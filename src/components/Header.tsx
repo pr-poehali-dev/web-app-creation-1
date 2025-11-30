@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Icon from '@/components/ui/icon';
 import DistrictSelector from '@/components/DistrictSelector';
+import { getSession } from '@/utils/auth';
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -17,10 +18,16 @@ interface HeaderProps {
 
 export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const navigate = useNavigate();
+  const currentUser = getSession();
 
   const handleLogout = () => {
     onLogout();
     navigate('/');
+  };
+
+  const getUserDisplayName = () => {
+    if (!currentUser) return 'Личный кабинет';
+    return `${currentUser.firstName} ${currentUser.lastName}`;
   };
 
   return (
@@ -76,11 +83,22 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center space-x-2">
                   <Icon name="User" className="h-4 w-4" />
-                  <span>Личный кабинет</span>
+                  <span className="max-w-[150px] truncate">{getUserDisplayName()}</span>
                   <Icon name="ChevronDown" className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
+                {currentUser && (
+                  <>
+                    <div className="px-2 py-1.5 text-sm font-medium">
+                      {currentUser.firstName} {currentUser.lastName}
+                    </div>
+                    <div className="px-2 pb-2 text-xs text-muted-foreground">
+                      {currentUser.email}
+                    </div>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <Icon name="User" className="mr-2 h-4 w-4" />
                   Мои данные
