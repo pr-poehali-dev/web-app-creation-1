@@ -44,7 +44,7 @@ export default function ResetPassword() {
           description: 'Ссылка для восстановления пароля отправлена на вашу почту',
         });
         setTimeout(() => {
-          navigate('/login');
+          navigate('/new-password');
         }, 2000);
       } else {
         setEmailError('Эл.почта введена неправильно');
