@@ -3,13 +3,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import type { LocationData } from '@/utils/geolocation';
 
 interface IndexProps {
   isAuthenticated: boolean;
   onLogout: () => void;
+  userLocation: LocationData | null;
 }
 
-export default function Index({ isAuthenticated, onLogout }: IndexProps) {
+export default function Index({ isAuthenticated, onLogout, userLocation }: IndexProps) {
   const navigate = useNavigate();
 
   const features = [
@@ -50,7 +52,7 @@ export default function Index({ isAuthenticated, onLogout }: IndexProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-12">
-        <div className="mb-12 text-center">
+        <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold text-foreground">
             Единая региональная товарно-торговая площадка
           </h1>
@@ -59,6 +61,27 @@ export default function Index({ isAuthenticated, onLogout }: IndexProps) {
             Оптимизируйте бизнес-процессы вашей компании.
           </p>
         </div>
+
+        {userLocation && (
+          <div className="mb-8 flex justify-center">
+            <Card className="border-primary/20 bg-primary/5 max-w-md w-full">
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3">
+                  <Icon name="MapPin" className="h-5 w-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Ваше местоположение</p>
+                    <p className="font-medium">{userLocation.city}, {userLocation.district}</p>
+                  </div>
+                  {userLocation.source === 'geolocation' && (
+                    <div className="rounded-full bg-green-100 px-2 py-1">
+                      <span className="text-xs text-green-700">Точное</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (

@@ -11,11 +11,14 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import NewPassword from "./pages/NewPassword";
 import NotFound from "./pages/NotFound";
+import LocationDetectionDialog from "./components/LocationDetectionDialog";
+import { getLocationFromStorage, type LocationData } from "./utils/geolocation";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userLocation, setUserLocation] = useState<LocationData | null>(getLocationFromStorage());
 
   const handleLogin = () => {
     setIsAuthenticated(true);
@@ -25,14 +28,19 @@ const App = () => {
     setIsAuthenticated(false);
   };
 
+  const handleLocationDetected = (location: LocationData) => {
+    setUserLocation(location);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <LocationDetectionDialog onLocationDetected={handleLocationDetected} />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/" element={<Index isAuthenticated={isAuthenticated} onLogout={handleLogout} userLocation={userLocation} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/offers" element={<NotFound />} />
             <Route path="/requests" element={<NotFound />} />
