@@ -35,6 +35,12 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
         <nav className="hidden md:flex items-center space-x-6">
           <Link
+            to="/home"
+            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+          >
+            Главная
+          </Link>
+          <Link
             to="/offers"
             className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
