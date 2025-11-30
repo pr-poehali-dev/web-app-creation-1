@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import { authenticateUser } from '@/utils/auth';
+import { authenticateUser, saveSession } from '@/utils/auth';
 
 interface LoginProps {
   onLogin: () => void;
@@ -49,6 +49,7 @@ export default function Login({ onLogin }: LoginProps) {
     const user = authenticateUser(email, password);
     
     if (user) {
+      saveSession(user);
       onLogin();
       navigate('/');
       toast({

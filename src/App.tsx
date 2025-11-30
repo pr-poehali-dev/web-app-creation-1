@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +19,7 @@ import OfferDetail from "./pages/OfferDetail";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { getLocationFromStorage, type LocationData } from "./utils/geolocation";
 import { DistrictProvider } from "./contexts/DistrictContext";
+import { getSession, clearSession } from "./utils/auth";
 
 const queryClient = new QueryClient();
 
@@ -26,11 +27,19 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userLocation, setUserLocation] = useState<LocationData | null>(getLocationFromStorage());
 
+  useEffect(() => {
+    const session = getSession();
+    if (session) {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
   const handleLogin = () => {
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
+    clearSession();
     setIsAuthenticated(false);
   };
 

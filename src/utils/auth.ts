@@ -65,3 +65,31 @@ export const isEmailRegistered = (email: string): boolean => {
   const users = getRegisteredUsers();
   return users.some((u) => u.email === email);
 };
+
+const SESSION_STORAGE_KEY = 'currentUser';
+
+export const saveSession = (user: RegisteredUser): void => {
+  try {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+  } catch (error) {
+    console.error('Error saving session:', error);
+  }
+};
+
+export const getSession = (): RegisteredUser | null => {
+  try {
+    const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Error reading session:', error);
+    return null;
+  }
+};
+
+export const clearSession = (): void => {
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (error) {
+    console.error('Error clearing session:', error);
+  }
+};
