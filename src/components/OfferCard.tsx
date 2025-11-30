@@ -32,7 +32,7 @@ export default function OfferCard({ offer }: OfferCardProps) {
   };
 
   const handleCardClick = () => {
-    navigate(`/offers/${offer.id}`);
+    navigate(`/offer/${offer.id}`);
   };
 
   const handleOrderClick = (e: React.MouseEvent) => {
