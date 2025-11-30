@@ -90,7 +90,6 @@ export default function Register({ onRegister }: RegisterProps) {
     } else {
       if (!formData.lastName.trim()) newErrors.lastName = 'Обязательное поле';
       if (!formData.firstName.trim()) newErrors.firstName = 'Обязательное поле';
-      if (!formData.middleName.trim()) newErrors.middleName = 'Обязательное поле';
 
       if (formData.userType === 'self-employed' || formData.userType === 'entrepreneur') {
         if (!formData.inn.trim()) {
@@ -160,9 +159,9 @@ export default function Register({ onRegister }: RegisterProps) {
       const newUser = {
         email: formData.email,
         password: formData.password,
-        firstName: formData.firstName || 'Пользователь',
-        lastName: formData.lastName || '',
-        middleName: formData.middleName,
+        firstName: formData.firstName.trim() || 'Пользователь',
+        lastName: formData.lastName.trim() || '',
+        middleName: formData.middleName?.trim() || '',
         userType: formData.userType,
         phone: formData.phone,
         registeredAt: new Date().toISOString(),
