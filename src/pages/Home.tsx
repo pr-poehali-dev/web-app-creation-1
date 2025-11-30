@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
 import { MOCK_OFFERS } from '@/data/mockOffers';
+import { searchOffers } from '@/utils/searchUtils';
 
 interface HomeProps {
   isAuthenticated: boolean;
@@ -42,13 +43,8 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
   const filteredOffers = useMemo(() => {
     let result = [...MOCK_OFFERS];
 
-    if (filters.query) {
-      const query = filters.query.toLowerCase();
-      result = result.filter(
-        (offer) =>
-          offer.title.toLowerCase().includes(query) ||
-          offer.description.toLowerCase().includes(query)
-      );
+    if (filters.query && filters.query.length >= 2) {
+      result = searchOffers(result, filters.query);
     }
 
     if (filters.category) {
@@ -134,6 +130,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onSearch={handleSearch}
+          allOffers={MOCK_OFFERS}
         />
 
         {isLoading ? (
@@ -149,15 +146,22 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
           </>
         ) : (
           <>
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
-                {filteredOffers.length === 1
-                  ? 'предложение'
-                  : filteredOffers.length < 5
-                  ? 'предложения'
-                  : 'предложений'}
-              </p>
+            <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
+                  {filteredOffers.length === 1
+                    ? 'предложение'
+                    : filteredOffers.length < 5
+                    ? 'предложения'
+                    : 'предложений'}
+                </p>
+                {filters.query && filters.query.length >= 2 && (
+                  <p className="text-sm text-muted-foreground">
+                    по запросу: <span className="font-semibold text-foreground">"{filters.query}"</span>
+                  </p>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">
                 Сортировка: <span className="font-semibold text-foreground">По новизне</span>
               </p>

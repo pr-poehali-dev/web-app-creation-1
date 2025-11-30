@@ -1,23 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
-import type { SearchFilters, ContentType } from '@/types/offer';
+import type { SearchFilters, ContentType, Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { getSearchSuggestions } from '@/utils/searchUtils';
 
 interface SearchBlockProps {
   filters: SearchFilters;
   onFiltersChange: (filters: SearchFilters) => void;
   onSearch: () => void;
+  allOffers: Offer[];
 }
 
-export default function SearchBlock({ filters, onFiltersChange, onSearch }: SearchBlockProps) {
+export default function SearchBlock({ filters, onFiltersChange, onSearch, allOffers }: SearchBlockProps) {
   const { districts } = useDistrict();
   const [selectedCategory, setSelectedCategory] = useState(filters.category);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const currentCategory = CATEGORIES.find(c => c.id === selectedCategory);
   const subcategories = currentCategory?.subcategories || [];
@@ -28,8 +35,83 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch }: Sear
     }
   }, [selectedCategory]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleQueryChange = (query: string) => {
     onFiltersChange({ ...filters, query });
+
+    if (query.length >= 2) {
+      const newSuggestions = getSearchSuggestions(allOffers, query, 5);
+      setSuggestions(newSuggestions);
+      setShowSuggestions(newSuggestions.length > 0);
+      setActiveSuggestionIndex(-1);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleClearQuery = () => {
+    onFiltersChange({ ...filters, query: '' });
+    setSuggestions([]);
+    setShowSuggestions(false);
+    inputRef.current?.focus();
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    onFiltersChange({ ...filters, query: suggestion });
+    setShowSuggestions(false);
+    setSuggestions([]);
+    onSearch();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) {
+      if (e.key === 'Enter') {
+        onSearch();
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setActiveSuggestionIndex((prev) =>
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setActiveSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (activeSuggestionIndex >= 0) {
+          handleSuggestionClick(suggestions[activeSuggestionIndex]);
+        } else {
+          onSearch();
+          setShowSuggestions(false);
+        }
+        break;
+      case 'Escape':
+        setShowSuggestions(false);
+        setActiveSuggestionIndex(-1);
+        break;
+    }
   };
 
   const handleContentTypeChange = (contentType: ContentType) => {
@@ -57,6 +139,8 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch }: Sear
       subcategory: '',
       district: 'all',
     });
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   return (
@@ -64,21 +148,63 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch }: Sear
       <CardContent className="pt-6">
         <div className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Label htmlFor="search-query" className="mb-2 block">
                 Поиск
               </Label>
               <div className="relative">
                 <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
+                  ref={inputRef}
                   id="search-query"
-                  placeholder="Введите название товара или услуги..."
+                  placeholder="Введите минимум 2 символа для поиска..."
                   value={filters.query}
                   onChange={(e) => handleQueryChange(e.target.value)}
-                  className="pl-10"
-                  onKeyDown={(e) => e.key === 'Enter' && onSearch()}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (filters.query.length >= 2 && suggestions.length > 0) {
+                      setShowSuggestions(true);
+                    }
+                  }}
+                  className="pl-10 pr-10"
                 />
+                {filters.query && (
+                  <button
+                    type="button"
+                    onClick={handleClearQuery}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Icon name="X" className="h-4 w-4" />
+                  </button>
+                )}
               </div>
+
+              {showSuggestions && suggestions.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                >
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className={`w-full text-left px-4 py-3 hover:bg-muted transition-colors flex items-center gap-2 ${
+                        index === activeSuggestionIndex ? 'bg-muted' : ''
+                      }`}
+                    >
+                      <Icon name="Search" className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm">{suggestion}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {filters.query.length > 0 && filters.query.length < 2 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Введите минимум 2 символа для поиска
+                </p>
+              )}
             </div>
 
             <div className="w-full md:w-48">
