@@ -46,11 +46,10 @@ const App = () => {
           <LocationDetectionDialog onLocationDetected={handleLocationDetected} />
           <BrowserRouter>
             <Routes>
-            <Route path="/" element={<Index isAuthenticated={isAuthenticated} onLogout={handleLogout} userLocation={userLocation} />} />
+            <Route path="/" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/home" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/search" element={<SearchResults isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/offers" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/requests" element={<NotFound />} />
             <Route path="/auction" element={<NotFound />} />
