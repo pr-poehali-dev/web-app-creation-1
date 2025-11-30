@@ -16,6 +16,10 @@ import Auctions from "./pages/Auctions";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import MyOffers from "./pages/MyOffers";
+import MyRequests from "./pages/MyRequests";
+import MyAuctions from "./pages/MyAuctions";
+import ActiveOrders from "./pages/ActiveOrders";
+import Notifications from "./pages/Notifications";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
@@ -69,10 +73,10 @@ const App = () => {
             <Route path="/support" element={<NotFound />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-requests" element={<NotFound />} />
-            <Route path="/my-auctions" element={<NotFound />} />
-            <Route path="/active-orders" element={<NotFound />} />
-            <Route path="/notifications" element={<NotFound />} />
+            <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/register" element={<Register onRegister={handleLogin} />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/new-password" element={<NewPassword />} />
