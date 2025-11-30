@@ -9,6 +9,7 @@ import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
 import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
+import { addToSearchHistory } from '@/utils/searchHistory';
 
 interface HomeProps {
   isAuthenticated: boolean;
@@ -59,9 +60,13 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
       result = result.filter((offer) => offer.district === filters.district);
     }
 
-    result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const premiumOffers = result.filter((offer) => offer.isPremium);
+    const regularOffers = result.filter((offer) => !offer.isPremium);
 
-    return result;
+    premiumOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    regularOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return [...premiumOffers, ...regularOffers];
   }, [filters]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
@@ -106,9 +111,20 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
   };
 
   const handleSearch = () => {
+    if (filters.query && filters.query.length >= 2) {
+      addToSearchHistory(filters.query, {
+        category: filters.category,
+        subcategory: filters.subcategory,
+        district: filters.district,
+        contentType: filters.contentType
+      });
+    }
     setDisplayedCount(ITEMS_PER_PAGE);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const premiumCount = currentOffers.filter((offer) => offer.isPremium).length;
+  const regularCount = currentOffers.length - premiumCount;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -146,53 +162,138 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
           </>
         ) : (
           <>
-            <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-muted-foreground">
-                  Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
-                  {filteredOffers.length === 1
-                    ? 'предложение'
-                    : filteredOffers.length < 5
-                    ? 'предложения'
-                    : 'предложений'}
-                </p>
-                {filters.query && filters.query.length >= 2 && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Icon name="Package" className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
+                      {filteredOffers.length === 1
+                        ? 'предложение'
+                        : filteredOffers.length < 5
+                        ? 'предложения'
+                        : 'предложений'}
+                    </p>
+                  </div>
+                  
+                  {filters.query && filters.query.length >= 2 && (
+                    <div className="flex items-center gap-2">
+                      <Icon name="Search" className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        по запросу: <span className="font-semibold text-foreground">"{filters.query}"</span>
+                      </p>
+                    </div>
+                  )}
+
+                  {premiumCount > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Icon name="Star" className="h-4 w-4 text-primary" />
+                      <p className="text-sm text-muted-foreground">
+                        Премиум: <span className="font-semibold text-primary">{premiumCount}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    по запросу: <span className="font-semibold text-foreground">"{filters.query}"</span>
+                    Сортировка: <span className="font-semibold text-foreground">Премиум + По новизне</span>
                   </p>
-                )}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Сортировка: <span className="font-semibold text-foreground">По новизне</span>
-              </p>
+
+              {filters.category && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {filters.category && (
+                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                      <Icon name="Tag" className="h-3 w-3" />
+                      {filters.category}
+                    </span>
+                  )}
+                  {filters.subcategory && (
+                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                      {filters.subcategory}
+                    </span>
+                  )}
+                  {filters.district !== 'all' && (
+                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                      <Icon name="MapPin" className="h-3 w-3" />
+                      {filters.district}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {currentOffers.length === 0 ? (
-              <div className="text-center py-16">
-                <Icon name="Package" className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Пока нет предложений</h3>
-                <p className="text-muted-foreground mb-6">
-                  Попробуйте изменить параметры поиска или вернитесь позже
-                </p>
-                <Button
-                  onClick={() =>
-                    handleFiltersChange({
-                      query: '',
-                      contentType: 'offers',
-                      category: '',
-                      subcategory: '',
-                      district: 'all',
-                    })
-                  }
-                >
-                  Сбросить фильтры
-                </Button>
+              <div className="text-center py-20 px-4">
+                <div className="max-w-md mx-auto">
+                  <Icon name="SearchX" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
+                  <h3 className="text-2xl font-semibold mb-3">Пока нет предложений или запросов</h3>
+                  <p className="text-muted-foreground mb-8">
+                    По вашему запросу ничего не найдено. Попробуйте изменить параметры поиска или фильтры.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      onClick={() =>
+                        handleFiltersChange({
+                          query: '',
+                          contentType: filters.contentType,
+                          category: '',
+                          subcategory: '',
+                          district: 'all',
+                        })
+                      }
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Icon name="RotateCcw" className="h-4 w-4" />
+                      Сбросить фильтры
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        handleFiltersChange({
+                          query: '',
+                          contentType: 'offers',
+                          category: '',
+                          subcategory: '',
+                          district: 'all',
+                        })
+                      }
+                      className="gap-2"
+                    >
+                      <Icon name="Home" className="h-4 w-4" />
+                      Все предложения
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : (
               <>
+                {premiumCount > 0 && regularCount > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                      <Icon name="Star" className="h-4 w-4" />
+                      <span>Оплаченные объявления ({premiumCount})</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {currentOffers.map((offer) => (
-                    <OfferCard key={offer.id} offer={offer} />
+                  {currentOffers.map((offer, index) => (
+                    <div key={offer.id}>
+                      {index === premiumCount && premiumCount > 0 && (
+                        <div className="col-span-full mb-4 mt-2">
+                          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                            <Icon name="Package" className="h-4 w-4" />
+                            <span>Обычные объявления ({regularCount})</span>
+                          </div>
+                        </div>
+                      )}
+                      <OfferCard offer={offer} />
+                    </div>
                   ))}
                 </div>
 
@@ -209,10 +310,16 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
                 )}
 
                 {!hasMore && filteredOffers.length > ITEMS_PER_PAGE && (
-                  <div className="mt-8 text-center">
-                    <p className="text-sm text-muted-foreground">
-                      Показаны все предложения ({filteredOffers.length})
-                    </p>
+                  <div className="mt-8 text-center py-6 border-t">
+                    <div className="flex flex-col items-center gap-2">
+                      <Icon name="CheckCircle2" className="h-6 w-6 text-green-500" />
+                      <p className="text-sm font-medium text-foreground">
+                        Показаны все предложения
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Всего найдено: {filteredOffers.length} {filteredOffers.length === 1 ? 'предложение' : filteredOffers.length < 5 ? 'предложения' : 'предложений'}
+                      </p>
+                    </div>
                   </div>
                 )}
               </>
