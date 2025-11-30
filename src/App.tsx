@@ -12,6 +12,7 @@ import NewPassword from "./pages/NewPassword";
 import NotFound from "./pages/NotFound";
 import Offers from "./pages/Offers";
 import Requests from "./pages/Requests";
+import Auctions from "./pages/Auctions";
 import Home from "./pages/Home";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
@@ -52,7 +53,7 @@ const App = () => {
             <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/auction" element={<NotFound />} />
+            <Route path="/auction" element={<Auctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/about" element={<NotFound />} />
             <Route path="/support" element={<NotFound />} />
             <Route path="/profile" element={<NotFound />} />
