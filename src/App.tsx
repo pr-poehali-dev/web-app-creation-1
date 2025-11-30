@@ -11,8 +11,10 @@ import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import NewPassword from "./pages/NewPassword";
 import NotFound from "./pages/NotFound";
+import Offers from "./pages/Offers";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { getLocationFromStorage, type LocationData } from "./utils/geolocation";
+import { DistrictProvider } from "./contexts/DistrictContext";
 
 const queryClient = new QueryClient();
 
@@ -35,14 +37,15 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <LocationDetectionDialog onLocationDetected={handleLocationDetected} />
-        <BrowserRouter>
-          <Routes>
+        <DistrictProvider>
+          <Toaster />
+          <Sonner />
+          <LocationDetectionDialog onLocationDetected={handleLocationDetected} />
+          <BrowserRouter>
+            <Routes>
             <Route path="/" element={<Index isAuthenticated={isAuthenticated} onLogout={handleLogout} userLocation={userLocation} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/offers" element={<NotFound />} />
+            <Route path="/offers" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/requests" element={<NotFound />} />
             <Route path="/auction" element={<NotFound />} />
             <Route path="/about" element={<NotFound />} />
@@ -60,6 +63,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </DistrictProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

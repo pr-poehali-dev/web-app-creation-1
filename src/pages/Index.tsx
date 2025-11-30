@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import DistrictSelector from '@/components/DistrictSelector';
 import type { LocationData } from '@/utils/geolocation';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface IndexProps {
   isAuthenticated: boolean;
@@ -13,6 +15,9 @@ interface IndexProps {
 
 export default function Index({ isAuthenticated, onLogout, userLocation }: IndexProps) {
   const navigate = useNavigate();
+  const { selectedDistrict, districts } = useDistrict();
+  
+  const currentDistrictName = districts.find(d => d.id === selectedDistrict)?.name || 'Все районы';
 
   const features = [
     {
@@ -62,9 +67,9 @@ export default function Index({ isAuthenticated, onLogout, userLocation }: Index
           </p>
         </div>
 
-        {userLocation && (
-          <div className="mb-8 flex justify-center">
-            <Card className="border-primary/20 bg-primary/5 max-w-md w-full">
+        <div className="mb-8 flex flex-col md:flex-row gap-4 justify-center items-stretch">
+          {userLocation && (
+            <Card className="border-primary/20 bg-primary/5 flex-1 max-w-md">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
                   <Icon name="MapPin" className="h-5 w-5 text-primary" />
@@ -80,8 +85,19 @@ export default function Index({ isAuthenticated, onLogout, userLocation }: Index
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          )}
+          
+          <Card className="border-primary/20 bg-primary/5 flex-1 max-w-md md:hidden">
+            <CardContent className="pt-6">
+              <DistrictSelector showLabel={true} />
+              {selectedDistrict !== 'all' && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Отображаются предложения для: {currentDistrictName}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (

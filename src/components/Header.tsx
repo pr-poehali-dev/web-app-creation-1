@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Icon from '@/components/ui/icon';
+import DistrictSelector from '@/components/DistrictSelector';
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -67,6 +67,10 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         </nav>
 
         <div className="flex items-center space-x-4">
+          <div className="hidden md:block w-56">
+            <DistrictSelector showLabel={false} />
+          </div>
+          
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
