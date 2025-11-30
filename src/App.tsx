@@ -15,6 +15,7 @@ import Requests from "./pages/Requests";
 import Auctions from "./pages/Auctions";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
+import MyOffers from "./pages/MyOffers";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
@@ -67,7 +68,7 @@ const App = () => {
             <Route path="/about" element={<NotFound />} />
             <Route path="/support" element={<NotFound />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-offers" element={<NotFound />} />
+            <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-requests" element={<NotFound />} />
             <Route path="/my-auctions" element={<NotFound />} />
             <Route path="/active-orders" element={<NotFound />} />
