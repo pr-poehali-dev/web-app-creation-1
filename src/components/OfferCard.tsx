@@ -134,9 +134,9 @@ export default function OfferCard({ offer }: OfferCardProps) {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Icon name="Map" className="h-4 w-4" />
             <span>
-              Доставка: {offer.availableDistricts.length === districts.length - 1
+              Доступные районы: {offer.availableDistricts.length === districts.length - 1
                 ? 'Все районы'
-                : `${offer.availableDistricts.length} ${offer.availableDistricts.length === 1 ? 'район' : 'района'}`}
+                : offer.availableDistricts.length}
             </span>
           </div>
 
