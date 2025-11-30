@@ -41,6 +41,13 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             Главная
           </Link>
           <Link
+            to="/search"
+            className="text-sm font-medium text-foreground transition-colors hover:text-primary flex items-center gap-1"
+          >
+            <Icon name="Search" className="h-4 w-4" />
+            Поиск
+          </Link>
+          <Link
             to="/offers"
             className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
