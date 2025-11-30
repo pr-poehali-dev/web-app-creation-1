@@ -1,4 +1,5 @@
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -53,10 +54,10 @@ export default function Index({ isAuthenticated, onLogout, userLocation }: Index
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-12 flex-1">
         <div className="mb-8 text-center">
           <h1 className="mb-4 text-4xl font-bold text-foreground">
             Единая региональная товарно-торговая площадка
@@ -144,6 +145,8 @@ export default function Index({ isAuthenticated, onLogout, userLocation }: Index
           </Card>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

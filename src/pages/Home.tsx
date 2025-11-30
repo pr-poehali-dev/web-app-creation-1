@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import SearchBlock from '@/components/SearchBlock';
 import OfferCard from '@/components/OfferCard';
+import OfferCardSkeleton from '@/components/OfferCardSkeleton';
+import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
 import { MOCK_OFFERS } from '@/data/mockOffers';
-import { CATEGORIES } from '@/data/categories';
 
 interface HomeProps {
   isAuthenticated: boolean;
@@ -16,7 +17,11 @@ interface HomeProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Home({ isAuthenticated, onLogout }: HomeProps) {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
     contentType: 'offers',
@@ -24,6 +29,15 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
     subcategory: '',
     district: 'all',
   });
+
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredOffers = useMemo(() => {
     let result = [...MOCK_OFFERS];
@@ -54,59 +68,57 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
     return result;
   }, [filters]);
 
-  const totalPages = Math.ceil(filteredOffers.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentOffers = filteredOffers.slice(startIndex, endIndex);
+  const currentOffers = filteredOffers.slice(0, displayedCount);
+  const hasMore = displayedCount < filteredOffers.length;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isLoadingMore, displayedCount]);
+
+  const loadMore = () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
+      setIsLoadingMore(false);
+    }, 500);
+  };
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
-    setCurrentPage(1);
-  };
-
-  const handleSearch = () => {
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    setDisplayedCount(ITEMS_PER_PAGE);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxVisible = 7;
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 4) {
-        for (let i = 1; i <= 5; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 3) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
+  const handleSearch = () => {
+    setDisplayedCount(ITEMS_PER_PAGE);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {filters.contentType === 'offers' ? 'Предложения' : 'Запросы'}
@@ -124,92 +136,88 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
           onSearch={handleSearch}
         />
 
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
-            {filteredOffers.length === 1
-              ? 'предложение'
-              : filteredOffers.length < 5
-              ? 'предложения'
-              : 'предложений'}
-          </p>
-          {filters.district !== 'all' && (
-            <p className="text-sm text-muted-foreground">
-              Сортировка: <span className="font-semibold text-foreground">По новизне</span>
-            </p>
-          )}
-        </div>
-
-        {currentOffers.length === 0 ? (
-          <div className="text-center py-16">
-            <Icon name="Package" className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Ничего не найдено</h3>
-            <p className="text-muted-foreground mb-6">
-              Попробуйте изменить параметры поиска
-            </p>
-            <Button onClick={() => handleFiltersChange({
-              query: '',
-              contentType: 'offers',
-              category: '',
-              subcategory: '',
-              district: 'all',
-            })}>
-              Сбросить фильтры
-            </Button>
-          </div>
-        ) : (
+        {isLoading ? (
           <>
+            <div className="mb-6">
+              <div className="h-5 w-48 bg-muted animate-pulse rounded" />
+            </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {currentOffers.map((offer) => (
-                <OfferCard key={offer.id} offer={offer} />
+              {Array.from({ length: 8 }).map((_, index) => (
+                <OfferCardSkeleton key={index} />
               ))}
             </div>
+          </>
+        ) : (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
+                {filteredOffers.length === 1
+                  ? 'предложение'
+                  : filteredOffers.length < 5
+                  ? 'предложения'
+                  : 'предложений'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Сортировка: <span className="font-semibold text-foreground">По новизне</span>
+              </p>
+            </div>
 
-            {totalPages > 1 && (
-              <div className="mt-12 flex items-center justify-center gap-2">
+            {currentOffers.length === 0 ? (
+              <div className="text-center py-16">
+                <Icon name="Package" className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Пока нет предложений</h3>
+                <p className="text-muted-foreground mb-6">
+                  Попробуйте изменить параметры поиска или вернитесь позже
+                </p>
                 <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
+                  onClick={() =>
+                    handleFiltersChange({
+                      query: '',
+                      contentType: 'offers',
+                      category: '',
+                      subcategory: '',
+                      district: 'all',
+                    })
+                  }
                 >
-                  <Icon name="ChevronLeft" className="h-4 w-4" />
-                </Button>
-
-                {getPageNumbers().map((page, index) => (
-                  typeof page === 'number' ? (
-                    <Button
-                      key={index}
-                      variant={currentPage === page ? 'default' : 'outline'}
-                      onClick={() => handlePageChange(page)}
-                      className="min-w-10"
-                    >
-                      {page}
-                    </Button>
-                  ) : (
-                    <span key={index} className="px-2 text-muted-foreground">
-                      {page}
-                    </span>
-                  )
-                ))}
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <Icon name="ChevronRight" className="h-4 w-4" />
+                  Сбросить фильтры
                 </Button>
               </div>
-            )}
+            ) : (
+              <>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {currentOffers.map((offer) => (
+                    <OfferCard key={offer.id} offer={offer} />
+                  ))}
+                </div>
 
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              Страница {currentPage} из {totalPages}
-            </div>
+                {hasMore && (
+                  <div ref={observerTarget} className="mt-8">
+                    {isLoadingMore && (
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                          <OfferCardSkeleton key={`loading-${index}`} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!hasMore && filteredOffers.length > ITEMS_PER_PAGE && (
+                  <div className="mt-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Показаны все предложения ({filteredOffers.length})
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
           </>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

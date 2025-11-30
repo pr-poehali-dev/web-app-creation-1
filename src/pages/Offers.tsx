@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -105,10 +106,10 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const currentDistrictName = districts.find(d => d.id === selectedDistrict)?.name;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Предложения</h1>
           <p className="text-muted-foreground">
@@ -184,6 +185,8 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }
