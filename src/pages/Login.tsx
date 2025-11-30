@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import { authenticateUser } from '@/utils/auth';
 
 interface LoginProps {
   onLogin: () => void;
@@ -45,18 +46,20 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
 
-    if (email === 'demo@example.com' && password === 'demo123') {
+    const user = authenticateUser(email, password);
+    
+    if (user) {
       onLogin();
       navigate('/');
       toast({
         title: 'Успешно',
-        description: 'Вы успешно авторизовались',
+        description: `Добро пожаловать, ${user.firstName} ${user.lastName}!`,
       });
     } else {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: 'Логин или пароль введены некорректно',
+        description: 'Email или пароль введены некорректно',
       });
     }
   };
