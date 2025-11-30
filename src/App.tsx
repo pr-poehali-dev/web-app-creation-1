@@ -13,6 +13,7 @@ import NewPassword from "./pages/NewPassword";
 import NotFound from "./pages/NotFound";
 import Offers from "./pages/Offers";
 import Home from "./pages/Home";
+import SearchResults from "./pages/SearchResults";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { getLocationFromStorage, type LocationData } from "./utils/geolocation";
 import { DistrictProvider } from "./contexts/DistrictContext";
@@ -47,6 +48,7 @@ const App = () => {
             <Route path="/" element={<Index isAuthenticated={isAuthenticated} onLogout={handleLogout} userLocation={userLocation} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/home" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/search" element={<SearchResults isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offers" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/requests" element={<NotFound />} />
             <Route path="/auction" element={<NotFound />} />
