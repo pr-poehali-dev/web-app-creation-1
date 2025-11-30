@@ -1,14 +1,110 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Header from '@/components/Header';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+import Icon from '@/components/ui/icon';
 
-const Index = () => {
+interface IndexProps {
+  isAuthenticated: boolean;
+  onLogout: () => void;
+}
+
+export default function Index({ isAuthenticated, onLogout }: IndexProps) {
+  const navigate = useNavigate();
+
+  const features = [
+    {
+      icon: 'Package',
+      title: 'Предложения',
+      description: 'Размещайте и просматривайте коммерческие предложения',
+      path: '/offers',
+    },
+    {
+      icon: 'FileText',
+      title: 'Запросы',
+      description: 'Создавайте запросы на поставку товаров и услуг',
+      path: '/requests',
+    },
+    {
+      icon: 'Gavel',
+      title: 'Аукцион',
+      description: 'Участвуйте в торгах и аукционах',
+      path: '/auction',
+    },
+    {
+      icon: 'Info',
+      title: 'О площадке',
+      description: 'Узнайте больше о нашей платформе',
+      path: '/about',
+    },
+    {
+      icon: 'HeadphonesIcon',
+      title: 'Поддержка',
+      description: 'Получите помощь от нашей команды',
+      path: '/support',
+    },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4 color-black text-black">Добро пожаловать!</h1>
-        <p className="text-xl text-gray-600">тут будет отображаться ваш проект</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+
+      <main className="container mx-auto px-4 py-12">
+        <div className="mb-12 text-center">
+          <h1 className="mb-4 text-4xl font-bold text-foreground">
+            Корпоративная B2B платформа
+          </h1>
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+            Эффективное решение для управления предложениями, запросами и аукционами. 
+            Оптимизируйте бизнес-процессы вашей компании.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => (
+            <Card
+              key={feature.path}
+              className="transition-all hover:shadow-lg cursor-pointer"
+              onClick={() => navigate(feature.path)}
+            >
+              <CardHeader>
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon name={feature.icon as any} className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="text-xl">{feature.title}</CardTitle>
+                <CardDescription>{feature.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="ghost" className="w-full justify-between">
+                  Перейти
+                  <Icon name="ArrowRight" className="h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-16">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle>Начните работу прямо сейчас</CardTitle>
+              <CardDescription>
+                Войдите в систему или зарегистрируйтесь для доступа ко всем функциям платформы
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <Button onClick={() => navigate('/login')} size="lg">
+                  Войти в систему
+                </Button>
+                <Button onClick={() => navigate('/register')} variant="outline" size="lg">
+                  Регистрация
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
-};
-
-export default Index;
+}
