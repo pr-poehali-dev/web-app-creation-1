@@ -13,9 +13,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Складской комплекс №1',
-    district: 'industrial',
-    fullAddress: 'Промышленный район, ул. Складская, д. 15',
-    availableDistricts: ['central', 'northern', 'industrial', 'zavolzhsky'],
+    district: 'yakutsk',
+    fullAddress: 'г. Якутск, ул. Складская, д. 15',
+    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky', 'namsky'],
     images: [
       {
         id: 'img1',
@@ -69,9 +69,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Офисный центр',
-    district: 'central',
-    fullAddress: 'Центральный район, пр. Ленина, д. 42',
-    availableDistricts: ['central', 'northern', 'southern'],
+    district: 'yakutsk',
+    fullAddress: 'г. Якутск, пр. Ленина, д. 42',
+    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky'],
     images: [
       {
         id: 'img2',
@@ -119,9 +119,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Магазин техники',
-    district: 'northern',
-    fullAddress: 'Северный район, ул. Советская, д. 78',
-    availableDistricts: ['central', 'northern', 'eastern', 'western'],
+    district: 'neryungri',
+    fullAddress: 'г. Нерюнгри, ул. Советская, д. 78',
+    availableDistricts: ['neryungri', 'aldan', 'yakutsk'],
     images: [
       {
         id: 'img3',
@@ -175,9 +175,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 10,
     location: 'Молочный завод',
-    district: 'southern',
-    fullAddress: 'Южный район, ул. Заводская, д. 5',
-    availableDistricts: ['southern', 'central', 'western'],
+    district: 'megino-kangalassky',
+    fullAddress: 'Мегино-Кангаласский улус, с. Майя, ул. Заводская, д. 5',
+    availableDistricts: ['megino-kangalassky', 'yakutsk', 'namsky'],
     images: [
       {
         id: 'img4',
@@ -220,9 +220,9 @@ export const MOCK_OFFERS: Offer[] = [
     pricePerUnit: 1500,
     hasVAT: false,
     location: 'Автопарк',
-    district: 'industrial',
-    fullAddress: 'Промышленный район, ул. Транспортная, д. 12',
-    availableDistricts: ['central', 'northern', 'southern', 'eastern', 'western', 'industrial', 'zavolzhsky', 'sovetsky'],
+    district: 'yakutsk',
+    fullAddress: 'г. Якутск, ул. Транспортная, д. 12',
+    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky', 'namsky', 'churapcha', 'ust-aldan', 'gorny'],
     images: [
       {
         id: 'img5',
@@ -264,9 +264,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Клининговая компания',
-    district: 'central',
-    fullAddress: 'Центральный район, ул. Чистая, д. 3',
-    availableDistricts: ['central', 'northern', 'southern'],
+    district: 'yakutsk',
+    fullAddress: 'г. Якутск, ул. Чистая, д. 3',
+    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky'],
     images: [
       {
         id: 'img6',
