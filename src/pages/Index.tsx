@@ -52,7 +52,7 @@ export default function Index({ isAuthenticated, onLogout }: IndexProps) {
       <main className="container mx-auto px-4 py-12">
         <div className="mb-12 text-center">
           <h1 className="mb-4 text-4xl font-bold text-foreground">
-            Корпоративная B2B платформа
+            Единая региональная товарно-торговая площадка
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
             Эффективное решение для управления предложениями, запросами и аукционами. 
