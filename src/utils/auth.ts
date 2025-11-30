@@ -93,3 +93,23 @@ export const clearSession = (): void => {
     console.error('Error clearing session:', error);
   }
 };
+
+export const updateUser = (updatedUser: RegisteredUser): boolean => {
+  try {
+    const users = getRegisteredUsers();
+    const userIndex = users.findIndex((u) => u.email === updatedUser.email);
+    
+    if (userIndex === -1) {
+      return false;
+    }
+    
+    users[userIndex] = updatedUser;
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    saveSession(updatedUser);
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return false;
+  }
+};
