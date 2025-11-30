@@ -1,188 +1,349 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
+import SearchBlock from '@/components/SearchBlock';
+import OfferCard from '@/components/OfferCard';
+import OfferCardSkeleton from '@/components/OfferCardSkeleton';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import type { SearchFilters } from '@/types/offer';
+import { MOCK_OFFERS } from '@/data/mockOffers';
+import { searchOffers } from '@/utils/searchUtils';
+import { addToSearchHistory } from '@/utils/searchHistory';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { filterByDistrict } from '@/utils/districtFilter';
-
-interface Offer {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  district: string;
-  category: string;
-  seller: string;
-  image?: string;
-}
 
 interface OffersProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const { selectedDistrict, districts } = useDistrict();
+  const [isLoading, setIsLoading] = useState(true);
+  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerTarget = useRef<HTMLDivElement>(null);
 
-  const allOffers: Offer[] = [
-    {
-      id: '1',
-      title: 'Стройматериалы оптом',
-      description: 'Широкий ассортимент стройматериалов по оптовым ценам',
-      price: 50000,
-      district: 'central',
-      category: 'Строительство',
-      seller: 'ООО "СтройМастер"',
-    },
-    {
-      id: '2',
-      title: 'Офисная мебель',
-      description: 'Комплекты офисной мебели для компаний',
-      price: 75000,
-      district: 'northern',
-      category: 'Мебель',
-      seller: 'ИП Иванов А.С.',
-    },
-    {
-      id: '3',
-      title: 'IT-оборудование',
-      description: 'Компьютеры, ноутбуки, серверы',
-      price: 120000,
-      district: 'central',
-      category: 'Техника',
-      seller: 'ООО "ТехноСервис"',
-    },
-    {
-      id: '4',
-      title: 'Канцелярские товары',
-      description: 'Полный комплект канцтоваров для офиса',
-      price: 15000,
-      district: 'southern',
-      category: 'Канцтовары',
-      seller: 'ООО "Офис+"',
-    },
-    {
-      id: '5',
-      title: 'Транспортные услуги',
-      description: 'Грузоперевозки по региону',
-      price: 3000,
-      district: 'industrial',
-      category: 'Услуги',
-      seller: 'ИП Петров В.И.',
-    },
-    {
-      id: '6',
-      title: 'Упаковочные материалы',
-      description: 'Различные виды упаковки для товаров',
-      price: 8000,
-      district: 'western',
-      category: 'Упаковка',
-      seller: 'ООО "ПакСервис"',
-    },
-    {
-      id: '7',
-      title: 'Электротовары',
-      description: 'Кабели, розетки, выключатели, светильники',
-      price: 25000,
-      district: 'eastern',
-      category: 'Электрика',
-      seller: 'ИП Сидоров М.П.',
-    },
-    {
-      id: '8',
-      title: 'Клининговые услуги',
-      description: 'Профессиональная уборка помещений',
-      price: 5000,
-      district: 'central',
-      category: 'Услуги',
-      seller: 'ООО "ЧистоДом"',
-    },
-  ];
+  const [filters, setFilters] = useState<SearchFilters>({
+    query: '',
+    contentType: 'offers',
+    category: '',
+    subcategory: '',
+    district: selectedDistrict,
+  });
 
-  const filteredOffers = filterByDistrict(allOffers, selectedDistrict);
-  const currentDistrictName = districts.find(d => d.id === selectedDistrict)?.name;
+  useEffect(() => {
+    setFilters(prev => ({ ...prev, district: selectedDistrict }));
+  }, [selectedDistrict]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const filteredOffers = useMemo(() => {
+    let result = [...MOCK_OFFERS];
+
+    if (filters.query && filters.query.length >= 2) {
+      result = searchOffers(result, filters.query);
+    }
+
+    if (filters.category) {
+      result = result.filter((offer) => offer.category === filters.category);
+    }
+
+    if (filters.subcategory) {
+      result = result.filter((offer) => offer.subcategory === filters.subcategory);
+    }
+
+    if (filters.district !== 'all') {
+      result = result.filter((offer) => 
+        offer.district === filters.district || 
+        offer.availableDistricts.includes(filters.district)
+      );
+    }
+
+    const premiumOffers = result.filter((offer) => offer.isPremium);
+    const regularOffers = result.filter((offer) => !offer.isPremium);
+
+    premiumOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    regularOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    return [...premiumOffers, ...regularOffers];
+  }, [filters]);
+
+  const currentOffers = filteredOffers.slice(0, displayedCount);
+  const hasMore = displayedCount < filteredOffers.length;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isLoadingMore, displayedCount]);
+
+  const loadMore = () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
+      setIsLoadingMore(false);
+    }, 400);
+  };
+
+  const handleFiltersChange = (newFilters: SearchFilters) => {
+    setFilters(newFilters);
+    setDisplayedCount(ITEMS_PER_PAGE);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearch = () => {
+    if (filters.query && filters.query.length >= 2) {
+      addToSearchHistory(filters.query, {
+        category: filters.category,
+        subcategory: filters.subcategory,
+        district: filters.district,
+        contentType: filters.contentType
+      });
+    }
+    setDisplayedCount(ITEMS_PER_PAGE);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const premiumCount = currentOffers.filter((offer) => offer.isPremium).length;
+  const regularCount = currentOffers.length - premiumCount;
+  const currentDistrictName = districts.find(d => d.id === filters.district)?.name;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground mb-2">Предложения</h1>
           <p className="text-muted-foreground">
-            Просмотр коммерческих предложений от поставщиков
+            Активные предложения от проверенных поставщиков в вашем районе
           </p>
         </div>
 
-        {selectedDistrict !== 'all' && (
-          <div className="mb-6">
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="pt-6 pb-4">
-                <div className="flex items-center gap-2">
-                  <Icon name="Filter" className="h-5 w-5 text-primary" />
-                  <p className="text-sm">
-                    Отображаются предложения для района: <span className="font-semibold">{currentDistrictName}</span>
-                  </p>
-                  <Badge variant="secondary" className="ml-auto">
-                    {filteredOffers.length} из {allOffers.length}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {filteredOffers.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="pt-12 pb-12 text-center">
-              <Icon name="Package" className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Нет предложений</h3>
-              <p className="text-muted-foreground">
-                В выбранном районе пока нет доступных предложений
-              </p>
+        {filters.district !== 'all' && (
+          <Card className="mb-6 border-primary/20 bg-primary/5">
+            <CardContent className="pt-4 pb-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Icon name="MapPin" className="h-5 w-5 text-primary" />
+                <p className="text-sm">
+                  Район: <span className="font-semibold">{currentDistrictName}</span>
+                </p>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  Показаны предложения, доступные в этом районе
+                </span>
+              </div>
             </CardContent>
           </Card>
+        )}
+
+        <SearchBlock
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onSearch={handleSearch}
+          allOffers={MOCK_OFFERS}
+        />
+
+        {isLoading ? (
+          <>
+            <div className="mb-6">
+              <div className="h-5 w-48 bg-muted animate-pulse rounded" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <OfferCardSkeleton key={index} />
+              ))}
+            </div>
+          </>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredOffers.map((offer) => (
-              <Card key={offer.id} className="transition-all hover:shadow-lg">
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <Badge variant="secondary">{offer.category}</Badge>
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Icon name="MapPin" className="h-3 w-3" />
-                      <span className="text-xs">
-                        {districts.find(d => d.id === offer.district)?.name}
-                      </span>
-                    </div>
+          <>
+            <div className="mb-6">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Icon name="Package" className="h-5 w-5 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
+                      {filteredOffers.length === 1
+                        ? 'предложение'
+                        : filteredOffers.length < 5
+                        ? 'предложения'
+                        : 'предложений'}
+                    </p>
                   </div>
-                  <CardTitle className="text-xl">{offer.title}</CardTitle>
-                  <CardDescription>{offer.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Цена:</span>
-                      <span className="text-xl font-bold text-primary">
-                        {offer.price.toLocaleString('ru-RU')} ₽
-                      </span>
+                  
+                  {filters.query && filters.query.length >= 2 && (
+                    <div className="flex items-center gap-2">
+                      <Icon name="Search" className="h-4 w-4 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        по запросу: <span className="font-semibold text-foreground">"{filters.query}"</span>
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Icon name="Building2" className="h-4 w-4" />
-                      <span>{offer.seller}</span>
+                  )}
+
+                  {premiumCount > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Icon name="Star" className="h-4 w-4 text-primary" />
+                      <p className="text-sm text-muted-foreground">
+                        Премиум: <span className="font-semibold text-primary">{premiumCount}</span>
+                      </p>
                     </div>
-                    <Button className="w-full">
-                      Подробнее
-                      <Icon name="ArrowRight" className="ml-2 h-4 w-4" />
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Сортировка: <span className="font-semibold text-foreground">Премиум + По новизне</span>
+                  </p>
+                </div>
+              </div>
+
+              {filters.category && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {filters.category && (
+                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                      <Icon name="Tag" className="h-3 w-3" />
+                      {filters.category}
+                    </span>
+                  )}
+                  {filters.subcategory && (
+                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                      {filters.subcategory}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {currentOffers.length === 0 ? (
+              <div className="text-center py-20 px-4">
+                <div className="max-w-md mx-auto">
+                  <Icon name="Package" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
+                  <h3 className="text-2xl font-semibold mb-3">Пока нет предложений</h3>
+                  <p className="text-muted-foreground mb-8">
+                    {filters.district !== 'all' 
+                      ? `В районе "${currentDistrictName}" пока нет доступных предложений`
+                      : 'По вашим фильтрам ничего не найдено'}
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      onClick={() =>
+                        handleFiltersChange({
+                          query: '',
+                          contentType: 'offers',
+                          category: '',
+                          subcategory: '',
+                          district: filters.district,
+                        })
+                      }
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Icon name="RotateCcw" className="h-4 w-4" />
+                      Сбросить фильтры
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        handleFiltersChange({
+                          query: '',
+                          contentType: 'offers',
+                          category: '',
+                          subcategory: '',
+                          district: 'all',
+                        })
+                      }
+                      className="gap-2"
+                    >
+                      <Icon name="Globe" className="h-4 w-4" />
+                      Все районы
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {premiumCount > 0 && regularCount > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                      <Icon name="Star" className="h-4 w-4" />
+                      <span>Оплаченные объявления ({premiumCount})</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {currentOffers.map((offer, index) => (
+                    <div key={offer.id}>
+                      {index === premiumCount && premiumCount > 0 && (
+                        <div className="col-span-full mb-4 mt-2">
+                          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                            <Icon name="Package" className="h-4 w-4" />
+                            <span>Обычные объявления ({regularCount})</span>
+                          </div>
+                        </div>
+                      )}
+                      <OfferCard offer={offer} />
+                    </div>
+                  ))}
+                </div>
+
+                {hasMore && (
+                  <div ref={observerTarget} className="mt-8">
+                    {isLoadingMore && (
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                          <OfferCardSkeleton key={`loading-${index}`} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!hasMore && filteredOffers.length > ITEMS_PER_PAGE && (
+                  <div className="mt-8 text-center py-6 border-t">
+                    <div className="flex flex-col items-center gap-2">
+                      <Icon name="CheckCircle2" className="h-6 w-6 text-green-500" />
+                      <p className="text-sm font-medium text-foreground">
+                        Показаны все предложения
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Всего найдено: {filteredOffers.length} {filteredOffers.length === 1 ? 'предложение' : filteredOffers.length < 5 ? 'предложения' : 'предложений'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </>
         )}
       </main>
 
