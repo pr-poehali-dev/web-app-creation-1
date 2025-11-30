@@ -41,7 +41,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             Предложения
           </Link>
           <Link
-            to="/requests"
+            to="/zaprosy"
             className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
             Запросы

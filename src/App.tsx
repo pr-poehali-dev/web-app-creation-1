@@ -5,13 +5,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import NewPassword from "./pages/NewPassword";
 import NotFound from "./pages/NotFound";
 import Offers from "./pages/Offers";
+import Requests from "./pages/Requests";
 import Home from "./pages/Home";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
@@ -51,7 +51,7 @@ const App = () => {
             <Route path="/search" element={<SearchResults isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/requests" element={<NotFound />} />
+            <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/auction" element={<NotFound />} />
             <Route path="/about" element={<NotFound />} />
             <Route path="/support" element={<NotFound />} />
