@@ -238,12 +238,12 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
               <Label htmlFor="category" className="mb-2 block">
                 Категория
               </Label>
-              <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+              <Select value={selectedCategory || 'all-categories'} onValueChange={(value) => handleCategoryChange(value === 'all-categories' ? '' : value)}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="Все категории" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все категории</SelectItem>
+                  <SelectItem value="all-categories">Все категории</SelectItem>
                   {CATEGORIES.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -258,15 +258,15 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
                 Подкатегория
               </Label>
               <Select
-                value={filters.subcategory}
-                onValueChange={handleSubcategoryChange}
+                value={filters.subcategory || 'all-subcategories'}
+                onValueChange={(value) => handleSubcategoryChange(value === 'all-subcategories' ? '' : value)}
                 disabled={!selectedCategory}
               >
                 <SelectTrigger id="subcategory">
                   <SelectValue placeholder="Все подкатегории" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Все подкатегории</SelectItem>
+                  <SelectItem value="all-subcategories">Все подкатегории</SelectItem>
                   {subcategories.map((subcategory) => (
                     <SelectItem key={subcategory.id} value={subcategory.id}>
                       {subcategory.name}
