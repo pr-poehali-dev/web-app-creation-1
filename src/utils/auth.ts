@@ -57,7 +57,22 @@ export const saveUser = (user: RegisteredUser): boolean => {
 
 export const authenticateUser = (email: string, password: string): RegisteredUser | null => {
   const users = getRegisteredUsers();
+  console.log('🔐 Попытка входа:', { email, totalUsers: users.length });
+  console.log('📋 Зарегистрированные email:', users.map(u => u.email));
+  
   const user = users.find((u) => u.email === email && u.password === password);
+  
+  if (!user) {
+    const emailExists = users.find((u) => u.email === email);
+    if (emailExists) {
+      console.log('❌ Email найден, но пароль не совпадает');
+    } else {
+      console.log('❌ Email не найден в системе');
+    }
+  } else {
+    console.log('✅ Авторизация успешна:', user.email);
+  }
+  
   return user || null;
 };
 
