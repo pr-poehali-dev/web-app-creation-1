@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
@@ -19,8 +20,36 @@ export default function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('rememberMe') === 'true';
+  });
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const credentials = localStorage.getItem('rememberMeCredentials');
+    if (credentials && rememberMe) {
+      try {
+        const { email: savedEmail, password: savedPassword } = JSON.parse(credentials);
+        const user = authenticateUser(savedEmail, savedPassword);
+        
+        if (user) {
+          saveSession(user);
+          onLogin();
+          navigate('/');
+          toast({
+            title: 'Успешно',
+            description: `Добро пожаловать, ${user.firstName} ${user.lastName}!`,
+          });
+        } else {
+          localStorage.removeItem('rememberMeCredentials');
+        }
+      } catch (error) {
+        console.error('Auto-login failed:', error);
+        localStorage.removeItem('rememberMeCredentials');
+      }
+    }
+  }, []);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,6 +82,14 @@ export default function Login({ onLogin }: LoginProps) {
     
     if (user) {
       localStorage.setItem('lastLoginEmail', email);
+      localStorage.setItem('rememberMe', rememberMe.toString());
+      
+      if (rememberMe) {
+        localStorage.setItem('rememberMeCredentials', JSON.stringify({ email, password }));
+      } else {
+        localStorage.removeItem('rememberMeCredentials');
+      }
+      
       saveSession(user);
       onLogin();
       navigate('/');
@@ -125,14 +162,29 @@ export default function Login({ onLogin }: LoginProps) {
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="link"
-              className="px-0 text-sm"
-              onClick={() => navigate('/reset-password')}
-            >
-              Забыли пароль?
-            </Button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <label
+                  htmlFor="remember"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Запомнить меня
+                </label>
+              </div>
+              <Button
+                type="button"
+                variant="link"
+                className="px-0 text-sm h-auto"
+                onClick={() => navigate('/reset-password')}
+              >
+                Забыли пароль?
+              </Button>
+            </div>
 
             <Button type="submit" className="w-full">
               Войти
