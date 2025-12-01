@@ -23,6 +23,8 @@ import Notifications from "./pages/Notifications";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
 import RequestDetail from "./pages/RequestDetail";
+import CreateOffer from "./pages/CreateOffer";
+import CreateRequest from "./pages/CreateRequest";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { getSession, clearSession } from "./utils/auth";
@@ -69,7 +71,9 @@ const App = () => {
             <Route path="/support" element={<NotFound />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

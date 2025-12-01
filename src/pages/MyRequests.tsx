@@ -317,7 +317,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
                 Управляйте своими запросами на покупку
               </p>
             </div>
-            <Button disabled>
+            <Button onClick={() => navigate('/create-request')}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Создать запрос
             </Button>
@@ -372,7 +372,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
             <p className="text-muted-foreground mb-8">
               Создайте запрос на покупку, чтобы получить предложения от поставщиков
             </p>
-            <Button disabled>
+            <Button onClick={() => navigate('/create-request')}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Создать запрос
             </Button>

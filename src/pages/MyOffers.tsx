@@ -276,7 +276,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
                 Управляйте своими опубликованными предложениями
               </p>
             </div>
-            <Button disabled>
+            <Button onClick={() => navigate('/create-offer')}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Создать предложение
             </Button>
@@ -331,7 +331,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
             <p className="text-muted-foreground mb-8">
               Создайте свое первое предложение, чтобы начать продажи
             </p>
-            <Button disabled>
+            <Button onClick={() => navigate('/create-offer')}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Создать предложение
             </Button>
