@@ -11,6 +11,7 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
+  CommandItem,
   CommandList,
 } from '@/components/ui/command';
 import Icon from '@/components/ui/icon';
@@ -27,7 +28,10 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
   const availableDistricts = districts.filter(d => d.id !== 'all');
   const selectedCount = selectedDistricts.length;
 
-  const handleSelectAll = () => {
+  const handleSelectAll = (e?: Event) => {
+    if (e) {
+      e.preventDefault();
+    }
     setSelectedDistricts([]);
   };
 
@@ -42,10 +46,9 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
     setSelectedDistricts(ulusDistricts);
   };
 
-  const handleToggleDistrict = (districtId: string, e?: React.MouseEvent) => {
+  const handleToggleDistrict = (districtId: string, e?: Event) => {
     if (e) {
       e.preventDefault();
-      e.stopPropagation();
     }
     toggleDistrict(districtId);
   };
@@ -109,9 +112,13 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                 </Button>
               </CommandGroup>
               <CommandGroup>
-                <div
-                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                  onClick={handleSelectAll}
+                <CommandItem
+                  value="all-districts"
+                  keywords={['все', 'районы', 'all']}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    handleSelectAll();
+                  }}
                 >
                   <div className="flex items-center gap-2 flex-1">
                     <div className="w-4 h-4 border-2 border-primary rounded flex items-center justify-center">
@@ -122,16 +129,19 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                     <Icon name="Globe" className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Все районы</span>
                   </div>
-                </div>
+                </CommandItem>
               </CommandGroup>
               <CommandGroup heading="Выберите районы">
                 {availableDistricts.map((district) => {
                   const isSelected = selectedDistricts.includes(district.id);
                   return (
-                    <div
+                    <CommandItem
                       key={district.id}
-                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                      onClick={(e) => handleToggleDistrict(district.id, e)}
+                      value={district.name}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        handleToggleDistrict(district.id);
+                      }}
                     >
                       <div className="flex items-center gap-2 flex-1">
                         <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
@@ -142,7 +152,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                         <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
                         <span>{district.name}</span>
                       </div>
-                    </div>
+                    </CommandItem>
                   );
                 })}
               </CommandGroup>
