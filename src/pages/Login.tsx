@@ -13,9 +13,12 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    return localStorage.getItem('lastLoginEmail') || '';
+  });
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,6 +52,7 @@ export default function Login({ onLogin }: LoginProps) {
     const user = authenticateUser(email, password);
     
     if (user) {
+      localStorage.setItem('lastLoginEmail', email);
       saveSession(user);
       onLogin();
       navigate('/');
@@ -86,10 +90,12 @@ export default function Login({ onLogin }: LoginProps) {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="example@company.com"
                 value={email}
                 onChange={handleEmailChange}
+                autoComplete="email"
                 className={emailError ? 'border-destructive' : ''}
               />
               {emailError && <p className="text-sm text-destructive">{emailError}</p>}
@@ -97,13 +103,26 @@ export default function Login({ onLogin }: LoginProps) {
 
             <div className="space-y-2">
               <Label htmlFor="password">Пароль</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Введите пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Введите пароль"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  <Icon name={showPassword ? 'EyeOff' : 'Eye'} className="h-4 w-4" />
+                </button>
+              </div>
             </div>
 
             <Button
