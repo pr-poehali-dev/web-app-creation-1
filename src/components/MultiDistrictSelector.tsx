@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/command';
 import Icon from '@/components/ui/icon';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { cn } from '@/lib/utils';
 
 interface MultiDistrictSelectorProps {
   className?: string;
@@ -31,7 +30,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
   const selectedCount = selectedDistricts.length;
 
   const handleSelectAll = () => {
-    toggleDistrict('all');
+    setSelectedDistricts([]);
   };
 
   const handleSelectYakutsk = () => {
@@ -43,6 +42,10 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
       .filter(d => d.id !== 'yakutsk')
       .map(d => d.id);
     setSelectedDistricts(ulusDistricts);
+  };
+
+  const handleToggleDistrict = (districtId: string) => {
+    toggleDistrict(districtId);
   };
 
   const getDisplayText = () => {
@@ -74,14 +77,14 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
-          <Command>
+          <Command shouldFilter={true}>
             <CommandInput placeholder="Поиск района..." />
             <CommandList>
               <CommandEmpty>Район не найден</CommandEmpty>
               <CommandGroup>
-                <CommandItem
-                  onSelect={handleSelectAll}
-                  className="cursor-pointer"
+                <div
+                  className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  onClick={handleSelectAll}
                 >
                   <div className="flex items-center gap-2 flex-1">
                     <Checkbox
@@ -94,21 +97,21 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                   {selectedCount === 0 && (
                     <Icon name="Check" className="h-4 w-4 text-primary" />
                   )}
-                </CommandItem>
+                </div>
               </CommandGroup>
               <CommandGroup heading="Выберите районы">
                 {availableDistricts.map((district) => {
                   const isSelected = selectedDistricts.includes(district.id);
                   return (
-                    <CommandItem
+                    <div
                       key={district.id}
-                      onSelect={() => toggleDistrict(district.id)}
-                      className="cursor-pointer"
+                      className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                      onClick={() => handleToggleDistrict(district.id)}
                     >
                       <div className="flex items-center gap-2 flex-1">
                         <Checkbox
                           checked={isSelected}
-                          onCheckedChange={() => toggleDistrict(district.id)}
+                          onCheckedChange={() => handleToggleDistrict(district.id)}
                         />
                         <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
                         <span>{district.name}</span>
@@ -116,7 +119,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                       {isSelected && (
                         <Icon name="Check" className="h-4 w-4 text-primary" />
                       )}
-                    </CommandItem>
+                    </div>
                   );
                 })}
               </CommandGroup>
