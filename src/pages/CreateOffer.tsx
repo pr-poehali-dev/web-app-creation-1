@@ -3,17 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import type { DeliveryType } from '@/types/offer';
+import OfferBasicInfoSection from '@/components/offer/OfferBasicInfoSection';
+import OfferPricingSection from '@/components/offer/OfferPricingSection';
+import OfferLocationSection from '@/components/offer/OfferLocationSection';
+import OfferMediaSection from '@/components/offer/OfferMediaSection';
 
 interface CreateOfferProps {
   isAuthenticated: boolean;
@@ -47,9 +47,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const [video, setVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const selectedCategory = CATEGORIES.find(c => c.id === formData.category);
-  const subcategories = selectedCategory?.subcategories || [];
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -180,358 +177,50 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
           </div>
 
           <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Основная информация</CardTitle>
-                <CardDescription>
-                  Название, описание и категория предложения
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Название предложения *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => handleInputChange('title', e.target.value)}
-                    placeholder="Например: Цемент М500, мешок 50 кг"
-                    required
-                    maxLength={100}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formData.title.length}/100 символов
-                  </p>
-                </div>
+            <OfferBasicInfoSection
+              formData={{
+                title: formData.title,
+                description: formData.description,
+                category: formData.category,
+                subcategory: formData.subcategory,
+              }}
+              onInputChange={handleInputChange}
+            />
 
-                <div>
-                  <Label htmlFor="description">Описание *</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => handleInputChange('description', e.target.value)}
-                    placeholder="Подробное описание товара или услуги..."
-                    required
-                    rows={6}
-                    maxLength={1000}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formData.description.length}/1000 символов
-                  </p>
-                </div>
+            <OfferPricingSection
+              formData={{
+                quantity: formData.quantity,
+                unit: formData.unit,
+                pricePerUnit: formData.pricePerUnit,
+                hasVAT: formData.hasVAT,
+                vatRate: formData.vatRate,
+              }}
+              onInputChange={handleInputChange}
+            />
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="category">Категория *</Label>
-                    <select
-                      id="category"
-                      value={formData.category}
-                      onChange={(e) => handleInputChange('category', e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      required
-                    >
-                      <option value="">Выберите категорию</option>
-                      {CATEGORIES.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </div>
+            <OfferLocationSection
+              formData={{
+                district: formData.district,
+                fullAddress: formData.fullAddress,
+                availableDistricts: formData.availableDistricts,
+                availableDeliveryTypes: formData.availableDeliveryTypes,
+              }}
+              districts={districts}
+              onInputChange={handleInputChange}
+              onDistrictToggle={handleDistrictToggle}
+              onDeliveryTypeToggle={handleDeliveryTypeToggle}
+            />
 
-                  <div>
-                    <Label htmlFor="subcategory">Подкатегория *</Label>
-                    <select
-                      id="subcategory"
-                      value={formData.subcategory}
-                      onChange={(e) => handleInputChange('subcategory', e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      required
-                      disabled={!formData.category}
-                    >
-                      <option value="">Выберите подкатегорию</option>
-                      {subcategories.map(sub => (
-                        <option key={sub.id} value={sub.id}>{sub.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Цена и количество</CardTitle>
-                <CardDescription>
-                  Укажите количество и стоимость
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="quantity">Количество *</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      value={formData.quantity}
-                      onChange={(e) => handleInputChange('quantity', e.target.value)}
-                      placeholder="0"
-                      required
-                      min="0.01"
-                      step="0.01"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="unit">Единица измерения *</Label>
-                    <select
-                      id="unit"
-                      value={formData.unit}
-                      onChange={(e) => handleInputChange('unit', e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      required
-                    >
-                      <option value="шт">шт</option>
-                      <option value="кг">кг</option>
-                      <option value="т">т</option>
-                      <option value="м">м</option>
-                      <option value="м²">м²</option>
-                      <option value="м³">м³</option>
-                      <option value="л">л</option>
-                      <option value="упак">упак</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="pricePerUnit">Цена за единицу (₽) *</Label>
-                    <Input
-                      id="pricePerUnit"
-                      type="number"
-                      value={formData.pricePerUnit}
-                      onChange={(e) => handleInputChange('pricePerUnit', e.target.value)}
-                      placeholder="0"
-                      required
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-2">
-                  <Checkbox
-                    id="hasVAT"
-                    checked={formData.hasVAT}
-                    onCheckedChange={(checked) => handleInputChange('hasVAT', checked as boolean)}
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <label
-                      htmlFor="hasVAT"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Цена включает НДС
-                    </label>
-                  </div>
-                </div>
-
-                {formData.hasVAT && (
-                  <div className="w-40">
-                    <Label htmlFor="vatRate">Ставка НДС (%)</Label>
-                    <select
-                      id="vatRate"
-                      value={formData.vatRate}
-                      onChange={(e) => handleInputChange('vatRate', e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="0">0%</option>
-                      <option value="10">10%</option>
-                      <option value="20">20%</option>
-                    </select>
-                  </div>
-                )}
-
-                {formData.quantity && formData.pricePerUnit && (
-                  <div className="pt-4 border-t">
-                    <p className="text-sm text-muted-foreground mb-1">Общая стоимость</p>
-                    <p className="text-2xl font-bold text-primary">
-                      {(Number(formData.quantity) * Number(formData.pricePerUnit)).toLocaleString('ru-RU')} ₽
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Местоположение и доставка</CardTitle>
-                <CardDescription>
-                  Укажите где находится товар и куда возможна доставка
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="district">Район местонахождения *</Label>
-                  <select
-                    id="district"
-                    value={formData.district}
-                    onChange={(e) => handleInputChange('district', e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    required
-                  >
-                    <option value="">Выберите район</option>
-                    {districts.map(district => (
-                      <option key={district.id} value={district.id}>{district.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Label htmlFor="fullAddress">Полный адрес (необязательно)</Label>
-                  <Input
-                    id="fullAddress"
-                    value={formData.fullAddress}
-                    onChange={(e) => handleInputChange('fullAddress', e.target.value)}
-                    placeholder="Улица, дом, офис"
-                  />
-                </div>
-
-                <div>
-                  <Label className="mb-3 block">Доступно для заказа из районов *</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {districts.map(district => (
-                      <div key={district.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`district-${district.id}`}
-                          checked={formData.availableDistricts.includes(district.id)}
-                          onCheckedChange={() => handleDistrictToggle(district.id)}
-                        />
-                        <label
-                          htmlFor={`district-${district.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {district.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                  {formData.availableDistricts.length === 0 && (
-                    <p className="text-xs text-destructive mt-2">
-                      Выберите хотя бы один район
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label className="mb-3 block">Способы получения *</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="delivery-pickup"
-                        checked={formData.availableDeliveryTypes.includes('pickup')}
-                        onCheckedChange={() => handleDeliveryTypeToggle('pickup')}
-                      />
-                      <label
-                        htmlFor="delivery-pickup"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
-                      >
-                        <Icon name="Store" className="h-4 w-4" />
-                        Самовывоз
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="delivery-delivery"
-                        checked={formData.availableDeliveryTypes.includes('delivery')}
-                        onCheckedChange={() => handleDeliveryTypeToggle('delivery')}
-                      />
-                      <label
-                        htmlFor="delivery-delivery"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
-                      >
-                        <Icon name="Truck" className="h-4 w-4" />
-                        Доставка
-                      </label>
-                    </div>
-                  </div>
-                  {formData.availableDeliveryTypes.length === 0 && (
-                    <p className="text-xs text-destructive mt-2">
-                      Выберите хотя бы один способ получения
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Медиа</CardTitle>
-                <CardDescription>
-                  Загрузите фотографии и видео (до 10 фото + 1 видео)
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="images">Фотографии (до 10)</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="images"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      disabled={images.length >= 10}
-                    />
-                  </div>
-                  
-                  {imagePreviews.length > 0 && (
-                    <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mt-4">
-                      {imagePreviews.map((preview, index) => (
-                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
-                          <img
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveImage(index)}
-                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
-                          >
-                            <Icon name="X" className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="video">Видео (1 файл)</Label>
-                  <div className="mt-2">
-                    <Input
-                      id="video"
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoUpload}
-                      disabled={!!video}
-                    />
-                  </div>
-                  
-                  {videoPreview && (
-                    <div className="relative aspect-video rounded-lg overflow-hidden border mt-4 max-w-md">
-                      <video
-                        src={videoPreview}
-                        controls
-                        className="w-full h-full"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleRemoveVideo}
-                        className="absolute top-2 right-2 p-2 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
-                      >
-                        <Icon name="X" className="h-4 w-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <OfferMediaSection
+              images={images}
+              imagePreviews={imagePreviews}
+              video={video}
+              videoPreview={videoPreview}
+              onImageUpload={handleImageUpload}
+              onRemoveImage={handleRemoveImage}
+              onVideoUpload={handleVideoUpload}
+              onRemoveVideo={handleRemoveVideo}
+            />
 
             <Card>
               <CardHeader>
