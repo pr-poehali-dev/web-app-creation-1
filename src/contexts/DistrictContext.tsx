@@ -111,6 +111,9 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       if (storedLocation) {
         const districtId = findDistrictByLocation(storedLocation.city, storedLocation.district);
         setSelectedDistrictState(districtId);
+        if (districtId !== 'all') {
+          setSelectedDistrictsState([districtId]);
+        }
         return;
       }
 
@@ -128,6 +131,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
           
           if (districtId !== 'all') {
             setSelectedDistrictState(districtId);
+            setSelectedDistrictsState([districtId]);
             saveLocationToStorage(location);
           }
           
@@ -184,6 +188,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       
       if (districtId !== 'all') {
         setSelectedDistrictState(districtId);
+        setSelectedDistrictsState([districtId]);
         saveLocationToStorage(location);
       }
     } catch (error) {
