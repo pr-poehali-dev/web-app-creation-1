@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession, updateUser } from '@/utils/auth';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import ProfileInfoCard from '@/components/profile/ProfileInfoCard';
+import ProfileSecurityCard from '@/components/profile/ProfileSecurityCard';
+import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 
 interface ProfileProps {
   isAuthenticated: boolean;
@@ -94,6 +95,10 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       month: 'long',
       year: 'numeric',
     });
+  };
+
+  const getUserTypeLabel = (type: string) => {
+    return USER_TYPE_LABELS[type] || type;
   };
 
   const validatePhone = (phone: string): boolean => {
@@ -278,256 +283,46 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
           <div className="grid gap-6">
             <Card>
               <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-bold">
-                    {getInitials()}
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-2xl">
-                      {currentUser.firstName} {currentUser.lastName}
-                    </CardTitle>
-                    <CardDescription className="text-base mt-1">
-                      {currentUser.email}
-                    </CardDescription>
-                    <div className="mt-2">
-                      <Badge variant="secondary">
-                        {USER_TYPE_LABELS[currentUser.userType] || currentUser.userType}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
+                <ProfileHeader
+                  firstName={currentUser.firstName}
+                  lastName={currentUser.lastName}
+                  userType={currentUser.userType}
+                  isVerified={currentUser.isVerified}
+                  getInitials={getInitials}
+                  getUserTypeLabel={getUserTypeLabel}
+                />
               </CardHeader>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Icon name="User" className="h-5 w-5" />
-                    Личные данные
-                  </CardTitle>
-                  {!isEditing && (
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                      <Icon name="Pencil" className="mr-2 h-4 w-4" />
-                      Редактировать
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Фамилия</Label>
-                    <Input
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      disabled={!isEditing}
-                      className={errors.lastName ? 'border-destructive' : ''}
-                    />
-                    {errors.lastName && (
-                      <p className="text-sm text-destructive">{errors.lastName}</p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Имя</Label>
-                    <Input
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      disabled={!isEditing}
-                      className={errors.firstName ? 'border-destructive' : ''}
-                    />
-                    {errors.firstName && (
-                      <p className="text-sm text-destructive">{errors.firstName}</p>
-                    )}
-                  </div>
-                </div>
+            <ProfileInfoCard
+              email={currentUser.email}
+              isEditing={isEditing}
+              formData={formData}
+              errors={errors}
+              isSaving={isSaving}
+              onEdit={() => setIsEditing(true)}
+              onSave={handleSave}
+              onCancel={handleCancel}
+              onInputChange={handleInputChange}
+            />
 
-                <div className="space-y-2">
-                  <Label>Отчество</Label>
-                  <Input
-                    value={formData.middleName}
-                    onChange={(e) => handleInputChange('middleName', e.target.value)}
-                    disabled={!isEditing}
-                    placeholder="Не обязательно"
-                  />
-                </div>
+            <ProfileSecurityCard
+              isChangingPassword={isChangingPassword}
+              passwordData={passwordData}
+              passwordErrors={passwordErrors}
+              isSaving={isSaving}
+              lastLoginDate={currentUser.lastLogin}
+              formatDate={formatDate}
+              onChangePassword={() => setIsChangingPassword(true)}
+              onPasswordSave={handlePasswordSave}
+              onCancelPassword={handleCancelPassword}
+              onPasswordChange={handlePasswordChange}
+            />
 
-                <div className="space-y-2">
-                  <Label>Тип пользователя</Label>
-                  <Input
-                    value={USER_TYPE_LABELS[currentUser.userType] || currentUser.userType}
-                    disabled
-                  />
-                </div>
-
-                {isEditing && (
-                  <div className="flex gap-2 pt-2">
-                    <Button onClick={handleSave} disabled={isSaving}>
-                      {isSaving ? (
-                        <>
-                          <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                          Сохранение...
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="Check" className="mr-2 h-4 w-4" />
-                          Сохранить
-                        </>
-                      )}
-                    </Button>
-                    <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-                      Отмена
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon name="Phone" className="h-5 w-5" />
-                  Контактная информация
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Телефон</Label>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    disabled={!isEditing}
-                    className={errors.phone ? 'border-destructive' : ''}
-                  />
-                  {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input value={currentUser.email} disabled />
-                  <p className="text-xs text-muted-foreground">
-                    Email нельзя изменить
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Icon name="Calendar" className="h-5 w-5" />
-                  Информация об аккаунте
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-sm text-muted-foreground">Дата регистрации</span>
-                  <span className="text-sm font-medium">
-                    {formatDate(currentUser.registeredAt)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between py-2 border-b">
-                  <span className="text-sm text-muted-foreground">Статус аккаунта</span>
-                  <Badge variant="default" className="bg-green-500">
-                    <Icon name="CheckCircle" className="mr-1 h-3 w-3" />
-                    Активен
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Icon name="Key" className="h-5 w-5" />
-                      Безопасность
-                    </CardTitle>
-                    <CardDescription>Изменение пароля</CardDescription>
-                  </div>
-                  {!isChangingPassword && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsChangingPassword(true)}
-                    >
-                      <Icon name="Key" className="mr-2 h-4 w-4" />
-                      Изменить пароль
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              {isChangingPassword && (
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Текущий пароль</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.currentPassword}
-                      onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                      className={passwordErrors.currentPassword ? 'border-destructive' : ''}
-                    />
-                    {passwordErrors.currentPassword && (
-                      <p className="text-sm text-destructive">
-                        {passwordErrors.currentPassword}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Новый пароль</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.newPassword}
-                      onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                      className={passwordErrors.newPassword ? 'border-destructive' : ''}
-                    />
-                    {passwordErrors.newPassword && (
-                      <p className="text-sm text-destructive">{passwordErrors.newPassword}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Подтвердите новый пароль</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                      className={passwordErrors.confirmPassword ? 'border-destructive' : ''}
-                    />
-                    {passwordErrors.confirmPassword && (
-                      <p className="text-sm text-destructive">
-                        {passwordErrors.confirmPassword}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button onClick={handlePasswordSave} disabled={isSaving}>
-                      {isSaving ? (
-                        <>
-                          <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                          Сохранение...
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="Check" className="mr-2 h-4 w-4" />
-                          Сохранить пароль
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleCancelPassword}
-                      disabled={isSaving}
-                    >
-                      Отмена
-                    </Button>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+            <ProfileStatsCard
+              registrationDate={currentUser.registrationDate}
+              formatDate={formatDate}
+            />
           </div>
         </div>
       </main>
