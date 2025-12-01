@@ -9,20 +9,29 @@ interface DistrictSelectorProps {
 }
 
 export default function DistrictSelector({ className = '', showLabel = true }: DistrictSelectorProps) {
-  const { selectedDistrict, setSelectedDistrict, districts } = useDistrict();
+  const { selectedDistrict, setSelectedDistrict, districts, isDetecting } = useDistrict();
 
   const currentDistrict = districts.find(d => d.id === selectedDistrict);
 
   return (
     <div className={className}>
       {showLabel && <Label htmlFor="district-select" className="mb-2 block">Район</Label>}
-      <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+      <Select value={selectedDistrict} onValueChange={setSelectedDistrict} disabled={isDetecting}>
         <SelectTrigger id="district-select" className="w-full">
           <div className="flex items-center gap-2">
-            <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-            <SelectValue>
-              {currentDistrict?.name || 'Выберите район'}
-            </SelectValue>
+            {isDetecting ? (
+              <>
+                <Icon name="Loader2" className="h-4 w-4 text-muted-foreground animate-spin" />
+                <span className="text-sm text-muted-foreground">Определяем...</span>
+              </>
+            ) : (
+              <>
+                <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                <SelectValue>
+                  {currentDistrict?.name || 'Выберите район'}
+                </SelectValue>
+              </>
+            )}
           </div>
         </SelectTrigger>
         <SelectContent>

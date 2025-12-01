@@ -23,7 +23,6 @@ import Notifications from "./pages/Notifications";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
-import { getLocationFromStorage, type LocationData } from "./utils/geolocation";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { getSession, clearSession } from "./utils/auth";
 
@@ -31,7 +30,6 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userLocation, setUserLocation] = useState<LocationData | null>(getLocationFromStorage());
 
   useEffect(() => {
     const session = getSession();
@@ -49,17 +47,13 @@ const App = () => {
     setIsAuthenticated(false);
   };
 
-  const handleLocationDetected = (location: LocationData) => {
-    setUserLocation(location);
-  };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <DistrictProvider>
           <Toaster />
           <Sonner />
-          <LocationDetectionDialog onLocationDetected={handleLocationDetected} />
+          <LocationDetectionDialog />
           <BrowserRouter>
             <Routes>
             <Route path="/" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

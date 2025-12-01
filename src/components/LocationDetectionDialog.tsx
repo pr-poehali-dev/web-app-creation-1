@@ -9,155 +9,92 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
-import { 
-  detectLocationByIP, 
-  detectLocationByBrowser, 
-  saveLocationToStorage,
-  isFirstVisit,
-  markLocationDetected,
-  type LocationData 
-} from '@/utils/geolocation';
+import { useDistrict } from '@/contexts/DistrictContext';
 
-interface LocationDetectionDialogProps {
-  onLocationDetected: (location: LocationData) => void;
-}
-
-export default function LocationDetectionDialog({ onLocationDetected }: LocationDetectionDialogProps) {
+export default function LocationDetectionDialog() {
   const [open, setOpen] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [ipLocation, setIpLocation] = useState<LocationData | null>(null);
-  const [step, setStep] = useState<'initial' | 'browser-permission'>('initial');
+  const { isDetecting, requestGeolocation, selectedDistrict } = useDistrict();
 
   useEffect(() => {
-    const checkAndDetect = async () => {
-      if (isFirstVisit()) {
-        setIsDetecting(true);
-        const location = await detectLocationByIP();
-        setIpLocation(location);
-        setIsDetecting(false);
-        setOpen(true);
-      }
-    };
-
-    checkAndDetect();
-  }, []);
-
-  const handleUseBrowserLocation = async () => {
-    setStep('browser-permission');
-    setIsDetecting(true);
+    const hasShownDialog = localStorage.getItem('geolocationDialogShown');
     
-    const location = await detectLocationByBrowser();
-    saveLocationToStorage(location);
-    markLocationDetected();
-    onLocationDetected(location);
-    setIsDetecting(false);
-    setOpen(false);
-  };
-
-  const handleUseIPLocation = () => {
-    if (ipLocation) {
-      saveLocationToStorage(ipLocation);
-      markLocationDetected();
-      onLocationDetected(ipLocation);
+    if (!hasShownDialog && selectedDistrict === 'all') {
+      const timer = setTimeout(() => {
+        setOpen(true);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
     }
+  }, [selectedDistrict]);
+
+  const handleAccept = async () => {
+    localStorage.setItem('geolocationDialogShown', 'true');
     setOpen(false);
+    await requestGeolocation();
   };
 
-  const handleSkip = () => {
-    const defaultLocation: LocationData = {
-      city: 'Не определен',
-      district: 'Все районы',
-      source: 'default'
-    };
-    saveLocationToStorage(defaultLocation);
-    markLocationDetected();
-    onLocationDetected(defaultLocation);
+  const handleDecline = () => {
+    localStorage.setItem('geolocationDialogShown', 'true');
     setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md">
-        {step === 'initial' ? (
-          <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Icon name="MapPin" className="h-5 w-5 text-primary" />
-                Определение местоположения
-              </DialogTitle>
-              <DialogDescription>
-                Мы определили ваше примерное местоположение по IP-адресу
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-4">
-              {isDetecting ? (
-                <div className="flex items-center justify-center py-8">
-                  <Icon name="Loader2" className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : ipLocation ? (
-                <div className="rounded-lg border bg-muted/50 p-4">
-                  <div className="flex items-start gap-3">
-                    <Icon name="MapPin" className="h-5 w-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="font-medium">{ipLocation.city}</p>
-                      <p className="text-sm text-muted-foreground">{ipLocation.district}</p>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  Для более точного определения местоположения разрешите доступ к геолокации браузера
-                </p>
+      <DialogContent>
+        <DialogHeader>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Icon name="MapPin" className="h-6 w-6 text-primary" />
+            </div>
+            <DialogTitle className="text-xl">Определить ваш район?</DialogTitle>
+          </div>
+          <DialogDescription className="text-base space-y-3 pt-2">
+            <p>
+              Мы можем автоматически определить ваше местоположение, чтобы показывать
+              предложения и услуги, доступные в вашем районе.
+            </p>
+            <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
+              <div className="flex items-start gap-2">
+                <Icon name="Shield" className="h-4 w-4 text-primary mt-0.5" />
+                <span>Ваши координаты не передаются третьим лицам</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Icon name="MapPin" className="h-4 w-4 text-primary mt-0.5" />
+                <span>Используется только для определения района</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Icon name="Settings" className="h-4 w-4 text-primary mt-0.5" />
+                <span>Вы можете изменить район в любое время</span>
               </div>
             </div>
-
-            <DialogFooter className="flex-col sm:flex-col gap-2">
-              <Button
-                onClick={handleUseBrowserLocation}
-                disabled={isDetecting}
-                className="w-full"
-              >
-                <Icon name="Navigation" className="h-4 w-4 mr-2" />
-                Использовать точную геолокацию
-              </Button>
-              <Button
-                onClick={handleUseIPLocation}
-                variant="outline"
-                disabled={isDetecting}
-                className="w-full"
-              >
-                Оставить определение по IP
-              </Button>
-              <Button
-                onClick={handleSkip}
-                variant="ghost"
-                disabled={isDetecting}
-                className="w-full"
-              >
-                Пропустить
-              </Button>
-            </DialogFooter>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Icon name="Navigation" className="h-5 w-5 text-primary" />
-                Запрос геолокации
-              </DialogTitle>
-              <DialogDescription>
-                Браузер запросит разрешение на доступ к вашему местоположению. Пожалуйста, разрешите доступ для точного определения.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="flex items-center justify-center py-8">
-              <Icon name="Loader2" className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          </>
-        )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button
+            variant="outline"
+            onClick={handleDecline}
+            className="w-full sm:w-auto"
+          >
+            Нет, спасибо
+          </Button>
+          <Button
+            onClick={handleAccept}
+            disabled={isDetecting}
+            className="w-full sm:w-auto"
+          >
+            {isDetecting ? (
+              <>
+                <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                Определяем...
+              </>
+            ) : (
+              <>
+                <Icon name="MapPin" className="mr-2 h-4 w-4" />
+                Разрешить
+              </>
+            )}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
