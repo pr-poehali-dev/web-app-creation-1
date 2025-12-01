@@ -56,4 +56,14 @@ export const CATEGORIES: Category[] = [
       { id: 'taxi-intercity', name: 'Такси межгород', categoryId: 'services' },
     ],
   },
+  {
+    id: 'food',
+    name: 'Продукты питания',
+    subcategories: [
+      { id: 'meat', name: 'Мясная продукция', categoryId: 'food' },
+      { id: 'dairy', name: 'Молочная продукция', categoryId: 'food' },
+      { id: 'fruits-vegetables', name: 'Фрукты-Овощи', categoryId: 'food' },
+      { id: 'grocery', name: 'Бакалея', categoryId: 'food' },
+    ],
+  },
 ];
