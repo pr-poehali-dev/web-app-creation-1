@@ -1,7 +1,13 @@
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
+import { cn } from '@/lib/utils';
 import type { District } from '@/contexts/DistrictContext';
 
 interface RequestDeliverySectionProps {
@@ -21,6 +27,18 @@ export default function RequestDeliverySection({
   onInputChange,
   onDistrictToggle,
 }: RequestDeliverySectionProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const filteredDistricts = useMemo(() => {
+    if (!search) return districts;
+    return districts.filter(d => 
+      d.name.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [districts, search]);
+
+  const selectedDistrictName = districts.find(d => d.id === formData.district)?.name || 'Выберите район';
+
   return (
     <Card>
       <CardHeader>
@@ -32,18 +50,53 @@ export default function RequestDeliverySection({
       <CardContent className="space-y-4">
         <div>
           <Label htmlFor="district">Район доставки *</Label>
-          <select
-            id="district"
-            value={formData.district}
-            onChange={(e) => onInputChange('district', e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            required
-          >
-            <option value="">Выберите район</option>
-            {districts.map(district => (
-              <option key={district.id} value={district.id}>{district.name}</option>
-            ))}
-          </select>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between"
+              >
+                {selectedDistrictName}
+                <Icon name="ChevronsUpDown" className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Поиск района..." 
+                  value={search}
+                  onValueChange={setSearch}
+                />
+                <CommandList>
+                  <CommandEmpty>Район не найден</CommandEmpty>
+                  <CommandGroup>
+                    {filteredDistricts.map((district) => (
+                      <CommandItem
+                        key={district.id}
+                        value={district.id}
+                        onSelect={() => {
+                          onInputChange('district', district.id);
+                          setOpen(false);
+                          setSearch('');
+                        }}
+                      >
+                        <Icon
+                          name="Check"
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.district === district.id ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {district.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div>
@@ -52,7 +105,7 @@ export default function RequestDeliverySection({
             id="deliveryAddress"
             value={formData.deliveryAddress}
             onChange={(e) => onInputChange('deliveryAddress', e.target.value)}
-            placeholder="Улица, дом, офис, подъезд"
+            placeholder="Населенный пункт, улица, дом, офис, подъезд"
             required
           />
         </div>
