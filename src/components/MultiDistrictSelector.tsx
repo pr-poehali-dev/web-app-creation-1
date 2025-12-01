@@ -19,9 +19,10 @@ import { useDistrict } from '@/contexts/DistrictContext';
 
 interface MultiDistrictSelectorProps {
   className?: string;
+  showBadges?: boolean;
 }
 
-export default function MultiDistrictSelector({ className = '' }: MultiDistrictSelectorProps) {
+export default function MultiDistrictSelector({ className = '', showBadges = true }: MultiDistrictSelectorProps) {
   const { selectedDistricts, toggleDistrict, districts, setSelectedDistricts, isDetecting, requestGeolocation } = useDistrict();
   const [open, setOpen] = useState(false);
 
@@ -186,7 +187,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
         </PopoverContent>
       </Popover>
 
-      {selectedCount > 0 && (
+      {showBadges && selectedCount > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {selectedDistricts.slice(0, 3).map((districtId) => {
             const district = districts.find(d => d.id === districtId);

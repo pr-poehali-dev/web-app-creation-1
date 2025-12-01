@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Icon from '@/components/ui/icon';
 import MultiDistrictSelector from '@/components/MultiDistrictSelector';
+import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 
 interface HeaderProps {
@@ -19,6 +21,7 @@ interface HeaderProps {
 export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const navigate = useNavigate();
   const currentUser = getSession();
+  const { selectedDistricts, districts, toggleDistrict } = useDistrict();
 
   const handleLogout = () => {
     onLogout();
@@ -75,7 +78,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
         <div className="flex items-center space-x-4">
           <div className="hidden md:block w-64">
-            <MultiDistrictSelector />
+            <MultiDistrictSelector showBadges={false} />
           </div>
           
           {isAuthenticated ? (
@@ -135,6 +138,30 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           )}
         </div>
       </div>
+      
+      {selectedDistricts.length > 0 && (
+        <div className="border-b bg-muted/30">
+          <div className="container mx-auto px-4 py-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">Выбранные районы:</span>
+              {selectedDistricts.map((districtId) => {
+                const district = districts.find(d => d.id === districtId);
+                return (
+                  <Badge
+                    key={districtId}
+                    variant="secondary"
+                    className="cursor-pointer hover:bg-secondary/80"
+                    onClick={() => toggleDistrict(districtId)}
+                  >
+                    {district?.name}
+                    <Icon name="X" className="ml-1 h-3 w-3" />
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
