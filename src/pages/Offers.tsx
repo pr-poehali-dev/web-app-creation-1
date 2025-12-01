@@ -236,6 +236,24 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
                       {filters.subcategory}
                     </span>
                   )}
+                  {selectedDistricts.length > 0 && (
+                    <>
+                      {selectedDistricts.slice(0, 3).map((districtId) => {
+                        const district = districts.find(d => d.id === districtId);
+                        return (
+                          <span key={districtId} className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                            <Icon name="MapPin" className="h-3 w-3" />
+                            {district?.name}
+                          </span>
+                        );
+                      })}
+                      {selectedDistricts.length > 3 && (
+                        <span className="inline-flex items-center gap-1 bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-medium">
+                          +{selectedDistricts.length - 3} еще
+                        </span>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>

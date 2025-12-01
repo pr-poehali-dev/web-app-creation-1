@@ -20,7 +20,7 @@ interface HomeProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Home({ isAuthenticated, onLogout }: HomeProps) {
-  const { selectedDistricts } = useDistrict();
+  const { selectedDistricts, districts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -59,7 +59,10 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
     }
 
     if (selectedDistricts.length > 0) {
-      result = result.filter((offer) => selectedDistricts.includes(offer.district));
+      result = result.filter((offer) => 
+        selectedDistricts.includes(offer.district) || 
+        offer.availableDistricts?.some(d => selectedDistricts.includes(d))
+      );
     }
 
     const premiumOffers = result.filter((offer) => offer.isPremium);
@@ -220,10 +223,22 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
                     </span>
                   )}
                   {selectedDistricts.length > 0 && (
-                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                      <Icon name="MapPin" className="h-3 w-3" />
-                      Районов: {selectedDistricts.length}
-                    </span>
+                    <>
+                      {selectedDistricts.slice(0, 3).map((districtId) => {
+                        const district = districts.find(d => d.id === districtId);
+                        return (
+                          <span key={districtId} className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                            <Icon name="MapPin" className="h-3 w-3" />
+                            {district?.name}
+                          </span>
+                        );
+                      })}
+                      {selectedDistricts.length > 3 && (
+                        <span className="inline-flex items-center gap-1 bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-medium">
+                          +{selectedDistricts.length - 3} еще
+                        </span>
+                      )}
+                    </>
                   )}
                 </div>
               )}

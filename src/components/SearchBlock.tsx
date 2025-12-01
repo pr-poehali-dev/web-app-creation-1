@@ -19,6 +19,7 @@ interface SearchBlockProps {
 }
 
 export default function SearchBlock({ filters, onFiltersChange, onSearch, allOffers }: SearchBlockProps) {
+  const { setSelectedDistricts } = useDistrict();
   const [selectedCategory, setSelectedCategory] = useState(filters.category);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -128,6 +129,7 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
 
   const handleReset = () => {
     setSelectedCategory('');
+    setSelectedDistricts([]);
     onFiltersChange({
       query: '',
       contentType: 'offers',

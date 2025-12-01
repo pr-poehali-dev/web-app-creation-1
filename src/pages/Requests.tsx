@@ -18,7 +18,7 @@ interface RequestsProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
-  const { selectedDistricts } = useDistrict();
+  const { selectedDistricts, districts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -180,7 +180,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
                 </div>
               </div>
 
-              {filters.category && (
+              {(filters.category || selectedDistricts.length > 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {filters.category && (
                     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
@@ -192,6 +192,24 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
                     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
                       {filters.subcategory}
                     </span>
+                  )}
+                  {selectedDistricts.length > 0 && (
+                    <>
+                      {selectedDistricts.slice(0, 3).map((districtId) => {
+                        const district = districts.find(d => d.id === districtId);
+                        return (
+                          <span key={districtId} className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
+                            <Icon name="MapPin" className="h-3 w-3" />
+                            {district?.name}
+                          </span>
+                        );
+                      })}
+                      {selectedDistricts.length > 3 && (
+                        <span className="inline-flex items-center gap-1 bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-medium">
+                          +{selectedDistricts.length - 3} еще
+                        </span>
+                      )}
+                    </>
                   )}
                   {filters.district !== 'all' && (
                     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">

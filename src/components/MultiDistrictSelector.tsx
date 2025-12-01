@@ -24,7 +24,7 @@ interface MultiDistrictSelectorProps {
 }
 
 export default function MultiDistrictSelector({ className = '' }: MultiDistrictSelectorProps) {
-  const { selectedDistricts, toggleDistrict, districts } = useDistrict();
+  const { selectedDistricts, toggleDistrict, districts, setSelectedDistricts } = useDistrict();
   const [open, setOpen] = useState(false);
 
   const availableDistricts = districts.filter(d => d.id !== 'all');
@@ -32,6 +32,17 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
 
   const handleSelectAll = () => {
     toggleDistrict('all');
+  };
+
+  const handleSelectYakutsk = () => {
+    setSelectedDistricts(['yakutsk']);
+  };
+
+  const handleSelectAllUluses = () => {
+    const ulusDistricts = availableDistricts
+      .filter(d => d.id !== 'yakutsk')
+      .map(d => d.id);
+    setSelectedDistricts(ulusDistricts);
   };
 
   const getDisplayText = () => {
@@ -111,8 +122,28 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
               </CommandGroup>
             </CommandList>
           </Command>
-          {selectedCount > 0 && (
-            <div className="border-t p-3">
+          <div className="border-t p-3 space-y-2">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSelectYakutsk}
+                className="flex-1 h-7 text-xs"
+              >
+                <Icon name="Building2" className="mr-1 h-3 w-3" />
+                Только Якутск
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSelectAllUluses}
+                className="flex-1 h-7 text-xs"
+              >
+                <Icon name="MapPin" className="mr-1 h-3 w-3" />
+                Все улусы
+              </Button>
+            </div>
+            {selectedCount > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Выбрано: {selectedCount}
@@ -126,8 +157,8 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                   Сбросить
                 </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </PopoverContent>
       </Popover>
 
