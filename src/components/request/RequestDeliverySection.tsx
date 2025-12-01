@@ -28,25 +28,35 @@ export default function RequestDeliverySection({
   onInputChange,
   onDistrictToggle,
 }: RequestDeliverySectionProps) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
+
+  useEffect(() => {
+    const selectedDistrict = districts.find(d => d.id === formData.district);
+    if (selectedDistrict && !districtInput) {
+      setDistrictInput(selectedDistrict.name);
+    }
+  }, [formData.district, districts, districtInput]);
 
   useEffect(() => {
     if (addressInput && addressInput.length > 2) {
       const settlement = findSettlementByName(addressInput);
       if (settlement) {
-        onInputChange('district', settlement.districtId);
+        const district = districts.find(d => d.id === settlement.districtId);
+        if (district) {
+          setDistrictInput(district.name);
+          onInputChange('district', settlement.districtId);
+        }
       }
     }
-  }, [addressInput, onInputChange]);
+  }, [addressInput, onInputChange, districts]);
 
   const filteredDistricts = useMemo(() => {
-    if (!search) return districts;
+    if (!districtInput || districtInput.length < 1) return [];
     return districts.filter(d => 
-      d.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [districts, search]);
+      d.name.toLowerCase().includes(districtInput.toLowerCase()) && d.id !== 'all'
+    ).slice(0, 5);
+  }, [districts, districtInput]);
 
   const filteredSettlements = useMemo(() => {
     if (!addressInput || addressInput.length < 2) return [];
@@ -54,8 +64,6 @@ export default function RequestDeliverySection({
       s.name.toLowerCase().includes(addressInput.toLowerCase())
     ).slice(0, 5);
   }, [addressInput]);
-
-  const selectedDistrictName = districts.find(d => d.id === formData.district)?.name || 'Выберите район';
 
   return (
     <Card>
@@ -66,55 +74,35 @@ export default function RequestDeliverySection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
+        <div className="relative">
           <Label htmlFor="district">Район доставки *</Label>
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-full justify-between"
-              >
-                {selectedDistrictName}
-                <Icon name="ChevronsUpDown" className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
-              <Command>
-                <CommandInput 
-                  placeholder="Поиск района..." 
-                  value={search}
-                  onValueChange={setSearch}
-                />
-                <CommandList>
-                  <CommandEmpty>Район не найден</CommandEmpty>
-                  <CommandGroup>
-                    {filteredDistricts.map((district) => (
-                      <CommandItem
-                        key={district.id}
-                        value={district.id}
-                        onSelect={() => {
-                          onInputChange('district', district.id);
-                          setOpen(false);
-                          setSearch('');
-                        }}
-                      >
-                        <Icon
-                          name="Check"
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            formData.district === district.id ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {district.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <Input
+            id="district"
+            value={districtInput}
+            onChange={(e) => {
+              setDistrictInput(e.target.value);
+            }}
+            placeholder="Начните вводить название района..."
+            required
+          />
+          {filteredDistricts.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
+              {filteredDistricts.map((district) => (
+                <button
+                  key={district.id}
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+                  onClick={() => {
+                    setDistrictInput(district.name);
+                    onInputChange('district', district.id);
+                  }}
+                >
+                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                  <span>{district.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="relative">
