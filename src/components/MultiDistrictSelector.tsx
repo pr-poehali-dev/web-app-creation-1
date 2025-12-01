@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Popover,
   PopoverContent,
@@ -12,7 +11,6 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
 } from '@/components/ui/command';
 import Icon from '@/components/ui/icon';
@@ -91,18 +89,14 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                   onClick={handleSelectAll}
                 >
                   <div className="flex items-center gap-2 flex-1">
-                    <Checkbox
-                      checked={selectedCount === 0}
-                      onClick={(e: React.MouseEvent) => {
-                        e.stopPropagation();
-                      }}
-                    />
+                    <div className="w-4 h-4 border-2 border-primary rounded flex items-center justify-center">
+                      {selectedCount === 0 && (
+                        <Icon name="Check" className="h-3 w-3 text-primary" />
+                      )}
+                    </div>
                     <Icon name="Globe" className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Все районы</span>
                   </div>
-                  {selectedCount === 0 && (
-                    <Icon name="Check" className="h-4 w-4 text-primary" />
-                  )}
                 </div>
               </CommandGroup>
               <CommandGroup heading="Выберите районы">
@@ -115,18 +109,14 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                       onClick={(e) => handleToggleDistrict(district.id, e)}
                     >
                       <div className="flex items-center gap-2 flex-1">
-                        <Checkbox
-                          checked={isSelected}
-                          onClick={(e: React.MouseEvent) => {
-                            e.stopPropagation();
-                          }}
-                        />
+                        <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                          {isSelected && (
+                            <Icon name="Check" className="h-3 w-3 text-white" />
+                          )}
+                        </div>
                         <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
                         <span>{district.name}</span>
                       </div>
-                      {isSelected && (
-                        <Icon name="Check" className="h-4 w-4 text-primary" />
-                      )}
                     </div>
                   );
                 })}
