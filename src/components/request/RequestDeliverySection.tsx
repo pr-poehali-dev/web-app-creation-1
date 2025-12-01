@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { cn } from '@/lib/utils';
+import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
 import type { District } from '@/contexts/DistrictContext';
 
 interface RequestDeliverySectionProps {
@@ -29,6 +30,16 @@ export default function RequestDeliverySection({
 }: RequestDeliverySectionProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
+
+  useEffect(() => {
+    if (addressInput && addressInput.length > 2) {
+      const settlement = findSettlementByName(addressInput);
+      if (settlement) {
+        onInputChange('district', settlement.districtId);
+      }
+    }
+  }, [addressInput, onInputChange]);
 
   const filteredDistricts = useMemo(() => {
     if (!search) return districts;
@@ -36,6 +47,13 @@ export default function RequestDeliverySection({
       d.name.toLowerCase().includes(search.toLowerCase())
     );
   }, [districts, search]);
+
+  const filteredSettlements = useMemo(() => {
+    if (!addressInput || addressInput.length < 2) return [];
+    return SETTLEMENTS.filter(s => 
+      s.name.toLowerCase().includes(addressInput.toLowerCase())
+    ).slice(0, 5);
+  }, [addressInput]);
 
   const selectedDistrictName = districts.find(d => d.id === formData.district)?.name || 'Выберите район';
 
@@ -99,15 +117,37 @@ export default function RequestDeliverySection({
           </Popover>
         </div>
 
-        <div>
+        <div className="relative">
           <Label htmlFor="deliveryAddress">Точный адрес доставки *</Label>
           <Input
             id="deliveryAddress"
-            value={formData.deliveryAddress}
-            onChange={(e) => onInputChange('deliveryAddress', e.target.value)}
+            value={addressInput}
+            onChange={(e) => {
+              setAddressInput(e.target.value);
+              onInputChange('deliveryAddress', e.target.value);
+            }}
             placeholder="Населенный пункт, улица, дом, офис, подъезд"
             required
           />
+          {filteredSettlements.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
+              {filteredSettlements.map((settlement) => (
+                <button
+                  key={settlement.id}
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground transition-colors flex items-center gap-2"
+                  onClick={() => {
+                    setAddressInput(settlement.name);
+                    onInputChange('deliveryAddress', settlement.name);
+                    onInputChange('district', settlement.districtId);
+                  }}
+                >
+                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                  <span>{settlement.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
