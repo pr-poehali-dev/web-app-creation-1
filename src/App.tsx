@@ -22,6 +22,7 @@ import ActiveOrders from "./pages/ActiveOrders";
 import Notifications from "./pages/Notifications";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
+import RequestDetail from "./pages/RequestDetail";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { getSession, clearSession } from "./utils/auth";
@@ -62,6 +63,7 @@ const App = () => {
             <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/request/:id" element={<RequestDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/auction" element={<Auctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/about" element={<NotFound />} />
             <Route path="/support" element={<NotFound />} />

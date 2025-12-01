@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import OfferCard from '@/components/OfferCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,25 +18,133 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
-import { MOCK_OFFERS } from '@/data/mockOffers';
-import type { Offer } from '@/types/offer';
 
-interface OfferDetailProps {
+interface RequestImage {
+  id: string;
+  url: string;
+  alt: string;
+}
+
+interface RequestVideo {
+  id: string;
+  url: string;
+  thumbnail?: string;
+}
+
+interface Author {
+  id: string;
+  name: string;
+  type: 'individual' | 'self-employed' | 'entrepreneur' | 'legal-entity';
+  phone: string;
+  email: string;
+  rating: number;
+  reviewsCount: number;
+  isVerified: boolean;
+  responsiblePerson?: {
+    id: string;
+    name: string;
+    phone: string;
+    email: string;
+  };
+  statistics: {
+    totalRequests: number;
+    activeRequests: number;
+    completedOrders: number;
+    registrationDate: Date;
+  };
+}
+
+interface Request {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit: number;
+  hasVAT: boolean;
+  vatRate?: number;
+  deliveryAddress: string;
+  district: string;
+  availableDistricts: string[];
+  images: RequestImage[];
+  video?: RequestVideo;
+  isPremium: boolean;
+  author: Author;
+  createdAt: Date;
+  updatedAt: Date;
+  expiryDate?: Date;
+  viewsCount?: number;
+  responsesCount?: number;
+}
+
+interface RequestDetailProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
 
-export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailProps) {
+const MOCK_REQUEST: Request = {
+  id: '1',
+  title: 'Требуется песок строительный 50 тонн',
+  description: 'Необходим качественный строительный песок для фундамента. Требования: модуль крупности 2.0-2.5, влажность не более 5%. Доставка на строительную площадку обязательна.',
+  category: 'Стройматериалы',
+  subcategory: 'Песок и щебень',
+  quantity: 50,
+  unit: 'т',
+  pricePerUnit: 450,
+  hasVAT: true,
+  vatRate: 20,
+  deliveryAddress: 'ул. Строителей, 15, стройплощадка №3',
+  district: 'Ленинский',
+  availableDistricts: ['Ленинский', 'Советский', 'Октябрьский'],
+  images: [
+    {
+      id: '1',
+      url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800',
+      alt: 'Строительная площадка'
+    }
+  ],
+  isPremium: false,
+  author: {
+    id: '1',
+    name: 'ООО "СтройДом"',
+    type: 'legal-entity',
+    phone: '+7 (999) 123-45-67',
+    email: 'info@stroydom.ru',
+    rating: 4.7,
+    reviewsCount: 89,
+    isVerified: true,
+    responsiblePerson: {
+      id: '1',
+      name: 'Петров Петр Петрович',
+      phone: '+7 (999) 123-45-68',
+      email: 'petrov@stroydom.ru'
+    },
+    statistics: {
+      totalRequests: 45,
+      activeRequests: 12,
+      completedOrders: 156,
+      registrationDate: new Date('2023-01-15')
+    }
+  },
+  createdAt: new Date('2024-02-15'),
+  updatedAt: new Date('2024-02-15'),
+  viewsCount: 245,
+  responsesCount: 8
+};
+
+export default function RequestDetail({ isAuthenticated, onLogout }: RequestDetailProps) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   
-  const [offer, setOffer] = useState<Offer | null>(null);
+  const [request, setRequest] = useState<Request | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
@@ -45,11 +152,10 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
-      const foundOffer = MOCK_OFFERS.find(o => o.id === id);
-      setOffer(foundOffer || null);
+      setRequest(MOCK_REQUEST);
       setIsLoading(false);
       
-      if (foundOffer?.video) {
+      if (MOCK_REQUEST.video) {
         setShowVideo(true);
       }
     }, 400);
@@ -58,13 +164,13 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
   }, [id]);
 
   useEffect(() => {
-    if (videoRef.current && showVideo && offer?.video) {
+    if (videoRef.current && showVideo && request?.video) {
       videoRef.current.play().catch(() => {
         console.log('Autoplay prevented');
       });
       setIsVideoPlaying(true);
     }
-  }, [showVideo, offer]);
+  }, [showVideo, request]);
 
   const togglePlayPause = () => {
     if (!videoRef.current) return;
@@ -89,14 +195,14 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
   };
 
   const handlePrevImage = () => {
-    if (!offer) return;
-    const totalItems = (showVideo && offer.video ? 1 : 0) + offer.images.length;
+    if (!request) return;
+    const totalItems = (showVideo && request.video ? 1 : 0) + request.images.length;
     setCurrentImageIndex((prev) => prev === 0 ? totalItems - 1 : prev - 1);
   };
 
   const handleNextImage = () => {
-    if (!offer) return;
-    const totalItems = (showVideo && offer.video ? 1 : 0) + offer.images.length;
+    if (!request) return;
+    const totalItems = (showVideo && request.video ? 1 : 0) + request.images.length;
     setCurrentImageIndex((prev) => prev === totalItems - 1 ? 0 : prev + 1);
   };
 
@@ -105,8 +211,8 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     if (navigator.share) {
       try {
         await navigator.share({
-          title: offer?.title,
-          text: offer?.description,
+          title: request?.title,
+          text: request?.description,
           url: url,
         });
       } catch (error) {
@@ -118,18 +224,18 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     }
   };
 
-  const handleOrderClick = () => {
+  const handleResponseClick = () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    setIsOrderModalOpen(true);
+    setIsResponseModalOpen(true);
   };
 
-  const handleOrderSubmit = (e: React.FormEvent) => {
+  const handleResponseSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsOrderModalOpen(false);
-    alert('Заказ успешно оформлен! Мы свяжемся с вами в ближайшее время.');
+    setIsResponseModalOpen(false);
+    alert('Отклик успешно отправлен! Мы свяжемся с вами в ближайшее время.');
   };
 
   const openGallery = (index: number) => {
@@ -182,7 +288,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     );
   }
 
-  if (!offer) {
+  if (!request) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -191,16 +297,16 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
             <Icon name="AlertCircle" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
             <h2 className="text-2xl font-bold mb-3">Контент не найден</h2>
             <p className="text-muted-foreground mb-8">
-              Предложение с таким ID не существует или было удалено
+              Запрос с таким ID не существует или был удален
             </p>
             <div className="flex gap-4 justify-center">
               <Button onClick={() => navigate('/')} className="gap-2">
                 <Icon name="Home" className="h-4 w-4" />
                 На главную
               </Button>
-              <Button onClick={() => navigate('/predlozheniya')} variant="outline" className="gap-2">
-                <Icon name="Package" className="h-4 w-4" />
-                К предложениям
+              <Button onClick={() => navigate('/zaprosy')} variant="outline" className="gap-2">
+                <Icon name="MessageSquare" className="h-4 w-4" />
+                К запросам
               </Button>
             </div>
           </div>
@@ -210,14 +316,9 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     );
   }
 
-  const remainingQuantity = offer.quantity - (offer.orderedQuantity || 0);
-  const totalPrice = offer.pricePerUnit * offer.quantity;
-  const similarOffers = MOCK_OFFERS
-    .filter(o => o.id !== offer.id && o.category === offer.category)
-    .slice(0, 4);
-
-  const totalMediaItems = (showVideo && offer.video ? 1 : 0) + offer.images.length;
-  const isShowingVideo = showVideo && offer.video && currentImageIndex === 0;
+  const totalPrice = request.pricePerUnit * request.quantity;
+  const totalMediaItems = (showVideo && request.video ? 1 : 0) + request.images.length;
+  const isShowingVideo = showVideo && request.video && currentImageIndex === 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -241,8 +342,8 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                   <div className="relative w-full h-full">
                     <video
                       ref={videoRef}
-                      src={offer.video!.url}
-                      poster={offer.video!.thumbnail}
+                      src={request.video!.url}
+                      poster={request.video!.thumbnail}
                       className="w-full h-full object-cover"
                       onPlay={() => setIsVideoPlaying(true)}
                       onPause={() => setIsVideoPlaying(false)}
@@ -289,18 +390,18 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                       </button>
                     </div>
                   </div>
-                ) : offer.images.length > 0 ? (
+                ) : request.images.length > 0 ? (
                   <>
                     <img
-                      src={offer.images[showVideo && offer.video ? currentImageIndex - 1 : currentImageIndex].url}
-                      alt={offer.images[showVideo && offer.video ? currentImageIndex - 1 : currentImageIndex].alt}
+                      src={request.images[showVideo && request.video ? currentImageIndex - 1 : currentImageIndex].url}
+                      alt={request.images[showVideo && request.video ? currentImageIndex - 1 : currentImageIndex].alt}
                       className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => openGallery(showVideo && offer.video ? currentImageIndex - 1 : currentImageIndex)}
+                      onClick={() => openGallery(showVideo && request.video ? currentImageIndex - 1 : currentImageIndex)}
                     />
                   </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Icon name="Package" className="h-24 w-24 text-muted-foreground" />
+                    <Icon name="MessageSquare" className="h-24 w-24 text-muted-foreground" />
                   </div>
                 )}
 
@@ -334,7 +435,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                   </>
                 )}
 
-                {offer.isPremium && (
+                {request.isPremium && (
                   <Badge className="absolute top-4 right-4 gap-1 bg-primary">
                     <Icon name="Star" className="h-3 w-3" />
                     Премиум
@@ -343,9 +444,9 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
               </div>
             </Card>
 
-            {(offer.images.length > 0 || (showVideo && offer.video)) && (
+            {(request.images.length > 0 || (showVideo && request.video)) && (
               <div className="grid grid-cols-5 gap-2 mb-6">
-                {showVideo && offer.video && (
+                {showVideo && request.video && (
                   <button
                     onClick={() => setCurrentImageIndex(0)}
                     className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
@@ -355,7 +456,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                     }`}
                   >
                     <img
-                      src={offer.video.thumbnail || '/placeholder-video.jpg'}
+                      src={request.video.thumbnail || '/placeholder-video.jpg'}
                       alt="Video thumbnail"
                       className="w-full h-full object-cover"
                     />
@@ -364,12 +465,12 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                     </div>
                   </button>
                 )}
-                {offer.images.slice(0, showVideo && offer.video ? 9 : 10).map((image, index) => (
+                {request.images.slice(0, showVideo && request.video ? 9 : 10).map((image, index) => (
                   <button
                     key={image.id}
-                    onClick={() => setCurrentImageIndex((showVideo && offer.video ? 1 : 0) + index)}
+                    onClick={() => setCurrentImageIndex((showVideo && request.video ? 1 : 0) + index)}
                     className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                      (showVideo && offer.video ? index + 1 : index) === currentImageIndex
+                      (showVideo && request.video ? index + 1 : index) === currentImageIndex
                         ? 'border-primary scale-95'
                         : 'border-transparent hover:border-muted-foreground/30'
                     }`}
@@ -387,10 +488,10 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
             <Card className="mb-6">
               <CardContent className="pt-6 space-y-6">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">{offer.title}</h1>
+                  <h1 className="text-3xl font-bold mb-2">{request.title}</h1>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">{offer.category}</Badge>
-                    <Badge variant="outline">{offer.subcategory}</Badge>
+                    <Badge variant="secondary">{request.category}</Badge>
+                    <Badge variant="outline">{request.subcategory}</Badge>
                   </div>
                 </div>
 
@@ -399,27 +500,27 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Количество</p>
-                      <p className="font-semibold">{offer.quantity} {offer.unit}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Требуемое количество</p>
+                      <p className="font-semibold">{request.quantity} {request.unit}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Цена за единицу</p>
-                      <p className="font-semibold">{offer.pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+                      <p className="font-semibold">{request.pricePerUnit.toLocaleString('ru-RU')} ₽</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Осталось</p>
-                      <p className="font-semibold">{remainingQuantity} {offer.unit}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Откликов</p>
+                      <p className="font-semibold">{request.responsesCount || 0}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">НДС</p>
                       <p className="font-semibold">
-                        {offer.hasVAT ? `${offer.vatRate}%` : 'Без НДС'}
+                        {request.hasVAT ? `${request.vatRate}%` : 'Без НДС'}
                       </p>
                     </div>
                   </div>
 
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Общая стоимость</p>
+                    <p className="text-sm text-muted-foreground mb-1">Общий бюджет</p>
                     <p className="text-2xl font-bold text-primary">
                       {totalPrice.toLocaleString('ru-RU')} ₽
                     </p>
@@ -429,30 +530,27 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                 <Separator />
 
                 <div>
-                  <h3 className="font-semibold mb-2">Описание</h3>
-                  <p className="text-muted-foreground whitespace-pre-line">{offer.description}</p>
+                  <h3 className="font-semibold mb-2">Описание запроса</h3>
+                  <p className="text-muted-foreground whitespace-pre-line">{request.description}</p>
                 </div>
 
                 <Separator />
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Местоположение</p>
-                    <p className="font-medium">{offer.location}</p>
-                    {offer.fullAddress && (
-                      <p className="text-sm text-muted-foreground">{offer.fullAddress}</p>
-                    )}
+                    <p className="text-sm text-muted-foreground mb-1">Адрес доставки</p>
+                    <p className="font-medium">{request.deliveryAddress}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Район</p>
-                    <p className="font-medium">{offer.district}</p>
+                    <p className="font-medium">{request.district}</p>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-sm text-muted-foreground mb-2">Доступно в районах</p>
+                  <p className="text-sm text-muted-foreground mb-2">Принимаются отклики из районов</p>
                   <div className="flex flex-wrap gap-2">
-                    {offer.availableDistricts.map((district) => (
+                    {request.availableDistricts.map((district) => (
                       <Badge key={district} variant="outline">{district}</Badge>
                     ))}
                   </div>
@@ -460,36 +558,18 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
 
                 <Separator />
 
-                <div>
-                  <p className="text-sm text-muted-foreground mb-2">Способы получения</p>
-                  <div className="flex gap-3">
-                    {offer.availableDeliveryTypes.includes('pickup') && (
-                      <Badge className="gap-1">
-                        <Icon name="Store" className="h-3 w-3" />
-                        Самовывоз
-                      </Badge>
-                    )}
-                    {offer.availableDeliveryTypes.includes('delivery') && (
-                      <Badge className="gap-1">
-                        <Icon name="Truck" className="h-3 w-3" />
-                        Доставка
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
                   <div>
                     <p>Дата создания</p>
                     <p className="font-medium text-foreground">
-                      {offer.createdAt.toLocaleDateString('ru-RU')}
+                      {request.createdAt.toLocaleDateString('ru-RU')}
                     </p>
                   </div>
-                  {offer.expiryDate && (
+                  {request.expiryDate && (
                     <div>
-                      <p>Срок годности</p>
+                      <p>Срок актуальности</p>
                       <p className="font-medium text-foreground">
-                        {offer.expiryDate.toLocaleDateString('ru-RU')}
+                        {request.expiryDate.toLocaleDateString('ru-RU')}
                       </p>
                     </div>
                   )}
@@ -502,12 +582,12 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <Button
-                  onClick={handleOrderClick}
+                  onClick={handleResponseClick}
                   size="lg"
                   className="w-full gap-2"
                 >
-                  <Icon name="ShoppingCart" className="h-5 w-5" />
-                  Заказать
+                  <Icon name="Send" className="h-5 w-5" />
+                  Отправить отклик
                 </Button>
                 <Button
                   onClick={handleShare}
@@ -525,14 +605,14 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Icon name="User" className="h-5 w-5" />
-                  Продавец
+                  Автор запроса
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-lg">{offer.seller.name}</h3>
-                    {offer.seller.isVerified && (
+                    <h3 className="font-semibold text-lg">{request.author.name}</h3>
+                    {request.author.isVerified && (
                       <Badge className="gap-1 bg-green-500">
                         <Icon name="BadgeCheck" className="h-3 w-3" />
                         Верифицирован
@@ -546,7 +626,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                           key={i}
                           name="Star"
                           className={`h-4 w-4 ${
-                            i < Math.floor(offer.seller.rating)
+                            i < Math.floor(request.author.rating)
                               ? 'fill-yellow-400 text-yellow-400'
                               : 'text-muted-foreground'
                           }`}
@@ -554,7 +634,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                       ))}
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {offer.seller.rating} ({offer.seller.reviewsCount} отзывов)
+                      {request.author.rating} ({request.author.reviewsCount} отзывов)
                     </span>
                   </div>
                 </div>
@@ -562,32 +642,32 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                 <Separator />
 
                 <div className="space-y-3">
-                  {offer.seller.responsiblePerson && (
+                  {request.author.responsiblePerson && (
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Ответственный</p>
-                      <p className="font-medium">{offer.seller.responsiblePerson.name}</p>
+                      <p className="font-medium">{request.author.responsiblePerson.name}</p>
                     </div>
                   )}
                   
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Телефон</p>
                     <a
-                      href={`tel:${offer.seller.phone}`}
+                      href={`tel:${request.author.phone}`}
                       className="font-medium hover:text-primary transition-colors flex items-center gap-1"
                     >
                       <Icon name="Phone" className="h-4 w-4" />
-                      {offer.seller.phone}
+                      {request.author.phone}
                     </a>
                   </div>
                   
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">Email</p>
                     <a
-                      href={`mailto:${offer.seller.email}`}
+                      href={`mailto:${request.author.email}`}
                       className="font-medium hover:text-primary transition-colors flex items-center gap-1"
                     >
                       <Icon name="Mail" className="h-4 w-4" />
-                      {offer.seller.email}
+                      {request.author.email}
                     </a>
                   </div>
                 </div>
@@ -598,21 +678,21 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                   <p className="text-sm font-semibold">Статистика</p>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Всего предложений</p>
-                      <p className="font-semibold">{offer.seller.statistics.totalOffers}</p>
+                      <p className="text-muted-foreground">Всего запросов</p>
+                      <p className="font-semibold">{request.author.statistics.totalRequests}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Активных</p>
-                      <p className="font-semibold">{offer.seller.statistics.activeOffers}</p>
+                      <p className="font-semibold">{request.author.statistics.activeRequests}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Выполнено заказов</p>
-                      <p className="font-semibold">{offer.seller.statistics.completedOrders}</p>
+                      <p className="font-semibold">{request.author.statistics.completedOrders}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">На платформе с</p>
                       <p className="font-semibold">
-                        {offer.seller.statistics.registrationDate.toLocaleDateString('ru-RU', {
+                        {request.author.statistics.registrationDate.toLocaleDateString('ru-RU', {
                           month: 'short',
                           year: 'numeric'
                         })}
@@ -624,7 +704,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => navigate(`/seller/${offer.seller.id}`)}
+                  onClick={() => navigate(`/seller/${request.author.id}`)}
                 >
                   Перейти к профилю
                 </Button>
@@ -632,87 +712,68 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
             </Card>
           </div>
         </div>
-
-        {similarOffers.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Похожие предложения</h2>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {similarOffers.map((similarOffer) => (
-                <OfferCard
-                  key={similarOffer.id}
-                  offer={similarOffer}
-                  onClick={() => navigate(`/offer/${similarOffer.id}`)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
       </main>
 
-      <Dialog open={isOrderModalOpen} onOpenChange={setIsOrderModalOpen}>
+      <Dialog open={isResponseModalOpen} onOpenChange={setIsResponseModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Оформление заказа</DialogTitle>
+            <DialogTitle>Отправить отклик</DialogTitle>
             <DialogDescription>
-              Заполните форму, и мы свяжемся с вами для подтверждения заказа
+              Заполните форму отклика, и автор запроса свяжется с вами
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleOrderSubmit} className="space-y-4">
+          <form onSubmit={handleResponseSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="order-quantity">Количество ({offer.unit})</Label>
+              <Label htmlFor="response-quantity">Количество ({request.unit})</Label>
               <Input
-                id="order-quantity"
+                id="response-quantity"
                 type="number"
                 min="1"
-                max={remainingQuantity}
-                defaultValue="1"
+                max={request.quantity}
+                defaultValue={request.quantity}
                 required
               />
             </div>
             
             <div>
-              <Label htmlFor="order-delivery">Способ получения</Label>
-              <select
-                id="order-delivery"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required
-              >
-                {offer.availableDeliveryTypes.includes('pickup') && (
-                  <option value="pickup">Самовывоз</option>
-                )}
-                {offer.availableDeliveryTypes.includes('delivery') && (
-                  <option value="delivery">Доставка</option>
-                )}
-              </select>
-            </div>
-
-            <div>
-              <Label htmlFor="order-address">Адрес доставки</Label>
+              <Label htmlFor="response-price">Ваша цена за единицу (₽)</Label>
               <Input
-                id="order-address"
-                type="text"
-                placeholder="Укажите адрес доставки"
+                id="response-price"
+                type="number"
+                min="1"
+                defaultValue={request.pricePerUnit}
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="order-comment">Комментарий</Label>
+              <Label htmlFor="response-delivery">Срок поставки (дней)</Label>
+              <Input
+                id="response-delivery"
+                type="number"
+                min="1"
+                placeholder="Укажите срок поставки"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="response-comment">Комментарий</Label>
               <Textarea
-                id="order-comment"
-                placeholder="Дополнительная информация к заказу"
+                id="response-comment"
+                placeholder="Дополнительная информация о вашем предложении"
                 rows={3}
               />
             </div>
 
             <div className="flex gap-3 pt-4">
               <Button type="submit" className="flex-1">
-                Отправить заказ
+                Отправить отклик
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsOrderModalOpen(false)}
+                onClick={() => setIsResponseModalOpen(false)}
               >
                 Отмена
               </Button>
@@ -724,29 +785,29 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className="max-w-4xl p-0">
           <div className="relative">
-            {offer.images[galleryIndex] && (
+            {request.images[galleryIndex] && (
               <img
-                src={offer.images[galleryIndex].url}
-                alt={offer.images[galleryIndex].alt}
+                src={request.images[galleryIndex].url}
+                alt={request.images[galleryIndex].alt}
                 className="w-full h-auto max-h-[80vh] object-contain"
               />
             )}
-            {offer.images.length > 1 && (
+            {request.images.length > 1 && (
               <>
                 <button
-                  onClick={() => setGalleryIndex((prev) => prev === 0 ? offer.images.length - 1 : prev - 1)}
+                  onClick={() => setGalleryIndex((prev) => prev === 0 ? request.images.length - 1 : prev - 1)}
                   className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/90 hover:bg-background shadow-lg"
                 >
                   <Icon name="ChevronLeft" className="h-6 w-6" />
                 </button>
                 <button
-                  onClick={() => setGalleryIndex((prev) => prev === offer.images.length - 1 ? 0 : prev + 1)}
+                  onClick={() => setGalleryIndex((prev) => prev === request.images.length - 1 ? 0 : prev + 1)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/90 hover:bg-background shadow-lg"
                 >
                   <Icon name="ChevronRight" className="h-6 w-6" />
                 </button>
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-background/90 text-sm font-medium">
-                  {galleryIndex + 1} / {offer.images.length}
+                  {galleryIndex + 1} / {request.images.length}
                 </div>
               </>
             )}
