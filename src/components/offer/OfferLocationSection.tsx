@@ -50,10 +50,16 @@ export default function OfferLocationSection({
 
   const filteredDistricts = useMemo(() => {
     if (!districtInput || districtInput.length < 1) return [];
+    
+    const currentDistrict = districts.find(d => d.id === formData.district);
+    if (currentDistrict && districtInput === currentDistrict.name) {
+      return [];
+    }
+    
     return districts.filter(d => 
       d.name.toLowerCase().includes(districtInput.toLowerCase()) && d.id !== 'all'
     ).slice(0, 5);
-  }, [districts, districtInput]);
+  }, [districts, districtInput, formData.district]);
 
   const filteredSettlements = useMemo(() => {
     if (!addressInput || addressInput.length < 2) return [];
@@ -143,7 +149,7 @@ export default function OfferLocationSection({
         </div>
 
         <div>
-          <Label className="mb-3 block">Доступно для заказа из районов *</Label>
+          <Label className="mb-3 block">Доступно для заказа из районов</Label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {districts.map(district => (
               <div key={district.id} className="flex items-center space-x-2">
@@ -161,11 +167,6 @@ export default function OfferLocationSection({
               </div>
             ))}
           </div>
-          {formData.availableDistricts.length === 0 && (
-            <p className="text-xs text-destructive mt-2">
-              Выберите хотя бы один район
-            </p>
-          )}
         </div>
 
         <div>
