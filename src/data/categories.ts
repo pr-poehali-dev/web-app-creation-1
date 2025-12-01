@@ -44,7 +44,6 @@ export const CATEGORIES: Category[] = [
       { id: 'delivery', name: 'Грузоперевозки', categoryId: 'transport' },
       { id: 'logistics', name: 'Логистика', categoryId: 'transport' },
       { id: 'vehicles', name: 'Транспортные средства', categoryId: 'transport' },
-      { id: 'taxi-intercity', name: 'Такси межгород', categoryId: 'transport' },
     ],
   },
   {
@@ -54,6 +53,7 @@ export const CATEGORIES: Category[] = [
       { id: 'cleaning', name: 'Клининг', categoryId: 'services' },
       { id: 'security', name: 'Охрана', categoryId: 'services' },
       { id: 'consulting', name: 'Консалтинг', categoryId: 'services' },
+      { id: 'taxi-intercity', name: 'Такси межгород', categoryId: 'services' },
     ],
   },
 ];
