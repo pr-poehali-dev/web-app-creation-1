@@ -30,26 +30,15 @@ export default function RequestDeliverySection({
 }: RequestDeliverySectionProps) {
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
+  const [isDistrictInitialized, setIsDistrictInitialized] = useState(false);
 
   useEffect(() => {
     const selectedDistrict = districts.find(d => d.id === formData.district);
-    if (selectedDistrict && !districtInput) {
+    if (selectedDistrict && !isDistrictInitialized) {
       setDistrictInput(selectedDistrict.name);
+      setIsDistrictInitialized(true);
     }
-  }, [formData.district, districts, districtInput]);
-
-  useEffect(() => {
-    if (addressInput && addressInput.length > 2) {
-      const settlement = findSettlementByName(addressInput);
-      if (settlement) {
-        const district = districts.find(d => d.id === settlement.districtId);
-        if (district) {
-          setDistrictInput(district.name);
-          onInputChange('district', settlement.districtId);
-        }
-      }
-    }
-  }, [addressInput, onInputChange, districts]);
+  }, [formData.district, districts, isDistrictInitialized]);
 
   const filteredDistricts = useMemo(() => {
     if (!districtInput || districtInput.length < 1) return [];
@@ -80,7 +69,15 @@ export default function RequestDeliverySection({
             id="district"
             value={districtInput}
             onChange={(e) => {
-              setDistrictInput(e.target.value);
+              const value = e.target.value;
+              setDistrictInput(value);
+              
+              const matchedDistrict = districts.find(d => 
+                d.name.toLowerCase() === value.toLowerCase() && d.id !== 'all'
+              );
+              if (matchedDistrict) {
+                onInputChange('district', matchedDistrict.id);
+              }
             }}
             placeholder="Начните вводить название района..."
             required
