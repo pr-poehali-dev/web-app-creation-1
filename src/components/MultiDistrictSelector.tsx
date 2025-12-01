@@ -21,7 +21,7 @@ interface MultiDistrictSelectorProps {
 }
 
 export default function MultiDistrictSelector({ className = '' }: MultiDistrictSelectorProps) {
-  const { selectedDistricts, toggleDistrict, districts, setSelectedDistricts } = useDistrict();
+  const { selectedDistricts, toggleDistrict, districts, setSelectedDistricts, isDetecting, requestGeolocation } = useDistrict();
   const [open, setOpen] = useState(false);
 
   const availableDistricts = districts.filter(d => d.id !== 'all');
@@ -48,6 +48,10 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
       e.stopPropagation();
     }
     toggleDistrict(districtId);
+  };
+
+  const handleDetectLocation = async () => {
+    await requestGeolocation();
   };
 
   const getDisplayText = () => {
@@ -83,6 +87,27 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
             <CommandInput placeholder="Поиск района..." />
             <CommandList>
               <CommandEmpty>Район не найден</CommandEmpty>
+              <CommandGroup>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDetectLocation}
+                  disabled={isDetecting}
+                  className="w-full justify-start mb-2 h-8"
+                >
+                  {isDetecting ? (
+                    <>
+                      <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                      Определяем...
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="MapPinned" className="mr-2 h-4 w-4" />
+                      Определить мой район
+                    </>
+                  )}
+                </Button>
+              </CommandGroup>
               <CommandGroup>
                 <div
                   className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
