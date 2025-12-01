@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Icon from '@/components/ui/icon';
-import DistrictSelector from '@/components/DistrictSelector';
+import MultiDistrictSelector from '@/components/MultiDistrictSelector';
 import { getSession } from '@/utils/auth';
 
 interface HeaderProps {
@@ -74,8 +74,8 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         </nav>
 
         <div className="flex items-center space-x-4">
-          <div className="hidden md:block w-56">
-            <DistrictSelector showLabel={false} />
+          <div className="hidden md:block w-64">
+            <MultiDistrictSelector />
           </div>
           
           {isAuthenticated ? (

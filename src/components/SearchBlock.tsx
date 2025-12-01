@@ -5,7 +5,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
-import MultiDistrictSelector from '@/components/MultiDistrictSelector';
 import type { SearchFilters, ContentType, Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -231,7 +230,7 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="category" className="mb-2 block">
                 Категория
@@ -272,13 +271,6 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label className="mb-2 block">
-                Районы
-              </Label>
-              <MultiDistrictSelector />
             </div>
           </div>
 
