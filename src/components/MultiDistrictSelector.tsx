@@ -44,7 +44,11 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
     setSelectedDistricts(ulusDistricts);
   };
 
-  const handleToggleDistrict = (districtId: string) => {
+  const handleToggleDistrict = (districtId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     toggleDistrict(districtId);
   };
 
@@ -89,7 +93,9 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                   <div className="flex items-center gap-2 flex-1">
                     <Checkbox
                       checked={selectedCount === 0}
-                      onCheckedChange={handleSelectAll}
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                      }}
                     />
                     <Icon name="Globe" className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Все районы</span>
@@ -106,12 +112,14 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                     <div
                       key={district.id}
                       className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
-                      onClick={() => handleToggleDistrict(district.id)}
+                      onClick={(e) => handleToggleDistrict(district.id, e)}
                     >
                       <div className="flex items-center gap-2 flex-1">
                         <Checkbox
                           checked={isSelected}
-                          onCheckedChange={() => handleToggleDistrict(district.id)}
+                          onClick={(e: React.MouseEvent) => {
+                            e.stopPropagation();
+                          }}
                         />
                         <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
                         <span>{district.name}</span>
