@@ -28,10 +28,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
   const availableDistricts = districts.filter(d => d.id !== 'all');
   const selectedCount = selectedDistricts.length;
 
-  const handleSelectAll = (e?: Event) => {
-    if (e) {
-      e.preventDefault();
-    }
+  const handleSelectAll = () => {
     setSelectedDistricts([]);
   };
 
@@ -46,10 +43,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
     setSelectedDistricts(ulusDistricts);
   };
 
-  const handleToggleDistrict = (districtId: string, e?: Event) => {
-    if (e) {
-      e.preventDefault();
-    }
+  const handleToggleDistrict = (districtId: string) => {
     toggleDistrict(districtId);
   };
 
@@ -115,10 +109,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                 <CommandItem
                   value="all-districts"
                   keywords={['все', 'районы', 'all']}
-                  onSelect={(e) => {
-                    e.preventDefault();
-                    handleSelectAll();
-                  }}
+                  onSelect={() => handleSelectAll()}
                 >
                   <div className="flex items-center gap-2 flex-1">
                     <div className="w-4 h-4 border-2 border-primary rounded flex items-center justify-center">
@@ -138,10 +129,7 @@ export default function MultiDistrictSelector({ className = '' }: MultiDistrictS
                     <CommandItem
                       key={district.id}
                       value={district.name}
-                      onSelect={(e) => {
-                        e.preventDefault();
-                        handleToggleDistrict(district.id);
-                      }}
+                      onSelect={() => handleToggleDistrict(district.id)}
                     >
                       <div className="flex items-center gap-2 flex-1">
                         <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
