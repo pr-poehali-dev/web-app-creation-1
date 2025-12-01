@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import MultiDistrictSelector from '@/components/MultiDistrictSelector';
 import type { SearchFilters, ContentType, Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -18,7 +19,6 @@ interface SearchBlockProps {
 }
 
 export default function SearchBlock({ filters, onFiltersChange, onSearch, allOffers }: SearchBlockProps) {
-  const { districts } = useDistrict();
   const [selectedCategory, setSelectedCategory] = useState(filters.category);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -124,10 +124,6 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
 
   const handleSubcategoryChange = (subcategory: string) => {
     onFiltersChange({ ...filters, subcategory });
-  };
-
-  const handleDistrictChange = (district: string) => {
-    onFiltersChange({ ...filters, district });
   };
 
   const handleReset = () => {
@@ -277,28 +273,10 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
             </div>
 
             <div>
-              <Label htmlFor="district-search" className="mb-2 block">
-                Район
+              <Label className="mb-2 block">
+                Районы
               </Label>
-              <Select value={filters.district} onValueChange={handleDistrictChange}>
-                <SelectTrigger id="district-search">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {districts.map((district) => (
-                    <SelectItem key={district.id} value={district.id}>
-                      <div className="flex items-center gap-2">
-                        {district.id === 'all' ? (
-                          <Icon name="Globe" className="h-4 w-4" />
-                        ) : (
-                          <Icon name="MapPin" className="h-4 w-4" />
-                        )}
-                        <span>{district.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MultiDistrictSelector />
             </div>
           </div>
 

@@ -22,7 +22,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const navigate = useNavigate();
-  const { districts } = useDistrict();
+  const { districts, selectedDistricts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -71,11 +71,11 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       result = result.filter((auction) => auction.subcategory === filters.subcategory);
     }
 
-    if (filters.district !== 'all') {
+    if (selectedDistricts.length > 0) {
       result = result.filter(
         (auction) =>
-          auction.district === filters.district ||
-          auction.availableDistricts.includes(filters.district)
+          selectedDistricts.includes(auction.district) ||
+          auction.availableDistricts.some(d => selectedDistricts.includes(d))
       );
     }
 
@@ -95,7 +95,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     });
 
     return [...premiumAuctions, ...regularAuctions];
-  }, [filters, statusFilter]);
+  }, [filters, statusFilter, selectedDistricts]);
 
   const currentAuctions = filteredAuctions.slice(0, displayedCount);
   const hasMore = displayedCount < filteredAuctions.length;

@@ -9,6 +9,9 @@ export interface District {
 interface DistrictContextType {
   selectedDistrict: string;
   setSelectedDistrict: (district: string) => void;
+  selectedDistricts: string[];
+  setSelectedDistricts: (districts: string[]) => void;
+  toggleDistrict: (districtId: string) => void;
   districts: District[];
   isDetecting: boolean;
   requestGeolocation: () => Promise<void>;
@@ -95,6 +98,10 @@ function findDistrictByLocation(city: string, district: string): string {
 
 export function DistrictProvider({ children }: { children: ReactNode }) {
   const [selectedDistrict, setSelectedDistrictState] = useState<string>('all');
+  const [selectedDistricts, setSelectedDistrictsState] = useState<string[]>(() => {
+    const stored = localStorage.getItem('selectedDistricts');
+    return stored ? JSON.parse(stored) : [];
+  });
   const [isDetecting, setIsDetecting] = useState(false);
 
   useEffect(() => {
@@ -142,8 +149,31 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
     }
   }, [selectedDistrict]);
 
+  useEffect(() => {
+    localStorage.setItem('selectedDistricts', JSON.stringify(selectedDistricts));
+  }, [selectedDistricts]);
+
   const setSelectedDistrict = (district: string) => {
     setSelectedDistrictState(district);
+  };
+
+  const setSelectedDistricts = (districts: string[]) => {
+    setSelectedDistrictsState(districts);
+  };
+
+  const toggleDistrict = (districtId: string) => {
+    if (districtId === 'all') {
+      setSelectedDistrictsState([]);
+      return;
+    }
+
+    setSelectedDistrictsState(prev => {
+      if (prev.includes(districtId)) {
+        return prev.filter(id => id !== districtId);
+      } else {
+        return [...prev, districtId];
+      }
+    });
   };
 
   const requestGeolocation = async () => {
@@ -164,7 +194,16 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <DistrictContext.Provider value={{ selectedDistrict, setSelectedDistrict, districts: DISTRICTS, isDetecting, requestGeolocation }}>
+    <DistrictContext.Provider value={{ 
+      selectedDistrict, 
+      setSelectedDistrict, 
+      selectedDistricts, 
+      setSelectedDistricts, 
+      toggleDistrict,
+      districts: DISTRICTS, 
+      isDetecting, 
+      requestGeolocation 
+    }}>
       {children}
     </DistrictContext.Provider>
   );

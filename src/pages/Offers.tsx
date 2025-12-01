@@ -21,7 +21,7 @@ interface OffersProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
-  const { selectedDistrict, districts } = useDistrict();
+  const { selectedDistricts, districts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -32,12 +32,8 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     contentType: 'offers',
     category: '',
     subcategory: '',
-    district: selectedDistrict,
+    district: 'all',
   });
-
-  useEffect(() => {
-    setFilters(prev => ({ ...prev, district: selectedDistrict }));
-  }, [selectedDistrict]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -63,10 +59,10 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       result = result.filter((offer) => offer.subcategory === filters.subcategory);
     }
 
-    if (filters.district !== 'all') {
+    if (selectedDistricts.length > 0) {
       result = result.filter((offer) => 
-        offer.district === filters.district || 
-        offer.availableDistricts.includes(filters.district)
+        selectedDistricts.includes(offer.district) || 
+        offer.availableDistricts.some(d => selectedDistricts.includes(d))
       );
     }
 
@@ -77,7 +73,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     regularOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return [...premiumOffers, ...regularOffers];
-  }, [filters]);
+  }, [filters, selectedDistricts]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
   const hasMore = displayedCount < filteredOffers.length;

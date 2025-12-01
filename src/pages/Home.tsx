@@ -10,6 +10,7 @@ import type { SearchFilters } from '@/types/offer';
 import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
 import { addToSearchHistory } from '@/utils/searchHistory';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface HomeProps {
   isAuthenticated: boolean;
@@ -19,6 +20,7 @@ interface HomeProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Home({ isAuthenticated, onLogout }: HomeProps) {
+  const { selectedDistricts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -56,8 +58,8 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
       result = result.filter((offer) => offer.subcategory === filters.subcategory);
     }
 
-    if (filters.district !== 'all') {
-      result = result.filter((offer) => offer.district === filters.district);
+    if (selectedDistricts.length > 0) {
+      result = result.filter((offer) => selectedDistricts.includes(offer.district));
     }
 
     const premiumOffers = result.filter((offer) => offer.isPremium);
@@ -67,7 +69,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
     regularOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return [...premiumOffers, ...regularOffers];
-  }, [filters]);
+  }, [filters, selectedDistricts]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
   const hasMore = displayedCount < filteredOffers.length;
@@ -204,7 +206,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
                 </div>
               </div>
 
-              {filters.category && (
+              {(filters.category || selectedDistricts.length > 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {filters.category && (
                     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
@@ -217,10 +219,10 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
                       {filters.subcategory}
                     </span>
                   )}
-                  {filters.district !== 'all' && (
+                  {selectedDistricts.length > 0 && (
                     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
                       <Icon name="MapPin" className="h-3 w-3" />
-                      {filters.district}
+                      Районов: {selectedDistricts.length}
                     </span>
                   )}
                 </div>

@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
 import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -17,6 +18,7 @@ interface RequestsProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
+  const { selectedDistricts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -54,18 +56,18 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
       result = result.filter((offer) => offer.subcategory === filters.subcategory);
     }
 
-    if (filters.district !== 'all') {
+    if (selectedDistricts.length > 0) {
       result = result.filter(
         (offer) =>
-          offer.district === filters.district ||
-          offer.availableDistricts.includes(filters.district)
+          selectedDistricts.includes(offer.district) ||
+          offer.availableDistricts.some(d => selectedDistricts.includes(d))
       );
     }
 
     result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return result;
-  }, [filters]);
+  }, [filters, selectedDistricts]);
 
   const currentRequests = filteredRequests.slice(0, displayedCount);
   const hasMore = displayedCount < filteredRequests.length;
