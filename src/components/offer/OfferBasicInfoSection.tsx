@@ -60,7 +60,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="category">Категория *</Label>
+            <Label htmlFor="category">Выберите категорию *</Label>
             <select
               id="category"
               value={formData.category}
@@ -68,7 +68,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               required
             >
-              <option value="">Выберите категорию</option>
+              <option value="">Категория не выбрана</option>
               {CATEGORIES.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
@@ -76,7 +76,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
           </div>
 
           <div>
-            <Label htmlFor="subcategory">Подкатегория *</Label>
+            <Label htmlFor="subcategory">Выберите подкатегорию *</Label>
             <select
               id="subcategory"
               value={formData.subcategory}
@@ -85,7 +85,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
               required
               disabled={!formData.category}
             >
-              <option value="">Выберите подкатегорию</option>
+              <option value="">Подкатегория не выбрана</option>
               {subcategories.map(sub => (
                 <option key={sub.id} value={sub.id}>{sub.name}</option>
               ))}
