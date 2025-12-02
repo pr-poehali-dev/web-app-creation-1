@@ -14,11 +14,8 @@ import {
   CommandItem,
   CommandList,
 } from '@/components/ui/command';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { getSettlementsByRegion, type Settlement } from '@/data/settlements';
-import { REGIONS } from '@/data/regions';
 import { MOCK_OFFERS } from '@/data/mockOffers';
 
 interface RegionDistrictSelectorProps {
@@ -41,13 +38,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
   } = useDistrict();
   
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'districts' | 'settlements'>('districts');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as 'districts' | 'settlements');
-    setSearchQuery('');
-  };
 
   const availableRegions = regions.filter(r => r.id !== 'all');
   const selectedRegionData = regions.find(r => r.id === selectedRegion);
@@ -59,24 +50,12 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
     }
   };
 
-  const settlements = useMemo(() => {
-    if (selectedRegion === 'all') return [];
-    return getSettlementsByRegion(selectedRegion);
-  }, [selectedRegion]);
-
   const filteredDistricts = useMemo(() => {
     if (!searchQuery) return districts;
     return districts.filter(d => 
       d.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [districts, searchQuery]);
-
-  const filteredSettlements = useMemo(() => {
-    if (!searchQuery) return settlements;
-    return settlements.filter(s => 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [settlements, searchQuery]);
 
   const districtCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -91,21 +70,6 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
     
     return counts;
   }, [districts]);
-
-  const settlementCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    
-    settlements.forEach(settlement => {
-      if (!settlement.districtId) return;
-      const count = MOCK_OFFERS.filter(offer => 
-        offer.district === settlement.districtId || 
-        offer.availableDistricts.includes(settlement.districtId)
-      ).length;
-      counts[settlement.id] = count;
-    });
-    
-    return counts;
-  }, [settlements]);
 
   const handleToggleDistrict = (districtId: string) => {
     toggleDistrict(districtId);
@@ -122,7 +86,6 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
 
   const handleDetectLocation = async () => {
     await requestGeolocation();
-    setActiveTab('districts');
   };
 
   const getDisplayText = () => {
@@ -173,13 +136,59 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0" align="start">
-          <Tabs value={activeTab} onValueChange={handleTabChange}>
-            <div className="border-b px-3 py-2 bg-muted/50">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">
-                  {selectedRegion === 'all' ? 'Все регионы' : selectedRegionData?.name}
-                </span>
-                {selectedRegion !== 'all' && (
+          {selectedRegion === 'all' ? (
+            <div className="p-4">
+              <Command shouldFilter={true}>
+                <CommandInput placeholder="Поиск региона..." />
+                <CommandList>
+                  <CommandEmpty>Регион не найден</CommandEmpty>
+                  <CommandGroup>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDetectLocation}
+                      disabled={isDetecting}
+                      className="w-full justify-start mb-2 h-8"
+                    >
+                      {isDetecting ? (
+                        <>
+                          <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                          Определяем...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="MapPinned" className="mr-2 h-4 w-4" />
+                          Определить мой регион
+                        </>
+                      )}
+                    </Button>
+                  </CommandGroup>
+                  <CommandGroup heading="Выберите регион">
+                    {availableRegions.map((region) => {
+                      return (
+                        <CommandItem
+                          key={region.id}
+                          value={region.name}
+                          onSelect={() => handleSelectRegion(region.id)}
+                        >
+                          <div className="flex items-center gap-2 flex-1">
+                            <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                            <span>{region.name}</span>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </div>
+          ) : (
+            <>
+              <div className="border-b px-3 py-2 bg-muted/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">
+                    {selectedRegionData?.name}
+                  </span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -189,68 +198,8 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                     <Icon name="X" className="h-3 w-3 mr-1" />
                     Сбросить
                   </Button>
-                )}
+                </div>
               </div>
-            </div>
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="districts" disabled={selectedRegion === 'all'}>
-                Районы {selectedDistricts.length > 0 && `(${selectedDistricts.length})`}
-              </TabsTrigger>
-              <TabsTrigger value="settlements" disabled={selectedRegion === 'all'}>
-                Населенные пункты
-              </TabsTrigger>
-            </TabsList>
-
-            {selectedRegion === 'all' && (
-              <div className="p-4">
-                <Command shouldFilter={true}>
-                  <CommandInput placeholder="Поиск региона..." />
-                  <CommandList>
-                    <CommandEmpty>Регион не найден</CommandEmpty>
-                    <CommandGroup>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDetectLocation}
-                        disabled={isDetecting}
-                        className="w-full justify-start mb-2 h-8"
-                      >
-                        {isDetecting ? (
-                          <>
-                            <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                            Определяем...
-                          </>
-                        ) : (
-                          <>
-                            <Icon name="MapPinned" className="mr-2 h-4 w-4" />
-                            Определить мой регион
-                          </>
-                        )}
-                      </Button>
-                    </CommandGroup>
-                    <CommandGroup heading="Выберите регион">
-                      {availableRegions.map((region) => {
-                        const isSelected = selectedRegion === region.id;
-                        return (
-                          <CommandItem
-                            key={region.id}
-                            value={region.name}
-                            onSelect={() => handleSelectRegion(region.id)}
-                          >
-                            <div className="flex items-center gap-2 flex-1">
-                              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-                              <span>{region.name}</span>
-                            </div>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </div>
-            )}
-
-            <TabsContent value="districts" className="m-0">
               <Command shouldFilter={false}>
                 <CommandInput 
                   placeholder="Поиск района..." 
@@ -323,65 +272,8 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </div>
                 )}
               </div>
-            </TabsContent>
-
-            <TabsContent value="settlements" className="m-0">
-              <Command shouldFilter={false}>
-                <CommandInput 
-                  placeholder="Поиск города..." 
-                  value={searchQuery}
-                  onValueChange={setSearchQuery}
-                />
-                <CommandList>
-                  {filteredSettlements.length === 0 ? (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      Город не найден
-                    </div>
-                  ) : (
-                    <CommandGroup heading={`Населённые пункты: ${selectedRegionData?.name || ''}`}>
-                      {filteredSettlements.map((settlement) => {
-                        const count = settlementCounts[settlement.id] || 0;
-                        return (
-                          <CommandItem
-                            key={settlement.id}
-                            value={settlement.name}
-                            onSelect={() => {
-                              if (settlement.districtId) {
-                                setSelectedDistricts([settlement.districtId]);
-                                setActiveTab('districts');
-                              }
-                            }}
-                          >
-                            <div className="flex items-center justify-between gap-2 flex-1">
-                              <div className="flex items-center gap-2">
-                                <Icon 
-                                  name={settlement.type === 'city' ? 'Building2' : settlement.type === 'town' ? 'Home' : 'MapPin'} 
-                                  className="h-4 w-4 text-muted-foreground" 
-                                />
-                                <div className="flex flex-col">
-                                  <span>{settlement.name}</span>
-                                  {settlement.population && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {settlement.population.toLocaleString('ru-RU')} чел.
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              {count > 0 && (
-                                <Badge variant="secondary" className="ml-auto text-xs">
-                                  {count}
-                                </Badge>
-                              )}
-                            </div>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-            </TabsContent>
-          </Tabs>
+            </>
+          )}
         </PopoverContent>
       </Popover>
 
