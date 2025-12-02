@@ -14,6 +14,7 @@ import OfferBasicInfoSection from '@/components/offer/OfferBasicInfoSection';
 import OfferPricingSection from '@/components/offer/OfferPricingSection';
 import OfferLocationSection from '@/components/offer/OfferLocationSection';
 import OfferMediaSection from '@/components/offer/OfferMediaSection';
+import VerificationGuard from '@/components/VerificationGuard';
 
 interface CreateOfferProps {
   isAuthenticated: boolean;
@@ -159,6 +160,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <VerificationGuard>
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"
@@ -287,6 +289,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
             </div>
           </form>
         </div>
+        </VerificationGuard>
       </main>
 
       <Footer />

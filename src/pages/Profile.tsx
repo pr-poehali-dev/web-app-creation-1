@@ -11,6 +11,7 @@ import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileInfoCard from '@/components/profile/ProfileInfoCard';
 import ProfileSecurityCard from '@/components/profile/ProfileSecurityCard';
 import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
+import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
 
 interface ProfileProps {
   isAuthenticated: boolean;
@@ -311,6 +312,8 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
                 />
               </CardHeader>
             </Card>
+
+            <ProfileVerificationCard />
 
             <ProfileInfoCard
               email={currentUser.email}

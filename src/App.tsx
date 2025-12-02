@@ -25,6 +25,7 @@ import OfferDetail from "./pages/OfferDetail";
 import RequestDetail from "./pages/RequestDetail";
 import CreateOffer from "./pages/CreateOffer";
 import CreateRequest from "./pages/CreateRequest";
+import VerificationPage from "./pages/VerificationPage";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { getSession, clearSession } from "./utils/auth";
@@ -70,6 +71,7 @@ const App = () => {
             <Route path="/about" element={<NotFound />} />
             <Route path="/support" element={<NotFound />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/verification" element={<VerificationPage />} />
             <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

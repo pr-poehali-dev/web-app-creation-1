@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "Submit verification for individual",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "body": {
+        "verificationType": "individual",
+        "phone": "+79991234567",
+        "registrationAddress": "Москва, ул. Ленина, д. 1",
+        "actualAddress": "Москва, ул. Ленина, д. 1"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

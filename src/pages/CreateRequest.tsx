@@ -13,6 +13,7 @@ import RequestBasicInfoSection from '@/components/request/RequestBasicInfoSectio
 import RequestPricingSection from '@/components/request/RequestPricingSection';
 import RequestDeliverySection from '@/components/request/RequestDeliverySection';
 import RequestMediaSection from '@/components/request/RequestMediaSection';
+import VerificationGuard from '@/components/VerificationGuard';
 
 interface CreateRequestProps {
   isAuthenticated: boolean;
@@ -148,6 +149,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <VerificationGuard>
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"
@@ -273,6 +275,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
             </div>
           </form>
         </div>
+        </VerificationGuard>
       </main>
 
       <Footer />

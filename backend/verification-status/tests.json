@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Get verification status",
+      "method": "GET",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "verificationStatus": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
