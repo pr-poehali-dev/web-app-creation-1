@@ -44,6 +44,11 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
   const [activeTab, setActiveTab] = useState<'districts' | 'settlements'>('districts');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as 'districts' | 'settlements');
+    setSearchQuery('');
+  };
+
   const availableRegions = regions.filter(r => r.id !== 'all');
   const selectedRegionData = regions.find(r => r.id === selectedRegion);
 
@@ -110,7 +115,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
 
   const handleDetectLocation = async () => {
     await requestGeolocation();
-    setActiveTab('district');
+    setActiveTab('districts');
   };
 
   const getDisplayText = () => {
@@ -161,7 +166,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0" align="start">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'districts' | 'settlements')}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <div className="border-b px-3 py-2 bg-muted/50">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">
@@ -185,7 +190,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                 Районы {selectedDistricts.length > 0 && `(${selectedDistricts.length})`}
               </TabsTrigger>
               <TabsTrigger value="settlements" disabled={selectedRegion === 'all'}>
-                Города
+                Населенные пункты
               </TabsTrigger>
             </TabsList>
 
