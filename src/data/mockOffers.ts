@@ -13,9 +13,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Складской комплекс №1',
-    district: 'yakutsk',
+    district: 'yakutsk-city',
     fullAddress: 'г. Якутск, ул. Складская, д. 15',
-    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky', 'namsky'],
+    availableDistricts: ['yakutsk-city', 'yakutsk-megino-kangalassky', 'yakutsk-khangalassky', 'yakutsk-namsky'],
     images: [
       {
         id: 'img1',
@@ -69,9 +69,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Офисный центр',
-    district: 'yakutsk',
+    district: 'yakutsk-city',
     fullAddress: 'г. Якутск, пр. Ленина, д. 42',
-    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky'],
+    availableDistricts: ['yakutsk-city', 'yakutsk-megino-kangalassky', 'yakutsk-khangalassky'],
     images: [
       {
         id: 'img2',
@@ -119,9 +119,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Магазин техники',
-    district: 'neryungri',
+    district: 'yakutsk-neryungrinsky',
     fullAddress: 'г. Нерюнгри, ул. Советская, д. 78',
-    availableDistricts: ['neryungri', 'aldan', 'yakutsk'],
+    availableDistricts: ['yakutsk-neryungrinsky', 'yakutsk-aldansky', 'yakutsk-city'],
     images: [
       {
         id: 'img3',
@@ -175,9 +175,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 10,
     location: 'Молочный завод',
-    district: 'megino-kangalassky',
+    district: 'yakutsk-megino-kangalassky',
     fullAddress: 'Мегино-Кангаласский улус, с. Майя, ул. Заводская, д. 5',
-    availableDistricts: ['megino-kangalassky', 'yakutsk', 'namsky'],
+    availableDistricts: ['yakutsk-megino-kangalassky', 'yakutsk-city', 'yakutsk-namsky'],
     images: [
       {
         id: 'img4',
@@ -220,9 +220,9 @@ export const MOCK_OFFERS: Offer[] = [
     pricePerUnit: 1500,
     hasVAT: false,
     location: 'Автопарк',
-    district: 'yakutsk',
+    district: 'yakutsk-city',
     fullAddress: 'г. Якутск, ул. Транспортная, д. 12',
-    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky', 'namsky', 'churapcha', 'ust-aldan', 'gorny'],
+    availableDistricts: ['yakutsk-city', 'yakutsk-megino-kangalassky', 'yakutsk-khangalassky', 'yakutsk-namsky', 'yakutsk-churapchinsky', 'yakutsk-ust-aldansky', 'yakutsk-gorny'],
     images: [
       {
         id: 'img5',
@@ -264,9 +264,9 @@ export const MOCK_OFFERS: Offer[] = [
     hasVAT: true,
     vatRate: 20,
     location: 'Клининговая компания',
-    district: 'yakutsk',
-    fullAddress: 'г. Якутск, ул. Чистая, д. 3',
-    availableDistricts: ['yakutsk', 'megino-kangalassky', 'khangalassky'],
+    district: 'yakutsk-city',
+    fullAddress: 'г. Якутск, ул. Чернышевского, д. 25',
+    availableDistricts: ['yakutsk-city', 'yakutsk-megino-kangalassky'],
     images: [
       {
         id: 'img6',
@@ -277,28 +277,28 @@ export const MOCK_OFFERS: Offer[] = [
     isPremium: true,
     seller: {
       id: 'seller6',
-      name: 'ООО "ЧистоДом"',
+      name: 'ООО "КлинСити"',
       type: 'legal-entity',
-      phone: '+7 (987) 222-33-44',
-      email: 'info@chistodom.ru',
+      phone: '+7 (912) 222-33-44',
+      email: 'info@cleancity.ru',
       rating: 4.9,
-      reviewsCount: 145,
+      reviewsCount: 143,
       isVerified: true,
       responsiblePerson: {
         id: 'resp6',
-        name: 'Кузнецова Мария Александровна',
-        phone: '+7 (987) 222-33-45',
-        email: 'kuznetsova@chistodom.ru',
+        name: 'Соколова Марина Владимировна',
+        phone: '+7 (912) 222-33-45',
+        email: 'sokolova@cleancity.ru',
       },
       statistics: {
         totalOffers: 8,
         activeOffers: 6,
-        completedOrders: 423,
-        registrationDate: new Date('2020-11-20'),
+        completedOrders: 421,
+        registrationDate: new Date('2021-07-01'),
       },
     },
-    createdAt: new Date('2024-11-29'),
-    updatedAt: new Date('2024-11-29'),
+    createdAt: new Date('2024-11-27'),
+    updatedAt: new Date('2024-11-27'),
     availableDeliveryTypes: ['pickup'],
     viewsCount: 678,
   },

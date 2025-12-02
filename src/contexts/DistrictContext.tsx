@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { detectLocationByIP, detectLocationByBrowser, isFirstVisit, markLocationDetected, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
-import { REGIONS, FEDERAL_DISTRICTS, findRegionByLocation, type Region } from '@/data/regions';
+import { REGIONS, findRegionByLocation, type Region } from '@/data/regions';
+import { DISTRICTS, getDistrictsByRegion, findDistrictByName, type District as DistrictType } from '@/data/districts';
 
 export interface District {
   id: string;
@@ -8,19 +9,21 @@ export interface District {
 }
 
 interface DistrictContextType {
-  selectedDistrict: string;
-  setSelectedDistrict: (district: string) => void;
+  selectedRegion: string;
+  setSelectedRegion: (region: string) => void;
   selectedDistricts: string[];
   setSelectedDistricts: (districts: string[]) => void;
   toggleDistrict: (districtId: string) => void;
-  districts: District[];
+  regions: District[];
+  districts: DistrictType[];
   isDetecting: boolean;
   requestGeolocation: () => Promise<void>;
+  detectedCity: string | null;
 }
 
 const DistrictContext = createContext<DistrictContextType | undefined>(undefined);
 
-const ALL_DISTRICTS: District[] = [
+const ALL_REGIONS: District[] = [
   { id: 'all', name: 'Все регионы' },
   ...REGIONS.map(region => ({
     id: region.id,
@@ -29,12 +32,14 @@ const ALL_DISTRICTS: District[] = [
 ];
 
 export function DistrictProvider({ children }: { children: ReactNode }) {
-  const [selectedDistrict, setSelectedDistrictState] = useState<string>('all');
+  const [selectedRegion, setSelectedRegionState] = useState<string>('all');
   const [selectedDistricts, setSelectedDistrictsState] = useState<string[]>(() => {
     const stored = localStorage.getItem('selectedDistricts');
     return stored ? JSON.parse(stored) : [];
   });
+  const [detectedCity, setDetectedCity] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [availableDistricts, setAvailableDistricts] = useState<DistrictType[]>([]);
 
   useEffect(() => {
     const initLocation = async () => {
@@ -42,16 +47,24 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       
       if (storedLocation) {
         const regionId = findRegionByLocation(storedLocation.city, storedLocation.district);
-        setSelectedDistrictState(regionId);
-        if (regionId !== 'all') {
-          setSelectedDistrictsState([regionId]);
+        setSelectedRegionState(regionId);
+        setDetectedCity(storedLocation.city);
+        
+        const districts = getDistrictsByRegion(regionId);
+        setAvailableDistricts(districts);
+        
+        const district = findDistrictByName(storedLocation.district, regionId);
+        if (district) {
+          setSelectedDistrictsState([district.id]);
         }
         return;
       }
 
-      const storedDistrict = localStorage.getItem('selectedDistrict');
-      if (storedDistrict) {
-        setSelectedDistrictState(storedDistrict);
+      const storedRegion = localStorage.getItem('selectedRegion');
+      if (storedRegion) {
+        setSelectedRegionState(storedRegion);
+        const districts = getDistrictsByRegion(storedRegion);
+        setAvailableDistricts(districts);
         return;
       }
 
@@ -62,9 +75,17 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
           const regionId = findRegionByLocation(location.city, location.district);
           
           if (regionId !== 'all') {
-            setSelectedDistrictState(regionId);
-            setSelectedDistrictsState([regionId]);
+            setSelectedRegionState(regionId);
+            setDetectedCity(location.city);
             saveLocationToStorage(location);
+            
+            const districts = getDistrictsByRegion(regionId);
+            setAvailableDistricts(districts);
+            
+            const district = findDistrictByName(location.district, regionId);
+            if (district) {
+              setSelectedDistrictsState([district.id]);
+            }
           }
           
           markLocationDetected();
@@ -80,17 +101,24 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (selectedDistrict !== 'all') {
-      localStorage.setItem('selectedDistrict', selectedDistrict);
+    if (selectedRegion !== 'all') {
+      localStorage.setItem('selectedRegion', selectedRegion);
+      const districts = getDistrictsByRegion(selectedRegion);
+      setAvailableDistricts(districts);
+    } else {
+      setAvailableDistricts([]);
     }
-  }, [selectedDistrict]);
+  }, [selectedRegion]);
 
   useEffect(() => {
     localStorage.setItem('selectedDistricts', JSON.stringify(selectedDistricts));
   }, [selectedDistricts]);
 
-  const setSelectedDistrict = (district: string) => {
-    setSelectedDistrictState(district);
+  const setSelectedRegion = (region: string) => {
+    setSelectedRegionState(region);
+    if (region !== selectedRegion) {
+      setSelectedDistrictsState([]);
+    }
   };
 
   const setSelectedDistricts = (districts: string[]) => {
@@ -119,9 +147,17 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       const regionId = findRegionByLocation(location.city, location.district);
       
       if (regionId !== 'all') {
-        setSelectedDistrictState(regionId);
-        setSelectedDistrictsState([regionId]);
+        setSelectedRegionState(regionId);
+        setDetectedCity(location.city);
         saveLocationToStorage(location);
+        
+        const districts = getDistrictsByRegion(regionId);
+        setAvailableDistricts(districts);
+        
+        const district = findDistrictByName(location.district, regionId);
+        if (district) {
+          setSelectedDistrictsState([district.id]);
+        }
       }
     } catch (error) {
       console.error('Browser geolocation failed:', error);
@@ -132,14 +168,16 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
 
   return (
     <DistrictContext.Provider value={{ 
-      selectedDistrict, 
-      setSelectedDistrict, 
+      selectedRegion, 
+      setSelectedRegion, 
       selectedDistricts, 
       setSelectedDistricts, 
       toggleDistrict,
-      districts: ALL_DISTRICTS, 
+      regions: ALL_REGIONS,
+      districts: availableDistricts,
       isDetecting, 
-      requestGeolocation 
+      requestGeolocation,
+      detectedCity
     }}>
       {children}
     </DistrictContext.Provider>

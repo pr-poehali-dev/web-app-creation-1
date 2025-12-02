@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Icon from '@/components/ui/icon';
-import MultiDistrictSelector from '@/components/MultiDistrictSelector';
+import RegionDistrictSelector from '@/components/RegionDistrictSelector';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 
@@ -78,7 +78,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
         <div className="flex items-center space-x-4">
           <div className="hidden md:block w-64">
-            <MultiDistrictSelector showBadges={false} />
+            <RegionDistrictSelector showBadges={false} />
           </div>
           
           {isAuthenticated ? (
