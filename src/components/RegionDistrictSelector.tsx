@@ -64,6 +64,13 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
     return getSettlementsByRegion(selectedRegion);
   }, [selectedRegion]);
 
+  const filteredDistricts = useMemo(() => {
+    if (!searchQuery) return districts;
+    return districts.filter(d => 
+      d.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [districts, searchQuery]);
+
   const filteredSettlements = useMemo(() => {
     if (!searchQuery) return settlements;
     return settlements.filter(s => 
@@ -251,42 +258,42 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   onValueChange={setSearchQuery}
                 />
                 <CommandList>
-                  <CommandEmpty>Район не найден</CommandEmpty>
-                  <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
-                    {districts
-                      .filter(district => 
-                        !searchQuery || 
-                        district.name.toLowerCase().includes(searchQuery.toLowerCase())
-                      )
-                      .map((district) => {
-                      const isSelected = selectedDistricts.includes(district.id);
-                      const count = districtCounts[district.id] || 0;
-                      return (
-                        <CommandItem
-                          key={district.id}
-                          value={district.name}
-                          onSelect={() => handleToggleDistrict(district.id)}
-                        >
-                          <div className="flex items-center justify-between gap-2 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
-                                {isSelected && (
-                                  <Icon name="Check" className="h-3 w-3 text-white" />
-                                )}
+                  {filteredDistricts.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      Район не найден
+                    </div>
+                  ) : (
+                    <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
+                      {filteredDistricts.map((district) => {
+                        const isSelected = selectedDistricts.includes(district.id);
+                        const count = districtCounts[district.id] || 0;
+                        return (
+                          <CommandItem
+                            key={district.id}
+                            value={district.name}
+                            onSelect={() => handleToggleDistrict(district.id)}
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                                  {isSelected && (
+                                    <Icon name="Check" className="h-3 w-3 text-white" />
+                                  )}
+                                </div>
+                                <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                                <span>{district.name}</span>
                               </div>
-                              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-                              <span>{district.name}</span>
+                              {count > 0 && (
+                                <Badge variant="secondary" className="ml-auto text-xs">
+                                  {count}
+                                </Badge>
+                              )}
                             </div>
-                            {count > 0 && (
-                              <Badge variant="secondary" className="ml-auto text-xs">
-                                {count}
-                              </Badge>
-                            )}
-                          </div>
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  )}
                 </CommandList>
               </Command>
               <div className="border-t p-3 space-y-2">
@@ -326,46 +333,51 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   onValueChange={setSearchQuery}
                 />
                 <CommandList>
-                  <CommandEmpty>Город не найден</CommandEmpty>
-                  <CommandGroup heading={`Населённые пункты: ${selectedRegionData?.name || ''}`}>
-                    {filteredSettlements.map((settlement) => {
-                      const count = settlementCounts[settlement.id] || 0;
-                      return (
-                        <CommandItem
-                          key={settlement.id}
-                          value={settlement.name}
-                          onSelect={() => {
-                            if (settlement.districtId) {
-                              setSelectedDistricts([settlement.districtId]);
-                              setActiveTab('districts');
-                            }
-                          }}
-                        >
-                          <div className="flex items-center justify-between gap-2 flex-1">
-                            <div className="flex items-center gap-2">
-                              <Icon 
-                                name={settlement.type === 'city' ? 'Building2' : settlement.type === 'town' ? 'Home' : 'MapPin'} 
-                                className="h-4 w-4 text-muted-foreground" 
-                              />
-                              <div className="flex flex-col">
-                                <span>{settlement.name}</span>
-                                {settlement.population && (
-                                  <span className="text-xs text-muted-foreground">
-                                    {settlement.population.toLocaleString('ru-RU')} чел.
-                                  </span>
-                                )}
+                  {filteredSettlements.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      Город не найден
+                    </div>
+                  ) : (
+                    <CommandGroup heading={`Населённые пункты: ${selectedRegionData?.name || ''}`}>
+                      {filteredSettlements.map((settlement) => {
+                        const count = settlementCounts[settlement.id] || 0;
+                        return (
+                          <CommandItem
+                            key={settlement.id}
+                            value={settlement.name}
+                            onSelect={() => {
+                              if (settlement.districtId) {
+                                setSelectedDistricts([settlement.districtId]);
+                                setActiveTab('districts');
+                              }
+                            }}
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <Icon 
+                                  name={settlement.type === 'city' ? 'Building2' : settlement.type === 'town' ? 'Home' : 'MapPin'} 
+                                  className="h-4 w-4 text-muted-foreground" 
+                                />
+                                <div className="flex flex-col">
+                                  <span>{settlement.name}</span>
+                                  {settlement.population && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {settlement.population.toLocaleString('ru-RU')} чел.
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                              {count > 0 && (
+                                <Badge variant="secondary" className="ml-auto text-xs">
+                                  {count}
+                                </Badge>
+                              )}
                             </div>
-                            {count > 0 && (
-                              <Badge variant="secondary" className="ml-auto text-xs">
-                                {count}
-                              </Badge>
-                            )}
-                          </div>
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  )}
                 </CommandList>
               </Command>
             </TabsContent>
