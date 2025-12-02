@@ -9,7 +9,7 @@ import Icon from '@/components/ui/icon';
 import RegisterFormFields from './Register/RegisterFormFields';
 import { validateEmail, validatePhone, validateINN, validateOGRNIP, validateOGRN, validatePassword } from './Register/validators';
 import type { FormData, FormErrors, RegisterProps, UserType } from './Register/types';
-import { saveUser, isEmailRegistered } from '@/utils/auth';
+import { registerUser } from '@/utils/auth';
 
 export default function Register({ onRegister }: RegisterProps) {
   const [formData, setFormData] = useState<FormData>({
@@ -118,8 +118,6 @@ export default function Register({ onRegister }: RegisterProps) {
       newErrors.email = 'Обязательное поле';
     } else if (!validateEmail(formData.email)) {
       newErrors.email = 'Некорректный email';
-    } else if (isEmailRegistered(formData.email)) {
-      newErrors.email = 'Пользователь с таким email уже зарегистрирован';
     }
 
     if (!formData.password) {
@@ -141,7 +139,7 @@ export default function Register({ onRegister }: RegisterProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -155,21 +153,25 @@ export default function Register({ onRegister }: RegisterProps) {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const newUser = {
+    try {
+      const result = await registerUser({
         email: formData.email,
         password: formData.password,
         firstName: formData.firstName.trim() || 'Пользователь',
         lastName: formData.lastName.trim() || '',
-        middleName: formData.middleName?.trim() || '',
+        middleName: formData.middleName?.trim(),
         userType: formData.userType,
         phone: formData.phone,
-        registeredAt: new Date().toISOString(),
-      };
+        companyName: formData.companyName?.trim(),
+        inn: formData.inn?.trim(),
+        ogrnip: formData.ogrnip?.trim(),
+        ogrnLegal: formData.ogrnLegal?.trim(),
+        position: formData.position?.trim(),
+        directorName: formData.directorName?.trim(),
+        legalAddress: formData.legalAddress?.trim(),
+      });
 
-      const success = saveUser(newUser);
-
-      if (success) {
+      if (result.success) {
         toast({
           title: 'Успешно',
           description: 'Регистрация прошла успешно! Войдите в систему с вашими учетными данными.',
@@ -181,11 +183,18 @@ export default function Register({ onRegister }: RegisterProps) {
         toast({
           variant: 'destructive',
           title: 'Ошибка',
-          description: 'Не удалось завершить регистрацию. Попробуйте снова.',
+          description: result.error || 'Не удалось завершить регистрацию',
         });
         setIsSubmitting(false);
       }
-    }, 1000);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Произошла ошибка при регистрации',
+      });
+      setIsSubmitting(false);
+    }
   };
 
   return (

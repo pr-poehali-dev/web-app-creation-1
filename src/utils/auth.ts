@@ -1,4 +1,32 @@
-interface RegisteredUser {
+interface User {
+  id?: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  userType: string;
+  phone: string;
+  companyName?: string;
+  inn?: string;
+  ogrnip?: string;
+  ogrn?: string;
+  position?: string;
+  directorName?: string;
+  legalAddress?: string;
+  createdAt?: string;
+}
+
+interface AuthResponse {
+  success: boolean;
+  user?: User;
+  error?: string;
+  locked_until?: string;
+}
+
+const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213';
+const SESSION_STORAGE_KEY = 'currentUser';
+
+export const registerUser = async (userData: {
   email: string;
   password: string;
   firstName: string;
@@ -6,84 +34,99 @@ interface RegisteredUser {
   middleName?: string;
   userType: string;
   phone: string;
-  registeredAt: string;
-}
-
-const USERS_STORAGE_KEY = 'registeredUsers';
-const DEMO_USER = {
-  email: 'demo@example.com',
-  password: 'demo123',
-  firstName: 'Демо',
-  lastName: 'Пользователь',
-  userType: 'individual',
-  phone: '+7 (999) 999-99-99',
-  registeredAt: new Date().toISOString(),
-};
-
-export const getRegisteredUsers = (): RegisteredUser[] => {
+  companyName?: string;
+  inn?: string;
+  ogrnip?: string;
+  ogrnLegal?: string;
+  position?: string;
+  directorName?: string;
+  legalAddress?: string;
+}): Promise<AuthResponse> => {
   try {
-    const stored = localStorage.getItem(USERS_STORAGE_KEY);
-    const users = stored ? JSON.parse(stored) : [];
-    
-    const hasDemoUser = users.some((user: RegisteredUser) => user.email === DEMO_USER.email);
-    if (!hasDemoUser) {
-      users.push(DEMO_USER);
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'register',
+        ...userData,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || 'Ошибка регистрации',
+      };
     }
-    
-    return users;
+
+    return {
+      success: true,
+      user: data.user,
+    };
   } catch (error) {
-    console.error('Error reading users from localStorage:', error);
-    return [DEMO_USER];
+    console.error('Registration error:', error);
+    return {
+      success: false,
+      error: 'Ошибка соединения с сервером',
+    };
   }
 };
 
-export const saveUser = (user: RegisteredUser): boolean => {
+export const authenticateUser = async (
+  email: string,
+  password: string
+): Promise<AuthResponse> => {
   try {
-    const users = getRegisteredUsers();
-    
-    const existingUser = users.find((u) => u.email === user.email);
-    if (existingUser) {
-      return false;
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'login',
+        email,
+        password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 423) {
+        return {
+          success: false,
+          error: data.error,
+          locked_until: data.locked_until,
+        };
+      }
+      return {
+        success: false,
+        error: data.error || 'Ошибка входа',
+      };
     }
-    
-    users.push(user);
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-    return true;
+
+    if (data.success && data.user) {
+      saveSession(data.user);
+    }
+
+    return {
+      success: true,
+      user: data.user,
+    };
   } catch (error) {
-    console.error('Error saving user to localStorage:', error);
-    return false;
+    console.error('Authentication error:', error);
+    return {
+      success: false,
+      error: 'Ошибка соединения с сервером',
+    };
   }
 };
 
-export const authenticateUser = (email: string, password: string): RegisteredUser | null => {
-  const users = getRegisteredUsers();
-  console.log('🔐 Попытка входа:', { email, totalUsers: users.length });
-  console.log('📋 Зарегистрированные email:', users.map(u => u.email));
-  
-  const user = users.find((u) => u.email === email && u.password === password);
-  
-  if (!user) {
-    const emailExists = users.find((u) => u.email === email);
-    if (emailExists) {
-      console.log('❌ Email найден, но пароль не совпадает');
-    } else {
-      console.log('❌ Email не найден в системе');
-    }
-  } else {
-    console.log('✅ Авторизация успешна:', user.email);
-  }
-  
-  return user || null;
-};
-
-export const isEmailRegistered = (email: string): boolean => {
-  const users = getRegisteredUsers();
-  return users.some((u) => u.email === email);
-};
-
-const SESSION_STORAGE_KEY = 'currentUser';
-
-export const saveSession = (user: RegisteredUser): void => {
+export const saveSession = (user: User): void => {
   try {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
   } catch (error) {
@@ -91,7 +134,7 @@ export const saveSession = (user: RegisteredUser): void => {
   }
 };
 
-export const getSession = (): RegisteredUser | null => {
+export const getSession = (): User | null => {
   try {
     const stored = localStorage.getItem(SESSION_STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
@@ -104,27 +147,13 @@ export const getSession = (): RegisteredUser | null => {
 export const clearSession = (): void => {
   try {
     localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem('rememberMeCredentials');
+    localStorage.removeItem('lastLoginEmail');
   } catch (error) {
     console.error('Error clearing session:', error);
   }
 };
 
-export const updateUser = (updatedUser: RegisteredUser): boolean => {
-  try {
-    const users = getRegisteredUsers();
-    const userIndex = users.findIndex((u) => u.email === updatedUser.email);
-    
-    if (userIndex === -1) {
-      return false;
-    }
-    
-    users[userIndex] = updatedUser;
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-    saveSession(updatedUser);
-    
-    return true;
-  } catch (error) {
-    console.error('Error updating user:', error);
-    return false;
-  }
+export const isEmailRegistered = async (email: string): Promise<boolean> => {
+  return false;
 };

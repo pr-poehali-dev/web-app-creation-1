@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,56 +7,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import { authenticateUser, saveSession } from '@/utils/auth';
+import { authenticateUser } from '@/utils/auth';
 
 interface LoginProps {
   onLogin: () => void;
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = useState(() => {
-    return localStorage.getItem('lastLoginEmail') || '';
-  });
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(() => {
-    return localStorage.getItem('rememberMe') === 'true';
-  });
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    const credentials = localStorage.getItem('rememberMeCredentials');
-    if (credentials && rememberMe) {
-      try {
-        const { email: savedEmail, password: savedPassword } = JSON.parse(credentials);
-        const user = authenticateUser(savedEmail, savedPassword);
-        
-        if (user) {
-          saveSession(user);
-          onLogin();
-          navigate('/');
-          toast({
-            title: 'Успешно',
-            description: `Добро пожаловать, ${user.firstName} ${user.lastName}!`,
-          });
-        } else {
-          localStorage.removeItem('rememberMeCredentials');
-        }
-      } catch (error) {
-        console.error('Auto-login failed:', error);
-        localStorage.removeItem('rememberMeCredentials');
-      }
-    }
-  }, []);
+
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email) {
@@ -78,31 +51,33 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
 
-    const user = authenticateUser(email, password);
-    
-    if (user) {
-      localStorage.setItem('lastLoginEmail', email);
-      localStorage.setItem('rememberMe', rememberMe.toString());
+    setIsLoading(true);
+
+    try {
+      const result = await authenticateUser(email, password);
       
-      if (rememberMe) {
-        localStorage.setItem('rememberMeCredentials', JSON.stringify({ email, password }));
+      if (result.success && result.user) {
+        onLogin();
+        navigate('/');
+        toast({
+          title: 'Успешно',
+          description: `Добро пожаловать, ${result.user.firstName} ${result.user.lastName}!`,
+        });
       } else {
-        localStorage.removeItem('rememberMeCredentials');
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка',
+          description: result.error || 'Ошибка входа',
+        });
       }
-      
-      saveSession(user);
-      onLogin();
-      navigate('/');
-      toast({
-        title: 'Успешно',
-        description: `Добро пожаловать, ${user.firstName} ${user.lastName}!`,
-      });
-    } else {
+    } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: 'Email или пароль введены некорректно',
+        description: 'Произошла ошибка при входе',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -162,20 +137,7 @@ export default function Login({ onLogin }: LoginProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Запомнить меня
-                </label>
-              </div>
+            <div className="flex items-center justify-end">
               <Button
                 type="button"
                 variant="link"
@@ -186,8 +148,15 @@ export default function Login({ onLogin }: LoginProps) {
               </Button>
             </div>
 
-            <Button type="submit" className="w-full">
-              Войти
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Вход...
+                </>
+              ) : (
+                'Войти'
+              )}
             </Button>
 
             <div className="text-center text-sm">
