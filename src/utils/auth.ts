@@ -130,7 +130,10 @@ export const authenticateUser = async (
     }
 
     if (data.success && data.user) {
+      console.log('Auth - Raw user data from backend:', data.user);
       const convertedUser = convertUserFromBackend(data.user);
+      console.log('Auth - Converted user data:', convertedUser);
+      console.log('Auth - Company name:', convertedUser.companyName);
       saveSession(convertedUser);
       return {
         success: true,
