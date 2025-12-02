@@ -117,7 +117,7 @@ export default function OfferLocationSection({
         </div>
 
         <div className="relative">
-          <Label htmlFor="fullAddress">Полный адрес (необязательно)</Label>
+          <Label htmlFor="fullAddress">Полный адрес *</Label>
           <Input
             id="fullAddress"
             value={addressInput}
@@ -126,6 +126,7 @@ export default function OfferLocationSection({
               onInputChange('fullAddress', e.target.value);
             }}
             placeholder="Населенный пункт, улица, дом, офис"
+            required
           />
           {filteredSettlements.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
