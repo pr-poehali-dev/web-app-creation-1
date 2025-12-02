@@ -92,6 +92,107 @@ export const DISTRICTS: District[] = [
   { id: 'ekaterinburg-oktyabrsky', name: 'Октябрьский район', regionId: 'sverdlovsk', type: 'district' },
   { id: 'ekaterinburg-ordzhonikidzevsky', name: 'Орджоникидзевский район', regionId: 'sverdlovsk', type: 'district' },
   { id: 'ekaterinburg-chkalovsky', name: 'Чкаловский район', regionId: 'sverdlovsk', type: 'district' },
+
+  // Казань (Татарстан)
+  { id: 'kazan-vakhitovsky', name: 'Вахитовский район', regionId: 'tatarstan', type: 'district' },
+  { id: 'kazan-aviastroitelny', name: 'Авиастроительный район', regionId: 'tatarstan', type: 'district' },
+  { id: 'kazan-kirovsky', name: 'Кировский район', regionId: 'tatarstan', type: 'district' },
+  { id: 'kazan-moskovsky', name: 'Московский район', regionId: 'tatarstan', type: 'district' },
+  { id: 'kazan-novo-savinovsky', name: 'Ново-Савиновский район', regionId: 'tatarstan', type: 'district' },
+  { id: 'kazan-privolzhsky', name: 'Приволжский район', regionId: 'tatarstan', type: 'district' },
+  { id: 'kazan-sovetsky', name: 'Советский район', regionId: 'tatarstan', type: 'district' },
+
+  // Нижний Новгород
+  { id: 'nn-nizhegorodsky', name: 'Нижегородский район', regionId: 'nizhny-novgorod', type: 'district' },
+  { id: 'nn-avtozavodsky', name: 'Автозаводский район', regionId: 'nizhny-novgorod', type: 'district' },
+  { id: 'nn-kanавинский', name: 'Канавинский район', regionId: 'nizhny-novgorod', type: 'district' },
+  { id: 'nn-leninsky', name: 'Ленинский район', regionId: 'nizhny-novgorod', type: 'district' },
+  { id: 'nn-moskovsky', name: 'Московский район', regionId: 'nizhny-novgorod', type: 'district' },
+  { id: 'nn-prioksky', name: 'Приокский район', regionId: 'nizhny-novgorod', type: 'district' },
+  { id: 'nn-sovetsky', name: 'Советский район', regionId: 'nizhny-novgorod', type: 'district' },
+  { id: 'nn-sormovsky', name: 'Сормовский район', regionId: 'nizhny-novgorod', type: 'district' },
+
+  // Челябинск
+  { id: 'chelyabinsk-central', name: 'Центральный район', regionId: 'chelyabinsk', type: 'district' },
+  { id: 'chelyabinsk-kalininsky', name: 'Калининский район', regionId: 'chelyabinsk', type: 'district' },
+  { id: 'chelyabinsk-kurсhatovsky', name: 'Курчатовский район', regionId: 'chelyabinsk', type: 'district' },
+  { id: 'chelyabinsk-leninsky', name: 'Ленинский район', regionId: 'chelyabinsk', type: 'district' },
+  { id: 'chelyabinsk-metallurgichesky', name: 'Металлургический район', regionId: 'chelyabinsk', type: 'district' },
+  { id: 'chelyabinsk-sovetsky', name: 'Советский район', regionId: 'chelyabinsk', type: 'district' },
+  { id: 'chelyabinsk-traktorozavodsky', name: 'Тракторозаводский район', regionId: 'chelyabinsk', type: 'district' },
+
+  // Самара
+  { id: 'samara-leninsky', name: 'Ленинский район', regionId: 'samara', type: 'district' },
+  { id: 'samara-zheleznodorozhny', name: 'Железнодорожный район', regionId: 'samara', type: 'district' },
+  { id: 'samara-kirovsky', name: 'Кировский район', regionId: 'samara', type: 'district' },
+  { id: 'samara-krasnoglinsky', name: 'Красноглинский район', regionId: 'samara', type: 'district' },
+  { id: 'samara-kuybyshevsky', name: 'Куйбышевский район', regionId: 'samara', type: 'district' },
+  { id: 'samara-oktyabrsky', name: 'Октябрьский район', regionId: 'samara', type: 'district' },
+  { id: 'samara-promyshlenny', name: 'Промышленный район', regionId: 'samara', type: 'district' },
+  { id: 'samara-sovetsky', name: 'Советский район', regionId: 'samara', type: 'district' },
+  { id: 'samara-samarsky', name: 'Самарский район', regionId: 'samara', type: 'district' },
+
+  // Омск
+  { id: 'omsk-central', name: 'Центральный округ', regionId: 'omsk', type: 'district' },
+  { id: 'omsk-kirovsky', name: 'Кировский округ', regionId: 'omsk', type: 'district' },
+  { id: 'omsk-leninsky', name: 'Ленинский округ', regionId: 'omsk', type: 'district' },
+  { id: 'omsk-oktyabrsky', name: 'Октябрьский округ', regionId: 'omsk', type: 'district' },
+  { id: 'omsk-sovetsky', name: 'Советский округ', regionId: 'omsk', type: 'district' },
+
+  // Ростов-на-Дону
+  { id: 'rostov-leninsky', name: 'Ленинский район', regionId: 'rostov', type: 'district' },
+  { id: 'rostov-kirovsky', name: 'Кировский район', regionId: 'rostov', type: 'district' },
+  { id: 'rostov-oktyabrsky', name: 'Октябрьский район', regionId: 'rostov', type: 'district' },
+  { id: 'rostov-pervomaisky', name: 'Первомайский район', regionId: 'rostov', type: 'district' },
+  { id: 'rostov-proletarsky', name: 'Пролетарский район', regionId: 'rostov', type: 'district' },
+  { id: 'rostov-sovetsky', name: 'Советский район', regionId: 'rostov', type: 'district' },
+  { id: 'rostov-zheleznodorozhny', name: 'Железнодорожный район', regionId: 'rostov', type: 'district' },
+  { id: 'rostov-voroshilovsky', name: 'Ворошиловский район', regionId: 'rostov', type: 'district' },
+
+  // Уфа
+  { id: 'ufa-demsky', name: 'Демский район', regionId: 'bashkortostan', type: 'district' },
+  { id: 'ufa-kalinsky', name: 'Калининский район', regionId: 'bashkortostan', type: 'district' },
+  { id: 'ufa-kirovsky', name: 'Кировский район', regionId: 'bashkortostan', type: 'district' },
+  { id: 'ufa-leninsky', name: 'Ленинский район', regionId: 'bashkortostan', type: 'district' },
+  { id: 'ufa-oktyabrsky', name: 'Октябрьский район', regionId: 'bashkortostan', type: 'district' },
+  { id: 'ufa-ordzhonikidze', name: 'Орджоникидзевский район', regionId: 'bashkortostan', type: 'district' },
+  { id: 'ufa-sovetsky', name: 'Советский район', regionId: 'bashkortostan', type: 'district' },
+
+  // Красноярск
+  { id: 'krasnoyarsk-central', name: 'Центральный район', regionId: 'krasnoyarsk', type: 'district' },
+  { id: 'krasnoyarsk-zheleznodorozhny', name: 'Железнодорожный район', regionId: 'krasnoyarsk', type: 'district' },
+  { id: 'krasnoyarsk-kirovsky', name: 'Кировский район', regionId: 'krasnoyarsk', type: 'district' },
+  { id: 'krasnoyarsk-leninsky', name: 'Ленинский район', regionId: 'krasnoyarsk', type: 'district' },
+  { id: 'krasnoyarsk-oktyabrsky', name: 'Октябрьский район', regionId: 'krasnoyarsk', type: 'district' },
+  { id: 'krasnoyarsk-sovetsky', name: 'Советский район', regionId: 'krasnoyarsk', type: 'district' },
+  { id: 'krasnoyarsk-sverdlovsky', name: 'Свердловский район', regionId: 'krasnoyarsk', type: 'district' },
+
+  // Воронеж
+  { id: 'voronezh-central', name: 'Центральный район', regionId: 'voronezh', type: 'district' },
+  { id: 'voronezh-kominternovsky', name: 'Коминтерновский район', regionId: 'voronezh', type: 'district' },
+  { id: 'voronezh-leninsky', name: 'Ленинский район', regionId: 'voronezh', type: 'district' },
+  { id: 'voronezh-levoberezhny', name: 'Левобережный район', regionId: 'voronezh', type: 'district' },
+  { id: 'voronezh-sovetsky', name: 'Советский район', regionId: 'voronezh', type: 'district' },
+  { id: 'voronezh-zheleznodorozhny', name: 'Железнодорожный район', regionId: 'voronezh', type: 'district' },
+
+  // Пермь
+  { id: 'perm-leninsky', name: 'Ленинский район', regionId: 'perm', type: 'district' },
+  { id: 'perm-dzerzhinsky', name: 'Дзержинский район', regionId: 'perm', type: 'district' },
+  { id: 'perm-industrialny', name: 'Индустриальный район', regionId: 'perm', type: 'district' },
+  { id: 'perm-kirovsky', name: 'Кировский район', regionId: 'perm', type: 'district' },
+  { id: 'perm-motovilikhinsky', name: 'Мотовилихинский район', regionId: 'perm', type: 'district' },
+  { id: 'perm-ordzhonikidzevsky', name: 'Орджоникидзевский район', regionId: 'perm', type: 'district' },
+  { id: 'perm-sverdlovsky', name: 'Свердловский район', regionId: 'perm', type: 'district' },
+
+  // Волгоград
+  { id: 'volgograd-central', name: 'Центральный район', regionId: 'volgograd', type: 'district' },
+  { id: 'volgograd-dzerzhinsk', name: 'Дзержинский район', regionId: 'volgograd', type: 'district' },
+  { id: 'volgograd-kirovsky', name: 'Кировский район', regionId: 'volgograd', type: 'district' },
+  { id: 'volgograd-krasnooktяbrsky', name: 'Краснооктябрьский район', regionId: 'volgograd', type: 'district' },
+  { id: 'volgograd-krasnoarmeisky', name: 'Красноармейский район', regionId: 'volgograd', type: 'district' },
+  { id: 'volgograd-sovetsky', name: 'Советский район', regionId: 'volgograd', type: 'district' },
+  { id: 'volgograd-traktorozavodsky', name: 'Тракторозаводский район', regionId: 'volgograd', type: 'district' },
+  { id: 'volgograd-voroshilovsky', name: 'Ворошиловский район', regionId: 'volgograd', type: 'district' },
 ];
 
 export function getDistrictsByRegion(regionId: string): District[] {
