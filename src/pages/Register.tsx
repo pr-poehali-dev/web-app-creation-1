@@ -136,6 +136,8 @@ export default function Register({ onRegister }: RegisterProps) {
       if (!formData.position.trim()) newErrors.position = 'Обязательное поле';
       if (!formData.directorName.trim()) newErrors.directorName = 'Обязательное поле';
       if (!formData.legalAddress.trim()) newErrors.legalAddress = 'Обязательное поле';
+      if (!formData.lastName.trim()) newErrors.lastName = 'Обязательное поле';
+      if (!formData.firstName.trim()) newErrors.firstName = 'Обязательное поле';
     } else {
       if (!formData.lastName.trim()) newErrors.lastName = 'Обязательное поле';
       if (!formData.firstName.trim()) newErrors.firstName = 'Обязательное поле';

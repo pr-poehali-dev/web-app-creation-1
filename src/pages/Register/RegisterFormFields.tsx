@@ -134,6 +134,49 @@ export default function RegisterFormFields({
             />
             {errors.legalAddress && <p className="text-sm text-destructive">{errors.legalAddress}</p>}
           </div>
+
+          <div className="border-t pt-4 mt-4">
+            <h3 className="text-sm font-medium mb-4">Контактное лицо</h3>
+            
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Фамилия</Label>
+              <Input
+                id="lastName"
+                value={formData.lastName}
+                onChange={(e) => onInputChange('lastName', e.target.value)}
+                placeholder="Фамилия контактного лица"
+                className={errors.lastName ? 'border-destructive' : ''}
+                disabled={isSubmitting}
+              />
+              {errors.lastName && <p className="text-sm text-destructive">{errors.lastName}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="firstName">Имя</Label>
+              <Input
+                id="firstName"
+                value={formData.firstName}
+                onChange={(e) => onInputChange('firstName', e.target.value)}
+                placeholder="Имя контактного лица"
+                className={errors.firstName ? 'border-destructive' : ''}
+                disabled={isSubmitting}
+              />
+              {errors.firstName && <p className="text-sm text-destructive">{errors.firstName}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="middleName">Отчество</Label>
+              <Input
+                id="middleName"
+                value={formData.middleName}
+                onChange={(e) => onInputChange('middleName', e.target.value)}
+                placeholder="Отчество контактного лица"
+                className={errors.middleName ? 'border-destructive' : ''}
+                disabled={isSubmitting}
+              />
+              {errors.middleName && <p className="text-sm text-destructive">{errors.middleName}</p>}
+            </div>
+          </div>
         </>
       ) : (
         <>
