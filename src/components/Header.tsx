@@ -39,24 +39,19 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   };
 
   const shortenCompanyName = (fullName: string): string => {
-    const replacements: Record<string, string> = {
-      'Общество с ограниченной ответственностью': 'ООО',
-      'Общество С Ограниченной Ответственностью': 'ООО',
-      'Закрытое акционерное общество': 'ЗАО',
-      'Закрытое Акционерное Общество': 'ЗАО',
-      'Открытое акционерное общество': 'ОАО',
-      'Открытое Акционерное Общество': 'ОАО',
-      'Публичное акционерное общество': 'ПАО',
-      'Публичное Акционерное Общество': 'ПАО',
-      'Акционерное общество': 'АО',
-      'Акционерное Общество': 'АО',
-      'Индивидуальный предприниматель': 'ИП',
-      'Индивидуальный Предприниматель': 'ИП',
-    };
+    const replacements: Array<[RegExp, string]> = [
+      [/Общество\s+с\s+ограниченной\s+ответственностью/gi, 'ООО'],
+      [/ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ/g, 'ООО'],
+      [/Закрытое\s+акционерное\s+общество/gi, 'ЗАО'],
+      [/Открытое\s+акционерное\s+общество/gi, 'ОАО'],
+      [/Публичное\s+акционерное\s+общество/gi, 'ПАО'],
+      [/Акционерное\s+общество/gi, 'АО'],
+      [/Индивидуальный\s+предприниматель/gi, 'ИП'],
+    ];
 
     let shortened = fullName;
-    for (const [full, short] of Object.entries(replacements)) {
-      shortened = shortened.replace(full, short);
+    for (const [pattern, short] of replacements) {
+      shortened = shortened.replace(pattern, short);
     }
     return shortened;
   };
