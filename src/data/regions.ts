@@ -98,7 +98,7 @@ export const REGIONS: Region[] = [
   { id: 'tomsk', name: 'Томская область', federalDistrict: 'siberian' },
 
   { id: 'buryatia', name: 'Республика Бурятия', federalDistrict: 'far-eastern' },
-  { id: 'yakutia', name: 'Республика Саха (Якутия)', federalDistrict: 'far-eastern' },
+  { id: 'sakha', name: 'Республика Саха (Якутия)', federalDistrict: 'far-eastern' },
   { id: 'zabaykalsky', name: 'Забайкальский край', federalDistrict: 'far-eastern' },
   { id: 'kamchatka', name: 'Камчатский край', federalDistrict: 'far-eastern' },
   { id: 'primorsky', name: 'Приморский край', federalDistrict: 'far-eastern' },
@@ -113,7 +113,7 @@ export const REGIONS: Region[] = [
 export const REGION_KEYWORDS: Record<string, string[]> = {
   'moscow': ['москва', 'moscow'],
   'spb': ['санкт-петербург', 'петербург', 'saint petersburg', 'spb', 'питер'],
-  'yakutia': ['якутия', 'yakutia', 'якутск', 'yakutsk', 'саха'],
+  'sakha': ['якутия', 'yakutia', 'якутск', 'yakutsk', 'саха'],
   'krasnodar': ['краснодар', 'krasnodar', 'сочи', 'sochi'],
   'sverdlovsk': ['екатеринбург', 'yekaterinburg', 'свердловск'],
   'novosibirsk': ['новосибирск', 'novosibirsk'],
@@ -134,7 +134,6 @@ export const REGION_KEYWORDS: Record<string, string[]> = {
   'khanty-mansi': ['ханты-мансийск', 'khanty-mansiysk', 'сургут', 'surgut', 'нижневартовск'],
   'yamalo-nenets': ['ямало-ненецкий', 'салехард', 'новый уренгой'],
   'irkutsk': ['иркутск', 'irkutsk'],
-  'krasnodar': ['краснодар', 'krasnodar'],
   'dagestan': ['дагестан', 'dagestan', 'махачкала', 'makhachkala'],
   'crimea': ['крым', 'crimea', 'симферополь', 'simferopol'],
   'kamchatka': ['камчатка', 'kamchatka', 'петропавловск-камчатский'],
@@ -147,14 +146,28 @@ export const REGION_KEYWORDS: Record<string, string[]> = {
 export function findRegionByLocation(city: string, region: string): string {
   const searchText = `${city} ${region}`.toLowerCase();
   
+  console.log('Finding region for:', { city, region, searchText });
+  
   for (const [regionId, keywords] of Object.entries(REGION_KEYWORDS)) {
     for (const keyword of keywords) {
       if (searchText.includes(keyword.toLowerCase())) {
+        console.log('Found region:', regionId, 'by keyword:', keyword);
         return regionId;
       }
     }
   }
   
+  const regionData = REGIONS.find(r => 
+    r.name.toLowerCase().includes(searchText) || 
+    searchText.includes(r.name.toLowerCase())
+  );
+  
+  if (regionData) {
+    console.log('Found region by name match:', regionData.id);
+    return regionData.id;
+  }
+  
+  console.log('No region found, returning all');
   return 'all';
 }
 
