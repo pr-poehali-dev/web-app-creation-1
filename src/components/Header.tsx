@@ -123,7 +123,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex items-center space-x-2">
                   <Icon name="User" className="h-4 w-4" />
-                  <span className="max-w-[150px] truncate">{getUserDisplayName()}</span>
+                  <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[250px] truncate text-xs' : 'max-w-[150px] truncate'}>{getUserDisplayName()}</span>
                   <Icon name="ChevronDown" className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
