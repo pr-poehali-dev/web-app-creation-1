@@ -120,7 +120,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         """INSERT INTO users (email, password_hash, first_name, last_name, middle_name, 
                            user_type, phone, company_name, inn, ogrnip, ogrn, position, director_name, legal_address)
                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                           RETURNING id, email, first_name, last_name, middle_name, user_type, phone, created_at""",
+                           RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
+                                     company_name, inn, ogrnip, ogrn, position, director_name, legal_address, created_at""",
                         (email, password_hash, first_name, last_name, middle_name or None, user_type, phone,
                          body_data.get('companyName'), body_data.get('inn'), body_data.get('ogrnip'),
                          body_data.get('ogrnLegal'), body_data.get('position'), body_data.get('directorName'),
@@ -242,7 +243,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 with conn.cursor() as cur:
                     cur.execute(
                         """SELECT id, email, password_hash, first_name, last_name, middle_name, 
-                           user_type, phone, is_active FROM users WHERE email = %s""",
+                           user_type, phone, is_active, company_name, inn, ogrnip, ogrn, 
+                           position, director_name, legal_address, created_at 
+                           FROM users WHERE email = %s""",
                         (email,)
                     )
                     user = cur.fetchone()

@@ -64,15 +64,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     if (!currentUser) return 'Личный кабинет';
     
     if (currentUser.userType === 'legal-entity') {
-      console.log('Header - Current user data:', currentUser);
-      console.log('Header - User type:', currentUser.userType);
-      console.log('Header - Company name from user:', currentUser.companyName);
-      
-      const companyName = currentUser.companyName || 'Организация';
-      console.log('Header - Company name used:', companyName);
-      const shortened = shortenCompanyName(companyName);
-      console.log('Header - Shortened result:', shortened);
-      return shortened;
+      return shortenCompanyName(currentUser.companyName || 'Организация');
     }
     
     return `${currentUser.firstName} ${currentUser.lastName}`;
