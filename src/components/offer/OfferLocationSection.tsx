@@ -152,6 +152,47 @@ export default function OfferLocationSection({
           )}
         </div>
 
+        {formData.availableDeliveryTypes.includes('delivery') && (
+          <div>
+            <Label className="mb-3 block">Доставка на районы:</Label>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="district-delivery-no"
+                  checked={!showDistrictDelivery}
+                  onCheckedChange={(checked) => setShowDistrictDelivery(!checked)}
+                />
+                <label
+                  htmlFor="district-delivery-no"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Нет
+                </label>
+              </div>
+              
+              {showDistrictDelivery && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {districts.map(district => (
+                    <div key={district.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`district-${district.id}`}
+                        checked={formData.availableDistricts.includes(district.id)}
+                        onCheckedChange={() => onDistrictToggle(district.id)}
+                      />
+                      <label
+                        htmlFor={`district-${district.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {district.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div>
           <Label className="mb-3 block">Способы получения *</Label>
           <div className="space-y-2">
@@ -183,44 +224,6 @@ export default function OfferLocationSection({
                 Доставка
               </label>
             </div>
-            
-            {formData.availableDeliveryTypes.includes('delivery') && (
-              <div className="ml-6 space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="district-delivery-no"
-                    checked={!showDistrictDelivery}
-                    onCheckedChange={(checked) => setShowDistrictDelivery(!checked)}
-                  />
-                  <label
-                    htmlFor="district-delivery-no"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Доставка на другие районы: Нет
-                  </label>
-                </div>
-                
-                {showDistrictDelivery && (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
-                    {districts.map(district => (
-                      <div key={district.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`district-${district.id}`}
-                          checked={formData.availableDistricts.includes(district.id)}
-                          onCheckedChange={() => onDistrictToggle(district.id)}
-                        />
-                        <label
-                          htmlFor={`district-${district.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          {district.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
           {formData.availableDeliveryTypes.length === 0 && (
             <p className="text-xs text-destructive mt-2">
