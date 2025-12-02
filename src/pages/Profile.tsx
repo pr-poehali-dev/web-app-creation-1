@@ -175,7 +175,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validateForm()) {
       toast({
         variant: 'destructive',
