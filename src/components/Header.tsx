@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -20,8 +21,17 @@ interface HeaderProps {
 
 export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const navigate = useNavigate();
-  const currentUser = getSession();
+  const [currentUser, setCurrentUser] = useState(getSession());
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
+
+  useEffect(() => {
+    const handleSessionChange = () => {
+      setCurrentUser(getSession());
+    };
+    
+    window.addEventListener('userSessionChanged', handleSessionChange);
+    return () => window.removeEventListener('userSessionChanged', handleSessionChange);
+  }, []);
 
   const handleLogout = () => {
     onLogout();

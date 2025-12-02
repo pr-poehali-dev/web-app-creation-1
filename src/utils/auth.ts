@@ -26,6 +26,26 @@ interface AuthResponse {
 const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213';
 const SESSION_STORAGE_KEY = 'currentUser';
 
+const convertUserFromBackend = (backendUser: any): User => {
+  return {
+    id: backendUser.id,
+    email: backendUser.email,
+    firstName: backendUser.first_name || backendUser.firstName,
+    lastName: backendUser.last_name || backendUser.lastName,
+    middleName: backendUser.middle_name || backendUser.middleName,
+    userType: backendUser.user_type || backendUser.userType,
+    phone: backendUser.phone,
+    companyName: backendUser.company_name || backendUser.companyName,
+    inn: backendUser.inn,
+    ogrnip: backendUser.ogrnip,
+    ogrn: backendUser.ogrn,
+    position: backendUser.position,
+    directorName: backendUser.director_name || backendUser.directorName,
+    legalAddress: backendUser.legal_address || backendUser.legalAddress,
+    createdAt: backendUser.created_at || backendUser.createdAt,
+  };
+};
+
 export const registerUser = async (userData: {
   email: string;
   password: string;
@@ -65,7 +85,7 @@ export const registerUser = async (userData: {
 
     return {
       success: true,
-      user: data.user,
+      user: data.user ? convertUserFromBackend(data.user) : undefined,
     };
   } catch (error) {
     console.error('Registration error:', error);
@@ -110,12 +130,17 @@ export const authenticateUser = async (
     }
 
     if (data.success && data.user) {
-      saveSession(data.user);
+      const convertedUser = convertUserFromBackend(data.user);
+      saveSession(convertedUser);
+      return {
+        success: true,
+        user: convertedUser,
+      };
     }
 
     return {
       success: true,
-      user: data.user,
+      user: data.user ? convertUserFromBackend(data.user) : undefined,
     };
   } catch (error) {
     console.error('Authentication error:', error);
@@ -129,6 +154,7 @@ export const authenticateUser = async (
 export const saveSession = (user: User): void => {
   try {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event('userSessionChanged'));
   } catch (error) {
     console.error('Error saving session:', error);
   }
