@@ -132,12 +132,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                   <>
                     <div className="px-2 py-1.5 text-sm font-medium">
                       {currentUser.userType === 'legal-entity' && currentUser.companyName ? (
-                        <>
-                          <div>{shortenCompanyName(currentUser.companyName)}</div>
-                          <div className="text-xs text-muted-foreground font-normal">
-                            {currentUser.firstName} {currentUser.lastName}
-                          </div>
-                        </>
+                        shortenCompanyName(currentUser.companyName)
                       ) : (
                         <>{currentUser.firstName} {currentUser.lastName}</>
                       )}
