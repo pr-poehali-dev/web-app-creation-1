@@ -12,21 +12,23 @@ interface ProfileHeaderProps {
 }
 
 const shortenCompanyName = (fullName: string): string => {
+  if (!fullName) return fullName;
+  
   const replacements: Array<[RegExp, string]> = [
-    [/Общество\s+с\s+ограниченной\s+ответственностью/gi, 'ООО'],
-    [/ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ/g, 'ООО'],
-    [/Закрытое\s+акционерное\s+общество/gi, 'ЗАО'],
-    [/Открытое\s+акционерное\s+общество/gi, 'ОАО'],
-    [/Публичное\s+акционерное\s+общество/gi, 'ПАО'],
-    [/Акционерное\s+общество/gi, 'АО'],
-    [/Индивидуальный\s+предприниматель/gi, 'ИП'],
+    [/Общество\s+с\s+ограниченной\s+ответственностью\s*/gi, 'ООО '],
+    [/ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ\s*/g, 'ООО '],
+    [/Закрытое\s+акционерное\s+общество\s*/gi, 'ЗАО '],
+    [/Открытое\s+акционерное\s+общество\s*/gi, 'ОАО '],
+    [/Публичное\s+акционерное\s+общество\s*/gi, 'ПАО '],
+    [/Акционерное\s+общество\s*/gi, 'АО '],
+    [/Индивидуальный\s+предприниматель\s*/gi, 'ИП '],
   ];
 
-  let shortened = fullName;
+  let shortened = fullName.trim();
   for (const [pattern, short] of replacements) {
     shortened = shortened.replace(pattern, short);
   }
-  return shortened;
+  return shortened.trim();
 };
 
 export default function ProfileHeader({ 
