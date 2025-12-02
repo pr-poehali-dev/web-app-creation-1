@@ -157,3 +157,19 @@ export const clearSession = (): void => {
 export const isEmailRegistered = async (email: string): Promise<boolean> => {
   return false;
 };
+
+export const updateUser = (updatedUser: User): boolean => {
+  try {
+    const currentUser = getSession();
+    if (!currentUser) {
+      return false;
+    }
+    
+    const mergedUser = { ...currentUser, ...updatedUser };
+    saveSession(mergedUser);
+    return true;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return false;
+  }
+};
