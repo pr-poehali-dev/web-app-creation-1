@@ -35,10 +35,21 @@ export default function ResetPassword() {
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      const existingEmails = ['demo@example.com', 'user@example.com'];
-      
-      if (existingEmails.includes(email.toLowerCase())) {
+    try {
+      const response = await fetch('https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'check_email',
+          email: email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.exists) {
         toast({
           title: 'Успешно',
           description: 'Ссылка для восстановления пароля отправлена на вашу почту',
@@ -47,11 +58,17 @@ export default function ResetPassword() {
           navigate('/new-password');
         }, 2000);
       } else {
-        setEmailError('Эл.почта введена неправильно');
+        setEmailError('Пользователь с такой эл.почтой не найден');
       }
-      
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Произошла ошибка при проверке эл.почты',
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {

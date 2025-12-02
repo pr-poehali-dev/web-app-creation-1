@@ -139,6 +139,36 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            elif action == 'check_email':
+                email = body_data.get('email', '').strip()
+                
+                if not email:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Email обязателен'}),
+                        'isBase64Encoded': False
+                    }
+                
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+                    user = cur.fetchone()
+                
+                if user:
+                    return {
+                        'statusCode': 200,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'success': True, 'exists': True}),
+                        'isBase64Encoded': False
+                    }
+                else:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'success': False, 'exists': False}),
+                        'isBase64Encoded': False
+                    }
+            
             elif action == 'login':
                 email = body_data.get('email', '').strip()
                 password = body_data.get('password', '')
