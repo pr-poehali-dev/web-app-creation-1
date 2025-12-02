@@ -100,18 +100,6 @@ export default function RegisterFormFields({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="position">Должность</Label>
-            <Input
-              id="position"
-              value={formData.position}
-              onChange={(e) => onInputChange('position', e.target.value)}
-              className={errors.position ? 'border-destructive' : ''}
-              disabled={isSubmitting}
-            />
-            {errors.position && <p className="text-sm text-destructive">{errors.position}</p>}
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="directorName">ФИО руководителя</Label>
             <Input
               id="directorName"
@@ -175,6 +163,19 @@ export default function RegisterFormFields({
                 disabled={isSubmitting}
               />
               {errors.middleName && <p className="text-sm text-destructive">{errors.middleName}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="position">Должность</Label>
+              <Input
+                id="position"
+                value={formData.position}
+                onChange={(e) => onInputChange('position', e.target.value)}
+                placeholder="Должность контактного лица"
+                className={errors.position ? 'border-destructive' : ''}
+                disabled={isSubmitting}
+              />
+              {errors.position && <p className="text-sm text-destructive">{errors.position}</p>}
             </div>
           </div>
         </>

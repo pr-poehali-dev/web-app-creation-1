@@ -133,7 +133,6 @@ export default function Register({ onRegister }: RegisterProps) {
       } else if (!validateOGRN(formData.ogrnLegal)) {
         newErrors.ogrnLegal = 'ОГРН должен содержать 13 цифр';
       }
-      if (!formData.position.trim()) newErrors.position = 'Обязательное поле';
       if (!formData.directorName.trim()) newErrors.directorName = 'Обязательное поле';
       if (!formData.legalAddress.trim()) newErrors.legalAddress = 'Обязательное поле';
       if (!formData.lastName.trim()) newErrors.lastName = 'Обязательное поле';

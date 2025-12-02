@@ -89,12 +89,21 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    });
+    if (!dateString) return 'Не указана';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Не указана';
+      }
+      return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Не указана';
+    }
   };
 
   const getUserTypeLabel = (type: string) => {
@@ -311,7 +320,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               passwordData={passwordData}
               passwordErrors={passwordErrors}
               isSaving={isSaving}
-              lastLoginDate={currentUser.lastLogin}
+              lastLoginDate={currentUser.createdAt || ''}
               formatDate={formatDate}
               onChangePassword={() => setIsChangingPassword(true)}
               onPasswordSave={handlePasswordSave}
@@ -320,7 +329,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             />
 
             <ProfileStatsCard
-              registrationDate={currentUser.registrationDate}
+              registrationDate={currentUser.createdAt || ''}
               formatDate={formatDate}
             />
           </div>
