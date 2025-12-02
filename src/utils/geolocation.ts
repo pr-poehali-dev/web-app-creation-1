@@ -1,5 +1,6 @@
 import { findSettlementByCoordinates, findSettlementByName } from '@/data/settlements';
 import { findDistrictByName } from '@/data/districts';
+import { findNaslegByCoordinates } from '@/data/naslegs';
 
 export interface LocationData {
   city: string;
@@ -32,11 +33,19 @@ export const detectLocationByIP = async (): Promise<LocationData> => {
     let district = data.region || 'Все районы';
 
     if (coordinates) {
-      const settlement = findSettlementByCoordinates(coordinates.latitude, coordinates.longitude);
-      if (settlement) {
-        city = settlement.name;
-        if (settlement.districtId) {
-          district = settlement.districtId;
+      // Сначала проверяем наслеги (более точное определение для Якутии)
+      const nasleg = findNaslegByCoordinates(coordinates.latitude, coordinates.longitude);
+      if (nasleg) {
+        city = nasleg.name;
+        district = nasleg.districtId;
+      } else {
+        // Если наслег не найден, ищем по общим поселениям
+        const settlement = findSettlementByCoordinates(coordinates.latitude, coordinates.longitude);
+        if (settlement) {
+          city = settlement.name;
+          if (settlement.districtId) {
+            district = settlement.districtId;
+          }
         }
       }
     }
@@ -82,6 +91,22 @@ export const detectLocationByBrowser = (): Promise<LocationData> => {
         const { latitude, longitude } = position.coords;
         console.log('Got coordinates:', { latitude, longitude });
         
+        // Сначала проверяем наслеги (более точное определение для Якутии)
+        const nasleg = findNaslegByCoordinates(latitude, longitude);
+        console.log('Found nasleg:', nasleg);
+        
+        if (nasleg) {
+          console.log('Using nasleg data:', { city: nasleg.name, district: nasleg.districtId });
+          resolve({
+            city: nasleg.name,
+            district: nasleg.districtId,
+            coordinates: { latitude, longitude },
+            source: 'geolocation'
+          });
+          return;
+        }
+        
+        // Если наслег не найден, ищем по общим поселениям
         const settlement = findSettlementByCoordinates(latitude, longitude);
         console.log('Found settlement:', settlement);
         
