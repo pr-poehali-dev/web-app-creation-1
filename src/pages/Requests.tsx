@@ -18,7 +18,7 @@ interface RequestsProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
-  const { selectedDistricts, districts } = useDistrict();
+  const { selectedRegion, selectedDistricts, districts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -56,12 +56,22 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
       result = result.filter((offer) => offer.subcategory === filters.subcategory);
     }
 
-    if (selectedDistricts.length > 0) {
-      result = result.filter(
-        (offer) =>
-          selectedDistricts.includes(offer.district) ||
-          offer.availableDistricts.some(d => selectedDistricts.includes(d))
-      );
+    if (selectedRegion !== 'all') {
+      const districtsInRegion = districts.map(d => d.id);
+      
+      if (selectedDistricts.length > 0) {
+        result = result.filter(
+          (offer) =>
+            selectedDistricts.includes(offer.district) ||
+            offer.availableDistricts.some(d => selectedDistricts.includes(d))
+        );
+      } else {
+        result = result.filter(
+          (offer) =>
+            districtsInRegion.includes(offer.district) ||
+            offer.availableDistricts.some(d => districtsInRegion.includes(d))
+        );
+      }
     }
 
     result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());

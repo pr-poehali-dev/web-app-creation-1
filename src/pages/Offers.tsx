@@ -21,7 +21,7 @@ interface OffersProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
-  const { selectedDistricts, districts } = useDistrict();
+  const { selectedRegion, selectedDistricts, districts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -59,11 +59,20 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       result = result.filter((offer) => offer.subcategory === filters.subcategory);
     }
 
-    if (selectedDistricts.length > 0) {
-      result = result.filter((offer) => 
-        selectedDistricts.includes(offer.district) || 
-        offer.availableDistricts.some(d => selectedDistricts.includes(d))
-      );
+    if (selectedRegion !== 'all') {
+      const districtsInRegion = districts.map(d => d.id);
+      
+      if (selectedDistricts.length > 0) {
+        result = result.filter((offer) => 
+          selectedDistricts.includes(offer.district) || 
+          offer.availableDistricts.some(d => selectedDistricts.includes(d))
+        );
+      } else {
+        result = result.filter((offer) => 
+          districtsInRegion.includes(offer.district) || 
+          offer.availableDistricts.some(d => districtsInRegion.includes(d))
+        );
+      }
     }
 
     const premiumOffers = result.filter((offer) => offer.isPremium);
