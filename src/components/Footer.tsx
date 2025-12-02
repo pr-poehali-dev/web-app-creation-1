@@ -16,7 +16,7 @@ export default function Footer() {
               <span className="font-bold text-primary">ЕРТТ</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Единая региональная товарно-торговая площадка
+              Единая Региональная Торговая Площадка
             </p>
           </div>
 
@@ -90,7 +90,7 @@ export default function Footer() {
         <div className="mt-8 pt-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} Единая региональная товарно-торговая площадка. Все права защищены.
+              © {currentYear} Единая Региональная Торговая Площадка. Все права защищены.
             </p>
             <div className="flex items-center gap-4">
               <a

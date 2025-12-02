@@ -40,7 +40,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <Icon name="Building2" className="h-6 w-6 text-white" />
           </div>
-          <span className="text-lg font-bold text-primary">Единая региональная товарно-торговая площадка</span>
+          <span className="text-lg font-bold text-primary">Единая Региональная Торговая Площадка</span>
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">
