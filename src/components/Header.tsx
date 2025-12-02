@@ -38,11 +38,34 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     navigate('/');
   };
 
+  const shortenCompanyName = (fullName: string): string => {
+    const replacements: Record<string, string> = {
+      'Общество с ограниченной ответственностью': 'ООО',
+      'Общество С Ограниченной Ответственностью': 'ООО',
+      'Закрытое акционерное общество': 'ЗАО',
+      'Закрытое Акционерное Общество': 'ЗАО',
+      'Открытое акционерное общество': 'ОАО',
+      'Открытое Акционерное Общество': 'ОАО',
+      'Публичное акционерное общество': 'ПАО',
+      'Публичное Акционерное Общество': 'ПАО',
+      'Акционерное общество': 'АО',
+      'Акционерное Общество': 'АО',
+      'Индивидуальный предприниматель': 'ИП',
+      'Индивидуальный Предприниматель': 'ИП',
+    };
+
+    let shortened = fullName;
+    for (const [full, short] of Object.entries(replacements)) {
+      shortened = shortened.replace(full, short);
+    }
+    return shortened;
+  };
+
   const getUserDisplayName = () => {
     if (!currentUser) return 'Личный кабинет';
     
     if (currentUser.userType === 'legal-entity') {
-      const companyName = currentUser.companyName || 'Организация';
+      const companyName = shortenCompanyName(currentUser.companyName || 'Организация');
       const contactName = `${currentUser.firstName} ${currentUser.lastName}`.trim();
       return contactName ? `${companyName} (${contactName})` : companyName;
     }

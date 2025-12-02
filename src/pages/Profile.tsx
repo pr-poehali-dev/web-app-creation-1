@@ -304,6 +304,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
                   lastName={currentUser.lastName}
                   userType={currentUser.userType}
                   isVerified={currentUser.isVerified}
+                  companyName={currentUser.companyName}
                   getInitials={getInitials}
                   getUserTypeLabel={getUserTypeLabel}
                 />
