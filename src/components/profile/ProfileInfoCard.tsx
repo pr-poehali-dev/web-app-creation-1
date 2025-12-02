@@ -48,9 +48,9 @@ export default function ProfileInfoCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Основная информация</CardTitle>
+            {!isLegalEntity && <CardTitle>Основная информация</CardTitle>}
             <CardDescription>
-              {isLegalEntity ? 'Контактное лицо и данные для связи' : 'Личные данные вашего профиля'}
+              {isLegalEntity ? 'Должностное лицо и данные для связи' : 'Личные данные вашего профиля'}
             </CardDescription>
           </div>
           {!isEditing && (
