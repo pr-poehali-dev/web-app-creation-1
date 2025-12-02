@@ -55,6 +55,7 @@ export default function RegisterFormFields({
                 value={formData.inn}
                 onChange={(e) => onInputChange('inn', e.target.value)}
                 maxLength={10}
+                placeholder="Введите ИНН организации"
                 className={errors.inn ? 'border-destructive' : ''}
                 disabled={isSubmitting || isFetchingCompany}
               />
@@ -63,6 +64,7 @@ export default function RegisterFormFields({
                 variant="outline"
                 onClick={() => onFetchCompanyData?.(formData.inn)}
                 disabled={isSubmitting || isFetchingCompany || formData.inn.length !== 10}
+                title="Загрузить данные организации по ИНН"
               >
                 {isFetchingCompany ? (
                   <>
@@ -76,6 +78,12 @@ export default function RegisterFormFields({
               </Button>
             </div>
             {errors.inn && <p className="text-sm text-destructive">{errors.inn}</p>}
+            {!errors.inn && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Icon name="Info" className="h-3 w-3" />
+                Введите ИНН и нажмите на кнопку поиска — данные организации заполнятся автоматически
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
