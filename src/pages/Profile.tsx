@@ -187,7 +187,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
 
     setIsSaving(true);
 
-    setTimeout(() => {
+    try {
       const updatedUser = {
         ...currentUser,
         firstName: formData.firstName,
@@ -196,10 +196,10 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         phone: formData.phone,
       };
 
-      const success = updateUser(updatedUser);
+      const result = await updateUser(updatedUser);
 
-      if (success) {
-        setCurrentUser(updatedUser);
+      if (result.success && result.user) {
+        setCurrentUser(result.user);
         setIsEditing(false);
         toast({
           title: 'Успешно',
@@ -209,11 +209,18 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         toast({
           variant: 'destructive',
           title: 'Ошибка',
-          description: 'Не удалось обновить профиль',
+          description: result.error || 'Не удалось обновить профиль',
         });
       }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Произошла ошибка при обновлении профиля',
+      });
+    } finally {
       setIsSaving(false);
-    }, 500);
+    }
   };
 
   const handlePasswordSave = () => {

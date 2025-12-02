@@ -208,18 +208,49 @@ export const isEmailRegistered = async (email: string): Promise<boolean> => {
   return false;
 };
 
-export const updateUser = (updatedUser: User): boolean => {
+export const updateUser = async (updatedUser: User): Promise<{ success: boolean; user?: User; error?: string }> => {
   try {
     const currentUser = getSession();
     if (!currentUser) {
-      return false;
+      return { success: false, error: 'Пользователь не авторизован' };
     }
     
-    const mergedUser = { ...currentUser, ...updatedUser };
-    saveSession(mergedUser);
-    return true;
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'update_profile',
+        email: currentUser.email,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        middleName: updatedUser.middleName,
+        phone: updatedUser.phone,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.error || 'Ошибка обновления профиля',
+      };
+    }
+
+    if (data.success && data.user) {
+      const convertedUser = convertUserFromBackend(data.user);
+      saveSession(convertedUser);
+      return {
+        success: true,
+        user: convertedUser,
+      };
+    }
+
+    return { success: false, error: 'Не удалось обновить профиль' };
   } catch (error) {
     console.error('Error updating user:', error);
-    return false;
+    return { success: false, error: 'Ошибка соединения с сервером' };
   }
 };

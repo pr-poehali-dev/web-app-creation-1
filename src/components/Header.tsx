@@ -40,6 +40,13 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
   const getUserDisplayName = () => {
     if (!currentUser) return 'Личный кабинет';
+    
+    if (currentUser.userType === 'legal-entity') {
+      const companyName = currentUser.companyName || 'Организация';
+      const contactName = `${currentUser.firstName} ${currentUser.lastName}`.trim();
+      return contactName ? `${companyName} (${contactName})` : companyName;
+    }
+    
     return `${currentUser.firstName} ${currentUser.lastName}`;
   };
 

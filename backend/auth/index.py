@@ -169,6 +169,52 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
             
+            elif action == 'update_profile':
+                email = body_data.get('email', '').strip()
+                first_name = body_data.get('firstName', '').strip()
+                last_name = body_data.get('lastName', '').strip()
+                middle_name = body_data.get('middleName', '').strip()
+                phone = body_data.get('phone', '').strip()
+                
+                if not email:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Email обязателен'}),
+                        'isBase64Encoded': False
+                    }
+                
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """UPDATE users 
+                           SET first_name = %s, last_name = %s, middle_name = %s, phone = %s 
+                           WHERE email = %s
+                           RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
+                                     company_name, inn, ogrnip, ogrn, position, director_name, legal_address, created_at""",
+                        (first_name, last_name, middle_name or None, phone, email)
+                    )
+                    user = cur.fetchone()
+                    
+                    if not user:
+                        return {
+                            'statusCode': 404,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Пользователь не найден'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({
+                        'success': True,
+                        'user': dict(user)
+                    }, default=str),
+                    'isBase64Encoded': False
+                }
+            
             elif action == 'login':
                 email = body_data.get('email', '').strip()
                 password = body_data.get('password', '')
