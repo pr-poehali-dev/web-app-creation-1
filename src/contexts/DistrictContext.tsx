@@ -119,6 +119,14 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
     if (region !== selectedRegion) {
       setSelectedDistrictsState([]);
     }
+    
+    // Сразу обновляем доступные районы
+    if (region !== 'all') {
+      const districts = getDistrictsByRegion(region);
+      setAvailableDistricts(districts);
+    } else {
+      setAvailableDistricts([]);
+    }
   };
 
   const setSelectedDistricts = (districts: string[]) => {
