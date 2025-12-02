@@ -147,10 +147,34 @@ export const getSession = (): User | null => {
 export const clearSession = (): void => {
   try {
     localStorage.removeItem(SESSION_STORAGE_KEY);
-    localStorage.removeItem('rememberMeCredentials');
-    localStorage.removeItem('lastLoginEmail');
   } catch (error) {
     console.error('Error clearing session:', error);
+  }
+};
+
+export const saveRememberMe = (email: string, password: string): void => {
+  try {
+    localStorage.setItem('rememberMeCredentials', JSON.stringify({ email, password }));
+  } catch (error) {
+    console.error('Error saving remember me:', error);
+  }
+};
+
+export const getRememberMe = (): { email: string; password: string } | null => {
+  try {
+    const stored = localStorage.getItem('rememberMeCredentials');
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Error reading remember me:', error);
+    return null;
+  }
+};
+
+export const clearRememberMe = (): void => {
+  try {
+    localStorage.removeItem('rememberMeCredentials');
+  } catch (error) {
+    console.error('Error clearing remember me:', error);
   }
 };
 

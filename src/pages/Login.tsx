@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import { authenticateUser } from '@/utils/auth';
+import { authenticateUser, saveRememberMe, getRememberMe, clearRememberMe } from '@/utils/auth';
 
 interface LoginProps {
   onLogin: () => void;
@@ -19,8 +19,18 @@ export default function Login({ onLogin }: LoginProps) {
   const [emailError, setEmailError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const savedCredentials = getRememberMe();
+    if (savedCredentials) {
+      setEmail(savedCredentials.email);
+      setPassword(savedCredentials.password);
+      setRememberMe(true);
+    }
+  }, []);
 
 
 
@@ -57,6 +67,12 @@ export default function Login({ onLogin }: LoginProps) {
       const result = await authenticateUser(email, password);
       
       if (result.success && result.user) {
+        if (rememberMe) {
+          saveRememberMe(email, password);
+        } else {
+          clearRememberMe();
+        }
+        
         onLogin();
         navigate('/');
         toast({
@@ -67,7 +83,7 @@ export default function Login({ onLogin }: LoginProps) {
         toast({
           variant: 'destructive',
           title: 'Ошибка',
-          description: result.error || 'Ошибка входа',
+          description: result.error || 'Неверный email или пароль',
         });
       }
     } catch (error) {
@@ -137,7 +153,20 @@ export default function Login({ onLogin }: LoginProps) {
               </div>
             </div>
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="remember" 
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label 
+                  htmlFor="remember" 
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Запомнить меня
+                </Label>
+              </div>
               <Button
                 type="button"
                 variant="link"
