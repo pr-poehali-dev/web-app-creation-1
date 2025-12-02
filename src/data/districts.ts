@@ -631,9 +631,7 @@ export const DISTRICTS: District[] = [
   { id: 'samara-bolshechernigovskyi', name: 'Большечерниговский район', regionId: 'samara', type: 'district' },
   { id: 'samara-bolsheglushitsky', name: 'Большеглушицкий район', regionId: 'samara', type: 'district' },
   { id: 'samara-bogatovsky', name: 'Богатовский район', regionId: 'samara', type: 'district' },
-  { id: 'samara-bor
-
-sky', name: 'Борский район', regionId: 'samara', type: 'district' },
+  { id: 'samara-borsky', name: 'Борский район', regionId: 'samara', type: 'district' },
   { id: 'samara-volzhsky', name: 'Волжский район', regionId: 'samara', type: 'district' },
   { id: 'samara-yelkhovskyi', name: 'Елховский район', regionId: 'samara', type: 'district' },
   { id: 'samara-isakeevsky', name: 'Исаклинский район', regionId: 'samara', type: 'district' },
