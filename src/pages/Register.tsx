@@ -9,7 +9,7 @@ import Icon from '@/components/ui/icon';
 import RegisterFormFields from './Register/RegisterFormFields';
 import { validateEmail, validatePhone, validateINN, validateOGRNIP, validateOGRN, validatePassword } from './Register/validators';
 import type { FormData, FormErrors, RegisterProps, UserType } from './Register/types';
-import { registerUser } from '@/utils/auth';
+import { registerUser, saveSession } from '@/utils/auth';
 
 export default function Register({ onRegister }: RegisterProps) {
   const [formData, setFormData] = useState<FormData>({
@@ -171,13 +171,15 @@ export default function Register({ onRegister }: RegisterProps) {
         legalAddress: formData.legalAddress?.trim(),
       });
 
-      if (result.success) {
+      if (result.success && result.user) {
+        saveSession(result.user);
+        onRegister();
         toast({
           title: 'Успешно',
-          description: 'Регистрация прошла успешно! Войдите в систему с вашими учетными данными.',
+          description: 'Регистрация прошла успешно! Добро пожаловать!',
         });
         setTimeout(() => {
-          navigate('/login');
+          navigate('/');
         }, 1500);
       } else {
         toast({
