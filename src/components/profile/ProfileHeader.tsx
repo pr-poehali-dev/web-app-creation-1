@@ -56,8 +56,8 @@ export default function ProfileHeader({
             <h2 className="text-2xl font-bold">
               {shortenCompanyName(companyName)}
             </h2>
-            <p className="text-muted-foreground mt-1">
-              <span className="text-xs uppercase tracking-wide">Руководитель:</span> {directorName || 'Не указан'}
+            <p className="text-sm text-muted-foreground mt-1">
+              Руководитель: {directorName || 'Не указан'}
             </p>
           </>
         ) : (
