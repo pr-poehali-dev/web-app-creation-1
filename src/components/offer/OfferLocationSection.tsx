@@ -117,7 +117,9 @@ export default function OfferLocationSection({
         </div>
 
         <div className="relative">
-          <Label htmlFor="fullAddress">Полный адрес *</Label>
+          <Label htmlFor="fullAddress">
+            Полный адрес {formData.availableDeliveryTypes.length === 1 && formData.availableDeliveryTypes.includes('pickup') ? '*' : '(необязательно)'}
+          </Label>
           <Input
             id="fullAddress"
             value={addressInput}
@@ -126,7 +128,7 @@ export default function OfferLocationSection({
               onInputChange('fullAddress', e.target.value);
             }}
             placeholder="Населенный пункт, улица, дом, офис"
-            required
+            required={formData.availableDeliveryTypes.length === 1 && formData.availableDeliveryTypes.includes('pickup')}
           />
           {filteredSettlements.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
