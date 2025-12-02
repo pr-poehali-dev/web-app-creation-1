@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/command';
 import Icon from '@/components/ui/icon';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { getLocationFromStorage } from '@/utils/geolocation';
 
 interface MultiDistrictSelectorProps {
   className?: string;
@@ -54,13 +55,21 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
 
   const getDisplayText = () => {
     if (selectedCount === 0) {
-      return 'Все районы';
+      return 'Все регионы';
     }
     if (selectedCount === 1) {
       const district = districts.find(d => d.id === selectedDistricts[0]);
-      return district?.name || 'Выбран 1 район';
+      return district?.name || 'Выбран 1 регион';
     }
-    return `Выбрано: ${selectedCount} ${selectedCount < 5 ? 'района' : 'районов'}`;
+    return `Выбрано: ${selectedCount} ${selectedCount === 1 ? 'регион' : selectedCount < 5 ? 'региона' : 'регионов'}`;
+  };
+
+  const getSubtitleText = () => {
+    const location = getLocationFromStorage();
+    if (location && location.city && location.city !== 'Не определен') {
+      return location.city;
+    }
+    return null;
   };
 
   return (
@@ -71,20 +80,25 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full justify-between h-auto py-2"
           >
-            <div className="flex items-center gap-2">
-              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-              <span className="truncate">{getDisplayText()}</span>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
+              <div className="flex flex-col items-start min-w-0">
+                <span className="truncate text-sm font-medium">{getDisplayText()}</span>
+                {getSubtitleText() && (
+                  <span className="text-xs text-muted-foreground truncate w-full">{getSubtitleText()}</span>
+                )}
+              </div>
             </div>
             <Icon name="ChevronsUpDown" className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
           <Command shouldFilter={true}>
-            <CommandInput placeholder="Поиск района..." />
+            <CommandInput placeholder="Поиск региона..." />
             <CommandList>
-              <CommandEmpty>Район не найден</CommandEmpty>
+              <CommandEmpty>Регион не найден</CommandEmpty>
               <CommandGroup>
                 <Button
                   variant="outline"
@@ -101,7 +115,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                   ) : (
                     <>
                       <Icon name="MapPinned" className="mr-2 h-4 w-4" />
-                      Определить мой район
+                      Определить мой регион
                     </>
                   )}
                 </Button>
@@ -119,11 +133,11 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                       )}
                     </div>
                     <Icon name="Globe" className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Все районы</span>
+                    <span className="font-medium">Все регионы</span>
                   </div>
                 </CommandItem>
               </CommandGroup>
-              <CommandGroup heading="Выберите районы">
+              <CommandGroup heading="Выберите регионы">
                 {availableDistricts.map((district) => {
                   const isSelected = selectedDistricts.includes(district.id);
                   return (
