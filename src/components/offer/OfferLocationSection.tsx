@@ -193,7 +193,7 @@ export default function OfferLocationSection({
 
         {formData.availableDeliveryTypes.includes('delivery') && (
           <div>
-            <Label className="mb-3 block">Доставка на другие районы:</Label>
+            <Label className="mb-3 block">Доставка в другие районы:</Label>
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <Checkbox
