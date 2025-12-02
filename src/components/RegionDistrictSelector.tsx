@@ -239,12 +239,21 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
             )}
 
             <TabsContent value="districts" className="m-0">
-              <Command shouldFilter={true}>
-                <CommandInput placeholder="Поиск района..." onChange={(e) => setSearchQuery(e.target.value)} />
+              <Command shouldFilter={false}>
+                <CommandInput 
+                  placeholder="Поиск района..." 
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                />
                 <CommandList>
                   <CommandEmpty>Район не найден</CommandEmpty>
                   <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
-                    {districts.map((district) => {
+                    {districts
+                      .filter(district => 
+                        !searchQuery || 
+                        district.name.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map((district) => {
                       const isSelected = selectedDistricts.includes(district.id);
                       const count = districtCounts[district.id] || 0;
                       return (
