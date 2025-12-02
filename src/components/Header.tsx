@@ -41,20 +41,22 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const shortenCompanyName = (fullName: string): string => {
     if (!fullName) return fullName;
     
-    const replacements: Array<[RegExp, string]> = [
-      [/Общество\s+с\s+ограниченной\s+ответственностью\s*/gi, 'ООО '],
-      [/ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ\s*/g, 'ООО '],
-      [/Закрытое\s+акционерное\s+общество\s*/gi, 'ЗАО '],
-      [/Открытое\s+акционерное\s+общество\s*/gi, 'ОАО '],
-      [/Публичное\s+акционерное\s+общество\s*/gi, 'ПАО '],
-      [/Акционерное\s+общество\s*/gi, 'АО '],
-      [/Индивидуальный\s+предприниматель\s*/gi, 'ИП '],
-    ];
-
     let shortened = fullName.trim();
-    for (const [pattern, short] of replacements) {
-      shortened = shortened.replace(pattern, short);
-    }
+    
+    // Замены с учетом разных форматов
+    shortened = shortened.replace(/ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ\s*/gi, 'ООО ');
+    shortened = shortened.replace(/Общество\s+с\s+ограниченной\s+ответственностью\s*/gi, 'ООО ');
+    shortened = shortened.replace(/ЗАКРЫТОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО\s*/gi, 'ЗАО ');
+    shortened = shortened.replace(/Закрытое\s+акционерное\s+общество\s*/gi, 'ЗАО ');
+    shortened = shortened.replace(/ОТКРЫТОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО\s*/gi, 'ОАО ');
+    shortened = shortened.replace(/Открытое\s+акционерное\s+общество\s*/gi, 'ОАО ');
+    shortened = shortened.replace(/ПУБЛИЧНОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО\s*/gi, 'ПАО ');
+    shortened = shortened.replace(/Публичное\s+акционерное\s+общество\s*/gi, 'ПАО ');
+    shortened = shortened.replace(/АКЦИОНЕРНОЕ\s+ОБЩЕСТВО\s*/gi, 'АО ');
+    shortened = shortened.replace(/Акционерное\s+общество\s*/gi, 'АО ');
+    shortened = shortened.replace(/ИНДИВИДУАЛЬНЫЙ\s+ПРЕДПРИНИМАТЕЛЬ\s*/gi, 'ИП ');
+    shortened = shortened.replace(/Индивидуальный\s+предприниматель\s*/gi, 'ИП ');
+    
     return shortened.trim();
   };
 
