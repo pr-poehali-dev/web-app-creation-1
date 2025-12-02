@@ -143,7 +143,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         <div className="border-b bg-muted/30">
           <div className="container mx-auto px-4 py-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Выбранные районы:</span>
+              <span className="text-sm text-muted-foreground">Выбранные регионы:</span>
               {selectedDistricts.map((districtId) => {
                 const district = districts.find(d => d.id === districtId);
                 return (

@@ -46,12 +46,12 @@ export default function LocationDetectionDialog() {
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
               <Icon name="MapPin" className="h-6 w-6 text-primary" />
             </div>
-            <DialogTitle className="text-xl">Определить ваш район?</DialogTitle>
+            <DialogTitle className="text-xl">Определить ваш регион?</DialogTitle>
           </div>
           <DialogDescription className="text-base space-y-3 pt-2">
             <p>
               Мы можем автоматически определить ваше местоположение, чтобы показывать
-              предложения и услуги, доступные в вашем районе.
+              предложения и услуги, доступные в вашем регионе.
             </p>
             <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
               <div className="flex items-start gap-2">
@@ -60,11 +60,11 @@ export default function LocationDetectionDialog() {
               </div>
               <div className="flex items-start gap-2">
                 <Icon name="MapPin" className="h-4 w-4 text-primary mt-0.5" />
-                <span>Используется только для определения района</span>
+                <span>Используется только для определения региона</span>
               </div>
               <div className="flex items-start gap-2">
                 <Icon name="Settings" className="h-4 w-4 text-primary mt-0.5" />
-                <span>Вы можете изменить район в любое время</span>
+                <span>Вы можете изменить регион в любое время</span>
               </div>
             </div>
           </DialogDescription>

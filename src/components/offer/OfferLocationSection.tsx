@@ -78,7 +78,7 @@ export default function OfferLocationSection({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative">
-          <Label htmlFor="district">Район местонахождения *</Label>
+          <Label htmlFor="district">Регион местонахождения *</Label>
           <Input
             id="district"
             value={districtInput}
@@ -93,7 +93,7 @@ export default function OfferLocationSection({
                 onInputChange('district', matchedDistrict.id);
               }
             }}
-            placeholder="Начните вводить название района..."
+            placeholder="Начните вводить название региона..."
             required
           />
           {filteredDistricts.length > 0 && (
@@ -149,7 +149,7 @@ export default function OfferLocationSection({
         </div>
 
         <div>
-          <Label className="mb-3 block">Доступно для заказа из районов</Label>
+          <Label className="mb-3 block">Доступно для заказа из регионов</Label>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {districts.map(district => (
               <div key={district.id} className="flex items-center space-x-2">

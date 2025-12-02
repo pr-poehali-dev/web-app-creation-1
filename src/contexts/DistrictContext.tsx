@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { detectLocationByIP, detectLocationByBrowser, isFirstVisit, markLocationDetected, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
+import { REGIONS, FEDERAL_DISTRICTS, findRegionByLocation, type Region } from '@/data/regions';
 
 export interface District {
   id: string;
@@ -19,82 +20,13 @@ interface DistrictContextType {
 
 const DistrictContext = createContext<DistrictContextType | undefined>(undefined);
 
-const DISTRICTS: District[] = [
-  { id: 'all', name: 'Все районы' },
-  { id: 'yakutsk', name: 'г. Якутск' },
-  { id: 'aldan', name: 'Алданский улус' },
-  { id: 'amga', name: 'Амгинский улус' },
-  { id: 'anabar', name: 'Анабарский улус' },
-  { id: 'bulun', name: 'Булунский улус' },
-  { id: 'verkhnekolymsk', name: 'Верхнеколымский улус' },
-  { id: 'verkhnevilyuisk', name: 'Верхневилюйский улус' },
-  { id: 'verkhoyansk', name: 'Верхоянский улус' },
-  { id: 'vilyuisk', name: 'Вилюйский улус' },
-  { id: 'gorny', name: 'Горный улус' },
-  { id: 'zhigansky', name: 'Жиганский улус' },
-  { id: 'kobyai', name: 'Кобяйский улус' },
-  { id: 'lensk', name: 'Ленский улус' },
-  { id: 'megino-kangalassky', name: 'Мегино-Кангаласский улус' },
-  { id: 'mirny', name: 'Мирнинский улус' },
-  { id: 'momsky', name: 'Момский улус' },
-  { id: 'namsky', name: 'Намский улус' },
-  { id: 'neryungri', name: 'Нерюнгринский улус' },
-  { id: 'nizhnekolymsk', name: 'Нижнеколымский улус' },
-  { id: 'nyurbinsky', name: 'Нюрбинский улус' },
-  { id: 'oymyakon', name: 'Оймяконский улус' },
-  { id: 'olekminsk', name: 'Олёкминский улус' },
-  { id: 'ust-aldan', name: 'Усть-Алданский улус' },
-  { id: 'ust-maya', name: 'Усть-Майский улус' },
-  { id: 'ust-yan', name: 'Усть-Янский улус' },
-  { id: 'khangalassky', name: 'Хангаласский улус' },
-  { id: 'churapcha', name: 'Чурапчинский улус' },
-  { id: 'eveno-bytantai', name: 'Эвено-Бытантайский улус' },
+const ALL_DISTRICTS: District[] = [
+  { id: 'all', name: 'Все регионы' },
+  ...REGIONS.map(region => ({
+    id: region.id,
+    name: region.name
+  }))
 ];
-
-const DISTRICT_KEYWORDS: Record<string, string[]> = {
-  'yakutsk': ['якутск', 'yakutsk'],
-  'aldan': ['алдан', 'aldan', 'алданский'],
-  'amga': ['амга', 'amga', 'амгинский'],
-  'anabar': ['анабар', 'anabar', 'анабарский'],
-  'bulun': ['булун', 'bulun', 'тикси', 'tiksi', 'булунский'],
-  'verkhnekolymsk': ['верхнеколымск', 'verkhnekolymsk', 'верхнеколымский'],
-  'verkhnevilyuisk': ['верхневилюйск', 'verkhnevilyuisk', 'верхневилюйский'],
-  'verkhoyansk': ['верхоянск', 'verkhoyansk', 'верхоянский'],
-  'vilyuisk': ['вилюйск', 'vilyuisk', 'вилюйский'],
-  'gorny': ['горный', 'gorny', 'бердигестях', 'berdigestyakh'],
-  'zhigansky': ['жиганск', 'zhigansky', 'жиганский'],
-  'kobyai': ['кобяй', 'kobyai', 'сангар', 'sangar', 'кобяйский'],
-  'lensk': ['ленск', 'lensk', 'ленский'],
-  'megino-kangalassky': ['мегино-кангаласский', 'megino-kangalassky', 'майя', 'maya'],
-  'mirny': ['мирный', 'mirny', 'мирнинский'],
-  'momsky': ['момский', 'momsky', 'хонуу', 'khonuu'],
-  'namsky': ['намский', 'namsky'],
-  'neryungri': ['нерюнгри', 'neryungri', 'нерюнгринский'],
-  'nizhnekolymsk': ['нижнеколымск', 'nizhnekolymsk', 'черский', 'chersky', 'нижнеколымский'],
-  'nyurbinsky': ['нюрбинский', 'nyurbinsky', 'нюрба', 'nyurba'],
-  'oymyakon': ['оймякон', 'oymyakon', 'оймяконский'],
-  'olekminsk': ['олёкминск', 'olekminsk', 'олёкминский'],
-  'ust-aldan': ['усть-алданский', 'ust-aldan', 'усть-алдан'],
-  'ust-maya': ['усть-майский', 'ust-maya', 'усть-мая'],
-  'ust-yan': ['усть-янский', 'ust-yan', 'усть-яна'],
-  'khangalassky': ['хангаласский', 'khangalassky', 'покровск', 'pokrovsk'],
-  'churapcha': ['чурапчинский', 'churapcha', 'чурапча'],
-  'eveno-bytantai': ['эвено-бытантайский', 'eveno-bytantai', 'батагай-алыта', 'batagay-alyta'],
-};
-
-function findDistrictByLocation(city: string, district: string): string {
-  const searchText = `${city} ${district}`.toLowerCase();
-  
-  for (const [districtId, keywords] of Object.entries(DISTRICT_KEYWORDS)) {
-    for (const keyword of keywords) {
-      if (searchText.includes(keyword.toLowerCase())) {
-        return districtId;
-      }
-    }
-  }
-  
-  return 'all';
-}
 
 export function DistrictProvider({ children }: { children: ReactNode }) {
   const [selectedDistrict, setSelectedDistrictState] = useState<string>('all');
@@ -109,10 +41,10 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       const storedLocation = getLocationFromStorage();
       
       if (storedLocation) {
-        const districtId = findDistrictByLocation(storedLocation.city, storedLocation.district);
-        setSelectedDistrictState(districtId);
-        if (districtId !== 'all') {
-          setSelectedDistrictsState([districtId]);
+        const regionId = findRegionByLocation(storedLocation.city, storedLocation.district);
+        setSelectedDistrictState(regionId);
+        if (regionId !== 'all') {
+          setSelectedDistrictsState([regionId]);
         }
         return;
       }
@@ -127,11 +59,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         setIsDetecting(true);
         try {
           const location = await detectLocationByIP();
-          const districtId = findDistrictByLocation(location.city, location.district);
+          const regionId = findRegionByLocation(location.city, location.district);
           
-          if (districtId !== 'all') {
-            setSelectedDistrictState(districtId);
-            setSelectedDistrictsState([districtId]);
+          if (regionId !== 'all') {
+            setSelectedDistrictState(regionId);
+            setSelectedDistrictsState([regionId]);
             saveLocationToStorage(location);
           }
           
@@ -184,11 +116,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
     setIsDetecting(true);
     try {
       const location = await detectLocationByBrowser();
-      const districtId = findDistrictByLocation(location.city, location.district);
+      const regionId = findRegionByLocation(location.city, location.district);
       
-      if (districtId !== 'all') {
-        setSelectedDistrictState(districtId);
-        setSelectedDistrictsState([districtId]);
+      if (regionId !== 'all') {
+        setSelectedDistrictState(regionId);
+        setSelectedDistrictsState([regionId]);
         saveLocationToStorage(location);
       }
     } catch (error) {
@@ -205,7 +137,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       selectedDistricts, 
       setSelectedDistricts, 
       toggleDistrict,
-      districts: DISTRICTS, 
+      districts: ALL_DISTRICTS, 
       isDetecting, 
       requestGeolocation 
     }}>

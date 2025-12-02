@@ -5,95 +5,78 @@ export interface Settlement {
 }
 
 export const SETTLEMENTS: Settlement[] = [
-  { id: 'yakutsk', name: 'г. Якутск', districtId: 'yakutsk' },
-  
-  { id: 'aldan', name: 'г. Алдан', districtId: 'aldan' },
-  { id: 'tommot', name: 'пгт. Tommot', districtId: 'aldan' },
-  { id: 'khатыstыrах', name: 'с. Хатыstырах', districtId: 'aldan' },
-  
-  { id: 'amga', name: 'с. Амга', districtId: 'amga' },
-  { id: 'bolshaya-oimyakon', name: 'с. Большая Оймякон', districtId: 'amga' },
-  
-  { id: 'saskylakh', name: 'пгт. Саскылах', districtId: 'anabar' },
-  { id: 'yuryung-khaya', name: 'с. Юрюнг-Хая', districtId: 'anabar' },
-  
-  { id: 'tiksi', name: 'пгт. Тикси', districtId: 'bulun' },
-  { id: 'bulun', name: 'с. Булун', districtId: 'bulun' },
-  { id: 'bykovsky', name: 'с. Быковский', districtId: 'bulun' },
-  
-  { id: 'zyryanka', name: 'пгт. Зырянка', districtId: 'verkhnekolymsk' },
-  { id: 'nelemnoe', name: 'с. Нелемное', districtId: 'verkhnekolymsk' },
-  
-  { id: 'verkhnevilyuisk', name: 'с. Верхневилюйск', districtId: 'verkhnevilyuisk' },
-  { id: 'kysyl-syr', name: 'с. Кысыл-Сыр', districtId: 'verkhnevilyuisk' },
-  
-  { id: 'verkhoyansk', name: 'пгт. Верхоянск', districtId: 'verkhoyansk' },
-  { id: 'batagay', name: 'пгт. Батагай', districtId: 'verkhoyansk' },
-  
-  { id: 'vilyuisk', name: 'г. Вилюйск', districtId: 'vilyuisk' },
-  { id: 'suntar', name: 'пгт. Сунтар', districtId: 'vilyuisk' },
-  { id: 'nyurba', name: 'г. Нюрба', districtId: 'nyurbinsky' },
-  
-  { id: 'berdigestyakh', name: 'с. Бердигестях', districtId: 'gorny' },
-  { id: 'bestyakh', name: 'с. Бестях', districtId: 'gorny' },
-  
-  { id: 'zhigansk', name: 'с. Жиганск', districtId: 'zhigansky' },
-  { id: 'kyusyur', name: 'с. Кюсюр', districtId: 'zhigansky' },
-  
-  { id: 'sangar', name: 'пгт. Сангар', districtId: 'kobyai' },
-  { id: 'sebyan-kyuyol', name: 'с. Себян-Кюёль', districtId: 'kobyai' },
-  
-  { id: 'lensk', name: 'г. Ленск', districtId: 'lensk' },
-  { id: 'peleduy', name: 'с. Пеледуй', districtId: 'lensk' },
-  { id: 'vitim', name: 'с. Витим', districtId: 'lensk' },
-  
-  { id: 'maya', name: 'с. Майя', districtId: 'megino-kangalassky' },
-  { id: 'nizhny-bestyakh', name: 'с. Нижний Бестях', districtId: 'megino-kangalassky' },
-  
-  { id: 'mirny', name: 'г. Мирный', districtId: 'mirny' },
-  { id: 'udachny', name: 'пгт. Удачный', districtId: 'mirny' },
-  { id: 'aikhal', name: 'пгт. Айхал', districtId: 'mirny' },
-  { id: 'chernyshevsky', name: 'пгт. Чернышевский', districtId: 'mirny' },
-  
-  { id: 'khonuu', name: 'с. Хонуу', districtId: 'momsky' },
-  { id: 'sobolokh', name: 'с. Соболох', districtId: 'momsky' },
-  
-  { id: 'namtsy', name: 'с. Намцы', districtId: 'namsky' },
-  { id: 'bytantay', name: 'с. Бытантай', districtId: 'namsky' },
-  
-  { id: 'neryungri', name: 'г. Нерюнгри', districtId: 'neryungri' },
-  { id: 'berkakit', name: 'пгт. Беркакит', districtId: 'neryungri' },
-  { id: 'chulman', name: 'пгт. Чульман', districtId: 'neryungri' },
-  { id: 'serebryany-bor', name: 'пгт. Серебряный Бор', districtId: 'neryungri' },
-  
-  { id: 'chersky', name: 'пгт. Черский', districtId: 'nizhnekolymsk' },
-  { id: 'nizhnеkolymsk', name: 'с. Нижнеколымск', districtId: 'nizhnekolymsk' },
-  
-  { id: 'ust-nera', name: 'пгт. Усть-Нера', districtId: 'oymyakon' },
-  { id: 'tomtor', name: 'с. Томтор', districtId: 'oymyakon' },
-  { id: 'oymyakon', name: 'с. Оймякон', districtId: 'oymyakon' },
-  
-  { id: 'olekminsk', name: 'г. Олёкминск', districtId: 'olekminsk' },
-  { id: 'tас', name: 'с. Тас', districtId: 'olekminsk' },
-  
-  { id: 'borогontsy', name: 'с. Борогонцы', districtId: 'ust-aldan' },
-  { id: 'khamagatta', name: 'с. Хамагатта', districtId: 'ust-aldan' },
-  
-  { id: 'ust-maya', name: 'пгт. Усть-Мая', districtId: 'ust-maya' },
-  { id: 'yugaryonok', name: 'с. Югарёнок', districtId: 'ust-maya' },
-  
-  { id: 'deputatsky', name: 'пгт. Депутатский', districtId: 'ust-yan' },
-  { id: 'kazachye', name: 'с. Казачье', districtId: 'ust-yan' },
-  
-  { id: 'pokrovsk', name: 'г. Покровск', districtId: 'khangalassky' },
-  { id: 'magan', name: 'с. Маган', districtId: 'khangalassky' },
-  { id: 'nizhny-bestyakh', name: 'с. Нижний Бестях', districtId: 'khangalassky' },
-  
-  { id: 'churapcha', name: 'с. Чурапча', districtId: 'churapcha' },
-  { id: 'ytyk-kel', name: 'с. Ытык-Кёль', districtId: 'churapcha' },
-  
-  { id: 'batagay-alyta', name: 'с. Батагай-Алыта', districtId: 'eveno-bytantai' },
-  { id: 'dzharbardakh', name: 'с. Джарбардах', districtId: 'eveno-bytantai' },
+  { id: 'moscow', name: 'г. Москва', districtId: 'moscow' },
+  { id: 'spb', name: 'г. Санкт-Петербург', districtId: 'spb' },
+  { id: 'novosibirsk', name: 'г. Новосибирск', districtId: 'novosibirsk' },
+  { id: 'yekaterinburg', name: 'г. Екатеринбург', districtId: 'sverdlovsk' },
+  { id: 'kazan', name: 'г. Казань', districtId: 'tatarstan' },
+  { id: 'nizhny-novgorod', name: 'г. Нижний Новгород', districtId: 'nizhny-novgorod' },
+  { id: 'chelyabinsk', name: 'г. Челябинск', districtId: 'chelyabinsk' },
+  { id: 'samara', name: 'г. Самара', districtId: 'samara' },
+  { id: 'omsk', name: 'г. Омск', districtId: 'omsk' },
+  { id: 'rostov-na-donu', name: 'г. Ростов-на-Дону', districtId: 'rostov' },
+  { id: 'ufa', name: 'г. Уфа', districtId: 'bashkortostan' },
+  { id: 'krasnoyarsk', name: 'г. Красноярск', districtId: 'krasnoyarsk' },
+  { id: 'voronezh', name: 'г. Воронеж', districtId: 'voronezh' },
+  { id: 'perm', name: 'г. Пермь', districtId: 'perm' },
+  { id: 'volgograd', name: 'г. Волгоград', districtId: 'volgograd' },
+  { id: 'krasnodar', name: 'г. Краснодар', districtId: 'krasnodar' },
+  { id: 'saratov', name: 'г. Саратов', districtId: 'saratov' },
+  { id: 'tyumen', name: 'г. Тюмень', districtId: 'tyumen' },
+  { id: 'tolyatti', name: 'г. Тольятти', districtId: 'samara' },
+  { id: 'izhevsk', name: 'г. Ижевск', districtId: 'udmurtia' },
+  { id: 'barnaul', name: 'г. Барнаул', districtId: 'altai-krai' },
+  { id: 'ulyanovsk', name: 'г. Ульяновск', districtId: 'ulyanovsk' },
+  { id: 'irkutsk', name: 'г. Иркутск', districtId: 'irkutsk' },
+  { id: 'khabarovsk', name: 'г. Хабаровск', districtId: 'khabarovsk' },
+  { id: 'yaroslavl', name: 'г. Ярославль', districtId: 'yaroslavl' },
+  { id: 'vladivostok', name: 'г. Владивосток', districtId: 'primorsky' },
+  { id: 'makhachkala', name: 'г. Махачкала', districtId: 'dagestan' },
+  { id: 'tomsk', name: 'г. Томск', districtId: 'tomsk' },
+  { id: 'orenburg', name: 'г. Оренбург', districtId: 'orenburg' },
+  { id: 'kemerovo', name: 'г. Кемерово', districtId: 'kemerovo' },
+  { id: 'novokuznetsk', name: 'г. Новокузнецк', districtId: 'kemerovo' },
+  { id: 'ryazan', name: 'г. Рязань', districtId: 'ryazan' },
+  { id: 'naberezhnye-chelny', name: 'г. Набережные Челны', districtId: 'tatarstan' },
+  { id: 'astrakhan', name: 'г. Астрахань', districtId: 'astrakhan' },
+  { id: 'penza', name: 'г. Пенза', districtId: 'penza' },
+  { id: 'kirov', name: 'г. Киров', districtId: 'kirov' },
+  { id: 'lipetsk', name: 'г. Липецк', districtId: 'lipetsk' },
+  { id: 'cheboksary', name: 'г. Чебоксары', districtId: 'chuvashia' },
+  { id: 'kaliningrad', name: 'г. Калининград', districtId: 'kaliningrad' },
+  { id: 'tula', name: 'г. Тула', districtId: 'tula' },
+  { id: 'kursk', name: 'г. Курск', districtId: 'kursk' },
+  { id: 'stavropol', name: 'г. Ставрополь', districtId: 'stavropol' },
+  { id: 'ulan-ude', name: 'г. Улан-Удэ', districtId: 'buryatia' },
+  { id: 'tver', name: 'г. Тверь', districtId: 'tver' },
+  { id: 'magnitogorsk', name: 'г. Магнитогорск', districtId: 'chelyabinsk' },
+  { id: 'ivanovo', name: 'г. Иваново', districtId: 'ivanovo' },
+  { id: 'bryansk', name: 'г. Брянск', districtId: 'bryansk' },
+  { id: 'belgorod', name: 'г. Белгород', districtId: 'belgorod' },
+  { id: 'surgut', name: 'г. Сургут', districtId: 'khanty-mansi' },
+  { id: 'vladimir', name: 'г. Владимир', districtId: 'vladimir' },
+  { id: 'chita', name: 'г. Чита', districtId: 'zabaykalsky' },
+  { id: 'nizhny-tagil', name: 'г. Нижний Тагил', districtId: 'sverdlovsk' },
+  { id: 'arkhangelsk', name: 'г. Архангельск', districtId: 'arkhangelsk' },
+  { id: 'simferopol', name: 'г. Симферополь', districtId: 'crimea' },
+  { id: 'kaluga', name: 'г. Калуга', districtId: 'kaluga' },
+  { id: 'smolensk', name: 'г. Смоленск', districtId: 'smolensk' },
+  { id: 'volzhsky', name: 'г. Волжский', districtId: 'volgograd' },
+  { id: 'yakutsk', name: 'г. Якутск', districtId: 'yakutia' },
+  { id: 'murmansk', name: 'г. Мурманск', districtId: 'murmansk' },
+  { id: 'yuzhno-sakhalinsk', name: 'г. Южно-Сахалинск', districtId: 'sakhalin' },
+  { id: 'petropavlovsk-kamchatsky', name: 'г. Петропавловск-Камчатский', districtId: 'kamchatka' },
+  { id: 'vologda', name: 'г. Вологда', districtId: 'vologda' },
+  { id: 'saransk', name: 'г. Саранск', districtId: 'mordovia' },
+  { id: 'tambov', name: 'г. Тамбов', districtId: 'tambov' },
+  { id: 'vladikavkaz', name: 'г. Владикавказ', districtId: 'north-ossetia' },
+  { id: 'grozny', name: 'г. Грозный', districtId: 'chechnya' },
+  { id: 'kostroma', name: 'г. Кострома', districtId: 'kostroma' },
+  { id: 'petrozavodsk', name: 'г. Петрозаводск', districtId: 'karelia' },
+  { id: 'nizhnevartovsk', name: 'г. Нижневартовск', districtId: 'khanty-mansi' },
+  { id: 'novokuybyshevsk', name: 'г. Новокуйбышевск', districtId: 'samara' },
+  { id: 'syktyvkar', name: 'г. Сыктывкар', districtId: 'komi' },
+  { id: 'yoshkar-ola', name: 'г. Йошкар-Ола', districtId: 'mariy-el' },
 ];
 
 export function findSettlementByName(query: string): Settlement | undefined {
