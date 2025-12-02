@@ -6,6 +6,7 @@ interface ProfileHeaderProps {
   userType: string;
   isVerified: boolean;
   companyName?: string;
+  directorName?: string;
   getInitials: () => string;
   getUserTypeLabel: (type: string) => string;
 }
@@ -39,6 +40,7 @@ export default function ProfileHeader({
   userType, 
   isVerified, 
   companyName,
+  directorName,
   getInitials,
   getUserTypeLabel 
 }: ProfileHeaderProps) {
@@ -56,7 +58,7 @@ export default function ProfileHeader({
               {shortenCompanyName(companyName)}
             </h2>
             <p className="text-muted-foreground mt-1">
-              {firstName} {lastName}
+              {directorName || 'Руководитель не указан'}
             </p>
           </>
         ) : (
