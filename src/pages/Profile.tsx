@@ -318,6 +318,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               formData={formData}
               errors={errors}
               isSaving={isSaving}
+              userType={currentUser.userType}
               onEdit={() => setIsEditing(true)}
               onSave={handleSave}
               onCancel={handleCancel}

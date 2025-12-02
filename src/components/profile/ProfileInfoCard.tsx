@@ -23,6 +23,7 @@ interface ProfileInfoCardProps {
   formData: FormData;
   errors: FormErrors;
   isSaving: boolean;
+  userType?: string;
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -35,18 +36,22 @@ export default function ProfileInfoCard({
   formData,
   errors,
   isSaving,
+  userType,
   onEdit,
   onSave,
   onCancel,
   onInputChange,
 }: ProfileInfoCardProps) {
+  const isLegalEntity = userType === 'legal-entity';
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Основная информация</CardTitle>
-            <CardDescription>Личные данные вашего профиля</CardDescription>
+            <CardDescription>
+              {isLegalEntity ? 'Контактное лицо и данные для связи' : 'Личные данные вашего профиля'}
+            </CardDescription>
           </div>
           {!isEditing && (
             <Button variant="outline" onClick={onEdit}>
