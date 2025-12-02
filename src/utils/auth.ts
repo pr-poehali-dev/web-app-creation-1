@@ -27,7 +27,7 @@ const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d
 const SESSION_STORAGE_KEY = 'currentUser';
 
 const convertUserFromBackend = (backendUser: any): User => {
-  return {
+  const user = {
     id: backendUser.id,
     email: backendUser.email,
     firstName: backendUser.first_name || backendUser.firstName,
@@ -44,6 +44,12 @@ const convertUserFromBackend = (backendUser: any): User => {
     legalAddress: backendUser.legal_address || backendUser.legalAddress,
     createdAt: backendUser.created_at || backendUser.createdAt,
   };
+  
+  if (backendUser.role) {
+    localStorage.setItem('userRole', backendUser.role);
+  }
+  
+  return user;
 };
 
 export const registerUser = async (userData: {
@@ -173,6 +179,8 @@ export const getSession = (): User | null => {
 export const clearSession = (): void => {
   try {
     localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
   } catch (error) {
     console.error('Error clearing session:', error);
   }

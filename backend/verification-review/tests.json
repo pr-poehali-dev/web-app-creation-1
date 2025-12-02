@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Approve verification request",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "body": {
+        "verificationId": 1,
+        "action": "approve"
+      },
+      "expectedStatus": 403,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

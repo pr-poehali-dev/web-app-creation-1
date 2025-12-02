@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "name": "Get pending verifications",
+      "method": "GET",
+      "path": "/?status=pending",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "expectedStatus": 403,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
