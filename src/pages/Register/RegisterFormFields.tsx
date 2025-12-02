@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { FormData, FormErrors } from './types';
 
@@ -12,6 +13,8 @@ interface RegisterFormFieldsProps {
   onInputChange: (field: keyof FormData, value: string) => void;
   onTogglePassword: () => void;
   onToggleConfirmPassword: () => void;
+  onFetchCompanyData?: (inn: string) => void;
+  isFetchingCompany?: boolean;
 }
 
 export default function RegisterFormFields({
@@ -23,6 +26,8 @@ export default function RegisterFormFields({
   onInputChange,
   onTogglePassword,
   onToggleConfirmPassword,
+  onFetchCompanyData,
+  isFetchingCompany = false,
 }: RegisterFormFieldsProps) {
   if (!formData.userType) return null;
 
@@ -44,14 +49,32 @@ export default function RegisterFormFields({
 
           <div className="space-y-2">
             <Label htmlFor="inn">ИНН (10 цифр)</Label>
-            <Input
-              id="inn"
-              value={formData.inn}
-              onChange={(e) => onInputChange('inn', e.target.value)}
-              maxLength={10}
-              className={errors.inn ? 'border-destructive' : ''}
-              disabled={isSubmitting}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="inn"
+                value={formData.inn}
+                onChange={(e) => onInputChange('inn', e.target.value)}
+                maxLength={10}
+                className={errors.inn ? 'border-destructive' : ''}
+                disabled={isSubmitting || isFetchingCompany}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onFetchCompanyData?.(formData.inn)}
+                disabled={isSubmitting || isFetchingCompany || formData.inn.length !== 10}
+              >
+                {isFetchingCompany ? (
+                  <>
+                    <Icon name="Loader2" className="h-4 w-4 animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Search" className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
             {errors.inn && <p className="text-sm text-destructive">{errors.inn}</p>}
           </div>
 

@@ -32,10 +32,59 @@ export default function Register({ onRegister }: RegisterProps) {
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFetchingCompany, setIsFetchingCompany] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const fetchCompanyData = async (inn: string) => {
+    if (inn.length !== 10) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'ИНН должен содержать 10 цифр',
+      });
+      return;
+    }
+
+    setIsFetchingCompany(true);
+
+    try {
+      const response = await fetch(
+        `https://functions.poehali.dev/de7c45a6-d320-45cc-8aca-719530cc640c?inn=${inn}`
+      );
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setFormData({
+          ...formData,
+          companyName: result.data.company_name || formData.companyName,
+          ogrnLegal: result.data.ogrn || formData.ogrnLegal,
+          legalAddress: result.data.legal_address || formData.legalAddress,
+          directorName: result.data.director_name || formData.directorName,
+        });
+        toast({
+          title: 'Успешно',
+          description: 'Данные организации загружены',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка',
+          description: result.error || 'Организация не найдена',
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Не удалось загрузить данные организации',
+      });
+    } finally {
+      setIsFetchingCompany(false);
+    }
+  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData({ ...formData, [field]: value });
@@ -233,6 +282,8 @@ export default function Register({ onRegister }: RegisterProps) {
               onInputChange={handleInputChange}
               onTogglePassword={() => setShowPassword(!showPassword)}
               onToggleConfirmPassword={() => setShowConfirmPassword(!showConfirmPassword)}
+              onFetchCompanyData={fetchCompanyData}
+              isFetchingCompany={isFetchingCompany}
             />
 
             <div className="flex gap-4">
