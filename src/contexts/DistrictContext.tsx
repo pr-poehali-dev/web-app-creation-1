@@ -143,8 +143,43 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   const requestGeolocation = async () => {
     setIsDetecting(true);
     try {
-      const location = await detectLocationByBrowser();
-      const regionId = findRegionByLocation(location.city, location.district);
+      let location = await detectLocationByBrowser();
+      
+      // Если браузерная геолокация не работает, используем IP
+      if (location.city === 'Не определен' || location.source === 'default') {
+        console.log('Browser geolocation failed, trying IP detection...');
+        location = await detectLocationByIP();
+      }
+      
+      console.log('Location detected:', location);
+      
+      // Если district это ID района, получаем регион из него
+      let regionId = 'all';
+      let districtToSelect = null;
+      
+      if (location.district && location.district !== 'Все районы') {
+        // Проверяем, является ли district ID-ом района
+        const districtData = DISTRICTS.find(d => d.id === location.district);
+        if (districtData) {
+          regionId = districtData.regionId;
+          districtToSelect = districtData;
+          console.log('Found district by ID:', districtData);
+        } else {
+          // Если не нашли по ID, ищем по названию через старую функцию
+          regionId = findRegionByLocation(location.city, location.district);
+          if (regionId !== 'all') {
+            const district = findDistrictByName(location.district, regionId);
+            if (district) {
+              districtToSelect = district;
+            }
+          }
+        }
+      } else {
+        // Используем старую логику поиска по городу
+        regionId = findRegionByLocation(location.city, location.district);
+      }
+      
+      console.log('Selected region ID:', regionId);
       
       if (regionId !== 'all') {
         setSelectedRegionState(regionId);
@@ -154,13 +189,15 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         const districts = getDistrictsByRegion(regionId);
         setAvailableDistricts(districts);
         
-        const district = findDistrictByName(location.district, regionId);
-        if (district) {
-          setSelectedDistrictsState([district.id]);
+        if (districtToSelect) {
+          setSelectedDistrictsState([districtToSelect.id]);
+          console.log('Selected district:', districtToSelect.name);
         }
+      } else {
+        console.log('Could not determine region from location:', location);
       }
     } catch (error) {
-      console.error('Browser geolocation failed:', error);
+      console.error('Geolocation failed:', error);
     } finally {
       setIsDetecting(false);
     }

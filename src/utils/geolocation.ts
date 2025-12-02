@@ -76,7 +76,6 @@ export const detectLocationByIP = async (): Promise<LocationData> => {
 export const detectLocationByBrowser = (): Promise<LocationData> => {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
-      console.log('Geolocation not supported');
       resolve({
         city: 'Не определен',
         district: 'Все районы',
@@ -85,18 +84,14 @@ export const detectLocationByBrowser = (): Promise<LocationData> => {
       return;
     }
 
-    console.log('Requesting geolocation...');
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        console.log('Got coordinates:', { latitude, longitude });
         
         // Сначала проверяем наслеги (более точное определение для Якутии)
         const nasleg = findNaslegByCoordinates(latitude, longitude);
-        console.log('Found nasleg:', nasleg);
         
         if (nasleg) {
-          console.log('Using nasleg data:', { city: nasleg.name, district: nasleg.districtId });
           resolve({
             city: nasleg.name,
             district: nasleg.districtId,
@@ -108,10 +103,8 @@ export const detectLocationByBrowser = (): Promise<LocationData> => {
         
         // Если наслег не найден, ищем по общим поселениям
         const settlement = findSettlementByCoordinates(latitude, longitude);
-        console.log('Found settlement:', settlement);
         
         if (settlement) {
-          console.log('Using settlement data:', { city: settlement.name, district: settlement.districtId });
           resolve({
             city: settlement.name,
             district: settlement.districtId || 'Все районы',
@@ -155,8 +148,7 @@ export const detectLocationByBrowser = (): Promise<LocationData> => {
         }
       },
       (error) => {
-        console.error('Ошибка получения геолокации:', error);
-        console.log('Error code:', error.code, 'Message:', error.message);
+        console.error('Ошибка геолокации (code ' + error.code + '):', error.message);
         resolve({
           city: 'Не определен',
           district: 'Все районы',

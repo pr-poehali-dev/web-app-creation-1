@@ -146,12 +146,9 @@ export const REGION_KEYWORDS: Record<string, string[]> = {
 export function findRegionByLocation(city: string, region: string): string {
   const searchText = `${city} ${region}`.toLowerCase();
   
-  console.log('Finding region for:', { city, region, searchText });
-  
   for (const [regionId, keywords] of Object.entries(REGION_KEYWORDS)) {
     for (const keyword of keywords) {
       if (searchText.includes(keyword.toLowerCase())) {
-        console.log('Found region:', regionId, 'by keyword:', keyword);
         return regionId;
       }
     }
@@ -163,11 +160,9 @@ export function findRegionByLocation(city: string, region: string): string {
   );
   
   if (regionData) {
-    console.log('Found region by name match:', regionData.id);
     return regionData.id;
   }
   
-  console.log('No region found, returning all');
   return 'all';
 }
 
