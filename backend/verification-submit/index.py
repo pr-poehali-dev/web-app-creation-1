@@ -78,39 +78,47 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if verification_type == 'legal_entity':
         company_name = body_data.get('companyName', '')
         inn = body_data.get('inn', '')
+        registration_cert_url = body_data.get('registrationCertUrl')
+        agreement_form_url = body_data.get('agreementFormUrl')
         
         cursor.execute('''
             INSERT INTO user_verifications 
-            (user_id, verification_type, phone, company_name, inn, status)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (user_id) 
             DO UPDATE SET 
                 verification_type = EXCLUDED.verification_type,
                 phone = EXCLUDED.phone,
                 company_name = EXCLUDED.company_name,
                 inn = EXCLUDED.inn,
+                registration_cert_url = EXCLUDED.registration_cert_url,
+                agreement_form_url = EXCLUDED.agreement_form_url,
                 status = EXCLUDED.status,
                 updated_at = CURRENT_TIMESTAMP
             RETURNING id
-        ''', (user_id, verification_type, phone, company_name, inn, 'pending'))
+        ''', (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, 'pending'))
     else:
         registration_address = body_data.get('registrationAddress', '')
         actual_address = body_data.get('actualAddress', '')
+        passport_scan_url = body_data.get('passportScanUrl')
+        utility_bill_url = body_data.get('utilityBillUrl')
         
         cursor.execute('''
             INSERT INTO user_verifications 
-            (user_id, verification_type, phone, registration_address, actual_address, status)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, utility_bill_url, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (user_id) 
             DO UPDATE SET 
                 verification_type = EXCLUDED.verification_type,
                 phone = EXCLUDED.phone,
                 registration_address = EXCLUDED.registration_address,
                 actual_address = EXCLUDED.actual_address,
+                passport_scan_url = EXCLUDED.passport_scan_url,
+                utility_bill_url = EXCLUDED.utility_bill_url,
                 status = EXCLUDED.status,
                 updated_at = CURRENT_TIMESTAMP
             RETURNING id
-        ''', (user_id, verification_type, phone, registration_address, actual_address, 'pending'))
+        ''', (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, utility_bill_url, 'pending'))
     
     cursor.execute('''
         UPDATE users 

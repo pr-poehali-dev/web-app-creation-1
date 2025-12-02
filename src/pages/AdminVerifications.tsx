@@ -268,28 +268,56 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
                             <Label className="text-sm font-medium mb-2 block">Документы</Label>
                             <div className="flex flex-wrap gap-2">
                               {verification.passportScanUrl && (
-                                <Badge variant="outline">
-                                  <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                  Паспорт
-                                </Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <a href={verification.passportScanUrl} target="_blank" rel="noopener noreferrer">
+                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
+                                    Паспорт
+                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
+                                  </a>
+                                </Button>
                               )}
                               {verification.utilityBillUrl && (
-                                <Badge variant="outline">
-                                  <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                  Квитанция
-                                </Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <a href={verification.utilityBillUrl} target="_blank" rel="noopener noreferrer">
+                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
+                                    Квитанция
+                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
+                                  </a>
+                                </Button>
                               )}
                               {verification.registrationCertUrl && (
-                                <Badge variant="outline">
-                                  <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                  Свидетельство
-                                </Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <a href={verification.registrationCertUrl} target="_blank" rel="noopener noreferrer">
+                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
+                                    Свидетельство
+                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
+                                  </a>
+                                </Button>
                               )}
                               {verification.agreementFormUrl && (
-                                <Badge variant="outline">
-                                  <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                  Соглашение
-                                </Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  asChild
+                                >
+                                  <a href={verification.agreementFormUrl} target="_blank" rel="noopener noreferrer">
+                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
+                                    Соглашение
+                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
+                                  </a>
+                                </Button>
                               )}
                             </div>
                           </div>

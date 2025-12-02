@@ -7,12 +7,16 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import type { VerificationType, VerificationFormData } from '@/types/verification';
+import { uploadMultipleFiles } from '@/utils/fileUpload';
 
 export default function VerificationPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadTotal, setUploadTotal] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [formData, setFormData] = useState<VerificationFormData>({
@@ -40,8 +44,43 @@ export default function VerificationPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setUploadProgress(0);
+    setUploadTotal(0);
 
     try {
+      const userId = localStorage.getItem('userId') || '';
+      const filesToUpload: { file: File; type: string }[] = [];
+
+      if (formData.verificationType === 'legal_entity') {
+        if (formData.registrationCert) {
+          filesToUpload.push({ file: formData.registrationCert, type: 'registration_cert' });
+        }
+        if (formData.agreementForm) {
+          filesToUpload.push({ file: formData.agreementForm, type: 'agreement_form' });
+        }
+      } else {
+        if (formData.passportScan) {
+          filesToUpload.push({ file: formData.passportScan, type: 'passport_scan' });
+        }
+        if (formData.utilityBill) {
+          filesToUpload.push({ file: formData.utilityBill, type: 'utility_bill' });
+        }
+      }
+
+      let uploadedUrls: Record<string, string> = {};
+      
+      if (filesToUpload.length > 0) {
+        setUploadTotal(filesToUpload.length);
+        uploadedUrls = await uploadMultipleFiles(
+          filesToUpload,
+          userId,
+          (current, total) => {
+            setUploadProgress(current);
+            setUploadTotal(total);
+          }
+        );
+      }
+
       const dataToSend: any = {
         verificationType: formData.verificationType,
         phone: formData.phone,
@@ -50,15 +89,19 @@ export default function VerificationPage() {
       if (formData.verificationType === 'legal_entity') {
         dataToSend.companyName = formData.companyName || '';
         dataToSend.inn = formData.inn || '';
+        dataToSend.registrationCertUrl = uploadedUrls.registration_cert || null;
+        dataToSend.agreementFormUrl = uploadedUrls.agreement_form || null;
       } else {
         dataToSend.registrationAddress = formData.registrationAddress || '';
         dataToSend.actualAddress = formData.actualAddress || '';
+        dataToSend.passportScanUrl = uploadedUrls.passport_scan || null;
+        dataToSend.utilityBillUrl = uploadedUrls.utility_bill || null;
       }
 
       const response = await fetch('https://functions.poehali.dev/afc94607-0379-45a9-bc60-262eded2b980', {
         method: 'POST',
         headers: {
-          'X-User-Id': localStorage.getItem('userId') || '',
+          'X-User-Id': userId,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(dataToSend),
@@ -77,6 +120,8 @@ export default function VerificationPage() {
       setError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
       setLoading(false);
+      setUploadProgress(0);
+      setUploadTotal(0);
     }
   };
 
@@ -108,6 +153,16 @@ export default function VerificationPage() {
               <Alert variant="destructive">
                 <Icon name="AlertCircle" className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {loading && uploadTotal > 0 && (
+              <Alert>
+                <Icon name="Upload" className="h-4 w-4" />
+                <AlertDescription>
+                  Загрузка файлов: {uploadProgress} из {uploadTotal}
+                  <Progress value={(uploadProgress / uploadTotal) * 100} className="mt-2" />
+                </AlertDescription>
               </Alert>
             )}
 
