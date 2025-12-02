@@ -198,7 +198,9 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         setAvailableDistricts(districts);
         
         if (districtToSelect) {
-          setSelectedDistrictsState([districtToSelect.id]);
+          const districtIds = [districtToSelect.id];
+          setSelectedDistrictsState(districtIds);
+          localStorage.setItem('selectedDistricts', JSON.stringify(districtIds));
           console.log('Selected district:', districtToSelect.name);
         }
       } else {
