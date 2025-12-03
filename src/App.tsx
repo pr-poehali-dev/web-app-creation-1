@@ -29,6 +29,12 @@ import VerificationPage from "./pages/VerificationPage";
 import AdminVerifications from "./pages/AdminVerifications";
 import AdminLogin from "./pages/AdminLogin";
 import AdminChangePassword from "./pages/AdminChangePassword";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminOffers from "./pages/AdminOffers";
+import AdminRequests from "./pages/AdminRequests";
+import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminSettings from "./pages/AdminSettings";
 import TradingPlatform from "./pages/TradingPlatform";
 import CreateContract from "./pages/CreateContract";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
@@ -78,6 +84,12 @@ const App = () => {
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/verification" element={<VerificationPage />} />
             <Route path="/admin" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/admin/users" element={<AdminUsers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/admin/offers" element={<AdminOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/admin/requests" element={<AdminRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/admin/settings" element={<AdminSettings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/verifications" element={<AdminVerifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/change-password" element={<AdminChangePassword />} />
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

@@ -52,7 +52,7 @@ export default function AdminLogin() {
           localStorage.setItem('userId', userId.toString());
           localStorage.setItem('userRole', userRole);
           localStorage.setItem('adminSession', JSON.stringify({ login, timestamp: Date.now() }));
-          navigate('/admin/verifications');
+          navigate('/admin/dashboard');
           toast({
             title: 'Успешно',
             description: 'Добро пожаловать в панель администратора',
