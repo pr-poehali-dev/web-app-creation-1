@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('');
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function AdminLogin() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email || !password) {
+    if (!login || !password) {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
@@ -37,7 +37,7 @@ export default function AdminLogin() {
         },
         body: JSON.stringify({
           action: 'login',
-          email,
+          email: login,
           password,
         }),
       });
@@ -48,7 +48,7 @@ export default function AdminLogin() {
         const userRole = localStorage.getItem('userRole');
         
         if (userRole === 'admin') {
-          localStorage.setItem('adminSession', JSON.stringify({ email, timestamp: Date.now() }));
+          localStorage.setItem('adminSession', JSON.stringify({ login, timestamp: Date.now() }));
           navigate('/admin/verifications');
           toast({
             title: 'Успешно',
@@ -104,15 +104,15 @@ export default function AdminLogin() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email администратора</Label>
+              <Label htmlFor="login">Логин</Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
+                id="login"
+                name="login"
+                type="text"
+                placeholder="admin"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
+                autoComplete="username"
               />
             </div>
 
