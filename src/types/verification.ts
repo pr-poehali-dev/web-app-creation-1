@@ -34,9 +34,10 @@ export interface VerificationFormData {
   passportRegistration?: File | null;
   utilityBill?: File | null;
   
-  // Для юридических лиц
+  // Для юридических лиц и ИП
   companyName?: string;
   inn?: string;
+  ogrnip?: string;
   registrationCert?: File | null;
   agreementForm?: File | null;
 }

@@ -61,7 +61,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cursor = conn.cursor()
     
     cursor.execute('''
-        SELECT verification_status 
+        SELECT verification_status, user_type, phone, company_name, inn, ogrnip
         FROM users 
         WHERE id = %s
     ''', (user_id,))
@@ -82,6 +82,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     verification_status = result[0] if result[0] else 'not_verified'
+    user_type = result[1] if len(result) > 1 else None
+    phone = result[2] if len(result) > 2 else None
+    company_name = result[3] if len(result) > 3 else None
+    inn = result[4] if len(result) > 4 else None
+    ogrnip = result[5] if len(result) > 5 else None
     
     return {
         'statusCode': 200,
@@ -91,7 +96,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         },
         'body': json.dumps({
             'verificationStatus': verification_status,
-            'isVerified': verification_status == 'verified'
+            'isVerified': verification_status == 'verified',
+            'userType': user_type,
+            'phone': phone,
+            'companyName': company_name,
+            'inn': inn,
+            'ogrnip': ogrnip
         }),
         'isBase64Encoded': False
     }
