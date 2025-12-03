@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import type { VerificationType, VerificationFormData } from '@/types/verification';
 import { uploadMultipleFiles } from '@/utils/fileUpload';
+import AddressAutocomplete from '@/components/AddressAutocomplete';
 
 export default function VerificationPage() {
   const navigate = useNavigate();
@@ -299,16 +299,14 @@ export default function VerificationPage() {
                   </p>
                 </div>
 
-                <div>
-                  <Label htmlFor="registrationAddress">Адрес регистрации (прописки) *</Label>
-                  <Textarea
-                    id="registrationAddress"
-                    value={formData.registrationAddress}
-                    onChange={(e) => handleInputChange('registrationAddress', e.target.value)}
-                    placeholder="Введите адрес регистрации"
-                    required
-                  />
-                </div>
+                <AddressAutocomplete
+                  id="registrationAddress"
+                  label="Адрес регистрации (прописки)"
+                  value={formData.registrationAddress || ''}
+                  onChange={(value) => handleInputChange('registrationAddress', value)}
+                  placeholder="Начните вводить адрес"
+                  required
+                />
 
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -329,16 +327,14 @@ export default function VerificationPage() {
                 </div>
 
                 {!formData.addressesMatch && (
-                  <div>
-                    <Label htmlFor="actualAddress">Фактический адрес проживания *</Label>
-                    <Textarea
-                      id="actualAddress"
-                      value={formData.actualAddress}
-                      onChange={(e) => handleInputChange('actualAddress', e.target.value)}
-                      placeholder="Введите фактический адрес"
-                      required
-                    />
-                  </div>
+                  <AddressAutocomplete
+                    id="actualAddress"
+                    label="Фактический адрес проживания"
+                    value={formData.actualAddress || ''}
+                    onChange={(value) => handleInputChange('actualAddress', value)}
+                    placeholder="Начните вводить адрес"
+                    required
+                  />
                 )}
 
                 {!formData.addressesMatch && (
