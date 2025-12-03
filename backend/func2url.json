@@ -1,5 +1,6 @@
 {
-  "test-login": "https://functions.poehali.dev/7aeaa105-3ccd-464e-b8ed-2fa1035d4b70",
+  "contracts-create": "https://functions.poehali.dev/1eb3dd30-04c6-4570-97ff-73c5403573f5",
+  "contracts-list": "https://functions.poehali.dev/f1e9dea3-13a0-488b-a042-58b89a19b204",
   "admin-change-password": "https://functions.poehali.dev/eae49dc4-a843-4dc0-9ec2-1a6f326d2e90",
   "upload-document": "https://functions.poehali.dev/b7dd4633-d02b-45c1-bef3-e42a0fbfa170",
   "verification-review": "https://functions.poehali.dev/6054aed7-d9a1-4b6c-a98d-5a54e058be0b",

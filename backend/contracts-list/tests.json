@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Get contracts list",
+      "method": "GET",
+      "path": "/?status=open",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "contracts": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -102,6 +102,15 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             Аукцион
           </Link>
           <Link
+            to="/trading"
+            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+          >
+            <span className="flex items-center gap-1">
+              Контракты
+              <Badge variant="secondary" className="text-xs">Новое</Badge>
+            </span>
+          </Link>
+          <Link
             to="/about"
             className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
