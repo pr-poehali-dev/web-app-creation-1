@@ -75,7 +75,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
 
     const checkVerification = async () => {
       try {
-        const userId = localStorage.getItem('userId');
+        const userId = currentUser.id?.toString() || localStorage.getItem('userId');
         if (!userId) {
           navigate('/login');
           return;

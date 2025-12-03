@@ -53,7 +53,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
 
     const checkVerification = async () => {
       try {
-        const userId = localStorage.getItem('userId');
+        const userId = currentUser.id?.toString() || localStorage.getItem('userId');
         if (!userId) {
           navigate('/login');
           return;

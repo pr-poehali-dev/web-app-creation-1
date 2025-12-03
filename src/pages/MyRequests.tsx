@@ -131,7 +131,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
 
     const checkVerification = async () => {
       try {
-        const userId = localStorage.getItem('userId');
+        const userId = currentUser.id?.toString() || localStorage.getItem('userId');
         if (!userId) {
           navigate('/login');
           return;
