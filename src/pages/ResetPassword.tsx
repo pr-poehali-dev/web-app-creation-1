@@ -131,11 +131,11 @@ export default function ResetPassword() {
               <Button
                 type="button"
                 variant="link"
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/')}
                 disabled={isSubmitting}
               >
                 <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-                Вернуться к входу
+                Вернуться на главную
               </Button>
             </div>
           </form>
