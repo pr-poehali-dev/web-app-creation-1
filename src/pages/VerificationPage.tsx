@@ -4,15 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
 import type { VerificationType, VerificationFormData } from '@/types/verification';
 import { uploadMultipleFiles } from '@/utils/fileUpload';
-import AddressAutocomplete from '@/components/AddressAutocomplete';
 import AgreementDialog from '@/components/AgreementDialog';
+import VerificationTypeSelector from '@/components/verification/VerificationTypeSelector';
+import LegalEntityForm from '@/components/verification/LegalEntityForm';
+import EntrepreneurForm from '@/components/verification/EntrepreneurForm';
+import IndividualForm from '@/components/verification/IndividualForm';
 
 export default function VerificationPage() {
   const navigate = useNavigate();
@@ -294,32 +295,10 @@ export default function VerificationPage() {
               </Alert>
             )}
 
-            <div className="space-y-3">
-              <Label>Тип участника *</Label>
-              <RadioGroup
-                value={formData.verificationType}
-                onValueChange={(value) => handleInputChange('verificationType', value as VerificationType)}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="individual" id="individual" />
-                  <Label htmlFor="individual" className="font-normal cursor-pointer">
-                    Самозанятый (физическое лицо)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="self_employed" id="self_employed" />
-                  <Label htmlFor="self_employed" className="font-normal cursor-pointer">
-                    ИП (индивидуальный предприниматель)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="legal_entity" id="legal_entity" />
-                  <Label htmlFor="legal_entity" className="font-normal cursor-pointer">
-                    Юридическое лицо
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
+            <VerificationTypeSelector
+              value={formData.verificationType}
+              onChange={(value) => handleInputChange('verificationType', value)}
+            />
 
             <div>
               <Label htmlFor="phone">Номер телефона *</Label>
@@ -337,240 +316,25 @@ export default function VerificationPage() {
             </div>
 
             {formData.verificationType === 'legal_entity' ? (
-              <>
-                <div>
-                  <Label htmlFor="companyName">Название организации *</Label>
-                  <Input
-                    id="companyName"
-                    value={formData.companyName}
-                    onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    placeholder="ООО «Пример»"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="inn">ИНН *</Label>
-                  <Input
-                    id="inn"
-                    value={formData.inn}
-                    onChange={(e) => handleInputChange('inn', e.target.value)}
-                    placeholder="1234567890"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="registrationCert">Свидетельство о регистрации *</Label>
-                  <Input
-                    id="registrationCert"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => handleFileChange('registrationCert', e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Загрузите скан-копию свидетельства о регистрации юридического лица
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="agreementForm">Форма соглашения с ЕРТТП *</Label>
-                  <Input
-                    id="agreementForm"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => handleFileChange('agreementForm', e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Загрузите заполненную форму с печатью и подписью
-                  </p>
-                </div>
-              </>
+              <LegalEntityForm
+                formData={formData}
+                onInputChange={handleInputChange}
+                onFileChange={handleFileChange}
+              />
             ) : formData.verificationType === 'self_employed' ? (
-              <>
-                <div>
-                  <Label htmlFor="inn">ИНН *</Label>
-                  <Input
-                    id="inn"
-                    value={formData.inn}
-                    onChange={(e) => handleInputChange('inn', e.target.value)}
-                    placeholder="123456789012"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="ogrnip">ОГРНИП *</Label>
-                  <Input
-                    id="ogrnip"
-                    value={formData.ogrnip}
-                    onChange={(e) => handleInputChange('ogrnip', e.target.value)}
-                    placeholder="123456789012345"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="passportScan">Лицевая сторона паспорта *</Label>
-                  <Input
-                    id="passportScan"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => handleFileChange('passportScan', e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Загрузите фото или скан лицевой стороны паспорта
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="passportRegistration">Страница с отметкой о регистрации *</Label>
-                  <Input
-                    id="passportRegistration"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => handleFileChange('passportRegistration', e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Загрузите страницу паспорта с отметкой о регистрации
-                  </p>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="addressesMatch"
-                    checked={formData.addressesMatch}
-                    onCheckedChange={(checked) => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        addressesMatch: checked as boolean,
-                        actualAddress: checked ? '' : prev.actualAddress,
-                        utilityBill: checked ? null : prev.utilityBill
-                      }));
-                    }}
-                  />
-                  <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
-                    Фактический адрес проживания совпадает с адресом прописки
-                  </Label>
-                </div>
-
-                {!formData.addressesMatch && (
-                  <AddressAutocomplete
-                    id="actualAddress"
-                    label="Фактический адрес проживания"
-                    value={formData.actualAddress || ''}
-                    onChange={(value) => handleInputChange('actualAddress', value)}
-                    placeholder="Начните вводить адрес"
-                    required
-                  />
-                )}
-
-                {!formData.addressesMatch && (
-                  <div>
-                    <Label htmlFor="utilityBill">Оплаченная квитанция *</Label>
-                    <Input
-                      id="utilityBill"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileChange('utilityBill', e.target.files?.[0] || null)}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Загрузите квитанцию для подтверждения адреса проживания
-                    </p>
-                  </div>
-                )}
-              </>
+              <EntrepreneurForm
+                formData={formData}
+                onInputChange={handleInputChange}
+                onFileChange={handleFileChange}
+                onFormDataChange={setFormData}
+              />
             ) : (
-              <>
-                <div>
-                  <Label htmlFor="inn">ИНН *</Label>
-                  <Input
-                    id="inn"
-                    value={formData.inn}
-                    onChange={(e) => handleInputChange('inn', e.target.value)}
-                    placeholder="123456789012"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="passportScan">Лицевая сторона паспорта *</Label>
-                  <Input
-                    id="passportScan"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => handleFileChange('passportScan', e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Загрузите фото или скан лицевой стороны паспорта
-                  </p>
-                </div>
-
-                <div>
-                  <Label htmlFor="passportRegistration">Страница с отметкой о регистрации *</Label>
-                  <Input
-                    id="passportRegistration"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => handleFileChange('passportRegistration', e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Загрузите страницу паспорта с отметкой о регистрации
-                  </p>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="addressesMatch"
-                    checked={formData.addressesMatch}
-                    onCheckedChange={(checked) => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        addressesMatch: checked as boolean,
-                        actualAddress: checked ? '' : prev.actualAddress,
-                        utilityBill: checked ? null : prev.utilityBill
-                      }));
-                    }}
-                  />
-                  <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
-                    Фактический адрес проживания совпадает с адресом прописки
-                  </Label>
-                </div>
-
-                {!formData.addressesMatch && (
-                  <AddressAutocomplete
-                    id="actualAddress"
-                    label="Фактический адрес проживания"
-                    value={formData.actualAddress || ''}
-                    onChange={(value) => handleInputChange('actualAddress', value)}
-                    placeholder="Начните вводить адрес"
-                    required
-                  />
-                )}
-
-                {!formData.addressesMatch && (
-                  <div>
-                    <Label htmlFor="utilityBill">Оплаченная квитанция *</Label>
-                    <Input
-                      id="utilityBill"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileChange('utilityBill', e.target.files?.[0] || null)}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Загрузите квитанцию для подтверждения адреса проживания
-                    </p>
-                  </div>
-                )}
-              </>
+              <IndividualForm
+                formData={formData}
+                onInputChange={handleInputChange}
+                onFileChange={handleFileChange}
+                onFormDataChange={setFormData}
+              />
             )}
 
             <Alert>
@@ -591,7 +355,6 @@ export default function VerificationPage() {
         open={showAgreement}
         onOpenChange={setShowAgreement}
         onAccept={handleAgreementAccept}
-        verificationType={formData.verificationType}
       />
     </div>
   );
