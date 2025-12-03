@@ -17,6 +17,7 @@ import AgreementDialog from '@/components/AgreementDialog';
 export default function VerificationPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [isLoadingUserData, setIsLoadingUserData] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadTotal, setUploadTotal] = useState(0);
   const [error, setError] = useState('');
@@ -44,6 +45,73 @@ export default function VerificationPage() {
 
   const handleFileChange = (field: keyof VerificationFormData, file: File | null) => {
     setFormData(prev => ({ ...prev, [field]: file }));
+  };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        setIsLoadingUserData(false);
+        return;
+      }
+
+      const response = await fetch('https://functions.poehali.dev/1c97f222-fdea-4b59-b941-223ee8bb077b', {
+        headers: {
+          'X-User-Id': userId,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        let verificationType: VerificationType = 'individual';
+        if (data.userType === 'legal-entity') {
+          verificationType = 'legal_entity';
+        } else if (data.userType === 'self-employed') {
+          verificationType = 'self_employed';
+        } else if (data.userType === 'entrepreneur') {
+          verificationType = 'self_employed';
+        }
+
+        setFormData(prev => ({
+          ...prev,
+          verificationType,
+          phone: data.phone || '',
+          companyName: data.companyName || '',
+          inn: data.inn || '',
+        }));
+
+        if (data.inn && verificationType === 'legal_entity') {
+          await fetchCompanyDataByINN(data.inn);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setIsLoadingUserData(false);
+    }
+  };
+
+  const fetchCompanyDataByINN = async (inn: string) => {
+    try {
+      const response = await fetch(
+        `https://functions.poehali.dev/de7c45a6-d320-45cc-8aca-719530cc640c?inn=${inn}`
+      );
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setFormData(prev => ({
+          ...prev,
+          companyName: result.data.company_name || prev.companyName,
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching company data:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,6 +229,14 @@ export default function VerificationPage() {
             Заявка на верификацию успешно отправлена! Мы проверим ваши документы в течение 1-3 рабочих дней.
           </AlertDescription>
         </Alert>
+      </div>
+    );
+  }
+
+  if (isLoadingUserData) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-2xl flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
