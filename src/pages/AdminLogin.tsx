@@ -45,9 +45,12 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        const userRole = localStorage.getItem('userRole');
+        const userId = data.user?.id;
+        const userRole = data.user?.role;
         
-        if (userRole === 'admin') {
+        if (userId && userRole === 'admin') {
+          localStorage.setItem('userId', userId.toString());
+          localStorage.setItem('userRole', userRole);
           localStorage.setItem('adminSession', JSON.stringify({ login, timestamp: Date.now() }));
           navigate('/admin/verifications');
           toast({
