@@ -272,48 +272,6 @@ export default function VerificationPage() {
             ) : (
               <>
                 <div>
-                  <Label htmlFor="registrationAddress">Адрес регистрации *</Label>
-                  <Textarea
-                    id="registrationAddress"
-                    value={formData.registrationAddress}
-                    onChange={(e) => handleInputChange('registrationAddress', e.target.value)}
-                    placeholder="Введите адрес регистрации"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="addressesMatch"
-                    checked={formData.addressesMatch}
-                    onCheckedChange={(checked) => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        addressesMatch: checked as boolean,
-                        actualAddress: checked ? prev.registrationAddress : prev.actualAddress,
-                        utilityBill: checked ? null : prev.utilityBill
-                      }));
-                    }}
-                  />
-                  <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
-                    Фактический адрес совпадает с адресом регистрации
-                  </Label>
-                </div>
-
-                {!formData.addressesMatch && (
-                  <div>
-                    <Label htmlFor="actualAddress">Фактический адрес проживания *</Label>
-                    <Textarea
-                      id="actualAddress"
-                      value={formData.actualAddress}
-                      onChange={(e) => handleInputChange('actualAddress', e.target.value)}
-                      placeholder="Введите фактический адрес"
-                      required
-                    />
-                  </div>
-                )}
-
-                <div>
                   <Label htmlFor="passportScan">Лицевая сторона паспорта *</Label>
                   <Input
                     id="passportScan"
@@ -340,6 +298,48 @@ export default function VerificationPage() {
                     Загрузите страницу паспорта с отметкой о регистрации
                   </p>
                 </div>
+
+                <div>
+                  <Label htmlFor="registrationAddress">Адрес регистрации (прописки) *</Label>
+                  <Textarea
+                    id="registrationAddress"
+                    value={formData.registrationAddress}
+                    onChange={(e) => handleInputChange('registrationAddress', e.target.value)}
+                    placeholder="Введите адрес регистрации"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="addressesMatch"
+                    checked={formData.addressesMatch}
+                    onCheckedChange={(checked) => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        addressesMatch: checked as boolean,
+                        actualAddress: checked ? prev.registrationAddress : prev.actualAddress,
+                        utilityBill: checked ? null : prev.utilityBill
+                      }));
+                    }}
+                  />
+                  <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
+                    Фактический адрес проживания совпадает с адресом прописки
+                  </Label>
+                </div>
+
+                {!formData.addressesMatch && (
+                  <div>
+                    <Label htmlFor="actualAddress">Фактический адрес проживания *</Label>
+                    <Textarea
+                      id="actualAddress"
+                      value={formData.actualAddress}
+                      onChange={(e) => handleInputChange('actualAddress', e.target.value)}
+                      placeholder="Введите фактический адрес"
+                      required
+                    />
+                  </div>
+                )}
 
                 {!formData.addressesMatch && (
                   <div>
