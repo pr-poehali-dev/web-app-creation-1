@@ -23,7 +23,7 @@ export default function IndividualForm({
         <Label htmlFor="inn">ИНН *</Label>
         <Input
           id="inn"
-          value={formData.inn}
+          value={formData.inn || ''}
           onChange={(e) => onInputChange('inn', e.target.value)}
           placeholder="123456789012"
           required

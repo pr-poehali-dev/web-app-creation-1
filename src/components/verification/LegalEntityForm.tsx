@@ -15,7 +15,7 @@ export default function LegalEntityForm({ formData, onInputChange, onFileChange 
         <Label htmlFor="companyName">Название организации *</Label>
         <Input
           id="companyName"
-          value={formData.companyName}
+          value={formData.companyName || ''}
           onChange={(e) => onInputChange('companyName', e.target.value)}
           placeholder="ООО «Пример»"
           required
@@ -26,7 +26,7 @@ export default function LegalEntityForm({ formData, onInputChange, onFileChange 
         <Label htmlFor="inn">ИНН *</Label>
         <Input
           id="inn"
-          value={formData.inn}
+          value={formData.inn || ''}
           onChange={(e) => onInputChange('inn', e.target.value)}
           placeholder="1234567890"
           required
