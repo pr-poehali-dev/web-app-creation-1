@@ -188,7 +188,7 @@ export const clearSession = (): void => {
 
 export const saveRememberMe = (email: string, password: string): void => {
   try {
-    localStorage.setItem('rememberMeCredentials', JSON.stringify({ email, password }));
+    localStorage.setItem('rememberMeEmail', email);
   } catch (error) {
     console.error('Error saving remember me:', error);
   }
@@ -196,8 +196,8 @@ export const saveRememberMe = (email: string, password: string): void => {
 
 export const getRememberMe = (): { email: string; password: string } | null => {
   try {
-    const stored = localStorage.getItem('rememberMeCredentials');
-    return stored ? JSON.parse(stored) : null;
+    const email = localStorage.getItem('rememberMeEmail');
+    return email ? { email, password: '' } : null;
   } catch (error) {
     console.error('Error reading remember me:', error);
     return null;
@@ -206,7 +206,7 @@ export const getRememberMe = (): { email: string; password: string } | null => {
 
 export const clearRememberMe = (): void => {
   try {
-    localStorage.removeItem('rememberMeCredentials');
+    localStorage.removeItem('rememberMeEmail');
   } catch (error) {
     console.error('Error clearing remember me:', error);
   }

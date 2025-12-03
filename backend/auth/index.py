@@ -74,6 +74,10 @@ def send_reset_email(email: str, reset_link: str):
     smtp_pass = os.environ.get('SMTP_PASS')
     smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    use_ssl = os.environ.get('SMTP_USE_SSL', 'false').lower() == 'true'
+    
+    if not smtp_user or not smtp_pass:
+        raise ValueError("SMTP credentials not configured")
     
     msg = MIMEMultipart('alternative')
     msg['Subject'] = 'Восстановление пароля'
@@ -94,10 +98,17 @@ def send_reset_email(email: str, reset_link: str):
     
     msg.attach(MIMEText(html, 'html'))
     
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_pass)
-        server.send_message(msg)
+    if use_ssl:
+        import ssl
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -350,7 +361,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         )
                         conn.commit()
                         
-                        reset_link = f"https://yourapp.com/reset-password?token={token}"
+                        frontend_url = os.environ.get('FRONTEND_URL', 'https://preview--web-app-creation-1.poehali.dev')
+                        reset_link = f"{frontend_url}/new-password?token={token}"
                         
                         try:
                             send_reset_email(email, reset_link)

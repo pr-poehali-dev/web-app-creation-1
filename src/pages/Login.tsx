@@ -27,7 +27,6 @@ export default function Login({ onLogin }: LoginProps) {
     const savedCredentials = getRememberMe();
     if (savedCredentials) {
       setEmail(savedCredentials.email);
-      setPassword(savedCredentials.password);
       setRememberMe(true);
     }
   }, []);
