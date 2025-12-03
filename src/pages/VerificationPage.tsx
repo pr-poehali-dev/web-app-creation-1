@@ -250,11 +250,11 @@ export default function VerificationPage() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               disabled={loading}
             >
-              <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
-              Назад
+              <Icon name="Home" className="h-4 w-4 mr-1" />
+              Вернуться на главную
             </Button>
           </div>
           <CardTitle>Верификация аккаунта</CardTitle>
@@ -459,14 +459,9 @@ export default function VerificationPage() {
               </AlertDescription>
             </Alert>
 
-            <div className="flex gap-3">
-              <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? 'Отправка...' : agreementAccepted ? 'Отправить на верификацию' : 'Ознакомиться с соглашением'}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-                Отмена
-              </Button>
-            </div>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? 'Отправка...' : agreementAccepted ? 'Отправить на верификацию' : 'Ознакомиться с соглашением'}
+            </Button>
           </form>
         </CardContent>
       </Card>
