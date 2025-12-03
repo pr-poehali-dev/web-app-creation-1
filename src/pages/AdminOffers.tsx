@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -52,33 +52,32 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const mockOffers: Offer[] = [
-    {
-      id: '1',
-      title: 'Цемент М500 50кг',
-      seller: 'ООО "СтройМатериалы"',
-      price: 350,
-      status: 'active',
-      createdAt: '2024-01-20'
-    },
-    {
-      id: '2',
-      title: 'Кирпич красный полнотелый',
-      seller: 'ИП Петров',
-      price: 15,
-      status: 'moderation',
-      createdAt: '2024-02-15'
-    },
-    {
-      id: '3',
-      title: 'Песок речной навалом',
-      seller: 'ПАО "ГорСтрой"',
-      price: 500,
-      status: 'active',
-      createdAt: '2024-03-10'
-    },
-  ];
+  useEffect(() => {
+    fetchOffers();
+  }, [searchQuery, filterStatus]);
+
+  const fetchOffers = async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (filterStatus !== 'all') params.append('status', filterStatus);
+
+      const response = await fetch(`https://functions.poehali.dev/989d9b69-4c39-49f3-abad-1249c04ddc21?${params}`);
+      const data = await response.json();
+      
+      if (data.offers) {
+        setOffers(data.offers);
+      }
+    } catch (error) {
+      toast.error('Ошибка при загрузке предложений');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {

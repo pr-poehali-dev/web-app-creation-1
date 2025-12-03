@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -55,36 +55,33 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const mockUsers: User[] = [
-    {
-      id: '1',
-      email: 'ivan.petrov@example.com',
-      name: 'Иван Петров',
-      type: 'individual',
-      status: 'active',
-      verified: true,
-      registeredAt: '2024-01-15'
-    },
-    {
-      id: '2',
-      email: 'ip.ivanov@example.com',
-      name: 'ИП Иванов А.С.',
-      type: 'entrepreneur',
-      status: 'active',
-      verified: true,
-      registeredAt: '2024-02-10'
-    },
-    {
-      id: '3',
-      email: 'info@stroyinvest.ru',
-      name: 'ООО "СтройИнвест"',
-      type: 'legal-entity',
-      status: 'blocked',
-      verified: false,
-      registeredAt: '2024-03-05'
-    },
-  ];
+  useEffect(() => {
+    fetchUsers();
+  }, [searchQuery, filterStatus, filterType]);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (filterStatus !== 'all') params.append('status', filterStatus);
+      if (filterType !== 'all') params.append('type', filterType);
+
+      const response = await fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?${params}`);
+      const data = await response.json();
+      
+      if (data.users) {
+        setUsers(data.users);
+      }
+    } catch (error) {
+      toast.error('Ошибка при загрузке пользователей');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -112,20 +109,55 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
     }
   };
 
-  const handleBlockUser = () => {
-    if (selectedUser) {
-      toast.success(`Пользователь ${selectedUser.name} заблокирован`);
-      setShowBlockDialog(false);
-      setSelectedUser(null);
+  const handleBlockUser = async () => {
+    if (!selectedUser) return;
+    try {
+      const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUser.id, action: 'block' })
+      });
+      if (response.ok) {
+        toast.success(`Пользователь ${selectedUser.name} заблокирован`);
+        fetchUsers();
+      }
+    } catch (error) {
+      toast.error('Ошибка при блокировке');
+    }
+    setShowBlockDialog(false);
+    setSelectedUser(null);
+  };
+
+  const handleUnblockUser = async (user: User) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, action: 'unblock' })
+      });
+      if (response.ok) {
+        toast.success(`Пользователь ${user.name} разблокирован`);
+        fetchUsers();
+      }
+    } catch (error) {
+      toast.error('Ошибка при разблокировке');
     }
   };
 
-  const handleUnblockUser = (user: User) => {
-    toast.success(`Пользователь ${user.name} разблокирован`);
-  };
-
-  const handleDeleteUser = (user: User) => {
-    toast.success(`Пользователь ${user.name} удален`);
+  const handleDeleteUser = async (user: User) => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      });
+      if (response.ok) {
+        toast.success(`Пользователь ${user.name} удален`);
+        fetchUsers();
+      }
+    } catch (error) {
+      toast.error('Ошибка при удалении');
+    }
   };
 
   return (
@@ -198,7 +230,19 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockUsers.map((user) => (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8">
+                          Загрузка...
+                        </TableCell>
+                      </TableRow>
+                    ) : users.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                          Пользователи не найдены
+                        </TableCell>
+                      </TableRow>
+                    ) : users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.name}</TableCell>
                         <TableCell>{user.email}</TableCell>

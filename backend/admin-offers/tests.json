@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Get offers list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "offers": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
