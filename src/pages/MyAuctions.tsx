@@ -51,10 +51,38 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
       return;
     }
 
-    setTimeout(() => {
-      setAuctions(MOCK_AUCTIONS.slice(0, 2));
-      setIsLoading(false);
-    }, 800);
+    const checkVerification = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          navigate('/login');
+          return;
+        }
+
+        const response = await fetch('https://functions.poehali.dev/1c97f222-fdea-4b59-b941-223ee8bb077b', {
+          headers: {
+            'X-User-Id': userId,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (!data.isVerified) {
+            navigate('/verification');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking verification:', error);
+      }
+
+      setTimeout(() => {
+        setAuctions(MOCK_AUCTIONS.slice(0, 2));
+        setIsLoading(false);
+      }, 800);
+    };
+
+    checkVerification();
   }, [isAuthenticated, currentUser, navigate]);
 
   const filteredAuctions = filterStatus === 'all' 

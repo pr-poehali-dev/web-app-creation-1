@@ -73,16 +73,44 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       return;
     }
 
-    setTimeout(() => {
-      const userOffers: MyOffer[] = MOCK_OFFERS.slice(0, 3).map((offer, index) => ({
-        ...offer,
-        status: index === 0 ? 'active' : index === 1 ? 'moderation' : 'draft',
-        views: Math.floor(Math.random() * 500) + 50,
-        favorites: Math.floor(Math.random() * 50) + 5,
-      }));
-      setOffers(userOffers);
-      setIsLoading(false);
-    }, 800);
+    const checkVerification = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          navigate('/login');
+          return;
+        }
+
+        const response = await fetch('https://functions.poehali.dev/1c97f222-fdea-4b59-b941-223ee8bb077b', {
+          headers: {
+            'X-User-Id': userId,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (!data.isVerified) {
+            navigate('/verification');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking verification:', error);
+      }
+
+      setTimeout(() => {
+        const userOffers: MyOffer[] = MOCK_OFFERS.slice(0, 3).map((offer, index) => ({
+          ...offer,
+          status: index === 0 ? 'active' : index === 1 ? 'moderation' : 'draft',
+          views: Math.floor(Math.random() * 500) + 50,
+          favorites: Math.floor(Math.random() * 50) + 5,
+        }));
+        setOffers(userOffers);
+        setIsLoading(false);
+      }, 800);
+    };
+
+    checkVerification();
   }, [isAuthenticated, currentUser, navigate]);
 
   const filteredOffers = filterStatus === 'all' 

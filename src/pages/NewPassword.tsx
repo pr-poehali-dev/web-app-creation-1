@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,8 +13,24 @@ export default function NewPassword() {
   const [newPasswordError, setNewPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get('token');
+    if (!tokenParam) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Неверная ссылка восстановления пароля',
+      });
+      navigate('/reset-password');
+    } else {
+      setToken(tokenParam);
+    }
+  }, [navigate, toast]);
 
   const validatePassword = (password: string): { isValid: boolean; error: string } => {
     if (password.length < 6) {
@@ -29,7 +45,7 @@ export default function NewPassword() {
     return { isValid: true, error: '' };
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setNewPasswordError('');
     setConfirmPasswordError('');
@@ -55,17 +71,56 @@ export default function NewPassword() {
       return;
     }
 
+    if (!token) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Токен отсутствует',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      toast({
-        title: 'Успешно',
-        description: 'Пароль успешно изменен. Войдите с новым паролем',
+    try {
+      const response = await fetch('https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'reset_password',
+          token: token,
+          newPassword: newPassword,
+        }),
       });
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
-    }, 1000);
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        toast({
+          title: 'Успешно',
+          description: 'Пароль успешно изменен. Войдите с новым паролем',
+        });
+        setTimeout(() => {
+          navigate('/login');
+        }, 1500);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка',
+          description: data.error || 'Не удалось изменить пароль',
+        });
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Произошла ошибка при изменении пароля',
+      });
+      setIsSubmitting(false);
+    }
   };
 
   const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,11 +142,11 @@ export default function NewPassword() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/reset-password')}
+              onClick={() => navigate('/')}
               disabled={isSubmitting}
             >
               <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
-              Назад
+              Вернуться на главную
             </Button>
           </div>
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">

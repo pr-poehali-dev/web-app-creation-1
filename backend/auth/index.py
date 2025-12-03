@@ -7,11 +7,15 @@ Returns: HTTP response dict with statusCode, headers, body
 
 import json
 import os
+import secrets
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import bcrypt
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -64,6 +68,36 @@ def reset_failed_attempts(conn, email: str):
             (email,)
         )
         conn.commit()
+
+def send_reset_email(email: str, reset_link: str):
+    smtp_user = os.environ.get('SMTP_USER')
+    smtp_pass = os.environ.get('SMTP_PASS')
+    smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+    smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Восстановление пароля'
+    msg['From'] = smtp_user
+    msg['To'] = email
+    
+    html = f"""
+    <html>
+      <body>
+        <h2>Восстановление пароля</h2>
+        <p>Вы запросили восстановление пароля. Перейдите по ссылке ниже, чтобы создать новый пароль:</p>
+        <p><a href="{reset_link}">Восстановить пароль</a></p>
+        <p>Ссылка действительна в течение 1 часа.</p>
+        <p>Если вы не запрашивали восстановление пароля, проигнорируйте это письмо.</p>
+      </body>
+    </html>
+    """
+    
+    msg.attach(MIMEText(html, 'html'))
+    
+    with smtplib.SMTP(smtp_host, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.send_message(msg)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -287,6 +321,109 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'success': True,
                         'user': user_data
                     }, default=str),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'forgot_password':
+                email = body_data.get('email', '').strip()
+                
+                if not email:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Email обязателен'}),
+                        'isBase64Encoded': False
+                    }
+                
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+                    user = cur.fetchone()
+                    
+                    if user:
+                        token = secrets.token_urlsafe(32)
+                        expires_at = datetime.now() + timedelta(hours=1)
+                        
+                        cur.execute(
+                            """INSERT INTO password_reset_tokens (user_id, token, expires_at) 
+                               VALUES (%s, %s, %s)""",
+                            (user['id'], token, expires_at)
+                        )
+                        conn.commit()
+                        
+                        reset_link = f"https://yourapp.com/reset-password?token={token}"
+                        
+                        try:
+                            send_reset_email(email, reset_link)
+                        except Exception as e:
+                            print(f"Email send error: {e}")
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Если пользователь существует, письмо отправлено'}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'reset_password':
+                token = body_data.get('token', '').strip()
+                new_password = body_data.get('newPassword', '')
+                
+                if not token or not new_password:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Токен и новый пароль обязательны'}),
+                        'isBase64Encoded': False
+                    }
+                
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """SELECT user_id, expires_at, used 
+                           FROM password_reset_tokens 
+                           WHERE token = %s""",
+                        (token,)
+                    )
+                    reset_token = cur.fetchone()
+                    
+                    if not reset_token:
+                        return {
+                            'statusCode': 400,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Неверный токен'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    if reset_token['used']:
+                        return {
+                            'statusCode': 400,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Токен уже использован'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    if datetime.now() > reset_token['expires_at']:
+                        return {
+                            'statusCode': 400,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Срок действия токена истек'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    password_hash = hash_password(new_password)
+                    cur.execute(
+                        "UPDATE users SET password_hash = %s, failed_login_attempts = 0, locked_until = NULL WHERE id = %s",
+                        (password_hash, reset_token['user_id'])
+                    )
+                    cur.execute(
+                        "UPDATE password_reset_tokens SET used = TRUE WHERE token = %s",
+                        (token,)
+                    )
+                    conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Пароль успешно изменен'}),
                     'isBase64Encoded': False
                 }
         

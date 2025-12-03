@@ -42,23 +42,23 @@ export default function ResetPassword() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'check_email',
+          action: 'forgot_password',
           email: email,
         }),
       });
 
       const data = await response.json();
 
-      if (response.ok && data.exists) {
+      if (response.ok) {
         toast({
           title: 'Успешно',
-          description: 'Ссылка для восстановления пароля отправлена на вашу почту',
+          description: 'Если пользователь с таким email существует, на него отправлена ссылка для восстановления пароля',
         });
         setTimeout(() => {
-          navigate('/new-password');
+          navigate('/login');
         }, 2000);
       } else {
-        setEmailError('Пользователь с такой эл.почтой не найден');
+        setEmailError('Произошла ошибка при отправке письма');
       }
     } catch (error) {
       toast({
@@ -85,11 +85,11 @@ export default function ResetPassword() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/')}
               disabled={isSubmitting}
             >
               <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
-              Назад
+              Вернуться на главную
             </Button>
           </div>
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">

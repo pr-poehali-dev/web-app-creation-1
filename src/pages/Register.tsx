@@ -258,11 +258,11 @@ export default function Register({ onRegister }: RegisterProps) {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/')}
               disabled={isSubmitting}
             >
               <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
-              Назад
+              Вернуться на главную
             </Button>
           </div>
           <CardTitle className="text-2xl">Регистрация</CardTitle>

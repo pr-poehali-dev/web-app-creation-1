@@ -115,7 +115,7 @@ export default function Login({ onLogin }: LoginProps) {
               disabled={isLoading}
             >
               <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
-              Назад
+              Вернуться на главную
             </Button>
           </div>
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
