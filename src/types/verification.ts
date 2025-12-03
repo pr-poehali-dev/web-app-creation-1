@@ -29,7 +29,9 @@ export interface VerificationFormData {
   // Для физических лиц и самозанятых
   registrationAddress?: string;
   actualAddress?: string;
+  addressesMatch?: boolean;
   passportScan?: File | null;
+  passportRegistration?: File | null;
   utilityBill?: File | null;
   
   // Для юридических лиц

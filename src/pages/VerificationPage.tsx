@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import Icon from '@/components/ui/icon';
@@ -24,7 +25,9 @@ export default function VerificationPage() {
     phone: '',
     registrationAddress: '',
     actualAddress: '',
+    addressesMatch: false,
     passportScan: null,
+    passportRegistration: null,
     utilityBill: null,
     companyName: '',
     inn: '',
@@ -62,7 +65,10 @@ export default function VerificationPage() {
         if (formData.passportScan) {
           filesToUpload.push({ file: formData.passportScan, type: 'passport_scan' });
         }
-        if (formData.utilityBill) {
+        if (formData.passportRegistration) {
+          filesToUpload.push({ file: formData.passportRegistration, type: 'passport_registration' });
+        }
+        if (formData.utilityBill && !formData.addressesMatch) {
           filesToUpload.push({ file: formData.utilityBill, type: 'utility_bill' });
         }
       }
@@ -93,9 +99,12 @@ export default function VerificationPage() {
         dataToSend.agreementFormUrl = uploadedUrls.agreement_form || null;
       } else {
         dataToSend.registrationAddress = formData.registrationAddress || '';
-        dataToSend.actualAddress = formData.actualAddress || '';
+        dataToSend.actualAddress = formData.addressesMatch 
+          ? formData.registrationAddress || '' 
+          : formData.actualAddress || '';
         dataToSend.passportScanUrl = uploadedUrls.passport_scan || null;
-        dataToSend.utilityBillUrl = uploadedUrls.utility_bill || null;
+        dataToSend.passportRegistrationUrl = uploadedUrls.passport_registration || null;
+        dataToSend.utilityBillUrl = formData.addressesMatch ? null : uploadedUrls.utility_bill || null;
       }
 
       const response = await fetch('https://functions.poehali.dev/afc94607-0379-45a9-bc60-262eded2b980', {
@@ -273,19 +282,39 @@ export default function VerificationPage() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="actualAddress">Фактический адрес проживания *</Label>
-                  <Textarea
-                    id="actualAddress"
-                    value={formData.actualAddress}
-                    onChange={(e) => handleInputChange('actualAddress', e.target.value)}
-                    placeholder="Введите фактический адрес"
-                    required
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="addressesMatch"
+                    checked={formData.addressesMatch}
+                    onCheckedChange={(checked) => {
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        addressesMatch: checked as boolean,
+                        actualAddress: checked ? prev.registrationAddress : prev.actualAddress,
+                        utilityBill: checked ? null : prev.utilityBill
+                      }));
+                    }}
                   />
+                  <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
+                    Фактический адрес совпадает с адресом регистрации
+                  </Label>
                 </div>
 
+                {!formData.addressesMatch && (
+                  <div>
+                    <Label htmlFor="actualAddress">Фактический адрес проживания *</Label>
+                    <Textarea
+                      id="actualAddress"
+                      value={formData.actualAddress}
+                      onChange={(e) => handleInputChange('actualAddress', e.target.value)}
+                      placeholder="Введите фактический адрес"
+                      required
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <Label htmlFor="passportScan">Скан паспорта с отметкой о регистрации *</Label>
+                  <Label htmlFor="passportScan">Лицевая сторона паспорта *</Label>
                   <Input
                     id="passportScan"
                     type="file"
@@ -293,21 +322,40 @@ export default function VerificationPage() {
                     onChange={(e) => handleFileChange('passportScan', e.target.files?.[0] || null)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Загрузите фото или скан лицевой стороны паспорта
+                  </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="utilityBill">Оплаченная квитанция *</Label>
+                  <Label htmlFor="passportRegistration">Страница с отметкой о регистрации *</Label>
                   <Input
-                    id="utilityBill"
+                    id="passportRegistration"
                     type="file"
                     accept="image/*,.pdf"
-                    onChange={(e) => handleFileChange('utilityBill', e.target.files?.[0] || null)}
+                    onChange={(e) => handleFileChange('passportRegistration', e.target.files?.[0] || null)}
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Загрузите квитанцию для подтверждения адреса проживания
+                    Загрузите страницу паспорта с отметкой о регистрации
                   </p>
                 </div>
+
+                {!formData.addressesMatch && (
+                  <div>
+                    <Label htmlFor="utilityBill">Оплаченная квитанция *</Label>
+                    <Input
+                      id="utilityBill"
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => handleFileChange('utilityBill', e.target.files?.[0] || null)}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Загрузите квитанцию для подтверждения адреса проживания
+                    </p>
+                  </div>
+                )}
               </>
             )}
 
