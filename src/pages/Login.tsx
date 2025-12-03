@@ -111,7 +111,7 @@ export default function Login({ onLogin }: LoginProps) {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               disabled={isLoading}
             >
               <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />

@@ -245,6 +245,18 @@ export default function VerificationPage() {
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <Card>
         <CardHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(-1)}
+              disabled={loading}
+            >
+              <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
+              Назад
+            </Button>
+          </div>
           <CardTitle>Верификация аккаунта</CardTitle>
           <CardDescription>
             Пройдите верификацию для получения доступа к созданию запросов и предложений

@@ -82,6 +82,18 @@ export default function NewPassword() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
+          <div className="flex items-center gap-2 mb-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/reset-password')}
+              disabled={isSubmitting}
+            >
+              <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
+              Назад
+            </Button>
+          </div>
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
             <Icon name="ShieldCheck" className="h-6 w-6 text-primary" />
           </div>
