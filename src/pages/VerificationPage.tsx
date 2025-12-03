@@ -278,6 +278,7 @@ export default function VerificationPage() {
               size="sm"
               onClick={() => navigate('/')}
               disabled={loading}
+              className="text-primary font-bold"
             >
               <Icon name="Home" className="h-4 w-4 mr-1" />
               Вернуться на главную

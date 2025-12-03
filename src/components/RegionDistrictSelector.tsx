@@ -93,17 +93,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
       return 'Все регионы';
     }
     
-    if (selectedDistricts.length === 0) {
-      return selectedRegionData?.name || 'Выбран регион';
-    }
-    
-    if (selectedDistricts.length === 1) {
-      const district = districts.find(d => d.id === selectedDistricts[0]);
-      return district?.name || selectedRegionData?.name;
-    }
-    
-    const count = selectedDistricts.length;
-    return `${count} ${count === 1 ? 'район' : count < 5 ? 'района' : 'районов'} в ${selectedRegionData?.name || 'регионе'}`;
+    return selectedRegionData?.name || 'Выбран регион';
   };
 
   const getSubtitleText = () => {
