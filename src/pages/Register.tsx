@@ -299,21 +299,16 @@ export default function Register({ onRegister }: RegisterProps) {
               isFetchingCompany={isFetchingCompany}
             />
 
-            <div className="flex gap-4">
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                    Регистрация...
-                  </>
-                ) : (
-                  'Зарегистрироваться'
-                )}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/login')} disabled={isSubmitting}>
-                Войти
-              </Button>
-            </div>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Регистрация...
+                </>
+              ) : (
+                'Зарегистрироваться'
+              )}
+            </Button>
           </form>
         </CardContent>
       </Card>
