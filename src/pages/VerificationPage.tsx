@@ -300,42 +300,13 @@ export default function VerificationPage() {
                 </div>
 
                 <AddressAutocomplete
-                  id="registrationAddress"
-                  label="Адрес регистрации (прописки)"
-                  value={formData.registrationAddress || ''}
-                  onChange={(value) => handleInputChange('registrationAddress', value)}
+                  id="actualAddress"
+                  label="Фактический адрес проживания"
+                  value={formData.actualAddress || ''}
+                  onChange={(value) => handleInputChange('actualAddress', value)}
                   placeholder="Начните вводить адрес"
                   required
                 />
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="addressesMatch"
-                    checked={formData.addressesMatch}
-                    onCheckedChange={(checked) => {
-                      setFormData(prev => ({ 
-                        ...prev, 
-                        addressesMatch: checked as boolean,
-                        actualAddress: checked ? prev.registrationAddress : prev.actualAddress,
-                        utilityBill: checked ? null : prev.utilityBill
-                      }));
-                    }}
-                  />
-                  <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
-                    Фактический адрес проживания совпадает с адресом прописки
-                  </Label>
-                </div>
-
-                {!formData.addressesMatch && (
-                  <AddressAutocomplete
-                    id="actualAddress"
-                    label="Фактический адрес проживания"
-                    value={formData.actualAddress || ''}
-                    onChange={(value) => handleInputChange('actualAddress', value)}
-                    placeholder="Начните вводить адрес"
-                    required
-                  />
-                )}
 
                 {!formData.addressesMatch && (
                   <div>
