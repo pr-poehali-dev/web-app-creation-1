@@ -44,11 +44,11 @@ export default function AdminLogin() {
 
       const data = await response.json();
 
-      if (response.ok && data.success && data.user) {
+      if (response.ok && data.success) {
         const userRole = localStorage.getItem('userRole');
         
         if (userRole === 'admin') {
-          localStorage.setItem('adminSession', JSON.stringify(data.user));
+          localStorage.setItem('adminSession', JSON.stringify({ email, timestamp: Date.now() }));
           navigate('/admin/verifications');
           toast({
             title: 'Успешно',
