@@ -80,9 +80,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         suggestion = data['suggestions'][0]
         company_data = suggestion.get('data', {})
         
+        ogrn = company_data.get('ogrn')
+        ogrnip = company_data.get('ogrnip')
+        
         result = {
             'inn': company_data.get('inn'),
-            'ogrn': company_data.get('ogrn'),
+            'ogrn': ogrn,
+            'ogrnip': ogrnip,
             'company_name': company_data.get('name', {}).get('full_with_opf') if isinstance(company_data.get('name'), dict) else company_data.get('name'),
             'legal_address': company_data.get('address', {}).get('value') if isinstance(company_data.get('address'), dict) else company_data.get('address'),
             'director_name': company_data.get('management', {}).get('name') if isinstance(company_data.get('management'), dict) else None,

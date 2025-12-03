@@ -73,10 +73,10 @@ export default function VerificationPage() {
         let verificationType: VerificationType = 'individual';
         if (data.userType === 'legal-entity') {
           verificationType = 'legal_entity';
-        } else if (data.userType === 'self-employed') {
-          verificationType = 'self_employed';
         } else if (data.userType === 'entrepreneur') {
           verificationType = 'self_employed';
+        } else if (data.userType === 'self-employed' || data.userType === 'individual') {
+          verificationType = 'individual';
         }
 
         setFormData(prev => ({
@@ -89,7 +89,7 @@ export default function VerificationPage() {
         }));
 
         if (data.inn && (verificationType === 'legal_entity' || verificationType === 'self_employed')) {
-          await fetchCompanyDataByINN(data.inn);
+          await fetchCompanyDataByINN(data.inn, verificationType);
         }
       }
     } catch (error) {
@@ -99,7 +99,7 @@ export default function VerificationPage() {
     }
   };
 
-  const fetchCompanyDataByINN = async (inn: string) => {
+  const fetchCompanyDataByINN = async (inn: string, verificationType: VerificationType) => {
     try {
       const response = await fetch(
         `https://functions.poehali.dev/de7c45a6-d320-45cc-8aca-719530cc640c?inn=${inn}`
@@ -107,10 +107,22 @@ export default function VerificationPage() {
       const result = await response.json();
 
       if (result.success && result.data) {
-        setFormData(prev => ({
-          ...prev,
-          companyName: result.data.company_name || prev.companyName,
-        }));
+        const dadataData = result.data;
+        
+        if (verificationType === 'legal_entity') {
+          setFormData(prev => ({
+            ...prev,
+            companyName: dadataData.company_name || prev.companyName,
+            inn: dadataData.inn || prev.inn,
+          }));
+        } else if (verificationType === 'self_employed') {
+          setFormData(prev => ({
+            ...prev,
+            companyName: dadataData.company_name || prev.companyName,
+            inn: dadataData.inn || prev.inn,
+            ogrnip: dadataData.ogrnip || prev.ogrnip,
+          }));
+        }
       }
     } catch (error) {
       console.error('Error fetching company data:', error);
@@ -298,6 +310,7 @@ export default function VerificationPage() {
             <VerificationTypeSelector
               value={formData.verificationType}
               onChange={(value) => handleInputChange('verificationType', value)}
+              disabled={true}
             />
 
             <div>
