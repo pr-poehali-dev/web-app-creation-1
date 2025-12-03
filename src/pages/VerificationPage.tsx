@@ -12,6 +12,7 @@ import Icon from '@/components/ui/icon';
 import type { VerificationType, VerificationFormData } from '@/types/verification';
 import { uploadMultipleFiles } from '@/utils/fileUpload';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
+import AgreementDialog from '@/components/AgreementDialog';
 
 export default function VerificationPage() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function VerificationPage() {
   const [uploadTotal, setUploadTotal] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showAgreement, setShowAgreement] = useState(false);
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [formData, setFormData] = useState<VerificationFormData>({
     verificationType: 'individual',
     phone: '',
@@ -45,6 +48,16 @@ export default function VerificationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!agreementAccepted) {
+      setShowAgreement(true);
+      return;
+    }
+
+    submitVerification();
+  };
+
+  const submitVerification = async () => {
     setError('');
     setLoading(true);
     setUploadProgress(0);
@@ -132,6 +145,11 @@ export default function VerificationPage() {
       setUploadProgress(0);
       setUploadTotal(0);
     }
+  };
+
+  const handleAgreementAccept = () => {
+    setAgreementAccepted(true);
+    submitVerification();
   };
 
   if (success) {
@@ -355,7 +373,7 @@ export default function VerificationPage() {
 
             <div className="flex gap-3">
               <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? 'Отправка...' : 'Отправить на верификацию'}
+                {loading ? 'Отправка...' : agreementAccepted ? 'Отправить на верификацию' : 'Ознакомиться с соглашением'}
               </Button>
               <Button type="button" variant="outline" onClick={() => navigate(-1)}>
                 Отмена
@@ -364,6 +382,13 @@ export default function VerificationPage() {
           </form>
         </CardContent>
       </Card>
+
+      <AgreementDialog
+        open={showAgreement}
+        onOpenChange={setShowAgreement}
+        onAccept={handleAgreementAccept}
+        verificationType={formData.verificationType}
+      />
     </div>
   );
 }
