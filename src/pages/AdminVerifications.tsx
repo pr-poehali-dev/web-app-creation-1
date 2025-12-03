@@ -192,10 +192,16 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
       <main className="container mx-auto px-4 py-8 flex-1">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-              <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-              Назад
-            </Button>
+            <div className="flex items-center justify-between mb-4">
+              <Button variant="ghost" onClick={() => navigate(-1)}>
+                <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
+                Назад
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/admin/change-password')}>
+                <Icon name="Key" className="mr-2 h-4 w-4" />
+                Сменить пароль
+              </Button>
+            </div>
             <h1 className="text-3xl font-bold">Модерация верификации</h1>
             <p className="text-muted-foreground mt-2">
               Проверка и одобрение заявок на верификацию пользователей

@@ -1,0 +1,35 @@
+{
+  "tests": [
+    {
+      "name": "Test missing authentication",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "currentPassword": "123456",
+        "newPassword": "newpass123"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test password change validation",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "999999"
+      },
+      "body": {
+        "currentPassword": "123456",
+        "newPassword": "short"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
