@@ -71,15 +71,18 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
             navigate('/verification');
             return;
           }
+          
+          setTimeout(() => {
+            setAuctions(MOCK_AUCTIONS.slice(0, 2));
+            setIsLoading(false);
+          }, 800);
+        } else {
+          navigate('/verification');
         }
       } catch (error) {
         console.error('Error checking verification:', error);
+        navigate('/verification');
       }
-
-      setTimeout(() => {
-        setAuctions(MOCK_AUCTIONS.slice(0, 2));
-        setIsLoading(false);
-      }, 800);
     };
 
     checkVerification();

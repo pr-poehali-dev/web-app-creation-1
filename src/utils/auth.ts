@@ -160,6 +160,9 @@ export const authenticateUser = async (
 export const saveSession = (user: User): void => {
   try {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+    if (user.id) {
+      localStorage.setItem('userId', user.id.toString());
+    }
     window.dispatchEvent(new Event('userSessionChanged'));
   } catch (error) {
     console.error('Error saving session:', error);

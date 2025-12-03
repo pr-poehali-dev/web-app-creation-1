@@ -149,15 +149,18 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
             navigate('/verification');
             return;
           }
+          
+          setTimeout(() => {
+            setRequests(MOCK_REQUESTS);
+            setIsLoading(false);
+          }, 800);
+        } else {
+          navigate('/verification');
         }
       } catch (error) {
         console.error('Error checking verification:', error);
+        navigate('/verification');
       }
-
-      setTimeout(() => {
-        setRequests(MOCK_REQUESTS);
-        setIsLoading(false);
-      }, 800);
     };
 
     checkVerification();

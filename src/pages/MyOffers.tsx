@@ -93,21 +93,24 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
             navigate('/verification');
             return;
           }
+          
+          setTimeout(() => {
+            const userOffers: MyOffer[] = MOCK_OFFERS.slice(0, 3).map((offer, index) => ({
+              ...offer,
+              status: index === 0 ? 'active' : index === 1 ? 'moderation' : 'draft',
+              views: Math.floor(Math.random() * 500) + 50,
+              favorites: Math.floor(Math.random() * 50) + 5,
+            }));
+            setOffers(userOffers);
+            setIsLoading(false);
+          }, 800);
+        } else {
+          navigate('/verification');
         }
       } catch (error) {
         console.error('Error checking verification:', error);
+        navigate('/verification');
       }
-
-      setTimeout(() => {
-        const userOffers: MyOffer[] = MOCK_OFFERS.slice(0, 3).map((offer, index) => ({
-          ...offer,
-          status: index === 0 ? 'active' : index === 1 ? 'moderation' : 'draft',
-          views: Math.floor(Math.random() * 500) + 50,
-          favorites: Math.floor(Math.random() * 50) + 5,
-        }));
-        setOffers(userOffers);
-        setIsLoading(false);
-      }, 800);
     };
 
     checkVerification();
