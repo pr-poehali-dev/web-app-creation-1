@@ -253,18 +253,6 @@ export default function Register({ onRegister }: RegisterProps) {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(-1)}
-              disabled={isSubmitting}
-            >
-              <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
-              Назад
-            </Button>
-          </div>
           <CardTitle className="text-2xl">Регистрация</CardTitle>
           <CardDescription>Создайте учетную запись для доступа к платформе</CardDescription>
         </CardHeader>
