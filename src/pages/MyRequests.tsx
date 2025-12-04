@@ -129,41 +129,10 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
       return;
     }
 
-    const checkVerification = async () => {
-      try {
-        const userId = currentUser.id?.toString() || localStorage.getItem('userId');
-        if (!userId) {
-          navigate('/login');
-          return;
-        }
-
-        const response = await fetch('https://functions.poehali.dev/1c97f222-fdea-4b59-b941-223ee8bb077b', {
-          headers: {
-            'X-User-Id': userId,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (!data.isVerified) {
-            navigate('/verification');
-            return;
-          }
-          
-          setTimeout(() => {
-            setRequests(MOCK_REQUESTS);
-            setIsLoading(false);
-          }, 800);
-        } else {
-          navigate('/verification');
-        }
-      } catch (error) {
-        console.error('Error checking verification:', error);
-        navigate('/verification');
-      }
-    };
-
-    checkVerification();
+    setTimeout(() => {
+      setRequests(MOCK_REQUESTS);
+      setIsLoading(false);
+    }, 800);
   }, [isAuthenticated, currentUser, navigate]);
 
   const filteredRequests = filterStatus === 'all' 
