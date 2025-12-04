@@ -3,6 +3,46 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
+from datetime import datetime, timedelta
+
+def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 30, window_minutes: int = 1) -> bool:
+    with conn.cursor() as cur:
+        window_start = datetime.now() - timedelta(minutes=window_minutes)
+        
+        cur.execute(
+            """SELECT request_count, window_start 
+               FROM rate_limits 
+               WHERE identifier = %s AND endpoint = %s""",
+            (identifier, endpoint)
+        )
+        result = cur.fetchone()
+        
+        if result:
+            if result['window_start'] > window_start:
+                if result['request_count'] >= max_requests:
+                    return False
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = request_count + 1 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+            else:
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = 1, window_start = CURRENT_TIMESTAMP 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+        else:
+            cur.execute(
+                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
+                   VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
+                (identifier, endpoint)
+            )
+        
+        conn.commit()
+        return True
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -37,8 +77,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     conn = None
     try:
-        conn = psycopg2.connect(database_url)
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+        
+        headers = event.get('headers', {})
+        user_id = headers.get('X-User-Id') or headers.get('x-user-id', 'anonymous')
+        
+        if not check_rate_limit(conn, user_id, 'admin_users', max_requests=30, window_minutes=1):
+            return {
+                'statusCode': 429,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Слишком много запросов. Попробуйте через минуту.'}),
+                'isBase64Encoded': False
+            }
+        
+        cur = conn.cursor()
         
         if method == 'GET':
             query_params = event.get('queryStringParameters', {})

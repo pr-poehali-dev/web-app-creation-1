@@ -10,8 +10,56 @@ import os
 import base64
 import uuid
 from typing import Dict, Any
+from datetime import datetime, timedelta
 import boto3
 from botocore.exceptions import ClientError
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+def get_db_connection():
+    dsn = os.environ.get('DATABASE_URL')
+    if not dsn:
+        raise Exception('DATABASE_URL environment variable is not set')
+    return psycopg2.connect(dsn, cursor_factory=RealDictCursor)
+
+def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 10, window_minutes: int = 1) -> bool:
+    with conn.cursor() as cur:
+        window_start = datetime.now() - timedelta(minutes=window_minutes)
+        
+        cur.execute(
+            """SELECT request_count, window_start 
+               FROM rate_limits 
+               WHERE identifier = %s AND endpoint = %s""",
+            (identifier, endpoint)
+        )
+        result = cur.fetchone()
+        
+        if result:
+            if result['window_start'] > window_start:
+                if result['request_count'] >= max_requests:
+                    return False
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = request_count + 1 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+            else:
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = 1, window_start = CURRENT_TIMESTAMP 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+        else:
+            cur.execute(
+                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
+                   VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
+                (identifier, endpoint)
+            )
+        
+        conn.commit()
+        return True
 
 def get_s3_client():
     endpoint_url = 'https://storage.yandexcloud.net'
@@ -77,6 +125,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': 'Unauthorized'}),
             'isBase64Encoded': False
         }
+    
+    conn = get_db_connection()
+    if not check_rate_limit(conn, user_id, 'upload_document', max_requests=10, window_minutes=1):
+        conn.close()
+        return {
+            'statusCode': 429,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': 'Слишком много запросов. Попробуйте через минуту.'}),
+            'isBase64Encoded': False
+        }
+    conn.close()
     
     body = event.get('body', '')
     is_base64 = event.get('isBase64Encoded', False)

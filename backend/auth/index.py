@@ -22,6 +22,45 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
+def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 10, window_minutes: int = 1) -> bool:
+    with conn.cursor() as cur:
+        window_start = datetime.now() - timedelta(minutes=window_minutes)
+        
+        cur.execute(
+            """SELECT request_count, window_start 
+               FROM rate_limits 
+               WHERE identifier = %s AND endpoint = %s""",
+            (identifier, endpoint)
+        )
+        result = cur.fetchone()
+        
+        if result:
+            if result['window_start'] > window_start:
+                if result['request_count'] >= max_requests:
+                    return False
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = request_count + 1 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+            else:
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = 1, window_start = CURRENT_TIMESTAMP 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+        else:
+            cur.execute(
+                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
+                   VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
+                (identifier, endpoint)
+            )
+        
+        conn.commit()
+        return True
+
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
@@ -128,10 +167,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     conn = get_db_connection()
     
+    request_context = event.get('requestContext', {})
+    source_ip = request_context.get('identity', {}).get('sourceIp', 'unknown')
+    
     try:
         if method == 'POST':
             body_data = json.loads(event.get('body', '{}'))
             action = body_data.get('action')
+            
+            if action in ['login', 'register', 'forgot_password']:
+                if not check_rate_limit(conn, source_ip, f'auth_{action}', max_requests=5, window_minutes=1):
+                    return {
+                        'statusCode': 429,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Слишком много запросов. Попробуйте через минуту.'}),
+                        'isBase64Encoded': False
+                    }
             
             if action == 'register':
                 email = body_data.get('email', '').strip()
