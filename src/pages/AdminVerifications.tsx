@@ -48,6 +48,7 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [selectedVerification, setSelectedVerification] = useState<Verification | null>(null);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [showDocumentsDialog, setShowDocumentsDialog] = useState(false);
   const [reviewAction, setReviewAction] = useState<'approve' | 'reject'>('approve');
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,6 +110,11 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
     setReviewAction(action);
     setRejectionReason('');
     setShowReviewDialog(true);
+  };
+
+  const handleViewDocuments = (verification: Verification) => {
+    setSelectedVerification(verification);
+    setShowDocumentsDialog(true);
   };
 
   const handleSubmitReview = async () => {
@@ -281,60 +287,14 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
 
                           <div>
                             <Label className="text-sm font-medium mb-2 block">Документы</Label>
-                            <div className="flex flex-wrap gap-2">
-                              {verification.passportScanUrl && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  asChild
-                                >
-                                  <a href={verification.passportScanUrl} target="_blank" rel="noopener noreferrer">
-                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                    Паспорт
-                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
-                                  </a>
-                                </Button>
-                              )}
-                              {verification.utilityBillUrl && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  asChild
-                                >
-                                  <a href={verification.utilityBillUrl} target="_blank" rel="noopener noreferrer">
-                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                    Квитанция
-                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
-                                  </a>
-                                </Button>
-                              )}
-                              {verification.registrationCertUrl && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  asChild
-                                >
-                                  <a href={verification.registrationCertUrl} target="_blank" rel="noopener noreferrer">
-                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                    Свидетельство
-                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
-                                  </a>
-                                </Button>
-                              )}
-                              {verification.agreementFormUrl && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  asChild
-                                >
-                                  <a href={verification.agreementFormUrl} target="_blank" rel="noopener noreferrer">
-                                    <Icon name="FileText" className="h-3 w-3 mr-1" />
-                                    Соглашение
-                                    <Icon name="ExternalLink" className="h-3 w-3 ml-1" />
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewDocuments(verification)}
+                            >
+                              <Icon name="FileText" className="h-4 w-4 mr-2" />
+                              Просмотреть документы
+                            </Button>
                           </div>
 
                           {verification.rejectionReason && (
@@ -437,6 +397,194 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
                   {reviewAction === 'approve' ? 'Одобрить' : 'Отклонить'}
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDocumentsDialog} onOpenChange={setShowDocumentsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Документы верификации</DialogTitle>
+            <DialogDescription>
+              {selectedVerification && (
+                <>{selectedVerification.userLastName} {selectedVerification.userFirstName} • {selectedVerification.userEmail}</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedVerification && (
+            <div className="space-y-6 py-4">
+              <div className="grid gap-4">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Тип:</span>
+                    <span className="ml-2 font-medium">{getVerificationTypeLabel(selectedVerification.verificationType)}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Телефон:</span>
+                    <span className="ml-2 font-medium">{selectedVerification.phone}</span>
+                    {selectedVerification.phoneVerified && (
+                      <Badge variant="secondary" className="ml-2">Подтвержден</Badge>
+                    )}
+                  </div>
+                </div>
+
+                {selectedVerification.companyName && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">Компания:</span>
+                    <p className="font-medium">{selectedVerification.companyName}</p>
+                  </div>
+                )}
+
+                {selectedVerification.inn && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">ИНН:</span>
+                    <p className="font-medium">{selectedVerification.inn}</p>
+                  </div>
+                )}
+
+                {selectedVerification.registrationAddress && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">Адрес регистрации:</span>
+                    <p className="font-medium">{selectedVerification.registrationAddress}</p>
+                  </div>
+                )}
+
+                {selectedVerification.actualAddress && (
+                  <div>
+                    <span className="text-muted-foreground text-sm">Фактический адрес:</span>
+                    <p className="font-medium">{selectedVerification.actualAddress}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t pt-6">
+                <h4 className="font-semibold mb-4">Загруженные документы</h4>
+                <div className="grid gap-4">
+                  {selectedVerification.passportScanUrl && (
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Скан паспорта</span>
+                      </div>
+                      {selectedVerification.passportScanUrl.startsWith('data:') ? (
+                        <img 
+                          src={selectedVerification.passportScanUrl} 
+                          alt="Скан паспорта" 
+                          className="w-full rounded border"
+                        />
+                      ) : (
+                        <a 
+                          href={selectedVerification.passportScanUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-2"
+                        >
+                          <Icon name="ExternalLink" className="h-4 w-4" />
+                          Открыть документ
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedVerification.utilityBillUrl && (
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Коммунальный платеж</span>
+                      </div>
+                      {selectedVerification.utilityBillUrl.startsWith('data:') ? (
+                        <img 
+                          src={selectedVerification.utilityBillUrl} 
+                          alt="Коммунальный платеж" 
+                          className="w-full rounded border"
+                        />
+                      ) : (
+                        <a 
+                          href={selectedVerification.utilityBillUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-2"
+                        >
+                          <Icon name="ExternalLink" className="h-4 w-4" />
+                          Открыть документ
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedVerification.registrationCertUrl && (
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Свидетельство о регистрации / Выписка ЕГРЮЛ</span>
+                      </div>
+                      {selectedVerification.registrationCertUrl.startsWith('data:') ? (
+                        <img 
+                          src={selectedVerification.registrationCertUrl} 
+                          alt="Свидетельство о регистрации" 
+                          className="w-full rounded border"
+                        />
+                      ) : (
+                        <a 
+                          href={selectedVerification.registrationCertUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-2"
+                        >
+                          <Icon name="ExternalLink" className="h-4 w-4" />
+                          Открыть документ
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedVerification.agreementFormUrl && (
+                    <div className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Форма согласия</span>
+                      </div>
+                      {selectedVerification.agreementFormUrl.startsWith('data:') ? (
+                        <img 
+                          src={selectedVerification.agreementFormUrl} 
+                          alt="Форма согласия" 
+                          className="w-full rounded border"
+                        />
+                      ) : (
+                        <a 
+                          href={selectedVerification.agreementFormUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline flex items-center gap-2"
+                        >
+                          <Icon name="ExternalLink" className="h-4 w-4" />
+                          Открыть документ
+                        </a>
+                      )}
+                    </div>
+                  )}
+
+                  {!selectedVerification.passportScanUrl && 
+                   !selectedVerification.utilityBillUrl && 
+                   !selectedVerification.registrationCertUrl && 
+                   !selectedVerification.agreementFormUrl && (
+                    <Alert>
+                      <Icon name="AlertCircle" className="h-4 w-4" />
+                      <AlertDescription>
+                        Документы не загружены
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDocumentsDialog(false)}>
+              Закрыть
             </Button>
           </DialogFooter>
         </DialogContent>
