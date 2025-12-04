@@ -98,7 +98,7 @@ export default function Footer() {
                 className="text-xs text-muted-foreground/50 hover:text-primary transition-colors flex items-center gap-1"
               >
                 <Icon name="Shield" className="h-3 w-3" />
-                Админ
+                админ.ертп
               </Link>
             </div>
             <div className="flex items-center gap-4">
