@@ -26,6 +26,8 @@ export default function ProductMediaUpload({
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState<string>('');
+  const [recentlyUploadedImages, setRecentlyUploadedImages] = useState<string[]>([]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -72,6 +74,12 @@ export default function ProductMediaUpload({
       }
 
       onImagesChange([...productImages, ...newUrls]);
+      setRecentlyUploadedImages(newUrls);
+      setUploadSuccess(`Загружено ${newUrls.length} фото`);
+      setTimeout(() => {
+        setUploadSuccess('');
+        setRecentlyUploadedImages([]);
+      }, 3000);
     } catch (err) {
       setError('Ошибка загрузки изображений');
       console.error('Image upload error:', err);
@@ -113,6 +121,8 @@ export default function ProductMediaUpload({
         onVideoChange(urls[0]);
       }
       setUploadProgress(100);
+      setUploadSuccess('Видео успешно загружено');
+      setTimeout(() => setUploadSuccess(''), 3000);
     } catch (err) {
       setError('Ошибка загрузки видео');
       console.error('Video upload error:', err);
@@ -141,6 +151,13 @@ export default function ProductMediaUpload({
         </Alert>
       )}
 
+      {uploadSuccess && (
+        <Alert className="bg-green-50 border-green-200">
+          <Icon name="CheckCircle" className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800">{uploadSuccess}</AlertDescription>
+        </Alert>
+      )}
+
       <div className="space-y-2">
         <Label>Фотографии товара ({productImages.length}/{maxImages})</Label>
         <p className="text-xs text-muted-foreground">
@@ -154,8 +171,15 @@ export default function ProductMediaUpload({
                 <img
                   src={url}
                   alt={`Товар ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border"
+                  className={`w-full h-32 object-cover rounded-lg border ${
+                    recentlyUploadedImages.includes(url) ? 'ring-2 ring-green-500 ring-offset-2' : ''
+                  }`}
                 />
+                {recentlyUploadedImages.includes(url) && (
+                  <div className="absolute top-2 left-2 bg-green-500 text-white rounded-full p-1">
+                    <Icon name="Check" className="h-4 w-4" />
+                  </div>
+                )}
                 <Button
                   type="button"
                   variant="destructive"

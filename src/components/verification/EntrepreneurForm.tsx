@@ -2,6 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
+import FileUploadWithIndicator from '@/components/FileUploadWithIndicator';
 import type { VerificationFormData } from '@/types/verification';
 
 interface EntrepreneurFormProps {
@@ -41,33 +42,23 @@ export default function EntrepreneurForm({
         />
       </div>
 
-      <div>
-        <Label htmlFor="passportScan">Лицевая сторона паспорта *</Label>
-        <Input
-          id="passportScan"
-          type="file"
-          accept="image/*,.pdf"
-          onChange={(e) => onFileChange('passportScan', e.target.files?.[0] || null)}
-          required
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Загрузите фото или скан лицевой стороны паспорта
-        </p>
-      </div>
+      <FileUploadWithIndicator
+        id="passportScan"
+        label="Лицевая сторона паспорта"
+        accept="image/*,.pdf"
+        required
+        helpText="Загрузите фото или скан лицевой стороны паспорта"
+        onChange={(file) => onFileChange('passportScan', file)}
+      />
 
-      <div>
-        <Label htmlFor="passportRegistration">Страница с отметкой о регистрации *</Label>
-        <Input
-          id="passportRegistration"
-          type="file"
-          accept="image/*,.pdf"
-          onChange={(e) => onFileChange('passportRegistration', e.target.files?.[0] || null)}
-          required
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Загрузите страницу паспорта с отметкой о регистрации
-        </p>
-      </div>
+      <FileUploadWithIndicator
+        id="passportRegistration"
+        label="Страница с отметкой о регистрации"
+        accept="image/*,.pdf"
+        required
+        helpText="Загрузите страницу паспорта с отметкой о регистрации"
+        onChange={(file) => onFileChange('passportRegistration', file)}
+      />
 
       <div className="flex items-center space-x-2">
         <Checkbox
@@ -99,19 +90,14 @@ export default function EntrepreneurForm({
       )}
 
       {!formData.addressesMatch && (
-        <div>
-          <Label htmlFor="utilityBill">Оплаченная квитанция *</Label>
-          <Input
-            id="utilityBill"
-            type="file"
-            accept="image/*,.pdf"
-            onChange={(e) => onFileChange('utilityBill', e.target.files?.[0] || null)}
-            required
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Загрузите квитанцию для подтверждения адреса проживания
-          </p>
-        </div>
+        <FileUploadWithIndicator
+          id="utilityBill"
+          label="Оплаченная квитанция"
+          accept="image/*,.pdf"
+          required
+          helpText="Загрузите квитанцию для подтверждения адреса проживания"
+          onChange={(file) => onFileChange('utilityBill', file)}
+        />
       )}
     </>
   );

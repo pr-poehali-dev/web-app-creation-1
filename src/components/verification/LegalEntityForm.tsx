@@ -1,5 +1,6 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import FileUploadWithIndicator from '@/components/FileUploadWithIndicator';
 import type { VerificationFormData } from '@/types/verification';
 
 interface LegalEntityFormProps {
@@ -33,33 +34,23 @@ export default function LegalEntityForm({ formData, onInputChange, onFileChange 
         />
       </div>
 
-      <div>
-        <Label htmlFor="registrationCert">Свидетельство о регистрации *</Label>
-        <Input
-          id="registrationCert"
-          type="file"
-          accept="image/*,.pdf"
-          onChange={(e) => onFileChange('registrationCert', e.target.files?.[0] || null)}
-          required
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Загрузите скан-копию свидетельства о регистрации юридического лица
-        </p>
-      </div>
+      <FileUploadWithIndicator
+        id="registrationCert"
+        label="Свидетельство о регистрации"
+        accept="image/*,.pdf"
+        required
+        helpText="Загрузите скан-копию свидетельства о регистрации юридического лица"
+        onChange={(file) => onFileChange('registrationCert', file)}
+      />
 
-      <div>
-        <Label htmlFor="agreementForm">Форма соглашения с ЕРТТП *</Label>
-        <Input
-          id="agreementForm"
-          type="file"
-          accept="image/*,.pdf"
-          onChange={(e) => onFileChange('agreementForm', e.target.files?.[0] || null)}
-          required
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Загрузите заполненную форму с печатью и подписью
-        </p>
-      </div>
+      <FileUploadWithIndicator
+        id="agreementForm"
+        label="Форма соглашения с ЕРТТП"
+        accept="image/*,.pdf"
+        required
+        helpText="Загрузите заполненную форму с печатью и подписью"
+        onChange={(file) => onFileChange('agreementForm', file)}
+      />
     </>
   );
 }

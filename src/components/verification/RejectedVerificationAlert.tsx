@@ -27,6 +27,8 @@ export default function RejectedVerificationAlert({
   const [loading, setLoading] = useState(false);
   const [files, setFiles] = useState<{ [key: string]: File | null }>({});
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: boolean }>({});
+  const [uploadSuccess, setUploadSuccess] = useState(false);
 
   const getRequiredDocuments = () => {
     if (verificationType === 'legal_entity') {
@@ -69,6 +71,7 @@ export default function RejectedVerificationAlert({
         const urls = await uploadMultipleFiles([file as File], userId);
         if (urls.length > 0) {
           uploadedUrls[key] = urls[0];
+          setUploadedFiles(prev => ({ ...prev, [key]: true }));
         }
       }
 
@@ -96,7 +99,10 @@ export default function RejectedVerificationAlert({
       });
 
       if (response.ok) {
-        onResubmit();
+        setUploadSuccess(true);
+        setTimeout(() => {
+          onResubmit();
+        }, 2000);
       } else {
         const data = await response.json();
         alert(data.error || 'Ошибка при отправке документов');
@@ -113,73 +119,93 @@ export default function RejectedVerificationAlert({
   const documents = getRequiredDocuments();
 
   return (
-    <Alert variant="destructive" className="mb-6">
-      <Icon name="AlertCircle" className="h-5 w-5" />
-      <AlertTitle className="text-lg font-semibold mb-2">Верификация отклонена</AlertTitle>
+    <Alert variant={uploadSuccess ? "default" : "destructive"} className="mb-6">
+      <Icon name={uploadSuccess ? "CheckCircle" : "AlertCircle"} className={`h-5 w-5 ${uploadSuccess ? 'text-green-600' : ''}`} />
+      <AlertTitle className="text-lg font-semibold mb-2">
+        {uploadSuccess ? 'Документы успешно отправлены!' : 'Верификация отклонена'}
+      </AlertTitle>
       <AlertDescription className="space-y-4">
-        <p className="text-sm">
-          <strong>Причина:</strong> {rejectionReason}
-        </p>
-        
-        <div className="space-y-3 mt-4">
-          <p className="font-medium">Загрузите исправленные документы:</p>
-          
-          {documents.map(doc => (
-            <div key={doc.key} className="space-y-2">
-              <Label htmlFor={`reupload-${doc.key}`} className="text-sm">
-                {doc.label}
-                {doc.current && (
-                  <a 
-                    href={doc.current} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="ml-2 text-xs text-blue-500 hover:underline"
-                  >
-                    (текущий документ)
-                  </a>
-                )}
-              </Label>
-              <input
-                id={`reupload-${doc.key}`}
-                type="file"
-                accept="image/*,.pdf"
-                onChange={(e) => handleFileChange(doc.key, e.target.files?.[0] || null)}
-                disabled={loading}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium"
-              />
+        {uploadSuccess ? (
+          <p className="text-sm text-green-800">
+            Ваши исправленные документы отправлены на проверку. Мы уведомим вас о результате в течение 1-3 рабочих дней.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm">
+              <strong>Причина:</strong> {rejectionReason}
+            </p>
+            
+            <div className="space-y-3 mt-4">
+              <p className="font-medium">Загрузите исправленные документы:</p>
+              
+              {documents.map(doc => (
+                <div key={doc.key} className="space-y-2">
+                  <Label htmlFor={`reupload-${doc.key}`} className="text-sm flex items-center gap-2">
+                    {doc.label}
+                    {uploadedFiles[doc.key] && (
+                      <span className="inline-flex items-center gap-1 text-green-600 text-xs">
+                        <Icon name="Check" className="h-3 w-3" />
+                        Загружено
+                      </span>
+                    )}
+                    {doc.current && (
+                      <a 
+                        href={doc.current} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="ml-2 text-xs text-blue-500 hover:underline"
+                      >
+                        (текущий документ)
+                      </a>
+                    )}
+                  </Label>
+                  <div className="relative">
+                    <input
+                      id={`reupload-${doc.key}`}
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => handleFileChange(doc.key, e.target.files?.[0] || null)}
+                      disabled={loading}
+                      className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium ${
+                        uploadedFiles[doc.key] ? 'border-green-500 bg-green-50' : ''
+                      }`}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {uploadProgress > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm">Загрузка: {uploadProgress}%</p>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all" 
-                style={{ width: `${uploadProgress}%` }}
-              />
-            </div>
-          </div>
+            {uploadProgress > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm">Загрузка: {uploadProgress}%</p>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all" 
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <Button 
+              onClick={handleResubmit} 
+              disabled={loading || Object.keys(files).length === 0}
+              className="w-full mt-4"
+            >
+              {loading ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Отправка документов...
+                </>
+              ) : (
+                <>
+                  <Icon name="Upload" className="mr-2 h-4 w-4" />
+                  Отправить исправленные документы
+                </>
+              )}
+            </Button>
+          </>
         )}
-
-        <Button 
-          onClick={handleResubmit} 
-          disabled={loading || Object.keys(files).length === 0}
-          className="w-full mt-4"
-        >
-          {loading ? (
-            <>
-              <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-              Отправка документов...
-            </>
-          ) : (
-            <>
-              <Icon name="Upload" className="mr-2 h-4 w-4" />
-              Отправить исправленные документы
-            </>
-          )}
-        </Button>
       </AlertDescription>
     </Alert>
   );
