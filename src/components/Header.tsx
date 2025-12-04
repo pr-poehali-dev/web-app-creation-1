@@ -13,8 +13,6 @@ import Icon from '@/components/ui/icon';
 import RegionDistrictSelector from '@/components/RegionDistrictSelector';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
-import { useUserRole } from '@/hooks/useUserRole';
-
 interface HeaderProps {
   isAuthenticated: boolean;
   onLogout: () => void;
@@ -24,8 +22,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(getSession());
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
-  const { isModerator } = useUserRole();
-  const isFullAdmin = currentUser?.email === 'doydum-invest@mail.ru';
 
   useEffect(() => {
     const handleSessionChange = () => {
@@ -179,23 +175,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                   <Icon name="Bell" className="mr-2 h-4 w-4" />
                   Уведомления
                 </DropdownMenuItem>
-                {isFullAdmin ? (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/admin/dashboard')}>
-                      <Icon name="LayoutDashboard" className="mr-2 h-4 w-4" />
-                      Админ-панель
-                    </DropdownMenuItem>
-                  </>
-                ) : isModerator ? (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/admin/verifications')}>
-                      <Icon name="Shield" className="mr-2 h-4 w-4" />
-                      Модерация верификации
-                    </DropdownMenuItem>
-                  </>
-                ) : null}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                   <Icon name="LogOut" className="mr-2 h-4 w-4" />
