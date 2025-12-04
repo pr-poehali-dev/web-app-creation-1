@@ -112,20 +112,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    try:
-        body_data = json.loads(event.get('body', '{}'))
-    except json.JSONDecodeError as e:
-        conn.close()
-        return {
-            'statusCode': 400,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({'error': f'Invalid JSON: {str(e)}'}),
-            'isBase64Encoded': False
-        }
-    
+    body_data = json.loads(event.get('body', '{}'))
     verification_type = body_data.get('verificationType')
     phone = body_data.get('phone')
     
@@ -137,93 +124,79 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': f'Verification type and phone are required. Got: verificationType={verification_type}, phone={phone}'}),
+            'body': json.dumps({'error': 'Verification type and phone are required'}),
             'isBase64Encoded': False
         }
     
     cursor = conn.cursor()
     
-    try:
-        if verification_type == 'legal_entity':
-            company_name = body_data.get('companyName', '')
-            inn = body_data.get('inn', '')
-            registration_cert_url = body_data.get('registrationCertUrl')
-            agreement_form_url = body_data.get('agreementFormUrl')
-            
-            cursor.execute('''
-                INSERT INTO user_verifications 
-                (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (user_id) 
-                DO UPDATE SET 
-                    verification_type = EXCLUDED.verification_type,
-                    phone = EXCLUDED.phone,
-                    company_name = EXCLUDED.company_name,
-                    inn = EXCLUDED.inn,
-                    registration_cert_url = EXCLUDED.registration_cert_url,
-                    agreement_form_url = EXCLUDED.agreement_form_url,
-                    status = EXCLUDED.status,
-                    updated_at = CURRENT_TIMESTAMP
-                RETURNING id
-            ''', (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, 'pending'))
-        else:
-            registration_address = body_data.get('registrationAddress', '')
-            actual_address = body_data.get('actualAddress', '')
-            passport_scan_url = body_data.get('passportScanUrl')
-            passport_registration_url = body_data.get('passportRegistrationUrl')
-            utility_bill_url = body_data.get('utilityBillUrl')
-            inn = body_data.get('inn', '')
-            ogrnip = body_data.get('ogrnip', '')
-            
-            cursor.execute('''
-                INSERT INTO user_verifications 
-                (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (user_id) 
-                DO UPDATE SET 
-                    verification_type = EXCLUDED.verification_type,
-                    phone = EXCLUDED.phone,
-                    registration_address = EXCLUDED.registration_address,
-                    actual_address = EXCLUDED.actual_address,
-                    passport_scan_url = EXCLUDED.passport_scan_url,
-                    passport_registration_url = EXCLUDED.passport_registration_url,
-                    utility_bill_url = EXCLUDED.utility_bill_url,
-                    inn = EXCLUDED.inn,
-                    ogrnip = EXCLUDED.ogrnip,
-                    status = EXCLUDED.status,
-                    updated_at = CURRENT_TIMESTAMP
-                RETURNING id
-            ''', (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, 'pending'))
+    if verification_type == 'legal_entity':
+        company_name = body_data.get('companyName', '')
+        inn = body_data.get('inn', '')
+        registration_cert_url = body_data.get('registrationCertUrl')
+        agreement_form_url = body_data.get('agreementFormUrl')
         
         cursor.execute('''
-            UPDATE users 
-            SET verification_status = %s 
-            WHERE id = %s
-        ''', ('pending', user_id))
+            INSERT INTO user_verifications 
+            (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+                verification_type = EXCLUDED.verification_type,
+                phone = EXCLUDED.phone,
+                company_name = EXCLUDED.company_name,
+                inn = EXCLUDED.inn,
+                registration_cert_url = EXCLUDED.registration_cert_url,
+                agreement_form_url = EXCLUDED.agreement_form_url,
+                status = EXCLUDED.status,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id
+        ''', (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, 'pending'))
+    else:
+        registration_address = body_data.get('registrationAddress', '')
+        actual_address = body_data.get('actualAddress', '')
+        passport_scan_url = body_data.get('passportScanUrl')
+        passport_registration_url = body_data.get('passportRegistrationUrl')
+        utility_bill_url = body_data.get('utilityBillUrl')
+        inn = body_data.get('inn', '')
+        ogrnip = body_data.get('ogrnip', '')
         
-        conn.commit()
-        cursor.close()
-        conn.close()
-        
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({'success': True, 'message': 'Verification request submitted'}),
-            'isBase64Encoded': False
-        }
-    except Exception as e:
-        conn.rollback()
-        cursor.close()
-        conn.close()
-        return {
-            'statusCode': 500,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({'error': f'Database error: {str(e)}'}),
-            'isBase64Encoded': False
-        }
+        cursor.execute('''
+            INSERT INTO user_verifications 
+            (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+                verification_type = EXCLUDED.verification_type,
+                phone = EXCLUDED.phone,
+                registration_address = EXCLUDED.registration_address,
+                actual_address = EXCLUDED.actual_address,
+                passport_scan_url = EXCLUDED.passport_scan_url,
+                passport_registration_url = EXCLUDED.passport_registration_url,
+                utility_bill_url = EXCLUDED.utility_bill_url,
+                inn = EXCLUDED.inn,
+                ogrnip = EXCLUDED.ogrnip,
+                status = EXCLUDED.status,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id
+        ''', (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, 'pending'))
+    
+    cursor.execute('''
+        UPDATE users 
+        SET verification_status = %s 
+        WHERE id = %s
+    ''', ('pending', user_id))
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({'success': True, 'message': 'Verification request submitted'}),
+        'isBase64Encoded': False
+    }
