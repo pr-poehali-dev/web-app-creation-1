@@ -1,4 +1,5 @@
 {
+  "set-admin-password": "https://functions.poehali.dev/610b38a1-b500-46fd-bf38-44134ee09404",
   "admin-offers": "https://functions.poehali.dev/989d9b69-4c39-49f3-abad-1249c04ddc21",
   "admin-users": "https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f",
   "contracts-create": "https://functions.poehali.dev/1eb3dd30-04c6-4570-97ff-73c5403573f5",

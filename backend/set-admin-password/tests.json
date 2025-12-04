@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Set admin password",
+      "method": "POST",
+      "body": {
+        "email": "test@test.com",
+        "password": "testpass"
+      },
+      "expectedStatus": 404,
+      "bodyMatcher": "partial"
+    }
+  ]
+}
