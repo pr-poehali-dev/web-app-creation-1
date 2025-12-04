@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -345,6 +345,25 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               registrationDate={currentUser.createdAt || ''}
               formatDate={formatDate}
             />
+
+            {currentUser.email === 'doydum-invest@mail.ru' && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold">Администрирование</h3>
+                      <p className="text-sm text-muted-foreground">Доступ к панели управления системой</p>
+                    </div>
+                    <Link to="/admin">
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <Icon name="Shield" className="h-4 w-4" />
+                        Админ-панель
+                      </Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+              </Card>
+            )}
           </div>
         </div>
       </main>

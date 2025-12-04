@@ -89,18 +89,9 @@ export default function Footer() {
 
         <div className="mt-8 pt-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-4">
-              <p className="text-sm text-muted-foreground">
-                © {currentYear} Единая Региональная Торговая Площадка. Все права защищены.
-              </p>
-              <Link 
-                to="/admin" 
-                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Icon name="Shield" className="h-3 w-3" />
-                админ.ертп
-              </Link>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              © {currentYear} Единая Региональная Торговая Площадка. Все права защищены.
+            </p>
             <div className="flex items-center gap-4">
               <a
                 href="mailto:support@example.com"
