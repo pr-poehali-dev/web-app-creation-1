@@ -14,6 +14,7 @@ interface Verification {
   registrationAddress: string | null;
   actualAddress: string | null;
   passportScanUrl: string | null;
+  passportRegistrationUrl: string | null;
   utilityBillUrl: string | null;
   registrationCertUrl: string | null;
   agreementFormUrl: string | null;
@@ -102,106 +103,97 @@ export default function DocumentsDialog({
               <h4 className="font-semibold mb-4">Загруженные документы</h4>
               <div className="grid gap-4">
                 {selectedVerification.passportScanUrl && (
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon name="FileText" className="h-5 w-5 text-primary" />
                         <span className="font-medium">Скан паспорта</span>
                       </div>
-                      <a 
-                        href={selectedVerification.passportScanUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-2"
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedVerification.passportScanUrl!, '_blank')}
                       >
-                        <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть в новом окне
-                      </a>
+                        <Icon name="Eye" className="h-4 w-4 mr-2" />
+                        Просмотреть
+                      </Button>
                     </div>
-                    <img 
-                      src={selectedVerification.passportScanUrl} 
-                      alt="Скан паспорта" 
-                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
-                      onClick={() => window.open(selectedVerification.passportScanUrl!, '_blank')}
-                    />
+                  </div>
+                )}
+
+                {selectedVerification.passportRegistrationUrl && (
+                  <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Страница паспорта с регистрацией</span>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedVerification.passportRegistrationUrl!, '_blank')}
+                      >
+                        <Icon name="Eye" className="h-4 w-4 mr-2" />
+                        Просмотреть
+                      </Button>
+                    </div>
                   </div>
                 )}
 
                 {selectedVerification.utilityBillUrl && (
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon name="FileText" className="h-5 w-5 text-primary" />
                         <span className="font-medium">Коммунальный платеж</span>
                       </div>
-                      <a 
-                        href={selectedVerification.utilityBillUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-2"
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedVerification.utilityBillUrl!, '_blank')}
                       >
-                        <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть в новом окне
-                      </a>
+                        <Icon name="Eye" className="h-4 w-4 mr-2" />
+                        Просмотреть
+                      </Button>
                     </div>
-                    <img 
-                      src={selectedVerification.utilityBillUrl} 
-                      alt="Коммунальный платеж" 
-                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
-                      onClick={() => window.open(selectedVerification.utilityBillUrl!, '_blank')}
-                    />
                   </div>
                 )}
 
                 {selectedVerification.registrationCertUrl && (
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon name="FileText" className="h-5 w-5 text-primary" />
                         <span className="font-medium">Свидетельство о регистрации / Выписка ЕГРЮЛ</span>
                       </div>
-                      <a 
-                        href={selectedVerification.registrationCertUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-2"
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedVerification.registrationCertUrl!, '_blank')}
                       >
-                        <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть в новом окне
-                      </a>
+                        <Icon name="Eye" className="h-4 w-4 mr-2" />
+                        Просмотреть
+                      </Button>
                     </div>
-                    <img 
-                      src={selectedVerification.registrationCertUrl} 
-                      alt="Свидетельство о регистрации" 
-                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
-                      onClick={() => window.open(selectedVerification.registrationCertUrl!, '_blank')}
-                    />
                   </div>
                 )}
 
                 {selectedVerification.agreementFormUrl && (
-                  <div className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon name="FileText" className="h-5 w-5 text-primary" />
                         <span className="font-medium">Форма согласия</span>
                       </div>
-                      <a 
-                        href={selectedVerification.agreementFormUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline flex items-center gap-2"
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.open(selectedVerification.agreementFormUrl!, '_blank')}
                       >
-                        <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть в новом окне
-                      </a>
+                        <Icon name="Eye" className="h-4 w-4 mr-2" />
+                        Просмотреть
+                      </Button>
                     </div>
-                    <img 
-                      src={selectedVerification.agreementFormUrl} 
-                      alt="Форма согласия" 
-                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
-                      onClick={() => window.open(selectedVerification.agreementFormUrl!, '_blank')}
-                    />
                   </div>
                 )}
 
