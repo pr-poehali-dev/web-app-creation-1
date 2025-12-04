@@ -276,12 +276,12 @@ export default function VerificationPage() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
               disabled={loading}
               className="text-primary font-bold"
             >
-              <Icon name="Home" className="h-4 w-4 mr-1" />
-              Вернуться на главную
+              <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
+              Назад
             </Button>
           </div>
           <CardTitle>Верификация аккаунта</CardTitle>

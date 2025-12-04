@@ -157,7 +157,7 @@ export default function ProfileVerificationCard() {
             <Icon name="AlertCircle" className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-semibold mb-1">Рекомендуем пройти верификацию</p>
-              <p className="text-orange-600">Верифицированные пользователи вызывают больше доверия и получают больше откликов</p>
+              <p className="text-orange-600">Верифицированные пользователи получают больше возможностей и доступ ко всем инструментам платформы</p>
             </div>
           </div>
         )}
