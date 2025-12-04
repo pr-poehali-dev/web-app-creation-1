@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -15,6 +15,7 @@ import OfferPricingSection from '@/components/offer/OfferPricingSection';
 import OfferLocationSection from '@/components/offer/OfferLocationSection';
 import OfferMediaSection from '@/components/offer/OfferMediaSection';
 import VerificationGuard from '@/components/VerificationGuard';
+import { canCreateListing } from '@/utils/permissions';
 
 interface CreateOfferProps {
   isAuthenticated: boolean;
@@ -24,6 +25,18 @@ interface CreateOfferProps {
 export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const accessCheck = canCreateListing(isAuthenticated);
+
+  useEffect(() => {
+    if (!accessCheck.allowed) {
+      toast({
+        title: "Доступ ограничен",
+        description: accessCheck.message,
+        variant: "destructive",
+      });
+      navigate('/login');
+    }
+  }, [accessCheck.allowed, accessCheck.message, navigate, toast]);
   const { districts } = useDistrict();
 
   const [formData, setFormData] = useState({

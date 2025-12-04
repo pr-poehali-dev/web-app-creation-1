@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { checkAccessPermission } from '@/utils/permissions';
 
 interface TradingPlatformProps {
   isAuthenticated: boolean;
@@ -41,6 +42,13 @@ interface Contract {
 export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPlatformProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const accessCheck = checkAccessPermission(isAuthenticated, 'contracts');
+
+  useEffect(() => {
+    if (!accessCheck.allowed) {
+      navigate('/');
+    }
+  }, [accessCheck.allowed, navigate]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

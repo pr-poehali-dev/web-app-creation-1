@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { checkAccessPermission } from '@/utils/permissions';
 
 interface CreateContractProps {
   isAuthenticated: boolean;
@@ -20,6 +21,13 @@ interface CreateContractProps {
 export default function CreateContract({ isAuthenticated, onLogout }: CreateContractProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const accessCheck = checkAccessPermission(isAuthenticated, 'contracts');
+
+  useEffect(() => {
+    if (!accessCheck.allowed) {
+      navigate('/');
+    }
+  }, [accessCheck.allowed, navigate]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({

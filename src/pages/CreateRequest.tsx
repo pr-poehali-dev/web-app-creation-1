@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -14,6 +14,7 @@ import RequestPricingSection from '@/components/request/RequestPricingSection';
 import RequestDeliverySection from '@/components/request/RequestDeliverySection';
 import RequestMediaSection from '@/components/request/RequestMediaSection';
 import VerificationGuard from '@/components/VerificationGuard';
+import { canCreateListing } from '@/utils/permissions';
 
 interface CreateRequestProps {
   isAuthenticated: boolean;
@@ -23,6 +24,18 @@ interface CreateRequestProps {
 export default function CreateRequest({ isAuthenticated, onLogout }: CreateRequestProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const accessCheck = canCreateListing(isAuthenticated);
+
+  useEffect(() => {
+    if (!accessCheck.allowed) {
+      toast({
+        title: "Доступ ограничен",
+        description: accessCheck.message,
+        variant: "destructive",
+      });
+      navigate('/login');
+    }
+  }, [accessCheck.allowed, accessCheck.message, navigate, toast]);
   const { districts } = useDistrict();
 
   const [formData, setFormData] = useState({

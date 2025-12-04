@@ -12,6 +12,7 @@ import type { Auction } from '@/types/auction';
 import { useNavigate } from 'react-router-dom';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { CATEGORIES } from '@/data/categories';
+import { checkAccessPermission } from '@/utils/permissions';
 
 interface AuctionsProps {
   isAuthenticated: boolean;
@@ -22,6 +23,13 @@ const ITEMS_PER_PAGE = 20;
 
 export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const navigate = useNavigate();
+  const accessCheck = checkAccessPermission(isAuthenticated, 'auctions');
+
+  useEffect(() => {
+    if (!accessCheck.allowed) {
+      navigate('/');
+    }
+  }, [accessCheck.allowed, navigate]);
   const { districts, selectedDistricts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
