@@ -56,19 +56,13 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [selectedType, setSelectedType] = useState('all');
 
   useEffect(() => {
-    const userRole = localStorage.getItem('userRole');
-    if (!isAuthenticated || userRole !== 'verified') {
-      toast({
-        title: 'Доступ ограничен',
-        description: 'Торговая площадка доступна только верифицированным пользователям',
-        variant: 'destructive',
-      });
-      navigate('/verification');
+    if (!isAuthenticated) {
+      navigate('/login');
       return;
     }
 
     loadContracts();
-  }, [isAuthenticated, navigate, toast]);
+  }, [isAuthenticated, navigate]);
 
   const loadContracts = async () => {
     try {
