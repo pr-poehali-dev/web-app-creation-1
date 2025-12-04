@@ -4,11 +4,14 @@ import SearchBlock from '@/components/SearchBlock';
 import OfferCardSkeleton from '@/components/OfferCardSkeleton';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
 import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { getSession } from '@/utils/auth';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -19,9 +22,11 @@ const ITEMS_PER_PAGE = 20;
 
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
+  const currentUser = getSession();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -43,6 +48,10 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
   const filteredRequests = useMemo(() => {
     let result = [...MOCK_OFFERS];
+
+    if (showOnlyMy && isAuthenticated && currentUser) {
+      result = result.filter(offer => offer.userId === currentUser.id);
+    }
 
     if (filters.query && filters.query.length >= 2) {
       result = searchOffers(result, filters.query);
@@ -77,7 +86,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return result;
-  }, [filters, selectedDistricts]);
+  }, [filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
 
   const currentRequests = filteredRequests.slice(0, displayedCount);
   const hasMore = displayedCount < filteredRequests.length;
@@ -182,11 +191,26 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    Сортировка: <span className="font-semibold text-foreground">По новизне</span>
-                  </p>
+                <div className="flex items-center gap-4 flex-wrap">
+                  {isAuthenticated && (
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="show-only-my-requests"
+                        checked={showOnlyMy}
+                        onCheckedChange={setShowOnlyMy}
+                      />
+                      <Label htmlFor="show-only-my-requests" className="text-sm cursor-pointer">
+                        Только мои запросы
+                      </Label>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2">
+                    <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      Сортировка: <span className="font-semibold text-foreground">По новизне</span>
+                    </p>
+                  </div>
                 </div>
               </div>
 

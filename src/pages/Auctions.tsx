@@ -5,6 +5,8 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
 import { MOCK_AUCTIONS } from '@/data/mockAuctions';
@@ -13,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { CATEGORIES } from '@/data/categories';
 import { checkAccessPermission } from '@/utils/permissions';
+import { getSession } from '@/utils/auth';
 
 interface AuctionsProps {
   isAuthenticated: boolean;
@@ -23,6 +26,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const navigate = useNavigate();
+  const currentUser = getSession();
   const accessCheck = checkAccessPermission(isAuthenticated, 'auctions');
 
   useEffect(() => {
@@ -34,6 +38,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -57,6 +62,10 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
 
   const filteredAuctions = useMemo(() => {
     let result = [...MOCK_AUCTIONS];
+
+    if (showOnlyMy && isAuthenticated && currentUser) {
+      result = result.filter(auction => auction.userId === currentUser.id);
+    }
 
     if (statusFilter !== 'all') {
       result = result.filter((auction) => auction.status === statusFilter);
@@ -103,7 +112,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     });
 
     return [...premiumAuctions, ...regularAuctions];
-  }, [filters, statusFilter, selectedDistricts]);
+  }, [filters, statusFilter, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
 
   const currentAuctions = filteredAuctions.slice(0, displayedCount);
   const hasMore = displayedCount < filteredAuctions.length;
@@ -383,14 +392,29 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
         ) : (
           <>
             <div className="mb-6">
-              <p className="text-sm text-muted-foreground">
-                Найдено: <span className="font-semibold text-foreground">{filteredAuctions.length}</span>{' '}
-                {filteredAuctions.length === 1
-                  ? 'аукцион'
-                  : filteredAuctions.length < 5
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Найдено: <span className="font-semibold text-foreground">{filteredAuctions.length}</span>{' '}
+                  {filteredAuctions.length === 1
+                    ? 'аукцион'
+                    : filteredAuctions.length < 5
                   ? 'аукциона'
                   : 'аукционов'}
-              </p>
+                </p>
+
+                {isAuthenticated && (
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="show-only-my-auctions"
+                      checked={showOnlyMy}
+                      onCheckedChange={setShowOnlyMy}
+                    />
+                    <Label htmlFor="show-only-my-auctions" className="text-sm cursor-pointer">
+                      Только мои аукционы
+                    </Label>
+                  </div>
+                )}
+              </div>
 
               {(filters.category || selectedDistricts.length > 0) && (
                 <div className="mt-3 flex flex-wrap gap-2">
