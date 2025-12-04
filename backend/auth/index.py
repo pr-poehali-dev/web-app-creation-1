@@ -161,16 +161,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         }
                     
                     password_hash = hash_password(password)
+                    role = body_data.get('role', 'user')
                     cur.execute(
                         """INSERT INTO users (email, password_hash, first_name, last_name, middle_name, 
-                           user_type, phone, company_name, inn, ogrnip, ogrn, position, director_name, legal_address)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                           user_type, phone, company_name, inn, ogrnip, ogrn, position, director_name, legal_address, role)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                            RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
-                                     company_name, inn, ogrnip, ogrn, position, director_name, legal_address, created_at""",
+                                     company_name, inn, ogrnip, ogrn, position, director_name, legal_address, role, created_at""",
                         (email, password_hash, first_name, last_name, middle_name or None, user_type, phone,
                          body_data.get('companyName'), body_data.get('inn'), body_data.get('ogrnip'),
                          body_data.get('ogrnLegal'), body_data.get('position'), body_data.get('directorName'),
-                         body_data.get('legalAddress'))
+                         body_data.get('legalAddress'), role)
                     )
                     user = cur.fetchone()
                     conn.commit()

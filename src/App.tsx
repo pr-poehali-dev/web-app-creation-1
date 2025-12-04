@@ -38,6 +38,7 @@ import AdminSettings from "./pages/AdminSettings";
 import AdminAuctions from "./pages/AdminAuctions";
 import AdminContracts from "./pages/AdminContracts";
 import AdminReviews from "./pages/AdminReviews";
+import AdminManageAdmins from "./pages/AdminManageAdmins";
 import TradingPlatform from "./pages/TradingPlatform";
 import CreateContract from "./pages/CreateContract";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
@@ -96,6 +97,7 @@ const App = () => {
             <Route path="/admin/reviews" element={<AdminReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/analytics" element={<AdminAnalytics isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/settings" element={<AdminSettings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/admin/manage-admins" element={<AdminManageAdmins isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/verifications" element={<AdminVerifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/change-password" element={<AdminChangePassword />} />
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

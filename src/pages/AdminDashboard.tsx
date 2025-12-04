@@ -98,6 +98,15 @@ export default function AdminDashboard({ isAuthenticated, onLogout }: AdminDashb
       color: 'bg-gray-500',
       count: null,
       path: '/admin/settings'
+    },
+    {
+      id: 'manage-admins',
+      title: 'Управление администраторами',
+      description: 'Добавление и удаление администраторов',
+      icon: 'ShieldCheck',
+      color: 'bg-pink-500',
+      count: null,
+      path: '/admin/manage-admins'
     }
   ];
 

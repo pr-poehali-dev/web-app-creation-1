@@ -45,6 +45,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             search = query_params.get('search', '')
             status_filter = query_params.get('status', 'all')
             type_filter = query_params.get('type', 'all')
+            role_filter = query_params.get('role', '')
             
             where_clauses = []
             if search:
@@ -55,6 +56,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             if type_filter != 'all':
                 where_clauses.append(f"user_type = '{type_filter}'")
+            
+            if role_filter:
+                where_clauses.append(f"role = '{role_filter}'")
             
             where_sql = ' AND '.join(where_clauses) if where_clauses else '1=1'
             
