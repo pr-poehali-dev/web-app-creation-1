@@ -28,6 +28,7 @@ import { MOCK_OFFERS } from '@/data/mockOffers';
 import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useVerificationStatus } from '@/hooks/useVerificationStatus';
 
 interface MyOffersProps {
   isAuthenticated: boolean;
@@ -61,6 +62,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const { toast } = useToast();
   const { districts } = useDistrict();
   const currentUser = getSession();
+  const { verificationStatus } = useVerificationStatus();
   
   const [offers, setOffers] = useState<MyOffer[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | OfferStatus>('all');
@@ -276,7 +278,13 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
                 Управляйте своими опубликованными предложениями
               </p>
             </div>
-            <Button onClick={() => navigate('/create-offer')}>
+            <Button onClick={() => {
+              if (verificationStatus !== 'verified') {
+                navigate('/verification');
+              } else {
+                navigate('/create-offer');
+              }
+            }}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Создать предложение
             </Button>

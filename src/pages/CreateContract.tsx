@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
+import { useVerificationStatus } from '@/hooks/useVerificationStatus';
 
 interface CreateContractProps {
   isAuthenticated: boolean;
@@ -21,13 +22,18 @@ interface CreateContractProps {
 export default function CreateContract({ isAuthenticated, onLogout }: CreateContractProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { verificationStatus } = useVerificationStatus();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
+      return;
     }
-  }, [isAuthenticated, navigate]);
+    if (verificationStatus !== 'verified' && verificationStatus !== null) {
+      navigate('/verification');
+    }
+  }, [isAuthenticated, verificationStatus, navigate]);
 
   const [formData, setFormData] = useState({
     contractType: 'futures',

@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useVerificationStatus } from '@/hooks/useVerificationStatus';
 
 interface MyRequestsProps {
   isAuthenticated: boolean;
@@ -117,6 +118,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
   const { toast } = useToast();
   const { districts } = useDistrict();
   const currentUser = getSession();
+  const { verificationStatus } = useVerificationStatus();
   
   const [requests, setRequests] = useState<Request[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | RequestStatus>('all');
@@ -317,7 +319,13 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
                 Управляйте своими запросами на покупку
               </p>
             </div>
-            <Button onClick={() => navigate('/create-request')}>
+            <Button onClick={() => {
+              if (verificationStatus !== 'verified') {
+                navigate('/verification');
+              } else {
+                navigate('/create-request');
+              }
+            }}>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Создать запрос
             </Button>

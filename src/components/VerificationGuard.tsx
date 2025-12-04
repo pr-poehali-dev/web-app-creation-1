@@ -63,8 +63,7 @@ export default function VerificationGuard({ children }: VerificationGuardProps) 
           <AlertTitle>Требуется верификация</AlertTitle>
           <AlertDescription className="mt-2 space-y-4">
             <p>
-              Для создания запросов и предложений необходимо пройти верификацию аккаунта.
-              Это займет всего несколько минут.
+              Для полного доступа к функционалу платформы (создания запросов, предложений, аукциона, контракта) необходимо пройти верификацию аккаунта. Это займет всего несколько минут.
             </p>
             <Button onClick={() => navigate('/verification')}>
               Пройти верификацию
