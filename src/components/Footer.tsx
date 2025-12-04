@@ -95,7 +95,7 @@ export default function Footer() {
               </p>
               <Link 
                 to="/admin" 
-                className="text-xs text-muted-foreground/50 hover:text-primary transition-colors flex items-center gap-1"
+                className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Icon name="Shield" className="h-3 w-3" />
                 админ.ертп
