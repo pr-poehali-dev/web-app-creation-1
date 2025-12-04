@@ -12,6 +12,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
 import { getSession } from '@/utils/auth';
+import ProductMediaGallery from '@/components/ProductMediaGallery';
 
 interface TradingPlatformProps {
   isAuthenticated: boolean;
@@ -38,6 +39,8 @@ interface Contract {
   financingAvailable: boolean;
   viewsCount: number;
   createdAt: string;
+  productImages?: string[];
+  productVideoUrl?: string;
 }
 
 export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPlatformProps) {
@@ -277,6 +280,12 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
+                    <ProductMediaGallery 
+                      images={contract.productImages}
+                      videoUrl={contract.productVideoUrl}
+                      productName={contract.productName}
+                    />
+                    <div className="mt-3 border-t pt-3" />
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Icon name="Package" className="h-4 w-4 text-muted-foreground" />

@@ -115,6 +115,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     contract_dict['createdAt'] = str(contract_dict.pop('created_at'))
                     contract_dict['updatedAt'] = str(contract_dict.pop('updated_at'))
                     contract_dict['quantity'] = float(contract_dict['quantity'])
+                    contract_dict['productImages'] = contract_dict.pop('product_images')
+                    contract_dict['productVideoUrl'] = contract_dict.pop('product_video_url')
                     
                     contracts_list.append(contract_dict)
                 

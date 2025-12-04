@@ -67,10 +67,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     ''', (user_id,))
     
     result = cursor.fetchone()
-    cursor.close()
-    conn.close()
     
     if not result:
+        cursor.close()
+        conn.close()
         return {
             'statusCode': 404,
             'headers': {
@@ -88,6 +88,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     inn = result[4] if len(result) > 4 else None
     ogrnip = result[5] if len(result) > 5 else None
     
+    cursor.execute('''
+        SELECT status, rejection_reason, verification_type,
+               passport_scan_url, passport_registration_url, utility_bill_url,
+               registration_cert_url, agreement_form_url
+        FROM user_verifications
+        WHERE user_id = %s
+    ''', (user_id,))
+    
+    verification_data = cursor.fetchone()
+    rejection_reason = None
+    verification_type = None
+    existing_docs = {}
+    
+    if verification_data:
+        verification_type = verification_data[2]
+        if verification_data[0] == 'rejected':
+            rejection_reason = verification_data[1]
+        
+        existing_docs = {
+            'passportScanUrl': verification_data[3],
+            'passportRegistrationUrl': verification_data[4],
+            'utilityBillUrl': verification_data[5],
+            'registrationCertUrl': verification_data[6],
+            'agreementFormUrl': verification_data[7]
+        }
+    
+    cursor.close()
+    conn.close()
+    
     return {
         'statusCode': 200,
         'headers': {
@@ -101,7 +130,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'phone': phone,
             'companyName': company_name,
             'inn': inn,
-            'ogrnip': ogrnip
+            'ogrnip': ogrnip,
+            'rejectionReason': rejection_reason,
+            'verificationType': verification_type,
+            'existingDocuments': existing_docs
         }),
         'isBase64Encoded': False
     }

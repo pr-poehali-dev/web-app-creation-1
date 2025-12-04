@@ -13,6 +13,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
 import { useVerificationStatus } from '@/hooks/useVerificationStatus';
+import ProductMediaUpload from '@/components/ProductMediaUpload';
 
 interface CreateContractProps {
   isAuthenticated: boolean;
@@ -54,9 +55,11 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
     financingAvailable: false,
     termsConditions: '',
     minPurchaseQuantity: '',
+    productImages: [] as string[],
+    productVideoUrl: '',
   });
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -89,6 +92,8 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
           ...formData,
           totalAmount,
           prepaymentAmount,
+          productImages: formData.productImages,
+          productVideoUrl: formData.productVideoUrl,
         }),
       });
 
@@ -387,6 +392,15 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
                       rows={4}
                     />
                   </div>
+
+                  <ProductMediaUpload
+                    productImages={formData.productImages}
+                    productVideoUrl={formData.productVideoUrl}
+                    onImagesChange={(urls) => handleInputChange('productImages', urls)}
+                    onVideoChange={(url) => handleInputChange('productVideoUrl', url)}
+                    maxImages={5}
+                    maxVideoSizeMB={100}
+                  />
                 </div>
 
                 <div className="flex gap-4 pt-4">

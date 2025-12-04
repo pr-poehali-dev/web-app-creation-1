@@ -74,6 +74,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         terms_conditions = body.get('termsConditions', '')
         min_purchase_quantity = body.get('minPurchaseQuantity', 0)
         discount_percent = body.get('discountPercent', 0)
+        product_images = body.get('productImages', [])
+        product_video_url = body.get('productVideoUrl', '')
         
         if not all([contract_type, title, category, product_name, quantity, unit, price_per_unit, 
                    delivery_date, contract_start_date, contract_end_date]):
@@ -105,15 +107,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         quantity, unit, price_per_unit, total_amount, delivery_date,
                         contract_start_date, contract_end_date, seller_id, delivery_address,
                         delivery_method, prepayment_percent, prepayment_amount, 
-                        financing_available, terms_conditions, min_purchase_quantity, discount_percent
+                        financing_available, terms_conditions, min_purchase_quantity, discount_percent,
+                        product_images, product_video_url
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     ) RETURNING id, created_at""",
                     (contract_type, title, description, category, product_name, quantity, unit,
                      price_per_unit, total_amount, delivery_date, contract_start_date, 
                      contract_end_date, int(user_id), delivery_address, delivery_method,
                      prepayment_percent, prepayment_amount, financing_available, 
-                     terms_conditions, min_purchase_quantity or None, discount_percent)
+                     terms_conditions, min_purchase_quantity or None, discount_percent,
+                     product_images if product_images else None, product_video_url or None)
                 )
                 
                 result = cur.fetchone()

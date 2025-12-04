@@ -14,6 +14,7 @@ import VerificationTypeSelector from '@/components/verification/VerificationType
 import LegalEntityForm from '@/components/verification/LegalEntityForm';
 import EntrepreneurForm from '@/components/verification/EntrepreneurForm';
 import IndividualForm from '@/components/verification/IndividualForm';
+import RejectedVerificationAlert from '@/components/verification/RejectedVerificationAlert';
 
 export default function VerificationPage() {
   const navigate = useNavigate();
@@ -25,6 +26,9 @@ export default function VerificationPage() {
   const [success, setSuccess] = useState(false);
   const [showAgreement, setShowAgreement] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string>('');
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [existingDocuments, setExistingDocuments] = useState<any>({});
   const [formData, setFormData] = useState<VerificationFormData>({
     verificationType: 'individual',
     phone: '',
@@ -69,6 +73,10 @@ export default function VerificationPage() {
 
       if (response.ok) {
         const data = await response.json();
+        
+        setVerificationStatus(data.verificationStatus);
+        setRejectionReason(data.rejectionReason || '');
+        setExistingDocuments(data.existingDocuments || {});
         
         let verificationType: VerificationType = 'individual';
         if (data.userType === 'legal-entity') {
@@ -290,6 +298,15 @@ export default function VerificationPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {verificationStatus === 'rejected' && rejectionReason && (
+            <RejectedVerificationAlert
+              rejectionReason={rejectionReason}
+              verificationType={formData.verificationType}
+              existingDocuments={existingDocuments}
+              onResubmit={loadUserData}
+            />
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <Alert variant="destructive">
