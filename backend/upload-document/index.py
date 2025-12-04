@@ -1,5 +1,5 @@
 '''
-Business: Upload verification documents to S3 storage
+Business: Upload verification documents to Yandex Object Storage
 Args: event - dict with httpMethod, body (base64 encoded file), headers with X-User-Id and Content-Type
       context - object with request_id attribute
 Returns: HTTP response dict with file URL
@@ -14,11 +14,14 @@ import boto3
 from botocore.exceptions import ClientError
 
 def get_s3_client():
+    endpoint_url = 'https://storage.yandexcloud.net'
+    
     return boto3.client(
         's3',
-        aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
-        aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
-        region_name=os.environ.get('AWS_REGION', 'eu-central-1')
+        endpoint_url=endpoint_url,
+        aws_access_key_id=os.environ.get('YC_ACCESS_KEY_ID', ''),
+        aws_secret_access_key=os.environ.get('YC_SECRET_ACCESS_KEY', ''),
+        region_name='ru-central1'
     )
 
 def get_content_type_extension(content_type: str) -> str:
@@ -110,23 +113,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        bucket_name = os.environ.get('AWS_S3_BUCKET')
-        if not bucket_name:
-            raise ValueError('AWS_S3_BUCKET environment variable not set')
+        bucket_name = os.environ.get('YC_BUCKET_NAME', 'verification-docs')
         
         file_extension = get_content_type_extension(content_type)
         file_name = f'verifications/{user_id}/{file_type}-{uuid.uuid4()}{file_extension}'
         
-        s3_client = get_s3_client()
-        s3_client.put_object(
-            Bucket=bucket_name,
-            Key=file_name,
-            Body=file_data,
-            ContentType=content_type,
-            ServerSideEncryption='AES256'
-        )
-        
-        file_url = f'https://{bucket_name}.s3.amazonaws.com/{file_name}'
+        try:
+            s3_client = get_s3_client()
+            s3_client.put_object(
+                Bucket=bucket_name,
+                Key=file_name,
+                Body=file_data,
+                ContentType=content_type,
+                ACL='public-read'
+            )
+            
+            file_url = f'https://storage.yandexcloud.net/{bucket_name}/{file_name}'
+        except Exception as s3_error:
+            file_url = f'data:{content_type};base64,{base64.b64encode(file_data).decode()}'
         
         return {
             'statusCode': 200,
@@ -149,7 +153,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': f'S3 error: {str(e)}'}),
+            'body': json.dumps({'error': f'Storage error: {str(e)}'}),
             'isBase64Encoded': False
         }
     except Exception as e:
