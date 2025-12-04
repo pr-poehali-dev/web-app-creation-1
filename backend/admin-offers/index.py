@@ -46,11 +46,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             status_filter = query_params.get('status', 'all')
             
             where_clauses = []
+            params = []
+            
             if search:
-                where_clauses.append(f"(c.title ILIKE '%{search}%' OR c.product_name ILIKE '%{search}%' OR u.company_name ILIKE '%{search}%' OR u.first_name ILIKE '%{search}%')")
+                search_pattern = f"%{search}%"
+                where_clauses.append("(c.title ILIKE %s OR c.product_name ILIKE %s OR u.company_name ILIKE %s OR u.first_name ILIKE %s)")
+                params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
             
             if status_filter != 'all':
-                where_clauses.append(f"c.status = '{status_filter}'")
+                where_clauses.append("c.status = %s")
+                params.append(status_filter)
             
             where_sql = ' AND '.join(where_clauses) if where_clauses else '1=1'
             
@@ -72,7 +77,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 LIMIT 100
             """
             
-            cur.execute(query)
+            cur.execute(query, tuple(params))
             offers = cur.fetchall()
             
             offers_list = []

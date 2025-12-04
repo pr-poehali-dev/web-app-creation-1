@@ -48,17 +48,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             role_filter = query_params.get('role', '')
             
             where_clauses = []
+            params = []
+            
             if search:
-                where_clauses.append(f"(email ILIKE '%{search}%' OR first_name ILIKE '%{search}%' OR last_name ILIKE '%{search}%' OR company_name ILIKE '%{search}%')")
+                search_pattern = f"%{search}%"
+                where_clauses.append("(email ILIKE %s OR first_name ILIKE %s OR last_name ILIKE %s OR company_name ILIKE %s)")
+                params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
             
             if status_filter != 'all':
-                where_clauses.append(f"status = '{status_filter}'")
+                where_clauses.append("status = %s")
+                params.append(status_filter)
             
             if type_filter != 'all':
-                where_clauses.append(f"user_type = '{type_filter}'")
+                where_clauses.append("user_type = %s")
+                params.append(type_filter)
             
             if role_filter:
-                where_clauses.append(f"role = '{role_filter}'")
+                where_clauses.append("role = %s")
+                params.append(role_filter)
             
             where_sql = ' AND '.join(where_clauses) if where_clauses else '1=1'
             
@@ -79,7 +86,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 LIMIT 100
             """
             
-            cur.execute(query)
+            cur.execute(query, tuple(params))
             users = cur.fetchall()
             
             users_list = []
