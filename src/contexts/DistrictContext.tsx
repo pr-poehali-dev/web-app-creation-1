@@ -155,11 +155,8 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       
       // Если браузерная геолокация не работает, используем IP
       if (location.city === 'Не определен' || location.source === 'default') {
-        console.log('Browser geolocation failed, trying IP detection...');
         location = await detectLocationByIP();
       }
-      
-      console.log('Location detected:', location);
       
       // Если district это ID района, получаем регион из него
       let regionId = 'all';
@@ -171,7 +168,6 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         if (districtData) {
           regionId = districtData.regionId;
           districtToSelect = districtData;
-          console.log('Found district by ID:', districtData);
         } else {
           // Если не нашли по ID, ищем по названию через старую функцию
           regionId = findRegionByLocation(location.city, location.district);
@@ -187,8 +183,6 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         regionId = findRegionByLocation(location.city, location.district);
       }
       
-      console.log('Selected region ID:', regionId);
-      
       if (regionId !== 'all') {
         setSelectedRegionState(regionId);
         setDetectedCity(location.city);
@@ -201,10 +195,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
           const districtIds = [districtToSelect.id];
           setSelectedDistrictsState(districtIds);
           localStorage.setItem('selectedDistricts', JSON.stringify(districtIds));
-          console.log('Selected district:', districtToSelect.name);
         }
-      } else {
-        console.log('Could not determine region from location:', location);
       }
     } catch (error) {
       console.error('Geolocation failed:', error);
