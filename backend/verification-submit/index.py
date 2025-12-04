@@ -101,14 +101,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         registration_address = body_data.get('registrationAddress', '')
         actual_address = body_data.get('actualAddress', '')
         passport_scan_url = body_data.get('passportScanUrl')
+        passport_registration_url = body_data.get('passportRegistrationUrl')
         utility_bill_url = body_data.get('utilityBillUrl')
         inn = body_data.get('inn', '')
         ogrnip = body_data.get('ogrnip', '')
         
         cursor.execute('''
             INSERT INTO user_verifications 
-            (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, utility_bill_url, inn, ogrnip, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (user_id) 
             DO UPDATE SET 
                 verification_type = EXCLUDED.verification_type,
@@ -116,13 +117,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 registration_address = EXCLUDED.registration_address,
                 actual_address = EXCLUDED.actual_address,
                 passport_scan_url = EXCLUDED.passport_scan_url,
+                passport_registration_url = EXCLUDED.passport_registration_url,
                 utility_bill_url = EXCLUDED.utility_bill_url,
                 inn = EXCLUDED.inn,
                 ogrnip = EXCLUDED.ogrnip,
                 status = EXCLUDED.status,
                 updated_at = CURRENT_TIMESTAMP
             RETURNING id
-        ''', (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, utility_bill_url, inn, ogrnip, 'pending'))
+        ''', (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, 'pending'))
     
     cursor.execute('''
         UPDATE users 

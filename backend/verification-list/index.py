@@ -84,7 +84,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             uv.id, uv.user_id, uv.verification_type, uv.status,
             uv.phone, uv.phone_verified,
             uv.registration_address, uv.actual_address,
-            uv.passport_scan_url, uv.utility_bill_url,
+            uv.passport_scan_url, uv.passport_registration_url, uv.utility_bill_url,
             uv.registration_cert_url, uv.agreement_form_url,
             uv.company_name, uv.inn,
             uv.rejection_reason, uv.created_at, uv.updated_at,
@@ -110,17 +110,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'registrationAddress': row[6],
             'actualAddress': row[7],
             'passportScanUrl': row[8],
-            'utilityBillUrl': row[9],
-            'registrationCertUrl': row[10],
-            'agreementFormUrl': row[11],
-            'companyName': row[12],
-            'inn': row[13],
-            'rejectionReason': row[14],
-            'createdAt': row[15].isoformat() if row[15] else None,
-            'updatedAt': row[16].isoformat() if row[16] else None,
-            'userEmail': row[17],
-            'userFirstName': row[18],
-            'userLastName': row[19]
+            'passportRegistrationUrl': row[9],
+            'utilityBillUrl': row[10],
+            'registrationCertUrl': row[11],
+            'agreementFormUrl': row[12],
+            'companyName': row[13],
+            'inn': row[14],
+            'rejectionReason': row[15],
+            'createdAt': row[16].isoformat() if row[16] else None,
+            'updatedAt': row[17].isoformat() if row[17] else None,
+            'userEmail': row[18],
+            'userFirstName': row[19],
+            'userLastName': row[20]
         })
     
     cursor.close()
