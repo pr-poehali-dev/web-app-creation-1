@@ -103,17 +103,11 @@ export default function DocumentsDialog({
               <div className="grid gap-4">
                 {selectedVerification.passportScanUrl && (
                   <div className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Icon name="FileText" className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Скан паспорта</span>
-                    </div>
-                    {selectedVerification.passportScanUrl.startsWith('data:') ? (
-                      <img 
-                        src={selectedVerification.passportScanUrl} 
-                        alt="Скан паспорта" 
-                        className="w-full rounded border"
-                      />
-                    ) : (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Скан паспорта</span>
+                      </div>
                       <a 
                         href={selectedVerification.passportScanUrl} 
                         target="_blank" 
@@ -121,25 +115,25 @@ export default function DocumentsDialog({
                         className="text-primary hover:underline flex items-center gap-2"
                       >
                         <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть документ
+                        Открыть в новом окне
                       </a>
-                    )}
+                    </div>
+                    <img 
+                      src={selectedVerification.passportScanUrl} 
+                      alt="Скан паспорта" 
+                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
+                      onClick={() => window.open(selectedVerification.passportScanUrl!, '_blank')}
+                    />
                   </div>
                 )}
 
                 {selectedVerification.utilityBillUrl && (
                   <div className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Icon name="FileText" className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Коммунальный платеж</span>
-                    </div>
-                    {selectedVerification.utilityBillUrl.startsWith('data:') ? (
-                      <img 
-                        src={selectedVerification.utilityBillUrl} 
-                        alt="Коммунальный платеж" 
-                        className="w-full rounded border"
-                      />
-                    ) : (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Коммунальный платеж</span>
+                      </div>
                       <a 
                         href={selectedVerification.utilityBillUrl} 
                         target="_blank" 
@@ -147,25 +141,25 @@ export default function DocumentsDialog({
                         className="text-primary hover:underline flex items-center gap-2"
                       >
                         <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть документ
+                        Открыть в новом окне
                       </a>
-                    )}
+                    </div>
+                    <img 
+                      src={selectedVerification.utilityBillUrl} 
+                      alt="Коммунальный платеж" 
+                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
+                      onClick={() => window.open(selectedVerification.utilityBillUrl!, '_blank')}
+                    />
                   </div>
                 )}
 
                 {selectedVerification.registrationCertUrl && (
                   <div className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Icon name="FileText" className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Свидетельство о регистрации / Выписка ЕГРЮЛ</span>
-                    </div>
-                    {selectedVerification.registrationCertUrl.startsWith('data:') ? (
-                      <img 
-                        src={selectedVerification.registrationCertUrl} 
-                        alt="Свидетельство о регистрации" 
-                        className="w-full rounded border"
-                      />
-                    ) : (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Свидетельство о регистрации / Выписка ЕГРЮЛ</span>
+                      </div>
                       <a 
                         href={selectedVerification.registrationCertUrl} 
                         target="_blank" 
@@ -173,25 +167,25 @@ export default function DocumentsDialog({
                         className="text-primary hover:underline flex items-center gap-2"
                       >
                         <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть документ
+                        Открыть в новом окне
                       </a>
-                    )}
+                    </div>
+                    <img 
+                      src={selectedVerification.registrationCertUrl} 
+                      alt="Свидетельство о регистрации" 
+                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
+                      onClick={() => window.open(selectedVerification.registrationCertUrl!, '_blank')}
+                    />
                   </div>
                 )}
 
                 {selectedVerification.agreementFormUrl && (
                   <div className="border rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Icon name="FileText" className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Форма согласия</span>
-                    </div>
-                    {selectedVerification.agreementFormUrl.startsWith('data:') ? (
-                      <img 
-                        src={selectedVerification.agreementFormUrl} 
-                        alt="Форма согласия" 
-                        className="w-full rounded border"
-                      />
-                    ) : (
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="FileText" className="h-5 w-5 text-primary" />
+                        <span className="font-medium">Форма согласия</span>
+                      </div>
                       <a 
                         href={selectedVerification.agreementFormUrl} 
                         target="_blank" 
@@ -199,9 +193,15 @@ export default function DocumentsDialog({
                         className="text-primary hover:underline flex items-center gap-2"
                       >
                         <Icon name="ExternalLink" className="h-4 w-4" />
-                        Открыть документ
+                        Открыть в новом окне
                       </a>
-                    )}
+                    </div>
+                    <img 
+                      src={selectedVerification.agreementFormUrl} 
+                      alt="Форма согласия" 
+                      className="w-full rounded border max-h-[400px] object-contain cursor-pointer"
+                      onClick={() => window.open(selectedVerification.agreementFormUrl!, '_blank')}
+                    />
                   </div>
                 )}
 

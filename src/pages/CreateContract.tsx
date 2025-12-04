@@ -21,14 +21,13 @@ interface CreateContractProps {
 export default function CreateContract({ isAuthenticated, onLogout }: CreateContractProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const accessCheck = checkAccessPermission(isAuthenticated, 'contracts');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!accessCheck.allowed) {
-      navigate('/');
+    if (!isAuthenticated) {
+      navigate('/login');
     }
-  }, [accessCheck.allowed, navigate]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  }, [isAuthenticated, navigate]);
 
   const [formData, setFormData] = useState({
     contractType: 'futures',

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -35,6 +36,10 @@ export default function ProfileSecurityCard({
   onCancelPassword,
   onPasswordChange,
 }: ProfileSecurityCardProps) {
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <Card>
       <CardHeader>
@@ -86,13 +91,24 @@ export default function ProfileSecurityCard({
               <Label htmlFor="currentPassword">
                 Текущий пароль <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="currentPassword"
-                type="password"
-                value={passwordData.currentPassword}
-                onChange={(e) => onPasswordChange('currentPassword', e.target.value)}
-                placeholder="Введите текущий пароль"
-              />
+              <div className="relative">
+                <Input
+                  id="currentPassword"
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  value={passwordData.currentPassword}
+                  onChange={(e) => onPasswordChange('currentPassword', e.target.value)}
+                  placeholder="Введите текущий пароль"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  <Icon name={showCurrentPassword ? 'EyeOff' : 'Eye'} className="h-4 w-4" />
+                </button>
+              </div>
               {passwordErrors.currentPassword && (
                 <p className="text-sm text-destructive">{passwordErrors.currentPassword}</p>
               )}
@@ -102,13 +118,24 @@ export default function ProfileSecurityCard({
               <Label htmlFor="newPassword">
                 Новый пароль <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={passwordData.newPassword}
-                onChange={(e) => onPasswordChange('newPassword', e.target.value)}
-                placeholder="Минимум 6 символов"
-              />
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showNewPassword ? 'text' : 'password'}
+                  value={passwordData.newPassword}
+                  onChange={(e) => onPasswordChange('newPassword', e.target.value)}
+                  placeholder="Минимум 6 символов"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  <Icon name={showNewPassword ? 'EyeOff' : 'Eye'} className="h-4 w-4" />
+                </button>
+              </div>
               {passwordErrors.newPassword && (
                 <p className="text-sm text-destructive">{passwordErrors.newPassword}</p>
               )}
@@ -118,13 +145,24 @@ export default function ProfileSecurityCard({
               <Label htmlFor="confirmPassword">
                 Подтвердите новый пароль <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={passwordData.confirmPassword}
-                onChange={(e) => onPasswordChange('confirmPassword', e.target.value)}
-                placeholder="Повторите новый пароль"
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => onPasswordChange('confirmPassword', e.target.value)}
+                  placeholder="Повторите новый пароль"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  tabIndex={-1}
+                >
+                  <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} className="h-4 w-4" />
+                </button>
+              </div>
               {passwordErrors.confirmPassword && (
                 <p className="text-sm text-destructive">{passwordErrors.confirmPassword}</p>
               )}

@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
+import { getSession } from '@/utils/auth';
 
 interface TradingPlatformProps {
   isAuthenticated: boolean;
@@ -54,6 +55,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
+  const currentUser = getSession();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -149,10 +151,12 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
                   Фьючерсные и форвардные контракты для верифицированных участников
                 </p>
               </div>
-              <Button onClick={() => navigate('/create-contract')} size="lg">
-                <Icon name="Plus" className="mr-2 h-4 w-4" />
-                Создать контракт
-              </Button>
+              {currentUser?.userType !== 'individual' && (
+                <Button onClick={() => navigate('/create-contract')} size="lg">
+                  <Icon name="Plus" className="mr-2 h-4 w-4" />
+                  Создать контракт
+                </Button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
