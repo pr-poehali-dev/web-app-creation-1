@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfileStatsCardProps {
   registrationDate: string;
@@ -7,6 +9,8 @@ interface ProfileStatsCardProps {
 }
 
 export default function ProfileStatsCard({ registrationDate, formatDate }: ProfileStatsCardProps) {
+  const navigate = useNavigate();
+
   return (
     <Card>
       <CardHeader>
@@ -25,35 +29,59 @@ export default function ProfileStatsCard({ registrationDate, formatDate }: Profi
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-4 border rounded-lg">
+          <button
+            onClick={() => navigate('/predlozheniya')}
+            className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/10">
               <Icon name="Package" className="h-5 w-5 text-green-500" />
             </div>
-            <div>
+            <div className="text-left">
               <p className="text-sm text-muted-foreground">Активных предложений</p>
               <p className="font-semibold">2</p>
             </div>
-          </div>
+          </button>
 
-          <div className="flex items-center gap-3 p-4 border rounded-lg">
+          <button
+            onClick={() => navigate('/zaprosy')}
+            className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/10">
               <Icon name="FileText" className="h-5 w-5 text-purple-500" />
             </div>
-            <div>
+            <div className="text-left">
               <p className="text-sm text-muted-foreground">Активных запросов</p>
               <p className="font-semibold">1</p>
             </div>
-          </div>
+          </button>
 
-          <div className="flex items-center gap-3 p-4 border rounded-lg">
+          <button
+            onClick={() => navigate('/auction')}
+            className="flex items-center gap-3 p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/10">
-              <Icon name="ShoppingCart" className="h-5 w-5 text-orange-500" />
+              <Icon name="Gavel" className="h-5 w-5 text-orange-500" />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Завершенных заказов</p>
-              <p className="font-semibold">5</p>
+            <div className="text-left">
+              <p className="text-sm text-muted-foreground">Участие в аукционах</p>
+              <p className="font-semibold">3</p>
             </div>
-          </div>
+          </button>
+        </div>
+        
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Button onClick={() => navigate('/predlozheniya')} variant="outline" size="sm">
+            <Icon name="Package" className="mr-2 h-4 w-4" />
+            Мои предложения
+          </Button>
+          <Button onClick={() => navigate('/zaprosy')} variant="outline" size="sm">
+            <Icon name="FileText" className="mr-2 h-4 w-4" />
+            Мои запросы
+          </Button>
+          <Button onClick={() => navigate('/auction')} variant="outline" size="sm">
+            <Icon name="Gavel" className="mr-2 h-4 w-4" />
+            Мои аукционы
+          </Button>
         </div>
       </CardContent>
     </Card>
