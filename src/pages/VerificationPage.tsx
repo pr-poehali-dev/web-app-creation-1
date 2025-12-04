@@ -276,7 +276,7 @@ export default function VerificationPage() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/')}
               disabled={loading}
               className="text-primary font-bold"
             >
