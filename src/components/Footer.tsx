@@ -24,12 +24,12 @@ export default function Footer() {
             <h3 className="font-semibold mb-4">Основные разделы</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/home" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/predlozheniya" className="text-muted-foreground hover:text-primary transition-colors">
                   Предложения
                 </Link>
               </li>
               <li>
-                <Link to="/requests" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/zaprosy" className="text-muted-foreground hover:text-primary transition-colors">
                   Запросы
                 </Link>
               </li>
