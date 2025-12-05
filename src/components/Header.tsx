@@ -79,7 +79,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2 transition-opacity hover:opacity-80">
+          <Link to="/" className="flex items-center space-x-2 px-3 py-2 rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <Icon name="Building2" className="h-6 w-6 text-white" />
             </div>
