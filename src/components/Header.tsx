@@ -116,9 +116,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/about"
-              className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="text-sm font-medium text-foreground transition-colors hover:text-primary whitespace-nowrap"
             >
-              О площадке
+              О&nbsp;площадке
             </Link>
             <Link
               to="/support"
