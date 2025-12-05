@@ -136,10 +136,10 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center space-x-2">
-                    {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-4 w-4" />}
-                    <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[250px] truncate text-xs' : 'max-w-[150px] truncate'}>{getUserDisplayName()}</span>
-                    <Icon name="ChevronDown" className="h-4 w-4" />
+                  <Button variant="outline" className="flex items-center space-x-1.5 h-9 px-3">
+                    {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-3.5 w-3.5" />}
+                    <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[200px] truncate text-xs' : 'max-w-[120px] truncate text-xs'}>{getUserDisplayName()}</span>
+                    <Icon name="ChevronDown" className="h-3.5 w-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -190,7 +190,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={() => navigate('/login')}>Авторизация</Button>
+              <Button onClick={() => navigate('/login')} className="h-9 px-4 text-xs">Авторизация</Button>
             )}
           </div>
         </div>
