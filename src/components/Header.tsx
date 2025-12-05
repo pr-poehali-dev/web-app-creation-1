@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,8 +20,14 @@ interface HeaderProps {
 
 export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(getSession());
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
+  
+  const shouldShowDistricts = () => {
+    const hiddenPaths = ['/', '/about', '/support'];
+    return !hiddenPaths.includes(location.pathname);
+  };
 
   useEffect(() => {
     const handleSessionChange = () => {
@@ -123,7 +129,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <div className="hidden md:block w-64">
+            <div className="hidden md:block w-48">
               <RegionDistrictSelector showBadges={false} />
             </div>
             
@@ -189,7 +195,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           </div>
         </div>
 
-        {selectedDistricts.length > 0 && (
+        {selectedDistricts.length > 0 && shouldShowDistricts() && (
           <div className="border-t py-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-muted-foreground font-medium">Выбранные районы:</span>

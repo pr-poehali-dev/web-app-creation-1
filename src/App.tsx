@@ -45,6 +45,8 @@ import CreateContract from "./pages/CreateContract";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import OfferAgreement from "./pages/OfferAgreement";
+import About from "./pages/About";
+import Support from "./pages/Support";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
@@ -89,8 +91,8 @@ const App = () => {
             <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/request/:id" element={<RequestDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/auction" element={<Auctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/about" element={<NotFound />} />
-            <Route path="/support" element={<NotFound />} />
+            <Route path="/about" element={<About isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/support" element={<Support isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/verification" element={<VerificationPage />} />
             <Route path="/admin" element={<AdminLogin />} />
