@@ -86,7 +86,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             <span className="text-lg font-bold text-primary">Единая Региональная Торговая Площадка</span>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-6 mr-6">
             <Link
               to="/predlozheniya"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary"
@@ -128,8 +128,8 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:block w-48 mr-2">
+          <div className="flex items-center space-x-3">
+            <div className="hidden md:block w-48">
               <RegionDistrictSelector showBadges={false} />
             </div>
             
