@@ -16,6 +16,7 @@ import OfferBasicInfoSection from '@/components/offer/OfferBasicInfoSection';
 import OfferPricingSection from '@/components/offer/OfferPricingSection';
 import OfferLocationSection from '@/components/offer/OfferLocationSection';
 import OfferMediaSection from '@/components/offer/OfferMediaSection';
+import { offersAPI } from '@/services/api';
 
 import { canCreateListing } from '@/utils/permissions';
 
@@ -152,12 +153,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     setIsSubmitting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const newOffer: Offer = {
-        id: `offer-${Date.now()}`,
-        userId: currentUser?.id || 'unknown',
-        type: 'offer',
+      const offerData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
@@ -166,30 +162,21 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         unit: formData.unit,
         pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
         hasVAT: formData.hasVAT,
-        vatRate: parseFloat(formData.vatRate) || 20,
+        vatRate: formData.hasVAT ? parseFloat(formData.vatRate) || 20 : undefined,
+        location: formData.fullAddress,
         district: formData.district,
         fullAddress: formData.fullAddress,
         availableDistricts: formData.availableDistricts,
         availableDeliveryTypes: formData.availableDeliveryTypes,
-        createdAt: new Date(),
-        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
-        views: 0,
-        responses: 0,
-        isPremium: false,
         images: imagePreviews.map((url, index) => ({
-          id: `img-${Date.now()}-${index}`,
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
         })),
-        video: videoPreview ? {
-          id: `video-${Date.now()}`,
-          url: videoPreview,
-          thumbnail: videoPreview,
-        } : undefined,
-        status: isDraft ? 'draft' : 'pending',
+        isPremium: false,
+        status: isDraft ? 'draft' : 'active',
       };
 
-      addOffer(newOffer);
+      const result = await offersAPI.createOffer(offerData);
       
       toast({
         title: 'Успешно',
@@ -198,11 +185,12 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
           : 'Предложение опубликовано',
       });
       
-      navigate('/my-offers');
+      navigate('/predlozheniya');
     } catch (error) {
+      console.error('Ошибка создания предложения:', error);
       toast({
         title: 'Ошибка',
-        description: 'Не удалось создать предложение',
+        description: error instanceof Error ? error.message : 'Не удалось создать предложение',
         variant: 'destructive',
       });
     } finally {

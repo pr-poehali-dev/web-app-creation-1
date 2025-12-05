@@ -10,12 +10,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
-import type { SearchFilters } from '@/types/offer';
+import type { SearchFilters, Offer } from '@/types/offer';
 import { searchOffers } from '@/utils/searchUtils';
 import { useOffers } from '@/contexts/OffersContext';
 import { addToSearchHistory } from '@/utils/searchHistory';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
+import { offersAPI } from '@/services/api';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -27,13 +28,14 @@ const ITEMS_PER_PAGE = 20;
 export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
-  const { offers } = useOffers();
+  const { offers: contextOffers } = useOffers();
   const currentUser = getSession();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [offers, setOffers] = useState<Offer[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -44,13 +46,26 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   });
 
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 600);
+    const loadOffers = async () => {
+      setIsLoading(true);
+      try {
+        const response = await offersAPI.getOffers({ status: 'active' });
+        const offersWithDates = response.offers.map(offer => ({
+          ...offer,
+          createdAt: new Date(offer.createdAt),
+          updatedAt: offer.updatedAt ? new Date(offer.updatedAt) : undefined,
+        }));
+        setOffers(offersWithDates);
+      } catch (error) {
+        console.error('Ошибка загрузки предложений:', error);
+        setOffers(contextOffers);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    loadOffers();
+  }, [contextOffers]);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];

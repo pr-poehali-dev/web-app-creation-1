@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
-import type { SearchFilters } from '@/types/offer';
+import type { SearchFilters, Request } from '@/types/offer';
 import { searchOffers } from '@/utils/searchUtils';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
 import { getSession } from '@/utils/auth';
+import { requestsAPI } from '@/services/api';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -24,13 +25,14 @@ const ITEMS_PER_PAGE = 20;
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
-  const { requests } = useOffers();
+  const { requests: contextRequests } = useOffers();
   const currentUser = getSession();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [requests, setRequests] = useState<Request[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -41,13 +43,26 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   });
 
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
+    const loadRequests = async () => {
+      setIsLoading(true);
+      try {
+        const response = await requestsAPI.getRequests({ status: 'active' });
+        const requestsWithDates = response.requests.map(req => ({
+          ...req,
+          createdAt: new Date(req.createdAt),
+          updatedAt: req.updatedAt ? new Date(req.updatedAt) : undefined,
+        }));
+        setRequests(requestsWithDates);
+      } catch (error) {
+        console.error('Ошибка загрузки запросов:', error);
+        setRequests(contextRequests);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    loadRequests();
+  }, [contextRequests]);
 
   const filteredRequests = useMemo(() => {
     let result = [...requests];

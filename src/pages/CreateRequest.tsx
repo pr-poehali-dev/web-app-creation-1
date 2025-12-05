@@ -16,6 +16,7 @@ import RequestBasicInfoSection from '@/components/request/RequestBasicInfoSectio
 import RequestPricingSection from '@/components/request/RequestPricingSection';
 import RequestDeliverySection from '@/components/request/RequestDeliverySection';
 import RequestMediaSection from '@/components/request/RequestMediaSection';
+import { requestsAPI } from '@/services/api';
 
 import { canCreateListing } from '@/utils/permissions';
 
@@ -142,12 +143,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     setIsSubmitting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const newRequest: RequestType = {
-        id: `request-${Date.now()}`,
-        userId: currentUser?.id || 'unknown',
-        type: 'request',
+      const requestData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
@@ -156,29 +152,19 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
         unit: formData.unit,
         pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
         hasVAT: formData.hasVAT,
-        vatRate: parseFloat(formData.vatRate) || 20,
+        vatRate: formData.hasVAT ? parseFloat(formData.vatRate) || 20 : undefined,
         district: formData.district,
         deliveryAddress: formData.deliveryAddress,
         availableDistricts: formData.availableDistricts,
-        createdAt: new Date(),
-        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
-        views: 0,
-        responses: 0,
-        isPremium: false,
         images: imagePreviews.map((url, index) => ({
-          id: `img-${Date.now()}-${index}`,
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
         })),
-        video: videoPreview ? {
-          id: `video-${Date.now()}`,
-          url: videoPreview,
-          thumbnail: videoPreview,
-        } : undefined,
-        status: isDraft ? 'draft' : 'pending',
+        isPremium: false,
+        status: isDraft ? 'draft' : 'active',
       };
 
-      addRequest(newRequest);
+      const result = await requestsAPI.createRequest(requestData);
       
       toast({
         title: 'Успешно',
@@ -187,11 +173,12 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
           : 'Запрос опубликован',
       });
       
-      navigate('/my-requests');
+      navigate('/zaprosy');
     } catch (error) {
+      console.error('Ошибка создания запроса:', error);
       toast({
         title: 'Ошибка',
-        description: 'Не удалось создать запрос',
+        description: error instanceof Error ? error.message : 'Не удалось создать запрос',
         variant: 'destructive',
       });
     } finally {
