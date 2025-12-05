@@ -11,8 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { checkAccessPermission } from '@/utils/permissions';
-import { useVerificationStatus } from '@/hooks/useVerificationStatus';
 import ProductMediaUpload from '@/components/ProductMediaUpload';
 
 interface CreateContractProps {
@@ -23,7 +21,6 @@ interface CreateContractProps {
 export default function CreateContract({ isAuthenticated, onLogout }: CreateContractProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { verificationStatus } = useVerificationStatus();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -31,10 +28,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
       navigate('/login');
       return;
     }
-    if (verificationStatus !== 'verified' && verificationStatus !== null) {
-      navigate('/verification');
-    }
-  }, [isAuthenticated, verificationStatus, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const [formData, setFormData] = useState({
     contractType: 'futures',
