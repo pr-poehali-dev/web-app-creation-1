@@ -24,6 +24,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    console.log('CreateContract: проверка верификации ОТКЛЮЧЕНА, требуется только авторизация');
     if (!isAuthenticated) {
       navigate('/login');
       return;

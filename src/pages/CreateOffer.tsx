@@ -28,6 +28,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const accessCheck = canCreateListing(isAuthenticated);
 
   useEffect(() => {
+    console.log('CreateOffer: проверка верификации ОТКЛЮЧЕНА, требуется только авторизация');
     if (!accessCheck.allowed) {
       toast({
         title: "Доступ ограничен",

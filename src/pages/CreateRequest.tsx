@@ -27,6 +27,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
   const accessCheck = canCreateListing(isAuthenticated);
 
   useEffect(() => {
+    console.log('CreateRequest: проверка верификации ОТКЛЮЧЕНА, требуется только авторизация');
     if (!accessCheck.allowed) {
       toast({
         title: "Доступ ограничен",
