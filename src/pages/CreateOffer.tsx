@@ -302,8 +302,9 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                 size="lg"
                 disabled={
                   isSubmitting || 
-                  formData.availableDistricts.length === 0 || 
-                  formData.availableDeliveryTypes.length === 0
+                  !formData.title || 
+                  !formData.category || 
+                  !formData.district
                 }
                 className="flex-1"
               >

@@ -289,7 +289,9 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                 size="lg"
                 disabled={
                   isSubmitting || 
-                  formData.availableDistricts.length === 0
+                  !formData.title || 
+                  !formData.category || 
+                  !formData.district
                 }
                 className="flex-1"
               >
