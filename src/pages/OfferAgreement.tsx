@@ -40,7 +40,7 @@ export default function OfferAgreement({ isAuthenticated, onLogout }: OfferAgree
             <h2 className="text-2xl font-semibold mb-4">1. Общие положения</h2>
             
             <p className="mb-3">
-              <strong>1.1.</strong> Настоящая Публичная оферта (далее – Оферта) является официальным предложением ООО "Региональная Торговая Площадка" (далее – Оператор) заключить договор об оказании информационных услуг на условиях, изложенных ниже.
+              <strong>1.1.</strong> Настоящая Публичная оферта (далее – Оферта) является официальным предложением ООО "Дойдум-Инвест" (далее – Оператор) заключить договор об оказании информационных услуг на условиях, изложенных ниже.
             </p>
 
             <p className="mb-3">
@@ -241,12 +241,12 @@ export default function OfferAgreement({ isAuthenticated, onLogout }: OfferAgree
             <h2 className="text-2xl font-semibold mb-4">11. Реквизиты Оператора</h2>
             
             <div className="bg-muted/50 p-6 rounded-lg space-y-2">
-              <p><strong>Наименование:</strong> ООО "Региональная Торговая Площадка"</p>
-              <p><strong>ИНН:</strong> 1234567890</p>
-              <p><strong>ОГРН:</strong> 1231234567890</p>
+              <p><strong>Наименование:</strong> ООО "Дойдум-Инвест"</p>
+              <p><strong>ИНН:</strong> 1400022716</p>
+              <p><strong>ОГРН:</strong> 1231400005682</p>
               <p><strong>Юридический адрес:</strong> г. Нюрба, ул. Степана Васильева, д. 15</p>
-              <p><strong>Email:</strong> support@erttp.ru</p>
-              <p><strong>Телефон:</strong> 8 (800) 123-45-67</p>
+              <p><strong>Email:</strong> doydum-invest@mail.ru</p>
+              <p><strong>Телефон:</strong> +7 (984) 101-73-55</p>
             </div>
           </section>
 

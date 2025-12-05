@@ -44,7 +44,7 @@ export default function PrivacyPolicy({ isAuthenticated, onLogout }: PrivacyPoli
             </p>
 
             <p className="mb-3">
-              <strong>1.2.</strong> Оператором персональных данных является ООО "Региональная Торговая Площадка" (далее – Оператор).
+              <strong>1.2.</strong> Оператором персональных данных является ООО "Дойдум-Инвест" (далее – Оператор).
             </p>
 
             <p className="mb-3">
@@ -131,7 +131,7 @@ export default function PrivacyPolicy({ isAuthenticated, onLogout }: PrivacyPoli
             </ul>
 
             <p className="mb-3">
-              <strong>5.2.</strong> Для реализации своих прав пользователь может направить обращение на адрес электронной почты: support@erttp.ru
+              <strong>5.2.</strong> Для реализации своих прав пользователь может направить обращение на адрес электронной почты: doydum-invest@mail.ru
             </p>
           </section>
 
@@ -190,7 +190,7 @@ export default function PrivacyPolicy({ isAuthenticated, onLogout }: PrivacyPoli
             <h2 className="text-2xl font-semibold mb-4">9. Обратная связь</h2>
             
             <p className="mb-3">
-              <strong>9.1.</strong> Все предложения или вопросы по поводу настоящей Политики конфиденциальности следует направлять на адрес электронной почты: support@erttp.ru
+              <strong>9.1.</strong> Все предложения или вопросы по поводу настоящей Политики конфиденциальности следует направлять на адрес электронной почты: doydum-invest@mail.ru
             </p>
 
             <p className="mb-3">
