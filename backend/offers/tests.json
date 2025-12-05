@@ -1,0 +1,10 @@
+{
+  "tests": [
+    {
+      "name": "Get offers list returns valid structure",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
