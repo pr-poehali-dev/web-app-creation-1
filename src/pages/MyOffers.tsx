@@ -24,7 +24,7 @@ import {
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
-import { MOCK_OFFERS } from '@/data/mockOffers';
+import { useOffers } from '@/contexts/OffersContext';
 import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -60,9 +60,9 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { districts } = useDistrict();
+  const { offers: allOffers, deleteOffer } = useOffers();
   const currentUser = getSession();
   
-  const [offers, setOffers] = useState<MyOffer[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | OfferStatus>('all');
   const [offerToDelete, setOfferToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,23 +74,25 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     }
 
     setTimeout(() => {
-      const userOffers: MyOffer[] = MOCK_OFFERS.slice(0, 3).map((offer, index) => ({
-        ...offer,
-        status: index === 0 ? 'active' : index === 1 ? 'moderation' : 'draft',
-        views: Math.floor(Math.random() * 500) + 50,
-        favorites: Math.floor(Math.random() * 50) + 5,
-      }));
-      setOffers(userOffers);
       setIsLoading(false);
     }, 800);
   }, [isAuthenticated, currentUser, navigate]);
 
+  const myOffers: MyOffer[] = allOffers
+    .filter(offer => offer.userId === currentUser?.id)
+    .map(offer => ({
+      ...offer,
+      status: (offer.status as OfferStatus) || 'active',
+      views: offer.views || 0,
+      favorites: 0,
+    }));
+
   const filteredOffers = filterStatus === 'all' 
-    ? offers 
-    : offers.filter(offer => offer.status === filterStatus);
+    ? myOffers 
+    : myOffers.filter(offer => offer.status === filterStatus);
 
   const handleDeleteOffer = (offerId: string) => {
-    setOffers(offers.filter(offer => offer.id !== offerId));
+    deleteOffer(offerId);
     setOfferToDelete(null);
     toast({
       title: 'Успешно',

@@ -9,6 +9,9 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useOffers } from '@/contexts/OffersContext';
+import type { Request as RequestType } from '@/types/offer';
+import { getSession } from '@/utils/auth';
 import RequestBasicInfoSection from '@/components/request/RequestBasicInfoSection';
 import RequestPricingSection from '@/components/request/RequestPricingSection';
 import RequestDeliverySection from '@/components/request/RequestDeliverySection';
@@ -24,6 +27,8 @@ interface CreateRequestProps {
 export default function CreateRequest({ isAuthenticated, onLogout }: CreateRequestProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addRequest } = useOffers();
+  const currentUser = getSession();
   const accessCheck = canCreateListing(isAuthenticated);
 
   useEffect(() => {
@@ -139,11 +144,47 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      const newRequest: RequestType = {
+        id: `request-${Date.now()}`,
+        userId: currentUser?.id || 'unknown',
+        type: 'request',
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.subcategory || undefined,
+        quantity: parseFloat(formData.quantity) || 0,
+        unit: formData.unit,
+        pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
+        hasVAT: formData.hasVAT,
+        vatRate: parseFloat(formData.vatRate) || 20,
+        district: formData.district,
+        deliveryAddress: formData.deliveryAddress,
+        availableDistricts: formData.availableDistricts,
+        createdAt: new Date(),
+        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
+        views: 0,
+        responses: 0,
+        isPremium: false,
+        images: imagePreviews.map((url, index) => ({
+          id: `img-${Date.now()}-${index}`,
+          url,
+          alt: `${formData.title} - изображение ${index + 1}`,
+        })),
+        video: videoPreview ? {
+          id: `video-${Date.now()}`,
+          url: videoPreview,
+          thumbnail: videoPreview,
+        } : undefined,
+        status: isDraft ? 'draft' : 'pending',
+      };
+
+      addRequest(newRequest);
+      
       toast({
         title: 'Успешно',
         description: isDraft 
           ? 'Запрос сохранен как черновик'
-          : 'Запрос отправлен на модерацию',
+          : 'Запрос опубликован',
       });
       
       navigate('/my-requests');

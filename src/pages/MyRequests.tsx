@@ -26,6 +26,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useOffers } from '@/contexts/OffersContext';
+import type { Request as RequestType } from '@/types/offer';
 
 
 interface MyRequestsProps {
@@ -117,9 +119,9 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
   const navigate = useNavigate();
   const { toast } = useToast();
   const { districts } = useDistrict();
+  const { requests: allRequests, deleteRequest } = useOffers();
   const currentUser = getSession();
   
-  const [requests, setRequests] = useState<Request[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | RequestStatus>('all');
   const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,17 +133,34 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
     }
 
     setTimeout(() => {
-      setRequests(MOCK_REQUESTS);
       setIsLoading(false);
     }, 800);
   }, [isAuthenticated, currentUser, navigate]);
 
+  const myRequests: Request[] = allRequests
+    .filter(request => request.userId === currentUser?.id)
+    .map(request => ({
+      id: request.id,
+      title: request.title,
+      description: request.description,
+      category: request.category,
+      district: request.district,
+      budget: request.pricePerUnit * request.quantity,
+      quantity: request.quantity,
+      unit: request.unit,
+      deadline: request.expiryDate?.toISOString().split('T')[0] || '',
+      status: (request.status as RequestStatus) || 'active',
+      responsesCount: request.responses || 0,
+      views: request.views || 0,
+      createdAt: request.createdAt,
+    }));
+
   const filteredRequests = filterStatus === 'all' 
-    ? requests 
-    : requests.filter(request => request.status === filterStatus);
+    ? myRequests 
+    : myRequests.filter(request => request.status === filterStatus);
 
   const handleDeleteRequest = (requestId: string) => {
-    setRequests(requests.filter(request => request.id !== requestId));
+    deleteRequest(requestId);
     setRequestToDelete(null);
     toast({
       title: 'Успешно',

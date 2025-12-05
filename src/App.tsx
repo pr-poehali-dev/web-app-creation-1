@@ -44,6 +44,7 @@ import TradingPlatform from "./pages/TradingPlatform";
 import CreateContract from "./pages/CreateContract";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { DistrictProvider } from "./contexts/DistrictContext";
+import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
 
 const queryClient = new QueryClient();
@@ -71,10 +72,11 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <DistrictProvider>
-          <Toaster />
-          <Sonner />
-          <LocationDetectionDialog />
-          <BrowserRouter>
+          <OffersProvider>
+            <Toaster />
+            <Sonner />
+            <LocationDetectionDialog />
+            <BrowserRouter>
             <Routes>
             <Route path="/" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
@@ -118,6 +120,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+          </OffersProvider>
         </DistrictProvider>
       </TooltipProvider>
     </QueryClientProvider>

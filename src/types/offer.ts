@@ -38,29 +38,61 @@ export interface Seller {
 
 export interface Offer {
   id: string;
+  userId: string;
+  type: 'offer';
   title: string;
   description: string;
   category: string;
-  subcategory: string;
+  subcategory?: string;
   quantity: number;
   unit: string;
   pricePerUnit: number;
   hasVAT: boolean;
   vatRate?: number;
-  location: string;
+  location?: string;
   district: string;
   fullAddress?: string;
   availableDistricts: string[];
   images: OfferImage[];
   video?: OfferVideo;
   isPremium: boolean;
-  seller: Seller;
+  seller?: Seller;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
   expiryDate?: Date;
   availableDeliveryTypes: DeliveryType[];
   viewsCount?: number;
+  views?: number;
   orderedQuantity?: number;
+  responses?: number;
+  status?: 'active' | 'draft' | 'pending' | 'moderation' | 'archived';
+}
+
+export interface Request {
+  id: string;
+  userId: string;
+  type: 'request';
+  title: string;
+  description: string;
+  category: string;
+  subcategory?: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit: number;
+  hasVAT: boolean;
+  vatRate?: number;
+  district: string;
+  deliveryAddress?: string;
+  availableDistricts: string[];
+  images: OfferImage[];
+  video?: OfferVideo;
+  isPremium: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+  expiryDate?: Date;
+  views?: number;
+  responses?: number;
+  status?: 'active' | 'draft' | 'pending' | 'closed' | 'archived';
 }
 
 export interface Category {

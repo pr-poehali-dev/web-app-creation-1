@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
-import type { DeliveryType } from '@/types/offer';
+import { useOffers } from '@/contexts/OffersContext';
+import type { DeliveryType, Offer } from '@/types/offer';
+import { getSession } from '@/utils/auth';
 import OfferBasicInfoSection from '@/components/offer/OfferBasicInfoSection';
 import OfferPricingSection from '@/components/offer/OfferPricingSection';
 import OfferLocationSection from '@/components/offer/OfferLocationSection';
@@ -25,6 +27,8 @@ interface CreateOfferProps {
 export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addOffer } = useOffers();
+  const currentUser = getSession();
   const accessCheck = canCreateListing(isAuthenticated);
 
   useEffect(() => {
@@ -150,11 +154,48 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      const newOffer: Offer = {
+        id: `offer-${Date.now()}`,
+        userId: currentUser?.id || 'unknown',
+        type: 'offer',
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.subcategory || undefined,
+        quantity: parseFloat(formData.quantity) || 0,
+        unit: formData.unit,
+        pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
+        hasVAT: formData.hasVAT,
+        vatRate: parseFloat(formData.vatRate) || 20,
+        district: formData.district,
+        fullAddress: formData.fullAddress,
+        availableDistricts: formData.availableDistricts,
+        availableDeliveryTypes: formData.availableDeliveryTypes,
+        createdAt: new Date(),
+        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
+        views: 0,
+        responses: 0,
+        isPremium: false,
+        images: imagePreviews.map((url, index) => ({
+          id: `img-${Date.now()}-${index}`,
+          url,
+          alt: `${formData.title} - изображение ${index + 1}`,
+        })),
+        video: videoPreview ? {
+          id: `video-${Date.now()}`,
+          url: videoPreview,
+          thumbnail: videoPreview,
+        } : undefined,
+        status: isDraft ? 'draft' : 'pending',
+      };
+
+      addOffer(newOffer);
+      
       toast({
         title: 'Успешно',
         description: isDraft 
           ? 'Предложение сохранено как черновик'
-          : 'Предложение отправлено на модерацию',
+          : 'Предложение опубликовано',
       });
       
       navigate('/my-offers');

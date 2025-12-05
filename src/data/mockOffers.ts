@@ -3,6 +3,8 @@ import type { Offer } from '@/types/offer';
 export const MOCK_OFFERS: Offer[] = [
   {
     id: '1',
+    userId: 'user1',
+    type: 'offer',
     title: 'Цемент М500 в мешках',
     description: 'Высококачественный портландцемент марки М500 в прочных мешках по 50 кг. Идеально подходит для строительных и ремонтных работ любой сложности. Соответствует ГОСТ 31108-2016. Гарантия качества от производителя.',
     category: 'construction',
@@ -56,6 +58,9 @@ export const MOCK_OFFERS: Offer[] = [
     availableDeliveryTypes: ['pickup', 'delivery'],
     viewsCount: 1247,
     orderedQuantity: 150,
+    views: 342,
+    responses: 28,
+    status: 'active' as const,
   },
   {
     id: '2',
@@ -106,6 +111,11 @@ export const MOCK_OFFERS: Offer[] = [
     availableDeliveryTypes: ['pickup', 'delivery'],
     viewsCount: 342,
     orderedQuantity: 5,
+    userId: 'user2',
+    type: 'offer' as const,
+    views: 156,
+    responses: 12,
+    status: 'active' as const,
   },
   {
     id: '3',
@@ -162,6 +172,11 @@ export const MOCK_OFFERS: Offer[] = [
     availableDeliveryTypes: ['pickup', 'delivery'],
     viewsCount: 892,
     orderedQuantity: 3,
+    userId: 'user3',
+    type: 'offer' as const,
+    views: 423,
+    responses: 35,
+    status: 'active' as const,
   },
   {
     id: '4',
@@ -208,6 +223,11 @@ export const MOCK_OFFERS: Offer[] = [
     availableDeliveryTypes: ['pickup', 'delivery'],
     viewsCount: 567,
     orderedQuantity: 45,
+    userId: 'user1',
+    type: 'offer' as const,
+    views: 234,
+    responses: 19,
+    status: 'active' as const,
   },
   {
     id: '5',
@@ -251,6 +271,11 @@ export const MOCK_OFFERS: Offer[] = [
     updatedAt: new Date('2024-11-26'),
     availableDeliveryTypes: ['pickup'],
     viewsCount: 445,
+    userId: 'user2',
+    type: 'offer' as const,
+    views: 189,
+    responses: 15,
+    status: 'active' as const,
   },
   {
     id: '6',
@@ -301,5 +326,10 @@ export const MOCK_OFFERS: Offer[] = [
     updatedAt: new Date('2024-11-27'),
     availableDeliveryTypes: ['pickup'],
     viewsCount: 678,
+    userId: 'user3',
+    type: 'offer' as const,
+    views: 267,
+    responses: 22,
+    status: 'active' as const,
   },
 ];

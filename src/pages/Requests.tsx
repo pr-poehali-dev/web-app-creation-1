@@ -9,9 +9,9 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
-import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useOffers } from '@/contexts/OffersContext';
 import { getSession } from '@/utils/auth';
 
 interface RequestsProps {
@@ -24,6 +24,7 @@ const ITEMS_PER_PAGE = 20;
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
+  const { requests } = useOffers();
   const currentUser = getSession();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
@@ -49,7 +50,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   }, []);
 
   const filteredRequests = useMemo(() => {
-    let result = [...MOCK_OFFERS];
+    let result = [...requests];
 
     if (showOnlyMy && isAuthenticated && currentUser) {
       result = result.filter(offer => offer.userId === currentUser.id);
@@ -88,7 +89,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return result;
-  }, [filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
+  }, [requests, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
 
   const currentRequests = filteredRequests.slice(0, displayedCount);
   const hasMore = displayedCount < filteredRequests.length;
@@ -160,7 +161,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onSearch={handleSearch}
-          allOffers={MOCK_OFFERS}
+          allOffers={requests}
         />
 
         {isLoading ? (
