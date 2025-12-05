@@ -15,6 +15,7 @@ interface RejectedVerificationAlertProps {
     registrationCertUrl?: string;
     agreementFormUrl?: string;
   };
+  phone: string;
   onResubmit: () => void;
 }
 
@@ -22,6 +23,7 @@ export default function RejectedVerificationAlert({
   rejectionReason,
   verificationType,
   existingDocuments,
+  phone,
   onResubmit
 }: RejectedVerificationAlertProps) {
   const [loading, setLoading] = useState(false);
@@ -68,16 +70,17 @@ export default function RejectedVerificationAlert({
         const [key, file] = filesToUpload[i];
         setUploadProgress(Math.round(((i + 1) / filesToUpload.length) * 100));
         
-        const urls = await uploadMultipleFiles([file as File], userId);
-        if (urls.length > 0) {
-          uploadedUrls[key] = urls[0];
+        const uploadResult = await uploadMultipleFiles([{ file: file as File, type: key }], userId);
+        const uploadedUrl = Object.values(uploadResult)[0];
+        if (uploadedUrl) {
+          uploadedUrls[key] = uploadedUrl;
           setUploadedFiles(prev => ({ ...prev, [key]: true }));
         }
       }
 
       const body: any = {
         verificationType,
-        phone: '',
+        phone: phone || '',
       };
 
       if (verificationType === 'legal_entity') {

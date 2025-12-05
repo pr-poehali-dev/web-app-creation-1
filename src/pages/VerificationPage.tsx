@@ -303,6 +303,7 @@ export default function VerificationPage() {
               rejectionReason={rejectionReason}
               verificationType={formData.verificationType}
               existingDocuments={existingDocuments}
+              phone={formData.phone}
               onResubmit={loadUserData}
             />
           )}

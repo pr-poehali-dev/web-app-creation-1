@@ -65,9 +65,10 @@ export default function ProductMediaUpload({
           continue;
         }
 
-        const urls = await uploadMultipleFiles([file], userId);
-        if (urls.length > 0) {
-          newUrls.push(urls[0]);
+        const uploadResult = await uploadMultipleFiles([{ file, type: `image_${i}` }], userId);
+        const uploadedUrl = Object.values(uploadResult)[0];
+        if (uploadedUrl) {
+          newUrls.push(uploadedUrl);
         }
         
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
@@ -116,9 +117,10 @@ export default function ProductMediaUpload({
     setUploadProgress(0);
 
     try {
-      const urls = await uploadMultipleFiles([file], userId);
-      if (urls.length > 0) {
-        onVideoChange(urls[0]);
+      const uploadResult = await uploadMultipleFiles([{ file, type: 'product_video' }], userId);
+      const uploadedUrl = Object.values(uploadResult)[0];
+      if (uploadedUrl) {
+        onVideoChange(uploadedUrl);
       }
       setUploadProgress(100);
       setUploadSuccess('Видео успешно загружено');
