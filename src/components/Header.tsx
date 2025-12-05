@@ -129,7 +129,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <div className="hidden md:block w-48">
+            <div className="hidden md:block w-48 mr-2">
               <RegionDistrictSelector showBadges={false} />
             </div>
             
