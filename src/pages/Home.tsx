@@ -53,7 +53,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
               </li>
               <li className="flex gap-2">
                 <span className="text-primary font-bold text-xl">•</span>
-                <span className="text-base text-foreground/90"><strong className="text-foreground">Выгода потребителей:</strong> возможность выставлять заявки на покупку товаров и услуг на своих условиях, получать скидки и гарантии сроков поставки по заранее оговоренной цене и минимизировать риски изменения цен, срыва сроков поставки.</span>
+                <span className="text-base text-foreground/90"><strong className="text-foreground">Выгоду потребителям:</strong> возможность выставлять заявки на покупку товаров и услуг на своих условиях, получать скидки и гарантии сроков поставки по заранее оговоренной цене и минимизировать риски изменения цен, срыва сроков поставки.</span>
               </li>
             </ul>
             <p className="text-lg font-bold text-foreground pt-2">
