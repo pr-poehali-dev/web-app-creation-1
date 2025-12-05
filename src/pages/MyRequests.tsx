@@ -169,9 +169,6 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
   };
 
   const handleCloseRequest = (requestId: string) => {
-    setRequests(requests.map(request => 
-      request.id === requestId ? { ...request, status: 'closed' as RequestStatus } : request
-    ));
     toast({
       title: 'Успешно',
       description: 'Запрос закрыт',
@@ -179,9 +176,6 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
   };
 
   const handleActivateRequest = (requestId: string) => {
-    setRequests(requests.map(request => 
-      request.id === requestId ? { ...request, status: 'active' as RequestStatus } : request
-    ));
     toast({
       title: 'Успешно',
       description: 'Запрос опубликован',
@@ -190,11 +184,11 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
 
   const getRequestStats = () => {
     return {
-      total: requests.length,
-      active: requests.filter(r => r.status === 'active').length,
-      draft: requests.filter(r => r.status === 'draft').length,
-      closed: requests.filter(r => r.status === 'closed').length,
-      archived: requests.filter(r => r.status === 'archived').length,
+      total: myRequests.length,
+      active: myRequests.filter(r => r.status === 'active').length,
+      draft: myRequests.filter(r => r.status === 'draft').length,
+      closed: myRequests.filter(r => r.status === 'closed').length,
+      archived: myRequests.filter(r => r.status === 'archived').length,
     };
   };
 
