@@ -80,12 +80,32 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">
-          <Link
-            to="/predlozheniya"
-            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-          >
-            Предложения
-          </Link>
+          <div className="flex flex-col">
+            <Link
+              to="/predlozheniya"
+              className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+            >
+              Предложения
+            </Link>
+            {selectedDistricts.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1 mt-1">
+                <span className="text-xs text-muted-foreground">Выбранные районы:</span>
+                {selectedDistricts.slice(0, 2).map((districtId) => {
+                  const district = districts.find(d => d.id === districtId);
+                  return (
+                    <span key={districtId} className="text-xs text-primary">
+                      {district?.name}
+                    </span>
+                  );
+                })}
+                {selectedDistricts.length > 2 && (
+                  <span className="text-xs text-muted-foreground">
+                    +{selectedDistricts.length - 2}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
           <Link
             to="/zaprosy"
             className="text-sm font-medium text-foreground transition-colors hover:text-primary"
@@ -187,30 +207,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           )}
         </div>
       </div>
-      
-      {selectedDistricts.length > 0 && (
-        <div className="border-b bg-muted/30">
-          <div className="container mx-auto px-4 py-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-foreground font-bold">Выбранные районы:</span>
-              {selectedDistricts.map((districtId) => {
-                const district = districts.find(d => d.id === districtId);
-                return (
-                  <Badge
-                    key={districtId}
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-secondary/80"
-                    onClick={() => toggleDistrict(districtId)}
-                  >
-                    {district?.name}
-                    <Icon name="X" className="ml-1 h-3 w-3" />
-                  </Badge>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }
