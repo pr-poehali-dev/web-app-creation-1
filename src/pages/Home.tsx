@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import SearchBlock from '@/components/SearchBlock';
 import OfferCard from '@/components/OfferCard';
@@ -174,22 +175,15 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
             <p className="font-medium">
               Зарегистрируйтесь на ЕРТП сегодня и начните развивать местную экономику вместе с нами!
             </p>
-            <p className="text-center font-bold text-primary text-lg pt-2">
-              Присоединяйтесь!
-            </p>
+            <div className="text-center pt-2">
+              <Link to="/register" className="inline-block font-bold text-primary text-lg hover:text-primary/80 transition-colors underline">
+                Присоединяйтесь!
+              </Link>
+            </div>
           </div>
         </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            {filters.contentType === 'offers' ? 'Предложения' : 'Запросы'}
-          </h2>
-          <p className="text-muted-foreground">
-            {filters.contentType === 'offers'
-              ? 'Найдите товары и услуги от проверенных поставщиков'
-              : 'Просмотрите запросы на покупку от покупателей'}
-          </p>
-        </div>
+
 
         <SearchBlock
           filters={filters}
