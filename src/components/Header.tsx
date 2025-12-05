@@ -22,6 +22,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(getSession());
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
   
   const shouldShowDistricts = () => {
@@ -85,6 +86,16 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </div>
             <span className="text-base md:text-2xl font-bold text-primary whitespace-nowrap">ЕРТП</span>
           </Link>
+
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Icon name={mobileMenuOpen ? "X" : "Menu"} className="h-6 w-6" />
+          </Button>
 
           <nav className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-3 lg:mr-4">
             <Link
@@ -194,6 +205,60 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             )}
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t py-4 space-y-3">
+            <Link
+              to="/predlozheniya"
+              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Предложения
+            </Link>
+            <Link
+              to="/zaprosy"
+              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Запросы
+            </Link>
+            <Link
+              to="/auction"
+              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Аукцион
+            </Link>
+            <Link
+              to="/trading"
+              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span className="flex items-center gap-2">
+                Контракты
+                <Badge variant="secondary" className="text-xs">Новое</Badge>
+              </span>
+            </Link>
+            <Link
+              to="/about"
+              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              О площадке
+            </Link>
+            <Link
+              to="/support"
+              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Поддержка
+            </Link>
+            <div className="px-4 pt-2">
+              <RegionDistrictSelector showBadges={false} />
+            </div>
+          </div>
+        )}
 
         {selectedDistricts.length > 0 && shouldShowDistricts() && (
           <div className="border-t py-2">
