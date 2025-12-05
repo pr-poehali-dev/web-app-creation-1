@@ -87,7 +87,20 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t">
+        <div className="mt-8 pt-8 border-t space-y-6">
+          <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-6">
+            <div className="flex gap-3">
+              <Icon name="AlertCircle" className="h-6 w-6 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+              <div className="space-y-2">
+                <h4 className="font-semibold text-foreground text-base">Информация о разработке</h4>
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  Сайт, веб-приложение находится в разработке, могут быть некорректности. 
+                  По вопросам спонсорства и инвестиций свяжитесь по указанным контактам.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
               © {currentYear} Единая Региональная Торговая Площадка. Все права защищены.
