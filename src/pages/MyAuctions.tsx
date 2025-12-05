@@ -28,7 +28,6 @@ import type { Auction } from '@/types/auction';
 import { MOCK_AUCTIONS } from '@/data/mockAuctions';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { useVerificationStatus } from '@/hooks/useVerificationStatus';
 
 interface MyAuctionsProps {
   isAuthenticated: boolean;
@@ -40,7 +39,6 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
   const { toast } = useToast();
   const { districts } = useDistrict();
   const currentUser = getSession();
-  const { verificationStatus } = useVerificationStatus();
   
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | Auction['status']>('all');
@@ -255,13 +253,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
                 Управляйте своими аукционами
               </p>
             </div>
-            <Button onClick={() => {
-              if (verificationStatus !== 'verified') {
-                navigate('/verification');
-              } else {
-                navigate('/create-auction');
-              }
-            }} disabled>
+            <Button onClick={() => navigate('/create-auction')} disabled>
               <Icon name="Plus" className="mr-2 h-4 w-4" />
               Создать аукцион
             </Button>
