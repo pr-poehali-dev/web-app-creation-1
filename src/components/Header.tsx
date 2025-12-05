@@ -78,68 +78,68 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
       <div className="container mx-auto px-4">
-        <div className="flex h-14 md:h-16 items-center justify-between">
-          <Link to="/" className="flex items-center space-x-1.5 md:space-x-2 px-1.5 md:px-2 py-1 md:py-1.5 rounded-md md:rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all mr-2 md:mr-4">
-            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-md md:rounded-lg bg-primary">
-              <Icon name="Building2" className="h-4 w-4 md:h-6 md:w-6 text-white" />
+        <div className="flex h-14 md:h-18 items-center justify-between">
+          <Link to="/" className="flex items-center space-x-1.5 md:space-x-2.5 px-1.5 md:px-3 py-1 md:py-2 rounded-md md:rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all mr-2 md:mr-3">
+            <div className="flex h-8 w-8 md:h-11 md:w-11 items-center justify-center rounded-md md:rounded-lg bg-primary">
+              <Icon name="Building2" className="h-4 w-4 md:h-7 md:w-7 text-white" />
             </div>
-            <span className="text-base md:text-xl font-bold text-primary whitespace-nowrap">ЕРТП</span>
+            <span className="text-base md:text-2xl font-bold text-primary whitespace-nowrap">ЕРТП</span>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-4 lg:space-x-6 mr-4 lg:mr-6">
+          <nav className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-3 lg:mr-4">
             <Link
               to="/predlozheniya"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
             >
               Аукцион
             </Link>
             <Link
               to="/trading"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
             >
               <span className="flex items-center gap-1">
                 Контракты
-                <Badge variant="secondary" className="text-[10px] lg:text-xs px-1 py-0">Новое</Badge>
+                <Badge variant="secondary" className="text-[10px] lg:text-xs px-1.5 py-0.5">Новое</Badge>
               </span>
             </Link>
             <Link
               to="/about"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary whitespace-nowrap"
+              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary whitespace-nowrap"
             >
               О&nbsp;площадке
             </Link>
             <Link
               to="/support"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
             >
               Поддержка
             </Link>
           </nav>
 
           <div className="flex items-center space-x-2 md:space-x-3">
-            <div className="hidden md:block w-40 lg:w-48">
+            <div className="hidden md:block w-40 lg:w-52">
               <RegionDistrictSelector showBadges={false} />
             </div>
             
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center space-x-1 md:space-x-1.5 h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm">
-                    {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-3 w-3 md:h-3.5 md:w-3.5" />}
-                    <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[150px] lg:max-w-[200px] truncate text-[10px] md:text-xs' : 'max-w-[80px] lg:max-w-[120px] truncate text-[10px] md:text-xs'}>{getUserDisplayName()}</span>
-                    <Icon name="ChevronDown" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+                  <Button variant="outline" className="flex items-center space-x-1 md:space-x-1.5 h-8 md:h-10 px-2 md:px-4 text-xs md:text-sm">
+                    {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-3 w-3 md:h-4 md:w-4" />}
+                    <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[150px] lg:max-w-[220px] truncate text-[10px] md:text-sm' : 'max-w-[80px] lg:max-w-[140px] truncate text-[10px] md:text-sm'}>{getUserDisplayName()}</span>
+                    <Icon name="ChevronDown" className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -190,7 +190,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={() => navigate('/login')} className="h-8 md:h-9 px-3 md:px-4 text-[10px] md:text-xs">Авторизация</Button>
+              <Button onClick={() => navigate('/login')} className="h-8 md:h-10 px-3 md:px-5 text-[10px] md:text-sm">Авторизация</Button>
             )}
           </div>
         </div>
