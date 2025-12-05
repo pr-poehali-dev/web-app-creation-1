@@ -309,6 +309,19 @@ export default function Register({ onRegister }: RegisterProps) {
                 'Зарегистрироваться'
               )}
             </Button>
+
+            <div className="text-center text-sm text-muted-foreground">
+              Я зарегистрирован.{' '}
+              <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto font-normal"
+                onClick={() => navigate('/login')}
+                disabled={isSubmitting}
+              >
+                Войти
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
