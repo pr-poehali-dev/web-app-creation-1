@@ -76,10 +76,10 @@ export default function Footer() {
             <h3 className="font-semibold mb-4">Реквизиты оператора</h3>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>
-                <span className="font-medium">ООО "Региональная Торговая Площадка"</span>
+                <span className="font-medium">ООО "Дойдум-Инвест"</span>
               </p>
-              <p>ИНН: 1234567890</p>
-              <p>ОГРН: 1231234567890</p>
+              <p>ИНН: 1400022716</p>
+              <p>ОГРН: 1231400005682</p>
               <p className="text-xs">
                 Юридический адрес: г. Нюрба, ул. Степана Васильева, д. 15
               </p>
@@ -94,18 +94,18 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="mailto:support@example.com"
+                href="mailto:doydum-invest@mail.ru"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Icon name="Mail" className="h-4 w-4" />
-                support@erttp.ru
+                doydum-invest@mail.ru
               </a>
               <a
-                href="tel:+78001234567"
+                href="tel:+79841017355"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
               >
                 <Icon name="Phone" className="h-4 w-4" />
-                8 (800) 123-45-67
+                +7 (984) 101-73-55
               </a>
             </div>
           </div>
