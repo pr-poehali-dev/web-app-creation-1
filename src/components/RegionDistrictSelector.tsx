@@ -111,18 +111,18 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-full justify-between h-auto py-2"
+            className="w-full justify-between h-auto py-1.5"
           >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <div className="flex flex-col items-start min-w-0">
-                <span className="truncate text-sm font-medium">{getDisplayText()}</span>
+                <span className="truncate text-xs font-medium">{getDisplayText()}</span>
                 {getSubtitleText() && (
-                  <span className="text-xs text-muted-foreground truncate w-full">{getSubtitleText()}</span>
+                  <span className="text-[10px] text-muted-foreground truncate w-full">{getSubtitleText()}</span>
                 )}
               </div>
             </div>
-            <Icon name="ChevronsUpDown" className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <Icon name="ChevronsUpDown" className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[400px] p-0" align="start">
