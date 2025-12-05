@@ -101,9 +101,6 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   };
 
   const handleArchiveOffer = (offerId: string) => {
-    setOffers(offers.map(offer => 
-      offer.id === offerId ? { ...offer, status: 'archived' as OfferStatus } : offer
-    ));
     toast({
       title: 'Успешно',
       description: 'Предложение перемещено в архив',
@@ -111,9 +108,6 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   };
 
   const handleActivateOffer = (offerId: string) => {
-    setOffers(offers.map(offer => 
-      offer.id === offerId ? { ...offer, status: 'active' as OfferStatus } : offer
-    ));
     toast({
       title: 'Успешно',
       description: 'Предложение опубликовано',
@@ -122,11 +116,11 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
 
   const getOfferStats = () => {
     return {
-      total: offers.length,
-      active: offers.filter(o => o.status === 'active').length,
-      draft: offers.filter(o => o.status === 'draft').length,
-      moderation: offers.filter(o => o.status === 'moderation').length,
-      archived: offers.filter(o => o.status === 'archived').length,
+      total: myOffers.length,
+      active: myOffers.filter(o => o.status === 'active').length,
+      draft: myOffers.filter(o => o.status === 'draft').length,
+      moderation: myOffers.filter(o => o.status === 'moderation').length,
+      archived: myOffers.filter(o => o.status === 'archived').length,
     };
   };
 
