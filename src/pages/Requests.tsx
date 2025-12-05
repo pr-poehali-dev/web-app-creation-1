@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import SearchBlock from '@/components/SearchBlock';
 import OfferCardSkeleton from '@/components/OfferCardSkeleton';
@@ -21,6 +22,7 @@ interface RequestsProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
+  const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
   const currentUser = getSession();
   const [isLoading, setIsLoading] = useState(true);
@@ -139,11 +141,19 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Запросы</h1>
-          <p className="text-muted-foreground">
-            Просмотрите запросы на покупку товаров и услуг от покупателей
-          </p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Запросы</h1>
+            <p className="text-muted-foreground">
+              Просмотрите запросы на покупку товаров и услуг от покупателей
+            </p>
+          </div>
+          {isAuthenticated && (
+            <Button onClick={() => navigate('/create-request')} className="flex items-center gap-2 whitespace-nowrap">
+              <Icon name="Plus" className="h-4 w-4" />
+              Создать запрос
+            </Button>
+          )}
         </div>
 
         <SearchBlock

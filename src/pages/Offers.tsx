@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import SearchBlock from '@/components/SearchBlock';
 import OfferCard from '@/components/OfferCard';
@@ -24,6 +25,7 @@ interface OffersProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
+  const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
   const currentUser = getSession();
   const [isLoading, setIsLoading] = useState(true);
@@ -156,11 +158,19 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Предложения</h1>
-          <p className="text-muted-foreground">
-            Активные предложения от проверенных поставщиков в вашем районе
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Предложения</h1>
+            <p className="text-muted-foreground">
+              Активные предложения от проверенных поставщиков в вашем районе
+            </p>
+          </div>
+          {isAuthenticated && (
+            <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap">
+              <Icon name="Plus" className="h-4 w-4" />
+              Создать предложение
+            </Button>
+          )}
         </div>
 
         {filters.district !== 'all' && (

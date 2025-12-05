@@ -315,6 +315,31 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
 
             <ProfileVerificationCard />
 
+            <Card>
+              <CardHeader>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Быстрые действия</h3>
+                    <p className="text-sm text-muted-foreground">Создавайте предложения и запросы</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Link to="/create-offer">
+                      <Button className="w-full flex items-center justify-center gap-2">
+                        <Icon name="Plus" className="h-4 w-4" />
+                        Создать предложение
+                      </Button>
+                    </Link>
+                    <Link to="/create-request">
+                      <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                        <Icon name="Plus" className="h-4 w-4" />
+                        Создать запрос
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
             <ProfileInfoCard
               email={currentUser.email}
               isEditing={isEditing}

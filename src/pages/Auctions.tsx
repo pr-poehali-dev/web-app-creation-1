@@ -328,11 +328,19 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Аукционы</h1>
-          <p className="text-muted-foreground">
-            Участвуйте в аукционах и делайте выгодные покупки по лучшей цене
-          </p>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Аукционы</h1>
+            <p className="text-muted-foreground">
+              Участвуйте в аукционах и делайте выгодные покупки по лучшей цене
+            </p>
+          </div>
+          {isAuthenticated && (
+            <Button onClick={() => navigate('/create-auction')} className="flex items-center gap-2 whitespace-nowrap">
+              <Icon name="Plus" className="h-4 w-4" />
+              Создать аукцион
+            </Button>
+          )}
         </div>
 
         <SearchBlock
