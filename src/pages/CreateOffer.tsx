@@ -181,6 +181,32 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
 
       const result = await offersAPI.createOffer(offerData);
       
+      const newOffer: Offer = {
+        id: result.id,
+        userId: currentUser?.id || '',
+        ...offerData,
+        seller: {
+          id: currentUser?.id || '',
+          name: `${currentUser?.firstName} ${currentUser?.lastName}`,
+          type: currentUser?.userType || 'individual',
+          rating: 0,
+          reviewsCount: 0,
+          isVerified: currentUser?.verificationStatus === 'verified',
+          phone: currentUser?.phone || '',
+          email: currentUser?.email || '',
+          statistics: {
+            totalOffers: 0,
+            activeOffers: 0,
+            completedOrders: 0,
+            registrationDate: new Date(),
+          }
+        },
+        views: 0,
+        createdAt: new Date(),
+      };
+      
+      addOffer(newOffer);
+      
       toast({
         title: 'Успешно',
         description: isDraft 

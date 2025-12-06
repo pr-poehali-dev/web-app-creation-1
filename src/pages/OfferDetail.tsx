@@ -14,8 +14,8 @@ import OfferMediaGallery from '@/components/offer/OfferMediaGallery';
 import OfferInfoCard from '@/components/offer/OfferInfoCard';
 import OfferSellerCard from '@/components/offer/OfferSellerCard';
 import OfferOrderModal from '@/components/offer/OfferOrderModal';
-import { MOCK_OFFERS } from '@/data/mockOffers';
 import type { Offer } from '@/types/offer';
+import { offersAPI } from '@/services/api';
 
 interface OfferDetailProps {
   isAuthenticated: boolean;
@@ -38,18 +38,57 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      const foundOffer = MOCK_OFFERS.find(o => o.id === id);
-      setOffer(foundOffer || null);
-      setIsLoading(false);
+    const loadOffer = async () => {
+      if (!id) return;
       
-      if (foundOffer?.video) {
-        setShowVideo(true);
+      setIsLoading(true);
+      try {
+        const data = await offersAPI.getOfferById(id);
+        
+        const mappedOffer: Offer = {
+          ...data,
+          pricePerUnit: data.price_per_unit || data.pricePerUnit || 0,
+          vatRate: data.vat_rate || data.vatRate,
+          hasVAT: data.has_vat !== undefined ? data.has_vat : data.hasVAT,
+          isPremium: data.is_premium !== undefined ? data.is_premium : data.isPremium,
+          availableDistricts: data.available_districts || data.availableDistricts || [],
+          availableDeliveryTypes: data.available_delivery_types || data.availableDeliveryTypes || ['pickup'],
+          userId: data.user_id || data.userId,
+          fullAddress: data.full_address || data.fullAddress,
+          seller: data.seller_name ? {
+            id: data.user_id || data.userId,
+            name: data.seller_name,
+            type: data.seller_type,
+            phone: data.seller_phone,
+            email: data.seller_email,
+            rating: data.seller_rating || 0,
+            reviewsCount: data.seller_reviews_count || 0,
+            isVerified: data.seller_is_verified || false,
+            statistics: {
+              totalOffers: 0,
+              activeOffers: 0,
+              completedOrders: 0,
+              registrationDate: new Date(),
+            }
+          } : undefined,
+          createdAt: new Date(data.createdAt || data.created_at),
+          updatedAt: data.updatedAt || data.updated_at ? new Date(data.updatedAt || data.updated_at) : undefined,
+        };
+        
+        setOffer(mappedOffer);
+        
+        if (mappedOffer?.video) {
+          setShowVideo(true);
+        }
+      } catch (error) {
+        console.error('Error loading offer:', error);
+        setOffer(null);
+      } finally {
+        setIsLoading(false);
       }
-    }, 400);
+    };
 
-    return () => clearTimeout(timer);
+    loadOffer();
   }, [id]);
 
   const handlePrevImage = () => {

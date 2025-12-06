@@ -15,9 +15,11 @@ import LegalEntityForm from '@/components/verification/LegalEntityForm';
 import EntrepreneurForm from '@/components/verification/EntrepreneurForm';
 import IndividualForm from '@/components/verification/IndividualForm';
 import RejectedVerificationAlert from '@/components/verification/RejectedVerificationAlert';
+import { useToast } from '@/hooks/use-toast';
 
 export default function VerificationPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [isLoadingUserData, setIsLoadingUserData] = useState(true);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -241,7 +243,13 @@ export default function VerificationPage() {
         navigate('/profile');
       }, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Произошла ошибка');
+      const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка';
+      setError(errorMessage);
+      toast({
+        title: 'Ошибка при отправке заявки',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
       setUploadProgress(0);

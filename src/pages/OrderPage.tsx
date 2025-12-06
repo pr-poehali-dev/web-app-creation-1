@@ -11,23 +11,23 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Icon from '@/components/ui/icon';
-import { useOffers } from '@/contexts/OffersContext';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
+import { offersAPI } from '@/services/api';
+import type { Offer } from '@/types/offer';
 
 export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { offers } = useOffers();
   const { toast } = useToast();
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [quantity, setQuantity] = useState('1');
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
   const [address, setAddress] = useState('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const offer = offers.find(o => o.id === id);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -40,10 +40,76 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
       return;
     }
 
-    if (!offer) {
-      navigate('/predlozheniya');
-    }
-  }, [isAuthenticated, offer, navigate, toast]);
+    const loadOffer = async () => {
+      if (!id) {
+        navigate('/predlozheniya');
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const data = await offersAPI.getOfferById(id);
+        
+        const mappedOffer: Offer = {
+          ...data,
+          pricePerUnit: data.price_per_unit || data.pricePerUnit || 0,
+          vatRate: data.vat_rate || data.vatRate,
+          hasVAT: data.has_vat !== undefined ? data.has_vat : data.hasVAT,
+          isPremium: data.is_premium !== undefined ? data.is_premium : data.isPremium,
+          availableDistricts: data.available_districts || data.availableDistricts || [],
+          availableDeliveryTypes: data.available_delivery_types || data.availableDeliveryTypes || ['pickup'],
+          userId: data.user_id || data.userId,
+          fullAddress: data.full_address || data.fullAddress,
+          seller: data.seller_name ? {
+            id: data.user_id || data.userId,
+            name: data.seller_name,
+            type: data.seller_type,
+            phone: data.seller_phone,
+            email: data.seller_email,
+            rating: data.seller_rating || 0,
+            reviewsCount: data.seller_reviews_count || 0,
+            isVerified: data.seller_is_verified || false,
+            statistics: {
+              totalOffers: 0,
+              activeOffers: 0,
+              completedOrders: 0,
+              registrationDate: new Date(),
+            }
+          } : undefined,
+          createdAt: new Date(data.createdAt || data.created_at),
+          updatedAt: data.updatedAt || data.updated_at ? new Date(data.updatedAt || data.updated_at) : undefined,
+        };
+        
+        setOffer(mappedOffer);
+      } catch (error) {
+        console.error('Error loading offer:', error);
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить предложение',
+          variant: 'destructive',
+        });
+        navigate('/predlozheniya');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadOffer();
+  }, [id, isAuthenticated, navigate, toast]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <main className="container mx-auto px-4 py-8 flex-1">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!offer) {
     return null;
