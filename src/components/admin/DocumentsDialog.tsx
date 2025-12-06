@@ -43,8 +43,9 @@ interface DocumentViewerDialogProps {
 }
 
 function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }: DocumentViewerDialogProps) {
-  const isPdf = documentUrl.includes('.pdf') || documentUrl.includes('application/pdf');
   const isDataUrl = documentUrl.startsWith('data:');
+  const isPdf = documentUrl.includes('.pdf') || documentUrl.includes('application/pdf') || (isDataUrl && documentUrl.includes('application/pdf'));
+  const isImage = !isPdf && (documentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) || (isDataUrl && documentUrl.match(/^data:image\//)));
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -74,15 +75,26 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
                   type="application/pdf"
                   className="w-full h-[75vh]"
                 />
+                <div className="text-center text-muted-foreground py-8">
+                  PDF не может быть отображен. <a href={documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Открыть в новой вкладке</a>
+                </div>
               </object>
             ) : (
               <iframe
                 src={documentUrl}
-                className="w-full h-[75vh]"
+                className="w-full h-[75vh] border-0"
                 title={documentTitle}
+                onError={(e) => {
+                  const target = e.target as HTMLIFrameElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML += '<div class="text-center text-muted-foreground py-8">Не удалось загрузить PDF. <a href="' + documentUrl + '" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Открыть в новой вкладке</a></div>';
+                  }
+                }}
               />
             )
-          ) : (
+          ) : isImage ? (
             <img
               src={documentUrl}
               alt={documentTitle}
@@ -92,10 +104,22 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
                 target.style.display = 'none';
                 const parent = target.parentElement;
                 if (parent) {
-                  parent.innerHTML += '<div class="text-center text-muted-foreground py-8">Не удалось загрузить изображение. Попробуйте открыть в новой вкладке.</div>';
+                  parent.innerHTML += '<div class="text-center text-muted-foreground py-8">Не удалось загрузить изображение. <a href="' + documentUrl + '" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Попробуйте открыть в новой вкладке</a></div>';
                 }
               }}
             />
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[75vh] gap-4">
+              <Icon name="FileText" className="h-16 w-16 text-muted-foreground" />
+              <p className="text-muted-foreground">Предварительный просмотр недоступен для этого типа файла</p>
+              <Button
+                variant="default"
+                onClick={() => window.open(documentUrl, '_blank')}
+              >
+                <Icon name="Download" className="h-4 w-4 mr-2" />
+                Скачать файл
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>

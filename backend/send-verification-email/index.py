@@ -167,6 +167,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             '''
     
     html_body += '<div class="documents"><h3>📎 Загруженные документы:</h3>'
+    html_body += '<p style="color: #6b7280; font-size: 13px; margin-bottom: 10px;">Нажмите на ссылку, чтобы открыть документ в браузере. Все документы хранятся в защищенном облачном хранилище.</p>'
     
     if passport_scan_url:
         html_body += f'<a href="{passport_scan_url}" class="doc-link" target="_blank">📄 Скан паспорта</a>'
