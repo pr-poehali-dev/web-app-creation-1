@@ -96,13 +96,13 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     sql = """
         SELECT 
             o.*,
-            s.name as seller_name,
-            s.type as seller_type,
-            s.phone as seller_phone,
-            s.email as seller_email,
-            s.rating as seller_rating,
-            s.reviews_count as seller_reviews_count,
-            s.is_verified as seller_is_verified,
+            CONCAT(u.first_name, ' ', u.last_name) as seller_name,
+            u.user_type as seller_type,
+            u.phone as seller_phone,
+            u.email as seller_email,
+            5.0 as seller_rating,
+            0 as seller_reviews_count,
+            CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
             COALESCE(
                 json_agg(
                     json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt)
@@ -111,7 +111,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 '[]'
             ) as images
         FROM offers o
-        LEFT JOIN sellers s ON o.seller_id = s.id
+        LEFT JOIN users u ON o.user_id::text = u.id::text
         LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
         LEFT JOIN offer_images oi ON oir.image_id = oi.id
         WHERE o.status = %s
@@ -136,7 +136,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         search_term = f'%{query}%'
         query_params.extend([search_term, search_term])
     
-    sql += " GROUP BY o.id, s.id ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
+    sql += " GROUP BY o.id, u.id ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
     query_params.extend([limit, offset])
     
     cur.execute(sql, query_params)
@@ -167,13 +167,13 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     sql = """
         SELECT 
             o.*,
-            s.name as seller_name,
-            s.type as seller_type,
-            s.phone as seller_phone,
-            s.email as seller_email,
-            s.rating as seller_rating,
-            s.reviews_count as seller_reviews_count,
-            s.is_verified as seller_is_verified,
+            CONCAT(u.first_name, ' ', u.last_name) as seller_name,
+            u.user_type as seller_type,
+            u.phone as seller_phone,
+            u.email as seller_email,
+            5.0 as seller_rating,
+            0 as seller_reviews_count,
+            CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
             COALESCE(
                 json_agg(
                     json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt)
@@ -182,11 +182,11 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
                 '[]'
             ) as images
         FROM offers o
-        LEFT JOIN sellers s ON o.seller_id = s.id
+        LEFT JOIN users u ON o.user_id::text = u.id::text
         LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
         LEFT JOIN offer_images oi ON oir.image_id = oi.id
         WHERE o.id = %s
-        GROUP BY o.id, s.id
+        GROUP BY o.id, u.id
     """
     
     cur.execute(sql, (offer_id,))
