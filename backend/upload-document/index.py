@@ -191,6 +191,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             file_url = f"https://cdn.poehali.dev/projects/{os.environ.get('AWS_ACCESS_KEY_ID')}/bucket/{file_name}"
         except Exception as s3_error:
+            print(f"S3 upload failed: {str(s3_error)}")
+            print(f"Error type: {type(s3_error).__name__}")
+            print(f"Bucket: {bucket_name}, Key: {file_name}")
+            print(f"Endpoint: https://bucket.poehali.dev")
+            print(f"AWS_ACCESS_KEY_ID present: {bool(os.environ.get('AWS_ACCESS_KEY_ID'))}")
+            print(f"AWS_SECRET_ACCESS_KEY present: {bool(os.environ.get('AWS_SECRET_ACCESS_KEY'))}")
+            
             if len(file_data) <= 500 * 1024:
                 file_url = f'data:{content_type};base64,{base64.b64encode(file_data).decode()}'
             else:

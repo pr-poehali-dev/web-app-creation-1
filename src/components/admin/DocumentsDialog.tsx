@@ -47,20 +47,46 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
   const isPdf = documentUrl.includes('.pdf') || documentUrl.includes('application/pdf') || (isDataUrl && documentUrl.includes('application/pdf'));
   const isImage = !isPdf && (documentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) || (isDataUrl && documentUrl.match(/^data:image\//)));
   
+  const handleDownload = () => {
+    if (isDataUrl) {
+      const link = document.createElement('a');
+      link.href = documentUrl;
+      link.download = documentTitle.replace(/\s+/g, '_') + (isImage ? '.png' : '.pdf');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      window.open(documentUrl, '_blank');
+    }
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>{documentTitle}</DialogTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(documentUrl, '_blank')}
-            className="mt-2"
-          >
-            <Icon name="ExternalLink" className="h-4 w-4 mr-2" />
-            Открыть в новой вкладке
-          </Button>
+          <div className="flex gap-2 mt-2">
+            {isDataUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownload}
+              >
+                <Icon name="Download" className="h-4 w-4 mr-2" />
+                Скачать файл
+              </Button>
+            )}
+            {!isDataUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(documentUrl, '_blank')}
+              >
+                <Icon name="ExternalLink" className="h-4 w-4 mr-2" />
+                Открыть в новой вкладке
+              </Button>
+            )}
+          </div>
         </DialogHeader>
         <div className="flex-1 overflow-auto bg-gray-100 rounded-lg p-4">
           {isPdf ? (
@@ -76,7 +102,11 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
                   className="w-full h-[75vh]"
                 />
                 <div className="text-center text-muted-foreground py-8">
-                  PDF не может быть отображен. <a href={documentUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">Открыть в новой вкладке</a>
+                  <p className="mb-4">PDF не может быть отображен в браузере</p>
+                  <Button onClick={handleDownload} variant="default">
+                    <Icon name="Download" className="h-4 w-4 mr-2" />
+                    Скачать для просмотра
+                  </Button>
                 </div>
               </object>
             ) : (
@@ -84,29 +114,14 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
                 src={documentUrl}
                 className="w-full h-[75vh] border-0"
                 title={documentTitle}
-                onError={(e) => {
-                  const target = e.target as HTMLIFrameElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML += '<div class="text-center text-muted-foreground py-8">Не удалось загрузить PDF. <a href="' + documentUrl + '" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Открыть в новой вкладке</a></div>';
-                  }
-                }}
               />
             )
           ) : isImage ? (
             <img
               src={documentUrl}
               alt={documentTitle}
-              className="w-full h-auto max-h-[75vh] object-contain mx-auto"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const parent = target.parentElement;
-                if (parent) {
-                  parent.innerHTML += '<div class="text-center text-muted-foreground py-8">Не удалось загрузить изображение. <a href="' + documentUrl + '" target="_blank" rel="noopener noreferrer" class="text-blue-500 underline">Попробуйте открыть в новой вкладке</a></div>';
-                }
-              }}
+              className="w-full h-auto max-h-[75vh] object-contain mx-auto bg-white rounded"
+              style={{ imageRendering: 'auto' }}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-[75vh] gap-4">
@@ -114,7 +129,7 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
               <p className="text-muted-foreground">Предварительный просмотр недоступен для этого типа файла</p>
               <Button
                 variant="default"
-                onClick={() => window.open(documentUrl, '_blank')}
+                onClick={handleDownload}
               >
                 <Icon name="Download" className="h-4 w-4 mr-2" />
                 Скачать файл
