@@ -192,15 +192,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             file_url = f'https://storage.yandexcloud.net/{bucket_name}/{file_name}'
         except Exception as s3_error:
-            return {
-                'statusCode': 500,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({'error': f'Ошибка загрузки файла в хранилище: {str(s3_error)}'}),
-                'isBase64Encoded': False
-            }
+            if len(file_data) <= 500 * 1024:
+                file_url = f'data:{content_type};base64,{base64.b64encode(file_data).decode()}'
+            else:
+                return {
+                    'statusCode': 500,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({'error': 'Ошибка загрузки файла в хранилище. Попробуйте файл меньшего размера (до 500 КБ) или обратитесь к администратору'}),
+                    'isBase64Encoded': False
+                }
         
         return {
             'statusCode': 200,

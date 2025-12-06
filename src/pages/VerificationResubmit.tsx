@@ -82,11 +82,11 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
   const handleFileChange = async (docType: string, file: File | null) => {
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 2 * 1024 * 1024) {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: 'Размер файла не должен превышать 5 МБ',
+        description: 'Размер файла не должен превышать 2 МБ. Попробуйте сжать изображение',
       });
       return;
     }
@@ -169,7 +169,7 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
         toast({
           variant: 'destructive',
           title: 'Ошибка',
-          description: 'Размер документов слишком большой. Попробуйте загрузить файлы меньшего размера (до 5 МБ каждый)',
+          description: 'Размер документов слишком большой. Попробуйте загрузить файлы меньшего размера (до 2 МБ каждый)',
         });
         return;
       }
