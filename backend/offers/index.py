@@ -111,7 +111,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 '[]'
             ) as images
         FROM offers o
-        LEFT JOIN users u ON o.user_id::text = u.id::text
+        LEFT JOIN users u ON o.user_id = u.id
         LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
         LEFT JOIN offer_images oi ON oir.image_id = oi.id
         WHERE o.status = %s
@@ -182,7 +182,7 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
                 '[]'
             ) as images
         FROM offers o
-        LEFT JOIN users u ON o.user_id::text = u.id::text
+        LEFT JOIN users u ON o.user_id = u.id
         LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
         LEFT JOIN offer_images oi ON oir.image_id = oi.id
         WHERE o.id = %s
