@@ -71,6 +71,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
     
     except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f'ERROR in offers handler: {str(e)}')
+        print(f'Traceback: {error_trace}')
         return {
             'statusCode': 500,
             'headers': headers,
@@ -80,84 +84,97 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список предложений с фильтрами"""
-    params = event.get('queryStringParameters', {}) or {}
-    
-    category = params.get('category', '')
-    subcategory = params.get('subcategory', '')
-    district = params.get('district', '')
-    query = params.get('query', '')
-    status = params.get('status', 'active')
-    limit = int(params.get('limit', '50'))
-    offset = int(params.get('offset', '0'))
-    
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    
-    sql = """
-        SELECT 
-            o.*,
-            CONCAT(u.first_name, ' ', u.last_name) as seller_name,
-            u.user_type as seller_type,
-            u.phone as seller_phone,
-            u.email as seller_email,
-            5.0 as seller_rating,
-            0 as seller_reviews_count,
-            CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
-            COALESCE(
-                json_agg(
-                    json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt)
-                    ORDER BY oir.sort_order
-                ) FILTER (WHERE oi.id IS NOT NULL),
-                '[]'
-            ) as images
-        FROM offers o
-        LEFT JOIN users u ON o.user_id = u.id
-        LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
-        LEFT JOIN offer_images oi ON oir.image_id = oi.id
-        WHERE o.status = %s
-    """
-    
-    query_params = [status]
-    
-    if category:
-        sql += " AND o.category = %s"
-        query_params.append(category)
-    
-    if subcategory:
-        sql += " AND o.subcategory = %s"
-        query_params.append(subcategory)
-    
-    if district:
-        sql += " AND o.district = %s"
-        query_params.append(district)
-    
-    if query:
-        sql += " AND (o.title ILIKE %s OR o.description ILIKE %s)"
-        search_term = f'%{query}%'
-        query_params.extend([search_term, search_term])
-    
-    sql += " GROUP BY o.id, u.id ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
-    query_params.extend([limit, offset])
-    
-    cur.execute(sql, query_params)
-    offers = cur.fetchall()
-    
-    result = []
-    for offer in offers:
-        offer_dict = dict(offer)
-        offer_dict['createdAt'] = offer_dict.pop('created_at').isoformat() if offer_dict.get('created_at') else None
-        offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
-        result.append(offer_dict)
-    
-    cur.close()
-    conn.close()
-    
-    return {
-        'statusCode': 200,
-        'headers': headers,
-        'body': json.dumps({'offers': result, 'total': len(result)}),
-        'isBase64Encoded': False
-    }
+    try:
+        params = event.get('queryStringParameters', {}) or {}
+        
+        category = params.get('category', '')
+        subcategory = params.get('subcategory', '')
+        district = params.get('district', '')
+        query = params.get('query', '')
+        status = params.get('status', 'active')
+        limit = int(params.get('limit', '50'))
+        offset = int(params.get('offset', '0'))
+        
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        sql = """
+            SELECT 
+                o.*,
+                CONCAT(u.first_name, ' ', u.last_name) as seller_name,
+                u.user_type as seller_type,
+                u.phone as seller_phone,
+                u.email as seller_email,
+                5.0 as seller_rating,
+                0 as seller_reviews_count,
+                CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
+                COALESCE(
+                    json_agg(
+                        json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt)
+                        ORDER BY oir.sort_order
+                    ) FILTER (WHERE oi.id IS NOT NULL),
+                    '[]'
+                ) as images
+            FROM offers o
+            LEFT JOIN users u ON o.user_id = u.id
+            LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
+            LEFT JOIN offer_images oi ON oir.image_id = oi.id
+            WHERE o.status = %s
+        """
+        
+        query_params = [status]
+        
+        if category:
+            sql += " AND o.category = %s"
+            query_params.append(category)
+        
+        if subcategory:
+            sql += " AND o.subcategory = %s"
+            query_params.append(subcategory)
+        
+        if district:
+            sql += " AND o.district = %s"
+            query_params.append(district)
+        
+        if query:
+            sql += " AND (o.title ILIKE %s OR o.description ILIKE %s)"
+            search_term = f'%{query}%'
+            query_params.extend([search_term, search_term])
+        
+        sql += " GROUP BY o.id, u.id ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
+        query_params.extend([limit, offset])
+        
+        cur.execute(sql, query_params)
+        offers = cur.fetchall()
+        
+        result = []
+        for offer in offers:
+            offer_dict = dict(offer)
+            offer_dict['createdAt'] = offer_dict.pop('created_at').isoformat() if offer_dict.get('created_at') else None
+            offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
+            if offer_dict.get('price_per_unit'):
+                offer_dict['price_per_unit'] = float(offer_dict['price_per_unit'])
+            if offer_dict.get('vat_rate'):
+                offer_dict['vat_rate'] = float(offer_dict['vat_rate'])
+            if offer_dict.get('seller_rating'):
+                offer_dict['seller_rating'] = float(offer_dict['seller_rating'])
+            result.append(offer_dict)
+        
+        cur.close()
+        conn.close()
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'offers': result, 'total': len(result)}),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f'ERROR in get_offers_list: {str(e)}')
+        print(f'Traceback: {error_trace}')
+        raise
 
 def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
@@ -206,6 +223,12 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     offer_dict = dict(offer)
     offer_dict['createdAt'] = offer_dict.pop('created_at').isoformat() if offer_dict.get('created_at') else None
     offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
+    if offer_dict.get('price_per_unit'):
+        offer_dict['price_per_unit'] = float(offer_dict['price_per_unit'])
+    if offer_dict.get('vat_rate'):
+        offer_dict['vat_rate'] = float(offer_dict['vat_rate'])
+    if offer_dict.get('seller_rating'):
+        offer_dict['seller_rating'] = float(offer_dict['seller_rating'])
     
     return {
         'statusCode': 200,
