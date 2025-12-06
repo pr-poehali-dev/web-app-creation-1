@@ -180,7 +180,7 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
           <Card>
             <CardHeader>
               <CardTitle>Список пользователей</CardTitle>
-              <CardDescription>Всего пользователей: {mockUsers.length}</CardDescription>
+              <CardDescription>Всего пользователей: {users.length}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
