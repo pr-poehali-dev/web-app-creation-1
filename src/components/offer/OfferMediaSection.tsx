@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +25,36 @@ export default function OfferMediaSection({
   onVideoUpload,
   onRemoveVideo
 }: OfferMediaSectionProps) {
+  const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isVideoUploading, setIsVideoUploading] = useState(false);
+  const [imageUploadSuccess, setImageUploadSuccess] = useState(false);
+  const [videoUploadSuccess, setVideoUploadSuccess] = useState(false);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsImageUploading(true);
+    setImageUploadSuccess(false);
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    onImageUpload(e);
+    
+    setIsImageUploading(false);
+    setImageUploadSuccess(true);
+    setTimeout(() => setImageUploadSuccess(false), 3000);
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsVideoUploading(true);
+    setVideoUploadSuccess(false);
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    onVideoUpload(e);
+    
+    setIsVideoUploading(false);
+    setVideoUploadSuccess(true);
+    setTimeout(() => setVideoUploadSuccess(false), 3000);
+  };
   return (
     <Card>
       <CardHeader>
@@ -34,15 +65,30 @@ export default function OfferMediaSection({
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="images">Фотографии (до 10)</Label>
+          <Label htmlFor="images" className="flex items-center gap-2">
+            Фотографии (до 10)
+            {isImageUploading && (
+              <span className="inline-flex items-center gap-1 text-primary text-xs font-normal">
+                <Icon name="Loader2" className="h-3 w-3 animate-spin" />
+                Загрузка...
+              </span>
+            )}
+            {imageUploadSuccess && (
+              <span className="inline-flex items-center gap-1 text-green-600 text-xs font-normal">
+                <Icon name="CheckCircle" className="h-3 w-3" />
+                Загружено
+              </span>
+            )}
+          </Label>
           <div className="mt-2">
             <Input
               id="images"
               type="file"
               accept="image/*"
               multiple
-              onChange={onImageUpload}
-              disabled={images.length >= 10}
+              onChange={handleImageUpload}
+              disabled={images.length >= 10 || isImageUploading}
+              className={imageUploadSuccess ? 'border-green-500 bg-green-50' : ''}
             />
           </div>
           
@@ -69,14 +115,29 @@ export default function OfferMediaSection({
         </div>
 
         <div>
-          <Label htmlFor="video">Видео (1 файл)</Label>
+          <Label htmlFor="video" className="flex items-center gap-2">
+            Видео (1 файл)
+            {isVideoUploading && (
+              <span className="inline-flex items-center gap-1 text-primary text-xs font-normal">
+                <Icon name="Loader2" className="h-3 w-3 animate-spin" />
+                Загрузка...
+              </span>
+            )}
+            {videoUploadSuccess && (
+              <span className="inline-flex items-center gap-1 text-green-600 text-xs font-normal">
+                <Icon name="CheckCircle" className="h-3 w-3" />
+                Загружено
+              </span>
+            )}
+          </Label>
           <div className="mt-2">
             <Input
               id="video"
               type="file"
               accept="video/*"
-              onChange={onVideoUpload}
-              disabled={!!video}
+              onChange={handleVideoUpload}
+              disabled={!!video || isVideoUploading}
+              className={videoUploadSuccess ? 'border-green-500 bg-green-50' : ''}
             />
           </div>
           
