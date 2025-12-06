@@ -23,6 +23,7 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -230,49 +231,64 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="category" className="mb-2 block">
-                Категория
-              </Label>
-              <Select value={selectedCategory || 'all-categories'} onValueChange={(value) => handleCategoryChange(value === 'all-categories' ? '' : value)}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Все категории" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all-categories">Все категории</SelectItem>
-                  {CATEGORIES.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="subcategory" className="mb-2 block">
-                Подкатегория
-              </Label>
-              <Select
-                value={filters.subcategory || 'all-subcategories'}
-                onValueChange={(value) => handleSubcategoryChange(value === 'all-subcategories' ? '' : value)}
-                disabled={!selectedCategory}
-              >
-                <SelectTrigger id="subcategory">
-                  <SelectValue placeholder="Все подкатегории" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all-subcategories">Все подкатегории</SelectItem>
-                  {subcategories.map((subcategory) => (
-                    <SelectItem key={subcategory.id} value={subcategory.id}>
-                      {subcategory.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex items-center gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+              className="text-sm"
+            >
+              <Icon name={showAdvancedSearch ? "ChevronUp" : "ChevronDown"} className="mr-2 h-4 w-4" />
+              {showAdvancedSearch ? 'Скрыть расширенный поиск' : 'Расширенный поиск'}
+            </Button>
           </div>
+
+          {showAdvancedSearch && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="category" className="mb-2 block">
+                  Категория
+                </Label>
+                <Select value={selectedCategory || 'all-categories'} onValueChange={(value) => handleCategoryChange(value === 'all-categories' ? '' : value)}>
+                  <SelectTrigger id="category">
+                    <SelectValue placeholder="Все категории" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-categories">Все категории</SelectItem>
+                    {CATEGORIES.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="subcategory" className="mb-2 block">
+                  Подкатегория
+                </Label>
+                <Select
+                  value={filters.subcategory || 'all-subcategories'}
+                  onValueChange={(value) => handleSubcategoryChange(value === 'all-subcategories' ? '' : value)}
+                  disabled={!selectedCategory}
+                >
+                  <SelectTrigger id="subcategory">
+                    <SelectValue placeholder="Все подкатегории" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all-subcategories">Все подкатегории</SelectItem>
+                    {subcategories.map((subcategory) => (
+                      <SelectItem key={subcategory.id} value={subcategory.id}>
+                        {subcategory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-2 pt-2">
             <Button onClick={onSearch} className="flex-1 md:flex-none">
