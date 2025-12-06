@@ -244,51 +244,53 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
             </Button>
           </div>
 
-          {showAdvancedSearch && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="category" className="mb-2 block">
-                  Категория
-                </Label>
-                <Select value={selectedCategory || 'all-categories'} onValueChange={(value) => handleCategoryChange(value === 'all-categories' ? '' : value)}>
-                  <SelectTrigger id="category">
-                    <SelectValue placeholder="Все категории" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all-categories">Все категории</SelectItem>
-                    {CATEGORIES.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="subcategory" className="mb-2 block">
-                  Подкатегория
-                </Label>
-                <Select
-                  value={filters.subcategory || 'all-subcategories'}
-                  onValueChange={(value) => handleSubcategoryChange(value === 'all-subcategories' ? '' : value)}
-                  disabled={!selectedCategory}
-                >
-                  <SelectTrigger id="subcategory">
-                    <SelectValue placeholder="Все подкатегории" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all-subcategories">Все подкатегории</SelectItem>
-                    {subcategories.map((subcategory) => (
-                      <SelectItem key={subcategory.id} value={subcategory.id}>
-                        {subcategory.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden transition-all duration-300 ease-in-out ${
+              showAdvancedSearch ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div>
+              <Label htmlFor="category" className="mb-2 block">
+                Категория
+              </Label>
+              <Select value={selectedCategory || 'all-categories'} onValueChange={(value) => handleCategoryChange(value === 'all-categories' ? '' : value)}>
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="Все категории" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-categories">Все категории</SelectItem>
+                  {CATEGORIES.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          )}
+
+            <div>
+              <Label htmlFor="subcategory" className="mb-2 block">
+                Подкатегория
+              </Label>
+              <Select
+                value={filters.subcategory || 'all-subcategories'}
+                onValueChange={(value) => handleSubcategoryChange(value === 'all-subcategories' ? '' : value)}
+                disabled={!selectedCategory}
+              >
+                <SelectTrigger id="subcategory">
+                  <SelectValue placeholder="Все подкатегории" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-subcategories">Все подкатегории</SelectItem>
+                  {subcategories.map((subcategory) => (
+                    <SelectItem key={subcategory.id} value={subcategory.id}>
+                      {subcategory.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <div className="flex gap-2 pt-2">
             <Button onClick={onSearch} className="flex-1 md:flex-none">
