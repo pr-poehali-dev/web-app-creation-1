@@ -46,29 +46,29 @@ export default function ProfileHeader({
   const isLegalEntity = userType === 'legal-entity';
   
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-bold">
+    <div className="flex items-center gap-3">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
         {getInitials()}
       </div>
       <div>
         {isLegalEntity && companyName ? (
           <>
-            <h2 className="text-2xl font-bold">
+            <h2 className="text-xl font-bold">
               {shortenCompanyName(companyName)}
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               Руководитель: {directorName || 'Не указан'}
             </p>
           </>
         ) : (
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-xl font-bold">
             {firstName} {lastName}
           </h2>
         )}
         <div className="flex items-center gap-2 mt-1">
-          <Badge variant="secondary">{getUserTypeLabel(userType)}</Badge>
+          <Badge variant="secondary" className="text-xs">{getUserTypeLabel(userType)}</Badge>
           {isVerified && (
-            <Badge variant="default" className="bg-green-500">
+            <Badge variant="default" className="bg-green-500 text-xs">
               Верифицирован
             </Badge>
           )}
