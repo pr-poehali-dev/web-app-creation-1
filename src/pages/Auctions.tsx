@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import SearchBlock from '@/components/SearchBlock';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -24,6 +26,7 @@ interface AuctionsProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
+  useScrollToTop();
   const navigate = useNavigate();
   const currentUser = getSession();
   const accessCheck = checkAccessPermission(isAuthenticated, 'auctions');
@@ -174,6 +177,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Аукционы</h1>

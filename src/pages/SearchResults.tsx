@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import SearchBlock from '@/components/SearchBlock';
 import OfferCard from '@/components/OfferCard';
@@ -20,6 +22,7 @@ interface SearchResultsProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function SearchResults({ isAuthenticated, onLogout }: SearchResultsProps) {
+  useScrollToTop();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -164,6 +167,7 @@ export default function SearchResults({ isAuthenticated, onLogout }: SearchResul
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground mb-2">Результаты поиска</h1>
           <p className="text-muted-foreground">

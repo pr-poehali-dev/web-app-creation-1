@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -14,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 
 export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
+  useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { offers } = useOffers();
@@ -107,6 +110,7 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       
       <main className="flex-1 container mx-auto px-4 py-8">
+        <BackButton />
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}

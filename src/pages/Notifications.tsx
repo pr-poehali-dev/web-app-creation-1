@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -100,6 +102,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ];
 
 export default function Notifications({ isAuthenticated, onLogout }: NotificationsProps) {
+  useScrollToTop();
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getSession();
@@ -240,6 +243,7 @@ export default function Notifications({ isAuthenticated, onLogout }: Notificatio
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">

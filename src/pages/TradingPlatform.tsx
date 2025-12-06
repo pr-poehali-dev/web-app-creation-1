@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +47,7 @@ interface Contract {
 
 export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPlatformProps) {
   const navigate = useNavigate();
+  useScrollToTop();
   const { toast } = useToast();
   const accessCheck = checkAccessPermission(isAuthenticated, 'contracts');
 
@@ -145,6 +148,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">

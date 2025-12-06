@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,7 @@ interface CreateContractProps {
 }
 
 export default function CreateContract({ isAuthenticated, onLogout }: CreateContractProps) {
+  useScrollToTop();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,6 +126,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <Button variant="ghost" onClick={() => navigate('/trading')}>

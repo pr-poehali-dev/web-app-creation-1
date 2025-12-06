@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -26,6 +28,7 @@ interface CreateRequestProps {
 }
 
 export default function CreateRequest({ isAuthenticated, onLogout }: CreateRequestProps) {
+  useScrollToTop();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { addRequest } = useOffers();
@@ -191,6 +194,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"

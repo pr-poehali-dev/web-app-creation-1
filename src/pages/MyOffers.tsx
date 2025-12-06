@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -57,6 +59,7 @@ const STATUS_COLORS: Record<OfferStatus, string> = {
 };
 
 export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
+  useScrollToTop();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { districts } = useDistrict();
@@ -260,6 +263,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="mb-8">
           <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
             <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />

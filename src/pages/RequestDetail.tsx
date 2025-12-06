@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -128,6 +130,7 @@ const MOCK_REQUEST: Request = {
 };
 
 export default function RequestDetail({ isAuthenticated, onLogout }: RequestDetailProps) {
+  useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -284,6 +287,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}

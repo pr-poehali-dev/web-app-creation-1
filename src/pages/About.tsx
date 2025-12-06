@@ -1,5 +1,7 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 interface AboutProps {
   isAuthenticated: boolean;
@@ -7,11 +9,13 @@ interface AboutProps {
 }
 
 export default function About({ isAuthenticated, onLogout }: AboutProps) {
+  useScrollToTop();
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold text-foreground mb-8">
             О Единой Региональной Торговой Площадке (ЕРТП)

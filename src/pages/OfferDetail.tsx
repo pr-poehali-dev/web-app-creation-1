@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import OfferCard from '@/components/OfferCard';
@@ -21,6 +23,7 @@ interface OfferDetailProps {
 }
 
 export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailProps) {
+  useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -182,6 +185,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
+        <BackButton />
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
