@@ -118,7 +118,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
               <div className="flex flex-col items-start min-w-0">
                 <span className="truncate text-xs font-medium">{getDisplayText()}</span>
                 {getSubtitleText() && (
-                  <span className="text-[10px] text-muted-foreground truncate w-full">{getSubtitleText()}</span>
+                  <span className="text-xs font-bold text-foreground truncate w-full">{getSubtitleText()}</span>
                 )}
               </div>
             </div>
