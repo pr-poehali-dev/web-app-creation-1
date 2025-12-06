@@ -62,14 +62,13 @@ def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 1
         return True
 
 def get_s3_client():
-    endpoint_url = 'https://storage.yandexcloud.net'
+    endpoint_url = 'https://bucket.poehali.dev'
     
     return boto3.client(
         's3',
         endpoint_url=endpoint_url,
-        aws_access_key_id=os.environ.get('YC_ACCESS_KEY_ID', ''),
-        aws_secret_access_key=os.environ.get('YC_SECRET_ACCESS_KEY', ''),
-        region_name='ru-central1'
+        aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID', ''),
+        aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', '')
     )
 
 def get_content_type_extension(content_type: str) -> str:
@@ -175,7 +174,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        bucket_name = os.environ.get('YC_BUCKET_NAME', 'verification-docs')
+        bucket_name = 'files'
         
         file_extension = get_content_type_extension(content_type)
         file_name = f'verifications/{user_id}/{file_type}-{uuid.uuid4()}{file_extension}'
@@ -190,7 +189,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 ACL='public-read'
             )
             
-            file_url = f'https://storage.yandexcloud.net/{bucket_name}/{file_name}'
+            file_url = f"https://cdn.poehali.dev/projects/{os.environ.get('AWS_ACCESS_KEY_ID')}/bucket/{file_name}"
         except Exception as s3_error:
             if len(file_data) <= 500 * 1024:
                 file_url = f'data:{content_type};base64,{base64.b64encode(file_data).decode()}'
