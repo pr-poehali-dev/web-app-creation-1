@@ -205,6 +205,22 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
               )}
             </div>
 
+            <div className="w-full md:w-auto">
+              <Label className="mb-2 block opacity-0 pointer-events-none">
+                &nbsp;
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="default"
+                onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                className="w-full md:w-auto whitespace-nowrap"
+              >
+                <Icon name={showAdvancedSearch ? "ChevronUp" : "ChevronDown"} className="mr-2 h-4 w-4" />
+                {showAdvancedSearch ? 'Скрыть' : 'Расширенный'}
+              </Button>
+            </div>
+
             <div className="w-full md:w-48">
               <Label htmlFor="content-type" className="mb-2 block">
                 Тип контента
@@ -229,19 +245,6 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
-              className="text-sm"
-            >
-              <Icon name={showAdvancedSearch ? "ChevronUp" : "ChevronDown"} className="mr-2 h-4 w-4" />
-              {showAdvancedSearch ? 'Скрыть расширенный поиск' : 'Расширенный поиск'}
-            </Button>
           </div>
 
           <div
