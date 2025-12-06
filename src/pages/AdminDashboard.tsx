@@ -143,32 +143,26 @@ export default function AdminDashboard({ isAuthenticated, onLogout }: AdminDashb
             <TabsContent value="overview" className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {adminSections.map((section) => (
-                  <a
+                  <Card 
                     key={section.id}
-                    href={section.path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
+                    className="cursor-pointer transition-all hover:shadow-lg h-full hover:border-primary/50"
+                    onClick={() => navigate(section.path)}
                   >
-                    <Card 
-                      className="cursor-pointer transition-all hover:shadow-lg h-full"
-                    >
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${section.color}`}>
-                          <Icon name={section.icon as any} className="h-6 w-6 text-white" />
-                        </div>
-                        {section.count !== null && (
-                          <Badge variant="secondary" className="text-lg font-bold">
-                            {section.count}
-                          </Badge>
-                        )}
-                      </CardHeader>
-                      <CardContent>
-                        <CardTitle className="mb-2 text-lg">{section.title}</CardTitle>
-                        <CardDescription>{section.description}</CardDescription>
-                      </CardContent>
-                    </Card>
-                  </a>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${section.color}`}>
+                        <Icon name={section.icon as any} className="h-6 w-6 text-white" />
+                      </div>
+                      {section.count !== null && (
+                        <Badge variant="secondary" className="text-lg font-bold">
+                          {section.count}
+                        </Badge>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      <CardTitle className="mb-2 text-lg">{section.title}</CardTitle>
+                      <CardDescription>{section.description}</CardDescription>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </TabsContent>

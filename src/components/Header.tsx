@@ -148,8 +148,17 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="flex items-center space-x-1 md:space-x-1.5 h-8 md:h-10 px-2 md:px-4 text-xs md:text-sm">
-                    {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-3 w-3 md:h-4 md:w-4" />}
-                    <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[150px] lg:max-w-[220px] truncate text-[10px] md:text-sm' : 'max-w-[80px] lg:max-w-[140px] truncate text-[10px] md:text-sm'}>{getUserDisplayName()}</span>
+                    {currentUser?.role === 'admin' ? (
+                      <>
+                        <Icon name="ShieldCheck" className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                        <span className="max-w-[100px] lg:max-w-[160px] truncate text-[10px] md:text-sm font-semibold text-primary">Администратор</span>
+                      </>
+                    ) : (
+                      <>
+                        {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-3 w-3 md:h-4 md:w-4" />}
+                        <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[150px] lg:max-w-[220px] truncate text-[10px] md:text-sm' : 'max-w-[80px] lg:max-w-[140px] truncate text-[10px] md:text-sm'}>{getUserDisplayName()}</span>
+                      </>
+                    )}
                     <Icon name="ChevronDown" className="h-3 w-3 md:h-4 md:w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -193,6 +202,50 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     <Icon name="Bell" className="mr-2 h-4 w-4" />
                     Уведомления
                   </DropdownMenuItem>
+                  {currentUser?.role === 'admin' && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="px-2 py-1.5 text-xs font-semibold text-primary uppercase">
+                        Администрирование
+                      </div>
+                      <DropdownMenuItem onClick={() => navigate('/admin/panel')}>
+                        <Icon name="LayoutDashboard" className="mr-2 h-4 w-4" />
+                        Админ-панель
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/verifications')}>
+                        <Icon name="ShieldCheck" className="mr-2 h-4 w-4" />
+                        Верификация
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/users')}>
+                        <Icon name="Users" className="mr-2 h-4 w-4" />
+                        Пользователи
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/offers')}>
+                        <Icon name="Package" className="mr-2 h-4 w-4" />
+                        Предложения
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/requests')}>
+                        <Icon name="FileText" className="mr-2 h-4 w-4" />
+                        Запросы
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/auctions')}>
+                        <Icon name="Gavel" className="mr-2 h-4 w-4" />
+                        Аукционы
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/contracts')}>
+                        <Icon name="FileSignature" className="mr-2 h-4 w-4" />
+                        Контракты
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/analytics')}>
+                        <Icon name="TrendingUp" className="mr-2 h-4 w-4" />
+                        Аналитика
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
+                        <Icon name="Settings" className="mr-2 h-4 w-4" />
+                        Настройки
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                     <Icon name="LogOut" className="mr-2 h-4 w-4" />

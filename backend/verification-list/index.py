@@ -17,125 +17,141 @@ def get_db_connection():
     return psycopg2.connect(dsn)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    method: str = event.get('httpMethod', 'GET')
+    try:
+        method: str = event.get('httpMethod', 'GET')
+        
+        if method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
+                    'Access-Control-Max-Age': '86400'
+                },
+                'body': '',
+                'isBase64Encoded': False
+            }
+        
+        if method != 'GET':
+            return {
+                'statusCode': 405,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'Method not allowed'}),
+                'isBase64Encoded': False
+            }
+        
+        headers = event.get('headers', {})
+        user_id = headers.get('X-User-Id') or headers.get('x-user-id')
+        
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'Unauthorized'}),
+                'isBase64Encoded': False
+            }
+        
+        conn = None
+        cursor = None
+        
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('SELECT role FROM users WHERE id = %s', (user_id,))
+            user_role = cursor.fetchone()
+            
+            if not user_role or user_role[0] not in ('moderator', 'admin'):
+                return {
+                    'statusCode': 403,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({'error': 'Access denied. Moderator or admin role required.'}),
+                    'isBase64Encoded': False
+                }
+            
+            query_params = event.get('queryStringParameters') or {}
+            status_filter = query_params.get('status', 'pending')
+            
+            query = '''
+                SELECT 
+                    uv.id, uv.user_id, uv.verification_type, uv.status,
+                    uv.phone, uv.phone_verified,
+                    uv.registration_address, uv.actual_address,
+                    uv.passport_scan_url, uv.passport_registration_url, uv.utility_bill_url,
+                    uv.registration_cert_url, uv.agreement_form_url,
+                    uv.company_name, uv.inn,
+                    uv.rejection_reason, uv.created_at, uv.updated_at,
+                    u.email, u.first_name, u.last_name
+                FROM user_verifications uv
+                JOIN users u ON uv.user_id = u.id
+                WHERE uv.status = %s
+                ORDER BY uv.created_at DESC
+            '''
+            
+            cursor.execute(query, (status_filter,))
+            rows = cursor.fetchall()
+            
+            verifications: List[Dict[str, Any]] = []
+            for row in rows:
+                verifications.append({
+                    'id': row[0],
+                    'userId': row[1],
+                    'verificationType': row[2],
+                    'status': row[3],
+                    'phone': row[4],
+                    'phoneVerified': row[5],
+                    'registrationAddress': row[6],
+                    'actualAddress': row[7],
+                    'passportScanUrl': row[8],
+                    'passportRegistrationUrl': row[9],
+                    'utilityBillUrl': row[10],
+                    'registrationCertUrl': row[11],
+                    'agreementFormUrl': row[12],
+                    'companyName': row[13],
+                    'inn': row[14],
+                    'rejectionReason': row[15],
+                    'createdAt': row[16].isoformat() if row[16] else None,
+                    'updatedAt': row[17].isoformat() if row[17] else None,
+                    'userEmail': row[18],
+                    'userFirstName': row[19],
+                    'userLastName': row[20]
+                })
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'verifications': verifications,
+                    'total': len(verifications)
+                }),
+                'isBase64Encoded': False
+            }
+        finally:
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
     
-    if method == 'OPTIONS':
+    except Exception as e:
         return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
-                'Access-Control-Max-Age': '86400'
-            },
-            'body': '',
-            'isBase64Encoded': False
-        }
-    
-    if method != 'GET':
-        return {
-            'statusCode': 405,
+            'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': 'Method not allowed'}),
+            'body': json.dumps({'error': f'Internal server error: {str(e)}'}),
             'isBase64Encoded': False
         }
-    
-    headers = event.get('headers', {})
-    user_id = headers.get('X-User-Id') or headers.get('x-user-id')
-    
-    if not user_id:
-        return {
-            'statusCode': 401,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({'error': 'Unauthorized'}),
-            'isBase64Encoded': False
-        }
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT role FROM users WHERE id = %s', (user_id,))
-    user_role = cursor.fetchone()
-    
-    if not user_role or user_role[0] not in ('moderator', 'admin'):
-        cursor.close()
-        conn.close()
-        return {
-            'statusCode': 403,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({'error': 'Access denied. Moderator or admin role required.'}),
-            'isBase64Encoded': False
-        }
-    
-    query_params = event.get('queryStringParameters') or {}
-    status_filter = query_params.get('status', 'pending')
-    
-    query = '''
-        SELECT 
-            uv.id, uv.user_id, uv.verification_type, uv.status,
-            uv.phone, uv.phone_verified,
-            uv.registration_address, uv.actual_address,
-            uv.passport_scan_url, uv.passport_registration_url, uv.utility_bill_url,
-            uv.registration_cert_url, uv.agreement_form_url,
-            uv.company_name, uv.inn,
-            uv.rejection_reason, uv.created_at, uv.updated_at,
-            u.email, u.first_name, u.last_name
-        FROM user_verifications uv
-        JOIN users u ON uv.user_id = u.id
-        WHERE uv.status = %s
-        ORDER BY uv.created_at DESC
-    '''
-    
-    cursor.execute(query, (status_filter,))
-    rows = cursor.fetchall()
-    
-    verifications: List[Dict[str, Any]] = []
-    for row in rows:
-        verifications.append({
-            'id': row[0],
-            'userId': row[1],
-            'verificationType': row[2],
-            'status': row[3],
-            'phone': row[4],
-            'phoneVerified': row[5],
-            'registrationAddress': row[6],
-            'actualAddress': row[7],
-            'passportScanUrl': row[8],
-            'passportRegistrationUrl': row[9],
-            'utilityBillUrl': row[10],
-            'registrationCertUrl': row[11],
-            'agreementFormUrl': row[12],
-            'companyName': row[13],
-            'inn': row[14],
-            'rejectionReason': row[15],
-            'createdAt': row[16].isoformat() if row[16] else None,
-            'updatedAt': row[17].isoformat() if row[17] else None,
-            'userEmail': row[18],
-            'userFirstName': row[19],
-            'userLastName': row[20]
-        })
-    
-    cursor.close()
-    conn.close()
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-        },
-        'body': json.dumps({
-            'verifications': verifications,
-            'total': len(verifications)
-        }),
-        'isBase64Encoded': False
-    }
