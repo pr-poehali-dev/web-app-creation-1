@@ -15,6 +15,14 @@ import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
 import { getSession } from '@/utils/auth';
 import ProductMediaGallery from '@/components/ProductMediaGallery';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface TradingPlatformProps {
   isAuthenticated: boolean;
@@ -61,6 +69,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const currentUser = getSession();
 
   useEffect(() => {
@@ -143,6 +152,14 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     return matchesSearch && matchesCategory && matchesType;
   });
 
+  const handleCreateContract = () => {
+    if (currentUser?.verificationStatus !== 'verified') {
+      setShowVerificationDialog(true);
+      return;
+    }
+    navigate('/create-contract');
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -159,7 +176,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
                 </p>
               </div>
               {currentUser?.userType !== 'individual' && (
-                <Button onClick={() => navigate('/create-contract')} size="lg">
+                <Button onClick={handleCreateContract} size="lg">
                   <Icon name="Plus" className="mr-2 h-4 w-4" />
                   Создать контракт
                 </Button>
@@ -360,6 +377,34 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       </main>
 
       <Footer />
+
+      <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Требуется верификация</DialogTitle>
+            <DialogDescription className="pt-4">
+              Только верифицированные пользователи могут создавать контракты на торговой площадке.
+              Пожалуйста, пройдите верификацию, чтобы получить доступ к этой функции.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setShowVerificationDialog(false)}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={() => {
+                setShowVerificationDialog(false);
+                navigate('/verification');
+              }}
+            >
+              Пройти верификацию
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

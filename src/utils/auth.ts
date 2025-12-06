@@ -14,6 +14,7 @@ interface User {
   directorName?: string;
   legalAddress?: string;
   createdAt?: string;
+  verificationStatus?: string;
 }
 
 interface AuthResponse {
@@ -43,6 +44,7 @@ const convertUserFromBackend = (backendUser: any): User => {
     directorName: backendUser.director_name || backendUser.directorName,
     legalAddress: backendUser.legal_address || backendUser.legalAddress,
     createdAt: backendUser.created_at || backendUser.createdAt,
+    verificationStatus: backendUser.verification_status || backendUser.verificationStatus,
   };
   
   if (backendUser.role) {

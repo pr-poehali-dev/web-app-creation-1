@@ -26,83 +26,67 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-6 md:py-8 lg:py-10 flex-1">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/5 p-5 md:p-8 lg:p-10 rounded-xl md:rounded-2xl border-2 border-primary/30 shadow-lg">
-            <h1 className="text-xl md:text-3xl lg:text-4xl font-extrabold text-foreground mb-5 md:mb-6 leading-tight text-center">
+      <main className="container mx-auto px-3 py-4 md:py-6 flex-1">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/5 p-4 md:p-6 rounded-lg md:rounded-xl border border-primary/30 shadow-md">
+            <h1 className="text-lg md:text-2xl font-bold text-foreground mb-3 md:mb-4 leading-tight text-center">
               «Единая региональная торговая площадка» - это Ваш ключ к успешной торговле!
             </h1>
             
-            <div className="space-y-4 md:space-y-5">
-              <p className="text-base md:text-lg lg:text-xl font-semibold text-foreground/90 leading-relaxed text-center">
-                Увеличьте продажи, оптимизируйте производство, привлекайте инвестиции – все это с Единой региональной торговой площадкой!
+            <div className="space-y-3 md:space-y-4">
+              <p className="text-sm md:text-base font-semibold text-foreground/90 leading-snug text-center">
+                Увеличьте продажи, оптимизируйте производство, привлекайте инвестиции!
               </p>
               
-              <div className="h-px bg-primary/20 my-4 md:my-5"></div>
+              <div className="h-px bg-primary/20 my-3"></div>
               
-              <p className="text-base md:text-lg font-semibold text-foreground leading-relaxed">
-                ЕРТП – это ваш инструмент для процветания на местном рынке. Мы предлагаем:
+              <p className="text-sm md:text-base font-semibold text-foreground leading-snug">
+                ЕРТП предлагает:
               </p>
               
-              <ul className="space-y-3 md:space-y-4 pl-1 md:pl-2">
-                <li className="flex gap-2 md:gap-3 items-start group">
-                  <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                    <Icon name="CheckCircle2" className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                  </div>
-                  <span className="text-sm md:text-base text-foreground leading-relaxed">
-                    <strong className="font-semibold text-foreground">Гарантированный сбыт вашей продукции:</strong>{' '}
-                    <span className="text-foreground/85 font-normal">забудьте о проблемах с реализацией – ЕРТП предоставит вам прямой доступ к вашей целевой аудитории.</span>
+              <ul className="space-y-2 md:space-y-3 pl-0">
+                <li className="flex gap-2 items-start">
+                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+                    <strong className="font-semibold">Гарантированный сбыт</strong> — прямой доступ к целевой аудитории
                   </span>
                 </li>
                 
-                <li className="flex gap-2 md:gap-3 items-start group">
-                  <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                    <Icon name="CheckCircle2" className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                  </div>
-                  <span className="text-sm md:text-base text-foreground leading-relaxed">
-                    <strong className="font-semibold text-foreground">Оптимизацию производственных и логистических процессов:</strong>{' '}
-                    <span className="text-foreground/85 font-normal">анализируйте рыночный спрос и планируйте свою деятельность на основе реальных данных.</span>
+                <li className="flex gap-2 items-start">
+                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+                    <strong className="font-semibold">Оптимизация процессов</strong> — планирование на основе реальных данных
                   </span>
                 </li>
                 
-                <li className="flex gap-2 md:gap-3 items-start group">
-                  <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                    <Icon name="CheckCircle2" className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                  </div>
-                  <span className="text-sm md:text-base text-foreground leading-relaxed">
-                    <strong className="font-semibold text-foreground">Новые возможности для финансирования:</strong>{' '}
-                    <span className="text-foreground/85 font-normal">получите средства на развитие своего бизнеса напрямую от потребителей через инновационные механизмы предоплаты и гарантированных поставок.</span>
+                <li className="flex gap-2 items-start">
+                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+                    <strong className="font-semibold">Финансирование</strong> — предоплата от потребителей напрямую
                   </span>
                 </li>
                 
-                <li className="flex gap-2 md:gap-3 items-start group">
-                  <div className="flex-shrink-0 w-6 h-6 md:w-7 md:h-7 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                    <Icon name="CheckCircle2" className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                  </div>
-                  <span className="text-sm md:text-base text-foreground leading-relaxed">
-                    <strong className="font-semibold text-foreground">Выгоду потребителям:</strong>{' '}
-                    <span className="text-foreground/85 font-normal">возможность выставлять заявки на покупку товаров и услуг на своих условиях, получать скидки и гарантии сроков поставки по заранее оговоренной цене и минимизировать риски изменения цен, срыва сроков поставки.</span>
+                <li className="flex gap-2 items-start">
+                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+                    <strong className="font-semibold">Выгода потребителям</strong> — фиксированные цены и гарантии поставки
                   </span>
                 </li>
               </ul>
               
-              <div className="h-px bg-primary/20 my-4 md:my-5"></div>
+              <div className="h-px bg-primary/20 my-3"></div>
               
-              <p className="text-base md:text-lg lg:text-xl font-bold text-foreground pt-2 md:pt-3 leading-relaxed text-center">
-                ЕРТП – это не просто торговая площадка, это ваш партнер по развитию вашего бизнеса!
+              <p className="text-sm md:text-base font-semibold text-foreground leading-snug text-center">
+                Зарегистрируйтесь и начните развивать бизнес уже сегодня!
               </p>
               
-              <p className="text-base md:text-lg font-semibold text-foreground/90 leading-relaxed text-center">
-                Зарегистрируйтесь на ЕРТП сегодня и начните развивать местную экономику вместе с нами!
-              </p>
-              
-              <div className="text-center pt-4 md:pt-5">
+              <div className="text-center pt-3">
                 <Link 
                   to="/register" 
-                  className="inline-flex items-center gap-2 md:gap-3 bg-primary text-primary-foreground px-6 md:px-8 py-2.5 md:py-3 rounded-lg md:rounded-xl text-base md:text-lg font-semibold hover:bg-primary/90 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2 md:py-2.5 rounded-lg text-sm md:text-base font-semibold hover:bg-primary/90 transition-all shadow-md"
                 >
                   Присоединяйтесь!
-                  <Icon name="ArrowRight" className="h-5 w-5 md:h-6 md:w-6" />
+                  <Icon name="ArrowRight" className="h-4 w-4" />
                 </Link>
               </div>
             </div>

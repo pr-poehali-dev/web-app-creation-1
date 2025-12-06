@@ -126,7 +126,6 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <BackButton />
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <Button variant="ghost" onClick={() => navigate('/trading')}>
