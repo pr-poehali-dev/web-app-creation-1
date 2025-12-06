@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import JSZip from 'jszip';
 
 interface Verification {
   id: number;
@@ -156,12 +157,82 @@ export default function DocumentsDialog({
     setViewerOpen(true);
   };
 
+  const handleDownloadAll = async () => {
+    if (!selectedVerification) return;
+
+    const zip = new JSZip();
+    const documents: Array<{ url: string; name: string }> = [];
+
+    if (selectedVerification.passportScanUrl) {
+      documents.push({ url: selectedVerification.passportScanUrl, name: 'Скан_паспорта' });
+    }
+    if (selectedVerification.passportRegistrationUrl) {
+      documents.push({ url: selectedVerification.passportRegistrationUrl, name: 'Страница_с_регистрацией' });
+    }
+    if (selectedVerification.utilityBillUrl) {
+      documents.push({ url: selectedVerification.utilityBillUrl, name: 'Коммунальный_платеж' });
+    }
+    if (selectedVerification.registrationCertUrl) {
+      documents.push({ url: selectedVerification.registrationCertUrl, name: 'Свидетельство_регистрации' });
+    }
+    if (selectedVerification.agreementFormUrl) {
+      documents.push({ url: selectedVerification.agreementFormUrl, name: 'Форма_согласия' });
+    }
+
+    if (documents.length === 0) return;
+
+    for (const doc of documents) {
+      try {
+        if (doc.url.startsWith('data:')) {
+          const base64Data = doc.url.split(',')[1];
+          const mimeType = doc.url.split(';')[0].split(':')[1];
+          const extension = mimeType.includes('pdf') ? '.pdf' : '.png';
+          zip.file(`${doc.name}${extension}`, base64Data, { base64: true });
+        } else {
+          const response = await fetch(doc.url);
+          const blob = await response.blob();
+          const extension = doc.url.match(/\.(jpg|jpeg|png|gif|webp|pdf)$/i)?.[0] || '.png';
+          zip.file(`${doc.name}${extension}`, blob);
+        }
+      } catch (error) {
+        console.error(`Failed to download ${doc.name}:`, error);
+      }
+    }
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(zipBlob);
+    const userName = `${selectedVerification.userLastName}_${selectedVerification.userFirstName}`.replace(/\s+/g, '_');
+    link.download = `Документы_${userName}_${selectedVerification.id}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Документы верификации</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Документы верификации</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadAll}
+                disabled={!selectedVerification || (
+                  !selectedVerification.passportScanUrl &&
+                  !selectedVerification.passportRegistrationUrl &&
+                  !selectedVerification.utilityBillUrl &&
+                  !selectedVerification.registrationCertUrl &&
+                  !selectedVerification.agreementFormUrl
+                )}
+              >
+                <Icon name="Archive" className="h-4 w-4 mr-2" />
+                Скачать все документы
+              </Button>
+            </DialogTitle>
             <DialogDescription>
               {selectedVerification && (
                 <>{selectedVerification.userLastName} {selectedVerification.userFirstName} • {selectedVerification.userEmail}</>
