@@ -151,6 +151,48 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             cursor.execute(update_query)
             conn.commit()
             
+            cursor.execute(f"SELECT uv.verification_type, u.first_name, u.last_name, u.email FROM user_verifications uv JOIN users u ON uv.user_id = u.id WHERE uv.id = {verification_id}")
+            verification_info = cursor.fetchone()
+            
+            if verification_info:
+                import urllib.request
+                import urllib.error
+                
+                user_name = f"{verification_info[1]} {verification_info[2]}"
+                user_email = verification_info[3]
+                verification_type_value = verification_info[0]
+                
+                email_payload = {
+                    'userName': user_name,
+                    'userEmail': user_email,
+                    'verificationType': verification_type_value,
+                    'phone': body_data.get('phone', '')
+                }
+                
+                if verification_type_value == 'legal_entity':
+                    email_payload['companyName'] = body_data.get('companyName', '')
+                    email_payload['inn'] = body_data.get('inn', '')
+                    email_payload['registrationCertUrl'] = body_data.get('registrationCertUrl', '')
+                    email_payload['agreementFormUrl'] = body_data.get('agreementFormUrl', '')
+                else:
+                    email_payload['registrationAddress'] = body_data.get('registrationAddress', '')
+                    email_payload['actualAddress'] = body_data.get('actualAddress', '')
+                    email_payload['passportScanUrl'] = body_data.get('passportScanUrl', '')
+                    email_payload['passportRegistrationUrl'] = body_data.get('passportRegistrationUrl', '')
+                    email_payload['utilityBillUrl'] = body_data.get('utilityBillUrl', '')
+                    email_payload['inn'] = body_data.get('inn', '')
+                
+                try:
+                    email_data = json.dumps(email_payload).encode('utf-8')
+                    email_req = urllib.request.Request(
+                        'https://functions.poehali.dev/42f9ef7b-b116-430a-ac8a-681742e10551',
+                        data=email_data,
+                        headers={'Content-Type': 'application/json'}
+                    )
+                    urllib.request.urlopen(email_req, timeout=5)
+                except (urllib.error.URLError, Exception):
+                    pass
+            
             return {
                 'statusCode': 200,
                 'headers': {
