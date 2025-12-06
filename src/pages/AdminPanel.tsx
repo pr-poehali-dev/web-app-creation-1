@@ -19,6 +19,7 @@ interface StatsData {
   totalUsers: number;
   verifiedUsers: number;
   pendingVerifications: number;
+  resubmittedVerifications: number;
   totalOffers: number;
   totalRequests: number;
   totalAuctions: number;
@@ -34,6 +35,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
     totalUsers: 0,
     verifiedUsers: 0,
     pendingVerifications: 0,
+    resubmittedVerifications: 0,
     totalOffers: 0,
     totalRequests: 0,
     totalAuctions: 0,
@@ -61,10 +63,29 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
   const loadStats = async () => {
     try {
       setLoading(true);
+      const userId = localStorage.getItem('userId');
+      
+      // Загружаем заявки на верификацию
+      const verificationsResponse = await fetch('https://functions.poehali.dev/bdff7262-3acc-4253-afcc-26ef5ef8b778?status=pending', {
+        headers: {
+          'X-User-Id': userId || '',
+        },
+      });
+      
+      let pendingCount = 0;
+      let resubmittedCount = 0;
+      
+      if (verificationsResponse.ok) {
+        const data = await verificationsResponse.json();
+        pendingCount = data.verifications?.length || 0;
+        resubmittedCount = data.verifications?.filter((v: any) => v.isResubmitted).length || 0;
+      }
+      
       setStats({
         totalUsers: 150,
         verifiedUsers: 98,
-        pendingVerifications: 5,
+        pendingVerifications: pendingCount,
+        resubmittedVerifications: resubmittedCount,
         totalOffers: 320,
         totalRequests: 180,
         totalAuctions: 45,
@@ -270,9 +291,17 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
                   <Icon name="AlertCircle" className="h-4 w-4 text-orange-600" />
                   <AlertDescription className="text-orange-800">
                     <div className="flex items-center justify-between">
-                      <span>
-                        У вас {stats.pendingVerifications} {stats.pendingVerifications === 1 ? 'заявка' : 'заявки'} на верификацию, ожидающих рассмотрения
-                      </span>
+                      <div>
+                        <div className="font-semibold mb-1">
+                          У вас {stats.pendingVerifications} {stats.pendingVerifications === 1 ? 'заявка' : 'заявок'} на верификацию
+                        </div>
+                        {stats.resubmittedVerifications > 0 && (
+                          <div className="text-sm flex items-center gap-1">
+                            <Icon name="RefreshCw" className="h-3 w-3" />
+                            <span>Из них {stats.resubmittedVerifications} повторно поданных</span>
+                          </div>
+                        )}
+                      </div>
                       <Button 
                         variant="outline" 
                         size="sm"

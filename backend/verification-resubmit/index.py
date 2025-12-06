@@ -144,6 +144,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             update_fields.append("status = 'pending'")
             update_fields.append("rejection_reason = NULL")
+            update_fields.append("is_resubmitted = TRUE")
             update_fields.append(f"updated_at = CURRENT_TIMESTAMP")
             
             update_query = f"UPDATE user_verifications SET {', '.join(update_fields)} WHERE id = {verification_id}"

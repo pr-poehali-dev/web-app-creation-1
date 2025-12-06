@@ -26,6 +26,8 @@ interface Verification {
   userEmail: string;
   userFirstName: string;
   userLastName: string;
+  isResubmitted?: boolean;
+  adminMessage?: string | null;
 }
 
 interface VerificationCardProps {
@@ -49,10 +51,18 @@ export default function VerificationCard({
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg">
-              {verification.userLastName} {verification.userFirstName}
-            </CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg">
+                {verification.userLastName} {verification.userFirstName}
+              </CardTitle>
+              {verification.isResubmitted && (
+                <Badge className="bg-orange-500 hover:bg-orange-600">
+                  <Icon name="RefreshCw" className="h-3 w-3 mr-1" />
+                  Повторная подача
+                </Badge>
+              )}
+            </div>
             <CardDescription>
               {verification.userEmail} • {getVerificationTypeLabel(verification.verificationType)}
             </CardDescription>
@@ -107,11 +117,20 @@ export default function VerificationCard({
             </Button>
           </div>
 
+          {verification.isResubmitted && verification.adminMessage && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <Icon name="MessageSquare" className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-900">
+                <strong>Сообщение от пользователя:</strong> {verification.adminMessage}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {verification.rejectionReason && (
             <Alert variant="destructive">
               <Icon name="AlertCircle" className="h-4 w-4" />
               <AlertDescription>
-                <strong>Причина отклонения:</strong> {verification.rejectionReason}
+                <strong>Предыдущая причина отклонения:</strong> {verification.rejectionReason}
               </AlertDescription>
             </Alert>
           )}

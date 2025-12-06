@@ -91,11 +91,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     uv.registration_cert_url, uv.agreement_form_url,
                     uv.company_name, uv.inn,
                     uv.rejection_reason, uv.created_at, uv.updated_at,
-                    u.email, u.first_name, u.last_name
+                    u.email, u.first_name, u.last_name,
+                    uv.is_resubmitted, uv.admin_message
                 FROM user_verifications uv
                 JOIN users u ON uv.user_id = u.id
                 WHERE uv.status = '{status_filter}'
-                ORDER BY uv.created_at DESC
+                ORDER BY uv.is_resubmitted DESC, uv.created_at DESC
             '''
             
             cursor.execute(query)
@@ -124,7 +125,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'updatedAt': row[17].isoformat() if row[17] else None,
                     'userEmail': row[18],
                     'userFirstName': row[19],
-                    'userLastName': row[20]
+                    'userLastName': row[20],
+                    'isResubmitted': row[21] if len(row) > 21 else False,
+                    'adminMessage': row[22] if len(row) > 22 else None
                 })
             
             return {

@@ -37,6 +37,8 @@ interface Verification {
   userEmail: string;
   userFirstName: string;
   userLastName: string;
+  isResubmitted?: boolean;
+  adminMessage?: string | null;
 }
 
 export default function AdminVerifications({ isAuthenticated, onLogout }: AdminVerificationsProps) {
@@ -212,9 +214,25 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
             </p>
           </div>
 
+          {activeTab === 'pending' && verifications.filter(v => v.isResubmitted).length > 0 && (
+            <Alert className="mb-6 bg-orange-50 border-orange-200">
+              <Icon name="AlertCircle" className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-900">
+                <strong>Внимание!</strong> У вас {verifications.filter(v => v.isResubmitted).length} повторно поданных заявок, требующих рассмотрения
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="pending">На рассмотрении</TabsTrigger>
+              <TabsTrigger value="pending">
+                На рассмотрении
+                {activeTab === 'pending' && verifications.filter(v => v.isResubmitted).length > 0 && (
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-orange-500 text-white rounded-full">
+                    {verifications.filter(v => v.isResubmitted).length}
+                  </span>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="approved">Одобренные</TabsTrigger>
               <TabsTrigger value="rejected">Отклоненные</TabsTrigger>
             </TabsList>

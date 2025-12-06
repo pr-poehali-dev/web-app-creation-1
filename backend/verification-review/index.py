@@ -60,7 +60,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT role FROM users WHERE id = %s', (moderator_id,))
+    cursor.execute(f'SELECT role FROM users WHERE id = {moderator_id}')
     user_role = cursor.fetchone()
     
     if not user_role or user_role[0] not in ('moderator', 'admin'):
@@ -97,17 +97,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     new_status = 'approved' if action == 'approve' else 'rejected'
     user_verification_status = 'verified' if action == 'approve' else 'rejected'
     
-    cursor.execute('''
-        UPDATE user_verifications 
-        SET status = %s, 
-            rejection_reason = %s,
-            reviewed_by = %s,
-            reviewed_at = CURRENT_TIMESTAMP,
-            verified_at = CASE WHEN %s = 'approved' THEN CURRENT_TIMESTAMP ELSE NULL END
-        WHERE id = %s
-        RETURNING user_id
-    ''', (new_status, rejection_reason, moderator_id, new_status, verification_id))
+    # Escape rejection_reason for SQL
+    escaped_reason = rejection_reason.replace("'", "''") if rejection_reason else ''
     
+    # Get user_id first
+    cursor.execute(f'SELECT user_id FROM user_verifications WHERE id = {verification_id}')
     result = cursor.fetchone()
     
     if not result:
@@ -125,11 +119,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     user_id = result[0]
     
-    cursor.execute('''
-        UPDATE users 
-        SET verification_status = %s
-        WHERE id = %s
-    ''', (user_verification_status, user_id))
+    # Update verification record
+    update_query = f'''
+        UPDATE user_verifications 
+        SET status = '{new_status}', 
+            rejection_reason = {'NULL' if not rejection_reason else f"'{escaped_reason}'"},
+            reviewed_by = {moderator_id},
+            reviewed_at = CURRENT_TIMESTAMP,
+            verified_at = {f'CURRENT_TIMESTAMP' if action == 'approve' else 'NULL'},
+            is_resubmitted = FALSE
+        WHERE id = {verification_id}
+    '''
+    cursor.execute(update_query)
+    
+    # Update user verification status
+    cursor.execute(f"UPDATE users SET verification_status = '{user_verification_status}' WHERE id = {user_id}")
     
     conn.commit()
     cursor.close()
