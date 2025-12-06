@@ -130,7 +130,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
           <Card>
             <CardHeader>
               <CardTitle>Список предложений</CardTitle>
-              <CardDescription>Всего предложений: {mockOffers.length}</CardDescription>
+              <CardDescription>Всего предложений: {offers.length}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
@@ -169,7 +169,19 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockOffers.map((offer) => (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8">
+                          Загрузка...
+                        </TableCell>
+                      </TableRow>
+                    ) : offers.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          Предложения не найдены
+                        </TableCell>
+                      </TableRow>
+                    ) : offers.map((offer) => (
                       <TableRow key={offer.id}>
                         <TableCell className="font-medium">{offer.title}</TableCell>
                         <TableCell>{offer.seller}</TableCell>
@@ -216,7 +228,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )))}
                   </TableBody>
                 </Table>
               </div>
