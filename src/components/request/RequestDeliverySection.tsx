@@ -144,22 +144,32 @@ export default function RequestDeliverySection({
         </div>
 
         <Collapsible open={isDistrictsOpen} onOpenChange={setIsDistrictsOpen}>
-          <div className="flex items-center gap-2 mb-3">
-            <Label>Принимаются отклики из регионов</Label>
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 w-8 p-0 border-2"
-              >
-                <Icon 
-                  name={isDistrictsOpen ? "ChevronUp" : "ChevronDown"} 
-                  className="h-5 w-5"
-                />
-              </Button>
-            </CollapsibleTrigger>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Label>Принимаются отклики из регионов</Label>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 w-8 p-0 border-2"
+                >
+                  <Icon 
+                    name={isDistrictsOpen ? "ChevronUp" : "ChevronDown"} 
+                    className="h-5 w-5"
+                  />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            {formData.availableDistricts.length > 0 && (
+              <div className="text-sm text-muted-foreground">
+                Выбрано: {formData.availableDistricts
+                  .map(id => districts.find(d => d.id === id)?.name)
+                  .filter(Boolean)
+                  .join(', ')}
+              </div>
+            )}
           </div>
-          <CollapsibleContent>
+          <CollapsibleContent className="mt-3">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {districts.map(district => (
                 <div key={district.id} className="flex items-center space-x-2">
