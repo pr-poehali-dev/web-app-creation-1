@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { Progress } from '@/components/ui/progress';
+import { useState, useRef, useEffect } from 'react';
 
 interface AgreementDialogProps {
   open: boolean;
@@ -14,6 +15,25 @@ interface AgreementDialogProps {
 
 export default function AgreementDialog({ open, onOpenChange, onAccept, verificationType }: AgreementDialogProps) {
   const [agreed, setAgreed] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      const scrollTop = viewport.scrollTop;
+      const scrollHeight = viewport.scrollHeight - viewport.clientHeight;
+      const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+      setScrollProgress(Math.min(100, Math.max(0, progress)));
+    };
+
+    viewport.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [open]);
 
   const getAgreementContent = () => {
     const commonTerms = `
@@ -189,13 +209,21 @@ export default function AgreementDialog({ open, onOpenChange, onAccept, verifica
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4 my-4">
-          <div className="prose prose-sm max-w-none">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
-              {getAgreementContent()}
-            </div>
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="mb-2">
+            <Progress value={scrollProgress} className="h-1" />
+            <p className="text-xs text-muted-foreground mt-1 text-center">
+              {scrollProgress < 95 ? 'Прокрутите до конца' : 'Вы прочитали всё соглашение'}
+            </p>
           </div>
-        </ScrollArea>
+          <ScrollArea ref={scrollAreaRef} className="flex-1 pr-4">
+            <div className="prose prose-sm max-w-none">
+              <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                {getAgreementContent()}
+              </div>
+            </div>
+          </ScrollArea>
+        </div>
 
         <div className="flex-shrink-0 space-y-3 pt-3 border-t">
           <div className="flex items-start space-x-2">
