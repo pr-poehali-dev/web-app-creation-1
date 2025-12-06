@@ -51,19 +51,50 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
       <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>{documentTitle}</DialogTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(documentUrl, '_blank')}
+            className="mt-2"
+          >
+            <Icon name="ExternalLink" className="h-4 w-4 mr-2" />
+            Открыть в новой вкладке
+          </Button>
         </DialogHeader>
-        <div className="flex-1 overflow-auto bg-gray-100 rounded-lg">
+        <div className="flex-1 overflow-auto bg-gray-100 rounded-lg p-4">
           {isPdf ? (
-            <iframe
-              src={documentUrl}
-              className="w-full h-[80vh]"
-              title={documentTitle}
-            />
+            isDataUrl ? (
+              <object
+                data={documentUrl}
+                type="application/pdf"
+                className="w-full h-[75vh]"
+              >
+                <embed
+                  src={documentUrl}
+                  type="application/pdf"
+                  className="w-full h-[75vh]"
+                />
+              </object>
+            ) : (
+              <iframe
+                src={documentUrl}
+                className="w-full h-[75vh]"
+                title={documentTitle}
+              />
+            )
           ) : (
             <img
               src={documentUrl}
               alt={documentTitle}
-              className="w-full h-auto max-h-[80vh] object-contain"
+              className="w-full h-auto max-h-[75vh] object-contain mx-auto"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML += '<div class="text-center text-muted-foreground py-8">Не удалось загрузить изображение. Попробуйте открыть в новой вкладке.</div>';
+                }
+              }}
             />
           )}
         </div>

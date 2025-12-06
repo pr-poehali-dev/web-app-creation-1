@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { uploadFile } from '@/utils/fileUpload';
 
 interface VerificationResubmitProps {
   isAuthenticated: boolean;
@@ -94,32 +95,23 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
 
     try {
       const userId = localStorage.getItem('userId');
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('userId', userId || '');
-      formData.append('documentType', docType);
-
-      const response = await fetch('https://functions.poehali.dev/53a94a69-2e23-4046-81e4-8e3a84db2be8', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setDocuments(prev => ({ ...prev, [docType]: file }));
-        setDocumentUrls(prev => ({ ...prev, [docType]: data.url }));
-        toast({
-          title: 'Успешно',
-          description: 'Документ загружен',
-        });
-      } else {
-        throw new Error('Upload failed');
+      if (!userId) {
+        throw new Error('User not authenticated');
       }
+
+      const url = await uploadFile(file, docType, userId);
+      
+      setDocuments(prev => ({ ...prev, [docType]: file }));
+      setDocumentUrls(prev => ({ ...prev, [docType]: url }));
+      toast({
+        title: 'Успешно',
+        description: 'Документ загружен',
+      });
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: 'Не удалось загрузить документ',
+        description: error instanceof Error ? error.message : 'Не удалось загрузить документ',
       });
     } finally {
       setUploadingDocs(prev => ({ ...prev, [docType]: false }));
