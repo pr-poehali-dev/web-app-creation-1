@@ -10,6 +10,7 @@ import Icon from '@/components/ui/icon';
 import { cn } from '@/lib/utils';
 import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
 import type { District } from '@/contexts/DistrictContext';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface RequestDeliverySectionProps {
   formData: {
@@ -31,6 +32,7 @@ export default function RequestDeliverySection({
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
   const [isDistrictInitialized, setIsDistrictInitialized] = useState(false);
+  const [isDistrictsOpen, setIsDistrictsOpen] = useState(false);
 
   useEffect(() => {
     const selectedDistrict = districts.find(d => d.id === formData.district);
@@ -141,26 +143,38 @@ export default function RequestDeliverySection({
           )}
         </div>
 
-        <div>
-          <Label className="mb-3 block">Принимаются отклики из регионов</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {districts.map(district => (
-              <div key={district.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`district-${district.id}`}
-                  checked={formData.availableDistricts.includes(district.id)}
-                  onCheckedChange={() => onDistrictToggle(district.id)}
+        <Collapsible open={isDistrictsOpen} onOpenChange={setIsDistrictsOpen}>
+          <div className="flex items-center justify-between">
+            <Label className="mb-3 block">Принимаются отклики из регионов</Label>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-9 p-0">
+                <Icon 
+                  name={isDistrictsOpen ? "ChevronUp" : "ChevronDown"} 
+                  className="h-4 w-4"
                 />
-                <label
-                  htmlFor={`district-${district.id}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {district.name}
-                </label>
-              </div>
-            ))}
+              </Button>
+            </CollapsibleTrigger>
           </div>
-        </div>
+          <CollapsibleContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
+              {districts.map(district => (
+                <div key={district.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`district-${district.id}`}
+                    checked={formData.availableDistricts.includes(district.id)}
+                    onCheckedChange={() => onDistrictToggle(district.id)}
+                  />
+                  <label
+                    htmlFor={`district-${district.id}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {district.name}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </CardContent>
     </Card>
   );
