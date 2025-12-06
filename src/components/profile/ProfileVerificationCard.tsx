@@ -183,14 +183,26 @@ export default function ProfileVerificationCard() {
           </div>
         )}
 
-        {verificationStatus !== 'verified' && verificationStatus !== 'pending' && (
+        {verificationStatus === 'not_verified' && (
           <Button 
-            onClick={() => navigate(verificationStatus === 'rejected' ? '/verification/resubmit' : '/verification')} 
+            onClick={() => navigate('/verification')} 
             className="w-full" 
             size="lg"
           >
-            <Icon name={verificationStatus === 'rejected' ? 'RefreshCw' : 'Shield'} className="h-4 w-4 mr-2" />
-            {verificationStatus === 'rejected' ? 'Подать документы повторно' : 'Пройти верификацию'}
+            <Icon name="Shield" className="h-4 w-4 mr-2" />
+            Пройти верификацию
+          </Button>
+        )}
+        
+        {verificationStatus === 'rejected' && (
+          <Button 
+            onClick={() => navigate('/verification/resubmit')} 
+            className="w-full" 
+            size="lg"
+            variant="default"
+          >
+            <Icon name="RefreshCw" className="h-4 w-4 mr-2" />
+            Подать документы повторно
           </Button>
         )}
       </CardContent>

@@ -57,13 +57,34 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
 
       if (response.ok) {
         const data = await response.json();
-        if (data.verification && data.verification.status === 'rejected') {
+        
+        if (!data.verification) {
+          toast({
+            title: 'Информация',
+            description: 'У вас пока нет заявок на верификацию. Пройдите верификацию сначала',
+          });
+          navigate('/verification');
+          return;
+        }
+        
+        if (data.verification.status === 'rejected') {
           setVerification(data.verification);
+        } else if (data.verification.status === 'pending') {
+          toast({
+            title: 'Информация',
+            description: 'Ваша заявка находится на рассмотрении. Дождитесь результата проверки',
+          });
+          navigate('/profile');
+        } else if (data.verification.status === 'verified') {
+          toast({
+            title: 'Информация',
+            description: 'Ваш аккаунт уже верифицирован',
+          });
+          navigate('/profile');
         } else {
           toast({
-            variant: 'destructive',
-            title: 'Ошибка',
-            description: 'Нет отклоненных заявок для повторной подачи',
+            title: 'Информация',
+            description: 'Повторная подача доступна только для отклоненных заявок',
           });
           navigate('/profile');
         }
