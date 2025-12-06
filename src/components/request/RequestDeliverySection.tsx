@@ -144,19 +144,23 @@ export default function RequestDeliverySection({
         </div>
 
         <Collapsible open={isDistrictsOpen} onOpenChange={setIsDistrictsOpen}>
-          <div className="flex items-center justify-between">
-            <Label className="mb-3 block">Принимаются отклики из регионов</Label>
+          <div className="flex items-center gap-2 mb-3">
+            <Label>Принимаются отклики из регионов</Label>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-9 p-0">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 w-8 p-0 border-2"
+              >
                 <Icon 
                   name={isDistrictsOpen ? "ChevronUp" : "ChevronDown"} 
-                  className="h-4 w-4"
+                  className="h-5 w-5"
                 />
               </Button>
             </CollapsibleTrigger>
           </div>
           <CollapsibleContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pt-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {districts.map(district => (
                 <div key={district.id} className="flex items-center space-x-2">
                   <Checkbox
