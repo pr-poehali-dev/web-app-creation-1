@@ -228,7 +228,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                           </div>
                         </TableCell>
                       </TableRow>
-                    )))}
+                    ))}
                   </TableBody>
                 </Table>
               </div>
