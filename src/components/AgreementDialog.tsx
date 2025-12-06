@@ -181,15 +181,15 @@ export default function AgreementDialog({ open, onOpenChange, onAccept, verifica
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[80vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-3xl h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Соглашение об использовании платформы</DialogTitle>
           <DialogDescription>
             Пожалуйста, внимательно ознакомьтесь с условиями соглашения
           </DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="h-[50vh] pr-4">
+        <ScrollArea className="flex-1 pr-4 my-4">
           <div className="prose prose-sm max-w-none">
             <div className="whitespace-pre-wrap text-sm leading-relaxed">
               {getAgreementContent()}
@@ -197,26 +197,29 @@ export default function AgreementDialog({ open, onOpenChange, onAccept, verifica
           </div>
         </ScrollArea>
 
-        <div className="flex items-start space-x-2 pt-4 border-t">
-          <Checkbox
-            id="agree"
-            checked={agreed}
-            onCheckedChange={(checked) => setAgreed(checked as boolean)}
-          />
-          <Label htmlFor="agree" className="text-sm font-normal cursor-pointer leading-relaxed">
-            Я прочитал(а) и принимаю условия соглашения об использовании платформы. 
-            Подтверждаю достоверность предоставленных данных и согласие на обработку персональных данных.
-          </Label>
-        </div>
+        <div className="flex-shrink-0 space-y-3 pt-3 border-t">
+          <div className="flex items-start space-x-2">
+            <Checkbox
+              id="agree"
+              checked={agreed}
+              onCheckedChange={(checked) => setAgreed(checked as boolean)}
+              className="mt-0.5"
+            />
+            <Label htmlFor="agree" className="text-sm font-normal cursor-pointer leading-snug">
+              Я прочитал(а) и принимаю условия соглашения об использовании платформы. 
+              Подтверждаю достоверность предоставленных данных и согласие на обработку персональных данных.
+            </Label>
+          </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Отмена
-          </Button>
-          <Button onClick={handleAccept} disabled={!agreed}>
-            Принять и продолжить
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="flex-row gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1 sm:flex-none">
+              Отмена
+            </Button>
+            <Button onClick={handleAccept} disabled={!agreed} className="flex-1 sm:flex-none">
+              Принять и продолжить
+            </Button>
+          </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
