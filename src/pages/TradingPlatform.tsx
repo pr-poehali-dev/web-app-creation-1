@@ -153,6 +153,14 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   });
 
   const handleCreateContract = () => {
+    if (currentUser?.verificationStatus === 'pending') {
+      toast({
+        title: 'Верификация на рассмотрении',
+        description: 'Верификация вашей учётной записи на рассмотрении. После одобрения верификации или отказа вы получите соответствующее уведомление. После успешной верификации вам будут доступны все возможности на ЕРТТП.',
+        duration: 8000,
+      });
+      return;
+    }
     if (currentUser?.verificationStatus !== 'verified') {
       setShowVerificationDialog(true);
       return;

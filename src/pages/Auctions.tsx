@@ -17,6 +17,7 @@ import { checkAccessPermission } from '@/utils/permissions';
 import { getSession } from '@/utils/auth';
 import AuctionCard from '@/components/auction/AuctionCard';
 import AuctionStatusFilters from '@/components/auction/AuctionStatusFilters';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuctionsProps {
   isAuthenticated: boolean;
@@ -28,14 +29,51 @@ const ITEMS_PER_PAGE = 20;
 export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   useScrollToTop();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const currentUser = getSession();
   const accessCheck = checkAccessPermission(isAuthenticated, 'auctions');
+  const [verificationStatus, setVerificationStatus] = useState<string>('');
 
   useEffect(() => {
     if (!accessCheck.allowed) {
       navigate('/');
     }
-  }, [accessCheck.allowed, navigate]);
+    if (isAuthenticated) {
+      checkVerificationStatus();
+    }
+  }, [accessCheck.allowed, navigate, isAuthenticated]);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      const response = await fetch('https://functions.poehali.dev/1c97f222-fdea-4b59-b941-223ee8bb077b', {
+        headers: {
+          'X-User-Id': userId,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setVerificationStatus(data.verificationStatus);
+      }
+    } catch (error) {
+      console.error('Error checking verification:', error);
+    }
+  };
+
+  const handleCreateAuctionClick = () => {
+    if (verificationStatus === 'pending') {
+      toast({
+        title: 'Верификация на рассмотрении',
+        description: 'Верификация вашей учётной записи на рассмотрении. После одобрения верификации или отказа вы получите соответствующее уведомление. После успешной верификации вам будут доступны все возможности на ЕРТТП.',
+        duration: 8000,
+      });
+      return;
+    }
+    navigate('/create-auction');
+  };
   const { districts, selectedDistricts } = useDistrict();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
@@ -186,7 +224,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
             </p>
           </div>
           {isAuthenticated && (
-            <Button onClick={() => navigate('/create-auction')} className="flex items-center gap-2 whitespace-nowrap">
+            <Button onClick={handleCreateAuctionClick} className="flex items-center gap-2 whitespace-nowrap">
               <Icon name="Plus" className="h-4 w-4" />
               Создать аукцион
             </Button>

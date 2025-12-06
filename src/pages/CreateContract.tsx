@@ -26,13 +26,50 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [verificationStatus, setVerificationStatus] = useState<string>('');
+  const [isCheckingVerification, setIsCheckingVerification] = useState(true);
+
   useEffect(() => {
-    console.log('CreateContract: проверка верификации ОТКЛЮЧЕНА, требуется только авторизация');
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+    checkVerificationStatus();
   }, [isAuthenticated, navigate]);
+
+  const checkVerificationStatus = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        setIsCheckingVerification(false);
+        return;
+      }
+
+      const response = await fetch('https://functions.poehali.dev/1c97f222-fdea-4b59-b941-223ee8bb077b', {
+        headers: {
+          'X-User-Id': userId,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setVerificationStatus(data.verificationStatus);
+        
+        if (data.verificationStatus === 'pending') {
+          toast({
+            title: 'Верификация на рассмотрении',
+            description: 'Верификация вашей учётной записи на рассмотрении. После одобрения верификации или отказа вы получите соответствующее уведомление. После успешной верификации вам будут доступны все возможности на ЕРТТП.',
+            duration: 8000,
+          });
+          navigate('/trading');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking verification:', error);
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     contractType: 'futures',
@@ -120,6 +157,18 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
       setIsSubmitting(false);
     }
   };
+
+  if (isCheckingVerification) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <main className="container mx-auto px-4 py-8 flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
