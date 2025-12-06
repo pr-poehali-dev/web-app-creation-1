@@ -332,7 +332,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
                       </Button>
                     </Link>
                     <Link to="/create-request">
-                      <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                      <Button className="w-full flex items-center justify-center gap-2">
                         <Icon name="Plus" className="h-4 w-4" />
                         Создать запрос
                       </Button>
