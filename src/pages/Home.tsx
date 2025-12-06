@@ -77,7 +77,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
               <div className="h-px bg-primary/20 my-3"></div>
               
               <p className="text-sm md:text-base font-semibold text-foreground leading-snug text-center">
-                Зарегистрируйтесь и начните развивать бизнес уже сегодня!
+                Зарегистрируйтесь и начните развивать бизнес вместе с нами!
               </p>
               
               <div className="text-center pt-3">
