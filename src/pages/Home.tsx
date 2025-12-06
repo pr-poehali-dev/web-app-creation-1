@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import SearchBlock from '@/components/SearchBlock';
 import OfferCard from '@/components/OfferCard';
@@ -12,6 +12,7 @@ import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
 import { addToSearchHistory } from '@/utils/searchHistory';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface HomeProps {
   isAuthenticated: boolean;
@@ -21,6 +22,18 @@ interface HomeProps {
 const ITEMS_PER_PAGE = 20;
 
 export default function Home({ isAuthenticated, onLogout }: HomeProps) {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleJoinClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isAuthenticated) {
+      e.preventDefault();
+      toast({
+        title: "Вы уже с нами!",
+        description: "Вы авторизованы и можете пользоваться всеми возможностями платформы",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -83,6 +96,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
               <div className="text-center pt-3">
                 <Link 
                   to="/register" 
+                  onClick={handleJoinClick}
                   className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2 md:py-2.5 rounded-lg text-sm md:text-base font-semibold hover:bg-primary/90 transition-all shadow-md"
                 >
                   Присоединяйтесь!
