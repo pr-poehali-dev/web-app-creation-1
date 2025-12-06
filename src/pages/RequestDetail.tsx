@@ -264,9 +264,9 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
               Запрос с таким ID не существует или был удален
             </p>
             <div className="flex gap-4 justify-center">
-              <Button onClick={() => navigate('/')} className="gap-2">
-                <Icon name="Home" className="h-4 w-4" />
-                На главную
+              <Button onClick={() => navigate(-1)} className="gap-2">
+                <Icon name="ArrowLeft" className="h-4 w-4" />
+                Назад
               </Button>
               <Button onClick={() => navigate('/zaprosy')} variant="outline" className="gap-2">
                 <Icon name="MessageSquare" className="h-4 w-4" />

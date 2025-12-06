@@ -168,9 +168,9 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
         <div className="container mx-auto px-4">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <Button variant="ghost" onClick={() => navigate('/admin/dashboard')} className="mb-2">
+              <Button variant="ghost" onClick={() => navigate(-1)} className="mb-2">
                 <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-                Назад к панели
+                Назад
               </Button>
               <h1 className="text-3xl font-bold">Управление пользователями</h1>
               <p className="text-muted-foreground">Просмотр и управление пользователями площадки</p>

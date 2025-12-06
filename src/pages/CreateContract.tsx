@@ -177,9 +177,9 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
       <main className="container mx-auto px-4 py-8 flex-1">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
-            <Button variant="ghost" onClick={() => navigate('/trading')}>
+            <Button variant="ghost" onClick={() => navigate(-1)}>
               <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-              Назад к площадке
+              Назад
             </Button>
           </div>
 

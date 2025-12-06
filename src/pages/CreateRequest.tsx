@@ -198,11 +198,11 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"
-            onClick={() => navigate('/my-requests')}
+            onClick={() => navigate(-1)}
             className="mb-6 gap-2"
           >
             <Icon name="ArrowLeft" className="h-4 w-4" />
-            Назад к запросам
+            Назад
           </Button>
 
           <div className="mb-6">

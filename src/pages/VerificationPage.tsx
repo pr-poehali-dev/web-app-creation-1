@@ -284,7 +284,7 @@ export default function VerificationPage() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/')}
+              onClick={() => navigate(-1)}
               disabled={loading}
               className="text-primary font-bold"
             >

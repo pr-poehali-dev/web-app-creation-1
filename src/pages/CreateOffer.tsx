@@ -210,11 +210,11 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         <div className="max-w-4xl mx-auto">
           <Button
             variant="ghost"
-            onClick={() => navigate('/my-offers')}
+            onClick={() => navigate(-1)}
             className="mb-6 gap-2"
           >
             <Icon name="ArrowLeft" className="h-4 w-4" />
-            Назад к предложениям
+            Назад
           </Button>
 
           <div className="mb-6">

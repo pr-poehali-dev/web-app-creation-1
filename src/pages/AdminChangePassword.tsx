@@ -107,11 +107,11 @@ export default function AdminChangePassword() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/admin/verifications')}
+              onClick={() => navigate(-1)}
               disabled={isLoading}
             >
               <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
-              Назад в панель
+              Назад
             </Button>
           </div>
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
