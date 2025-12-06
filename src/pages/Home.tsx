@@ -30,7 +30,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
       e.preventDefault();
       toast({
         title: "Вы уже с нами!",
-        description: "Вы авторизованы и можете пользоваться всеми возможностями платформы",
+        description: "Вы авторизованы и можете пользоваться возможностями платформы",
       });
     }
   };
