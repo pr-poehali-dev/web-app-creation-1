@@ -164,14 +164,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 raise ValueError('File data not found in request body')
             file_data = base64.b64decode(file_base64)
         
-        if len(file_data) > 10 * 1024 * 1024:
+        if len(file_data) > 5 * 1024 * 1024:
             return {
                 'statusCode': 400,
                 'headers': {
                     'Content-Type': 'application/json',
                     'Access-Control-Allow-Origin': '*'
                 },
-                'body': json.dumps({'error': 'File size exceeds 10MB limit'}),
+                'body': json.dumps({'error': 'Размер файла не должен превышать 5 МБ'}),
                 'isBase64Encoded': False
             }
         
@@ -192,7 +192,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             file_url = f'https://storage.yandexcloud.net/{bucket_name}/{file_name}'
         except Exception as s3_error:
-            file_url = f'data:{content_type};base64,{base64.b64encode(file_data).decode()}'
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': f'Ошибка загрузки файла в хранилище: {str(s3_error)}'}),
+                'isBase64Encoded': False
+            }
         
         return {
             'statusCode': 200,

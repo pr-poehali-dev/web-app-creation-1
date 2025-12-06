@@ -82,11 +82,11 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
   const handleFileChange = async (docType: string, file: File | null) => {
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: 'Размер файла не должен превышать 10 МБ',
+        description: 'Размер файла не должен превышать 5 МБ',
       });
       return;
     }
@@ -150,8 +150,9 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
       
       Object.keys(documentUrls).forEach(docType => {
         const fieldName = urlMapping[docType];
-        if (fieldName) {
-          payload[fieldName] = documentUrls[docType];
+        const url = documentUrls[docType];
+        if (fieldName && url) {
+          payload[fieldName] = url;
         }
       });
       
@@ -164,6 +165,15 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
         body: JSON.stringify(payload),
       });
 
+      if (response.status === 413) {
+        toast({
+          variant: 'destructive',
+          title: 'Ошибка',
+          description: 'Размер документов слишком большой. Попробуйте загрузить файлы меньшего размера (до 5 МБ каждый)',
+        });
+        return;
+      }
+
       if (response.ok) {
         toast({
           title: 'Заявка отправлена',
@@ -175,10 +185,11 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
         throw new Error(data.error || 'Failed to resubmit');
       }
     } catch (error) {
+      console.error('Submit error:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: 'Не удалось отправить заявку',
+        description: error instanceof Error ? error.message : 'Не удалось отправить заявку',
       });
     } finally {
       setSubmitting(false);
