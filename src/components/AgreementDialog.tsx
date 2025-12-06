@@ -27,13 +27,17 @@ export default function AgreementDialog({ open, onOpenChange, onAccept, verifica
       const scrollHeight = viewport.scrollHeight - viewport.clientHeight;
       const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
       setScrollProgress(Math.min(100, Math.max(0, progress)));
+      
+      if (progress >= 95 && !agreed) {
+        setAgreed(true);
+      }
     };
 
     viewport.addEventListener('scroll', handleScroll);
     handleScroll();
 
     return () => viewport.removeEventListener('scroll', handleScroll);
-  }, [open]);
+  }, [open, agreed]);
 
   const getAgreementContent = () => {
     const commonTerms = `
