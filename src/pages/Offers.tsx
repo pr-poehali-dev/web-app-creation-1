@@ -53,10 +53,34 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       setIsLoading(true);
       try {
         const response = await offersAPI.getOffers({ status: 'active' });
-        const offersWithDates = response.offers.map(offer => ({
+        const offersWithDates = response.offers.map((offer: any) => ({
           ...offer,
-          createdAt: new Date(offer.createdAt),
-          updatedAt: offer.updatedAt ? new Date(offer.updatedAt) : undefined,
+          pricePerUnit: offer.price_per_unit || offer.pricePerUnit || 0,
+          vatRate: offer.vat_rate || offer.vatRate,
+          hasVAT: offer.has_vat !== undefined ? offer.has_vat : offer.hasVAT,
+          isPremium: offer.is_premium !== undefined ? offer.is_premium : offer.isPremium,
+          availableDistricts: offer.available_districts || offer.availableDistricts || [],
+          availableDeliveryTypes: offer.available_delivery_types || offer.availableDeliveryTypes || ['pickup'],
+          userId: offer.user_id || offer.userId,
+          fullAddress: offer.full_address || offer.fullAddress,
+          seller: offer.seller_name ? {
+            id: offer.user_id || offer.userId,
+            name: offer.seller_name,
+            type: offer.seller_type,
+            phone: offer.seller_phone,
+            email: offer.seller_email,
+            rating: offer.seller_rating || 0,
+            reviewsCount: offer.seller_reviews_count || 0,
+            isVerified: offer.seller_is_verified || false,
+            statistics: {
+              totalOffers: 0,
+              activeOffers: 0,
+              completedOrders: 0,
+              registrationDate: new Date(),
+            }
+          } : undefined,
+          createdAt: new Date(offer.createdAt || offer.created_at),
+          updatedAt: offer.updatedAt || offer.updated_at ? new Date(offer.updatedAt || offer.updated_at) : undefined,
         }));
         setOffers(offersWithDates);
       } catch (error) {
