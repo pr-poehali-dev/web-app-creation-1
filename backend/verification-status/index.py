@@ -60,11 +60,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute('''
+    cursor.execute(f'''
         SELECT verification_status, user_type, phone, company_name, inn, ogrnip
         FROM users 
-        WHERE id = %s
-    ''', (user_id,))
+        WHERE id = {user_id}
+    ''')
     
     result = cursor.fetchone()
     
@@ -88,30 +88,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     inn = result[4] if len(result) > 4 else None
     ogrnip = result[5] if len(result) > 5 else None
     
-    cursor.execute('''
-        SELECT status, rejection_reason, verification_type,
+    cursor.execute(f'''
+        SELECT id, status, rejection_reason, verification_type, admin_message,
                passport_scan_url, passport_registration_url, utility_bill_url,
-               registration_cert_url, agreement_form_url
+               registration_cert_url, agreement_form_url, created_at, updated_at
         FROM user_verifications
-        WHERE user_id = %s
-    ''', (user_id,))
+        WHERE user_id = {user_id}
+        ORDER BY created_at DESC
+        LIMIT 1
+    ''')
     
     verification_data = cursor.fetchone()
+    verification_record = None
     rejection_reason = None
     verification_type = None
     existing_docs = {}
     
     if verification_data:
-        verification_type = verification_data[2]
-        if verification_data[0] == 'rejected':
-            rejection_reason = verification_data[1]
+        verification_type = verification_data[3]
+        if verification_data[1] == 'rejected':
+            rejection_reason = verification_data[2]
+        
+        verification_record = {
+            'id': verification_data[0],
+            'status': verification_data[1],
+            'rejectionReason': verification_data[2],
+            'verificationType': verification_data[3],
+            'adminMessage': verification_data[4],
+            'createdAt': verification_data[10].isoformat() if verification_data[10] else None,
+            'updatedAt': verification_data[11].isoformat() if verification_data[11] else None
+        }
         
         existing_docs = {
-            'passportScanUrl': verification_data[3],
-            'passportRegistrationUrl': verification_data[4],
-            'utilityBillUrl': verification_data[5],
-            'registrationCertUrl': verification_data[6],
-            'agreementFormUrl': verification_data[7]
+            'passportScanUrl': verification_data[5],
+            'passportRegistrationUrl': verification_data[6],
+            'utilityBillUrl': verification_data[7],
+            'registrationCertUrl': verification_data[8],
+            'agreementFormUrl': verification_data[9]
         }
     
     cursor.close()
@@ -133,7 +146,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'ogrnip': ogrnip,
             'rejectionReason': rejection_reason,
             'verificationType': verification_type,
-            'existingDocuments': existing_docs
+            'existingDocuments': existing_docs,
+            'verification': verification_record
         }),
         'isBase64Encoded': False
     }

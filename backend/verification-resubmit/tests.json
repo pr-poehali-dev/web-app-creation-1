@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "name": "Resubmit without verification ID",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "body": {
+        "passportScanUrl": "https://example.com/passport.jpg"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "Verification ID is required"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

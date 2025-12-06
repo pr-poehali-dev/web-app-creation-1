@@ -65,7 +65,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conn = get_db_connection()
             cursor = conn.cursor()
             
-            cursor.execute('SELECT role FROM users WHERE id = %s', (user_id,))
+            cursor.execute(f"SELECT role FROM users WHERE id = {user_id}")
             user_role = cursor.fetchone()
             
             if not user_role or user_role[0] not in ('moderator', 'admin'):
@@ -82,7 +82,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             query_params = event.get('queryStringParameters') or {}
             status_filter = query_params.get('status', 'pending')
             
-            query = '''
+            query = f'''
                 SELECT 
                     uv.id, uv.user_id, uv.verification_type, uv.status,
                     uv.phone, uv.phone_verified,
@@ -94,11 +94,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     u.email, u.first_name, u.last_name
                 FROM user_verifications uv
                 JOIN users u ON uv.user_id = u.id
-                WHERE uv.status = %s
+                WHERE uv.status = '{status_filter}'
                 ORDER BY uv.created_at DESC
             '''
             
-            cursor.execute(query, (status_filter,))
+            cursor.execute(query)
             rows = cursor.fetchall()
             
             verifications: List[Dict[str, Any]] = []

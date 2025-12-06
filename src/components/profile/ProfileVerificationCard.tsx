@@ -3,13 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import type { VerificationStatus } from '@/types/verification';
+
+interface VerificationDetails {
+  id: number;
+  rejectionReason?: string;
+  adminMessage?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export default function ProfileVerificationCard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>('not_verified');
+  const [verificationDetails, setVerificationDetails] = useState<VerificationDetails | null>(null);
 
   useEffect(() => {
     checkVerificationStatus();
@@ -29,6 +39,9 @@ export default function ProfileVerificationCard() {
       if (response.ok) {
         const data = await response.json();
         setVerificationStatus(data.verificationStatus);
+        if (data.verification) {
+          setVerificationDetails(data.verification);
+        }
       }
     } catch (error) {
       console.error('Error checking verification status:', error);
@@ -143,13 +156,21 @@ export default function ProfileVerificationCard() {
         )}
 
         {verificationStatus === 'rejected' && (
-          <div className="flex items-start gap-3 text-sm text-red-700 bg-red-100/80 p-4 rounded-lg border border-red-200">
-            <Icon name="XCircle" className="h-5 w-5 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold mb-1">Заявка отклонена</p>
-              <p className="text-red-600">Проверьте корректность введённых данных и повторите попытку</p>
-            </div>
-          </div>
+          <Alert variant="destructive">
+            <Icon name="XCircle" className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <p className="font-semibold">Заявка отклонена</p>
+                {verificationDetails?.rejectionReason && (
+                  <div className="mt-2 p-3 bg-white/50 rounded border border-red-200">
+                    <p className="text-sm font-medium mb-1">Причина отклонения:</p>
+                    <p className="text-sm">{verificationDetails.rejectionReason}</p>
+                  </div>
+                )}
+                <p className="text-sm mt-2">Пожалуйста, исправьте указанные замечания и подайте документы повторно</p>
+              </div>
+            </AlertDescription>
+          </Alert>
         )}
 
         {verificationStatus === 'not_verified' && (
@@ -163,9 +184,13 @@ export default function ProfileVerificationCard() {
         )}
 
         {verificationStatus !== 'verified' && verificationStatus !== 'pending' && (
-          <Button onClick={() => navigate('/verification')} className="w-full" size="lg">
-            <Icon name="Shield" className="h-4 w-4 mr-2" />
-            {verificationStatus === 'rejected' ? 'Подать заявку повторно' : 'Пройти верификацию'}
+          <Button 
+            onClick={() => navigate(verificationStatus === 'rejected' ? '/verification/resubmit' : '/verification')} 
+            className="w-full" 
+            size="lg"
+          >
+            <Icon name={verificationStatus === 'rejected' ? 'RefreshCw' : 'Shield'} className="h-4 w-4 mr-2" />
+            {verificationStatus === 'rejected' ? 'Подать документы повторно' : 'Пройти верификацию'}
           </Button>
         )}
       </CardContent>

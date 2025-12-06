@@ -26,6 +26,7 @@ import RequestDetail from "./pages/RequestDetail";
 import CreateOffer from "./pages/CreateOffer";
 import CreateRequest from "./pages/CreateRequest";
 import VerificationPage from "./pages/VerificationPage";
+import VerificationResubmit from "./pages/VerificationResubmit";
 import AdminVerifications from "./pages/AdminVerifications";
 import AdminLogin from "./pages/AdminLogin";
 import AdminChangePassword from "./pages/AdminChangePassword";
@@ -97,6 +98,7 @@ const App = () => {
             <Route path="/support" element={<Support isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/verification" element={<VerificationPage />} />
+            <Route path="/verification/resubmit" element={<VerificationResubmit isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route path="/admin/panel" element={<AdminPanel isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/dashboard" element={<AdminDashboard isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
