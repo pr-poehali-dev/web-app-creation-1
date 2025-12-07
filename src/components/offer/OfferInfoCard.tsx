@@ -49,11 +49,13 @@ export default function OfferInfoCard({
       <CardContent className="pt-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">{title}</h1>
-          {subcategory && (
-            <div className="flex flex-wrap gap-2">
-              <Badge variant="outline">{subcategory}</Badge>
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {category ? (
+              <Badge variant="secondary">{category}</Badge>
+            ) : (
+              <Badge variant="secondary">Категория не выбрана</Badge>
+            )}
+          </div>
         </div>
 
         <Separator />
