@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import Icon from '@/components/ui/icon';
 
 interface OfferPricingSectionProps {
   formData: {
@@ -15,6 +17,39 @@ interface OfferPricingSectionProps {
 }
 
 export default function OfferPricingSection({ formData, onInputChange }: OfferPricingSectionProps) {
+  const [isUnitOpen, setIsUnitOpen] = useState(false);
+  const [isVatRateOpen, setIsVatRateOpen] = useState(false);
+  
+  const unitOptions = [
+    { value: 'шт', label: 'шт' },
+    { value: 'кг', label: 'кг' },
+    { value: 'т', label: 'т' },
+    { value: 'м', label: 'м' },
+    { value: 'м²', label: 'м²' },
+    { value: 'м³', label: 'м³' },
+    { value: 'л', label: 'л' },
+    { value: 'упак', label: 'упак' }
+  ];
+
+  const vatOptions = [
+    { value: '0', label: '0%' },
+    { value: '10', label: '10%' },
+    { value: '20', label: '20%' }
+  ];
+
+  const selectedUnit = unitOptions.find(opt => opt.value === formData.unit);
+  const selectedVatRate = vatOptions.find(opt => opt.value === formData.vatRate);
+
+  const handleSelectUnit = (value: string) => {
+    onInputChange('unit', value);
+    setIsUnitOpen(false);
+  };
+
+  const handleSelectVatRate = (value: string) => {
+    onInputChange('vatRate', value);
+    setIsVatRateOpen(false);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -39,24 +74,49 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
             />
           </div>
 
-          <div>
+          <div className="relative">
             <Label htmlFor="unit">Единица измерения *</Label>
-            <select
-              id="unit"
-              value={formData.unit}
-              onChange={(e) => onInputChange('unit', e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="шт">шт</option>
-              <option value="кг">кг</option>
-              <option value="т">т</option>
-              <option value="м">м</option>
-              <option value="м²">м²</option>
-              <option value="м³">м³</option>
-              <option value="л">л</option>
-              <option value="упак">упак</option>
-            </select>
+            <div className="relative">
+              <Input
+                id="unit"
+                value={selectedUnit?.label || ''}
+                onFocus={() => setIsUnitOpen(true)}
+                placeholder="Выберите единицу..."
+                className="pr-8"
+                readOnly
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setIsUnitOpen(!isUnitOpen)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <Icon name={isUnitOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {isUnitOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsUnitOpen(false)}
+                />
+                <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                  {unitOptions.map(option => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleSelectUnit(option.value)}
+                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        formData.unit === option.value ? 'bg-accent font-medium' : ''
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div>
@@ -91,18 +151,48 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
         </div>
 
         {formData.hasVAT && (
-          <div className="w-40">
+          <div className="w-40 relative">
             <Label htmlFor="vatRate">Ставка НДС (%)</Label>
-            <select
-              id="vatRate"
-              value={formData.vatRate}
-              onChange={(e) => onInputChange('vatRate', e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="0">0%</option>
-              <option value="10">10%</option>
-              <option value="20">20%</option>
-            </select>
+            <div className="relative">
+              <Input
+                id="vatRate"
+                value={selectedVatRate?.label || ''}
+                onFocus={() => setIsVatRateOpen(true)}
+                placeholder="Выберите ставку НДС..."
+                className="pr-8"
+                readOnly
+              />
+              <button
+                type="button"
+                onClick={() => setIsVatRateOpen(!isVatRateOpen)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <Icon name={isVatRateOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {isVatRateOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsVatRateOpen(false)}
+                />
+                <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                  {vatOptions.map(option => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleSelectVatRate(option.value)}
+                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        formData.vatRate === option.value ? 'bg-accent font-medium' : ''
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
 
