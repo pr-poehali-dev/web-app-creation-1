@@ -47,12 +47,6 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
             </h1>
             
             <div className="space-y-4 md:space-y-5">
-              <p className="text-base md:text-lg font-semibold text-foreground/90 leading-snug text-center">
-                Увеличьте продажи, оптимизируйте производство, привлекайте инвестиции!
-              </p>
-              
-              <div className="h-px bg-primary/20 my-3"></div>
-              
               <p className="text-base md:text-lg font-semibold text-foreground leading-snug">
                 ЕРТТП предлагает:
               </p>
