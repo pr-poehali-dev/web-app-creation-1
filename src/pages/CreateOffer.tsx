@@ -321,7 +321,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                 disabled={
                   isSubmitting || 
                   !formData.title || 
-                  !formData.category || 
                   !formData.district
                 }
                 className="flex-1"
