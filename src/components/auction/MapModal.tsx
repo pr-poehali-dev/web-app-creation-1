@@ -80,7 +80,29 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             iconSize: [25, 41],
             iconAnchor: [12, 41],
           });
-          markerRef.current = L.marker([lat, lng], { icon }).addTo(map);
+          markerRef.current = L.marker([lat, lng], { icon, draggable: true }).addTo(map);
+          
+          markerRef.current.on('dragend', async () => {
+            if (!markerRef.current) return;
+            const position = markerRef.current.getLatLng();
+            const coords = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+            onCoordinatesChange(coords);
+            
+            if (onAddressChange) {
+              try {
+                const response = await fetch(
+                  `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru`
+                );
+                const data = await response.json();
+                const address = data.address;
+                const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+                const district = address.suburb || address.district || address.city_district || '';
+                onAddressChange(fullAddress, district);
+              } catch (error) {
+                console.error('Ошибка получения адреса:', error);
+              }
+            }
+          });
         }
       });
 
@@ -103,7 +125,29 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               iconSize: [25, 41],
               iconAnchor: [12, 41],
             });
-            markerRef.current = L.marker([lat, lng], { icon }).addTo(mapRef.current);
+            markerRef.current = L.marker([lat, lng], { icon, draggable: true }).addTo(mapRef.current);
+            
+            markerRef.current.on('dragend', async () => {
+              if (!markerRef.current) return;
+              const position = markerRef.current.getLatLng();
+              const coords = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+              onCoordinatesChange(coords);
+              
+              if (onAddressChange) {
+                try {
+                  const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru`
+                  );
+                  const data = await response.json();
+                  const address = data.address;
+                  const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+                  const district = address.suburb || address.district || address.city_district || '';
+                  onAddressChange(fullAddress, district);
+                } catch (error) {
+                  console.error('Ошибка получения адреса:', error);
+                }
+              }
+            });
           }
         }
       }
@@ -227,7 +271,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           </div>
           <div ref={mapContainerRef} className="h-[400px] rounded-lg overflow-hidden border" />
           <p className="text-sm text-muted-foreground">
-            Нажмите на карте, чтобы указать местонахождение
+            Нажмите на карте или перетащите маркер, чтобы указать местонахождение
           </p>
           <div>
             <Label htmlFor="mapCoordinates">Или введите координаты вручную</Label>
