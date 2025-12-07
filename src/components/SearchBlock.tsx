@@ -256,12 +256,13 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
               <Label htmlFor="category" className="mb-2 block">
                 Категория
               </Label>
-              <Select value={selectedCategory || 'not-selected'} onValueChange={(value) => handleCategoryChange(value === 'not-selected' ? '' : value)}>
+              <Select value={selectedCategory || 'not-selected'} onValueChange={(value) => handleCategoryChange(value === 'not-selected' ? '' : value === 'uncategorized' ? 'uncategorized' : value)}>
                 <SelectTrigger id="category">
                   <SelectValue placeholder="Не выбрана" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="not-selected">Не выбрана</SelectItem>
+                  <SelectItem value="uncategorized">Без категории</SelectItem>
                   {CATEGORIES.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}

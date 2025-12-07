@@ -106,7 +106,11 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     }
 
     if (filters.category) {
-      result = result.filter((offer) => offer.category === filters.category);
+      if (filters.category === 'uncategorized') {
+        result = result.filter((offer) => !offer.category || offer.category === '');
+      } else {
+        result = result.filter((offer) => offer.category === filters.category);
+      }
     }
 
     if (filters.subcategory) {
