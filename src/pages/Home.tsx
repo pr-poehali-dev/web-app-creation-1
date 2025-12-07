@@ -43,7 +43,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
         <div className="max-w-3xl mx-auto">
           <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/5 p-4 md:p-6 rounded-lg md:rounded-xl border border-primary/30 shadow-md">
             <h1 className="text-lg md:text-2xl font-bold text-foreground mb-3 md:mb-4 leading-tight text-center">
-              «Единая региональная торговая площадка» - это Ваш ключ к успешной торговле!
+              «Единая региональная товарно-торговая площадка» - это Ваш ключ к успешной торговле!
             </h1>
             
             <div className="space-y-3 md:space-y-4">
