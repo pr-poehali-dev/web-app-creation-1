@@ -13,7 +13,6 @@ import type { SearchFilters } from '@/types/offer';
 import { MOCK_AUCTIONS } from '@/data/mockAuctions';
 import type { Auction } from '@/types/auction';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { checkAccessPermission } from '@/utils/permissions';
 import { getSession } from '@/utils/auth';
 import AuctionCard from '@/components/auction/AuctionCard';
 import AuctionStatusFilters from '@/components/auction/AuctionStatusFilters';
@@ -31,23 +30,13 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getSession();
-  const accessCheck = checkAccessPermission(isAuthenticated, 'auctions');
   const [verificationStatus, setVerificationStatus] = useState<string>('');
 
   useEffect(() => {
-    if (!accessCheck.allowed) {
-      navigate('/');
-      return;
-    }
     if (isAuthenticated) {
       checkVerificationStatus();
     }
-  }, [accessCheck.allowed, navigate, isAuthenticated]);
-
-  // Если доступ запрещен, не рендерим страницу
-  if (!accessCheck.allowed) {
-    return null;
-  }
+  }, [isAuthenticated]);
 
   const checkVerificationStatus = async () => {
     try {
