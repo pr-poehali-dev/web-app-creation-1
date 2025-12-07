@@ -36,6 +36,106 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: 'bg-gray-500',
 };
 
+interface OrderCardProps {
+  order: Order;
+  districts: Array<{ id: string; name: string }>;
+  onNavigate: (path: string) => void;
+}
+
+const OrderCard = ({ order, districts, onNavigate }: OrderCardProps) => {
+  const districtName = districts.find(d => d.id === order.district)?.name;
+
+  return (
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant={order.type === 'purchase' ? 'default' : 'secondary'}>
+                {order.type === 'purchase' ? (
+                  <>
+                    <Icon name="ShoppingCart" className="h-3 w-3 mr-1" />
+                    Покупка
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Package" className="h-3 w-3 mr-1" />
+                    Продажа
+                  </>
+                )}
+              </Badge>
+              <Badge className={STATUS_COLORS[order.status]}>
+                {STATUS_LABELS[order.status]}
+              </Badge>
+            </div>
+            <h3 className="font-semibold text-lg">{order.title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {order.type === 'purchase' ? 'Продавец' : 'Покупатель'}: {order.counterparty}
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center justify-between pb-2 border-b">
+            <span className="text-muted-foreground">Сумма заказа:</span>
+            <span className="font-bold text-lg text-primary">
+              {(order.totalAmount || 0).toLocaleString()} ₽
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Количество:</span>
+            <span className="font-medium">
+              {order.quantity} {order.unit}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Дата заказа:</span>
+            <span className="font-medium">
+              {new Date(order.orderDate).toLocaleDateString('ru-RU')}
+            </span>
+          </div>
+          {order.deliveryDate && (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Дата доставки:</span>
+              <span className="font-medium">
+                {new Date(order.deliveryDate).toLocaleDateString('ru-RU')}
+              </span>
+            </div>
+          )}
+          {order.trackingNumber && (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Трек-номер:</span>
+              <span className="font-mono text-sm font-medium">
+                {order.trackingNumber}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Район:</span>
+            <span className="font-medium flex items-center gap-1">
+              <Icon name="MapPin" className="h-3 w-3" />
+              {districtName}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1"
+            onClick={() => onNavigate(`/order/${order.id}`)}
+          >
+            <Icon name="Eye" className="mr-2 h-4 w-4" />
+            Детали
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 
 export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrdersProps) {
@@ -86,101 +186,6 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     processing: orders.filter(o => o.status === 'processing').length,
     shipping: orders.filter(o => o.status === 'shipping').length,
   }), [orders]);
-
-  const OrderCard = ({ order }: { order: Order }) => {
-    const districtName = districts.find(d => d.id === order.district)?.name;
-
-    return (
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <Badge variant={order.type === 'purchase' ? 'default' : 'secondary'}>
-                  {order.type === 'purchase' ? (
-                    <>
-                      <Icon name="ShoppingCart" className="h-3 w-3 mr-1" />
-                      Покупка
-                    </>
-                  ) : (
-                    <>
-                      <Icon name="Package" className="h-3 w-3 mr-1" />
-                      Продажа
-                    </>
-                  )}
-                </Badge>
-                <Badge className={STATUS_COLORS[order.status]}>
-                  {STATUS_LABELS[order.status]}
-                </Badge>
-              </div>
-              <h3 className="font-semibold text-lg">{order.title}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {order.type === 'purchase' ? 'Продавец' : 'Покупатель'}: {order.counterparty}
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-3">
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between pb-2 border-b">
-              <span className="text-muted-foreground">Сумма заказа:</span>
-              <span className="font-bold text-lg text-primary">
-                {(order.totalAmount || 0).toLocaleString()} ₽
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Количество:</span>
-              <span className="font-medium">
-                {order.quantity} {order.unit}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Дата заказа:</span>
-              <span className="font-medium">
-                {new Date(order.orderDate).toLocaleDateString('ru-RU')}
-              </span>
-            </div>
-            {order.deliveryDate && (
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Дата доставки:</span>
-                <span className="font-medium">
-                  {new Date(order.deliveryDate).toLocaleDateString('ru-RU')}
-                </span>
-              </div>
-            )}
-            {order.trackingNumber && (
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Трек-номер:</span>
-                <span className="font-mono text-sm font-medium">
-                  {order.trackingNumber}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Район:</span>
-              <span className="font-medium flex items-center gap-1">
-                <Icon name="MapPin" className="h-3 w-3" />
-                {districtName}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1"
-              onClick={() => navigate(`/order/${order.id}`)}
-            >
-              <Icon name="Eye" className="mr-2 h-4 w-4" />
-              Детали
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -317,7 +322,12 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {filteredOrders.map((order) => (
-                    <OrderCard key={order.id} order={order} />
+                    <OrderCard 
+                      key={order.id} 
+                      order={order} 
+                      districts={districts}
+                      onNavigate={navigate}
+                    />
                   ))}
                 </div>
               </>
