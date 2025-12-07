@@ -37,11 +37,17 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   useEffect(() => {
     if (!accessCheck.allowed) {
       navigate('/');
+      return;
     }
     if (isAuthenticated) {
       checkVerificationStatus();
     }
   }, [accessCheck.allowed, navigate, isAuthenticated]);
+
+  // Если доступ запрещен, не рендерим страницу
+  if (!accessCheck.allowed) {
+    return null;
+  }
 
   const checkVerificationStatus = async () => {
     try {
