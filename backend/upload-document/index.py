@@ -71,6 +71,20 @@ def get_s3_client():
         aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', '')
     )
 
+def detect_file_type(file_data: bytes) -> tuple[str, str]:
+    if file_data.startswith(b'\xFF\xD8\xFF'):
+        return 'image/jpeg', '.jpg'
+    elif file_data.startswith(b'\x89PNG\r\n\x1a\n'):
+        return 'image/png', '.png'
+    elif file_data.startswith(b'GIF87a') or file_data.startswith(b'GIF89a'):
+        return 'image/gif', '.gif'
+    elif file_data.startswith(b'RIFF') and file_data[8:12] == b'WEBP':
+        return 'image/webp', '.webp'
+    elif file_data.startswith(b'%PDF'):
+        return 'application/pdf', '.pdf'
+    else:
+        return 'application/octet-stream', '.bin'
+
 def get_content_type_extension(content_type: str) -> str:
     extensions = {
         'image/jpeg': '.jpg',
@@ -176,7 +190,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         bucket_name = 'files'
         
-        file_extension = get_content_type_extension(content_type)
+        detected_content_type, file_extension = detect_file_type(file_data)
         file_name = f'verifications/{user_id}/{file_type}-{uuid.uuid4()}{file_extension}'
         
         try:
@@ -185,7 +199,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 Bucket=bucket_name,
                 Key=file_name,
                 Body=file_data,
-                ContentType=content_type,
+                ContentType=detected_content_type,
                 ACL='public-read'
             )
             
@@ -199,7 +213,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f"AWS_SECRET_ACCESS_KEY present: {bool(os.environ.get('AWS_SECRET_ACCESS_KEY'))}")
             
             if len(file_data) <= 500 * 1024:
-                file_url = f'data:{content_type};base64,{base64.b64encode(file_data).decode()}'
+                file_url = f'data:{detected_content_type};base64,{base64.b64encode(file_data).decode()}'
             else:
                 return {
                     'statusCode': 500,
