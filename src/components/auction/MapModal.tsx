@@ -10,9 +10,10 @@ interface MapModalProps {
   onClose: () => void;
   coordinates: string;
   onCoordinatesChange: (coords: string) => void;
+  onAddressChange?: (address: string, district: string) => void;
 }
 
-export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesChange }: MapModalProps) {
+export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesChange, onAddressChange }: MapModalProps) {
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -49,10 +50,25 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
 
-      map.on('click', (e: L.LeafletMouseEvent) => {
+      map.on('click', async (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         onCoordinatesChange(coords);
+
+        if (onAddressChange) {
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru`
+            );
+            const data = await response.json();
+            const address = data.address;
+            const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+            const district = address.suburb || address.district || address.city_district || '';
+            onAddressChange(fullAddress, district);
+          } catch (error) {
+            console.error('Ошибка получения адреса:', error);
+          }
+        }
 
         if (markerRef.current) {
           markerRef.current.setLatLng([lat, lng]);
@@ -138,10 +154,26 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     }
   };
 
-  const handleSelectSearchResult = (lat: string, lon: string) => {
+  const handleSelectSearchResult = async (lat: string, lon: string, displayName: string) => {
     const coords = `${parseFloat(lat).toFixed(6)}, ${parseFloat(lon).toFixed(6)}`;
     onCoordinatesChange(coords);
     setMapCenter([parseFloat(lat), parseFloat(lon)]);
+    
+    if (onAddressChange) {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ru`
+        );
+        const data = await response.json();
+        const address = data.address;
+        const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+        const district = address.suburb || address.district || address.city_district || '';
+        onAddressChange(fullAddress, district);
+      } catch (error) {
+        console.error('Ошибка получения адреса:', error);
+      }
+    }
+    
     setSearchResults([]);
     setSearchQuery('');
   };
@@ -184,7 +216,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                   <button
                     key={index}
                     type="button"
-                    onClick={() => handleSelectSearchResult(result.lat, result.lon)}
+                    onClick={() => handleSelectSearchResult(result.lat, result.lon, result.display_name)}
                     className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-sm"
                   >
                     {result.display_name}

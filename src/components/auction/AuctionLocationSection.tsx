@@ -50,6 +50,23 @@ export default function AuctionLocationSection({
     setDistrictSearch('');
   };
 
+  const handleMapAddressChange = (address: string, districtName: string) => {
+    if (address) {
+      onInputChange('fullAddress', address);
+    }
+    
+    if (districtName) {
+      const matchedDistrict = districts.find(d => 
+        d.name.toLowerCase().includes(districtName.toLowerCase()) ||
+        districtName.toLowerCase().includes(d.name.toLowerCase())
+      );
+      
+      if (matchedDistrict) {
+        onInputChange('district', matchedDistrict.id);
+      }
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -142,6 +159,7 @@ export default function AuctionLocationSection({
             onClose={() => setShowMapModal(false)}
             coordinates={formData.gpsCoordinates || ''}
             onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
+            onAddressChange={handleMapAddressChange}
           />
         </Suspense>
 
