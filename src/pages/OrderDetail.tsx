@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -80,7 +80,7 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
       return;
     }
     loadOrder();
-  }, [id, currentUser]);
+  }, [id]);
 
   const loadOrder = async () => {
     if (!id) return;
@@ -105,7 +105,7 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
     }
   };
 
-  const handleUpdateOrder = async () => {
+  const handleUpdateOrder = useCallback(async () => {
     if (!order || !currentUser) return;
     
     setIsUpdating(true);
@@ -136,9 +136,9 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
     } finally {
       setIsUpdating(false);
     }
-  };
+  }, [order, currentUser, newStatus, trackingNumber, sellerComment, cancellationReason, toast]);
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = useCallback((dateString?: string) => {
     if (!dateString) return '—';
     return new Date(dateString).toLocaleDateString('ru-RU', {
       day: 'numeric',
@@ -147,11 +147,11 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
+  }, []);
 
-  const formatPrice = (price: number) => {
+  const formatPrice = useCallback((price: number) => {
     return new Intl.NumberFormat('ru-RU').format(price);
-  };
+  }, []);
 
   if (!currentUser) {
     return null;
