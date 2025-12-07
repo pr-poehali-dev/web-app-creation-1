@@ -57,50 +57,46 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
                 ЕРТТП предлагает:
               </p>
               
-              <ul className="space-y-4 md:space-y-5 pl-0">
+              <ul className="space-y-2.5 md:space-y-3 pl-0">
                 <li className="flex gap-3 items-start">
-                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                  <span className="text-2xl md:text-3xl flex-shrink-0 leading-none text-primary font-bold">✓</span>
+                  <span className="text-lg md:text-xl text-foreground/90 leading-snug">
                     <strong className="font-semibold">Сбыт:</strong> Прямой доступ к клиентам + новые рынки в регионе.
                   </span>
                 </li>
                 
                 <li className="flex gap-3 items-start">
-                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                  <span className="text-2xl md:text-3xl flex-shrink-0 leading-none text-primary font-bold">✓</span>
+                  <span className="text-lg md:text-xl text-foreground/90 leading-snug">
                     <strong className="font-semibold">Оптимизация:</strong> Точное планирование + анализ спроса и предложения в реальном времени.
                   </span>
                 </li>
                 
                 <li className="flex gap-3 items-start">
-                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                  <span className="text-2xl md:text-3xl flex-shrink-0 leading-none text-primary font-bold">✓</span>
+                  <span className="text-lg md:text-xl text-foreground/90 leading-snug">
                     <strong className="font-semibold">Финансирование:</strong> Предоплата от потребителей напрямую по контрактам.
                   </span>
                 </li>
                 
                 <li className="flex gap-3 items-start">
-                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                  <span className="text-2xl md:text-3xl flex-shrink-0 leading-none text-primary font-bold">✓</span>
+                  <span className="text-lg md:text-xl text-foreground/90 leading-snug">
                     <strong className="font-semibold">Клиентам:</strong> Фиксированные цены, гарантии сроков поставки.
                   </span>
                 </li>
               </ul>
               
-              <div className="h-px bg-primary/20 my-3"></div>
+              <div className="h-px bg-primary/20 my-4"></div>
               
-              <p className="text-base md:text-lg font-semibold text-foreground leading-snug text-center">
-                Зарегистрируйтесь и начните развивать свой бизнес вместе с нами!
-              </p>
-              
-              <div className="text-center pt-4">
+              <div className="text-center pt-2">
                 <Link 
                   to="/register" 
                   onClick={handleJoinClick}
-                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-base md:text-lg font-semibold hover:bg-primary/90 transition-all shadow-md"
+                  className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-3 md:py-3.5 rounded-lg text-base md:text-lg font-semibold hover:bg-primary/90 transition-all shadow-md"
                 >
-                  Присоединяйтесь!
-                  <Icon name="ArrowRight" className="h-4 w-4" />
+                  Зарегистрируйтесь и начните развивать свой бизнес вместе с нами!
+                  <Icon name="ArrowRight" className="h-5 w-5" />
                 </Link>
               </div>
             </div>
