@@ -144,8 +144,12 @@ export default function OfferMediaGallery({
               />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Icon name="Package" className="h-24 w-24 text-muted-foreground" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+              <img 
+                src="/favicon.svg" 
+                alt="Логотип площадки" 
+                className="w-32 h-32 opacity-30"
+              />
             </div>
           )}
 
