@@ -122,12 +122,25 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
   };
 
   const handleDeliveryTypeToggle = (type: 'pickup' | 'delivery') => {
-    setFormData(prev => ({
-      ...prev,
-      availableDeliveryTypes: prev.availableDeliveryTypes.includes(type)
-        ? prev.availableDeliveryTypes.filter(t => t !== type)
-        : [...prev.availableDeliveryTypes, type]
-    }));
+    setFormData(prev => {
+      const isAdding = !prev.availableDeliveryTypes.includes(type);
+      const newDeliveryTypes = isAdding
+        ? [...prev.availableDeliveryTypes, type]
+        : prev.availableDeliveryTypes.filter(t => t !== type);
+      
+      if (type === 'delivery' && isAdding && prev.district && !prev.availableDistricts.includes(prev.district)) {
+        return {
+          ...prev,
+          availableDeliveryTypes: newDeliveryTypes,
+          availableDistricts: [...prev.availableDistricts, prev.district]
+        };
+      }
+      
+      return {
+        ...prev,
+        availableDeliveryTypes: newDeliveryTypes
+      };
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
