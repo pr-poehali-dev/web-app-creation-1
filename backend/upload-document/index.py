@@ -117,7 +117,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-File-Type',
+                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-File-Type, X-Original-File-Type',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
@@ -138,6 +138,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     headers = event.get('headers', {})
     user_id = headers.get('X-User-Id') or headers.get('x-user-id')
     file_type = headers.get('X-File-Type') or headers.get('x-file-type', 'document')
+    original_file_type = headers.get('X-Original-File-Type') or headers.get('x-original-file-type', '')
     content_type = headers.get('Content-Type') or headers.get('content-type', 'application/octet-stream')
     
     if not user_id:
@@ -180,11 +181,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        if is_base64:
-            print("Decoding from base64 body")
-            file_data = base64.b64decode(body)
-        else:
-            print("Decoding from JSON body")
+        print(f"Content-Type: {content_type}, isBase64Encoded: {is_base64}")
+        print(f"Body length: {len(body)}, first 100 chars: {body[:100]}")
+        
+        if content_type == 'application/json' or body.strip().startswith('{'):
+            print("Parsing as JSON body")
             body_json = json.loads(body)
             file_base64 = body_json.get('file', '')
             if not file_base64:
@@ -192,6 +193,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f"Base64 string length: {len(file_base64)}, first 50 chars: {file_base64[:50]}")
             file_data = base64.b64decode(file_base64)
             print(f"Decoded file data length: {len(file_data)}, first 12 bytes hex: {file_data[:12].hex()}")
+        else:
+            print("Decoding from base64 body")
+            file_data = base64.b64decode(body)
         
         if len(file_data) > 5 * 1024 * 1024:
             return {

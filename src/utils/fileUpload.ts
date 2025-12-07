@@ -20,9 +20,10 @@ export const uploadFile = async (
         const response = await fetch(UPLOAD_URL, {
           method: 'POST',
           headers: {
-            'Content-Type': file.type || 'application/octet-stream',
+            'Content-Type': 'application/json',
             'X-User-Id': userId,
             'X-File-Type': fileType,
+            'X-Original-File-Type': file.type || 'application/octet-stream',
           },
           body: JSON.stringify({ file: base64String }),
         });
