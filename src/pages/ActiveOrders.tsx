@@ -56,22 +56,12 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     }
 
     loadOrders();
-  }, [isAuthenticated, currentUser, navigate, activeTab, statusFilter]);
+  }, [isAuthenticated, currentUser, navigate]);
 
   const loadOrders = async () => {
     setIsLoading(true);
     try {
-      const params: any = {};
-      
-      if (activeTab !== 'all') {
-        params.type = activeTab;
-      }
-      
-      if (statusFilter !== 'all') {
-        params.status = statusFilter;
-      }
-      
-      const data = await ordersAPI.getUserOrders(params);
+      const data = await ordersAPI.getUserOrders({});
       setOrders(data.orders);
     } catch (error) {
       console.error('Error loading orders:', error);
