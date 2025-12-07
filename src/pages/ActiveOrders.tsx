@@ -178,22 +178,15 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" size="sm" className="flex-1" disabled>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1"
+              onClick={() => navigate(`/order/${order.id}`)}
+            >
               <Icon name="Eye" className="mr-2 h-4 w-4" />
               Детали
             </Button>
-            {order.status === 'shipping' && (
-              <Button variant="outline" size="sm" className="flex-1" disabled>
-                <Icon name="MapPin" className="mr-2 h-4 w-4" />
-                Отследить
-              </Button>
-            )}
-            {order.status === 'new' && (
-              <Button variant="outline" size="sm" className="flex-1" disabled>
-                <Icon name="XCircle" className="mr-2 h-4 w-4" />
-                Отменить
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>

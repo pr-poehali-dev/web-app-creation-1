@@ -45,6 +45,7 @@ import SetAdminPassword from "./pages/SetAdminPassword";
 import TradingPlatform from "./pages/TradingPlatform";
 import CreateContract from "./pages/CreateContract";
 import OrderPage from "./pages/OrderPage";
+import OrderDetail from "./pages/OrderDetail";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import OfferAgreement from "./pages/OfferAgreement";
@@ -116,7 +117,7 @@ const App = () => {
             <Route path="/set-admin-password" element={<SetAdminPassword />} />
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-contract" element={<CreateContract isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/order/:id" element={<OrderPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/order/:id" element={<OrderDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
