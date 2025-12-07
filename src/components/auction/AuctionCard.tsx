@@ -10,9 +10,10 @@ import { getTimeRemaining, getStatusBadge } from './AuctionHelpers';
 interface AuctionCardProps {
   auction: Auction;
   districts: Array<{ id: string; name: string }>;
+  isAuthenticated: boolean;
 }
 
-export default function AuctionCard({ auction, districts }: AuctionCardProps) {
+export default function AuctionCard({ auction, districts, isAuthenticated }: AuctionCardProps) {
   const navigate = useNavigate();
   const category = CATEGORIES.find(c => c.id === auction.category);
   const districtName = districts.find(d => d.id === auction.district)?.name;
@@ -116,12 +117,17 @@ export default function AuctionCard({ auction, districts }: AuctionCardProps) {
         <Button
           className="w-full"
           variant={auction.status === 'ended' ? 'secondary' : 'default'}
-          disabled={auction.status === 'ended' || auction.status === 'upcoming'}
+          disabled={auction.status === 'ended' || auction.status === 'upcoming' || !isAuthenticated}
         >
           {auction.status === 'ended' ? (
             <>
               <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
               Аукцион завершен
+            </>
+          ) : !isAuthenticated ? (
+            <>
+              <Icon name="Lock" className="mr-2 h-4 w-4" />
+              Войдите для участия
             </>
           ) : (
             <>

@@ -32,12 +32,6 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const currentUser = getSession();
   const [verificationStatus, setVerificationStatus] = useState<string>('');
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      checkVerificationStatus();
-    }
-  }, [isAuthenticated]);
-
   const checkVerificationStatus = async () => {
     try {
       const userId = localStorage.getItem('userId');
@@ -58,11 +52,29 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     }
   };
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      checkVerificationStatus();
+    }
+  }, [isAuthenticated]);
+
   const handleCreateAuctionClick = () => {
-    if (verificationStatus === 'pending') {
+    if (!isAuthenticated) {
       toast({
-        title: 'Верификация на рассмотрении',
-        description: 'Верификация вашей учётной записи на рассмотрении. После одобрения верификации или отказа вы получите соответствующее уведомление. После успешной верификации вам будут доступны все возможности на ЕРТТП.',
+        title: 'Требуется авторизация',
+        description: 'Для создания аукциона необходимо войти в систему',
+        duration: 5000,
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (verificationStatus !== 'verified') {
+      toast({
+        title: 'Требуется верификация',
+        description: verificationStatus === 'pending' 
+          ? 'Верификация вашей учётной записи на рассмотрении. После одобрения верификации вам будут доступны все возможности на ЕРТТП.'
+          : 'Для создания аукциона необходимо пройти верификацию. Перейдите в профиль и подайте заявку на верификацию.',
         duration: 8000,
       });
       return;
@@ -218,12 +230,10 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
               Участвуйте в аукционах и делайте выгодные покупки по лучшей цене
             </p>
           </div>
-          {isAuthenticated && (
-            <Button onClick={handleCreateAuctionClick} className="flex items-center gap-2 whitespace-nowrap">
-              <Icon name="Plus" className="h-4 w-4" />
-              Создать аукцион
-            </Button>
-          )}
+          <Button onClick={handleCreateAuctionClick} className="flex items-center gap-2 whitespace-nowrap">
+            <Icon name="Plus" className="h-4 w-4" />
+            Создать аукцион
+          </Button>
         </div>
 
         <SearchBlock
@@ -294,6 +304,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
                   key={auction.id} 
                   auction={auction}
                   districts={districts}
+                  isAuthenticated={isAuthenticated}
                 />
               ))}
             </div>
