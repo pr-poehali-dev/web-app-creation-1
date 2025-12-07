@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface FileUploadWithIndicatorProps {
   id: string;
@@ -30,6 +31,7 @@ export default function FileUploadWithIndicator({
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState<string>('');
   const [preview, setPreview] = useState<string>('');
+  const [showFullPreview, setShowFullPreview] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -114,26 +116,59 @@ export default function FileUploadWithIndicator({
             {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} МБ)
           </p>
           {preview && (
-            <div className="relative rounded-lg border border-green-200 overflow-hidden bg-white">
-              <img 
-                src={preview} 
-                alt="Предпросмотр" 
-                className="w-full h-auto max-h-64 object-contain"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedFile(null);
-                  setPreview('');
-                  onChange(null);
-                  const input = document.getElementById(id) as HTMLInputElement;
-                  if (input) input.value = '';
-                }}
-                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg"
-              >
-                <Icon name="X" className="h-4 w-4" />
-              </button>
-            </div>
+            <>
+              <div className="relative rounded-lg border border-green-200 overflow-hidden bg-white group cursor-pointer">
+                <img 
+                  src={preview} 
+                  alt="Предпросмотр" 
+                  className="w-full h-auto max-h-64 object-contain"
+                  onClick={() => setShowFullPreview(true)}
+                />
+                <div 
+                  className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center"
+                  onClick={() => setShowFullPreview(true)}
+                >
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-3">
+                    <Icon name="ZoomIn" className="h-6 w-6 text-gray-900" />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedFile(null);
+                    setPreview('');
+                    onChange(null);
+                    const input = document.getElementById(id) as HTMLInputElement;
+                    if (input) input.value = '';
+                  }}
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg z-10"
+                >
+                  <Icon name="X" className="h-4 w-4" />
+                </button>
+              </div>
+
+              <Dialog open={showFullPreview} onOpenChange={setShowFullPreview}>
+                <DialogContent className="max-w-[95vw] max-h-[95vh] p-0">
+                  <div className="relative w-full h-full flex items-center justify-center bg-black/95 rounded-lg overflow-hidden">
+                    <img 
+                      src={preview} 
+                      alt="Полный просмотр" 
+                      className="max-w-full max-h-[90vh] object-contain"
+                    />
+                    <button
+                      onClick={() => setShowFullPreview(false)}
+                      className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 transition-colors"
+                    >
+                      <Icon name="X" className="h-6 w-6" />
+                    </button>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm">
+                      {selectedFile.name}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
           {selectedFile.type === 'application/pdf' && (
             <div className="flex items-center gap-2 p-3 rounded-lg border border-green-200 bg-green-50">
