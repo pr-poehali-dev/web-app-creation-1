@@ -90,8 +90,12 @@ export default function OfferCard({ offer }: OfferCardProps) {
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Icon name="Image" className="h-12 w-12 text-muted-foreground" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+              <img 
+                src="/favicon.svg" 
+                alt="Логотип площадки" 
+                className="w-24 h-24 opacity-30"
+              />
             </div>
           )}
         </div>
