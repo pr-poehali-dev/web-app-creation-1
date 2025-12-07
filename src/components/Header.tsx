@@ -92,14 +92,12 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           </Link>
 
           {/* Mobile menu button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
+          <button
+            className="md:hidden px-3 py-2 text-sm font-bold text-primary uppercase"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <Icon name={mobileMenuOpen ? "X" : "Menu"} className="h-6 w-6 text-white" />
-          </Button>
+            {mobileMenuOpen ? "Закрыть" : "Меню"}
+          </button>
 
           <nav className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-3 lg:mr-4">
             <Link
