@@ -57,32 +57,32 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
                 ЕРТТП предлагает:
               </p>
               
-              <ul className="space-y-3 md:space-y-4 pl-0">
+              <ul className="space-y-4 md:space-y-5 pl-0">
                 <li className="flex gap-3 items-start">
-                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
-                    <strong className="font-semibold">Гарантированный сбыт:</strong> Прямой доступ к вашей целевой аудитории и новые рынки сбыта в вашем регионе.
+                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                    <strong className="font-semibold">Сбыт:</strong> Прямой доступ к клиентам + новые рынки в регионе.
                   </span>
                 </li>
                 
                 <li className="flex gap-3 items-start">
-                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
-                    <strong className="font-semibold">Оптимизация процессов:</strong> Точное планирование производства и анализ данных спроса и предложения в режиме реального времени.
+                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                    <strong className="font-semibold">Оптимизация:</strong> Точное планирование + анализ спроса и предложения в реальном времени.
                   </span>
                 </li>
                 
                 <li className="flex gap-3 items-start">
-                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
-                    <strong className="font-semibold">Финансирование без рисков:</strong> Получайте предоплату от потребителей напрямую на основе заключенных контрактов!
+                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                    <strong className="font-semibold">Финансирование:</strong> Предоплата от потребителей напрямую по контрактам.
                   </span>
                 </li>
                 
                 <li className="flex gap-3 items-start">
-                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
-                    <strong className="font-semibold">Выгода вашим клиентам:</strong> Фиксированные цены, гарантии сроков поставки и уверенность в качестве продукции
+                  <span className="text-lg md:text-xl flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-base md:text-lg text-foreground/90 leading-relaxed">
+                    <strong className="font-semibold">Клиентам:</strong> Фиксированные цены, гарантии сроков поставки.
                   </span>
                 </li>
               </ul>
