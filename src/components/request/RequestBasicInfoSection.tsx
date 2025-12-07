@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
 
 interface RequestBasicInfoSectionProps {
@@ -20,6 +22,31 @@ export default function RequestBasicInfoSection({
 }: RequestBasicInfoSectionProps) {
   const selectedCategory = CATEGORIES.find(c => c.id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
+  
+  const [categorySearch, setCategorySearch] = useState('');
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [subcategorySearch, setSubcategorySearch] = useState('');
+  const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
+
+  const filteredCategories = CATEGORIES.filter(cat => 
+    cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const filteredSubcategories = subcategories.filter(sub => 
+    sub.name.toLowerCase().includes(subcategorySearch.toLowerCase())
+  );
+
+  const handleSelectCategory = (categoryId: string) => {
+    onInputChange('category', categoryId);
+    setIsCategoryOpen(false);
+    setCategorySearch('');
+  };
+
+  const handleSelectSubcategory = (subcategoryId: string) => {
+    onInputChange('subcategory', subcategoryId);
+    setIsSubcategoryOpen(false);
+    setSubcategorySearch('');
+  };
 
   return (
     <Card>
@@ -62,37 +89,108 @@ export default function RequestBasicInfoSection({
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
-          <div>
+          <div className="relative">
             <Label htmlFor="category">Категория *</Label>
-            <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => onInputChange('category', e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-            >
-              <option value="">Выберите категорию</option>
-              {CATEGORIES.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <Input
+                id="category"
+                value={isCategoryOpen ? categorySearch : (selectedCategory?.name || '')}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                onFocus={() => setIsCategoryOpen(true)}
+                placeholder="Начните вводить название категории..."
+                className="pr-8"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <Icon name={isCategoryOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {isCategoryOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsCategoryOpen(false)}
+                />
+                <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                  {filteredCategories.length > 0 ? (
+                    filteredCategories.map(cat => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => handleSelectCategory(cat.id)}
+                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                          formData.category === cat.id ? 'bg-accent font-medium' : ''
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      Категории не найдены
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          <div>
+          <div className="relative">
             <Label htmlFor="subcategory">Подкатегория *</Label>
-            <select
-              id="subcategory"
-              value={formData.subcategory}
-              onChange={(e) => onInputChange('subcategory', e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-              disabled={!formData.category}
-            >
-              <option value="">Выберите подкатегорию</option>
-              {subcategories.map(sub => (
-                <option key={sub.id} value={sub.id}>{sub.name}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <Input
+                id="subcategory"
+                value={isSubcategoryOpen ? subcategorySearch : (subcategories.find(s => s.id === formData.subcategory)?.name || '')}
+                onChange={(e) => setSubcategorySearch(e.target.value)}
+                onFocus={() => setIsSubcategoryOpen(true)}
+                placeholder="Начните вводить название подкатегории..."
+                className="pr-8"
+                required
+                disabled={!formData.category}
+              />
+              <button
+                type="button"
+                onClick={() => setIsSubcategoryOpen(!isSubcategoryOpen)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                disabled={!formData.category}
+              >
+                <Icon name={isSubcategoryOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {isSubcategoryOpen && formData.category && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsSubcategoryOpen(false)}
+                />
+                <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                  {filteredSubcategories.length > 0 ? (
+                    filteredSubcategories.map(sub => (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => handleSelectSubcategory(sub.id)}
+                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                          formData.subcategory === sub.id ? 'bg-accent font-medium' : ''
+                        }`}
+                      >
+                        {sub.name}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      Подкатегории не найдены
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </CardContent>
