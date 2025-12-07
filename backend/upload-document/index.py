@@ -181,13 +181,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if is_base64:
+            print("Decoding from base64 body")
             file_data = base64.b64decode(body)
         else:
+            print("Decoding from JSON body")
             body_json = json.loads(body)
             file_base64 = body_json.get('file', '')
             if not file_base64:
                 raise ValueError('File data not found in request body')
+            print(f"Base64 string length: {len(file_base64)}, first 50 chars: {file_base64[:50]}")
             file_data = base64.b64decode(file_base64)
+            print(f"Decoded file data length: {len(file_data)}, first 12 bytes hex: {file_data[:12].hex()}")
         
         if len(file_data) > 5 * 1024 * 1024:
             return {
