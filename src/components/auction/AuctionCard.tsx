@@ -104,6 +104,20 @@ export default function AuctionCard({ auction, districts, isAuthenticated }: Auc
               <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">{districtName}</span>
             </div>
+            {auction.gpsCoordinates && (
+              <div className="flex items-center gap-2 text-sm">
+                <a
+                  href={`https://www.google.com/maps?q=${auction.gpsCoordinates}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2 text-primary hover:underline"
+                >
+                  <Icon name="Map" className="h-4 w-4" />
+                  <span>Карта</span>
+                </a>
+              </div>
+            )}
             {auction.status !== 'ended' && auction.status !== 'upcoming' && (
               <div className="flex items-center gap-2 text-sm">
                 <Icon name="Clock" className="h-4 w-4 text-muted-foreground" />

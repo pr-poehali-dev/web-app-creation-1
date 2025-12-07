@@ -26,6 +26,7 @@ export interface Auction {
   location: string;
   district: string;
   fullAddress?: string;
+  gpsCoordinates?: string;
   availableDistricts: string[];
   images: Array<{
     id: string;

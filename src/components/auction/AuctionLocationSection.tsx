@@ -30,6 +30,7 @@ export default function AuctionLocationSection({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDeliveryFilterEnabled, setIsDeliveryFilterEnabled] = useState(false);
   const [deliveryDistrictsFilter, setDeliveryDistrictsFilter] = useState('');
+  const [showMapModal, setShowMapModal] = useState(false);
 
   const filteredDistricts = districts.filter(d => 
     d.name.toLowerCase().includes(districtSearch.toLowerCase())
@@ -115,40 +116,79 @@ export default function AuctionLocationSection({
         </div>
 
         <div>
-          <Label htmlFor="gpsCoordinates">GPS-координаты (опционально)</Label>
-          <div className="relative">
-            <Input
-              id="gpsCoordinates"
-              value={formData.gpsCoordinates || ''}
-              onChange={(e) => onInputChange('gpsCoordinates', e.target.value)}
-              placeholder="Например: 41.2995, 69.2401"
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                      const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
-                      onInputChange('gpsCoordinates', coords);
-                    },
-                    (error) => {
-                      console.error('Ошибка получения координат:', error);
-                    }
-                  );
-                }
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-accent rounded-md transition-colors"
-              title="Получить текущие координаты"
-            >
-              <Icon name="MapPin" className="h-4 w-4 text-primary" />
-            </button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Укажите координаты в формате: широта, долгота
-          </p>
+          <Label>Местонахождение на карте (опционально)</Label>
+          <button
+            type="button"
+            onClick={() => setShowMapModal(true)}
+            className="flex items-center gap-2 px-4 py-2 mt-2 border-2 border-primary/20 rounded-md hover:border-primary/40 hover:bg-primary/5 transition-all"
+          >
+            <Icon name="Map" className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">
+              {formData.gpsCoordinates ? 'Изменить на карте' : 'Указать на карте'}
+            </span>
+          </button>
+          {formData.gpsCoordinates && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Координаты: {formData.gpsCoordinates}
+            </p>
+          )}
         </div>
+
+        {showMapModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowMapModal(false)}>
+            <div className="bg-background rounded-lg p-6 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Укажите местонахождение</h3>
+                <button onClick={() => setShowMapModal(false)} className="p-1 hover:bg-accent rounded-md">
+                  <Icon name="X" className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="mapCoordinates">Введите координаты</Label>
+                  <Input
+                    id="mapCoordinates"
+                    value={formData.gpsCoordinates || ''}
+                    onChange={(e) => onInputChange('gpsCoordinates', e.target.value)}
+                    placeholder="Например: 41.2995, 69.2401"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Формат: широта, долгота
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                          onInputChange('gpsCoordinates', coords);
+                        },
+                        (error) => {
+                          console.error('Ошибка получения координат:', error);
+                        }
+                      );
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                >
+                  <Icon name="MapPin" className="h-4 w-4" />
+                  Использовать мое местоположение
+                </button>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowMapModal(false)}
+                    className="px-4 py-2 border rounded-md hover:bg-accent transition-colors"
+                  >
+                    Готово
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div>
           <Label>Способы получения</Label>
