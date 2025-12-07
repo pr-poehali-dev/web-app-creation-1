@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import Icon from '@/components/ui/icon';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 interface AuctionLocationSectionProps {
   formData: {
@@ -19,6 +22,15 @@ interface AuctionLocationSectionProps {
   onDeliveryTypeToggle: (type: 'pickup' | 'delivery') => void;
 }
 
+function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (e) => {
+      onLocationSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
 export default function AuctionLocationSection({ 
   formData, 
   districts, 
@@ -31,6 +43,24 @@ export default function AuctionLocationSection({
   const [isDeliveryFilterEnabled, setIsDeliveryFilterEnabled] = useState(false);
   const [deliveryDistrictsFilter, setDeliveryDistrictsFilter] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([41.2995, 69.2401]);
+  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    if (formData.gpsCoordinates) {
+      const [lat, lng] = formData.gpsCoordinates.split(',').map(c => parseFloat(c.trim()));
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setMapCenter([lat, lng]);
+        setMarkerPosition([lat, lng]);
+      }
+    }
+  }, [formData.gpsCoordinates]);
+
+  const handleMapClick = (lat: number, lng: number) => {
+    const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    onInputChange('gpsCoordinates', coords);
+    setMarkerPosition([lat, lng]);
+  };
 
   const filteredDistricts = districts.filter(d => 
     d.name.toLowerCase().includes(districtSearch.toLowerCase())
@@ -136,7 +166,7 @@ export default function AuctionLocationSection({
 
         {showMapModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowMapModal(false)}>
-            <div className="bg-background rounded-lg p-6 max-w-2xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-background rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Укажите местонахождение</h3>
                 <button onClick={() => setShowMapModal(false)} className="p-1 hover:bg-accent rounded-md">
@@ -144,12 +174,47 @@ export default function AuctionLocationSection({
                 </button>
               </div>
               <div className="space-y-4">
+                <div className="h-[400px] rounded-lg overflow-hidden border">
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={13}
+                    style={{ height: '100%', width: '100%' }}
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    <MapClickHandler onLocationSelect={handleMapClick} />
+                    {markerPosition && (
+                      <Marker 
+                        position={markerPosition}
+                        icon={L.icon({
+                          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                          iconSize: [25, 41],
+                          iconAnchor: [12, 41],
+                        })}
+                      />
+                    )}
+                  </MapContainer>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Нажмите на карте, чтобы указать местонахождение
+                </p>
                 <div>
-                  <Label htmlFor="mapCoordinates">Введите координаты</Label>
+                  <Label htmlFor="mapCoordinates">Или введите координаты вручную</Label>
                   <Input
                     id="mapCoordinates"
                     value={formData.gpsCoordinates || ''}
-                    onChange={(e) => onInputChange('gpsCoordinates', e.target.value)}
+                    onChange={(e) => {
+                      onInputChange('gpsCoordinates', e.target.value);
+                      const [lat, lng] = e.target.value.split(',').map(c => parseFloat(c.trim()));
+                      if (!isNaN(lat) && !isNaN(lng)) {
+                        setMapCenter([lat, lng]);
+                        setMarkerPosition([lat, lng]);
+                      }
+                    }}
                     placeholder="Например: 41.2995, 69.2401"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
@@ -164,6 +229,8 @@ export default function AuctionLocationSection({
                         (position) => {
                           const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
                           onInputChange('gpsCoordinates', coords);
+                          setMapCenter([position.coords.latitude, position.coords.longitude]);
+                          setMarkerPosition([position.coords.latitude, position.coords.longitude]);
                         },
                         (error) => {
                           console.error('Ошибка получения координат:', error);
