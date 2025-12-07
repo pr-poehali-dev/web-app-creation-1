@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "name": "Get documents list with valid user",
+      "method": "GET",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "documents": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get documents without user ID",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 {
+  "get-documents": "https://functions.poehali.dev/7a553048-1de4-438d-9830-675770bf025b",
   "send-verification-email": "https://functions.poehali.dev/42f9ef7b-b116-430a-ac8a-681742e10551",
   "verification-resubmit": "https://functions.poehali.dev/d3ac1521-9001-4630-9c2b-8c829187016e",
   "requests": "https://functions.poehali.dev/a2ecd27a-6043-42df-9941-766c886acdb0",

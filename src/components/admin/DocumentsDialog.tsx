@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -144,6 +144,36 @@ export default function DocumentsDialog({
 }: DocumentsDialogProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<{ url: string; title: string } | null>(null);
+  const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+
+  useEffect(() => {
+    if (open && selectedVerification) {
+      loadUploadedDocuments();
+    }
+  }, [open, selectedVerification]);
+
+  const loadUploadedDocuments = async () => {
+    if (!selectedVerification) return;
+    
+    setLoadingDocuments(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/7a553048-1de4-438d-9830-675770bf025b', {
+        headers: {
+          'X-User-Id': String(selectedVerification.userId),
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUploadedDocuments(data.documents || []);
+      }
+    } catch (error) {
+      console.error('Failed to load uploaded documents:', error);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
 
   const handleViewDocument = (url: string, title: string) => {
     setCurrentDocument({ url, title });
@@ -281,112 +311,43 @@ export default function DocumentsDialog({
 
               <div className="border-t pt-6">
                 <h4 className="font-semibold mb-4">Загруженные документы</h4>
-                <div className="grid gap-4">
-                  {selectedVerification.passportScanUrl && (
-                    <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon name="FileText" className="h-5 w-5 text-primary" />
-                          <span className="font-medium">Скан паспорта</span>
+                {loadingDocuments ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <div className="grid gap-4">
+                    {uploadedDocuments.length > 0 ? (
+                      uploadedDocuments.map((doc) => (
+                        <div key={doc.id} className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Icon name="FileText" className="h-5 w-5 text-primary" />
+                              <div>
+                                <span className="font-medium block">{doc.fileName || doc.fileType}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(doc.uploadedAt).toLocaleString('ru-RU')}
+                                </span>
+                              </div>
+                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleViewDocument(doc.fileUrl, doc.fileName || doc.fileType)}
+                            >
+                              <Icon name="Eye" className="h-4 w-4 mr-2" />
+                              Просмотреть
+                            </Button>
+                          </div>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewDocument(selectedVerification.passportScanUrl!, 'Скан паспорта')}
-                        >
-                          <Icon name="Eye" className="h-4 w-4 mr-2" />
-                          Просмотреть
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedVerification.passportRegistrationUrl && (
-                    <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon name="FileText" className="h-5 w-5 text-primary" />
-                          <span className="font-medium">Страница паспорта с регистрацией</span>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewDocument(selectedVerification.passportRegistrationUrl!, 'Страница паспорта с регистрацией')}
-                        >
-                          <Icon name="Eye" className="h-4 w-4 mr-2" />
-                          Просмотреть
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedVerification.utilityBillUrl && (
-                    <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon name="FileText" className="h-5 w-5 text-primary" />
-                          <span className="font-medium">Коммунальный платеж</span>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewDocument(selectedVerification.utilityBillUrl!, 'Коммунальный платеж')}
-                        >
-                          <Icon name="Eye" className="h-4 w-4 mr-2" />
-                          Просмотреть
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedVerification.registrationCertUrl && (
-                    <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon name="FileText" className="h-5 w-5 text-primary" />
-                          <span className="font-medium">Свидетельство о регистрации / Выписка ЕГРЮЛ</span>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewDocument(selectedVerification.registrationCertUrl!, 'Свидетельство о регистрации / Выписка ЕГРЮЛ')}
-                        >
-                          <Icon name="Eye" className="h-4 w-4 mr-2" />
-                          Просмотреть
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedVerification.agreementFormUrl && (
-                    <div className="border rounded-lg p-4 hover:bg-accent/50 transition-colors">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon name="FileText" className="h-5 w-5 text-primary" />
-                          <span className="font-medium">Форма согласия</span>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleViewDocument(selectedVerification.agreementFormUrl!, 'Форма согласия')}
-                        >
-                          <Icon name="Eye" className="h-4 w-4 mr-2" />
-                          Просмотреть
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {!selectedVerification.passportScanUrl && 
-                   !selectedVerification.passportRegistrationUrl && 
-                   !selectedVerification.utilityBillUrl && 
-                   !selectedVerification.registrationCertUrl && 
-                   !selectedVerification.agreementFormUrl && (
-                    <p className="text-muted-foreground text-center py-8">
-                      Документы не загружены
-                    </p>
-                  )}
-                </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground text-center py-8">
+                        Документы не загружены
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

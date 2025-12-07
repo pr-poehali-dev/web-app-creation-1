@@ -225,6 +225,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             )
             
             file_url = f"https://cdn.poehali.dev/projects/{os.environ.get('AWS_ACCESS_KEY_ID')}/bucket/{file_name}"
+            
+            conn = get_db_connection()
+            with conn.cursor() as cur:
+                cur.execute(
+                    """INSERT INTO verification_documents 
+                       (user_id, file_type, file_url, file_name, file_size, status) 
+                       VALUES (%s, %s, %s, %s, %s, %s)
+                       RETURNING id""",
+                    (user_id, file_type, file_url, file_name.split('/')[-1], len(file_data), 'active')
+                )
+                doc_id = cur.fetchone()['id']
+                conn.commit()
+            conn.close()
+            
         except Exception as s3_error:
             print(f"S3 upload failed: {str(s3_error)}")
             print(f"Error type: {type(s3_error).__name__}")
@@ -235,6 +249,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             if len(file_data) <= 500 * 1024:
                 file_url = f'data:{detected_content_type};base64,{base64.b64encode(file_data).decode()}'
+                
+                conn = get_db_connection()
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """INSERT INTO verification_documents 
+                           (user_id, file_type, file_url, file_name, file_size, status) 
+                           VALUES (%s, %s, %s, %s, %s, %s)
+                           RETURNING id""",
+                        (user_id, file_type, file_url, file_name.split('/')[-1], len(file_data), 'active')
+                    )
+                    doc_id = cur.fetchone()['id']
+                    conn.commit()
+                conn.close()
             else:
                 return {
                     'statusCode': 500,
