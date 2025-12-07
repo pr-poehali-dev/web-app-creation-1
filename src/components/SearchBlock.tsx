@@ -256,12 +256,12 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
               <Label htmlFor="category" className="mb-2 block">
                 Категория
               </Label>
-              <Select value={selectedCategory || 'all-categories'} onValueChange={(value) => handleCategoryChange(value === 'all-categories' ? '' : value)}>
+              <Select value={selectedCategory || 'not-selected'} onValueChange={(value) => handleCategoryChange(value === 'not-selected' ? '' : value)}>
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="Все категории" />
+                  <SelectValue placeholder="Не выбрана" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all-categories">Все категории</SelectItem>
+                  <SelectItem value="not-selected">Не выбрана</SelectItem>
                   {CATEGORIES.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -276,15 +276,15 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
                 Подкатегория
               </Label>
               <Select
-                value={filters.subcategory || 'all-subcategories'}
-                onValueChange={(value) => handleSubcategoryChange(value === 'all-subcategories' ? '' : value)}
+                value={filters.subcategory || 'not-selected'}
+                onValueChange={(value) => handleSubcategoryChange(value === 'not-selected' ? '' : value)}
                 disabled={!selectedCategory}
               >
                 <SelectTrigger id="subcategory">
-                  <SelectValue placeholder="Все подкатегории" />
+                  <SelectValue placeholder="Не выбрана" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all-subcategories">Все подкатегории</SelectItem>
+                  <SelectItem value="not-selected">Не выбрана</SelectItem>
                   {subcategories.map((subcategory) => (
                     <SelectItem key={subcategory.id} value={subcategory.id}>
                       {subcategory.name}
