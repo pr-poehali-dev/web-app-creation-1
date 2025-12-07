@@ -93,6 +93,7 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
     vatRate: '20',
     district: '',
     fullAddress: '',
+    gpsCoordinates: '',
     availableDistricts: [] as string[],
     availableDeliveryTypes: [] as ('pickup' | 'delivery')[],
     startDate: '',

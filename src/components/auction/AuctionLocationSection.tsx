@@ -9,6 +9,7 @@ interface AuctionLocationSectionProps {
   formData: {
     district: string;
     fullAddress: string;
+    gpsCoordinates?: string;
     availableDistricts: string[];
     availableDeliveryTypes: ('pickup' | 'delivery')[];
   };
@@ -111,6 +112,42 @@ export default function AuctionLocationSection({
             onChange={(e) => onInputChange('fullAddress', e.target.value)}
             placeholder="Улица, дом"
           />
+        </div>
+
+        <div>
+          <Label htmlFor="gpsCoordinates">GPS-координаты (опционально)</Label>
+          <div className="relative">
+            <Input
+              id="gpsCoordinates"
+              value={formData.gpsCoordinates || ''}
+              onChange={(e) => onInputChange('gpsCoordinates', e.target.value)}
+              placeholder="Например: 41.2995, 69.2401"
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                      onInputChange('gpsCoordinates', coords);
+                    },
+                    (error) => {
+                      console.error('Ошибка получения координат:', error);
+                    }
+                  );
+                }
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-accent rounded-md transition-colors"
+              title="Получить текущие координаты"
+            >
+              <Icon name="MapPin" className="h-4 w-4 text-primary" />
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Укажите координаты в формате: широта, долгота
+          </p>
         </div>
 
         <div>
