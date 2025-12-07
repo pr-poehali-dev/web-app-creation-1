@@ -98,7 +98,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            <Icon name={mobileMenuOpen ? "X" : "Menu"} className="h-6 w-6" />
+            <Icon name={mobileMenuOpen ? "X" : "Menu"} className="h-6 w-6 text-white" />
           </Button>
 
           <nav className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-3 lg:mr-4">
