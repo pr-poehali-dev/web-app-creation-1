@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
-import SearchBlock from '@/components/SearchBlock';
+import AuctionSearchBlock from '@/components/auction/AuctionSearchBlock';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
@@ -236,11 +236,10 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
           </Button>
         </div>
 
-        <SearchBlock
+        <AuctionSearchBlock
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onSearch={handleSearch}
-          allOffers={[]}
         />
 
         <AuctionStatusFilters
