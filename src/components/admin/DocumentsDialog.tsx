@@ -46,7 +46,7 @@ interface DocumentViewerDialogProps {
 function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }: DocumentViewerDialogProps) {
   const isDataUrl = documentUrl.startsWith('data:');
   const isPdf = documentUrl.includes('.pdf') || documentUrl.includes('application/pdf') || (isDataUrl && documentUrl.includes('application/pdf'));
-  const isImage = !isPdf && (documentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) || (isDataUrl && documentUrl.match(/^data:image\//)));
+  const isImage = !isPdf && (documentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) || (isDataUrl && documentUrl.startsWith('data:image/')));
   
   const handleDownload = () => {
     if (isDataUrl) {
@@ -92,24 +92,15 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
         <div className="flex-1 overflow-auto bg-gray-100 rounded-lg p-4">
           {isPdf ? (
             isDataUrl ? (
-              <object
-                data={documentUrl}
-                type="application/pdf"
-                className="w-full h-[75vh]"
-              >
-                <embed
-                  src={documentUrl}
-                  type="application/pdf"
-                  className="w-full h-[75vh]"
-                />
-                <div className="text-center text-muted-foreground py-8">
-                  <p className="mb-4">PDF не может быть отображен в браузере</p>
-                  <Button onClick={handleDownload} variant="default">
-                    <Icon name="Download" className="h-4 w-4 mr-2" />
-                    Скачать для просмотра
-                  </Button>
-                </div>
-              </object>
+              <div className="flex flex-col items-center justify-center h-[75vh] gap-4">
+                <Icon name="FileText" className="h-16 w-16 text-muted-foreground" />
+                <p className="text-muted-foreground">PDF документ готов к скачиванию</p>
+                <p className="text-sm text-muted-foreground">Браузер не может отобразить встроенный PDF. Скачайте файл для просмотра.</p>
+                <Button onClick={handleDownload} variant="default" size="lg">
+                  <Icon name="Download" className="h-4 w-4 mr-2" />
+                  Скачать PDF
+                </Button>
+              </div>
             ) : (
               <iframe
                 src={documentUrl}
@@ -118,12 +109,14 @@ function DocumentViewerDialog({ open, onOpenChange, documentUrl, documentTitle }
               />
             )
           ) : isImage ? (
-            <img
-              src={documentUrl}
-              alt={documentTitle}
-              className="w-full h-auto max-h-[75vh] object-contain mx-auto bg-white rounded"
-              style={{ imageRendering: 'auto' }}
-            />
+            <div className="flex items-center justify-center min-h-[75vh]">
+              <img
+                src={documentUrl}
+                alt={documentTitle}
+                className="max-w-full max-h-[75vh] object-contain bg-white rounded shadow-lg"
+                style={{ imageRendering: 'auto' }}
+              />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-[75vh] gap-4">
               <Icon name="FileText" className="h-16 w-16 text-muted-foreground" />
