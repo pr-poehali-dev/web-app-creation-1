@@ -99,6 +99,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'purchase' | 'sale'>('all');
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -113,9 +114,9 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     }, 800);
   }, [isAuthenticated, currentUser, navigate]);
 
-  const filteredOrders = activeTab === 'all' 
-    ? orders 
-    : orders.filter(order => order.type === activeTab);
+  const filteredOrders = orders
+    .filter(order => activeTab === 'all' || order.type === activeTab)
+    .filter(order => statusFilter === 'all' || order.status === statusFilter);
 
   const getOrderStats = () => {
     return {
@@ -242,44 +243,62 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
             <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
             Назад
           </Button>
-          <h1 className="text-3xl font-bold text-foreground">Активные заказы</h1>
+          <h1 className="text-3xl font-bold text-foreground">Мои заказы</h1>
           <p className="text-muted-foreground mt-1">
-            Отслеживайте статус ваших покупок и продаж
+            Отслеживание покупок и продаж
           </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+            onClick={() => { setActiveTab('all'); setStatusFilter('all'); }}
+          >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-primary">{stats.total}</div>
               <p className="text-sm text-muted-foreground mt-1">Всего</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+            onClick={() => { setActiveTab('purchase'); setStatusFilter('all'); }}
+          >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-blue-500">{stats.purchase}</div>
               <p className="text-sm text-muted-foreground mt-1">Покупок</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+            onClick={() => { setActiveTab('sale'); setStatusFilter('all'); }}
+          >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-green-500">{stats.sale}</div>
               <p className="text-sm text-muted-foreground mt-1">Продаж</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+            onClick={() => setStatusFilter('new')}
+          >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-blue-400">{stats.new}</div>
               <p className="text-sm text-muted-foreground mt-1">Новых</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+            onClick={() => setStatusFilter('processing')}
+          >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-orange-500">{stats.processing}</div>
               <p className="text-sm text-muted-foreground mt-1">В обработке</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+            onClick={() => setStatusFilter('shipping')}
+          >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-purple-500">{stats.shipping}</div>
               <p className="text-sm text-muted-foreground mt-1">Доставка</p>
@@ -287,7 +306,25 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)} className="mb-6">
+        {statusFilter !== 'all' && (
+          <div className="flex items-center gap-2 bg-muted/50 p-3 rounded-lg mb-4">
+            <Icon name="Filter" className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Фильтр:</span>
+            <Badge className={STATUS_COLORS[statusFilter as OrderStatus]}>
+              {STATUS_LABELS[statusFilter as OrderStatus]}
+            </Badge>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setStatusFilter('all')}
+              className="ml-auto h-7"
+            >
+              <Icon name="X" className="h-3 w-3" />
+            </Button>
+          </div>
+        )}
+        
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setStatusFilter('all'); }} className="mb-6">
           <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="all">
               Все заказы
