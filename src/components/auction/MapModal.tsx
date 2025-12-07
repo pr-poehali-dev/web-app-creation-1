@@ -17,6 +17,9 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   const markerRef = useRef<L.Marker | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([41.2995, 69.2401]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ display_name: string; lat: string; lon: string }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (coordinates) {
@@ -109,6 +112,31 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     }
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5`
+      );
+      const data = await response.json();
+      setSearchResults(data);
+    } catch (error) {
+      console.error('Ошибка поиска:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleSelectSearchResult = (lat: string, lon: string) => {
+    const coords = `${parseFloat(lat).toFixed(6)}, ${parseFloat(lon).toFixed(6)}`;
+    onCoordinatesChange(coords);
+    setMapCenter([parseFloat(lat), parseFloat(lon)]);
+    setSearchResults([]);
+    setSearchQuery('');
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -121,6 +149,41 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           </button>
         </div>
         <div className="space-y-4">
+          <div>
+            <Label htmlFor="searchAddress">Поиск адреса</Label>
+            <div className="flex gap-2">
+              <Input
+                id="searchAddress"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                placeholder="Например: Ташкент, улица Амира Темура"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                <Icon name="Search" className="h-4 w-4" />
+              </button>
+            </div>
+            {searchResults.length > 0 && (
+              <div className="mt-2 border rounded-md max-h-40 overflow-auto">
+                {searchResults.map((result, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleSelectSearchResult(result.lat, result.lon)}
+                    className="w-full text-left px-3 py-2 hover:bg-accent transition-colors text-sm"
+                  >
+                    {result.display_name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div ref={mapContainerRef} className="h-[400px] rounded-lg overflow-hidden border" />
           <p className="text-sm text-muted-foreground">
             Нажмите на карте, чтобы указать местонахождение
