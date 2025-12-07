@@ -114,53 +114,6 @@ export default function AuctionLocationSection({
         </div>
 
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Label>Районы доставки *</Label>
-            <button
-              type="button"
-              onClick={() => {
-                setIsDeliveryFilterEnabled(!isDeliveryFilterEnabled);
-                setDeliveryDistrictsFilter('');
-              }}
-              className="px-2 py-0.5 text-xs rounded-md border hover:bg-accent transition-colors"
-            >
-              {isDeliveryFilterEnabled ? 'есть' : 'нет'}
-            </button>
-          </div>
-          
-          {isDeliveryFilterEnabled && (
-            <>
-              <div className="mb-3">
-                <Input
-                  value={deliveryDistrictsFilter}
-                  onChange={(e) => setDeliveryDistrictsFilter(e.target.value)}
-                  placeholder="Введите название района для фильтрации..."
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {filteredDeliveryDistricts.map(district => (
-                  <div key={district.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`district-${district.id}`}
-                      checked={formData.availableDistricts.includes(district.id)}
-                      onCheckedChange={() => onDistrictToggle(district.id)}
-                    />
-                    <Label
-                      htmlFor={`district-${district.id}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {district.name}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        <div>
           <Label>Способы получения</Label>
           <div className="flex gap-4 mt-2">
             <div className="flex items-center space-x-2">
@@ -185,6 +138,55 @@ export default function AuctionLocationSection({
             </div>
           </div>
         </div>
+
+        {formData.availableDeliveryTypes.includes('delivery') && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Label>Другие районы</Label>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDeliveryFilterEnabled(!isDeliveryFilterEnabled);
+                  setDeliveryDistrictsFilter('');
+                }}
+                className="px-2 py-0.5 text-xs font-bold rounded-md border hover:bg-accent transition-colors"
+              >
+                {isDeliveryFilterEnabled ? 'есть' : 'нет'}
+              </button>
+            </div>
+            
+            {isDeliveryFilterEnabled && (
+              <>
+                <div className="mb-3">
+                  <Input
+                    value={deliveryDistrictsFilter}
+                    onChange={(e) => setDeliveryDistrictsFilter(e.target.value)}
+                    placeholder="Введите название района для фильтрации..."
+                    className="w-full"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {filteredDeliveryDistricts.map(district => (
+                    <div key={district.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`district-${district.id}`}
+                        checked={formData.availableDistricts.includes(district.id)}
+                        onCheckedChange={() => onDistrictToggle(district.id)}
+                      />
+                      <Label
+                        htmlFor={`district-${district.id}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {district.name}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
