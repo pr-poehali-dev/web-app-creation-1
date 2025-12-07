@@ -63,6 +63,8 @@ export default function AuctionLocationSection({
       
       if (matchedDistrict) {
         onInputChange('district', matchedDistrict.id);
+        setDistrictSearch('');
+        setIsDropdownOpen(false);
       }
     }
   };

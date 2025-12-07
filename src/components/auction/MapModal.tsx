@@ -273,6 +273,23 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           <p className="text-sm text-muted-foreground">
             Нажмите на карте или перетащите маркер, чтобы указать местонахождение
           </p>
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              type="button"
+              onClick={handleUseMyLocation}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
+              <Icon name="MapPin" className="h-4 w-4" />
+              Мое местоположение
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border rounded-md hover:bg-accent transition-colors"
+            >
+              Готово
+            </button>
+          </div>
           <div>
             <Label htmlFor="mapCoordinates">Или введите координаты вручную</Label>
             <Input
@@ -284,23 +301,6 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             <p className="text-xs text-muted-foreground mt-1">
               Формат: широта, долгота
             </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleUseMyLocation}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            <Icon name="MapPin" className="h-4 w-4" />
-            Использовать мое местоположение
-          </button>
-          <div className="flex justify-end gap-2 mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border rounded-md hover:bg-accent transition-colors"
-            >
-              Готово
-            </button>
           </div>
         </div>
       </div>
