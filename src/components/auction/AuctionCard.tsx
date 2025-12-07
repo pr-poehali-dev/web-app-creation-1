@@ -40,8 +40,13 @@ export default function AuctionCard({ auction, districts, isAuthenticated }: Auc
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Icon name="Gavel" className="h-12 w-12 text-muted-foreground" />
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+              <div className="flex items-center space-x-2 opacity-30">
+                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary">
+                  <Icon name="Building2" className="h-10 w-10 text-white" />
+                </div>
+                <span className="text-4xl font-bold text-primary">ЕРТТП</span>
+              </div>
             </div>
           )}
           <div className="absolute top-2 right-2">
