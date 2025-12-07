@@ -148,6 +148,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
   const [activeTab, setActiveTab] = useState<'all' | 'purchase' | 'sale'>('all');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -155,17 +156,21 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
       return;
     }
 
-    loadOrders();
-  }, [isAuthenticated, currentUser, navigate]);
+    if (!hasLoaded) {
+      loadOrders();
+    }
+  }, [isAuthenticated]);
 
   const loadOrders = async () => {
     setIsLoading(true);
     try {
       const data = await ordersAPI.getUserOrders({});
       setOrders(data.orders);
+      setHasLoaded(true);
     } catch (error) {
       console.error('Error loading orders:', error);
       setOrders([]);
+      setHasLoaded(true);
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +192,15 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     shipping: orders.filter(o => o.status === 'shipping').length,
   }), [orders]);
 
+  const handleTabChange = useCallback((tab: 'all' | 'purchase' | 'sale') => {
+    setActiveTab(tab);
+    setStatusFilter('all');
+  }, []);
+
+  const handleStatusFilterChange = useCallback((status: OrderStatus) => {
+    setStatusFilter(status);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -206,7 +220,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-            onClick={() => { setActiveTab('all'); setStatusFilter('all'); }}
+            onClick={() => handleTabChange('all')}
           >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-primary">{stats.total}</div>
@@ -215,7 +229,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </Card>
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-            onClick={() => { setActiveTab('purchase'); setStatusFilter('all'); }}
+            onClick={() => handleTabChange('purchase')}
           >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-blue-500">{stats.purchase}</div>
@@ -224,7 +238,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </Card>
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-            onClick={() => { setActiveTab('sale'); setStatusFilter('all'); }}
+            onClick={() => handleTabChange('sale')}
           >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-green-500">{stats.sale}</div>
@@ -233,7 +247,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </Card>
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-            onClick={() => setStatusFilter('new')}
+            onClick={() => handleStatusFilterChange('new')}
           >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-blue-400">{stats.new}</div>
@@ -242,7 +256,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </Card>
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-            onClick={() => setStatusFilter('processing')}
+            onClick={() => handleStatusFilterChange('processing')}
           >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-orange-500">{stats.processing}</div>
@@ -251,7 +265,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </Card>
           <Card 
             className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
-            onClick={() => setStatusFilter('shipping')}
+            onClick={() => handleStatusFilterChange('shipping')}
           >
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-purple-500">{stats.shipping}</div>
