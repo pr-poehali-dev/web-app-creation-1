@@ -29,6 +29,7 @@ export default function FileUploadWithIndicator({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState<string>('');
+  const [preview, setPreview] = useState<string>('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -60,6 +61,16 @@ export default function FileUploadWithIndicator({
     onChange(file);
     setUploadSuccess(true);
     setTimeout(() => setUploadSuccess(false), 3000);
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPreview('');
+    }
   };
 
   return (
@@ -98,9 +109,42 @@ export default function FileUploadWithIndicator({
         <p className="text-xs text-muted-foreground">{helpText}</p>
       )}
       {selectedFile && !error && (
-        <p className="text-xs text-green-600">
-          {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} МБ)
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs text-green-600">
+            {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} МБ)
+          </p>
+          {preview && (
+            <div className="relative rounded-lg border border-green-200 overflow-hidden bg-white">
+              <img 
+                src={preview} 
+                alt="Предпросмотр" 
+                className="w-full h-auto max-h-64 object-contain"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFile(null);
+                  setPreview('');
+                  onChange(null);
+                  const input = document.getElementById(id) as HTMLInputElement;
+                  if (input) input.value = '';
+                }}
+                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg"
+              >
+                <Icon name="X" className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+          {selectedFile.type === 'application/pdf' && (
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-green-200 bg-green-50">
+              <Icon name="FileText" className="h-8 w-8 text-green-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-green-900">PDF документ</p>
+                <p className="text-xs text-green-600">Готов к загрузке</p>
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
