@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface FileUploadWithIndicatorProps {
   id: string;
@@ -12,6 +13,9 @@ interface FileUploadWithIndicatorProps {
   onChange: (file: File | null) => void;
   disabled?: boolean;
 }
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
 
 export default function FileUploadWithIndicator({
   id,
@@ -24,16 +28,38 @@ export default function FileUploadWithIndicator({
 }: FileUploadWithIndicatorProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [error, setError] = useState<string>('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    setError('');
+    
+    if (!file) {
+      setSelectedFile(null);
+      onChange(null);
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`Размер файла не должен превышать 5 МБ. Ваш файл: ${(file.size / 1024 / 1024).toFixed(2)} МБ`);
+      e.target.value = '';
+      setSelectedFile(null);
+      onChange(null);
+      return;
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError(`Недопустимый формат файла. Разрешены: JPEG, PNG, GIF, WebP, PDF. Ваш файл: ${file.type || 'неизвестный'}`);
+      e.target.value = '';
+      setSelectedFile(null);
+      onChange(null);
+      return;
+    }
+
     setSelectedFile(file);
     onChange(file);
-    
-    if (file) {
-      setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
-    }
+    setUploadSuccess(true);
+    setTimeout(() => setUploadSuccess(false), 3000);
   };
 
   return (
@@ -63,10 +89,15 @@ export default function FileUploadWithIndicator({
           </div>
         )}
       </div>
+      {error && (
+        <Alert variant="destructive" className="py-2">
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      )}
       {helpText && (
         <p className="text-xs text-muted-foreground">{helpText}</p>
       )}
-      {selectedFile && (
+      {selectedFile && !error && (
         <p className="text-xs text-green-600">
           {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} МБ)
         </p>
