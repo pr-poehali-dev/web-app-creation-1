@@ -34,24 +34,47 @@ export function getSearchSuggestions(offers: Offer[], query: string, limit: numb
   }
 
   const normalizedQuery = normalizeSearchString(query);
-  const suggestions = new Set<string>();
+  
+  const scoredSuggestions: Array<{ title: string; score: number }> = [];
 
   offers.forEach(offer => {
-    const title = offer.title.toLowerCase();
-    const words = title.split(/\s+/);
+    const normalizedTitle = normalizeSearchString(offer.title);
+    const words = normalizedTitle.split(/\s+/);
+
+    let score = 0;
 
     words.forEach(word => {
-      if (word.startsWith(normalizedQuery) && word.length > normalizedQuery.length) {
-        suggestions.add(offer.title);
+      if (word.startsWith(normalizedQuery)) {
+        score += 10;
       }
     });
 
-    if (title.includes(normalizedQuery)) {
-      suggestions.add(offer.title);
+    if (normalizedTitle.startsWith(normalizedQuery)) {
+      score += 20;
+    }
+
+    if (normalizedTitle.includes(normalizedQuery)) {
+      score += 5;
+    }
+
+    if (score > 0) {
+      scoredSuggestions.push({ title: offer.title, score });
     }
   });
 
-  return Array.from(suggestions).slice(0, limit);
+  scoredSuggestions.sort((a, b) => b.score - a.score);
+
+  const uniqueTitles = new Set<string>();
+  const result: string[] = [];
+
+  for (const suggestion of scoredSuggestions) {
+    if (!uniqueTitles.has(suggestion.title) && result.length < limit) {
+      uniqueTitles.add(suggestion.title);
+      result.push(suggestion.title);
+    }
+  }
+
+  return result;
 }
 
 export function highlightMatch(text: string, query: string): { text: string; isMatch: boolean }[] {
