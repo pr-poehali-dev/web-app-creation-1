@@ -149,7 +149,7 @@ export default function AuctionLocationSection({
                   setIsDeliveryFilterEnabled(!isDeliveryFilterEnabled);
                   setDeliveryDistrictsFilter('');
                 }}
-                className="px-2 py-0.5 text-xs font-bold rounded-md border hover:bg-accent transition-colors"
+                className="px-2 py-0.5 text-xs font-bold uppercase rounded-md border-2 hover:bg-accent transition-colors"
               >
                 {isDeliveryFilterEnabled ? 'есть' : 'нет'}
               </button>
