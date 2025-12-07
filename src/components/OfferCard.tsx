@@ -108,14 +108,11 @@ export default function OfferCard({ offer }: OfferCardProps) {
           </h3>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {category ? (
-            <Badge variant="secondary">{category.name}</Badge>
-          ) : (
-            <Badge variant="secondary">Категория не выбрана</Badge>
-          )}
-          {subcategory && <Badge variant="outline">{subcategory.name}</Badge>}
-        </div>
+        {subcategory && (
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="outline">{subcategory.name}</Badge>
+          </div>
+        )}
 
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">
