@@ -25,6 +25,7 @@ import OfferDetail from "./pages/OfferDetail";
 import RequestDetail from "./pages/RequestDetail";
 import CreateOffer from "./pages/CreateOffer";
 import CreateRequest from "./pages/CreateRequest";
+import CreateAuction from "./pages/CreateAuction";
 import VerificationPage from "./pages/VerificationPage";
 import VerificationResubmit from "./pages/VerificationResubmit";
 import AdminVerifications from "./pages/AdminVerifications";
@@ -123,6 +124,7 @@ const App = () => {
             <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/create-auction" element={<CreateAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/register" element={<Register onRegister={handleLogin} />} />

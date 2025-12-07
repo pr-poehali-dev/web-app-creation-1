@@ -9,6 +9,7 @@ export interface AuctionBid {
 
 export interface Auction {
   id: string;
+  userId: string;
   title: string;
   description: string;
   category: string;
@@ -17,7 +18,9 @@ export interface Auction {
   unit: string;
   startingPrice: number;
   currentPrice: number;
+  currentBid: number;
   minBidStep: number;
+  buyNowPrice?: number;
   hasVAT: boolean;
   vatRate?: number;
   location: string;

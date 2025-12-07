@@ -3,6 +3,7 @@ import type { Auction } from '@/types/auction';
 export const MOCK_AUCTIONS: Auction[] = [
   {
     id: '1',
+    userId: 'seller1',
     title: 'Партия строительного кирпича',
     description: 'Красный керамический кирпич первого сорта. Морозостойкость F50, марка прочности М150. Идеально подходит для строительства в условиях Крайнего Севера.',
     category: 'construction',
@@ -11,6 +12,7 @@ export const MOCK_AUCTIONS: Auction[] = [
     unit: 'шт',
     startingPrice: 15,
     currentPrice: 18,
+    currentBid: 18,
     minBidStep: 0.5,
     hasVAT: true,
     vatRate: 20,
@@ -80,6 +82,7 @@ export const MOCK_AUCTIONS: Auction[] = [
   },
   {
     id: '2',
+    userId: 'seller2',
     title: 'Офисная мебель (комплект на 20 рабочих мест)',
     description: 'Комплект офисной мебели включает: столы, кресла, тумбы, стеллажи. Состояние отличное, использовалась 2 года. Подходит для быстрой организации офиса.',
     category: 'furniture',
@@ -88,6 +91,7 @@ export const MOCK_AUCTIONS: Auction[] = [
     unit: 'комплект',
     startingPrice: 150000,
     currentPrice: 185000,
+    currentBid: 185000,
     minBidStep: 5000,
     hasVAT: true,
     vatRate: 20,
@@ -148,6 +152,7 @@ export const MOCK_AUCTIONS: Auction[] = [
   },
   {
     id: '3',
+    userId: 'seller3',
     title: 'Автопогрузчик Toyota 3 тонны',
     description: 'Дизельный автопогрузчик Toyota в хорошем рабочем состоянии. Грузоподъемность 3 тонны, высота подъема 4.5м. Все документы в порядке. Техническое обслуживание проходил регулярно.',
     category: 'transport',
@@ -156,6 +161,7 @@ export const MOCK_AUCTIONS: Auction[] = [
     unit: 'шт',
     startingPrice: 800000,
     currentPrice: 950000,
+    currentBid: 950000,
     minBidStep: 10000,
     hasVAT: true,
     vatRate: 20,
@@ -217,6 +223,7 @@ export const MOCK_AUCTIONS: Auction[] = [
   },
   {
     id: '4',
+    userId: 'seller4',
     title: 'Завершенный аукцион: Партия офисной техники',
     description: 'Принтеры, сканеры, МФУ - 15 единиц техники различных производителей. Аукцион завершен.',
     category: 'electronics',
@@ -225,6 +232,7 @@ export const MOCK_AUCTIONS: Auction[] = [
     unit: 'шт',
     startingPrice: 50000,
     currentPrice: 73000,
+    currentBid: 73000,
     minBidStep: 1000,
     hasVAT: true,
     vatRate: 20,
