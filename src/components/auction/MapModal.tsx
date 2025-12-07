@@ -1,18 +1,9 @@
-import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
-
-function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click: (e) => {
-      onLocationSelect(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
-}
 
 interface MapModalProps {
   isOpen: boolean;
@@ -22,31 +13,84 @@ interface MapModalProps {
 }
 
 export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesChange }: MapModalProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([41.2995, 69.2401]);
-  const [markerPosition, setMarkerPosition] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     if (coordinates) {
       const [lat, lng] = coordinates.split(',').map(c => parseFloat(c.trim()));
       if (!isNaN(lat) && !isNaN(lng)) {
         setMapCenter([lat, lng]);
-        setMarkerPosition([lat, lng]);
       }
     }
   }, [coordinates]);
 
-  const handleMapClick = (lat: number, lng: number) => {
-    const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    onCoordinatesChange(coords);
-    setMarkerPosition([lat, lng]);
-  };
+  useEffect(() => {
+    if (!isOpen || !mapContainerRef.current) return;
+
+    if (!mapRef.current) {
+      const map = L.map(mapContainerRef.current).setView(mapCenter, 13);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(map);
+
+      map.on('click', (e: L.LeafletMouseEvent) => {
+        const { lat, lng } = e.latlng;
+        const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        onCoordinatesChange(coords);
+
+        if (markerRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+        } else {
+          const icon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+          });
+          markerRef.current = L.marker([lat, lng], { icon }).addTo(map);
+        }
+      });
+
+      mapRef.current = map;
+    }
+
+    if (mapRef.current) {
+      mapRef.current.setView(mapCenter, 13);
+      
+      if (coordinates) {
+        const [lat, lng] = coordinates.split(',').map(c => parseFloat(c.trim()));
+        if (!isNaN(lat) && !isNaN(lng)) {
+          if (markerRef.current) {
+            markerRef.current.setLatLng([lat, lng]);
+          } else {
+            const icon = L.icon({
+              iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+              iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+              shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+            });
+            markerRef.current = L.marker([lat, lng], { icon }).addTo(mapRef.current);
+          }
+        }
+      }
+
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 100);
+    }
+  }, [isOpen, mapCenter, coordinates, onCoordinatesChange]);
 
   const handleInputChange = (value: string) => {
     onCoordinatesChange(value);
     const [lat, lng] = value.split(',').map(c => parseFloat(c.trim()));
     if (!isNaN(lat) && !isNaN(lng)) {
       setMapCenter([lat, lng]);
-      setMarkerPosition([lat, lng]);
     }
   };
 
@@ -57,7 +101,6 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
           onCoordinatesChange(coords);
           setMapCenter([position.coords.latitude, position.coords.longitude]);
-          setMarkerPosition([position.coords.latitude, position.coords.longitude]);
         },
         (error) => {
           console.error('Ошибка получения координат:', error);
@@ -78,31 +121,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           </button>
         </div>
         <div className="space-y-4">
-          <div className="h-[400px] rounded-lg overflow-hidden border">
-            <MapContainer
-              center={mapCenter}
-              zoom={13}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <MapClickHandler onLocationSelect={handleMapClick} />
-              {markerPosition && (
-                <Marker 
-                  position={markerPosition}
-                  icon={L.icon({
-                    iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                    iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-                    shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                  })}
-                />
-              )}
-            </MapContainer>
-          </div>
+          <div ref={mapContainerRef} className="h-[400px] rounded-lg overflow-hidden border" />
           <p className="text-sm text-muted-foreground">
             Нажмите на карте, чтобы указать местонахождение
           </p>
