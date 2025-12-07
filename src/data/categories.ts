@@ -58,12 +58,19 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: 'food',
-    name: 'Продукты питания',
+    name: 'Пищевая продукция',
     subcategories: [
       { id: 'meat', name: 'Мясная продукция', categoryId: 'food' },
       { id: 'dairy', name: 'Молочная продукция', categoryId: 'food' },
       { id: 'fruits-vegetables', name: 'Фрукты-Овощи', categoryId: 'food' },
       { id: 'grocery', name: 'Бакалея', categoryId: 'food' },
+      { id: 'fish', name: 'Рыбная продукция', categoryId: 'food' },
+      { id: 'bakery', name: 'Хлебобулочные изделия', categoryId: 'food' },
+      { id: 'confectionery', name: 'Кондитерские изделия', categoryId: 'food' },
+      { id: 'baby-food', name: 'Детское питание', categoryId: 'food' },
+      { id: 'eggs', name: 'Яйца и яичная продукция', categoryId: 'food' },
+      { id: 'beverages', name: 'Безалкогольные напитки', categoryId: 'food' },
+      { id: 'ready-meals', name: 'Полуфабрикаты и готовые блюда', categoryId: 'food' },
     ],
   },
 ];
