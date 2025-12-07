@@ -39,49 +39,49 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-3 py-4 md:py-6 flex-1">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/5 p-4 md:p-6 rounded-lg md:rounded-xl border border-primary/30 shadow-md">
-            <h1 className="text-lg md:text-2xl font-bold text-foreground mb-3 md:mb-4 leading-tight text-center">
+      <main className="container mx-auto px-3 py-6 md:py-8 flex-1">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/5 p-6 md:p-10 rounded-lg md:rounded-xl border border-primary/30 shadow-md">
+            <h1 className="text-xl md:text-3xl font-bold text-foreground mb-4 md:mb-5 leading-tight text-center">
               «Единая региональная товарно-торговая площадка» - это Ваш ключ к успешной торговле!
             </h1>
             
-            <div className="space-y-3 md:space-y-4">
-              <p className="text-sm md:text-base font-semibold text-foreground/90 leading-snug text-center">
+            <div className="space-y-4 md:space-y-5">
+              <p className="text-base md:text-lg font-semibold text-foreground/90 leading-snug text-center">
                 Увеличьте продажи, оптимизируйте производство, привлекайте инвестиции!
               </p>
               
               <div className="h-px bg-primary/20 my-3"></div>
               
-              <p className="text-sm md:text-base font-semibold text-foreground leading-snug">
+              <p className="text-base md:text-lg font-semibold text-foreground leading-snug">
                 ЕРТТП предлагает:
               </p>
               
-              <ul className="space-y-2 md:space-y-3 pl-0">
-                <li className="flex gap-2 items-start">
-                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+              <ul className="space-y-3 md:space-y-4 pl-0">
+                <li className="flex gap-3 items-start">
+                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
                     <strong className="font-semibold">Гарантированный сбыт:</strong> Прямой доступ к вашей целевой аудитории и новые рынки сбыта в вашем регионе.
                   </span>
                 </li>
                 
-                <li className="flex gap-2 items-start">
-                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+                <li className="flex gap-3 items-start">
+                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
                     <strong className="font-semibold">Оптимизация процессов:</strong> Точное планирование производства и анализ данных спроса и предложения в режиме реального времени.
                   </span>
                 </li>
                 
-                <li className="flex gap-2 items-start">
-                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+                <li className="flex gap-3 items-start">
+                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
                     <strong className="font-semibold">Финансирование без рисков:</strong> Получайте предоплату от потребителей напрямую на основе заключенных контрактов!
                   </span>
                 </li>
                 
-                <li className="flex gap-2 items-start">
-                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
-                  <span className="text-xs md:text-sm text-foreground/90 leading-snug">
+                <li className="flex gap-3 items-start">
+                  <span className="text-base md:text-lg flex-shrink-0 mt-0.5">✅</span>
+                  <span className="text-sm md:text-base text-foreground/90 leading-relaxed">
                     <strong className="font-semibold">Выгода вашим клиентам:</strong> Фиксированные цены, гарантии сроков поставки и уверенность в качестве продукции
                   </span>
                 </li>
@@ -89,15 +89,15 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
               
               <div className="h-px bg-primary/20 my-3"></div>
               
-              <p className="text-sm md:text-base font-semibold text-foreground leading-snug text-center">
+              <p className="text-base md:text-lg font-semibold text-foreground leading-snug text-center">
                 Зарегистрируйтесь и начните развивать свой бизнес вместе с нами!
               </p>
               
-              <div className="text-center pt-3">
+              <div className="text-center pt-4">
                 <Link 
                   to="/register" 
                   onClick={handleJoinClick}
-                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 md:px-6 py-2 md:py-2.5 rounded-lg text-sm md:text-base font-semibold hover:bg-primary/90 transition-all shadow-md"
+                  className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 md:px-8 py-2.5 md:py-3 rounded-lg text-base md:text-lg font-semibold hover:bg-primary/90 transition-all shadow-md"
                 >
                   Присоединяйтесь!
                   <Icon name="ArrowRight" className="h-4 w-4" />
