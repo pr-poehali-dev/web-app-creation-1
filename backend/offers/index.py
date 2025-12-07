@@ -39,8 +39,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     try:
         if method == 'GET':
-            path_params = event.get('pathParams', {})
-            offer_id = path_params.get('id')
+            # Проверяем query параметр id для получения одного предложения
+            query_params = event.get('queryStringParameters', {}) or {}
+            offer_id = query_params.get('id')
             
             if offer_id:
                 return get_offer_by_id(offer_id, headers)

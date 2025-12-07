@@ -93,9 +93,10 @@ export const offersAPI = {
   },
 
   async getOfferById(id: string): Promise<Offer> {
-    const response = await fetch(`${OFFERS_API}/${id}`);
+    const response = await fetch(`${OFFERS_API}?id=${id}`);
     
     if (!response.ok) {
+      console.error('HTTP', response.status, ':', `${OFFERS_API}?id=${id}`);
       throw new Error('Failed to fetch offer');
     }
     
@@ -172,9 +173,10 @@ export const requestsAPI = {
   },
 
   async getRequestById(id: string): Promise<OfferRequest> {
-    const response = await fetch(`${REQUESTS_API}/${id}`);
+    const response = await fetch(`${REQUESTS_API}?id=${id}`);
     
     if (!response.ok) {
+      console.error('HTTP', response.status, ':', `${REQUESTS_API}?id=${id}`);
       throw new Error('Failed to fetch request');
     }
     
