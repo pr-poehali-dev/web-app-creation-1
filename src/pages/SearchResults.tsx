@@ -259,6 +259,11 @@ export default function SearchResults({ isAuthenticated, onLogout }: SearchResul
             <div className="mb-6">
               <div className="flex items-center justify-between flex-wrap gap-4">
                 <div className="flex items-center gap-4 flex-wrap">
+                  <div className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md font-medium">
+                    <Icon name={filters.contentType === 'offers' ? 'Package' : 'FileText'} className="h-4 w-4" />
+                    <span className="text-sm">{filters.contentType === 'offers' ? 'Предложения' : 'Запросы'}</span>
+                  </div>
+                  
                   <div className="flex items-center gap-2">
                     <Icon name="Package" className="h-5 w-5 text-muted-foreground" />
                     <p className="text-sm text-muted-foreground">
