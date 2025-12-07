@@ -137,7 +137,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
             <div className="flex items-center justify-between pb-2 border-b">
               <span className="text-muted-foreground">Сумма заказа:</span>
               <span className="font-bold text-lg text-primary">
-                {order.totalAmount.toLocaleString()} ₽
+                {(order.totalAmount || 0).toLocaleString()} ₽
               </span>
             </div>
             <div className="flex items-center justify-between">
