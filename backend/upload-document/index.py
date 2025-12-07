@@ -9,7 +9,7 @@ import json
 import os
 import base64
 import uuid
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 from datetime import datetime, timedelta
 import boto3
 from botocore.exceptions import ClientError
@@ -71,18 +71,30 @@ def get_s3_client():
         aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY', '')
     )
 
-def detect_file_type(file_data: bytes) -> tuple[str, str]:
+def detect_file_type(file_data: bytes) -> Tuple[str, str]:
+    if len(file_data) < 12:
+        return 'application/octet-stream', '.bin'
+    
+    magic_bytes = file_data[:12]
+    print(f"First 12 bytes (hex): {magic_bytes.hex()}")
+    
     if file_data.startswith(b'\xFF\xD8\xFF'):
+        print("Detected: JPEG")
         return 'image/jpeg', '.jpg'
     elif file_data.startswith(b'\x89PNG\r\n\x1a\n'):
+        print("Detected: PNG")
         return 'image/png', '.png'
     elif file_data.startswith(b'GIF87a') or file_data.startswith(b'GIF89a'):
+        print("Detected: GIF")
         return 'image/gif', '.gif'
-    elif file_data.startswith(b'RIFF') and file_data[8:12] == b'WEBP':
+    elif file_data.startswith(b'RIFF') and len(file_data) >= 12 and file_data[8:12] == b'WEBP':
+        print("Detected: WebP")
         return 'image/webp', '.webp'
     elif file_data.startswith(b'%PDF'):
+        print("Detected: PDF")
         return 'application/pdf', '.pdf'
     else:
+        print(f"Unknown file type, magic bytes: {magic_bytes.hex()}")
         return 'application/octet-stream', '.bin'
 
 def get_content_type_extension(content_type: str) -> str:
@@ -191,6 +203,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         bucket_name = 'files'
         
         detected_content_type, file_extension = detect_file_type(file_data)
+        print(f"File size: {len(file_data)} bytes, detected type: {detected_content_type}, extension: {file_extension}")
         file_name = f'verifications/{user_id}/{file_type}-{uuid.uuid4()}{file_extension}'
         
         try:
