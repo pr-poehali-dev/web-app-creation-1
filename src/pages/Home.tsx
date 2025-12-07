@@ -59,30 +59,30 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
               
               <ul className="space-y-2 md:space-y-3 pl-0">
                 <li className="flex gap-2 items-start">
-                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
                   <span className="text-xs md:text-sm text-foreground/90 leading-snug">
-                    <strong className="font-semibold">Гарантированный сбыт</strong> — прямой доступ к целевой аудитории
+                    <strong className="font-semibold">Гарантированный сбыт:</strong> Прямой доступ к вашей целевой аудитории и новые рынки сбыта в вашем регионе.
                   </span>
                 </li>
                 
                 <li className="flex gap-2 items-start">
-                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
                   <span className="text-xs md:text-sm text-foreground/90 leading-snug">
-                    <strong className="font-semibold">Оптимизация процессов</strong> — планирование на основе реальных данных
+                    <strong className="font-semibold">Оптимизация процессов:</strong> Точное планирование производства и анализ данных спроса и предложения в режиме реального времени.
                   </span>
                 </li>
                 
                 <li className="flex gap-2 items-start">
-                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
                   <span className="text-xs md:text-sm text-foreground/90 leading-snug">
-                    <strong className="font-semibold">Финансирование</strong> — предоплата от потребителей напрямую
+                    <strong className="font-semibold">Финансирование без рисков:</strong> Получайте предоплату от потребителей напрямую на основе заключенных контрактов!
                   </span>
                 </li>
                 
                 <li className="flex gap-2 items-start">
-                  <Icon name="CheckCircle2" className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-xs md:text-sm flex-shrink-0 mt-0.5">✅</span>
                   <span className="text-xs md:text-sm text-foreground/90 leading-snug">
-                    <strong className="font-semibold">Выгода потребителям</strong> — фиксированные цены и гарантии поставки
+                    <strong className="font-semibold">Выгода вашим клиентам:</strong> Фиксированные цены, гарантии сроков поставки и уверенность в качестве продукции
                   </span>
                 </li>
               </ul>
