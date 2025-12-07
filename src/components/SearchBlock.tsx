@@ -222,11 +222,11 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
             </div>
 
             <div className="w-full md:w-48">
-              <Label htmlFor="content-type" className="mb-2 block">
+              <Label htmlFor="content-type" className="mb-2 block font-semibold text-primary">
                 Тип контента
               </Label>
               <Select value={filters.contentType} onValueChange={handleContentTypeChange}>
-                <SelectTrigger id="content-type">
+                <SelectTrigger id="content-type" className="bg-primary text-primary-foreground border-primary hover:bg-primary/90 font-medium">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
