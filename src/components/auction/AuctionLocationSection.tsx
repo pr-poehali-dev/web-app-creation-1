@@ -27,9 +27,15 @@ export default function AuctionLocationSection({
 }: AuctionLocationSectionProps) {
   const [districtSearch, setDistrictSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDeliveryFilterEnabled, setIsDeliveryFilterEnabled] = useState(false);
+  const [deliveryDistrictsFilter, setDeliveryDistrictsFilter] = useState('');
 
   const filteredDistricts = districts.filter(d => 
     d.name.toLowerCase().includes(districtSearch.toLowerCase())
+  );
+
+  const filteredDeliveryDistricts = districts.filter(d => 
+    d.name.toLowerCase().includes(deliveryDistrictsFilter.toLowerCase())
   );
 
   const selectedDistrict = districts.find(d => d.id === formData.district);
@@ -108,9 +114,34 @@ export default function AuctionLocationSection({
         </div>
 
         <div>
-          <Label>Районы доставки *</Label>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
-            {districts.map(district => (
+          <div className="flex items-center justify-between mb-2">
+            <Label>Районы доставки *</Label>
+            <button
+              type="button"
+              onClick={() => {
+                setIsDeliveryFilterEnabled(!isDeliveryFilterEnabled);
+                setDeliveryDistrictsFilter('');
+              }}
+              className="flex items-center gap-2 px-3 py-1 text-sm rounded-md border hover:bg-accent transition-colors"
+            >
+              <Icon name="Filter" className="h-4 w-4" />
+              <span>Фильтр: {isDeliveryFilterEnabled ? 'есть' : 'нет'}</span>
+            </button>
+          </div>
+          
+          {isDeliveryFilterEnabled && (
+            <div className="mb-3">
+              <Input
+                value={deliveryDistrictsFilter}
+                onChange={(e) => setDeliveryDistrictsFilter(e.target.value)}
+                placeholder="Введите название района для фильтрации..."
+                className="w-full"
+              />
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {(isDeliveryFilterEnabled ? filteredDeliveryDistricts : districts).map(district => (
               <div key={district.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={`district-${district.id}`}
