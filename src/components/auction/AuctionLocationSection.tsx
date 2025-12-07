@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import Icon from '@/components/ui/icon';
 
 interface AuctionLocationSectionProps {
   formData: {
@@ -23,26 +25,76 @@ export default function AuctionLocationSection({
   onDistrictToggle, 
   onDeliveryTypeToggle 
 }: AuctionLocationSectionProps) {
+  const [districtSearch, setDistrictSearch] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const filteredDistricts = districts.filter(d => 
+    d.name.toLowerCase().includes(districtSearch.toLowerCase())
+  );
+
+  const selectedDistrict = districts.find(d => d.id === formData.district);
+
+  const handleSelectDistrict = (districtId: string) => {
+    onInputChange('district', districtId);
+    setIsDropdownOpen(false);
+    setDistrictSearch('');
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Местоположение и доставка</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
+        <div className="relative">
           <Label htmlFor="district">Основной район *</Label>
-          <select
-            id="district"
-            value={formData.district}
-            onChange={(e) => onInputChange('district', e.target.value)}
-            className="w-full px-3 py-2 border border-input bg-background rounded-md"
-            required
-          >
-            <option value="">Выберите район</option>
-            {districts.map(d => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <Input
+              id="district"
+              value={isDropdownOpen ? districtSearch : (selectedDistrict?.name || '')}
+              onChange={(e) => setDistrictSearch(e.target.value)}
+              onFocus={() => setIsDropdownOpen(true)}
+              placeholder="Начните вводить название района..."
+              className="pr-8"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+            >
+              <Icon name={isDropdownOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+            </button>
+          </div>
+          
+          {isDropdownOpen && (
+            <>
+              <div 
+                className="fixed inset-0 z-10" 
+                onClick={() => setIsDropdownOpen(false)}
+              />
+              <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                {filteredDistricts.length > 0 ? (
+                  filteredDistricts.map(district => (
+                    <button
+                      key={district.id}
+                      type="button"
+                      onClick={() => handleSelectDistrict(district.id)}
+                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        formData.district === district.id ? 'bg-accent font-medium' : ''
+                      }`}
+                    >
+                      {district.name}
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">
+                    Районы не найдены
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         <div>
