@@ -59,7 +59,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="platform-name">Название площадки</Label>
-                    <Input id="platform-name" defaultValue="Единая Региональная Торговая Площадка" />
+                    <Input id="platform-name" defaultValue="Единая Региональная Товарно-Торговая Площадка" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="support-email">Email поддержки</Label>

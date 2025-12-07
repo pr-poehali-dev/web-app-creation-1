@@ -16,7 +16,7 @@ export default function PrivacyPolicy({ isAuthenticated, onLogout }: PrivacyPoli
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <Icon name="Building2" className="h-6 w-6 text-white" />
               </div>
-              <span className="font-bold text-xl text-primary">ЕРТТ</span>
+              <span className="font-bold text-xl text-primary">ЕРТТП</span>
             </Link>
           </div>
         </div>
