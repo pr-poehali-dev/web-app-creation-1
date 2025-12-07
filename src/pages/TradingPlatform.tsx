@@ -5,16 +5,12 @@ import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
 import { getSession } from '@/utils/auth';
-import ProductMediaGallery from '@/components/ProductMediaGallery';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +19,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import TradingPlatformStats from '@/components/trading/TradingPlatformStats';
+import TradingPlatformFilters from '@/components/trading/TradingPlatformFilters';
+import ContractCard from '@/components/trading/ContractCard';
 
 interface TradingPlatformProps {
   isAuthenticated: boolean;
@@ -64,6 +63,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       navigate('/');
     }
   }, [accessCheck.allowed, navigate]);
+  
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,11 +71,6 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [selectedType, setSelectedType] = useState('all');
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const currentUser = getSession();
-  
-  const [categorySearch, setCategorySearch] = useState('');
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [typeSearch, setTypeSearch] = useState('');
-  const [isTypeOpen, setIsTypeOpen] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -196,183 +191,16 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Активных контрактов
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {contracts.filter(c => c.status === 'open').length}
-                  </div>
-                </CardContent>
-              </Card>
+            <TradingPlatformStats contracts={contracts} formatPrice={formatPrice} />
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    С финансированием
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {contracts.filter(c => c.financingAvailable).length}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Со скидками
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {contracts.filter(c => c.discountPercent > 0).length}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Общий объем
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {formatPrice(contracts.reduce((sum, c) => sum + c.totalAmount, 0))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="flex gap-4 mb-6">
-              <div className="flex-1">
-                <Input
-                  placeholder="Поиск по контрактам..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              
-              <div className="w-[180px] relative">
-                <div className="relative">
-                  <Input
-                    value={isTypeOpen ? typeSearch : (selectedType === 'all' ? 'Все типы' : selectedType === 'futures' ? 'Фьючерсы' : 'Форварды')}
-                    onChange={(e) => setTypeSearch(e.target.value)}
-                    onFocus={() => setIsTypeOpen(true)}
-                    placeholder="Тип контракта"
-                    className="pr-8"
-                    readOnly={!isTypeOpen}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIsTypeOpen(!isTypeOpen)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                  >
-                    <Icon name={isTypeOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </div>
-                
-                {isTypeOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-10" 
-                      onClick={() => setIsTypeOpen(false)}
-                    />
-                    <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
-                      {[{value: 'all', label: 'Все типы'}, {value: 'futures', label: 'Фьючерсы'}, {value: 'forward', label: 'Форварды'}]
-                        .filter(opt => opt.label.toLowerCase().includes(typeSearch.toLowerCase()))
-                        .map(option => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => {
-                              setSelectedType(option.value);
-                              setIsTypeOpen(false);
-                              setTypeSearch('');
-                            }}
-                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
-                              selectedType === option.value ? 'bg-accent font-medium' : ''
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))
-                      }
-                    </div>
-                  </>
-                )}
-              </div>
-              
-              <div className="w-[200px] relative">
-                <div className="relative">
-                  <Input
-                    value={isCategoryOpen ? categorySearch : (
-                      selectedCategory === 'all' ? 'Все категории' :
-                      selectedCategory === 'agriculture' ? 'Сельское хозяйство' :
-                      selectedCategory === 'food' ? 'Продукты питания' :
-                      selectedCategory === 'materials' ? 'Стройматериалы' :
-                      selectedCategory === 'services' ? 'Услуги' : 'Прочее'
-                    )}
-                    onChange={(e) => setCategorySearch(e.target.value)}
-                    onFocus={() => setIsCategoryOpen(true)}
-                    placeholder="Категория"
-                    className="pr-8"
-                    readOnly={!isCategoryOpen}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                  >
-                    <Icon name={isCategoryOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                </div>
-                
-                {isCategoryOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-10" 
-                      onClick={() => setIsCategoryOpen(false)}
-                    />
-                    <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
-                      {[
-                        {value: 'all', label: 'Все категории'},
-                        {value: 'agriculture', label: 'Сельское хозяйство'},
-                        {value: 'food', label: 'Продукты питания'},
-                        {value: 'materials', label: 'Стройматериалы'},
-                        {value: 'services', label: 'Услуги'},
-                        {value: 'other', label: 'Прочее'}
-                      ]
-                        .filter(opt => opt.label.toLowerCase().includes(categorySearch.toLowerCase()))
-                        .map(option => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => {
-                              setSelectedCategory(option.value);
-                              setIsCategoryOpen(false);
-                              setCategorySearch('');
-                            }}
-                            className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
-                              selectedCategory === option.value ? 'bg-accent font-medium' : ''
-                            }`}
-                          >
-                            {option.label}
-                          </button>
-                        ))
-                      }
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            <TradingPlatformFilters
+              searchQuery={searchQuery}
+              selectedType={selectedType}
+              selectedCategory={selectedCategory}
+              onSearchChange={setSearchQuery}
+              onTypeChange={setSelectedType}
+              onCategoryChange={setSelectedCategory}
+            />
           </div>
 
           {loading ? (
@@ -389,90 +217,15 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredContracts.map((contract) => (
-                <Card key={contract.id} className="hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/contract/${contract.id}`)}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge variant="secondary">
-                        {getContractTypeLabel(contract.contractType)}
-                      </Badge>
-                      {getStatusBadge(contract.status)}
-                    </div>
-                    <CardTitle className="text-lg line-clamp-2">{contract.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {contract.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ProductMediaGallery 
-                      images={contract.productImages}
-                      videoUrl={contract.productVideoUrl}
-                      productName={contract.productName}
-                    />
-                    <div className="mt-3 border-t pt-3" />
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Icon name="Package" className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {contract.productName}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Icon name="Scale" className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {contract.quantity} {contract.unit}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Icon name="Calendar" className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          Поставка: {formatDate(contract.deliveryDate)}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-3 border-t">
-                        <div>
-                          <div className="text-xs text-muted-foreground">Цена за единицу</div>
-                          <div className="font-semibold">{formatPrice(contract.pricePerUnit)}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs text-muted-foreground">Общая сумма</div>
-                          <div className="font-bold text-lg">{formatPrice(contract.totalAmount)}</div>
-                        </div>
-                      </div>
-
-                      {(contract.discountPercent > 0 || contract.financingAvailable) && (
-                        <div className="flex gap-2 pt-2">
-                          {contract.discountPercent > 0 && (
-                            <Badge variant="outline" className="text-green-600">
-                              <Icon name="Tag" className="h-3 w-3 mr-1" />
-                              Скидка {contract.discountPercent}%
-                            </Badge>
-                          )}
-                          {contract.financingAvailable && (
-                            <Badge variant="outline" className="text-blue-600">
-                              <Icon name="DollarSign" className="h-3 w-3 mr-1" />
-                              Финансирование
-                            </Badge>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Icon name="User" className="h-3 w-3" />
-                          {contract.sellerFirstName} {contract.sellerLastName}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Icon name="Eye" className="h-3 w-3" />
-                          {contract.viewsCount}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ContractCard
+                  key={contract.id}
+                  contract={contract}
+                  onCardClick={(id) => navigate(`/contract/${id}`)}
+                  getContractTypeLabel={getContractTypeLabel}
+                  getStatusBadge={getStatusBadge}
+                  formatDate={formatDate}
+                  formatPrice={formatPrice}
+                />
               ))}
             </div>
           )}
@@ -485,25 +238,17 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Требуется верификация</DialogTitle>
-            <DialogDescription className="pt-4">
-              Только верифицированные пользователи могут создавать контракты на торговой площадке.
-              Пожалуйста, пройдите верификацию, чтобы получить доступ к этой функции.
+            <DialogDescription>
+              Для создания контрактов необходимо пройти верификацию. Это позволяет подтвердить
+              вашу надежность как участника торговой площадки.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowVerificationDialog(false)}
-            >
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowVerificationDialog(false)}>
               Отмена
             </Button>
-            <Button
-              onClick={() => {
-                setShowVerificationDialog(false);
-                navigate('/verification');
-              }}
-            >
-              Пройти верификацию
+            <Button onClick={() => navigate('/profile')}>
+              Перейти к верификации
             </Button>
           </DialogFooter>
         </DialogContent>
