@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import Icon from '@/components/ui/icon';
 
 interface AuctionPricingSectionProps {
   formData: {
@@ -15,6 +17,20 @@ interface AuctionPricingSectionProps {
 }
 
 export default function AuctionPricingSection({ formData, onInputChange }: AuctionPricingSectionProps) {
+  const [isVatRateOpen, setIsVatRateOpen] = useState(false);
+  const vatOptions = [
+    { value: '20', label: '20%' },
+    { value: '10', label: '10%' },
+    { value: '0', label: '0%' }
+  ];
+
+  const selectedVatRate = vatOptions.find(opt => opt.value === formData.vatRate);
+
+  const handleSelectVatRate = (value: string) => {
+    onInputChange('vatRate', value);
+    setIsVatRateOpen(false);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -77,18 +93,48 @@ export default function AuctionPricingSection({ formData, onInputChange }: Aucti
         </div>
 
         {formData.hasVAT && (
-          <div>
+          <div className="relative">
             <Label htmlFor="vatRate">Ставка НДС (%)</Label>
-            <select
-              id="vatRate"
-              value={formData.vatRate}
-              onChange={(e) => onInputChange('vatRate', e.target.value)}
-              className="w-full px-3 py-2 border border-input bg-background rounded-md"
-            >
-              <option value="20">20%</option>
-              <option value="10">10%</option>
-              <option value="0">0%</option>
-            </select>
+            <div className="relative">
+              <Input
+                id="vatRate"
+                value={selectedVatRate?.label || ''}
+                onFocus={() => setIsVatRateOpen(true)}
+                placeholder="Выберите ставку НДС..."
+                className="pr-8"
+                readOnly
+              />
+              <button
+                type="button"
+                onClick={() => setIsVatRateOpen(!isVatRateOpen)}
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              >
+                <Icon name={isVatRateOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </div>
+            
+            {isVatRateOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setIsVatRateOpen(false)}
+                />
+                <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                  {vatOptions.map(option => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => handleSelectVatRate(option.value)}
+                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        formData.vatRate === option.value ? 'bg-accent font-medium' : ''
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </CardContent>
