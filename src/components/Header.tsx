@@ -84,7 +84,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             <div className="flex h-8 w-8 md:h-11 md:w-11 items-center justify-center rounded-md md:rounded-lg bg-primary">
               <Icon name="Building2" className="h-4 w-4 md:h-7 md:w-7 text-white" />
             </div>
-            <span className="text-base md:text-2xl font-bold text-primary whitespace-nowrap">ЕРТП</span>
+            <span className="text-base md:text-2xl font-bold text-primary whitespace-nowrap">ЕРТТП</span>
           </Link>
 
           {/* Mobile menu button */}

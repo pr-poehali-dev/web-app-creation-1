@@ -54,7 +54,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
               <div className="h-px bg-primary/20 my-3"></div>
               
               <p className="text-sm md:text-base font-semibold text-foreground leading-snug">
-                ЕРТП предлагает:
+                ЕРТТП предлагает:
               </p>
               
               <ul className="space-y-2 md:space-y-3 pl-0">
