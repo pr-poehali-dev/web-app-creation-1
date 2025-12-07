@@ -26,9 +26,22 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  
+  const [categorySearch, setCategorySearch] = useState('');
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [subcategorySearch, setSubcategorySearch] = useState('');
+  const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
 
   const currentCategory = CATEGORIES.find(c => c.id === selectedCategory);
   const subcategories = currentCategory?.subcategories || [];
+  
+  const filteredCategories = CATEGORIES.filter(cat => 
+    cat.name.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const filteredSubcategories = subcategories.filter(sub => 
+    sub.name.toLowerCase().includes(subcategorySearch.toLowerCase())
+  );
 
   useEffect(() => {
     if (selectedCategory !== filters.category) {
@@ -121,10 +134,14 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
+    setIsCategoryOpen(false);
+    setCategorySearch('');
   };
 
   const handleSubcategoryChange = (subcategory: string) => {
     onFiltersChange({ ...filters, subcategory });
+    setIsSubcategoryOpen(false);
+    setSubcategorySearch('');
   };
 
   const handleReset = () => {
@@ -252,47 +269,137 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
               showAdvancedSearch ? 'max-h-96 opacity-100 mt-4' : 'max-h-0 opacity-0'
             }`}
           >
-            <div>
+            <div className="relative">
               <Label htmlFor="category" className="mb-2 block">
                 Категория
               </Label>
-              <Select value={selectedCategory || 'not-selected'} onValueChange={(value) => handleCategoryChange(value === 'not-selected' ? '' : value === 'uncategorized' ? 'uncategorized' : value)}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Не выбрана" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not-selected">Не выбрана</SelectItem>
-                  <SelectItem value="uncategorized">Без категории</SelectItem>
-                  {CATEGORIES.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Input
+                  id="category"
+                  value={isCategoryOpen ? categorySearch : (currentCategory?.name || '')}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  onFocus={() => setIsCategoryOpen(true)}
+                  placeholder="Начните вводить название категории..."
+                  className="pr-8"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                >
+                  <Icon name={isCategoryOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              
+              {isCategoryOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setIsCategoryOpen(false)}
+                  />
+                  <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryChange('')}
+                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        !selectedCategory ? 'bg-accent font-medium' : ''
+                      }`}
+                    >
+                      Не выбрана
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCategoryChange('uncategorized')}
+                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        selectedCategory === 'uncategorized' ? 'bg-accent font-medium' : ''
+                      }`}
+                    >
+                      Без категории
+                    </button>
+                    {filteredCategories.length > 0 ? (
+                      filteredCategories.map(cat => (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => handleCategoryChange(cat.id)}
+                          className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                            selectedCategory === cat.id ? 'bg-accent font-medium' : ''
+                          }`}
+                        >
+                          {cat.name}
+                        </button>
+                      ))
+                    ) : categorySearch && (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        Категории не найдены
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
-            <div>
+            <div className="relative">
               <Label htmlFor="subcategory" className="mb-2 block">
                 Подкатегория
               </Label>
-              <Select
-                value={filters.subcategory || 'not-selected'}
-                onValueChange={(value) => handleSubcategoryChange(value === 'not-selected' ? '' : value)}
-                disabled={!selectedCategory}
-              >
-                <SelectTrigger id="subcategory">
-                  <SelectValue placeholder="Не выбрана" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not-selected">Не выбрана</SelectItem>
-                  {subcategories.map((subcategory) => (
-                    <SelectItem key={subcategory.id} value={subcategory.id}>
-                      {subcategory.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Input
+                  id="subcategory"
+                  value={isSubcategoryOpen ? subcategorySearch : (subcategories.find(s => s.id === filters.subcategory)?.name || '')}
+                  onChange={(e) => setSubcategorySearch(e.target.value)}
+                  onFocus={() => setIsSubcategoryOpen(true)}
+                  placeholder="Начните вводить название подкатегории..."
+                  className="pr-8"
+                  disabled={!selectedCategory}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsSubcategoryOpen(!isSubcategoryOpen)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  disabled={!selectedCategory}
+                >
+                  <Icon name={isSubcategoryOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              
+              {isSubcategoryOpen && selectedCategory && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setIsSubcategoryOpen(false)}
+                  />
+                  <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => handleSubcategoryChange('')}
+                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        !filters.subcategory ? 'bg-accent font-medium' : ''
+                      }`}
+                    >
+                      Не выбрана
+                    </button>
+                    {filteredSubcategories.length > 0 ? (
+                      filteredSubcategories.map(sub => (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => handleSubcategoryChange(sub.id)}
+                          className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                            filters.subcategory === sub.id ? 'bg-accent font-medium' : ''
+                          }`}
+                        >
+                          {sub.name}
+                        </button>
+                      ))
+                    ) : subcategorySearch && (
+                      <div className="px-3 py-2 text-sm text-muted-foreground">
+                        Подкатегории не найдены
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
