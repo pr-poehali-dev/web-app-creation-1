@@ -13,10 +13,10 @@ export default function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                 <Icon name="Building2" className="h-5 w-5 text-white" />
               </div>
-              <span className="font-bold text-primary">ЕРТТ</span>
+              <span className="font-bold text-primary">ЕРТТП</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Единая Региональная Торговая Площадка
+              Единая Региональная Товарно-Торговая Площадка
             </p>
           </div>
 
@@ -102,7 +102,7 @@ export default function Footer() {
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {currentYear} Единая Региональная Торговая Площадка. Все права защищены.
+              © {currentYear} Единая Региональная Товарно-Торговая Площадка. Все права защищены.
             </p>
             <div className="flex items-center gap-4">
               <a
