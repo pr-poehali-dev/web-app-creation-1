@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { getSession } from '@/utils/auth';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { ordersAPI, type Order } from '@/services/api';
 
 interface ActiveOrdersProps {
   isAuthenticated: boolean;
@@ -18,21 +19,6 @@ interface ActiveOrdersProps {
 
 type OrderStatus = 'new' | 'processing' | 'shipping' | 'completed' | 'cancelled';
 type OrderType = 'purchase' | 'sale';
-
-interface Order {
-  id: string;
-  type: OrderType;
-  title: string;
-  counterparty: string;
-  amount: number;
-  quantity: number;
-  unit: string;
-  status: OrderStatus;
-  district: string;
-  orderDate: Date;
-  deliveryDate?: Date;
-  trackingNumber?: string;
-}
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   new: 'Новый',
@@ -50,46 +36,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: 'bg-gray-500',
 };
 
-const MOCK_ORDERS: Order[] = [
-  {
-    id: '1',
-    type: 'purchase',
-    title: 'Офисная мебель',
-    counterparty: 'ООО "МебельСтрой"',
-    amount: 125000,
-    quantity: 5,
-    unit: 'комплект',
-    status: 'shipping',
-    district: 'yakutsk',
-    orderDate: new Date('2024-11-25'),
-    deliveryDate: new Date('2024-12-05'),
-    trackingNumber: 'TRACK123456789',
-  },
-  {
-    id: '2',
-    type: 'sale',
-    title: 'Строительные материалы',
-    counterparty: 'ИП Иванов А.А.',
-    amount: 450000,
-    quantity: 50,
-    unit: 'тонн',
-    status: 'processing',
-    district: 'aldan',
-    orderDate: new Date('2024-11-28'),
-  },
-  {
-    id: '3',
-    type: 'purchase',
-    title: 'Компьютерная техника',
-    counterparty: 'ООО "ТехноПарк"',
-    amount: 280000,
-    quantity: 10,
-    unit: 'шт',
-    status: 'new',
-    district: 'yakutsk',
-    orderDate: new Date('2024-11-29'),
-  },
-];
+
 
 export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrdersProps) {
   useScrollToTop();
@@ -108,11 +55,31 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
       return;
     }
 
-    setTimeout(() => {
-      setOrders(MOCK_ORDERS);
+    loadOrders();
+  }, [isAuthenticated, currentUser, navigate, activeTab, statusFilter]);
+
+  const loadOrders = async () => {
+    setIsLoading(true);
+    try {
+      const params: any = {};
+      
+      if (activeTab !== 'all') {
+        params.type = activeTab;
+      }
+      
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      
+      const data = await ordersAPI.getUserOrders(params);
+      setOrders(data.orders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      setOrders([]);
+    } finally {
       setIsLoading(false);
-    }, 800);
-  }, [isAuthenticated, currentUser, navigate]);
+    }
+  };
 
   const filteredOrders = orders
     .filter(order => activeTab === 'all' || order.type === activeTab)
@@ -170,7 +137,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
             <div className="flex items-center justify-between pb-2 border-b">
               <span className="text-muted-foreground">Сумма заказа:</span>
               <span className="font-bold text-lg text-primary">
-                {order.amount.toLocaleString()} ₽
+                {order.totalAmount.toLocaleString()} ₽
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -182,14 +149,14 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Дата заказа:</span>
               <span className="font-medium">
-                {order.orderDate.toLocaleDateString('ru-RU')}
+                {new Date(order.orderDate).toLocaleDateString('ru-RU')}
               </span>
             </div>
             {order.deliveryDate && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Дата доставки:</span>
                 <span className="font-medium">
-                  {order.deliveryDate.toLocaleDateString('ru-RU')}
+                  {new Date(order.deliveryDate).toLocaleDateString('ru-RU')}
                 </span>
               </div>
             )}

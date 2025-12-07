@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "name": "Get user orders without auth",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "User ID required"
+      }
+    },
+    {
+      "name": "Create order without auth",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "offerId": "7e1c7f4d-13de-4176-9f32-664163048cc4",
+        "title": "Test Order",
+        "quantity": 10,
+        "unit": "кг",
+        "pricePerUnit": 500,
+        "deliveryType": "pickup",
+        "district": "yakutsk",
+        "buyerName": "Иван Иванов",
+        "buyerPhone": "+79991234567"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "User ID required"
+      }
+    }
+  ]
+}

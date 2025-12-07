@@ -3,6 +3,7 @@ import func2url from '../../backend/func2url.json';
 
 const OFFERS_API = func2url.offers;
 const REQUESTS_API = func2url.requests;
+const ORDERS_API = func2url.orders;
 
 export interface OffersListResponse {
   offers: Offer[];
@@ -217,6 +218,147 @@ export const requestsAPI = {
     
     if (!response.ok) {
       throw new Error('Failed to update request');
+    }
+    
+    return response.json();
+  },
+};
+
+export interface CreateOrderData {
+  offerId: string;
+  title: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit: number;
+  hasVAT: boolean;
+  vatRate?: number;
+  deliveryType: string;
+  deliveryAddress: string;
+  district: string;
+  buyerName: string;
+  buyerPhone: string;
+  buyerEmail?: string;
+  buyerCompany?: string;
+  buyerInn?: string;
+  buyerComment?: string;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  type: 'purchase' | 'sale';
+  title: string;
+  counterparty: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit: number;
+  totalAmount: number;
+  status: 'new' | 'processing' | 'shipping' | 'completed' | 'cancelled';
+  district: string;
+  orderDate: string;
+  deliveryDate?: string;
+  trackingNumber?: string;
+  deliveryType: string;
+  deliveryAddress?: string;
+}
+
+export interface OrdersListResponse {
+  orders: Order[];
+  total: number;
+}
+
+export const ordersAPI = {
+  async getUserOrders(params?: {
+    type?: 'all' | 'purchase' | 'sale';
+    status?: string;
+  }): Promise<OrdersListResponse> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const queryParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          queryParams.append(key, String(value));
+        }
+      });
+    }
+    
+    const url = `${ORDERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await fetch(url, {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch orders');
+    }
+    
+    return response.json();
+  },
+
+  async getOrderById(id: string): Promise<Order> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${ORDERS_API}?id=${id}`, {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch order');
+    }
+    
+    return response.json();
+  },
+
+  async createOrder(data: CreateOrderData): Promise<{ id: string; orderNumber: string; orderDate: string; message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(ORDERS_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create order');
+    }
+    
+    return response.json();
+  },
+
+  async updateOrder(id: string, data: { status?: string; trackingNumber?: string; deliveryDate?: string; sellerComment?: string; cancellationReason?: string }): Promise<{ message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${ORDERS_API}?id=${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update order');
     }
     
     return response.json();

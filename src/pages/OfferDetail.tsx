@@ -15,7 +15,9 @@ import OfferInfoCard from '@/components/offer/OfferInfoCard';
 import OfferSellerCard from '@/components/offer/OfferSellerCard';
 import OfferOrderModal from '@/components/offer/OfferOrderModal';
 import type { Offer } from '@/types/offer';
-import { offersAPI } from '@/services/api';
+import { offersAPI, ordersAPI } from '@/services/api';
+import { getSession } from '@/utils/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface OfferDetailProps {
   isAuthenticated: boolean;
@@ -26,6 +28,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,10 +132,52 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     setIsOrderModalOpen(true);
   };
 
-  const handleOrderSubmit = (e: React.FormEvent) => {
+  const handleOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsOrderModalOpen(false);
-    alert('Заказ успешно оформлен! Мы свяжемся с вами в ближайшее время.');
+    if (!offer) return;
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const currentUser = getSession();
+    
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const orderData = {
+        offerId: offer.id,
+        title: offer.title,
+        quantity: parseInt(formData.get('order-quantity') as string),
+        unit: offer.unit,
+        pricePerUnit: offer.pricePerUnit,
+        hasVAT: offer.hasVAT || false,
+        vatRate: offer.vatRate,
+        deliveryType: formData.get('order-delivery') as string,
+        deliveryAddress: formData.get('order-address') as string,
+        district: offer.district,
+        buyerName: currentUser.firstName + ' ' + currentUser.lastName,
+        buyerPhone: currentUser.phone || '',
+        buyerEmail: currentUser.email,
+        buyerComment: formData.get('order-comment') as string || '',
+      };
+
+      const result = await ordersAPI.createOrder(orderData);
+      
+      setIsOrderModalOpen(false);
+      
+      toast({
+        title: 'Заказ оформлен!',
+        description: `Номер заказа: ${result.orderNumber}`,
+      });
+      
+      setTimeout(() => {
+        navigate('/active-orders');
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Ошибка при оформлении заказа. Попробуйте еще раз.');
+    }
   };
 
   const openGallery = (index: number) => {

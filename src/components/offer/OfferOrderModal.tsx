@@ -41,6 +41,7 @@ export default function OfferOrderModal({
             <Label htmlFor="order-quantity">Количество ({unit})</Label>
             <Input
               id="order-quantity"
+              name="order-quantity"
               type="number"
               min="1"
               max={remainingQuantity}
@@ -53,6 +54,7 @@ export default function OfferOrderModal({
             <Label htmlFor="order-delivery">Способ получения</Label>
             <select
               id="order-delivery"
+              name="order-delivery"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               required
             >
@@ -69,6 +71,7 @@ export default function OfferOrderModal({
             <Label htmlFor="order-address">Адрес доставки</Label>
             <Input
               id="order-address"
+              name="order-address"
               type="text"
               placeholder="Укажите адрес доставки"
               required
@@ -79,6 +82,7 @@ export default function OfferOrderModal({
             <Label htmlFor="order-comment">Комментарий</Label>
             <Textarea
               id="order-comment"
+              name="order-comment"
               placeholder="Дополнительная информация к заказу"
               rows={3}
             />
