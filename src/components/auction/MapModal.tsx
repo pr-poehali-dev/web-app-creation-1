@@ -27,8 +27,17 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       if (!isNaN(lat) && !isNaN(lng)) {
         setMapCenter([lat, lng]);
       }
+    } else if (isOpen && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setMapCenter([position.coords.latitude, position.coords.longitude]);
+        },
+        () => {
+          setMapCenter([41.2995, 69.2401]);
+        }
+      );
     }
-  }, [coordinates]);
+  }, [coordinates, isOpen]);
 
   useEffect(() => {
     if (!isOpen || !mapContainerRef.current) return;
