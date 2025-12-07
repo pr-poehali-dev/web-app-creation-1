@@ -260,9 +260,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
 
   const remainingQuantity = offer.quantity - (offer.orderedQuantity || 0);
   const totalPrice = offer.pricePerUnit * offer.quantity;
-  const similarOffers = MOCK_OFFERS
-    .filter(o => o.id !== offer.id && o.category === offer.category)
-    .slice(0, 4);
+  const similarOffers: Offer[] = [];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
