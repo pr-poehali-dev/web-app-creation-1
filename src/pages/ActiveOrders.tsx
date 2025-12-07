@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -71,22 +71,21 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     }
   };
 
-  const filteredOrders = orders
-    .filter(order => activeTab === 'all' || order.type === activeTab)
-    .filter(order => statusFilter === 'all' || order.status === statusFilter);
+  const filteredOrders = useMemo(() => 
+    orders
+      .filter(order => activeTab === 'all' || order.type === activeTab)
+      .filter(order => statusFilter === 'all' || order.status === statusFilter),
+    [orders, activeTab, statusFilter]
+  );
 
-  const getOrderStats = () => {
-    return {
-      total: orders.length,
-      purchase: orders.filter(o => o.type === 'purchase').length,
-      sale: orders.filter(o => o.type === 'sale').length,
-      new: orders.filter(o => o.status === 'new').length,
-      processing: orders.filter(o => o.status === 'processing').length,
-      shipping: orders.filter(o => o.status === 'shipping').length,
-    };
-  };
-
-  const stats = getOrderStats();
+  const stats = useMemo(() => ({
+    total: orders.length,
+    purchase: orders.filter(o => o.type === 'purchase').length,
+    sale: orders.filter(o => o.type === 'sale').length,
+    new: orders.filter(o => o.status === 'new').length,
+    processing: orders.filter(o => o.status === 'processing').length,
+    shipping: orders.filter(o => o.status === 'shipping').length,
+  }), [orders]);
 
   const OrderCard = ({ order }: { order: Order }) => {
     const districtName = districts.find(d => d.id === order.district)?.name;

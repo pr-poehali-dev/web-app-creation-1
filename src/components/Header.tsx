@@ -196,7 +196,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/active-orders')}>
                     <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-                    Активные заказы
+                    Мои заказы
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/notifications')}>
                     <Icon name="Bell" className="mr-2 h-4 w-4" />
