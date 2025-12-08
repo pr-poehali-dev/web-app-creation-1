@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +33,7 @@ export default function AuctionLocationSection({
   const [isDeliveryFilterEnabled, setIsDeliveryFilterEnabled] = useState(false);
   const [deliveryDistrictsFilter, setDeliveryDistrictsFilter] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showDistrictNotification, setShowDistrictNotification] = useState(false);
 
   const filteredDistricts = districts.filter(d => 
     d.name.toLowerCase().includes(districtSearch.toLowerCase())
@@ -96,9 +97,20 @@ export default function AuctionLocationSection({
         onInputChange('district', matchedDistrict.id);
         setDistrictSearch('');
         setIsDropdownOpen(false);
+        
+        // Показать уведомление
+        setShowDistrictNotification(true);
+        setTimeout(() => setShowDistrictNotification(false), 3000);
       }
     }
   };
+
+  useEffect(() => {
+    if (showDistrictNotification) {
+      const timer = setTimeout(() => setShowDistrictNotification(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showDistrictNotification]);
 
   return (
     <Card>
@@ -115,7 +127,7 @@ export default function AuctionLocationSection({
               onChange={(e) => setDistrictSearch(e.target.value)}
               onFocus={() => setIsDropdownOpen(true)}
               placeholder="Начните вводить название района..."
-              className="pr-8"
+              className={`pr-8 transition-all ${showDistrictNotification ? 'ring-2 ring-green-500' : ''}`}
               required
             />
             <button
@@ -126,6 +138,15 @@ export default function AuctionLocationSection({
               <Icon name={isDropdownOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
+          
+          {showDistrictNotification && (
+            <div className="absolute left-0 right-0 -bottom-8 z-30 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white text-sm rounded-md shadow-lg">
+                <Icon name="CheckCircle2" className="h-4 w-4" />
+                <span>Район определён автоматически</span>
+              </div>
+            </div>
+          )}
           
           {isDropdownOpen && (
             <>
