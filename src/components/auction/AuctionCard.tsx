@@ -11,9 +11,10 @@ interface AuctionCardProps {
   auction: Auction;
   districts: Array<{ id: string; name: string }>;
   isAuthenticated: boolean;
+  isHighlighted?: boolean;
 }
 
-export default function AuctionCard({ auction, districts, isAuthenticated }: AuctionCardProps) {
+export default function AuctionCard({ auction, districts, isAuthenticated, isHighlighted = false }: AuctionCardProps) {
   const navigate = useNavigate();
   const category = CATEGORIES.find(c => c.id === auction.category);
   const districtName = districts.find(d => d.id === auction.district)?.name;
@@ -22,6 +23,8 @@ export default function AuctionCard({ auction, districts, isAuthenticated }: Auc
     <Card
       className={`transition-all hover:shadow-xl cursor-pointer group ${
         auction.isPremium && auction.status !== 'ended' ? 'border-2 border-primary shadow-lg' : ''
+      } ${
+        isHighlighted ? 'ring-2 ring-primary ring-offset-2 shadow-2xl' : ''
       }`}
       onClick={() => navigate(`/auction/${auction.id}`)}
     >

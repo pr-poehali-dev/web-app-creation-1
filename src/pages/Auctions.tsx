@@ -322,6 +322,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
                     auction={auction}
                     districts={districts}
                     isAuthenticated={isAuthenticated}
+                    isHighlighted={filters.query.length >= 2}
                   />
                 </div>
               ))}
