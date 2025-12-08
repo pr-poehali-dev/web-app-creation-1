@@ -60,11 +60,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
     const counts: Record<string, number> = {};
     
     districts.forEach(district => {
-      const count = MOCK_OFFERS.filter(offer => 
-        offer.district === district.id || 
-        offer.availableDistricts.includes(district.id)
-      ).length;
-      counts[district.id] = count;
+      counts[district.id] = 0;
     });
     
     return counts;
