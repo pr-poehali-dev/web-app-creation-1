@@ -101,7 +101,7 @@ export default function AuctionLocationSection({
       });
       
       if (matchedDistrict) {
-        console.log('District matched:', matchedDistrict.name);
+        console.log('✅ District matched:', matchedDistrict.name);
         onInputChange('district', matchedDistrict.id);
         setDistrictSearch('');
         setIsDropdownOpen(false);
@@ -117,6 +117,9 @@ export default function AuctionLocationSection({
             // Игнорируем ошибки воспроизведения
           });
         }
+      } else {
+        console.log('❌ No district match found. Available districts count:', districts.length);
+        console.log('Sample districts:', districts.slice(0, 5).map(d => d.name));
       }
     }
   };

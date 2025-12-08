@@ -58,12 +58,25 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         if (onAddressChange) {
           try {
             const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru`
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru&addressdetails=1`
             );
             const data = await response.json();
+            console.log('OpenStreetMap response:', data);
+            
             const address = data.address;
             const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-            const district = address.suburb || address.district || address.city_district || '';
+            
+            // Пробуем разные поля для определения района
+            const district = address.suburb || 
+                           address.district || 
+                           address.city_district || 
+                           address.municipality ||
+                           address.county ||
+                           address.state_district ||
+                           address.neighbourhood ||
+                           '';
+            
+            console.log('Extracted district:', district);
             onAddressChange(fullAddress, district);
           } catch (error) {
             console.error('Ошибка получения адреса:', error);
@@ -91,12 +104,23 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             if (onAddressChange) {
               try {
                 const response = await fetch(
-                  `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru`
+                  `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru&addressdetails=1`
                 );
                 const data = await response.json();
+                console.log('OpenStreetMap drag response:', data);
+                
                 const address = data.address;
                 const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-                const district = address.suburb || address.district || address.city_district || '';
+                const district = address.suburb || 
+                               address.district || 
+                               address.city_district || 
+                               address.municipality ||
+                               address.county ||
+                               address.state_district ||
+                               address.neighbourhood ||
+                               '';
+                
+                console.log('Extracted district (drag):', district);
                 onAddressChange(fullAddress, district);
               } catch (error) {
                 console.error('Ошибка получения адреса:', error);
@@ -167,12 +191,23 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       if (onAddressChange) {
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru&addressdetails=1`
           );
           const data = await response.json();
+          console.log('OpenStreetMap input response:', data);
+          
           const address = data.address;
           const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-          const district = address.suburb || address.district || address.city_district || '';
+          const district = address.suburb || 
+                         address.district || 
+                         address.city_district || 
+                         address.municipality ||
+                         address.county ||
+                         address.state_district ||
+                         address.neighbourhood ||
+                         '';
+          
+          console.log('Extracted district (input):', district);
           onAddressChange(fullAddress, district);
         } catch (error) {
           console.error('Ошибка получения адреса:', error);
@@ -192,12 +227,23 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           if (onAddressChange) {
             try {
               const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&accept-language=ru`
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&accept-language=ru&addressdetails=1`
               );
               const data = await response.json();
+              console.log('OpenStreetMap geolocation response:', data);
+              
               const address = data.address;
               const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-              const district = address.suburb || address.district || address.city_district || '';
+              const district = address.suburb || 
+                             address.district || 
+                             address.city_district || 
+                             address.municipality ||
+                             address.county ||
+                             address.state_district ||
+                             address.neighbourhood ||
+                             '';
+              
+              console.log('Extracted district (geolocation):', district);
               onAddressChange(fullAddress, district);
             } catch (error) {
               console.error('Ошибка получения адреса:', error);
@@ -236,12 +282,23 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     if (onAddressChange) {
       try {
         const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ru`
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ru&addressdetails=1`
         );
         const data = await response.json();
+        console.log('OpenStreetMap search response:', data);
+        
         const address = data.address;
         const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-        const district = address.suburb || address.district || address.city_district || '';
+        const district = address.suburb || 
+                       address.district || 
+                       address.city_district || 
+                       address.municipality ||
+                       address.county ||
+                       address.state_district ||
+                       address.neighbourhood ||
+                       '';
+        
+        console.log('Extracted district (search):', district);
         onAddressChange(fullAddress, district);
       } catch (error) {
         console.error('Ошибка получения адреса:', error);
