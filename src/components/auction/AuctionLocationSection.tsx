@@ -56,7 +56,7 @@ export default function AuctionLocationSection({
   };
 
   const handleMapAddressChange = (address: string, districtName: string) => {
-    console.log('MapModal callback:', { address, districtName });
+    console.log('🗺️ MapModal callback:', { address, districtName });
     
     if (address) {
       onInputChange('fullAddress', address);
@@ -64,7 +64,8 @@ export default function AuctionLocationSection({
     
     if (districtName) {
       const normalizedDistrictName = districtName.toLowerCase().trim();
-      console.log('Searching for district:', normalizedDistrictName);
+      console.log('🔍 Searching for district:', normalizedDistrictName);
+      console.log('📋 Total districts in database:', districts.length);
       
       // Попытка найти точное совпадение или частичное совпадение
       const matchedDistrict = districts.find(d => {
@@ -79,23 +80,40 @@ export default function AuctionLocationSection({
         // Обратное частичное совпадение (название из базы содержится в названии из OpenStreetMap)
         if (normalizedDistrictName.includes(normalizedDbName)) return true;
         
-        // Убираем слова "район", "округ", "улус" и сравниваем
+        // Убираем служебные слова для более точного сопоставления
         const cleanDbName = normalizedDbName
           .replace(/район/g, '')
           .replace(/округ/g, '')
           .replace(/улус/g, '')
           .replace(/административный/g, '')
+          .replace(/городской/g, '')
+          .replace(/муниципальный/g, '')
+          .replace(/\s+/g, ' ')
           .trim();
         const cleanOsmName = normalizedDistrictName
           .replace(/район/g, '')
           .replace(/округ/g, '')
           .replace(/улус/g, '')
           .replace(/административный/g, '')
+          .replace(/городской/g, '')
+          .replace(/муниципальный/g, '')
+          .replace(/raion/gi, '')
+          .replace(/okrug/gi, '')
+          .replace(/district/gi, '')
+          .replace(/\s+/g, ' ')
           .trim();
         
         if (cleanDbName && cleanOsmName && cleanDbName === cleanOsmName) return true;
         if (cleanDbName && cleanOsmName && cleanDbName.includes(cleanOsmName)) return true;
         if (cleanDbName && cleanOsmName && cleanOsmName.includes(cleanDbName)) return true;
+        
+        // Проверка первого слова (часто это основное название района)
+        const firstWordDb = cleanDbName.split(' ')[0];
+        const firstWordOsm = cleanOsmName.split(' ')[0];
+        if (firstWordDb && firstWordOsm && firstWordDb.length > 3 && firstWordOsm.length > 3) {
+          if (firstWordDb === firstWordOsm) return true;
+          if (firstWordDb.includes(firstWordOsm) || firstWordOsm.includes(firstWordDb)) return true;
+        }
         
         return false;
       });
@@ -118,8 +136,21 @@ export default function AuctionLocationSection({
           });
         }
       } else {
-        console.log('❌ No district match found. Available districts count:', districts.length);
-        console.log('Sample districts:', districts.slice(0, 5).map(d => d.name));
+        console.log('❌ No district match found');
+        console.log('📊 Available districts count:', districts.length);
+        console.log('🔤 Looking for:', normalizedDistrictName);
+        console.log('📝 Sample districts from DB:', districts.slice(0, 10).map(d => d.name).join(', '));
+        
+        // Попробуем найти похожие
+        const similar = districts.filter(d => {
+          const name = d.name.toLowerCase();
+          return name.includes(normalizedDistrictName.split(' ')[0]) || 
+                 normalizedDistrictName.includes(name.split(' ')[0]);
+        });
+        
+        if (similar.length > 0) {
+          console.log('🔎 Similar districts found:', similar.map(d => d.name).join(', '));
+        }
       }
     }
   };

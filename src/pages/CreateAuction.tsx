@@ -106,7 +106,19 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [field]: value };
+      
+      // Если меняется район местонахождения и у нас уже выбран способ получения
+      if (field === 'district' && typeof value === 'string' && value && prev.availableDeliveryTypes.length > 0) {
+        // Автоматически добавляем этот район в доступные районы если его там нет
+        if (!prev.availableDistricts.includes(value)) {
+          updated.availableDistricts = [...prev.availableDistricts, value];
+        }
+      }
+      
+      return updated;
+    });
     
     if (field === 'category') {
       setFormData(prev => ({ ...prev, subcategory: '' }));
@@ -129,7 +141,8 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
         ? [...prev.availableDeliveryTypes, type]
         : prev.availableDeliveryTypes.filter(t => t !== type);
       
-      if (type === 'delivery' && isAdding && prev.district && !prev.availableDistricts.includes(prev.district)) {
+      // При выборе любого способа получения автоматически добавляем текущий район
+      if (isAdding && prev.district && !prev.availableDistricts.includes(prev.district)) {
         return {
           ...prev,
           availableDeliveryTypes: newDeliveryTypes,
@@ -185,7 +198,16 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
       return;
     }
 
-    if (formData.availableDistricts.length === 0) {
+    if (formData.availableDeliveryTypes.length === 0) {
+      toast({
+        title: 'Ошибка',
+        description: 'Выберите хотя бы один способ получения',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.availableDeliveryTypes.includes('delivery') && formData.availableDistricts.length === 0) {
       toast({
         title: 'Ошибка',
         description: 'Выберите хотя бы один район доставки',

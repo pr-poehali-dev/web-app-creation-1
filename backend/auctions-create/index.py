@@ -94,6 +94,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         duration_days = int(body_data['duration'])
         end_datetime = start_datetime + timedelta(days=duration_days)
         
+        # Если availableDistricts пуст, добавляем хотя бы район местонахождения
+        available_districts = body_data.get('availableDistricts', [])
+        if not available_districts and body_data['district']:
+            available_districts = [body_data['district']]
+        
         # Вставка аукциона
         cur.execute("""
             INSERT INTO auctions (
@@ -122,7 +127,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_data['district'],
             body_data.get('fullAddress'),
             body_data.get('gpsCoordinates'),
-            body_data['availableDistricts'],
+            available_districts,
             body_data['availableDeliveryTypes'],
             start_datetime,
             end_datetime,
