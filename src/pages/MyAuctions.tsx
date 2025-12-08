@@ -29,6 +29,7 @@ import type { Auction } from '@/types/auction';
 import { MOCK_AUCTIONS } from '@/data/mockAuctions';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { auctionsAPI } from '@/services/api';
 
 interface MyAuctionsProps {
   isAuthenticated: boolean;
@@ -50,31 +51,10 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
   const loadMyAuctions = async () => {
     setIsLoading(true);
     try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) {
-        navigate('/login');
-        return;
-      }
-
-      const response = await fetch('https://functions.poehali.dev/2c3a53f4-20e0-40f4-bea1-ec3701e6c4cd', {
-        headers: {
-          'X-User-Id': userId,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const loadedAuctions = data.auctions.map((a: any) => ({
-          ...a,
-          startDate: new Date(a.startDate),
-          endDate: new Date(a.endDate),
-          createdAt: new Date(a.createdAt),
-        }));
-        setAuctions(loadedAuctions);
-      } else {
-        setAuctions([]);
-      }
+      const loadedAuctions = await auctionsAPI.getMyAuctions();
+      setAuctions(loadedAuctions);
     } catch (error) {
+      console.error('Error loading auctions:', error);
       setAuctions([]);
     } finally {
       setIsLoading(false);
@@ -96,16 +76,17 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
 
   const handleDeleteAuction = async (auctionId: string) => {
     try {
+      await auctionsAPI.deleteAuction(auctionId);
       setAuctions(auctions.filter(auction => auction.id !== auctionId));
       setAuctionToDelete(null);
       toast({
         title: 'Успешно',
-        description: 'Аукцион удален',
+        description: 'Аукцион отменен',
       });
     } catch (error) {
       toast({
         title: 'Ошибка',
-        description: 'Не удалось удалить аукцион',
+        description: 'Не удалось отменить аукцион',
         variant: 'destructive',
       });
     }

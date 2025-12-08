@@ -27,7 +27,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
@@ -35,7 +35,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    if method != 'GET':
+    if method not in ['GET', 'DELETE']:
         return {
             'statusCode': 405,
             'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
@@ -58,26 +58,55 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         
+        if method == 'DELETE':
+            body = json.loads(event.get('body', '{}'))
+            auction_id = body.get('auctionId')
+            
+            if not auction_id:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Missing auctionId'}),
+                    'isBase64Encoded': False
+                }
+            
+            cur.execute("""
+                UPDATE t_p42562714_web_app_creation_1.auctions
+                SET status = 'cancelled'
+                WHERE id = CAST(%s AS INTEGER) AND user_id = CAST(%s AS INTEGER)
+            """, (auction_id, user_id))
+            
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            return {
+                'statusCode': 200,
+                'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                'body': json.dumps({'success': True}),
+                'isBase64Encoded': False
+            }
+        
         # Обновляем статусы аукционов
         now = datetime.now()
         
         # Активируем аукционы, которые должны начаться
         cur.execute(f"""
-            UPDATE auctions 
+            UPDATE t_p42562714_web_app_creation_1.auctions 
             SET status = 'active' 
             WHERE status = 'pending' AND start_date <= %s
         """, (now,))
         
         # Завершаем аукционы, время которых истекло
         cur.execute(f"""
-            UPDATE auctions 
+            UPDATE t_p42562714_web_app_creation_1.auctions 
             SET status = 'ended' 
             WHERE status = 'active' AND end_date <= %s
         """, (now,))
         
         conn.commit()
         
-        # Получаем аукционы пользователя
+        # Получаем аукционы пользователя (исключаем отмененные)
         query = f"""
             SELECT 
                 a.id, a.user_id, a.title, a.description, a.category, a.subcategory,
@@ -92,9 +121,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'alt', ai.alt
                     ) ORDER BY ai.sort_order
                 ) FILTER (WHERE ai.id IS NOT NULL), '[]') as images
-            FROM auctions a
-            LEFT JOIN auction_images ai ON a.id = ai.auction_id
-            WHERE a.user_id = %s
+            FROM t_p42562714_web_app_creation_1.auctions a
+            LEFT JOIN t_p42562714_web_app_creation_1.auction_images ai ON a.id = ai.auction_id
+            WHERE a.user_id = %s AND a.status != 'cancelled'
             GROUP BY a.id
             ORDER BY a.created_at DESC
         """

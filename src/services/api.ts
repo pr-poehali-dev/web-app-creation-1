@@ -1,9 +1,12 @@
 import type { Offer, Request as OfferRequest } from '@/types/offer';
+import type { Auction } from '@/types/auction';
 import func2url from '../../backend/func2url.json';
 
 const OFFERS_API = func2url.offers;
 const REQUESTS_API = func2url.requests;
 const ORDERS_API = func2url.orders;
+const AUCTIONS_LIST_API = func2url['auctions-list'];
+const AUCTIONS_MY_API = func2url['auctions-my'];
 
 export interface OffersListResponse {
   offers: Offer[];
@@ -362,5 +365,73 @@ export const ordersAPI = {
     }
     
     return response.json();
+  },
+};
+
+export interface AuctionsListResponse {
+  auctions: Auction[];
+}
+
+export const auctionsAPI = {
+  async getAllAuctions(status?: string): Promise<Auction[]> {
+    const queryParams = status ? `?status=${status}` : '';
+    const response = await fetch(`${AUCTIONS_LIST_API}${queryParams}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch auctions');
+    }
+    
+    const data = await response.json();
+    return (data.auctions || []).map((a: any) => ({
+      ...a,
+      startDate: new Date(a.startDate),
+      endDate: new Date(a.endDate),
+      createdAt: new Date(a.createdAt),
+    }));
+  },
+
+  async getMyAuctions(): Promise<Auction[]> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(AUCTIONS_MY_API, {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch my auctions');
+    }
+    
+    const data = await response.json();
+    return (data.auctions || []).map((a: any) => ({
+      ...a,
+      startDate: new Date(a.startDate),
+      endDate: new Date(a.endDate),
+      createdAt: new Date(a.createdAt),
+    }));
+  },
+
+  async deleteAuction(auctionId: string): Promise<void> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(AUCTIONS_MY_API, {
+      method: 'DELETE',
+      headers: {
+        'X-User-Id': userId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ auctionId }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete auction');
+    }
   },
 };

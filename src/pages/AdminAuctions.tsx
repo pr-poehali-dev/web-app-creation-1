@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -31,13 +31,15 @@ import {
 } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import { auctionsAPI } from '@/services/api';
+import type { Auction } from '@/types/auction';
 
 interface AdminAuctionsProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
 
-interface Auction {
+interface AdminAuction {
   id: string;
   title: string;
   seller: string;
@@ -53,45 +55,40 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
+  const [selectedAuction, setSelectedAuction] = useState<AdminAuction | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showBidsDialog, setShowBidsDialog] = useState(false);
+  const [auctions, setAuctions] = useState<AdminAuction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const mockAuctions: Auction[] = [
-    {
-      id: '1',
-      title: 'Партия арматуры 12мм, 10 тонн',
-      seller: 'ООО "МеталлСнаб"',
-      startingPrice: 500000,
-      currentBid: 550000,
-      bidsCount: 12,
-      status: 'active',
-      endDate: '2024-12-20',
-      createdAt: '2024-12-01'
-    },
-    {
-      id: '2',
-      title: 'Щебень гранитный, фракция 5-20, 50м³',
-      seller: 'ИП Каменев',
-      startingPrice: 75000,
-      currentBid: 85000,
-      bidsCount: 8,
-      status: 'active',
-      endDate: '2024-12-18',
-      createdAt: '2024-11-28'
-    },
-    {
-      id: '3',
-      title: 'Доска обрезная 50x150x6000, 20м³',
-      seller: 'ПАО "ЛесПром"',
-      startingPrice: 120000,
-      currentBid: 120000,
-      bidsCount: 0,
-      status: 'upcoming',
-      endDate: '2024-12-25',
-      createdAt: '2024-12-03'
-    },
-  ];
+  useEffect(() => {
+    loadAuctions();
+  }, []);
+
+  const loadAuctions = async () => {
+    setIsLoading(true);
+    try {
+      const allAuctions = await auctionsAPI.getAllAuctions();
+      const adminAuctions: AdminAuction[] = allAuctions.map(a => ({
+        id: a.id,
+        title: a.title,
+        seller: 'Пользователь #' + a.userId,
+        startingPrice: a.startingPrice,
+        currentBid: a.currentBid,
+        bidsCount: a.bidCount,
+        status: a.status as 'active' | 'upcoming' | 'closed' | 'cancelled',
+        endDate: a.endDate.toISOString(),
+        createdAt: a.createdAt.toISOString(),
+      }));
+      setAuctions(adminAuctions);
+    } catch (error) {
+      console.error('Error loading auctions:', error);
+      toast.error('Ошибка загрузки аукционов');
+      setAuctions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const mockBids = [
     { id: '1', bidder: 'ООО "СтройИнвест"', amount: 550000, time: '2024-12-04 14:30' },
@@ -114,15 +111,27 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
     }
   };
 
-  const handleCancelAuction = (auction: Auction) => {
-    toast.success(`Аукцион "${auction.title}" отменен`);
+  const handleCancelAuction = async (auction: AdminAuction) => {
+    try {
+      await auctionsAPI.deleteAuction(auction.id);
+      toast.success(`Аукцион "${auction.title}" отменен`);
+      loadAuctions();
+    } catch (error) {
+      toast.error('Не удалось отменить аукцион');
+    }
   };
 
-  const handleDeleteAuction = () => {
+  const handleDeleteAuction = async () => {
     if (selectedAuction) {
-      toast.success(`Аукцион "${selectedAuction.title}" удален`);
-      setShowDeleteDialog(false);
-      setSelectedAuction(null);
+      try {
+        await auctionsAPI.deleteAuction(selectedAuction.id);
+        toast.success(`Аукцион "${selectedAuction.title}" удален`);
+        setShowDeleteDialog(false);
+        setSelectedAuction(null);
+        loadAuctions();
+      } catch (error) {
+        toast.error('Не удалось удалить аукцион');
+      }
     }
   };
 
@@ -146,7 +155,7 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
           <Card>
             <CardHeader>
               <CardTitle>Список аукционов</CardTitle>
-              <CardDescription>Всего аукционов: {mockAuctions.length}</CardDescription>
+              <CardDescription>Всего аукционов: {auctions.length}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
@@ -187,7 +196,20 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockAuctions.map((auction) => (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8">
+                          Загрузка...
+                        </TableCell>
+                      </TableRow>
+                    ) : auctions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          Аукционы не найдены
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      auctions.map((auction) => (
                       <TableRow key={auction.id}>
                         <TableCell className="font-medium">{auction.title}</TableCell>
                         <TableCell>{auction.seller}</TableCell>
@@ -240,7 +262,8 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )))}
+                  )
                   </TableBody>
                 </Table>
               </div>
