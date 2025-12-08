@@ -42,7 +42,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
           return;
         }
 
-        const response = await fetch(`https://functions.poehali.dev/2c3a53f4-20e0-40f4-bea1-ec3701e6c4cd`, {
+        const response = await fetch(`https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?id=${id}`, {
           headers: {
             'X-User-Id': userId,
           },
@@ -50,23 +50,21 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
 
         if (response.ok) {
           const data = await response.json();
-          const foundAuction = data.auctions.find((a: any) => a.id === id);
-          
-          if (foundAuction) {
+          if (data) {
             setAuction({
-              ...foundAuction,
-              startDate: new Date(foundAuction.startDate),
-              endDate: new Date(foundAuction.endDate),
-              createdAt: new Date(foundAuction.createdAt),
+              ...data,
+              startDate: new Date(data.startDate),
+              endDate: new Date(data.endDate),
+              createdAt: new Date(data.createdAt),
             });
           } else {
-            navigate('/my-auctions');
+            navigate('/auction');
           }
         } else {
-          navigate('/my-auctions');
+          navigate('/auction');
         }
       } catch (error) {
-        navigate('/my-auctions');
+        navigate('/auction');
       } finally {
         setIsLoading(false);
       }

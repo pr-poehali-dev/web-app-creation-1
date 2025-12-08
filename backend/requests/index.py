@@ -2,12 +2,19 @@ import json
 import os
 from typing import Dict, Any, List
 from datetime import datetime
+from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 def get_db_connection():
     """Подключение к базе данных"""
     return psycopg2.connect(os.environ['DATABASE_URL'])
+
+def decimal_default(obj):
+    """JSON serializer для Decimal"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
@@ -104,9 +111,9 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
                 ) FILTER (WHERE ri.id IS NOT NULL),
                 '[]'
             ) as images
-        FROM requests r
-        LEFT JOIN request_image_relations rir ON r.id = rir.request_id
-        LEFT JOIN offer_images ri ON rir.image_id = ri.id
+        FROM t_p42562714_web_app_creation_1.requests r
+        LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
+        LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
         WHERE r.status = %s
     """
     
@@ -138,6 +145,8 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     result = []
     for req in requests_data:
         req_dict = dict(req)
+        if isinstance(req_dict.get('price_per_unit'), Decimal):
+            req_dict['price_per_unit'] = float(req_dict['price_per_unit'])
         req_dict['createdAt'] = req_dict.pop('created_at').isoformat() if req_dict.get('created_at') else None
         req_dict['updatedAt'] = req_dict.pop('updated_at').isoformat() if req_dict.get('updated_at') else None
         result.append(req_dict)
@@ -167,9 +176,9 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
                 ) FILTER (WHERE ri.id IS NOT NULL),
                 '[]'
             ) as images
-        FROM requests r
-        LEFT JOIN request_image_relations rir ON r.id = rir.request_id
-        LEFT JOIN offer_images ri ON rir.image_id = ri.id
+        FROM t_p42562714_web_app_creation_1.requests r
+        LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
+        LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
         WHERE r.id = %s
         GROUP BY r.id
     """
@@ -189,6 +198,8 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
         }
     
     req_dict = dict(req)
+    if isinstance(req_dict.get('price_per_unit'), Decimal):
+        req_dict['price_per_unit'] = float(req_dict['price_per_unit'])
     req_dict['createdAt'] = req_dict.pop('created_at').isoformat() if req_dict.get('created_at') else None
     req_dict['updatedAt'] = req_dict.pop('updated_at').isoformat() if req_dict.get('updated_at') else None
     
@@ -217,7 +228,7 @@ def create_request(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     sql = """
-        INSERT INTO requests (
+        INSERT INTO t_p42562714_web_app_creation_1.requests (
             user_id, title, description, category, subcategory,
             quantity, unit, price_per_unit, has_vat, vat_rate,
             district, delivery_address, available_districts,
@@ -250,12 +261,12 @@ def create_request(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     if body.get('images'):
         for idx, img in enumerate(body['images']):
             cur.execute(
-                "INSERT INTO offer_images (url, alt) VALUES (%s, %s) RETURNING id",
+                "INSERT INTO t_p42562714_web_app_creation_1.offer_images (url, alt) VALUES (%s, %s) RETURNING id",
                 (img['url'], img.get('alt', ''))
             )
             image_id = cur.fetchone()['id']
             cur.execute(
-                "INSERT INTO request_image_relations (request_id, image_id, sort_order) VALUES (%s, %s, %s)",
+                "INSERT INTO t_p42562714_web_app_creation_1.request_image_relations (request_id, image_id, sort_order) VALUES (%s, %s, %s)",
                 (request_id, image_id, idx)
             )
     

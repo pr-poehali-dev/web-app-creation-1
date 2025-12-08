@@ -302,14 +302,21 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
               <>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
                   {currentRequests.map((request) => (
-                    <div key={request.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow cursor-pointer">
-                      <h3 className="font-semibold mb-2">{request.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{request.description}</p>
+                    <div key={request.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
+                      <div onClick={() => navigate(`/request/${request.id}`)} className="cursor-pointer">
+                        <h3 className="font-semibold mb-2">{request.title}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{request.description}</p>
+                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-primary">
                           {request.pricePerUnit.toLocaleString()} ₽
                         </span>
-                        <Button size="sm">Отправить отклик</Button>
+                        <Button 
+                          size="sm" 
+                          onClick={() => navigate(`/request/${request.id}`)}
+                        >
+                          Отправить отклик
+                        </Button>
                       </div>
                     </div>
                   ))}
