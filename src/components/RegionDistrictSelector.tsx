@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/command';
 import Icon from '@/components/ui/icon';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { MOCK_OFFERS } from '@/data/mockOffers';
 
 interface RegionDistrictSelectorProps {
   className?: string;

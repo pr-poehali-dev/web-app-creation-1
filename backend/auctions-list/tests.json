@@ -6,7 +6,7 @@
       "path": "/?status=active",
       "expectedStatus": 200,
       "expectedBody": {
-        "auctions": "array"
+        "auctions": []
       },
       "bodyMatcher": "partial"
     }

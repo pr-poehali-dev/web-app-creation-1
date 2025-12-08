@@ -52,25 +52,7 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
-  const mockRequests: Request[] = [
-    {
-      id: '1',
-      title: 'Нужен цемент М500',
-      buyer: 'ООО "СтройКомплект"',
-      budget: 100000,
-      status: 'active',
-      createdAt: '2024-01-18'
-    },
-    {
-      id: '2',
-      title: 'Требуется щебень фракции 5-20',
-      buyer: 'ИП Сидоров',
-      budget: 50000,
-      status: 'moderation',
-      createdAt: '2024-02-12'
-    },
-  ];
+  const [requests, setRequests] = useState<Request[]>([]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -123,7 +105,7 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
           <Card>
             <CardHeader>
               <CardTitle>Список запросов</CardTitle>
-              <CardDescription>Всего запросов: {mockRequests.length}</CardDescription>
+              <CardDescription>Всего запросов: {requests.length}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
@@ -162,7 +144,14 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockRequests.map((request) => (
+                    {requests.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          Запросы не найдены
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      requests.map((request) => (
                       <TableRow key={request.id}>
                         <TableCell className="font-medium">{request.title}</TableCell>
                         <TableCell>{request.buyer}</TableCell>
@@ -209,7 +198,8 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )))
+                    }
                   </TableBody>
                 </Table>
               </div>

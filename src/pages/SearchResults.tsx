@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
-import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
 import { addToSearchHistory, getSearchHistory, clearSearchHistory, removeFromSearchHistory, type SearchHistoryItem } from '@/utils/searchHistory';
 

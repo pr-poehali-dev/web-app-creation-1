@@ -26,7 +26,6 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import type { Auction } from '@/types/auction';
-import { MOCK_AUCTIONS } from '@/data/mockAuctions';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { auctionsAPI } from '@/services/api';

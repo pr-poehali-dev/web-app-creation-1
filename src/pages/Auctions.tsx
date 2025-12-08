@@ -10,8 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
-import { MOCK_AUCTIONS } from '@/data/mockAuctions';
 import type { Auction } from '@/types/auction';
+import { auctionsAPI } from '@/services/api';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import AuctionCard from '@/components/auction/AuctionCard';
@@ -103,19 +103,11 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const loadAuctions = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?status=active');
-      if (response.ok) {
-        const data = await response.json();
-        const loadedAuctions = data.auctions.map((a: any) => ({
-          ...a,
-          startDate: new Date(a.startDate),
-          endDate: new Date(a.endDate),
-          createdAt: new Date(a.createdAt),
-        }));
-        setAuctions(loadedAuctions);
-      }
+      const loadedAuctions = await auctionsAPI.getAllAuctions('active');
+      setAuctions(loadedAuctions);
     } catch (error) {
       console.error('Error loading auctions:', error);
+      setAuctions([]);
     } finally {
       setIsLoading(false);
     }

@@ -8,7 +8,6 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
-import { MOCK_OFFERS } from '@/data/mockOffers';
 import { searchOffers } from '@/utils/searchUtils';
 import { addToSearchHistory } from '@/utils/searchHistory';
 import { useDistrict } from '@/contexts/DistrictContext';

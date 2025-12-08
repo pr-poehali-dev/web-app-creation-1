@@ -1,7 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import type { Offer, Request } from '@/types/offer';
-import { MOCK_OFFERS } from '@/data/mockOffers';
-import { MOCK_REQUESTS } from '@/data/mockRequests';
 
 interface OffersContextType {
   offers: Offer[];
@@ -17,8 +15,8 @@ interface OffersContextType {
 const OffersContext = createContext<OffersContextType | undefined>(undefined);
 
 export function OffersProvider({ children }: { children: ReactNode }) {
-  const [offers, setOffers] = useState<Offer[]>(MOCK_OFFERS);
-  const [requests, setRequests] = useState<Request[]>(MOCK_REQUESTS);
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [requests, setRequests] = useState<Request[]>([]);
 
   const addOffer = (offer: Offer) => {
     setOffers(prev => [offer, ...prev]);

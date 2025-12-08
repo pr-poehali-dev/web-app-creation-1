@@ -101,8 +101,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cur.execute(f"""
             UPDATE t_p42562714_web_app_creation_1.auctions 
             SET status = 'ended' 
-            WHERE status = 'active' AND end_date <= %s
+            WHERE status IN ('active', 'ending-soon') AND end_date <= %s
         """, (now,))
+        
+        # Помечаем аукционы как "скоро завершится" (меньше 24 часов)
+        cur.execute(f"""
+            UPDATE t_p42562714_web_app_creation_1.auctions 
+            SET status = 'ending-soon' 
+            WHERE status = 'active' 
+            AND end_date > %s 
+            AND end_date <= %s + INTERVAL '24 hours'
+        """, (now, now))
         
         conn.commit()
         

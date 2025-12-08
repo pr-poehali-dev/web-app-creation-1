@@ -68,54 +68,6 @@ const STATUS_COLORS: Record<RequestStatus, string> = {
   archived: 'bg-slate-500',
 };
 
-const MOCK_REQUESTS: Request[] = [
-  {
-    id: '1',
-    title: 'Требуется поставка офисной мебели',
-    description: 'Необходимо приобрести офисную мебель для нового офиса',
-    category: 'furniture',
-    district: 'yakutsk',
-    budget: 500000,
-    quantity: 20,
-    unit: 'комплект',
-    deadline: '2024-12-20',
-    status: 'active',
-    responsesCount: 7,
-    views: 145,
-    createdAt: new Date('2024-11-20'),
-  },
-  {
-    id: '2',
-    title: 'Закупка строительных материалов',
-    description: 'Требуется закупить строительные материалы для строительства',
-    category: 'building-materials',
-    district: 'aldan',
-    budget: 1200000,
-    quantity: 100,
-    unit: 'тонн',
-    deadline: '2025-01-15',
-    status: 'active',
-    responsesCount: 12,
-    views: 287,
-    createdAt: new Date('2024-11-25'),
-  },
-  {
-    id: '3',
-    title: 'Ищем поставщика продуктов питания',
-    description: 'Регулярные поставки продуктов питания для столовой',
-    category: 'food',
-    district: 'yakutsk',
-    budget: 300000,
-    quantity: 1,
-    unit: 'договор',
-    deadline: '2024-12-10',
-    status: 'draft',
-    responsesCount: 0,
-    views: 23,
-    createdAt: new Date('2024-11-28'),
-  },
-];
-
 export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProps) {
   useScrollToTop();
   const navigate = useNavigate();
