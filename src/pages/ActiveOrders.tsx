@@ -8,9 +8,13 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
+import ReviewModal from '@/components/reviews/ReviewModal';
 import { getSession } from '@/utils/auth';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { ordersAPI, type Order } from '@/services/api';
+import { reviewsAPI } from '@/services/reviews';
+import { useToast } from '@/hooks/use-toast';
+import type { CreateReviewData } from '@/types/review';
 
 interface ActiveOrdersProps {
   isAuthenticated: boolean;
@@ -40,10 +44,12 @@ interface OrderCardProps {
   order: Order;
   districts: Array<{ id: string; name: string }>;
   onNavigate: (path: string) => void;
+  onReview?: (order: Order) => void;
 }
 
-const OrderCard = ({ order, districts, onNavigate }: OrderCardProps) => {
+const OrderCard = ({ order, districts, onNavigate, onReview }: OrderCardProps) => {
   const districtName = districts.find(d => d.id === order.district)?.name;
+  const canReview = order.status === 'completed' && order.type === 'purchase';
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -131,6 +137,16 @@ const OrderCard = ({ order, districts, onNavigate }: OrderCardProps) => {
             <Icon name="Eye" className="mr-2 h-4 w-4" />
             Детали
           </Button>
+          {canReview && onReview && (
+            <Button 
+              size="sm" 
+              className="flex-1"
+              onClick={() => onReview(order)}
+            >
+              <Icon name="Star" className="mr-2 h-4 w-4" />
+              Оставить отзыв
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -141,6 +157,7 @@ const OrderCard = ({ order, districts, onNavigate }: OrderCardProps) => {
 export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrdersProps) {
   useScrollToTop();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { districts } = useDistrict();
   const currentUser = getSession();
   
@@ -149,6 +166,8 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -196,6 +215,37 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     setActiveTab(tab);
     setStatusFilter('all');
   }, []);
+
+  const handleReviewClick = (order: Order) => {
+    setSelectedOrder(order);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewSubmit = async (data: CreateReviewData) => {
+    if (!currentUser || !selectedOrder) return;
+
+    try {
+      await reviewsAPI.createReview({
+        ...data,
+        reviewerId: currentUser.id,
+      });
+
+      toast({
+        title: 'Отзыв опубликован!',
+        description: 'Спасибо за ваш отзыв',
+      });
+
+      setIsReviewModalOpen(false);
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Не удалось опубликовать отзыв',
+      });
+    }
+  };
 
   const handleStatusFilterChange = useCallback((status: OrderStatus) => {
     setStatusFilter(status);
@@ -341,6 +391,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
                       order={order} 
                       districts={districts}
                       onNavigate={navigate}
+                      onReview={handleReviewClick}
                     />
                   ))}
                 </div>
@@ -351,6 +402,21 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
       </main>
 
       <Footer />
+
+      {selectedOrder && (
+        <ReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => {
+            setIsReviewModalOpen(false);
+            setSelectedOrder(null);
+          }}
+          onSubmit={handleReviewSubmit}
+          contractId={selectedOrder.id}
+          reviewedUserId={selectedOrder.sellerId || ''}
+          offerTitle={selectedOrder.title}
+          sellerName={selectedOrder.counterparty}
+        />
+      )}
     </div>
   );
 }

@@ -196,6 +196,10 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     <Icon name="Gavel" className="mr-2 h-4 w-4" />
                     Мои аукционы
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/my-reviews')}>
+                    <Icon name="Star" className="mr-2 h-4 w-4" />
+                    Мои отзывы
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/active-orders')}>
                     <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
                     Мои заказы

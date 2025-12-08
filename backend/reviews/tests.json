@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "name": "Get reviews for user",
+      "method": "GET",
+      "path": "/?userId=123",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "reviews": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get review stats for user",
+      "method": "GET",
+      "path": "/?action=stats&userId=123",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "stats": {
+          "averageRating": "number",
+          "totalReviews": "number",
+          "ratingDistribution": "object"
+        }
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

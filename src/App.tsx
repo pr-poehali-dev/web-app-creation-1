@@ -48,6 +48,7 @@ import TradingPlatform from "./pages/TradingPlatform";
 import CreateContract from "./pages/CreateContract";
 import OrderPage from "./pages/OrderPage";
 import OrderDetail from "./pages/OrderDetail";
+import MyReviews from "./pages/MyReviews";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import OfferAgreement from "./pages/OfferAgreement";
@@ -128,6 +129,7 @@ const App = () => {
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-auction" element={<CreateAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/register" element={<Register onRegister={handleLogin} />} />
             <Route path="/reset-password" element={<ResetPassword />} />
