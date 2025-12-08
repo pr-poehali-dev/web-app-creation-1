@@ -208,12 +208,12 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
           <div className="space-y-2 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Стартовая цена:</span>
-              <span className="font-medium">{auction.startingPrice.toLocaleString()} ₽</span>
+              <span className="font-medium">{auction.startingPrice?.toLocaleString() ?? '0'} ₽</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Текущая ставка:</span>
               <span className="font-bold text-primary text-lg">
-                {auction.currentBid.toLocaleString()} ₽
+                {auction.currentBid?.toLocaleString() ?? '0'} ₽
               </span>
             </div>
           </div>

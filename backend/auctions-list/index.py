@@ -40,14 +40,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Активируем аукционы, которые должны начаться
         cur.execute("""
-            UPDATE auctions 
+            UPDATE t_p42562714_web_app_creation_1.auctions 
             SET status = 'active' 
             WHERE status = 'pending' AND start_date <= %s
         """, (now,))
         
         # Завершаем аукционы, время которых истекло
         cur.execute("""
-            UPDATE auctions 
+            UPDATE t_p42562714_web_app_creation_1.auctions 
             SET status = 'ended' 
             WHERE status = 'active' AND end_date <= %s
         """, (now,))
@@ -56,6 +56,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # Получаем параметры запроса
         params = event.get('queryStringParameters') or {}
+        auction_id = params.get('id')
         status_filter = params.get('status', 'active')
         
         # Получаем список аукционов
@@ -73,14 +74,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'alt', ai.alt
                     ) ORDER BY ai.sort_order
                 ) FILTER (WHERE ai.id IS NOT NULL), '[]') as images
-            FROM auctions a
-            LEFT JOIN auction_images ai ON a.id = ai.auction_id
-            WHERE a.status = %s
-            GROUP BY a.id
-            ORDER BY a.is_premium DESC, a.created_at DESC
+            FROM t_p42562714_web_app_creation_1.auctions a
+            LEFT JOIN t_p42562714_web_app_creation_1.auction_images ai ON a.id = ai.auction_id
         """
         
-        cur.execute(query, (status_filter,))
+        if auction_id:
+            query += " WHERE a.id = %s"
+            query += " GROUP BY a.id"
+            cur.execute(query, (auction_id,))
+        else:
+            query += " WHERE a.status = %s"
+            query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
+            cur.execute(query, (status_filter,))
         rows = cur.fetchall()
         
         auctions = []
@@ -119,6 +124,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         cur.close()
         conn.close()
+        
+        if auction_id:
+            if auctions:
+                return {
+                    'statusCode': 200,
+                    'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                    'body': json.dumps(auctions[0]),
+                    'isBase64Encoded': False
+                }
+            else:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Auction not found'}),
+                    'isBase64Encoded': False
+                }
         
         return {
             'statusCode': 200,

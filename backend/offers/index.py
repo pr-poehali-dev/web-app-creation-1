@@ -5,6 +5,8 @@ from datetime import datetime
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+SCHEMA = 't_p42562714_web_app_creation_1'
+
 def get_db_connection():
     """Подключение к базе данных"""
     return psycopg2.connect(os.environ['DATABASE_URL'])
@@ -99,7 +101,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = """
+        sql = f"""
             SELECT 
                 o.*,
                 CONCAT(u.first_name, ' ', u.last_name) as seller_name,
@@ -116,10 +118,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                     ) FILTER (WHERE oi.id IS NOT NULL),
                     '[]'
                 ) as images
-            FROM offers o
-            LEFT JOIN users u ON o.user_id = u.id
-            LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
-            LEFT JOIN offer_images oi ON oir.image_id = oi.id
+            FROM {SCHEMA}.offers o
+            LEFT JOIN {SCHEMA}.users u ON o.user_id = u.id
+            LEFT JOIN {SCHEMA}.offer_image_relations oir ON o.id = oir.offer_id
+            LEFT JOIN {SCHEMA}.offer_images oi ON oir.image_id = oi.id
             WHERE o.status = %s
         """
         
