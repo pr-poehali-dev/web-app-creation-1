@@ -14,7 +14,7 @@ export default function BackButton({ className = '' }: BackButtonProps) {
       variant="ghost"
       size="sm"
       onClick={() => navigate(-1)}
-      className={`md:hidden flex items-center gap-2 mb-4 ${className}`}
+      className={`flex items-center gap-2 mb-4 ${className}`}
     >
       <Icon name="ArrowLeft" className="h-4 w-4" />
       <span>Назад</span>

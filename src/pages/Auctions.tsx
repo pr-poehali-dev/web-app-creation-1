@@ -87,6 +87,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const firstAuctionRef = useRef<HTMLDivElement>(null);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -165,6 +166,17 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const hasMore = displayedCount < filteredAuctions.length;
 
   useEffect(() => {
+    if (filters.query && filters.query.length >= 2 && filteredAuctions.length > 0) {
+      const timer = setTimeout(() => {
+        if (firstAuctionRef.current) {
+          firstAuctionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [filters.query, filteredAuctions.length]);
+
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
@@ -199,12 +211,15 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
     setDisplayedCount(ITEMS_PER_PAGE);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearch = () => {
     setDisplayedCount(ITEMS_PER_PAGE);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+      if (firstAuctionRef.current && filteredAuctions.length > 0) {
+        firstAuctionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   const auctionCounts = {
@@ -298,13 +313,17 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {currentAuctions.map((auction) => (
-                <AuctionCard 
-                  key={auction.id} 
-                  auction={auction}
-                  districts={districts}
-                  isAuthenticated={isAuthenticated}
-                />
+              {currentAuctions.map((auction, index) => (
+                <div
+                  key={auction.id}
+                  ref={index === 0 ? firstAuctionRef : null}
+                >
+                  <AuctionCard 
+                    auction={auction}
+                    districts={districts}
+                    isAuthenticated={isAuthenticated}
+                  />
+                </div>
               ))}
             </div>
 

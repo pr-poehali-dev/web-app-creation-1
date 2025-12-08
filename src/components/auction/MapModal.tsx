@@ -158,21 +158,51 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     }
   }, [isOpen, mapCenter, coordinates, onCoordinatesChange]);
 
-  const handleInputChange = (value: string) => {
+  const handleInputChange = async (value: string) => {
     onCoordinatesChange(value);
     const [lat, lng] = value.split(',').map(c => parseFloat(c.trim()));
     if (!isNaN(lat) && !isNaN(lng)) {
       setMapCenter([lat, lng]);
+      
+      if (onAddressChange) {
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru`
+          );
+          const data = await response.json();
+          const address = data.address;
+          const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+          const district = address.suburb || address.district || address.city_district || '';
+          onAddressChange(fullAddress, district);
+        } catch (error) {
+          console.error('Ошибка получения адреса:', error);
+        }
+      }
     }
   };
 
   const handleUseMyLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
           onCoordinatesChange(coords);
           setMapCenter([position.coords.latitude, position.coords.longitude]);
+          
+          if (onAddressChange) {
+            try {
+              const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&accept-language=ru`
+              );
+              const data = await response.json();
+              const address = data.address;
+              const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+              const district = address.suburb || address.district || address.city_district || '';
+              onAddressChange(fullAddress, district);
+            } catch (error) {
+              console.error('Ошибка получения адреса:', error);
+            }
+          }
         },
         (error) => {
           console.error('Ошибка получения координат:', error);
