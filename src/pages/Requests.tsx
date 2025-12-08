@@ -309,7 +309,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-primary">
-                          {request.pricePerUnit.toLocaleString()} ₽
+                          {request.pricePerUnit ? request.pricePerUnit.toLocaleString() : '0'} ₽
                         </span>
                         <Button 
                           size="sm" 
