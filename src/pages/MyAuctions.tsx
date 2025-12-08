@@ -201,7 +201,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Текущая ставка:</span>
               <span className="font-bold text-primary text-lg">
-                {auction.currentPrice.toLocaleString()} ₽
+                {auction.currentBid.toLocaleString()} ₽
               </span>
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
             <div className="text-center">
               <div className="flex items-center justify-center gap-1 text-muted-foreground">
                 <Icon name="Users" className="h-4 w-4" />
-                <span>{auction.bidsCount}</span>
+                <span>{auction.bidCount}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">Ставок</p>
             </div>
@@ -219,7 +219,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
                 <Icon name="Clock" className="h-4 w-4" />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {auction.status === 'ended' ? 'Завершен' : getTimeRemaining(auction.endTime)}
+                {auction.status === 'ended' ? 'Завершен' : getTimeRemaining(auction.endDate)}
               </p>
             </div>
             <div className="text-center">
