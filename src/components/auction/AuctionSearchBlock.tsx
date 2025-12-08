@@ -9,9 +9,17 @@ interface AuctionSearchBlockProps {
   filters: SearchFilters;
   onFiltersChange: (filters: SearchFilters) => void;
   onSearch: () => void;
+  placeholder?: string;
+  label?: string;
 }
 
-export default function AuctionSearchBlock({ filters, onFiltersChange, onSearch }: AuctionSearchBlockProps) {
+export default function AuctionSearchBlock({ 
+  filters, 
+  onFiltersChange, 
+  onSearch,
+  placeholder = "Введите минимум 2 символа для поиска...",
+  label = "Поиск"
+}: AuctionSearchBlockProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
@@ -56,14 +64,14 @@ export default function AuctionSearchBlock({ filters, onFiltersChange, onSearch 
       <CardContent className="pt-6">
         <div className="relative">
           <Label htmlFor="search-query" className="mb-2 block">
-            Поиск по аукционам
+            {label}
           </Label>
           <div className="relative">
             <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               ref={inputRef}
               id="search-query"
-              placeholder="Введите минимум 2 символа для поиска..."
+              placeholder={placeholder}
               value={filters.query}
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={handleKeyDown}

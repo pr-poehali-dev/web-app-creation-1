@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
-import SearchBlock from '@/components/SearchBlock';
+import AuctionSearchBlock from '@/components/auction/AuctionSearchBlock';
 import OfferCard from '@/components/OfferCard';
 import OfferCardSkeleton from '@/components/OfferCardSkeleton';
 import Footer from '@/components/Footer';
@@ -237,11 +237,12 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
           </Card>
         )}
 
-        <SearchBlock
+        <AuctionSearchBlock
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onSearch={handleSearch}
-          allOffers={offers}
+          placeholder="Поиск по предложениям..."
+          label="Поиск предложений"
         />
 
         {isLoading ? (
