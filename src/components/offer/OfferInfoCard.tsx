@@ -48,7 +48,7 @@ export default function OfferInfoCard({
     <Card className="mb-6">
       <CardContent className="pt-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{title}</h1>
           <div className="flex flex-wrap gap-2">
             {category ? (
               <Badge variant="secondary">{category}</Badge>
@@ -61,7 +61,7 @@ export default function OfferInfoCard({
         <Separator />
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Количество</p>
               <p className="font-semibold">{quantity} {unit}</p>

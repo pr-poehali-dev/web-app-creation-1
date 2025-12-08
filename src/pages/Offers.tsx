@@ -206,15 +206,15 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
       <main className="container mx-auto px-4 py-8 flex-1">
         <BackButton />
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Предложения</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Предложения</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Активные предложения от проверенных поставщиков в вашем районе
             </p>
           </div>
           {isAuthenticated && (
-            <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap">
+            <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap w-full md:w-auto">
               <Icon name="Plus" className="h-4 w-4" />
               Создать предложение
             </Button>
@@ -258,9 +258,9 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
         ) : (
           <>
             <div className="mb-6">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md font-medium">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
+                  <div className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md font-medium w-fit">
                     <Icon name="Package" className="h-4 w-4" />
                     <span className="text-sm">Предложения</span>
                   </div>
@@ -296,7 +296,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
                   {isAuthenticated && (
                     <div className="flex items-center gap-2">
                       <Switch
@@ -311,7 +311,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
                   )}
                   
                   <div className="flex items-center gap-2">
-                    <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground" />
+                    <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <p className="text-sm text-muted-foreground">
                       Сортировка: <span className="font-semibold text-foreground">Премиум + По новизне</span>
                     </p>
