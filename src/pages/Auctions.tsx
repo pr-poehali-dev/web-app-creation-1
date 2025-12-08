@@ -233,10 +233,10 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
 
   const auctionCounts = {
     all: filteredAuctions.length,
-    active: MOCK_AUCTIONS.filter(a => a.status === 'active').length,
-    endingSoon: MOCK_AUCTIONS.filter(a => a.status === 'ending-soon').length,
-    upcoming: MOCK_AUCTIONS.filter(a => a.status === 'upcoming').length,
-    ended: MOCK_AUCTIONS.filter(a => a.status === 'ended').length,
+    active: filteredAuctions.filter(a => a.status === 'active').length,
+    endingSoon: filteredAuctions.filter(a => a.status === 'ending-soon').length,
+    upcoming: filteredAuctions.filter(a => a.status === 'upcoming').length,
+    ended: filteredAuctions.filter(a => a.status === 'ended').length,
   };
 
   const premiumCount = currentAuctions.filter((auction) => auction.isPremium && auction.status !== 'ended').length;
