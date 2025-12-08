@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "Create auction without auth",
+      "method": "POST",
+      "path": "/",
+      "headers": {},
+      "body": {
+        "title": "Test Auction"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "Unauthorized"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

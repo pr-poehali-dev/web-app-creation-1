@@ -56,12 +56,15 @@ export default function AuctionLocationSection({
   };
 
   const handleMapAddressChange = (address: string, districtName: string) => {
+    console.log('MapModal callback:', { address, districtName });
+    
     if (address) {
       onInputChange('fullAddress', address);
     }
     
     if (districtName) {
       const normalizedDistrictName = districtName.toLowerCase().trim();
+      console.log('Searching for district:', normalizedDistrictName);
       
       // Попытка найти точное совпадение или частичное совпадение
       const matchedDistrict = districts.find(d => {
@@ -98,6 +101,7 @@ export default function AuctionLocationSection({
       });
       
       if (matchedDistrict) {
+        console.log('District matched:', matchedDistrict.name);
         onInputChange('district', matchedDistrict.id);
         setDistrictSearch('');
         setIsDropdownOpen(false);

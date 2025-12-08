@@ -206,18 +206,57 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
     setIsSubmitting(true);
 
     try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        toast({
+          title: 'Ошибка',
+          description: 'Необходимо авторизоваться',
+          variant: 'destructive',
+        });
+        navigate('/login');
+        return;
+      }
+
+      // Конвертируем изображения в base64
+      const imagePromises = images.map(file => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      });
+      
+      const imagesBase64 = await Promise.all(imagePromises);
+
+      const response = await fetch('https://functions.poehali.dev/54ee04cf-3428-411f-8f87-bc1f19a53f27', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId,
+        },
+        body: JSON.stringify({
+          ...formData,
+          images: imagesBase64,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Ошибка создания аукциона');
+      }
+
       toast({
         title: 'Успешно',
         description: 'Аукцион создан и будет опубликован в указанное время',
       });
       
       setTimeout(() => {
-        navigate('/my-auctions');
+        navigate('/auction');
       }, 1500);
     } catch (error) {
       toast({
         title: 'Ошибка',
-        description: 'Не удалось создать аукцион. Попробуйте позже.',
+        description: error instanceof Error ? error.message : 'Не удалось создать аукцион. Попробуйте позже.',
         variant: 'destructive',
       });
     } finally {

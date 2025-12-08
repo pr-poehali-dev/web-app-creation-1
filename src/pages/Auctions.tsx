@@ -86,6 +86,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const observerTarget = useRef<HTMLDivElement>(null);
   const firstAuctionRef = useRef<HTMLDivElement>(null);
 
@@ -99,17 +100,33 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
 
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'ending-soon' | 'upcoming' | 'ended'>('all');
 
-  useEffect(() => {
+  const loadAuctions = async () => {
     setIsLoading(true);
-    const timer = setTimeout(() => {
+    try {
+      const response = await fetch('https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?status=active');
+      if (response.ok) {
+        const data = await response.json();
+        const loadedAuctions = data.auctions.map((a: any) => ({
+          ...a,
+          startDate: new Date(a.startDate),
+          endDate: new Date(a.endDate),
+          createdAt: new Date(a.createdAt),
+        }));
+        setAuctions(loadedAuctions);
+      }
+    } catch (error) {
+      console.error('Error loading auctions:', error);
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
+  };
 
-    return () => clearTimeout(timer);
+  useEffect(() => {
+    loadAuctions();
   }, []);
 
   const filteredAuctions = useMemo(() => {
-    let result = [...MOCK_AUCTIONS];
+    let result = [...auctions];
 
     if (showOnlyMy && isAuthenticated && currentUser) {
       result = result.filter(auction => auction.userId === currentUser.id);
@@ -160,7 +177,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     });
 
     return [...premiumAuctions, ...regularAuctions];
-  }, [filters, statusFilter, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
+  }, [auctions, filters, statusFilter, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
 
   const currentAuctions = filteredAuctions.slice(0, displayedCount);
   const hasMore = displayedCount < filteredAuctions.length;
