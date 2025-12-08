@@ -125,6 +125,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'normal'
     },
     {
+      id: 'deleted-users',
+      title: 'История удаленных',
+      description: 'Просмотр и восстановление удаленных пользователей',
+      icon: 'Archive',
+      color: 'bg-slate-500',
+      count: null,
+      path: '/admin/deleted-users',
+      priority: 'low'
+    },
+    {
       id: 'offers',
       title: 'Модерация предложений',
       description: 'Проверка и управление предложениями на площадке',

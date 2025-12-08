@@ -155,6 +155,14 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
               <h1 className="text-3xl font-bold">Управление пользователями</h1>
               <p className="text-muted-foreground">Просмотр и управление пользователями площадки</p>
             </div>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/admin/deleted-users')}
+              className="gap-2"
+            >
+              <Icon name="Archive" className="h-4 w-4" />
+              История удаленных
+            </Button>
           </div>
 
           <Card>

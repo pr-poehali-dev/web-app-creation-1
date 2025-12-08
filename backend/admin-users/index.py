@@ -99,55 +99,88 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             status_filter = query_params.get('status', 'all')
             type_filter = query_params.get('type', 'all')
             role_filter = query_params.get('role', '')
+            show_deleted = query_params.get('deleted', 'false') == 'true'
             
             where_clauses = []
             params = []
             
+            # Фильтр для удаленных/активных пользователей
+            if show_deleted:
+                where_clauses.append("u.removed_at IS NOT NULL")
+            else:
+                where_clauses.append("u.removed_at IS NULL")
+            
             if search:
                 search_pattern = f"%{search}%"
-                where_clauses.append("(email ILIKE %s OR first_name ILIKE %s OR last_name ILIKE %s OR company_name ILIKE %s)")
+                where_clauses.append("(u.email ILIKE %s OR u.first_name ILIKE %s OR u.last_name ILIKE %s OR u.company_name ILIKE %s)")
                 params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
             
-            if status_filter != 'all':
+            if status_filter != 'all' and not show_deleted:
                 where_clauses.append("status = %s")
                 params.append(status_filter)
             
             if type_filter != 'all':
-                where_clauses.append("user_type = %s")
+                where_clauses.append("u.user_type = %s")
                 params.append(type_filter)
             
             if role_filter:
-                where_clauses.append("role = %s")
+                where_clauses.append("u.role = %s")
                 params.append(role_filter)
             
-            where_sql = ' AND '.join(where_clauses) if where_clauses else '1=1'
+            where_sql = ' AND '.join(where_clauses)
             
-            query = f"""
-                SELECT 
-                    u.id,
-                    u.email,
-                    u.first_name,
-                    u.last_name,
-                    u.middle_name,
-                    u.company_name,
-                    u.user_type,
-                    u.phone,
-                    u.inn,
-                    u.ogrnip,
-                    u.ogrn,
-                    u.position,
-                    u.director_name,
-                    u.legal_address,
-                    u.is_active,
-                    u.locked_until,
-                    u.created_at,
-                    COALESCE(uv.status = 'approved', false) as verified
-                FROM users u
-                LEFT JOIN user_verifications uv ON u.id = uv.user_id
-                WHERE u.removed_at IS NULL AND {where_sql}
-                ORDER BY u.created_at DESC
-                LIMIT 100
-            """
+            if show_deleted:
+                # Запрос для удаленных пользователей с подсчетом их данных
+                query = f"""
+                    SELECT 
+                        u.id,
+                        REGEXP_REPLACE(u.email, '^removed_[0-9]+@removed\\.local$', 'user_' || u.id || '@hidden.email') as email,
+                        u.first_name,
+                        u.last_name,
+                        u.middle_name,
+                        u.company_name,
+                        u.user_type,
+                        u.phone,
+                        u.inn,
+                        u.ogrnip,
+                        u.ogrn,
+                        u.removed_at,
+                        (SELECT COUNT(*) FROM orders WHERE buyer_id = u.id OR seller_id = u.id) as orders_count,
+                        (SELECT COUNT(*) FROM offers WHERE user_id = u.id) as offers_count,
+                        (SELECT COUNT(*) FROM requests WHERE user_id = u.id) as requests_count
+                    FROM users u
+                    WHERE {where_sql}
+                    ORDER BY u.removed_at DESC
+                    LIMIT 100
+                """
+            else:
+                # Обычный запрос для активных пользователей
+                query = f"""
+                    SELECT 
+                        u.id,
+                        u.email,
+                        u.first_name,
+                        u.last_name,
+                        u.middle_name,
+                        u.company_name,
+                        u.user_type,
+                        u.phone,
+                        u.inn,
+                        u.ogrnip,
+                        u.ogrn,
+                        u.position,
+                        u.director_name,
+                        u.legal_address,
+                        u.is_active,
+                        u.locked_until,
+                        u.created_at,
+                        COALESCE(uv.status = 'approved', false) as verified
+                    FROM users u
+                    LEFT JOIN user_verifications uv ON u.id = uv.user_id
+                    WHERE {where_sql}
+                    ORDER BY u.created_at DESC
+                    LIMIT 100
+                """
             
             cur.execute(query, tuple(params))
             users = cur.fetchall()
@@ -156,34 +189,51 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             for user in users:
                 name = user.get('company_name') if user.get('company_name') else f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
                 
-                status = 'active'
-                if not user.get('is_active'):
-                    status = 'blocked'
-                elif user.get('locked_until') and user['locked_until'] > datetime.now():
-                    status = 'blocked'
-                
-                users_list.append({
-                    'id': str(user['id']),
-                    'email': user['email'],
-                    'name': name,
-                    'firstName': user.get('first_name'),
-                    'lastName': user.get('last_name'),
-                    'middleName': user.get('middle_name'),
-                    'companyName': user.get('company_name'),
-                    'type': user['user_type'],
-                    'phone': user.get('phone'),
-                    'inn': user.get('inn'),
-                    'ogrnip': user.get('ogrnip'),
-                    'ogrn': user.get('ogrn'),
-                    'position': user.get('position'),
-                    'directorName': user.get('director_name'),
-                    'legalAddress': user.get('legal_address'),
-                    'status': status,
-                    'isActive': user.get('is_active', True),
-                    'lockedUntil': user['locked_until'].isoformat() if user.get('locked_until') else None,
-                    'verified': user['verified'],
-                    'registeredAt': user['created_at'].isoformat() if user['created_at'] else None
-                })
+                if show_deleted:
+                    # Для удаленных пользователей
+                    users_list.append({
+                        'id': str(user['id']),
+                        'originalEmail': user['email'],
+                        'name': name,
+                        'type': user['user_type'],
+                        'phone': user.get('phone'),
+                        'inn': user.get('inn'),
+                        'companyName': user.get('company_name'),
+                        'removedAt': user['removed_at'].isoformat() if user.get('removed_at') else None,
+                        'ordersCount': user.get('orders_count', 0),
+                        'offersCount': user.get('offers_count', 0),
+                        'requestsCount': user.get('requests_count', 0)
+                    })
+                else:
+                    # Для активных пользователей
+                    status = 'active'
+                    if not user.get('is_active'):
+                        status = 'blocked'
+                    elif user.get('locked_until') and user['locked_until'] > datetime.now():
+                        status = 'blocked'
+                    
+                    users_list.append({
+                        'id': str(user['id']),
+                        'email': user['email'],
+                        'name': name,
+                        'firstName': user.get('first_name'),
+                        'lastName': user.get('last_name'),
+                        'middleName': user.get('middle_name'),
+                        'companyName': user.get('company_name'),
+                        'type': user['user_type'],
+                        'phone': user.get('phone'),
+                        'inn': user.get('inn'),
+                        'ogrnip': user.get('ogrnip'),
+                        'ogrn': user.get('ogrn'),
+                        'position': user.get('position'),
+                        'directorName': user.get('director_name'),
+                        'legalAddress': user.get('legal_address'),
+                        'status': status,
+                        'isActive': user.get('is_active', True),
+                        'lockedUntil': user['locked_until'].isoformat() if user.get('locked_until') else None,
+                        'verified': user['verified'],
+                        'registeredAt': user['created_at'].isoformat() if user['created_at'] else None
+                    })
             
             return {
                 'statusCode': 200,
@@ -244,6 +294,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({'success': True, 'message': 'User unblocked'}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'restore':
+                # Получаем данные удаленного пользователя
+                cur.execute("SELECT first_name, last_name FROM users WHERE id = %s AND removed_at IS NOT NULL", (user_id,))
+                user_data = cur.fetchone()
+                
+                if not user_data:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'User not found or not deleted'}),
+                        'isBase64Encoded': False
+                    }
+                
+                # Генерируем новый email на основе имени и ID
+                first_name = user_data['first_name'] or 'user'
+                new_email = f"restored_{first_name.lower()}_{user_id}@needsemail.local"
+                
+                # Восстанавливаем пользователя
+                cur.execute("""
+                    UPDATE users 
+                    SET removed_at = NULL,
+                        is_active = true,
+                        email = %s
+                    WHERE id = %s
+                """, (new_email, user_id))
+                
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({
+                        'success': True, 
+                        'message': 'User restored successfully',
+                        'tempEmail': new_email
+                    }),
                     'isBase64Encoded': False
                 }
             
