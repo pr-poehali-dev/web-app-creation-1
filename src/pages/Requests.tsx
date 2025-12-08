@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
-import SearchBlock from '@/components/SearchBlock';
+import AuctionSearchBlock from '@/components/auction/AuctionSearchBlock';
 import OfferCardSkeleton from '@/components/OfferCardSkeleton';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
@@ -176,11 +176,12 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
           )}
         </div>
 
-        <SearchBlock
+        <AuctionSearchBlock
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onSearch={handleSearch}
-          allOffers={requests}
+          placeholder="Поиск по запросам..."
+          label="Поиск запросов"
         />
 
         {isLoading ? (
