@@ -56,10 +56,41 @@ export default function AuctionLocationSection({
     }
     
     if (districtName) {
-      const matchedDistrict = districts.find(d => 
-        d.name.toLowerCase().includes(districtName.toLowerCase()) ||
-        districtName.toLowerCase().includes(d.name.toLowerCase())
-      );
+      const normalizedDistrictName = districtName.toLowerCase().trim();
+      
+      // Попытка найти точное совпадение или частичное совпадение
+      const matchedDistrict = districts.find(d => {
+        const normalizedDbName = d.name.toLowerCase().trim();
+        
+        // Точное совпадение
+        if (normalizedDbName === normalizedDistrictName) return true;
+        
+        // Частичное совпадение (название из OpenStreetMap содержится в названии из базы)
+        if (normalizedDbName.includes(normalizedDistrictName)) return true;
+        
+        // Обратное частичное совпадение (название из базы содержится в названии из OpenStreetMap)
+        if (normalizedDistrictName.includes(normalizedDbName)) return true;
+        
+        // Убираем слова "район", "округ", "улус" и сравниваем
+        const cleanDbName = normalizedDbName
+          .replace(/район/g, '')
+          .replace(/округ/g, '')
+          .replace(/улус/g, '')
+          .replace(/административный/g, '')
+          .trim();
+        const cleanOsmName = normalizedDistrictName
+          .replace(/район/g, '')
+          .replace(/округ/g, '')
+          .replace(/улус/g, '')
+          .replace(/административный/g, '')
+          .trim();
+        
+        if (cleanDbName && cleanOsmName && cleanDbName === cleanOsmName) return true;
+        if (cleanDbName && cleanOsmName && cleanDbName.includes(cleanOsmName)) return true;
+        if (cleanDbName && cleanOsmName && cleanOsmName.includes(cleanDbName)) return true;
+        
+        return false;
+      });
       
       if (matchedDistrict) {
         onInputChange('district', matchedDistrict.id);
