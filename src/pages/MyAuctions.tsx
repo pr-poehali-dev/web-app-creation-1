@@ -94,13 +94,21 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     ? auctions 
     : auctions.filter(auction => auction.status === filterStatus);
 
-  const handleDeleteAuction = (auctionId: string) => {
-    setAuctions(auctions.filter(auction => auction.id !== auctionId));
-    setAuctionToDelete(null);
-    toast({
-      title: 'Успешно',
-      description: 'Аукцион удален',
-    });
+  const handleDeleteAuction = async (auctionId: string) => {
+    try {
+      setAuctions(auctions.filter(auction => auction.id !== auctionId));
+      setAuctionToDelete(null);
+      toast({
+        title: 'Успешно',
+        description: 'Аукцион удален',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить аукцион',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getAuctionStats = () => {

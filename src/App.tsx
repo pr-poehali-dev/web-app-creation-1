@@ -26,6 +26,7 @@ import RequestDetail from "./pages/RequestDetail";
 import CreateOffer from "./pages/CreateOffer";
 import CreateRequest from "./pages/CreateRequest";
 import CreateAuction from "./pages/CreateAuction";
+import AuctionDetail from "./pages/AuctionDetail";
 import VerificationPage from "./pages/VerificationPage";
 import VerificationResubmit from "./pages/VerificationResubmit";
 import AdminVerifications from "./pages/AdminVerifications";
@@ -96,6 +97,7 @@ const App = () => {
             <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/request/:id" element={<RequestDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/auction" element={<Auctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/auction/:id" element={<AuctionDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/about" element={<About isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/support" element={<Support isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
