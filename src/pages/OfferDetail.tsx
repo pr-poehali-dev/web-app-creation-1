@@ -268,14 +268,6 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
 
       <main className="container mx-auto px-4 py-8 flex-1">
         <BackButton />
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-6 gap-2"
-        >
-          <Icon name="ArrowLeft" className="h-4 w-4" />
-          Назад
-        </Button>
 
         <div className="grid gap-8 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-2">

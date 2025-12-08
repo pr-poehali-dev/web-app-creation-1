@@ -37,7 +37,7 @@ export default function OfferCard({ offer }: OfferCardProps) {
 
   const handleOrderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/order/${offer.id}`);
+    navigate(`/offer/${offer.id}`);
   };
 
   return (

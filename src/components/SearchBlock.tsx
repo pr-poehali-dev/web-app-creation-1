@@ -167,31 +167,43 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
               <Label htmlFor="search-query" className="mb-2 block">
                 Поиск
               </Label>
-              <div className="relative">
-                <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  ref={inputRef}
-                  id="search-query"
-                  placeholder="Введите минимум 2 символа для поиска..."
-                  value={filters.query}
-                  onChange={(e) => handleQueryChange(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => {
-                    if (filters.query.length >= 2 && suggestions.length > 0) {
-                      setShowSuggestions(true);
-                    }
-                  }}
-                  className="pl-10 pr-10"
-                />
-                {filters.query && (
-                  <button
-                    type="button"
-                    onClick={handleClearQuery}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Icon name="X" className="h-4 w-4" />
-                  </button>
-                )}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    ref={inputRef}
+                    id="search-query"
+                    placeholder="Введите минимум 2 символа для поиска..."
+                    value={filters.query}
+                    onChange={(e) => handleQueryChange(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => {
+                      if (filters.query.length >= 2 && suggestions.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    className="pl-10 pr-10"
+                  />
+                  {filters.query && (
+                    <button
+                      type="button"
+                      onClick={handleClearQuery}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Icon name="X" className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="default"
+                  onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+                  className="md:hidden whitespace-nowrap"
+                >
+                  <Icon name={showAdvancedSearch ? "ChevronUp" : "ChevronDown"} className="h-4 w-4" />
+                </Button>
               </div>
 
               {showSuggestions && suggestions.length > 0 && (
@@ -222,7 +234,7 @@ export default function SearchBlock({ filters, onFiltersChange, onSearch, allOff
               )}
             </div>
 
-            <div className="w-full md:w-auto">
+            <div className="hidden md:block md:w-auto">
               <Label className="mb-2 block opacity-0 pointer-events-none">
                 &nbsp;
               </Label>
