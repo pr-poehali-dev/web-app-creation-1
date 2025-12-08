@@ -68,7 +68,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as rating_4,
                         SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as rating_5
                     FROM reviews
-                    WHERE reviewed_user_id = %s
+                    WHERE reviewed_user_id = CAST(%s AS INTEGER)
                 """, (user_id,))
                 
                 stats_row = cur.fetchone()
@@ -105,7 +105,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
-                cur.execute("SELECT id FROM reviews WHERE contract_id = %s", (contract_id,))
+                cur.execute("SELECT id FROM reviews WHERE contract_id = CAST(%s AS INTEGER)", (contract_id,))
                 existing_review = cur.fetchone()
                 
                 return {
@@ -142,12 +142,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         r.updated_at,
                         u.first_name || ' ' || u.last_name as reviewer_name,
                         u.user_type as reviewer_type,
-                        o.title as offer_title
+                        '' as offer_title
                     FROM reviews r
                     LEFT JOIN users u ON r.reviewer_id = u.id
-                    LEFT JOIN contracts c ON r.contract_id = c.id
-                    LEFT JOIN offers o ON c.offer_id = o.id
-                    WHERE r.reviewed_user_id = %s
+                    WHERE r.reviewed_user_id = CAST(%s AS INTEGER)
                     ORDER BY r.created_at DESC
                     LIMIT 100
                 """, (user_id,))

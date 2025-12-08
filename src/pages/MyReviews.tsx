@@ -97,11 +97,13 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
           </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              {stats && <ReviewStats stats={stats} />}
-            </div>
+            {stats && stats.totalReviews > 0 && (
+              <div className="lg:col-span-1">
+                <ReviewStats stats={stats} />
+              </div>
+            )}
 
-            <div className="lg:col-span-2">
+            <div className={stats && stats.totalReviews > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
               {reviews.length === 0 ? (
                 <Card>
                   <CardContent className="pt-6 text-center py-12">
