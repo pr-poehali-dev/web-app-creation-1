@@ -144,7 +144,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     COALESCE(uv.status = 'approved', false) as verified
                 FROM users u
                 LEFT JOIN user_verifications uv ON u.id = uv.user_id
-                WHERE {where_sql}
+                WHERE u.removed_at IS NULL AND {where_sql}
                 ORDER BY u.created_at DESC
                 LIMIT 100
             """
@@ -208,19 +208,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if action == 'block':
                 duration = body_data.get('duration', 0)
                 
-                cur.execute("DELETE FROM bids WHERE user_id = %s", (user_id,))
-                cur.execute("DELETE FROM orders WHERE buyer_id = %s", (user_id,))
-                cur.execute("DELETE FROM requests WHERE user_id = %s", (user_id,))
-                cur.execute("DELETE FROM offers WHERE user_id = %s", (user_id,))
-                cur.execute("DELETE FROM auctions WHERE seller_id = %s", (user_id,))
+                # Отменяем только активные ставки пользователя (не удаляем историю)
+                cur.execute("UPDATE bids SET status = 'cancelled' WHERE user_id = %s AND status = 'active'", (user_id,))
                 
+                # Блокируем пользователя (временно или навсегда)
                 if duration > 0:
+                    # Временная блокировка
                     locked_until = datetime.now() + timedelta(hours=duration)
                     cur.execute(
-                        "UPDATE users SET locked_until = %s WHERE id = %s",
+                        "UPDATE users SET locked_until = %s, is_active = true WHERE id = %s",
                         (locked_until, user_id)
                     )
                 else:
+                    # Постоянная блокировка
                     cur.execute(
                         "UPDATE users SET is_active = false, locked_until = NULL WHERE id = %s",
                         (user_id,)
@@ -230,7 +230,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True, 'message': 'User blocked and all data deleted'}),
+                    'body': json.dumps({'success': True, 'message': 'User blocked, orders/offers/requests preserved'}),
                     'isBase64Encoded': False
                 }
             
@@ -284,21 +284,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cur.execute("DELETE FROM bids WHERE user_id = %s", (user_id,))
-            cur.execute("DELETE FROM orders WHERE buyer_id = %s", (user_id,))
-            cur.execute("DELETE FROM requests WHERE user_id = %s", (user_id,))
-            cur.execute("DELETE FROM offers WHERE user_id = %s", (user_id,))
-            cur.execute("DELETE FROM auctions WHERE seller_id = %s", (user_id,))
-            cur.execute("DELETE FROM user_verifications WHERE user_id = %s", (user_id,))
-            cur.execute("DELETE FROM verification_documents WHERE user_id = %s", (user_id,))
-            cur.execute("DELETE FROM reviews WHERE user_id = %s OR reviewer_id = %s", (user_id, user_id))
-            cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            # Soft delete: помечаем пользователя как удаленного
+            # Заказы, предложения, запросы, аукционы остаются в истории
+            cur.execute("""
+                UPDATE users 
+                SET removed_at = CURRENT_TIMESTAMP, 
+                    is_active = false,
+                    email = CONCAT('removed_', id, '@removed.local')
+                WHERE id = %s
+            """, (user_id,))
+            
+            # Отменяем только активные ставки пользователя
+            cur.execute("UPDATE bids SET status = 'cancelled' WHERE user_id = %s AND status = 'active'", (user_id,))
+            
             conn.commit()
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'User and all associated data deleted'}),
+                'body': json.dumps({'success': True, 'message': 'User removed (soft delete), orders/offers/requests preserved in history'}),
                 'isBase64Encoded': False
             }
         

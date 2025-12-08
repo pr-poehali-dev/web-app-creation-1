@@ -136,6 +136,7 @@ export default function UsersTable({
                       variant="destructive"
                       onClick={() => onBlock(user)}
                       title="Заблокировать"
+                      className="bg-red-500 hover:bg-red-600"
                     >
                       <Icon name="Ban" className="h-4 w-4" />
                     </Button>
@@ -145,6 +146,7 @@ export default function UsersTable({
                       variant="outline"
                       onClick={() => onUnblock(user)}
                       title="Разблокировать"
+                      className="border-green-500 text-green-600 hover:bg-green-50"
                     >
                       <Icon name="CheckCircle" className="h-4 w-4" />
                     </Button>
