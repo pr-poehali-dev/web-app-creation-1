@@ -42,7 +42,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
       <main className="container mx-auto px-3 py-6 md:py-8 flex-1">
         <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/5 p-6 md:p-10 rounded-lg md:rounded-xl border border-primary/30 shadow-md">
-            <h1 className="text-lg md:text-[27px] font-bold text-foreground mb-4 md:mb-5 leading-tight text-center">
+            <h1 className="text-[21px] md:text-[27px] font-bold text-foreground mb-4 md:mb-5 leading-tight text-center">
               «Единая региональная товарно-торговая площадка» - это Ваш ключ к успешной торговле!
             </h1>
             
