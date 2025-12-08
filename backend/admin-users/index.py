@@ -232,7 +232,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cur.execute(f"DELETE FROM {SCHEMA}.users WHERE id = %s", (user_id,))
+            cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
             conn.commit()
             
             return {

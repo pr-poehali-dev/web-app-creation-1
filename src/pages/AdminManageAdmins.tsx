@@ -78,7 +78,7 @@ export default function AdminManageAdmins({ isAuthenticated, onLogout }: AdminMa
     }
 
     try {
-      const response = await fetch('https://functions.poehali.dev/54e4c5ac-c42b-4ea9-a77d-ee91d4b8ee47', {
+      const response = await fetch('https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

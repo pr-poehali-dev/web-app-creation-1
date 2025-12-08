@@ -122,7 +122,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     conn = get_db_connection()
     cur = conn.cursor()
     
-    sql = f"""
+    sql = """
         SELECT 
             o.*,
             of.title as offer_title,
@@ -131,10 +131,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             buyer.first_name || ' ' || buyer.last_name as buyer_full_name,
             seller.email as seller_email,
             seller.first_name || ' ' || seller.last_name as seller_full_name
-        FROM {SCHEMA}.orders o
-        LEFT JOIN {SCHEMA}.offers of ON o.offer_id = of.id
-        LEFT JOIN {SCHEMA}.users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN {SCHEMA}.users seller ON o.seller_id = seller.id
+        FROM orders o
+        LEFT JOIN offers of ON o.offer_id = of.id
+        LEFT JOIN users buyer ON o.buyer_id = buyer.id
+        LEFT JOIN users seller ON o.seller_id = seller.id
         WHERE 1=1
     """
     
@@ -248,7 +248,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute(f"SELECT user_id FROM {SCHEMA}.offers WHERE id = %s", (body['offerId'],))
+    cur.execute("SELECT user_id FROM offers WHERE id = %s", (body['offerId'],))
     offer = cur.fetchone()
     
     if not offer:
@@ -366,7 +366,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'isBase64Encoded': False
         }
     
-    sql = f"UPDATE {SCHEMA}.orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+    sql = f"UPDATE orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
     params.append(order_id)
     
     cur.execute(sql, params)
