@@ -35,7 +35,8 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
     }
 
     loadReviews();
-  }, [isAuthenticated, currentUser, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const loadReviews = async () => {
     if (!currentUser) return;

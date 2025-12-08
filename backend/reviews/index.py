@@ -73,8 +73,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 stats_row = cur.fetchone()
                 
+                avg_rating = float(stats_row['average_rating']) if stats_row['average_rating'] else 0.0
+                quality_avg = float(stats_row['quality_average']) if stats_row['quality_average'] and float(stats_row['quality_average']) > 0 else None
+                delivery_avg = float(stats_row['delivery_average']) if stats_row['delivery_average'] and float(stats_row['delivery_average']) > 0 else None
+                comm_avg = float(stats_row['communication_average']) if stats_row['communication_average'] and float(stats_row['communication_average']) > 0 else None
+                
                 stats = {
-                    'averageRating': float(stats_row['average_rating']) if stats_row['average_rating'] else 0,
+                    'averageRating': avg_rating,
                     'totalReviews': int(stats_row['total_reviews']),
                     'ratingDistribution': {
                         '1': int(stats_row['rating_1'] or 0),
@@ -83,9 +88,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         '4': int(stats_row['rating_4'] or 0),
                         '5': int(stats_row['rating_5'] or 0),
                     },
-                    'qualityAverage': float(stats_row['quality_average']) if stats_row['quality_average'] else None,
-                    'deliveryAverage': float(stats_row['delivery_average']) if stats_row['delivery_average'] else None,
-                    'communicationAverage': float(stats_row['communication_average']) if stats_row['communication_average'] else None,
+                    'qualityAverage': quality_avg,
+                    'deliveryAverage': delivery_avg,
+                    'communicationAverage': comm_avg,
                 }
                 
                 return {
