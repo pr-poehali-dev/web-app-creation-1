@@ -34,6 +34,10 @@ export default function AuctionLocationSection({
   const [deliveryDistrictsFilter, setDeliveryDistrictsFilter] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDistrictNotification, setShowDistrictNotification] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem('districtSoundEnabled');
+    return saved === null ? true : saved === 'true';
+  });
 
   const filteredDistricts = districts.filter(d => 
     d.name.toLowerCase().includes(districtSearch.toLowerCase())
@@ -101,12 +105,14 @@ export default function AuctionLocationSection({
         // Показать уведомление
         setShowDistrictNotification(true);
         
-        // Воспроизвести звук успеха
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIGWi+8OKbTRAMUKzn77RdGgU7k9jwyHgrBSh+zPLaizsIHGS56+mjUBELTKXh8LJjHAU2jdXvwHUmBSl9y+/aiDkIHGe96+mjUBEMT6jr77RdGgU7ldjvx3YpBSh+zPDaizsIG2S46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2S46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7');
-        audio.volume = 0.3;
-        audio.play().catch(() => {
-          // Игнорируем ошибки воспроизведения
-        });
+        // Воспроизвести звук успеха (если включен)
+        if (soundEnabled) {
+          const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIGWi+8OKbTRAMUKzn77RdGgU7k9jwyHgrBSh+zPLaizsIHGS56+mjUBELTKXh8LJjHAU2jdXvwHUmBSl9y+/aiDkIHGe96+mjUBEMT6jr77RdGgU7ldjvx3YpBSh+zPDaizsIG2S46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2S46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7lNjvx3YpBSh9y+/aiDkIG2O46+mjUBEMTqfr77RdGgU7');
+          audio.volume = 0.3;
+          audio.play().catch(() => {
+            // Игнорируем ошибки воспроизведения
+          });
+        }
       }
     }
   };
@@ -195,11 +201,34 @@ export default function AuctionLocationSection({
         </div>
 
         <div>
-          <Label>Местонахождение на карте (опционально)</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label>Местонахождение на карте (опционально)</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="soundToggle" className="text-xs text-muted-foreground cursor-pointer">Звук</Label>
+              <button
+                id="soundToggle"
+                type="button"
+                onClick={() => {
+                  const newValue = !soundEnabled;
+                  setSoundEnabled(newValue);
+                  localStorage.setItem('districtSoundEnabled', String(newValue));
+                }}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                  soundEnabled ? 'bg-primary' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                    soundEnabled ? 'translate-x-5' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setShowMapModal(true)}
-            className="flex items-center gap-2 px-4 py-2 mt-2 border-2 border-primary/20 rounded-md hover:border-primary/40 hover:bg-primary/5 transition-all"
+            className="flex items-center gap-2 px-4 py-2 border-2 border-primary/20 rounded-md hover:border-primary/40 hover:bg-primary/5 transition-all"
           >
             <Icon name="Map" className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium text-primary">
