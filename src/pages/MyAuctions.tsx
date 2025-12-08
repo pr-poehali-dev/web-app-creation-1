@@ -47,16 +47,50 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
   const [auctionToDelete, setAuctionToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const loadMyAuctions = async () => {
+    setIsLoading(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        navigate('/login');
+        return;
+      }
+
+      const response = await fetch('https://functions.poehali.dev/2c3a53f4-20e0-40f4-bea1-ec3701e6c4cd', {
+        headers: {
+          'X-User-Id': userId,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const loadedAuctions = data.auctions.map((a: any) => ({
+          ...a,
+          startDate: new Date(a.startDate),
+          endDate: new Date(a.endDate),
+          createdAt: new Date(a.createdAt),
+        }));
+        setAuctions(loadedAuctions);
+      }
+    } catch (error) {
+      console.error('Error loading my auctions:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить ваши аукционы',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
       navigate('/login');
       return;
     }
 
-    setTimeout(() => {
-      setAuctions(MOCK_AUCTIONS.slice(0, 2));
-      setIsLoading(false);
-    }, 800);
+    loadMyAuctions();
   }, [isAuthenticated, currentUser, navigate]);
 
   const filteredAuctions = filterStatus === 'all' 
@@ -75,6 +109,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
   const getAuctionStats = () => {
     return {
       total: auctions.length,
+      pending: auctions.filter(a => a.status === 'pending').length,
       active: auctions.filter(a => a.status === 'active').length,
       endingSoon: auctions.filter(a => a.status === 'ending-soon').length,
       upcoming: auctions.filter(a => a.status === 'upcoming').length,
@@ -99,6 +134,8 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
 
   const getStatusBadge = (status: Auction['status']) => {
     switch (status) {
+      case 'pending':
+        return <Badge className="bg-yellow-500"><Icon name="Clock" className="h-3 w-3 mr-1" />Ожидает публикации</Badge>;
       case 'active':
         return <Badge className="bg-green-500"><Icon name="Play" className="h-3 w-3 mr-1" />Активен</Badge>;
       case 'ending-soon':
@@ -107,6 +144,8 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
         return <Badge className="bg-blue-500"><Icon name="Calendar" className="h-3 w-3 mr-1" />Предстоящий</Badge>;
       case 'ended':
         return <Badge variant="secondary"><Icon name="CheckCircle" className="h-3 w-3 mr-1" />Завершен</Badge>;
+      default:
+        return null;
     }
   };
 
@@ -262,11 +301,17 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('all')}>
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-primary">{stats.total}</div>
               <p className="text-sm text-muted-foreground mt-1">Всего</p>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('pending')}>
+            <CardContent className="pt-6 text-center">
+              <div className="text-3xl font-bold text-yellow-500">{stats.pending}</div>
+              <p className="text-sm text-muted-foreground mt-1">Ожидают</p>
             </CardContent>
           </Card>
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('active')}>

@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Get my auctions without auth",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "Unauthorized"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
