@@ -4,6 +4,18 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
 from datetime import datetime, timedelta
+from decimal import Decimal
+
+
+def decimal_to_float(obj):
+    """Рекурсивно конвертирует Decimal в float"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: decimal_to_float(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [decimal_to_float(item) for item in obj]
+    return obj
 
 def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 30, window_minutes: int = 1) -> bool:
     with conn.cursor() as cur:
@@ -134,17 +146,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             offers_list = []
             for offer in offers:
-                total_price = float(offer.get('price_per_unit', 0)) * float(offer.get('quantity', 1))
+                offer_dict = dict(offer)
+                offer_dict = decimal_to_float(offer_dict)
+                total_price = offer_dict.get('price_per_unit', 0) * offer_dict.get('quantity', 1)
                 offers_list.append({
-                    'id': str(offer['id']),
-                    'title': offer['title'] or offer['product_name'],
-                    'seller': offer['seller_name'] or 'Неизвестный продавец',
-                    'price': float(offer['price_per_unit']) if offer['price_per_unit'] else 0,
+                    'id': str(offer_dict['id']),
+                    'title': offer_dict['title'] or offer_dict['product_name'],
+                    'seller': offer_dict['seller_name'] or 'Неизвестный продавец',
+                    'price': offer_dict['price_per_unit'] if offer_dict['price_per_unit'] else 0,
                     'totalPrice': total_price,
-                    'quantity': float(offer['quantity']) if offer['quantity'] else 0,
-                    'unit': offer['unit'],
-                    'status': offer['status'] or 'open',
-                    'createdAt': offer['created_at'].isoformat() if offer['created_at'] else None
+                    'quantity': offer_dict['quantity'] if offer_dict['quantity'] else 0,
+                    'unit': offer_dict['unit'],
+                    'status': offer_dict['status'] or 'open',
+                    'createdAt': offer_dict['created_at'].isoformat() if offer_dict['created_at'] else None
                 })
             
             return {
@@ -168,7 +182,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             if action == 'approve':
-                cur.execute("UPDATE contracts SET status = 'open' WHERE id = %s", (offer_id,))
+                cur.execute(f"UPDATE contracts SET status = 'open' WHERE id = %s", (offer_id,))
                 conn.commit()
                 return {
                     'statusCode': 200,
@@ -178,7 +192,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             elif action == 'reject':
-                cur.execute("UPDATE contracts SET status = 'cancelled' WHERE id = %s", (offer_id,))
+                cur.execute(f"UPDATE contracts SET status = 'cancelled' WHERE id = %s", (offer_id,))
                 conn.commit()
                 return {
                     'statusCode': 200,
@@ -199,7 +213,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cur.execute("DELETE FROM contracts WHERE id = %s", (offer_id,))
+            cur.execute(f"DELETE FROM {SCHEMA}.contracts WHERE id = %s", (offer_id,))
             conn.commit()
             
             return {

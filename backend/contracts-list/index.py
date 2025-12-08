@@ -8,10 +8,22 @@ Returns: HTTP response dict with contracts list
 import json
 import os
 from typing import Dict, Any
+from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
+
+
+def decimal_to_float(obj):
+    """Рекурсивно конвертирует Decimal в float"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: decimal_to_float(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [decimal_to_float(item) for item in obj]
+    return obj
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
@@ -52,7 +64,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         try:
             with conn.cursor() as cur:
-                query = """
+                query = f"""
                     SELECT 
                         c.*,
                         u.first_name as seller_first_name,
@@ -83,20 +95,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 cur.execute(query, tuple(query_params))
                 contracts = cur.fetchall()
                 
-                cur.execute("SELECT COUNT(*) as total FROM contracts WHERE status = %s", (status,))
+                cur.execute(f"SELECT COUNT(*) as total FROM contracts WHERE status = %s", (status,))
                 total = cur.fetchone()['total']
                 
                 contracts_list = []
                 for contract in contracts:
                     contract_dict = dict(contract)
+                    contract_dict = decimal_to_float(contract_dict)
                     contract_dict['sellerFirstName'] = contract_dict.pop('seller_first_name')
                     contract_dict['sellerLastName'] = contract_dict.pop('seller_last_name')
-                    contract_dict['sellerRating'] = float(contract_dict.pop('seller_rating'))
+                    contract_dict['sellerRating'] = contract_dict.pop('seller_rating')
                     contract_dict['contractType'] = contract_dict.pop('contract_type')
                     contract_dict['productName'] = contract_dict.pop('product_name')
                     contract_dict['productSpecs'] = contract_dict.pop('product_specs')
-                    contract_dict['pricePerUnit'] = float(contract_dict.pop('price_per_unit'))
-                    contract_dict['totalAmount'] = float(contract_dict.pop('total_amount'))
+                    contract_dict['pricePerUnit'] = contract_dict.pop('price_per_unit')
+                    contract_dict['totalAmount'] = contract_dict.pop('total_amount')
                     contract_dict['deliveryDate'] = str(contract_dict.pop('delivery_date'))
                     contract_dict['contractStartDate'] = str(contract_dict.pop('contract_start_date'))
                     contract_dict['contractEndDate'] = str(contract_dict.pop('contract_end_date'))
@@ -105,16 +118,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     contract_dict['deliveryAddress'] = contract_dict.pop('delivery_address')
                     contract_dict['deliveryMethod'] = contract_dict.pop('delivery_method')
                     contract_dict['logisticsPartnerId'] = contract_dict.pop('logistics_partner_id')
-                    contract_dict['prepaymentPercent'] = float(contract_dict.pop('prepayment_percent') or 0)
-                    contract_dict['prepaymentAmount'] = float(contract_dict.pop('prepayment_amount') or 0)
+                    contract_dict['prepaymentPercent'] = contract_dict.pop('prepayment_percent') or 0
+                    contract_dict['prepaymentAmount'] = contract_dict.pop('prepayment_amount') or 0
                     contract_dict['financingAvailable'] = contract_dict.pop('financing_available')
                     contract_dict['termsConditions'] = contract_dict.pop('terms_conditions')
-                    contract_dict['minPurchaseQuantity'] = float(contract_dict.pop('min_purchase_quantity') or 0)
-                    contract_dict['discountPercent'] = float(contract_dict.pop('discount_percent') or 0)
+                    contract_dict['minPurchaseQuantity'] = contract_dict.pop('min_purchase_quantity') or 0
+                    contract_dict['discountPercent'] = contract_dict.pop('discount_percent') or 0
                     contract_dict['viewsCount'] = contract_dict.pop('views_count')
                     contract_dict['createdAt'] = str(contract_dict.pop('created_at'))
                     contract_dict['updatedAt'] = str(contract_dict.pop('updated_at'))
-                    contract_dict['quantity'] = float(contract_dict['quantity'])
                     contract_dict['productImages'] = contract_dict.pop('product_images')
                     contract_dict['productVideoUrl'] = contract_dict.pop('product_video_url')
                     

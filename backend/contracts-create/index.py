@@ -14,6 +14,7 @@ from psycopg2.extras import RealDictCursor
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
+
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
@@ -90,7 +91,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT id, role FROM users WHERE id = %s", (int(user_id),))
+                cur.execute(f"SELECT id, role FROM users WHERE id = %s", (int(user_id),))
                 user = cur.fetchone()
                 
                 if not user:
@@ -102,7 +103,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 cur.execute(
-                    """INSERT INTO contracts (
+                    f"""INSERT INTO contracts (
                         contract_type, title, description, category, product_name, 
                         quantity, unit, price_per_unit, total_amount, delivery_date,
                         contract_start_date, contract_end_date, seller_id, delivery_address,
@@ -124,7 +125,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 contract_id = result['id']
                 
                 cur.execute(
-                    """INSERT INTO contract_history (contract_id, user_id, action, description, new_status)
+                    f"""INSERT INTO contract_history (contract_id, user_id, action, description, new_status)
                        VALUES (%s, %s, %s, %s, %s)""",
                     (contract_id, int(user_id), 'created', 'Контракт создан', 'open')
                 )

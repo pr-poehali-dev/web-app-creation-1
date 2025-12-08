@@ -10,8 +10,20 @@ import json
 import os
 from typing import Dict, Any
 from datetime import datetime
+from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+
+def decimal_to_float(obj):
+    """Рекурсивно конвертирует Decimal в float"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: decimal_to_float(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [decimal_to_float(item) for item in obj]
+    return obj
 
 def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'], cursor_factory=RealDictCursor)
@@ -110,7 +122,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     conn = get_db_connection()
     cur = conn.cursor()
     
-    sql = """
+    sql = f"""
         SELECT 
             o.*,
             of.title as offer_title,
@@ -119,10 +131,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             buyer.first_name || ' ' || buyer.last_name as buyer_full_name,
             seller.email as seller_email,
             seller.first_name || ' ' || seller.last_name as seller_full_name
-        FROM orders o
-        LEFT JOIN offers of ON o.offer_id = of.id
-        LEFT JOIN users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN users seller ON o.seller_id = seller.id
+        FROM {SCHEMA}.orders o
+        LEFT JOIN {SCHEMA}.offers of ON o.offer_id = of.id
+        LEFT JOIN {SCHEMA}.users buyer ON o.buyer_id = buyer.id
+        LEFT JOIN {SCHEMA}.users seller ON o.seller_id = seller.id
         WHERE 1=1
     """
     
@@ -156,12 +168,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
         order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
         order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
-        if order_dict.get('price_per_unit'):
-            order_dict['price_per_unit'] = float(order_dict['price_per_unit'])
-        if order_dict.get('total_amount'):
-            order_dict['total_amount'] = float(order_dict['total_amount'])
-        if order_dict.get('vat_amount'):
-            order_dict['vat_amount'] = float(order_dict['vat_amount'])
+        order_dict = decimal_to_float(order_dict)
         result.append(order_dict)
     
     cur.close()
@@ -179,7 +186,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     conn = get_db_connection()
     cur = conn.cursor()
     
-    sql = """
+    sql = f"""
         SELECT 
             o.*,
             of.title as offer_title,
@@ -215,12 +222,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
     order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
     order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
-    if order_dict.get('price_per_unit'):
-        order_dict['price_per_unit'] = float(order_dict['price_per_unit'])
-    if order_dict.get('total_amount'):
-        order_dict['total_amount'] = float(order_dict['total_amount'])
-    if order_dict.get('vat_amount'):
-        order_dict['vat_amount'] = float(order_dict['vat_amount'])
+    order_dict = decimal_to_float(order_dict)
     
     return {
         'statusCode': 200,
@@ -246,7 +248,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("SELECT user_id FROM offers WHERE id = %s", (body['offerId'],))
+    cur.execute(f"SELECT user_id FROM {SCHEMA}.offers WHERE id = %s", (body['offerId'],))
     offer = cur.fetchone()
     
     if not offer:
@@ -271,7 +273,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     if vat_amount:
         total_amount += vat_amount
     
-    sql = """
+    sql = f"""
         INSERT INTO orders (
             order_number, buyer_id, seller_id, offer_id,
             title, quantity, unit, price_per_unit, total_amount,
@@ -325,7 +327,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     }
 
 def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    """Обновить статус заказа"""
+    '''Обновить статус заказа'''
     body = json.loads(event.get('body', '{}'))
     
     conn = get_db_connection()
@@ -364,7 +366,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'isBase64Encoded': False
         }
     
-    sql = f"UPDATE orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
+    sql = f"UPDATE {SCHEMA}.orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
     params.append(order_id)
     
     cur.execute(sql, params)

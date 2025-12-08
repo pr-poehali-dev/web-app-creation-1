@@ -5,6 +5,7 @@ from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
 from datetime import datetime, timedelta
 
+
 def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 30, window_minutes: int = 1) -> bool:
     with conn.cursor() as cur:
         window_start = datetime.now() - timedelta(minutes=window_minutes)
@@ -175,7 +176,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             if action == 'block':
-                cur.execute("UPDATE users SET status = 'blocked' WHERE id = %s", (user_id,))
+                cur.execute(f"UPDATE users SET status = 'blocked' WHERE id = %s", (user_id,))
                 conn.commit()
                 return {
                     'statusCode': 200,
@@ -185,7 +186,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             elif action == 'unblock':
-                cur.execute("UPDATE users SET status = 'active' WHERE id = %s", (user_id,))
+                cur.execute(f"UPDATE users SET status = 'active' WHERE id = %s", (user_id,))
                 conn.commit()
                 return {
                     'statusCode': 200,
@@ -199,17 +200,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 verified = body_data.get('verified')
                 
                 if email:
-                    cur.execute("UPDATE users SET email = %s WHERE id = %s", (email, user_id))
+                    cur.execute(f"UPDATE users SET email = %s WHERE id = %s", (email, user_id))
                 
                 if verified is not None:
                     if verified:
-                        cur.execute("""
+                        cur.execute(f"""
                             INSERT INTO user_verifications (user_id, status)
                             VALUES (%s, 'approved')
                             ON CONFLICT (user_id) DO UPDATE SET status = 'approved'
                         """, (user_id,))
                     else:
-                        cur.execute("DELETE FROM user_verifications WHERE user_id = %s", (user_id,))
+                        cur.execute(f"DELETE FROM user_verifications WHERE user_id = %s", (user_id,))
                 
                 conn.commit()
                 return {
@@ -231,7 +232,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            cur.execute(f"DELETE FROM {SCHEMA}.users WHERE id = %s", (user_id,))
             conn.commit()
             
             return {

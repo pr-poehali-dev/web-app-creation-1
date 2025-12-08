@@ -4,8 +4,20 @@
 import json
 import os
 from datetime import datetime
+from decimal import Decimal
 import psycopg2
 from typing import Dict, Any
+
+
+def decimal_to_float(obj):
+    """Рекурсивно конвертирует Decimal в float"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: decimal_to_float(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [decimal_to_float(item) for item in obj]
+    return obj
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -50,14 +62,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         now = datetime.now()
         
         # Активируем аукционы, которые должны начаться
-        cur.execute("""
+        cur.execute(f"""
             UPDATE auctions 
             SET status = 'active' 
             WHERE status = 'pending' AND start_date <= %s
         """, (now,))
         
         # Завершаем аукционы, время которых истекло
-        cur.execute("""
+        cur.execute(f"""
             UPDATE auctions 
             SET status = 'ended' 
             WHERE status = 'active' AND end_date <= %s
@@ -66,7 +78,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn.commit()
         
         # Получаем аукционы пользователя
-        query = """
+        query = f"""
             SELECT 
                 a.id, a.user_id, a.title, a.description, a.category, a.subcategory,
                 a.quantity, a.unit, a.starting_price, a.current_bid, a.min_bid_step,
@@ -99,14 +111,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'description': row[3],
                 'category': row[4],
                 'subcategory': row[5],
-                'quantity': float(row[6]) if row[6] else None,
+                'quantity': decimal_to_float(row[6]) if row[6] else None,
                 'unit': row[7],
-                'startingPrice': float(row[8]),
-                'currentBid': float(row[9]),
-                'minBidStep': float(row[10]),
-                'buyNowPrice': float(row[11]) if row[11] else None,
+                'startingPrice': decimal_to_float(row[8]),
+                'currentBid': decimal_to_float(row[9]),
+                'minBidStep': decimal_to_float(row[10]),
+                'buyNowPrice': decimal_to_float(row[11]) if row[11] else None,
                 'hasVAT': row[12],
-                'vatRate': float(row[13]) if row[13] else None,
+                'vatRate': decimal_to_float(row[13]) if row[13] else None,
                 'district': row[14],
                 'fullAddress': row[15],
                 'gpsCoordinates': row[16],

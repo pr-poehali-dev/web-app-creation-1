@@ -14,22 +14,22 @@ export interface Auction {
   description: string;
   category: string;
   subcategory: string;
-  quantity: number;
+  quantity?: number;
   unit: string;
-  startingPrice: number;
-  currentPrice: number;
-  currentBid: number;
-  minBidStep: number;
+  startingPrice?: number;
+  currentPrice?: number;
+  currentBid?: number;
+  minBidStep?: number;
   buyNowPrice?: number;
   hasVAT: boolean;
   vatRate?: number;
-  location: string;
+  location?: string;
   district: string;
   fullAddress?: string;
   gpsCoordinates?: string;
-  availableDistricts: string[];
-  images: Array<{
-    id: string;
+  availableDistricts?: string[];
+  images?: Array<{
+    id?: string;
     url: string;
     alt: string;
   }>;
@@ -38,8 +38,8 @@ export interface Auction {
     url: string;
     thumbnail?: string;
   };
-  isPremium: boolean;
-  seller: {
+  isPremium?: boolean;
+  seller?: {
     id: string;
     name: string;
     type: 'individual' | 'self-employed' | 'entrepreneur' | 'legal-entity';
@@ -55,15 +55,19 @@ export interface Auction {
       email: string;
     };
   };
-  startTime: Date;
-  endTime: Date;
-  status: 'upcoming' | 'active' | 'ending-soon' | 'ended';
-  bidsCount: number;
-  bids: AuctionBid[];
+  startDate?: string;
+  endDate?: string;
+  startTime?: Date;
+  endTime?: Date;
+  status: 'pending' | 'active' | 'ending-soon' | 'ended' | 'upcoming';
+  bidsCount?: number;
+  bidCount?: number;
+  bids?: AuctionBid[];
   viewsCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  viewCount?: number;
+  createdAt?: Date | string;
+  updatedAt?: Date;
   expiryDate?: string;
-  availableDeliveryTypes: ('pickup' | 'delivery')[];
+  availableDeliveryTypes?: ('pickup' | 'delivery')[];
   winningBidId?: string;
 }
