@@ -153,9 +153,10 @@ export default function UsersTable({
                   )}
                   <Button
                     size="sm"
-                    variant="destructive"
+                    variant="outline"
                     onClick={() => onDelete(user)}
                     title="Удалить"
+                    className="border-gray-400 text-gray-600 hover:bg-gray-50"
                   >
                     <Icon name="Trash2" className="h-4 w-4" />
                   </Button>
