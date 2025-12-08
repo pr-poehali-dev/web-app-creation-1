@@ -128,8 +128,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     u.email,
                     u.first_name,
                     u.last_name,
+                    u.middle_name,
                     u.company_name,
                     u.user_type,
+                    u.phone,
+                    u.inn,
+                    u.ogrnip,
+                    u.ogrn,
+                    u.position,
+                    u.director_name,
+                    u.legal_address,
+                    u.is_active,
+                    u.locked_until,
                     u.created_at,
                     COALESCE(uv.status = 'approved', false) as verified
                 FROM users u
@@ -145,12 +155,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             users_list = []
             for user in users:
                 name = user.get('company_name') if user.get('company_name') else f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+                
+                status = 'active'
+                if not user.get('is_active'):
+                    status = 'blocked'
+                elif user.get('locked_until') and user['locked_until'] > datetime.now():
+                    status = 'blocked'
+                
                 users_list.append({
                     'id': str(user['id']),
                     'email': user['email'],
                     'name': name,
+                    'firstName': user.get('first_name'),
+                    'lastName': user.get('last_name'),
+                    'middleName': user.get('middle_name'),
+                    'companyName': user.get('company_name'),
                     'type': user['user_type'],
-                    'status': 'active',
+                    'phone': user.get('phone'),
+                    'inn': user.get('inn'),
+                    'ogrnip': user.get('ogrnip'),
+                    'ogrn': user.get('ogrn'),
+                    'position': user.get('position'),
+                    'directorName': user.get('director_name'),
+                    'legalAddress': user.get('legal_address'),
+                    'status': status,
+                    'isActive': user.get('is_active', True),
+                    'lockedUntil': user['locked_until'].isoformat() if user.get('locked_until') else None,
                     'verified': user['verified'],
                     'registeredAt': user['created_at'].isoformat() if user['created_at'] else None
                 })
@@ -176,7 +206,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             if action == 'block':
-                cur.execute(f"UPDATE users SET status = 'blocked' WHERE id = %s", (user_id,))
+                duration = body_data.get('duration', 0)
+                
+                if duration > 0:
+                    locked_until = datetime.now() + timedelta(hours=duration)
+                    cur.execute(
+                        "UPDATE users SET locked_until = %s WHERE id = %s",
+                        (locked_until, user_id)
+                    )
+                else:
+                    cur.execute(
+                        "UPDATE users SET is_active = false, locked_until = NULL WHERE id = %s",
+                        (user_id,)
+                    )
+                
                 conn.commit()
                 return {
                     'statusCode': 200,
@@ -186,7 +229,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             elif action == 'unblock':
-                cur.execute(f"UPDATE users SET status = 'active' WHERE id = %s", (user_id,))
+                cur.execute(
+                    "UPDATE users SET is_active = true, locked_until = NULL WHERE id = %s",
+                    (user_id,)
+                )
                 conn.commit()
                 return {
                     'statusCode': 200,

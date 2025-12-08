@@ -45,6 +45,19 @@ interface User {
   status: 'active' | 'blocked' | 'pending';
   verified: boolean;
   registeredAt: string;
+  phone?: string;
+  inn?: string;
+  ogrnip?: string;
+  ogrn?: string;
+  companyName?: string;
+  directorName?: string;
+  position?: string;
+  legalAddress?: string;
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  isActive?: boolean;
+  lockedUntil?: string | null;
 }
 
 export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProps) {
@@ -54,9 +67,11 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showBlockDialog, setShowBlockDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [blockDuration, setBlockDuration] = useState<number>(0);
 
   useEffect(() => {
     fetchUsers();
@@ -115,17 +130,25 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: selectedUser.id, action: 'block' })
+        body: JSON.stringify({ 
+          userId: selectedUser.id, 
+          action: 'block',
+          duration: blockDuration > 0 ? blockDuration : undefined
+        })
       });
       if (response.ok) {
-        toast.success(`Пользователь ${selectedUser.name} заблокирован`);
+        const durationText = blockDuration > 0 ? ` на ${blockDuration} часов` : ' навсегда';
+        toast.success(`Пользователь ${selectedUser.name} заблокирован${durationText}`);
         fetchUsers();
+      } else {
+        toast.error('Ошибка при блокировке');
       }
     } catch (error) {
       toast.error('Ошибка при блокировке');
     }
     setShowBlockDialog(false);
     setSelectedUser(null);
+    setBlockDuration(0);
   };
 
   const handleUnblockUser = async (user: User) => {
@@ -144,20 +167,25 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
     }
   };
 
-  const handleDeleteUser = async (user: User) => {
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
     try {
       const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
+        body: JSON.stringify({ userId: selectedUser.id })
       });
       if (response.ok) {
-        toast.success(`Пользователь ${user.name} удален`);
+        toast.success(`Пользователь ${selectedUser.name} удален`);
         fetchUsers();
+      } else {
+        toast.error('Ошибка при удалении');
       }
     } catch (error) {
       toast.error('Ошибка при удалении');
     }
+    setShowDeleteDialog(false);
+    setSelectedUser(null);
   };
 
   return (
@@ -266,10 +294,11 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
                               variant="outline"
                               onClick={() => {
                                 setSelectedUser(user);
-                                setShowEditDialog(true);
+                                setShowDetailsDialog(true);
                               }}
+                              title="Подробнее"
                             >
-                              <Icon name="Edit" className="h-4 w-4" />
+                              <Icon name="Eye" className="h-4 w-4" />
                             </Button>
                             {user.status === 'active' ? (
                               <Button
@@ -279,6 +308,7 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
                                   setSelectedUser(user);
                                   setShowBlockDialog(true);
                                 }}
+                                title="Заблокировать"
                               >
                                 <Icon name="Ban" className="h-4 w-4" />
                               </Button>
@@ -287,14 +317,19 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleUnblockUser(user)}
+                                title="Разблокировать"
                               >
                                 <Icon name="CheckCircle" className="h-4 w-4" />
                               </Button>
                             )}
                             <Button
                               size="sm"
-                              variant="outline"
-                              onClick={() => handleDeleteUser(user)}
+                              variant="destructive"
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setShowDeleteDialog(true);
+                              }}
+                              title="Удалить"
                             >
                               <Icon name="Trash2" className="h-4 w-4" />
                             </Button>
@@ -313,14 +348,43 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Заблокировать пользователя?</DialogTitle>
+            <DialogTitle>Заблокировать пользователя</DialogTitle>
             <DialogDescription>
-              Вы действительно хотите заблокировать пользователя {selectedUser?.name}? 
-              Пользователь не сможет войти в систему.
+              Укажите срок блокировки для {selectedUser?.name}
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Срок блокировки</label>
+              <Select value={blockDuration.toString()} onValueChange={(val) => setBlockDuration(Number(val))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Навсегда</SelectItem>
+                  <SelectItem value="1">1 час</SelectItem>
+                  <SelectItem value="3">3 часа</SelectItem>
+                  <SelectItem value="6">6 часов</SelectItem>
+                  <SelectItem value="12">12 часов</SelectItem>
+                  <SelectItem value="24">1 день</SelectItem>
+                  <SelectItem value="72">3 дня</SelectItem>
+                  <SelectItem value="168">7 дней</SelectItem>
+                  <SelectItem value="720">30 дней</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {blockDuration === 0 
+                  ? 'Пользователь не сможет войти в систему до ручной разблокировки'
+                  : `Пользователь будет заблокирован на ${blockDuration} часов`
+                }
+              </p>
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBlockDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowBlockDialog(false);
+              setBlockDuration(0);
+            }}>
               Отмена
             </Button>
             <Button variant="destructive" onClick={handleBlockUser}>
@@ -330,41 +394,172 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Редактировать пользователя</DialogTitle>
+            <DialogTitle>Удалить пользователя?</DialogTitle>
             <DialogDescription>
-              Изменение данных пользователя {selectedUser?.name}
+              Вы действительно хотите удалить пользователя {selectedUser?.name}?
+              Это действие необратимо. Все данные пользователя будут удалены.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input defaultValue={selectedUser?.email} />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Статус верификации</label>
-              <Select defaultValue={selectedUser?.verified ? 'verified' : 'not-verified'}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="verified">Верифицирован</SelectItem>
-                  <SelectItem value="not-verified">Не верифицирован</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
               Отмена
             </Button>
-            <Button onClick={() => {
-              toast.success('Данные пользователя обновлены');
-              setShowEditDialog(false);
-            }}>
-              Сохранить
+            <Button variant="destructive" onClick={handleDeleteUser}>
+              Удалить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Информация о пользователе</DialogTitle>
+            <DialogDescription>
+              Полная карточка пользователя
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Email</p>
+                  <p className="text-sm">{selectedUser.email}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Тип пользователя</p>
+                  <p className="text-sm">{getTypeName(selectedUser.type)}</p>
+                </div>
+              </div>
+
+              {selectedUser.type === 'individual' && (
+                <div className="space-y-2 border-t pt-4">
+                  <h3 className="text-sm font-semibold">Персональные данные</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Фамилия</p>
+                      <p className="text-sm">{selectedUser.lastName || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Имя</p>
+                      <p className="text-sm">{selectedUser.firstName || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Отчество</p>
+                      <p className="text-sm">{selectedUser.middleName || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Телефон</p>
+                      <p className="text-sm">{selectedUser.phone || '—'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedUser.type === 'entrepreneur' && (
+                <div className="space-y-2 border-t pt-4">
+                  <h3 className="text-sm font-semibold">Данные ИП</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">ФИО</p>
+                      <p className="text-sm">{selectedUser.name}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Телефон</p>
+                      <p className="text-sm">{selectedUser.phone || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">ИНН</p>
+                      <p className="text-sm">{selectedUser.inn || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">ОГРНИП</p>
+                      <p className="text-sm">{selectedUser.ogrnip || '—'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedUser.type === 'legal-entity' && (
+                <div className="space-y-2 border-t pt-4">
+                  <h3 className="text-sm font-semibold">Данные юридического лица</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Название компании</p>
+                      <p className="text-sm">{selectedUser.companyName || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Телефон</p>
+                      <p className="text-sm">{selectedUser.phone || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">ИНН</p>
+                      <p className="text-sm">{selectedUser.inn || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">ОГРН</p>
+                      <p className="text-sm">{selectedUser.ogrn || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Директор</p>
+                      <p className="text-sm">{selectedUser.directorName || '—'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Должность</p>
+                      <p className="text-sm">{selectedUser.position || '—'}</p>
+                    </div>
+                    <div className="space-y-1 col-span-2">
+                      <p className="text-sm font-medium text-muted-foreground">Юридический адрес</p>
+                      <p className="text-sm">{selectedUser.legalAddress || '—'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2 border-t pt-4">
+                <h3 className="text-sm font-semibold">Системная информация</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Статус</p>
+                    <div>{getStatusBadge(selectedUser.status)}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Верификация</p>
+                    <div>
+                      {selectedUser.verified ? (
+                        <Badge className="bg-green-500">
+                          <Icon name="Check" className="mr-1 h-3 w-3" />
+                          Верифицирован
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Не верифицирован</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Дата регистрации</p>
+                    <p className="text-sm">{new Date(selectedUser.registeredAt).toLocaleString('ru-RU')}</p>
+                  </div>
+                  {selectedUser.lockedUntil && (
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Заблокирован до</p>
+                      <p className="text-sm">{new Date(selectedUser.lockedUntil).toLocaleString('ru-RU')}</p>
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">ID</p>
+                    <p className="text-xs font-mono">{selectedUser.id}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setShowDetailsDialog(false)}>
+              Закрыть
             </Button>
           </DialogFooter>
         </DialogContent>
