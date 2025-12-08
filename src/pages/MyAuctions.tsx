@@ -71,14 +71,11 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
           createdAt: new Date(a.createdAt),
         }));
         setAuctions(loadedAuctions);
+      } else {
+        setAuctions([]);
       }
     } catch (error) {
-      console.error('Error loading my auctions:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить ваши аукционы',
-        variant: 'destructive',
-      });
+      setAuctions([]);
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +88,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     }
 
     loadMyAuctions();
-  }, [isAuthenticated, currentUser, navigate]);
+  }, []);
 
   const filteredAuctions = filterStatus === 'all' 
     ? auctions 
