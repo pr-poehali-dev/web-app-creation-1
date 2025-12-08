@@ -208,6 +208,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if action == 'block':
                 duration = body_data.get('duration', 0)
                 
+                cur.execute("DELETE FROM bids WHERE user_id = %s", (user_id,))
+                cur.execute("DELETE FROM orders WHERE buyer_id = %s", (user_id,))
+                cur.execute("DELETE FROM requests WHERE user_id = %s", (user_id,))
+                cur.execute("DELETE FROM offers WHERE user_id = %s", (user_id,))
+                cur.execute("DELETE FROM auctions WHERE seller_id = %s", (user_id,))
+                
                 if duration > 0:
                     locked_until = datetime.now() + timedelta(hours=duration)
                     cur.execute(
@@ -224,7 +230,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True, 'message': 'User blocked'}),
+                    'body': json.dumps({'success': True, 'message': 'User blocked and all data deleted'}),
                     'isBase64Encoded': False
                 }
             
@@ -278,13 +284,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            cur.execute("DELETE FROM bids WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM orders WHERE buyer_id = %s", (user_id,))
+            cur.execute("DELETE FROM requests WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM offers WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM auctions WHERE seller_id = %s", (user_id,))
+            cur.execute("DELETE FROM user_verifications WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM verification_documents WHERE user_id = %s", (user_id,))
+            cur.execute("DELETE FROM reviews WHERE user_id = %s OR reviewer_id = %s", (user_id, user_id))
             cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
             conn.commit()
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'User deleted'}),
+                'body': json.dumps({'success': True, 'message': 'User and all associated data deleted'}),
                 'isBase64Encoded': False
             }
         
