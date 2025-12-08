@@ -5,23 +5,6 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
@@ -31,33 +14,13 @@ import {
 } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import UsersTable, { type User } from '@/components/admin/UsersTable';
+import UserDetailsDialog from '@/components/admin/UserDetailsDialog';
+import UserActionsDialogs from '@/components/admin/UserActionsDialogs';
 
 interface AdminUsersProps {
   isAuthenticated: boolean;
   onLogout: () => void;
-}
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  type: 'individual' | 'entrepreneur' | 'legal-entity';
-  status: 'active' | 'blocked' | 'pending';
-  verified: boolean;
-  registeredAt: string;
-  phone?: string;
-  inn?: string;
-  ogrnip?: string;
-  ogrn?: string;
-  companyName?: string;
-  directorName?: string;
-  position?: string;
-  legalAddress?: string;
-  firstName?: string;
-  lastName?: string;
-  middleName?: string;
-  isActive?: boolean;
-  lockedUntil?: string | null;
 }
 
 export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProps) {
@@ -95,32 +58,6 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       toast.error('Ошибка при загрузке пользователей');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-500">Активен</Badge>;
-      case 'blocked':
-        return <Badge variant="destructive">Заблокирован</Badge>;
-      case 'pending':
-        return <Badge variant="secondary">Ожидает</Badge>;
-      default:
-        return null;
-    }
-  };
-
-  const getTypeName = (type: string) => {
-    switch (type) {
-      case 'individual':
-        return 'Физическое лицо';
-      case 'entrepreneur':
-        return 'ИП';
-      case 'legal-entity':
-        return 'Юридическое лицо';
-      default:
-        return type;
     }
   };
 
@@ -188,6 +125,21 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
     setSelectedUser(null);
   };
 
+  const handleViewDetails = (user: User) => {
+    setSelectedUser(user);
+    setShowDetailsDialog(true);
+  };
+
+  const handleBlock = (user: User) => {
+    setSelectedUser(user);
+    setShowBlockDialog(true);
+  };
+
+  const handleDelete = (user: User) => {
+    setSelectedUser(user);
+    setShowDeleteDialog(true);
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -244,326 +196,39 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
                 </Select>
               </div>
 
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Имя / Компания</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Тип</TableHead>
-                      <TableHead>Статус</TableHead>
-                      <TableHead>Верификация</TableHead>
-                      <TableHead>Дата регистрации</TableHead>
-                      <TableHead className="text-right">Действия</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          Загрузка...
-                        </TableCell>
-                      </TableRow>
-                    ) : users.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          Пользователи не найдены
-                        </TableCell>
-                      </TableRow>
-                    ) : users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{getTypeName(user.type)}</TableCell>
-                        <TableCell>{getStatusBadge(user.status)}</TableCell>
-                        <TableCell>
-                          {user.verified ? (
-                            <Badge className="bg-green-500">
-                              <Icon name="Check" className="mr-1 h-3 w-3" />
-                              Верифицирован
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">Не верифицирован</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{new Date(user.registeredAt).toLocaleDateString('ru-RU')}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setShowDetailsDialog(true);
-                              }}
-                              title="Подробнее"
-                            >
-                              <Icon name="Eye" className="h-4 w-4" />
-                            </Button>
-                            {user.status === 'active' ? (
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setShowBlockDialog(true);
-                                }}
-                                title="Заблокировать"
-                              >
-                                <Icon name="Ban" className="h-4 w-4" />
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUnblockUser(user)}
-                                title="Разблокировать"
-                              >
-                                <Icon name="CheckCircle" className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setShowDeleteDialog(true);
-                              }}
-                              title="Удалить"
-                            >
-                              <Icon name="Trash2" className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <UsersTable
+                users={users}
+                isLoading={isLoading}
+                onViewDetails={handleViewDetails}
+                onBlock={handleBlock}
+                onUnblock={handleUnblockUser}
+                onDelete={handleDelete}
+              />
             </CardContent>
           </Card>
         </div>
       </main>
 
-      <Dialog open={showBlockDialog} onOpenChange={setShowBlockDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Заблокировать пользователя</DialogTitle>
-            <DialogDescription>
-              Укажите срок блокировки для {selectedUser?.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Срок блокировки</label>
-              <Select value={blockDuration.toString()} onValueChange={(val) => setBlockDuration(Number(val))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Навсегда</SelectItem>
-                  <SelectItem value="1">1 час</SelectItem>
-                  <SelectItem value="3">3 часа</SelectItem>
-                  <SelectItem value="6">6 часов</SelectItem>
-                  <SelectItem value="12">12 часов</SelectItem>
-                  <SelectItem value="24">1 день</SelectItem>
-                  <SelectItem value="72">3 дня</SelectItem>
-                  <SelectItem value="168">7 дней</SelectItem>
-                  <SelectItem value="720">30 дней</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {blockDuration === 0 
-                  ? 'Пользователь не сможет войти в систему до ручной разблокировки'
-                  : `Пользователь будет заблокирован на ${blockDuration} часов`
-                }
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setShowBlockDialog(false);
-              setBlockDuration(0);
-            }}>
-              Отмена
-            </Button>
-            <Button variant="destructive" onClick={handleBlockUser}>
-              Заблокировать
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UserActionsDialogs
+        selectedUser={selectedUser}
+        showBlockDialog={showBlockDialog}
+        showDeleteDialog={showDeleteDialog}
+        blockDuration={blockDuration}
+        onBlockDurationChange={setBlockDuration}
+        onCloseBlockDialog={() => {
+          setShowBlockDialog(false);
+          setBlockDuration(0);
+        }}
+        onCloseDeleteDialog={() => setShowDeleteDialog(false)}
+        onConfirmBlock={handleBlockUser}
+        onConfirmDelete={handleDeleteUser}
+      />
 
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Удалить пользователя?</DialogTitle>
-            <DialogDescription>
-              Вы действительно хотите удалить пользователя {selectedUser?.name}?
-              Это действие необратимо. Все данные пользователя будут удалены.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Отмена
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteUser}>
-              Удалить
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Информация о пользователе</DialogTitle>
-            <DialogDescription>
-              Полная карточка пользователя
-            </DialogDescription>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Email</p>
-                  <p className="text-sm">{selectedUser.email}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">Тип пользователя</p>
-                  <p className="text-sm">{getTypeName(selectedUser.type)}</p>
-                </div>
-              </div>
-
-              {selectedUser.type === 'individual' && (
-                <div className="space-y-2 border-t pt-4">
-                  <h3 className="text-sm font-semibold">Персональные данные</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Фамилия</p>
-                      <p className="text-sm">{selectedUser.lastName || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Имя</p>
-                      <p className="text-sm">{selectedUser.firstName || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Отчество</p>
-                      <p className="text-sm">{selectedUser.middleName || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Телефон</p>
-                      <p className="text-sm">{selectedUser.phone || '—'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedUser.type === 'entrepreneur' && (
-                <div className="space-y-2 border-t pt-4">
-                  <h3 className="text-sm font-semibold">Данные ИП</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">ФИО</p>
-                      <p className="text-sm">{selectedUser.name}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Телефон</p>
-                      <p className="text-sm">{selectedUser.phone || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">ИНН</p>
-                      <p className="text-sm">{selectedUser.inn || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">ОГРНИП</p>
-                      <p className="text-sm">{selectedUser.ogrnip || '—'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selectedUser.type === 'legal-entity' && (
-                <div className="space-y-2 border-t pt-4">
-                  <h3 className="text-sm font-semibold">Данные юридического лица</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Название компании</p>
-                      <p className="text-sm">{selectedUser.companyName || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Телефон</p>
-                      <p className="text-sm">{selectedUser.phone || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">ИНН</p>
-                      <p className="text-sm">{selectedUser.inn || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">ОГРН</p>
-                      <p className="text-sm">{selectedUser.ogrn || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Директор</p>
-                      <p className="text-sm">{selectedUser.directorName || '—'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Должность</p>
-                      <p className="text-sm">{selectedUser.position || '—'}</p>
-                    </div>
-                    <div className="space-y-1 col-span-2">
-                      <p className="text-sm font-medium text-muted-foreground">Юридический адрес</p>
-                      <p className="text-sm">{selectedUser.legalAddress || '—'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2 border-t pt-4">
-                <h3 className="text-sm font-semibold">Системная информация</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Статус</p>
-                    <div>{getStatusBadge(selectedUser.status)}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Верификация</p>
-                    <div>
-                      {selectedUser.verified ? (
-                        <Badge className="bg-green-500">
-                          <Icon name="Check" className="mr-1 h-3 w-3" />
-                          Верифицирован
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Не верифицирован</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Дата регистрации</p>
-                    <p className="text-sm">{new Date(selectedUser.registeredAt).toLocaleString('ru-RU')}</p>
-                  </div>
-                  {selectedUser.lockedUntil && (
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-muted-foreground">Заблокирован до</p>
-                      <p className="text-sm">{new Date(selectedUser.lockedUntil).toLocaleString('ru-RU')}</p>
-                    </div>
-                  )}
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">ID</p>
-                    <p className="text-xs font-mono">{selectedUser.id}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setShowDetailsDialog(false)}>
-              Закрыть
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UserDetailsDialog
+        user={selectedUser}
+        isOpen={showDetailsDialog}
+        onClose={() => setShowDetailsDialog(false)}
+      />
 
       <Footer />
     </div>
