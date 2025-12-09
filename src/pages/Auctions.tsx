@@ -104,10 +104,9 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     setIsLoading(true);
     try {
       const loadedAuctions = await auctionsAPI.getAllAuctions();
-      const isAdmin = currentUser?.role === 'admin';
+      const isAdminUser = currentUser?.role === 'admin';
       const publishedAuctions = loadedAuctions.filter(auction => {
-        if (auction.status === 'draft') return false;
-        if (auction.status === 'pending' && !isAdmin) return false;
+        if (auction.status === 'pending' && !isAdminUser) return false;
         return true;
       });
       setAuctions(publishedAuctions);
