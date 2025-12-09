@@ -155,7 +155,13 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       
       // Если браузерная геолокация не работает, используем IP
       if (location.city === 'Не определен' || location.source === 'default') {
-        location = await detectLocationByIP();
+        try {
+          location = await detectLocationByIP();
+        } catch (ipError) {
+          console.error('IP location detection failed:', ipError);
+          setIsDetecting(false);
+          return;
+        }
       }
       
       // Если district это ID района, получаем регион из него

@@ -73,26 +73,31 @@ export default function Login({ onLogin }: LoginProps) {
         }
         
         onLogin();
-        navigate('/');
+        
         toast({
           title: 'Успешно',
           description: `Добро пожаловать, ${result.user.firstName} ${result.user.lastName}!`,
         });
+        
+        setTimeout(() => {
+          navigate('/');
+        }, 100);
       } else {
+        setIsLoading(false);
         toast({
           variant: 'destructive',
-          title: 'Ошибка',
+          title: 'Ошибка входа',
           description: result.error || 'Неверный email или пароль',
         });
       }
     } catch (error) {
+      setIsLoading(false);
+      console.error('Login error:', error);
       toast({
         variant: 'destructive',
         title: 'Ошибка',
-        description: 'Произошла ошибка при входе',
+        description: 'Произошла ошибка при входе. Попробуйте снова.',
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
