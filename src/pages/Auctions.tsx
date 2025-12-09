@@ -246,19 +246,15 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-2 md:px-3 py-2 md:py-3 flex-1">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2 md:mb-3">
-          <div className="flex items-center justify-between gap-2">
-            <BackButton />
-            <div className="md:hidden">
-              <AuctionStatusFilters
-                statusFilter={statusFilter}
-                onFilterChange={setStatusFilter}
-                auctionCounts={auctionCounts}
-              />
-            </div>
-          </div>
+        <div className="flex items-center justify-between gap-2 mb-2 md:mb-3">
+          <BackButton />
+          <AuctionStatusFilters
+            statusFilter={statusFilter}
+            onFilterChange={setStatusFilter}
+            auctionCounts={auctionCounts}
+          />
           {isAuthenticated && (
-            <Button onClick={handleCreateAuctionClick} className="flex items-center gap-2 whitespace-nowrap w-full md:w-auto">
+            <Button onClick={handleCreateAuctionClick} className="hidden md:flex items-center gap-2 whitespace-nowrap">
               <Icon name="Plus" className="h-4 w-4" />
               <span>Создать аукцион</span>
             </Button>
@@ -273,13 +269,12 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
           onSearch={handleSearch}
         />
 
-        <div className="hidden md:block">
-          <AuctionStatusFilters
-            statusFilter={statusFilter}
-            onFilterChange={setStatusFilter}
-            auctionCounts={auctionCounts}
-          />
-        </div>
+        {isAuthenticated && (
+          <Button onClick={handleCreateAuctionClick} className="md:hidden flex items-center gap-2 whitespace-nowrap w-full mb-2">
+            <Icon name="Plus" className="h-4 w-4" />
+            <span>Создать аукцион</span>
+          </Button>
+        )}
 
         {isAuthenticated && (
           <div className="mb-2 md:mb-3 flex items-center gap-2">

@@ -147,25 +147,25 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <nav className="hidden md:flex items-center space-x-2 lg:space-x-3 mr-3 lg:mr-4">
             <Link
               to="/predlozheniya"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
             >
               <span className="flex items-center gap-1">
                 Контракты
@@ -174,13 +174,13 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/about"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20 whitespace-nowrap"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
               О&nbsp;площадке
             </Link>
             <Link
               to="/support"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
             >
               Поддержка
             </Link>
@@ -314,32 +314,32 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         {mobileMenuOpen && (
           <div 
             ref={mobileMenuRef}
-            className="md:hidden border-t py-4 space-y-3 touch-pan-y"
+            className="md:hidden border-t py-4 space-y-2 touch-pan-y"
           >
             <Link
               to="/predlozheniya"
-              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               <span className="flex items-center gap-2">
@@ -349,14 +349,14 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/about"
-              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               О площадке
             </Link>
             <Link
               to="/support"
-              className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
+              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               Поддержка

@@ -20,62 +20,56 @@ export default function AuctionStatusFilters({
   auctionCounts
 }: AuctionStatusFiltersProps) {
   return (
-    <div className="mb-6">
-      <div className="flex gap-1.5 md:gap-2 flex-wrap">
+    <div className="mb-0">
+      <div className="flex gap-1 md:gap-1.5 flex-wrap justify-center md:justify-start">
         <Button
           variant={statusFilter === 'all' ? 'default' : 'outline'}
           onClick={() => onFilterChange('all')}
-          className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4"
+          className="gap-0.5 md:gap-1 text-[10px] md:text-xs h-7 md:h-8 px-1.5 md:px-2"
           size="sm"
         >
-          <Icon name="List" className="h-3 w-3 md:h-4 md:w-4" />
-          <span className="hidden md:inline">Все</span>
-          <span className="md:hidden">Все</span>
-          <span className="hidden sm:inline">({auctionCounts.all})</span>
+          <Icon name="List" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+          <span>Все</span>
         </Button>
         <Button
           variant={statusFilter === 'active' ? 'default' : 'outline'}
           onClick={() => onFilterChange('active')}
-          className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4"
+          className="gap-0.5 md:gap-1 text-[10px] md:text-xs h-7 md:h-8 px-1.5 md:px-2"
           size="sm"
         >
-          <Icon name="Play" className="h-3 w-3 md:h-4 md:w-4" />
-          <span className="hidden md:inline">Активные</span>
-          <span className="md:hidden">Активн.</span>
-          <span className="hidden sm:inline">({auctionCounts.active})</span>
+          <Icon name="Play" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+          <span className="hidden sm:inline">Активные</span>
+          <span className="sm:hidden">Акт.</span>
         </Button>
         <Button
           variant={statusFilter === 'ending-soon' ? 'default' : 'outline'}
           onClick={() => onFilterChange('ending-soon')}
-          className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4"
+          className="gap-0.5 md:gap-1 text-[10px] md:text-xs h-7 md:h-8 px-1.5 md:px-2"
           size="sm"
         >
-          <Icon name="Clock" className="h-3 w-3 md:h-4 md:w-4" />
-          <span className="hidden md:inline">Заверш. скоро</span>
-          <span className="md:hidden whitespace-nowrap">Скоро</span>
-          <span className="hidden sm:inline">({auctionCounts.endingSoon})</span>
+          <Icon name="Clock" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+          <span className="hidden sm:inline whitespace-nowrap">Заверш. скоро</span>
+          <span className="sm:hidden">Скоро</span>
         </Button>
         <Button
           variant={statusFilter === 'upcoming' ? 'default' : 'outline'}
           onClick={() => onFilterChange('upcoming')}
-          className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4"
+          className="gap-0.5 md:gap-1 text-[10px] md:text-xs h-7 md:h-8 px-1.5 md:px-2"
           size="sm"
         >
-          <Icon name="Calendar" className="h-3 w-3 md:h-4 md:w-4" />
-          <span className="hidden md:inline">Предстоящие</span>
-          <span className="md:hidden">Предст.</span>
-          <span className="hidden sm:inline">({auctionCounts.upcoming})</span>
+          <Icon name="Calendar" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+          <span className="hidden sm:inline">Предстоящие</span>
+          <span className="sm:hidden">Предст.</span>
         </Button>
         <Button
           variant={statusFilter === 'ended' ? 'default' : 'outline'}
           onClick={() => onFilterChange('ended')}
-          className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4"
+          className="gap-0.5 md:gap-1 text-[10px] md:text-xs h-7 md:h-8 px-1.5 md:px-2"
           size="sm"
         >
-          <Icon name="CheckCircle" className="h-3 w-3 md:h-4 md:w-4" />
-          <span className="hidden md:inline">Завершенные</span>
-          <span className="md:hidden">Заверш.</span>
-          <span className="hidden sm:inline">({auctionCounts.ended})</span>
+          <Icon name="CheckCircle" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+          <span className="hidden sm:inline">Завершенные</span>
+          <span className="sm:hidden">Зав.</span>
         </Button>
       </div>
     </div>
