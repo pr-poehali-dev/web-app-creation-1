@@ -151,8 +151,12 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
         <Button
           className="w-full"
           variant={auction.status === 'ended' ? 'secondary' : 'default'}
-          disabled={auction.status === 'ended' || auction.status === 'upcoming' || !isAuthenticated}
+          disabled={auction.status === 'ended' || auction.status === 'upcoming'}
           onClick={() => {
+            if (!isAuthenticated) {
+              navigate('/login');
+              return;
+            }
             if (auction.status === 'active') {
               navigate(`/auction/${auction.id}?scrollTo=bids`);
             } else {
