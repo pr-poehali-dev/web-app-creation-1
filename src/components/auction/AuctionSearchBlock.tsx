@@ -60,14 +60,14 @@ export default function AuctionSearchBlock({
   };
 
   return (
-    <Card className="mb-8 shadow-lg">
-      <CardContent className="pt-6">
+    <Card className="mb-4 shadow-sm">
+      <CardContent className="p-3">
         <div className="relative">
-          <Label htmlFor="search-query" className="mb-2 block">
+          <Label htmlFor="search-query" className="mb-1.5 block text-xs font-medium">
             {label}
           </Label>
           <div className="relative">
-            <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Icon name="Search" className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               ref={inputRef}
               id="search-query"
@@ -75,22 +75,22 @@ export default function AuctionSearchBlock({
               value={filters.query}
               onChange={(e) => handleQueryChange(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="pl-10 pr-10"
+              className="pl-9 pr-9 h-9 text-sm"
             />
             {filters.query && (
               <button
                 type="button"
                 onClick={handleClearQuery}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <Icon name="X" className="h-4 w-4" />
+                <Icon name="X" className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
 
           {filters.query.length > 0 && filters.query.length < 2 && (
-            <p className="text-xs text-muted-foreground mt-1">
-              Введите минимум 2 символа для поиска
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Введите минимум 2 символа
             </p>
           )}
         </div>

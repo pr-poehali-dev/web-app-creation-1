@@ -159,22 +159,18 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8 flex-1">
-        <BackButton />
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Запросы</h1>
-            <p className="text-muted-foreground">
-              Просмотрите запросы на покупку товаров и услуг от покупателей
-            </p>
-          </div>
+      <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <BackButton />
           {isAuthenticated && (
             <Button onClick={() => navigate('/create-request')} className="flex items-center gap-2 whitespace-nowrap">
               <Icon name="Plus" className="h-4 w-4" />
-              Создать запрос
+              <span className="hidden sm:inline">Создать</span>
             </Button>
           )}
         </div>
+        
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-4">Запросы</h1>
 
         <AuctionSearchBlock
           filters={filters}
@@ -189,64 +185,42 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
             <div className="mb-6">
               <div className="h-5 w-48 bg-muted animate-pulse rounded" />
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, index) => (
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {Array.from({ length: 10 }).map((_, index) => (
                 <OfferCardSkeleton key={index} />
               ))}
             </div>
           </>
         ) : (
           <>
-            <div className="mb-6">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <div className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md font-medium">
-                    <Icon name="FileText" className="h-4 w-4" />
-                    <span className="text-sm">Запросы</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Icon name="FileText" className="h-5 w-5 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Найдено: <span className="font-semibold text-foreground">{filteredRequests.length}</span>{' '}
-                      {filteredRequests.length === 1
-                        ? 'запрос'
-                        : filteredRequests.length < 5
-                        ? 'запроса'
-                        : 'запросов'}
-                    </p>
-                  </div>
-                  
+            <div className="mb-3">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm flex-wrap">
+                  <span className="text-muted-foreground">Найдено:</span>
+                  <span className="font-semibold">{filteredRequests.length}</span>
                   {filters.query && filters.query.length >= 2 && (
-                    <div className="flex items-center gap-2">
-                      <Icon name="Search" className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        по запросу: <span className="font-semibold text-foreground">"{filters.query}"</span>
-                      </p>
-                    </div>
+                    <span className="text-muted-foreground">по "{filters.query}"</span>
                   )}
                 </div>
 
-                <div className="flex items-center gap-4 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap text-xs">
                   {isAuthenticated && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Switch
                         id="show-only-my-requests"
                         checked={showOnlyMy}
                         onCheckedChange={setShowOnlyMy}
+                        className="scale-75"
                       />
-                      <Label htmlFor="show-only-my-requests" className="text-sm cursor-pointer">
-                        Только мои запросы
+                      <Label htmlFor="show-only-my-requests" className="cursor-pointer text-muted-foreground">
+                        Только мои
                       </Label>
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-2">
-                    <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Сортировка: <span className="font-semibold text-foreground">По новизне</span>
-                    </p>
-                  </div>
+                  <span className="text-muted-foreground">
+                    Сортировка: <span className="font-medium text-foreground">По новизне</span>
+                  </span>
                 </div>
               </div>
 
@@ -301,22 +275,23 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
               </div>
             ) : (
               <>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mb-6">
                   {currentRequests.map((request) => (
-                    <div key={request.id} className="border rounded-lg p-4 hover:shadow-lg transition-shadow">
-                      <div onClick={() => navigate(`/request/${request.id}`)} className="cursor-pointer">
-                        <h3 className="font-semibold mb-2">{request.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{request.description}</p>
+                    <div key={request.id} className="border rounded-lg p-3 hover:shadow-lg transition-shadow">
+                      <div onClick={() => navigate(`/request/${request.id}`)} className="cursor-pointer mb-2">
+                        <h3 className="font-semibold text-sm mb-1 line-clamp-2">{request.title}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{request.description}</p>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-primary">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold text-primary">
                           {request.pricePerUnit ? request.pricePerUnit.toLocaleString() : '0'} ₽
                         </span>
                         <Button 
                           size="sm" 
                           onClick={() => navigate(`/request/${request.id}`)}
+                          className="h-7 text-xs px-2"
                         >
-                          Отправить отклик
+                          Отклик
                         </Button>
                       </div>
                     </div>

@@ -245,20 +245,18 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8 flex-1">
-        <BackButton />
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Аукционы</h1>
-            <p className="text-muted-foreground">
-              Участвуйте в аукционах и делайте выгодные покупки по лучшей цене
-            </p>
-          </div>
-          <Button onClick={handleCreateAuctionClick} className="flex items-center gap-2 whitespace-nowrap">
-            <Icon name="Plus" className="h-4 w-4" />
-            Создать аукцион
-          </Button>
+      <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <BackButton />
+          {isAuthenticated && (
+            <Button onClick={() => navigate('/create-auction')} className="flex items-center gap-2 whitespace-nowrap">
+              <Icon name="Plus" className="h-4 w-4" />
+              <span className="hidden sm:inline">Создать</span>
+            </Button>
+          )}
         </div>
+        
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-4">Аукционы</h1>
 
         <AuctionSearchBlock
           filters={filters}
@@ -273,14 +271,15 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
         />
 
         {isAuthenticated && (
-          <div className="mb-6 flex items-center gap-2">
+          <div className="mb-4 flex items-center gap-2">
             <Switch
               id="show-only-my"
               checked={showOnlyMy}
               onCheckedChange={setShowOnlyMy}
+              className="scale-75"
             />
-            <Label htmlFor="show-only-my" className="cursor-pointer">
-              Показать только мои аукционы
+            <Label htmlFor="show-only-my" className="cursor-pointer text-sm text-muted-foreground">
+              Только мои
             </Label>
           </div>
         )}

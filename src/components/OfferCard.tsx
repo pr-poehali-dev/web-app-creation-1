@@ -48,8 +48,8 @@ export default function OfferCard({ offer }: OfferCardProps) {
       onClick={handleCardClick}
     >
       {offer.isPremium && (
-        <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 text-center">
-          Премиум объявление
+        <div className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 text-center">
+          Премиум
         </div>
       )}
 
@@ -102,65 +102,45 @@ export default function OfferCard({ offer }: OfferCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 space-y-3">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
-            {offer.title}
-          </h3>
-        </div>
+      <CardContent className="p-3 space-y-2">
+        <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors">
+          {offer.title}
+        </h3>
 
-        <div className="flex flex-wrap gap-2">
-          {category ? (
-            <Badge variant="secondary">{category.name}</Badge>
-          ) : (
-            <Badge variant="secondary">Категория не выбрана</Badge>
+        <div className="flex flex-wrap gap-1.5">
+          {category && (
+            <Badge variant="secondary" className="text-xs py-0">{category.name}</Badge>
           )}
         </div>
 
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Количество:</span>
-            <span className="font-medium">
-              {offer.quantity} {offer.unit}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Цена:</span>
-            <span className="font-bold text-primary text-lg">
-              {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
-            </span>
-          </div>
+        <div className="flex items-baseline justify-between text-sm">
+          <span className="text-muted-foreground text-xs">
+            {offer.quantity} {offer.unit}
+          </span>
+          <span className="font-bold text-primary text-base">
+            {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+          </span>
         </div>
 
-        <div className="pt-2 space-y-2 border-t">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Icon name="MapPin" className="h-4 w-4" />
-            <span>{districtName}</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Icon name="Map" className="h-4 w-4" />
-            <span>
-              Доступные районы: {offer.availableDistricts.length === districts.length - 1
-                ? 'Все районы'
-                : offer.availableDistricts.length}
-            </span>
+        <div className="pt-2 space-y-1 border-t text-xs">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Icon name="MapPin" className="h-3.5 w-3.5" />
+            <span className="truncate">{districtName}</span>
           </div>
 
           {offer.seller && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Icon name="Building2" className="h-4 w-4" />
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Icon name="Building2" className="h-3.5 w-3.5" />
               <span className="truncate">{offer.seller.name}</span>
             </div>
           )}
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0">
-        <Button onClick={handleOrderClick} className="w-full" size="lg">
-          <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-          Оформить заказ
+      <CardFooter className="p-3 pt-0">
+        <Button onClick={handleOrderClick} className="w-full h-8 text-xs" size="sm">
+          <Icon name="ShoppingCart" className="mr-1.5 h-3.5 w-3.5" />
+          Заказать
         </Button>
       </CardFooter>
     </Card>

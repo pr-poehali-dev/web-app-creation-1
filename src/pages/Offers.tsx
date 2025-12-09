@@ -204,22 +204,18 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8 flex-1">
-        <BackButton />
-        <div className="mb-6 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Предложения</h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Активные предложения от проверенных поставщиков в вашем районе
-            </p>
-          </div>
+      <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <BackButton />
           {isAuthenticated && (
-            <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap w-full md:w-auto">
+            <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap">
               <Icon name="Plus" className="h-4 w-4" />
-              Создать предложение
+              <span className="hidden sm:inline">Создать</span>
             </Button>
           )}
         </div>
+        
+        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-4">Предложения</h1>
 
         {filters.district !== 'all' && (
           <Card className="mb-6 border-primary/20 bg-primary/5">
@@ -250,73 +246,49 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
             <div className="mb-6">
               <div className="h-5 w-48 bg-muted animate-pulse rounded" />
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, index) => (
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {Array.from({ length: 10 }).map((_, index) => (
                 <OfferCardSkeleton key={index} />
               ))}
             </div>
           </>
         ) : (
           <>
-            <div className="mb-6">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
-                  <div className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-3 py-1.5 rounded-md font-medium w-fit">
-                    <Icon name="Package" className="h-4 w-4" />
-                    <span className="text-sm">Предложения</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    <Icon name="Package" className="h-5 w-5 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Найдено: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
-                      {filteredOffers.length === 1
-                        ? 'предложение'
-                        : filteredOffers.length < 5
-                        ? 'предложения'
-                        : 'предложений'}
-                    </p>
-                  </div>
-                  
+            <div className="mb-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-sm flex-wrap">
+                  <span className="text-muted-foreground">Найдено:</span>
+                  <span className="font-semibold">{filteredOffers.length}</span>
                   {filters.query && filters.query.length >= 2 && (
-                    <div className="flex items-center gap-2">
-                      <Icon name="Search" className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        по запросу: <span className="font-semibold text-foreground">"{filters.query}"</span>
-                      </p>
-                    </div>
+                    <span className="text-muted-foreground">по "{filters.query}"</span>
                   )}
-
                   {premiumCount > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Icon name="Star" className="h-4 w-4 text-primary" />
-                      <p className="text-sm text-muted-foreground">
-                        Премиум: <span className="font-semibold text-primary">{premiumCount}</span>
-                      </p>
-                    </div>
+                    <>
+                      <span className="text-muted-foreground">•</span>
+                      <Icon name="Star" className="h-3.5 w-3.5 text-primary inline" />
+                      <span className="text-primary font-semibold">{premiumCount}</span>
+                    </>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap text-xs">
                   {isAuthenticated && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <Switch
                         id="show-only-my"
                         checked={showOnlyMy}
                         onCheckedChange={setShowOnlyMy}
+                        className="scale-75"
                       />
-                      <Label htmlFor="show-only-my" className="text-sm cursor-pointer">
-                        Только мои предложения
+                      <Label htmlFor="show-only-my" className="cursor-pointer text-muted-foreground">
+                        Только мои
                       </Label>
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-2">
-                    <Icon name="ArrowDownUp" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <p className="text-sm text-muted-foreground">
-                      Сортировка: <span className="font-semibold text-foreground">Премиум + По новизне</span>
-                    </p>
-                  </div>
+                  <span className="text-muted-foreground">
+                    Сортировка: <span className="font-medium text-foreground">Премиум + Новизна</span>
+                  </span>
                 </div>
               </div>
 
@@ -403,22 +375,22 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
             ) : (
               <>
                 {premiumCount > 0 && regularCount > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                      <Icon name="Star" className="h-4 w-4" />
-                      <span>Оплаченные объявления ({premiumCount})</span>
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 text-xs font-medium text-primary">
+                      <Icon name="Star" className="h-3.5 w-3.5" />
+                      <span>Оплаченные ({premiumCount})</span>
                     </div>
                   </div>
                 )}
 
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {currentOffers.map((offer, index) => (
                     <div key={offer.id}>
                       {index === premiumCount && premiumCount > 0 && (
-                        <div className="col-span-full mb-4 mt-2">
-                          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                            <Icon name="Package" className="h-4 w-4" />
-                            <span>Обычные объявления ({regularCount})</span>
+                        <div className="col-span-full mb-2 mt-1">
+                          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <Icon name="Package" className="h-3.5 w-3.5" />
+                            <span>Обычные ({regularCount})</span>
                           </div>
                         </div>
                       )}

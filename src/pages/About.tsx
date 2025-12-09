@@ -14,81 +14,81 @@ export default function About({ isAuthenticated, onLogout }: AboutProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8 flex-1">
+      <main className="container mx-auto px-4 py-4 md:py-6 flex-1">
         <BackButton />
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-foreground mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">
             Единая Региональная Товарно-Торговая Площадка (ЕРТТП)
           </h1>
 
-          <div className="space-y-6 text-foreground">
-            <p className="text-lg">
+          <div className="space-y-4 md:space-y-5 text-foreground">
+            <p className="text-sm md:text-base">
               ЕРТТП – это онлайн-платформа, разработанная для поддержки и развития местных производителей и поставщиков товаров и услуг. Проект нацелен на создание эффективной и инновационной системы онлайн-торговли, способствующей увеличению производства местной продукции, стимулированию товарооборота и диверсификации экономики региона.
             </p>
 
             <div>
-              <h2 className="text-2xl font-bold mb-4">Актуальность проекта:</h2>
-              <p>
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Актуальность проекта:</h2>
+              <p className="text-sm md:text-base">
                 В условиях цифровизации экономики и развития интернет-технологий создание ЕРТТП является стратегически важным шагом для поддержки малого и среднего предпринимательства и оптимизации экономической деятельности в регионах.
               </p>
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold mb-4">Цели и задачи:</h2>
-              <ul className="space-y-3 pl-5">
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Цели и задачи:</h2>
+              <ul className="space-y-2 md:space-y-2.5 pl-4">
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Создание условий для роста и развития местных производителей и поставщиков.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Создание условий для роста и развития местных производителей и поставщиков.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Увеличение объема производства и потребления местной продукции.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Увеличение объема производства и потребления местной продукции.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Снижение финансовой нагрузки на субъекты малого и среднего предпринимательства.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Снижение финансовой нагрузки на субъекты малого и среднего предпринимательства.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Диверсификация и устойчивое развитие местной экономики.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Диверсификация и устойчивое развитие местной экономики.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Обеспечение доступа к финансовым ресурсам через механизмы совместных закупок и фьючерсных/форвардных контрактов.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Обеспечение доступа к финансовым ресурсам через механизмы совместных закупок и фьючерсных/форвардных контрактов.</span>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold mb-4">Функциональность ЕРТТП:</h2>
-              <p className="mb-3">
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Функциональность ЕРТТП:</h2>
+              <p className="mb-2 text-sm md:text-base">
                 Платформа предоставляет широкий спектр инструментов для онлайн-торговли, включая:
               </p>
-              <ul className="space-y-2 pl-5">
+              <ul className="space-y-2 md:space-y-2.5 pl-4">
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Онлайн-аукционы.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Онлайн-аукционы.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Заключение договоров с применением фьючерсных и форвардных контрактов.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Заключение договоров с применением фьючерсных и форвардных контрактов.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Организацию совместных закупок.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Организацию совместных закупок.</span>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold mb-4">Специализация ЕРТТП:</h2>
-              <p className="mb-3">
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Специализация ЕРТТП:</h2>
+              <p className="mb-2 text-sm md:text-base">
                 Платформа специализируется на торговле следующими категориями товаров и услуг:
               </p>
-              <ul className="space-y-2 pl-5">
+              <ul className="space-y-2 md:space-y-2.5 pl-4">
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold">•</span>
-                  <span>Сельхозпродукция местного производства.</span>
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Сельхозпродукция местного производства.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold">•</span>

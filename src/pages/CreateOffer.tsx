@@ -234,15 +234,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       <main className="container mx-auto px-4 py-8 flex-1">
         <BackButton />
         <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-            className="mb-6 gap-2"
-          >
-            <Icon name="ArrowLeft" className="h-4 w-4" />
-            Назад
-          </Button>
-
           <div className="mb-6">
             <h1 className="text-3xl font-bold mb-2">Создание предложения</h1>
             <p className="text-muted-foreground">
