@@ -60,12 +60,12 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-3 py-3 md:py-4 flex-1">
-        <div className="mb-3">
+      <main className="container mx-auto px-2 md:px-3 py-2 md:py-3 flex-1">
+        <div className="mb-2">
           <BackButton />
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
+        <div className="grid lg:grid-cols-2 gap-2 md:gap-3 mb-2 md:mb-3">
           <AuctionImageGallery images={auction.images} />
           
           <AuctionInfoPanel
@@ -79,18 +79,18 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
           />
         </div>
 
-        <Card className="mb-3 md:mb-4">
-          <CardHeader className="py-3 md:py-4">
-            <CardTitle className="text-base md:text-lg">Описание</CardTitle>
+        <Card className="mb-2 md:mb-3">
+          <CardHeader className="py-2 md:py-3">
+            <CardTitle className="text-sm md:text-base">Описание</CardTitle>
           </CardHeader>
-          <CardContent className="py-3 md:py-4">
-            <p className="text-sm md:text-base text-muted-foreground whitespace-pre-line line-clamp-3">
+          <CardContent className="py-2 md:py-3">
+            <p className="text-xs md:text-sm text-muted-foreground whitespace-pre-line line-clamp-2">
               {auction.description}
             </p>
           </CardContent>
         </Card>
 
-        <div className="space-y-3 md:space-y-4" ref={bidsRef}>
+        <div className="space-y-2 md:space-y-3" ref={bidsRef}>
           <AuctionBidForm
             auction={auction}
             currentUser={currentUser}

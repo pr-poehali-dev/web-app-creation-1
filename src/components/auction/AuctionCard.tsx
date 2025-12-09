@@ -57,11 +57,11 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
-        <div className="space-y-3">
+      <CardContent className="pt-3 pb-3 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
+        <div className="space-y-2">
           <div>
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <h3 className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <h3 className="font-semibold text-base md:text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
                 {auction.title}
               </h3>
             </div>
@@ -72,59 +72,59 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
             )}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Текущая ставка:</span>
-              <span className="font-bold text-lg text-primary">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs md:text-sm">
+              <span className="text-muted-foreground">Текущая:</span>
+              <span className="font-bold text-base md:text-lg text-primary">
                 {auction.currentBid.toLocaleString('ru-RU')} ₽
               </span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Начальная цена:</span>
-              <span className="font-semibold">
+            <div className="flex items-center justify-between text-xs md:text-sm">
+              <span className="text-muted-foreground">Начальная:</span>
+              <span className="font-semibold text-sm md:text-base">
                 {auction.startingPrice.toLocaleString('ru-RU')} ₽
               </span>
             </div>
             {auction.buyNowPrice && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Купить сейчас:</span>
-                <span className="font-semibold text-green-600">
+              <div className="flex items-center justify-between text-xs md:text-sm">
+                <span className="text-muted-foreground">Купить:</span>
+                <span className="font-semibold text-sm md:text-base text-green-600">
                   {auction.buyNowPrice.toLocaleString('ru-RU')} ₽
                 </span>
               </div>
             )}
           </div>
 
-          <div className="pt-2 border-t space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <Icon name="Users" className="h-4 w-4 text-muted-foreground" />
+          <div className="pt-2 border-t space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs md:text-sm">
+              <Icon name="Users" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
                 {auction.bidsCount} {auction.bidsCount === 1 ? 'ставка' : 'ставок'}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">{districtName}</span>
+            <div className="flex items-center gap-1.5 text-xs md:text-sm">
+              <Icon name="MapPin" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+              <span className="text-muted-foreground truncate">{districtName}</span>
             </div>
             {auction.gpsCoordinates && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-1.5 text-xs md:text-sm">
                 <a
                   href={`https://www.google.com/maps?q=${auction.gpsCoordinates}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-2 text-primary hover:underline"
+                  className="flex items-center gap-1.5 text-primary hover:underline"
                 >
-                  <Icon name="Map" className="h-4 w-4" />
+                  <Icon name="Map" className="h-3 w-3 md:h-4 md:w-4" />
                   <span>Карта</span>
                 </a>
               </div>
             )}
             {auction.status === 'upcoming' && auction.startTime && (
-              <div className="flex items-center gap-2 text-sm">
-                <Icon name="Calendar" className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-1.5 text-xs md:text-sm">
+                <Icon name="Calendar" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                 <span className="font-semibold text-blue-600">
-                  Начало: {new Date(auction.startTime).toLocaleString('ru-RU', { 
+                  {new Date(auction.startTime).toLocaleString('ru-RU', { 
                     day: 'numeric', 
                     month: 'short', 
                     hour: '2-digit', 
@@ -134,12 +134,12 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
               </div>
             )}
             {auction.status !== 'ended' && auction.status !== 'upcoming' && (
-              <div className="flex items-center gap-2 text-sm">
-                <Icon name="Clock" className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-1.5 text-xs md:text-sm">
+                <Icon name="Clock" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
                 <span className={`font-semibold ${
                   auction.status === 'ending-soon' ? 'text-orange-600' : 'text-muted-foreground'
                 }`}>
-                  Осталось: {getTimeRemaining(auction.endTime)}
+                  {getTimeRemaining(auction.endTime)}
                 </span>
               </div>
             )}
@@ -147,9 +147,10 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0">
+      <CardFooter className="pt-0 pb-3">
         <Button
-          className="w-full"
+          className="w-full h-9 text-sm"
+          size="sm"
           variant={auction.status === 'ended' ? 'secondary' : 'default'}
           disabled={auction.status === 'ended' || auction.status === 'upcoming'}
           onClick={() => {
@@ -166,17 +167,17 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
         >
           {auction.status === 'ended' ? (
             <>
-              <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-              Аукцион завершен
+              <Icon name="CheckCircle" className="mr-1.5 h-3.5 w-3.5" />
+              Завершен
             </>
           ) : !isAuthenticated ? (
             <>
-              <Icon name="Lock" className="mr-2 h-4 w-4" />
-              Войдите для участия
+              <Icon name="Lock" className="mr-1.5 h-3.5 w-3.5" />
+              Войти
             </>
           ) : (
             <>
-              <Icon name="Gavel" className="mr-2 h-4 w-4" />
+              <Icon name="Gavel" className="mr-1.5 h-3.5 w-3.5" />
               Сделать ставку
             </>
           )}

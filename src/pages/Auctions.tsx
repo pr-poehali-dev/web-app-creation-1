@@ -245,8 +245,8 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+      <main className="container mx-auto px-2 md:px-3 py-2 md:py-3 flex-1">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2 md:mb-3">
           <div className="flex items-center justify-between gap-2">
             <BackButton />
             <div className="md:hidden">
@@ -265,7 +265,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
           )}
         </div>
         
-        <h1 className="text-xl md:text-2xl font-bold text-foreground mb-4">Аукционы</h1>
+        <h1 className="text-lg md:text-xl font-bold text-foreground mb-2 md:mb-3">Аукционы</h1>
 
         <AuctionSearchBlock
           filters={filters}
@@ -282,21 +282,21 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
         </div>
 
         {isAuthenticated && (
-          <div className="mb-4 flex items-center gap-2">
+          <div className="mb-2 md:mb-3 flex items-center gap-2">
             <Switch
               id="show-only-my"
               checked={showOnlyMy}
               onCheckedChange={setShowOnlyMy}
               className="scale-75"
             />
-            <Label htmlFor="show-only-my" className="cursor-pointer text-sm text-muted-foreground">
+            <Label htmlFor="show-only-my" className="cursor-pointer text-xs md:text-sm text-muted-foreground">
               Только мои
             </Label>
           </div>
         )}
 
         {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
@@ -305,12 +305,12 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
             ))}
           </div>
         ) : currentAuctions.length === 0 ? (
-          <div className="text-center py-20">
-            <Icon name="Gavel" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
-            <h3 className="text-xl font-semibold mb-2">
+          <div className="text-center py-10 md:py-16">
+            <Icon name="Gavel" className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mx-auto mb-3 md:mb-4" />
+            <h3 className="text-base md:text-lg font-semibold mb-2">
               {showOnlyMy ? 'У вас пока нет аукционов' : 'Аукционы не найдены'}
             </h3>
-            <p className="text-muted-foreground mb-8">
+            <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6">
               {showOnlyMy
                 ? 'Создайте свой первый аукцион, чтобы начать продавать'
                 : 'Попробуйте изменить параметры фильтра или поиска'}
@@ -318,8 +318,8 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
           </div>
         ) : (
           <>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
+            <div className="mb-2 md:mb-3 flex items-center justify-between">
+              <p className="text-xs md:text-sm text-muted-foreground">
                 Найдено: <span className="font-semibold text-foreground">{filteredAuctions.length}</span>{' '}
                 {filteredAuctions.length === 1 ? 'аукцион' : 
                  filteredAuctions.length < 5 ? 'аукциона' : 'аукционов'}
@@ -331,7 +331,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
               {currentAuctions.map((auction, index) => (
                 <div
                   key={auction.id}
@@ -350,7 +350,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
             {hasMore && (
               <div
                 ref={observerTarget}
-                className="flex justify-center items-center py-8"
+                className="flex justify-center items-center py-4 md:py-6"
               >
                 {isLoadingMore ? (
                   <div className="flex items-center gap-2 text-muted-foreground">

@@ -144,28 +144,28 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             {mobileMenuOpen ? "Закрыть" : "Меню"}
           </button>
 
-          <nav className="hidden md:flex items-center space-x-3 lg:space-x-4 mr-3 lg:mr-4">
+          <nav className="hidden md:flex items-center space-x-2 lg:space-x-3 mr-3 lg:mr-4">
             <Link
               to="/predlozheniya"
-              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
             >
               <span className="flex items-center gap-1">
                 Контракты
@@ -174,13 +174,13 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/about"
-              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary whitespace-nowrap"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20 whitespace-nowrap"
             >
               О&nbsp;площадке
             </Link>
             <Link
               to="/support"
-              className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
+              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border border-transparent hover:border-primary/20"
             >
               Поддержка
             </Link>

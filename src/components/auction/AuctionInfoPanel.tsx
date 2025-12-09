@@ -37,10 +37,10 @@ export default function AuctionInfoPanel({
   onMakeBidClick 
 }: AuctionInfoPanelProps) {
   return (
-    <div className="space-y-3 md:space-y-4">
+    <div className="space-y-2 md:space-y-3">
       <div>
-        <div className="flex items-start justify-between gap-2 md:gap-4 mb-2">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">{auction.title}</h1>
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{auction.title}</h1>
           {getStatusBadge(auction.status)}
         </div>
         {categoryName && (
@@ -54,68 +54,68 @@ export default function AuctionInfoPanel({
         )}
       </div>
 
-      <Separator />
+      <Separator className="my-2" />
 
-      <div className="space-y-2 md:space-y-3">
+      <div className="space-y-1.5 md:space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-sm md:text-base text-muted-foreground">Стартовая цена:</span>
-          <span className="text-base md:text-lg font-medium">{auction.startingPrice.toLocaleString()} ₽</span>
+          <span className="text-xs md:text-sm text-muted-foreground">Старт:</span>
+          <span className="text-sm md:text-base font-medium">{auction.startingPrice.toLocaleString()} ₽</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm md:text-base text-muted-foreground">Текущая ставка:</span>
-          <span className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">{auction.currentBid.toLocaleString()} ₽</span>
+          <span className="text-xs md:text-sm text-muted-foreground">Текущая:</span>
+          <span className="text-lg md:text-xl lg:text-2xl font-bold text-primary">{auction.currentBid.toLocaleString()} ₽</span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm md:text-base text-muted-foreground">Минимальный шаг:</span>
-          <span className="text-sm md:text-base font-medium">{auction.minBidStep.toLocaleString()} ₽</span>
+          <span className="text-xs md:text-sm text-muted-foreground">Шаг:</span>
+          <span className="text-xs md:text-sm font-medium">{auction.minBidStep.toLocaleString()} ₽</span>
         </div>
       </div>
 
       <Separator />
 
-      <div className="grid grid-cols-2 gap-2 md:gap-3">
-        <div className="space-y-0.5 md:space-y-1">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Icon name="Users" className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            <span className="text-xs md:text-sm">Ставки</span>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Icon name="Users" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+            <span className="text-[10px] md:text-xs">Ставки</span>
           </div>
-          <p className="text-lg md:text-xl lg:text-2xl font-bold">{auction.bidCount}</p>
+          <p className="text-base md:text-lg lg:text-xl font-bold">{auction.bidCount}</p>
         </div>
-        <div className="space-y-0.5 md:space-y-1">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Icon name="Clock" className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            <span className="text-xs md:text-sm">Осталось</span>
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Icon name="Clock" className="h-3 w-3 md:h-3.5 md:w-3.5" />
+            <span className="text-[10px] md:text-xs">Осталось</span>
           </div>
-          <p className="text-lg md:text-xl lg:text-2xl font-bold">{timeRemaining}</p>
+          <p className="text-base md:text-lg lg:text-xl font-bold">{timeRemaining}</p>
         </div>
       </div>
 
       <Separator />
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-1.5 text-muted-foreground text-sm md:text-base">
-          <Icon name="MapPin" className="h-3.5 w-3.5 md:h-4 md:w-4" />
+      <div className="space-y-1">
+        <div className="flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
+          <Icon name="MapPin" className="h-3 w-3 md:h-3.5 md:w-3.5" />
           <span>{districtName}</span>
         </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs md:text-sm">
-          <Icon name="Calendar" className="h-3.5 w-3.5" />
-          <span>Начало: {auction.startDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+        <div className="flex items-center gap-1 text-muted-foreground text-[10px] md:text-xs">
+          <Icon name="Calendar" className="h-3 w-3" />
+          <span>{auction.startDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs md:text-sm">
-          <Icon name="CalendarX" className="h-3.5 w-3.5" />
-          <span>Завершение: {auction.endDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+        <div className="flex items-center gap-1 text-muted-foreground text-[10px] md:text-xs">
+          <Icon name="CalendarX" className="h-3 w-3" />
+          <span>{auction.endDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
       </div>
 
       {auction.status === 'active' && (
         <>
-          <Separator />
+          <Separator className="my-2" />
           <Button 
-            size="default"
-            className="w-full"
+            size="sm"
+            className="w-full h-9 text-sm"
             onClick={onMakeBidClick}
           >
-            <Icon name="Gavel" className="h-4 w-4 mr-2" />
+            <Icon name="Gavel" className="h-3.5 w-3.5 mr-1.5" />
             Сделать ставку
           </Button>
         </>
