@@ -1,0 +1,39 @@
+{
+  "tests": [
+    {
+      "name": "Обновление аукциона до начала",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "auctionId": "test-auction-id",
+        "action": "update",
+        "title": "Обновленный аукцион",
+        "startingPrice": 5000
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Снижение цены активного аукциона",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "test-user-123"
+      },
+      "body": {
+        "auctionId": "test-auction-id",
+        "action": "reduce-price",
+        "newPrice": 4000
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ const REQUESTS_API = func2url.requests;
 const ORDERS_API = func2url.orders;
 const AUCTIONS_LIST_API = func2url['auctions-list'];
 const AUCTIONS_MY_API = func2url['auctions-my'];
+const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 
 export interface OffersListResponse {
   offers: Offer[];
@@ -417,6 +418,25 @@ export const auctionsAPI = {
     }));
   },
 
+  async getAuctionById(id: string): Promise<Auction> {
+    const response = await fetch(`${AUCTIONS_LIST_API}?id=${id}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch auction');
+    }
+    
+    const data = await response.json();
+    return {
+      ...data,
+      startDate: data.startDate ? new Date(data.startDate) : undefined,
+      endDate: data.endDate ? new Date(data.endDate) : undefined,
+      startTime: data.startDate ? new Date(data.startDate) : undefined,
+      endTime: data.endDate ? new Date(data.endDate) : undefined,
+      createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
+      images: data.images || [],
+    };
+  },
+
   async deleteAuction(auctionId: string): Promise<void> {
     const userId = getUserId();
     if (!userId) {
@@ -435,5 +455,38 @@ export const auctionsAPI = {
     if (!response.ok) {
       throw new Error('Failed to delete auction');
     }
+  },
+
+  async updateAuction(data: {
+    auctionId: string;
+    action: 'update' | 'reduce-price' | 'stop';
+    title?: string;
+    description?: string;
+    startingPrice?: number;
+    buyNowPrice?: number;
+    minBidStep?: number;
+    images?: Array<{ url: string; alt?: string }>;
+    newPrice?: number;
+  }): Promise<{ success: boolean; message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(AUCTIONS_UPDATE_API, {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update auction');
+    }
+    
+    return response.json();
   },
 };

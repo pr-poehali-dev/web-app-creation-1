@@ -45,6 +45,9 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
   const [auctions, setAuctions] = useState<Auction[]>([]);
   const [filterStatus, setFilterStatus] = useState<'all' | Auction['status']>('all');
   const [auctionToDelete, setAuctionToDelete] = useState<string | null>(null);
+  const [auctionToStop, setAuctionToStop] = useState<string | null>(null);
+  const [priceReduceAuction, setPriceReduceAuction] = useState<{ id: string; currentPrice: number } | null>(null);
+  const [newPrice, setNewPrice] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   const loadMyAuctions = async () => {
@@ -80,15 +83,92 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
       setAuctionToDelete(null);
       toast({
         title: 'Успешно',
-        description: 'Аукцион отменен',
+        description: 'Аукцион удален',
       });
     } catch (error) {
       toast({
         title: 'Ошибка',
-        description: 'Не удалось отменить аукцион',
+        description: 'Не удалось удалить аукцион',
         variant: 'destructive',
       });
     }
+  };
+
+  const handleStopAuction = async (auctionId: string) => {
+    try {
+      await auctionsAPI.updateAuction({ auctionId, action: 'stop' });
+      await loadMyAuctions();
+      setAuctionToStop(null);
+      toast({
+        title: 'Успешно',
+        description: 'Аукцион остановлен',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось остановить аукцион',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReducePrice = async () => {
+    if (!priceReduceAuction || !newPrice) return;
+
+    const price = parseFloat(newPrice);
+    if (isNaN(price) || price <= 0) {
+      toast({
+        title: 'Ошибка',
+        description: 'Введите корректную цену',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (price >= priceReduceAuction.currentPrice) {
+      toast({
+        title: 'Ошибка',
+        description: 'Новая цена должна быть ниже текущей',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await auctionsAPI.updateAuction({ 
+        auctionId: priceReduceAuction.id, 
+        action: 'reduce-price',
+        newPrice: price
+      });
+      await loadMyAuctions();
+      setPriceReduceAuction(null);
+      setNewPrice('');
+      toast({
+        title: 'Успешно',
+        description: 'Цена снижена',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось снизить цену',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const canEdit = (auction: Auction) => {
+    if (!auction.startDate) return false;
+    const start = new Date(auction.startDate);
+    const now = new Date();
+    return start > now;
+  };
+
+  const canReducePrice = (auction: Auction) => {
+    return auction.status === 'active' || auction.status === 'ending-soon';
+  };
+
+  const canStop = (auction: Auction) => {
+    return auction.status === 'active' || auction.status === 'ending-soon' || auction.status === 'upcoming';
   };
 
   const getAuctionStats = () => {
@@ -241,27 +321,36 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled>
-                <Icon name="Pencil" className="mr-2 h-4 w-4" />
-                Редактировать
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <Icon name="Users" className="mr-2 h-4 w-4" />
-                Список ставок
-              </DropdownMenuItem>
-              {auction.status === 'ended' && (
-                <DropdownMenuItem disabled>
-                  <Icon name="Trophy" className="mr-2 h-4 w-4" />
-                  Выбрать победителя
+              {canEdit(auction) && (
+                <DropdownMenuItem onClick={() => navigate(`/edit-auction/${auction.id}`)}>
+                  <Icon name="Edit" className="mr-2 h-4 w-4" />
+                  Редактировать
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => setAuctionToDelete(auction.id)}
-              >
-                <Icon name="Trash2" className="mr-2 h-4 w-4" />
-                Удалить
-              </DropdownMenuItem>
+              {canEdit(auction) && (
+                <DropdownMenuItem 
+                  onClick={() => setAuctionToDelete(auction.id)}
+                  className="text-destructive"
+                >
+                  <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                  Удалить
+                </DropdownMenuItem>
+              )}
+              {canReducePrice(auction) && (
+                <DropdownMenuItem onClick={() => setPriceReduceAuction({ id: auction.id, currentPrice: auction.currentBid || auction.startingPrice || 0 })}>
+                  <Icon name="TrendingDown" className="mr-2 h-4 w-4" />
+                  Снизить цену
+                </DropdownMenuItem>
+              )}
+              {canStop(auction) && (
+                <DropdownMenuItem 
+                  onClick={() => setAuctionToStop(auction.id)}
+                  className="text-orange-600"
+                >
+                  <Icon name="StopCircle" className="mr-2 h-4 w-4" />
+                  Остановить
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </CardFooter>
@@ -385,6 +474,58 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
               className="bg-destructive hover:bg-destructive/90"
             >
               Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!auctionToStop} onOpenChange={() => setAuctionToStop(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Остановить аукцион?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Аукцион будет завершен досрочно. Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => auctionToStop && handleStopAuction(auctionToStop)}
+              className="bg-orange-600 text-white hover:bg-orange-700"
+            >
+              Остановить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!priceReduceAuction} onOpenChange={() => { setPriceReduceAuction(null); setNewPrice(''); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Снизить цену</AlertDialogTitle>
+            <AlertDialogDescription>
+              Текущая цена: {priceReduceAuction?.currentPrice.toLocaleString('ru-RU')} ₽
+              <div className="mt-4">
+                <label className="block text-sm font-medium mb-2">Новая цена (ниже текущей):</label>
+                <input
+                  type="number"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="Введите новую цену"
+                  min="0"
+                  step="1"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => { setPriceReduceAuction(null); setNewPrice(''); }}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReducePrice}
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Снизить
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

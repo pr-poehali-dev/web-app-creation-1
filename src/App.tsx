@@ -25,6 +25,7 @@ import RequestDetail from "./pages/RequestDetail";
 import CreateOffer from "./pages/CreateOffer";
 import CreateRequest from "./pages/CreateRequest";
 import CreateAuction from "./pages/CreateAuction";
+import EditAuction from "./pages/EditAuction";
 import AuctionDetail from "./pages/AuctionDetail";
 import VerificationPage from "./pages/VerificationPage";
 import VerificationResubmit from "./pages/VerificationResubmit";
@@ -129,6 +130,7 @@ const App = () => {
             <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-auction" element={<CreateAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/edit-auction/:id" element={<EditAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
