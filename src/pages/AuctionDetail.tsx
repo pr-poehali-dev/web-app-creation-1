@@ -108,7 +108,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
             <BidHistoryTabs 
               bids={bids}
               categoryName={category?.name || 'Аукцион'}
-              auctionNumber={parseInt(auction.id.slice(-4), 16) % 1000}
+              auctionNumber={typeof auction.id === 'string' ? parseInt(auction.id.slice(-4), 16) % 1000 : auction.id % 1000}
               currentUserId={currentUser?.userId}
             />
           </div>
