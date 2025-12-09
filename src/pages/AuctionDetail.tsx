@@ -60,12 +60,12 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-3 py-6 flex-1">
-        <div className="mb-6">
+      <main className="container mx-auto px-3 py-3 md:py-4 flex-1">
+        <div className="mb-3">
           <BackButton />
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6 mb-6">
+        <div className="grid lg:grid-cols-2 gap-3 md:gap-4 mb-3 md:mb-4">
           <AuctionImageGallery images={auction.images} />
           
           <AuctionInfoPanel
@@ -79,18 +79,18 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
           />
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Описание</CardTitle>
+        <Card className="mb-3 md:mb-4">
+          <CardHeader className="py-3 md:py-4">
+            <CardTitle className="text-base md:text-lg">Описание</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground whitespace-pre-line">
+          <CardContent className="py-3 md:py-4">
+            <p className="text-sm md:text-base text-muted-foreground whitespace-pre-line line-clamp-3">
               {auction.description}
             </p>
           </CardContent>
         </Card>
 
-        <div className="mt-6 space-y-6" ref={bidsRef}>
+        <div className="space-y-3 md:space-y-4" ref={bidsRef}>
           <AuctionBidForm
             auction={auction}
             currentUser={currentUser}
@@ -100,9 +100,9 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
 
           <div className="relative">
             {auction.status === 'active' && (
-              <div className="absolute -top-8 right-0 flex items-center gap-2 text-xs text-muted-foreground">
-                <div className={`h-2 w-2 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
-                <span>Обновление каждые 5 сек</span>
+              <div className="absolute -top-7 right-0 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className={`h-1.5 w-1.5 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
+                <span className="hidden sm:inline">Обновление каждые 5 сек</span>
               </div>
             )}
             <BidHistoryTabs 

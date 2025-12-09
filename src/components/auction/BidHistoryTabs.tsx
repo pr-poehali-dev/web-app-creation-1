@@ -64,36 +64,38 @@ export default function BidHistoryTabs({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="history">
-          <Icon name="History" className="h-4 w-4 mr-2" />
-          История ставок
+        <TabsTrigger value="history" className="text-xs md:text-sm">
+          <Icon name="History" className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
+          <span className="hidden sm:inline">История ставок</span>
+          <span className="sm:hidden">История</span>
           {bids.length > 0 && (
-            <Badge variant="secondary" className="ml-2 text-xs">{bids.length}</Badge>
+            <Badge variant="secondary" className="ml-1 md:ml-2 text-xs">{bids.length}</Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="participants">
-          <Icon name="Users" className="h-4 w-4 mr-2" />
-          Участники
+        <TabsTrigger value="participants" className="text-xs md:text-sm">
+          <Icon name="Users" className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
+          <span className="hidden sm:inline">Участники</span>
+          <span className="sm:hidden">Участники</span>
           {uniqueParticipants > 0 && (
-            <Badge variant="secondary" className="ml-2 text-xs">{uniqueParticipants}</Badge>
+            <Badge variant="secondary" className="ml-1 md:ml-2 text-xs">{uniqueParticipants}</Badge>
           )}
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="history" className="mt-4">
+      <TabsContent value="history" className="mt-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Все ставки (по убыванию)</CardTitle>
+          <CardHeader className="py-3 md:py-4">
+            <CardTitle className="text-base md:text-lg">Все ставки</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="py-3 md:py-4">
             {sortedBids.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Icon name="Gavel" className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>Ставок пока нет</p>
+              <div className="text-center py-6 text-muted-foreground">
+                <Icon name="Gavel" className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-2 opacity-30" />
+                <p className="text-sm md:text-base">Ставок пока нет</p>
               </div>
             ) : (
-              <ScrollArea className="h-[400px] pr-4">
-                <div className="space-y-3">
+              <ScrollArea className="h-[250px] md:h-[300px] pr-2 md:pr-4">
+                <div className="space-y-2 md:space-y-3">
                   {sortedBids.map((bid, index) => {
                     const participantId = generateParticipantId(
                       bid.userId, 
@@ -106,7 +108,7 @@ export default function BidHistoryTabs({
                     return (
                       <div 
                         key={bid.id}
-                        className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-500 ${
+                        className={`flex items-center justify-between p-2 md:p-3 rounded-lg border transition-all duration-500 ${
                           index === 0 
                             ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900' 
                             : 'bg-muted/50'
@@ -122,7 +124,7 @@ export default function BidHistoryTabs({
                           }`}>
                             <Icon 
                               name={index === 0 ? "Trophy" : "User"} 
-                              className={`h-5 w-5 ${
+                              className={`h-4 w-4 md:h-5 md:w-5 ${
                                 index === 0 
                                   ? 'text-green-600 dark:text-green-400' 
                                   : 'text-muted-foreground'
@@ -130,22 +132,22 @@ export default function BidHistoryTabs({
                             />
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Участник {participantId}</span>
+                            <div className="flex items-center gap-1 md:gap-2">
+                              <span className="text-sm md:text-base font-medium">{participantId}</span>
                               {isCurrentUser && (
-                                <Badge variant="outline" className="text-xs">Вы</Badge>
+                                <Badge variant="outline" className="text-[10px] md:text-xs px-1 py-0">Вы</Badge>
                               )}
                               {index === 0 && (
-                                <Badge className="bg-green-600 text-xs">Лидирует</Badge>
+                                <Badge className="bg-green-600 text-[10px] md:text-xs px-1 py-0">TOP</Badge>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(bid.timestamp).toLocaleString('ru-RU')}
+                            <p className="text-[10px] md:text-xs text-muted-foreground">
+                              {new Date(bid.timestamp).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold">{bid.amount.toLocaleString()} ₽</p>
+                          <p className="text-base md:text-lg lg:text-xl font-bold">{bid.amount.toLocaleString()} ₽</p>
                         </div>
                       </div>
                     );
@@ -157,20 +159,20 @@ export default function BidHistoryTabs({
         </Card>
       </TabsContent>
 
-      <TabsContent value="participants" className="mt-4">
+      <TabsContent value="participants" className="mt-3">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Активность участников</CardTitle>
+          <CardHeader className="py-3 md:py-4">
+            <CardTitle className="text-base md:text-lg">Активность</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="py-3 md:py-4">
             {ascendingBids.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Icon name="Users" className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>Участников пока нет</p>
+              <div className="text-center py-6 text-muted-foreground">
+                <Icon name="Users" className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-2 opacity-30" />
+                <p className="text-sm md:text-base">Участников пока нет</p>
               </div>
             ) : (
-              <ScrollArea className="h-[400px] pr-4">
-                <div className="space-y-3">
+              <ScrollArea className="h-[250px] md:h-[300px] pr-2 md:pr-4">
+                <div className="space-y-2 md:space-y-3">
                   {Array.from(new Set(bids.map(b => b.userId))).map((userId) => {
                     const participantId = generateParticipantId(
                       userId, 
@@ -186,17 +188,17 @@ export default function BidHistoryTabs({
                     return (
                       <div 
                         key={userId}
-                        className="flex items-center justify-between p-4 rounded-lg border bg-muted/50"
+                        className="flex items-center justify-between p-2 md:p-3 rounded-lg border bg-muted/50"
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center ${
                             isLeading 
                               ? 'bg-green-100 dark:bg-green-900/30' 
                               : 'bg-background'
                           }`}>
                             <Icon 
                               name="User" 
-                              className={`h-5 w-5 ${
+                              className={`h-4 w-4 md:h-5 md:w-5 ${
                                 isLeading 
                                   ? 'text-green-600 dark:text-green-400' 
                                   : 'text-muted-foreground'

@@ -72,13 +72,13 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Сделать ставку</CardTitle>
+      <CardHeader className="py-3 md:py-4">
+        <CardTitle className="text-base md:text-lg">Сделать ставку</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 md:space-y-4 py-3 md:py-4">
         {currentUser ? (
-          <div className="grid gap-4">
-            <div className="space-y-2">
+          <div className="grid gap-3">
+            <div className="space-y-1.5">
               <Label htmlFor="bidAmount">Сумма ставки (₽)</Label>
               <Input
                 id="bidAmount"
@@ -99,9 +99,9 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
             </Button>
           </div>
         ) : (
-          <div className="text-center py-6">
-            <Icon name="Lock" className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground mb-4">Войдите, чтобы сделать ставку</p>
+          <div className="text-center py-4">
+            <Icon name="Lock" className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
+            <p className="text-sm md:text-base text-muted-foreground mb-3">Войдите, чтобы сделать ставку</p>
             <Button onClick={() => navigate('/login')}>
               Войти
             </Button>

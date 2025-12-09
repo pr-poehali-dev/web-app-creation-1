@@ -10,7 +10,7 @@ export default function AuctionImageGallery({ images }: AuctionImageGalleryProps
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 md:space-y-3">
       <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
         {images.length > 0 ? (
           <img
@@ -31,7 +31,7 @@ export default function AuctionImageGallery({ images }: AuctionImageGalleryProps
       </div>
 
       {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-1.5 md:gap-2">
           {images.map((image, index) => (
             <button
               key={index}
