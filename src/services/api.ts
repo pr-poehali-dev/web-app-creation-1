@@ -384,9 +384,11 @@ export const auctionsAPI = {
     const data = await response.json();
     return (data.auctions || []).map((a: any) => ({
       ...a,
-      startDate: new Date(a.startDate),
-      endDate: new Date(a.endDate),
-      createdAt: new Date(a.createdAt),
+      startDate: a.startDate ? new Date(a.startDate) : undefined,
+      endDate: a.endDate ? new Date(a.endDate) : undefined,
+      startTime: a.startDate ? new Date(a.startDate) : undefined,
+      endTime: a.endDate ? new Date(a.endDate) : undefined,
+      createdAt: a.createdAt ? new Date(a.createdAt) : undefined,
     }));
   },
 

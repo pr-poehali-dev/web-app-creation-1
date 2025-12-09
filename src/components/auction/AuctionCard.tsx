@@ -121,11 +121,11 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
                 </a>
               </div>
             )}
-            {auction.status === 'upcoming' && (
+            {auction.status === 'upcoming' && auction.startTime && (
               <div className="flex items-center gap-2 text-sm">
                 <Icon name="Calendar" className="h-4 w-4 text-muted-foreground" />
                 <span className="font-semibold text-blue-600">
-                  Начало: {auction.startTime.toLocaleString('ru-RU', { 
+                  Начало: {new Date(auction.startTime).toLocaleString('ru-RU', { 
                     day: 'numeric', 
                     month: 'short', 
                     hour: '2-digit', 

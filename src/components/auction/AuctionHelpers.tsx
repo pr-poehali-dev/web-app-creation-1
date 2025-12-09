@@ -2,9 +2,15 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import type { Auction } from '@/types/auction';
 
-export const getTimeRemaining = (endTime: Date): string => {
+export const getTimeRemaining = (endTime?: Date | string): string => {
+  if (!endTime) return 'Неизвестно';
+  
+  const endDate = typeof endTime === 'string' ? new Date(endTime) : endTime;
+  
+  if (isNaN(endDate.getTime())) return 'Неизвестно';
+  
   const now = new Date();
-  const diff = endTime.getTime() - now.getTime();
+  const diff = endDate.getTime() - now.getTime();
 
   if (diff <= 0) return 'Завершен';
 
