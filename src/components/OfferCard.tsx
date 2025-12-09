@@ -107,12 +107,6 @@ export default function OfferCard({ offer }: OfferCardProps) {
           {offer.title}
         </h3>
 
-        <div className="flex flex-wrap gap-1.5">
-          {category && (
-            <Badge variant="secondary" className="text-xs py-0">{category.name}</Badge>
-          )}
-        </div>
-
         <div className="flex items-baseline justify-between text-sm">
           <span className="text-muted-foreground text-xs">
             {offer.quantity} {offer.unit}
