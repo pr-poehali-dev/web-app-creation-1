@@ -37,6 +37,8 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
   const [bids, setBids] = useState<AuctionBid[]>([]);
   const [bidAmount, setBidAmount] = useState('');
   const [isPlacingBid, setIsPlacingBid] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState('');
   const [searchParams] = useSearchParams();
   const bidsRef = useRef<HTMLDivElement>(null);
 
@@ -95,6 +97,75 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
       }, 100);
     }
   }, [searchParams, isLoading]);
+
+  useEffect(() => {
+    if (!auction || auction.status !== 'active') return;
+
+    const refreshBids = async () => {
+      try {
+        setIsRefreshing(true);
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+
+        const response = await fetch(`https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?id=${id}`, {
+          headers: {
+            'X-User-Id': userId,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.bids && Array.isArray(data.bids)) {
+            const previousBidsCount = bids.length;
+            const newBids = data.bids.map((bid: any) => ({
+              ...bid,
+              timestamp: new Date(bid.timestamp)
+            }));
+            
+            setBids(newBids);
+            
+            setAuction(prev => prev ? {
+              ...prev,
+              currentBid: data.currentBid,
+              bidCount: data.bidCount
+            } : null);
+
+            if (newBids.length > previousBidsCount) {
+              const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE=');
+              audio.volume = 0.3;
+              audio.play().catch(() => {});
+              
+              toast({
+                title: 'Новая ставка!',
+                description: `Текущая цена: ${data.currentBid?.toLocaleString()} ₽`,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to refresh bids:', error);
+      } finally {
+        setTimeout(() => setIsRefreshing(false), 500);
+      }
+    };
+
+    const interval = setInterval(refreshBids, 5000);
+
+    return () => clearInterval(interval);
+  }, [auction?.status, id, bids.length, toast]);
+
+  useEffect(() => {
+    if (!auction?.endDate) return;
+
+    const updateTimer = () => {
+      setTimeRemaining(getTimeRemaining(auction.endDate));
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction?.endDate]);
 
   const getStatusBadge = (status: Auction['status']) => {
     switch (status) {
@@ -296,7 +367,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
                   <Icon name="Clock" className="h-4 w-4" />
                   <span className="text-sm">Осталось времени</span>
                 </div>
-                <p className="text-2xl font-bold">{getTimeRemaining(auction.endDate)}</p>
+                <p className="text-2xl font-bold">{timeRemaining || getTimeRemaining(auction.endDate)}</p>
               </div>
             </div>
 
@@ -372,12 +443,20 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
             </Card>
           )}
 
-          <BidHistoryTabs 
-            bids={bids}
-            categoryName={category?.name || 'Аукцион'}
-            auctionNumber={parseInt(auction.id.slice(-4), 16) % 1000}
-            currentUserId={currentUser?.userId}
-          />
+          <div className="relative">
+            {auction.status === 'active' && (
+              <div className="absolute -top-8 right-0 flex items-center gap-2 text-xs text-muted-foreground">
+                <div className={`h-2 w-2 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
+                <span>Обновление каждые 5 сек</span>
+              </div>
+            )}
+            <BidHistoryTabs 
+              bids={bids}
+              categoryName={category?.name || 'Аукцион'}
+              auctionNumber={parseInt(auction.id.slice(-4), 16) % 1000}
+              currentUserId={currentUser?.userId}
+            />
+          </div>
         </div>
       </main>
 

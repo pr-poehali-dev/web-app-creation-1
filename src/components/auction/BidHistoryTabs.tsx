@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -36,6 +36,20 @@ export default function BidHistoryTabs({
   currentUserId 
 }: BidHistoryTabsProps) {
   const [activeTab, setActiveTab] = useState('history');
+  const [newBidId, setNewBidId] = useState<string | null>(null);
+  const prevBidsLength = useRef(bids.length);
+
+  useEffect(() => {
+    if (bids.length > prevBidsLength.current && bids.length > 0) {
+      const latestBid = [...bids].sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      )[0];
+      
+      setNewBidId(latestBid.id);
+      setTimeout(() => setNewBidId(null), 3000);
+    }
+    prevBidsLength.current = bids.length;
+  }, [bids]);
 
   const sortedBids = [...bids].sort((a, b) => 
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -45,16 +59,24 @@ export default function BidHistoryTabs({
     new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 
+  const uniqueParticipants = Array.from(new Set(bids.map(b => b.userId))).length;
+
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="history">
           <Icon name="History" className="h-4 w-4 mr-2" />
           История ставок
+          {bids.length > 0 && (
+            <Badge variant="secondary" className="ml-2 text-xs">{bids.length}</Badge>
+          )}
         </TabsTrigger>
         <TabsTrigger value="participants">
           <Icon name="Users" className="h-4 w-4 mr-2" />
           Участники
+          {uniqueParticipants > 0 && (
+            <Badge variant="secondary" className="ml-2 text-xs">{uniqueParticipants}</Badge>
+          )}
         </TabsTrigger>
       </TabsList>
 
@@ -84,10 +106,12 @@ export default function BidHistoryTabs({
                     return (
                       <div 
                         key={bid.id}
-                        className={`flex items-center justify-between p-4 rounded-lg border ${
+                        className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-500 ${
                           index === 0 
                             ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900' 
                             : 'bg-muted/50'
+                        } ${
+                          newBidId === bid.id ? 'animate-pulse ring-2 ring-green-500' : ''
                         }`}
                       >
                         <div className="flex items-center gap-3">
