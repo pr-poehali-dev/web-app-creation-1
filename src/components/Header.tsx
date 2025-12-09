@@ -1,5 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,6 +24,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
   
   const shouldShowDistricts = () => {
     const hiddenPaths = ['/', '/about', '/support'];
@@ -38,6 +41,41 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     window.addEventListener('userSessionChanged', handleSessionChange);
     return () => window.removeEventListener('userSessionChanged', handleSessionChange);
   }, []);
+
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      touchEndY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = () => {
+      const swipeDistance = touchStartY.current - touchEndY.current;
+      
+      // Если свайп вверх больше 50px, закрываем меню
+      if (swipeDistance > 50) {
+        setMobileMenuOpen(false);
+      }
+      
+      touchStartY.current = 0;
+      touchEndY.current = 0;
+    };
+
+    const menuElement = mobileMenuRef.current;
+    if (mobileMenuOpen && menuElement) {
+      menuElement.addEventListener('touchstart', handleTouchStart);
+      menuElement.addEventListener('touchmove', handleTouchMove);
+      menuElement.addEventListener('touchend', handleTouchEnd);
+      
+      return () => {
+        menuElement.removeEventListener('touchstart', handleTouchStart);
+        menuElement.removeEventListener('touchmove', handleTouchMove);
+        menuElement.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [mobileMenuOpen]);
 
   const handleLogout = () => {
     onLogout();
@@ -267,7 +305,10 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t py-4 space-y-3">
+          <div 
+            ref={mobileMenuRef}
+            className="md:hidden border-t py-4 space-y-3 touch-pan-y"
+          >
             <Link
               to="/predlozheniya"
               className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
