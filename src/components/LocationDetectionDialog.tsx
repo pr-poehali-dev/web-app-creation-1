@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -15,22 +14,18 @@ import { useDistrict } from '@/contexts/DistrictContext';
 export default function LocationDetectionDialog() {
   const [open, setOpen] = useState(false);
   const { isDetecting, requestGeolocation, selectedRegion } = useDistrict();
-  const location = useLocation();
 
   useEffect(() => {
     const hasShownDialog = localStorage.getItem('geolocationDialogShown');
     
-    const excludedPaths = ['/login', '/register', '/reset-password', '/new-password', '/admin'];
-    const isExcludedPath = excludedPaths.some(path => location.pathname.startsWith(path));
-    
-    if (!hasShownDialog && selectedRegion === 'all' && !isExcludedPath) {
+    if (!hasShownDialog && selectedRegion === 'all') {
       const timer = setTimeout(() => {
         setOpen(true);
       }, 2000);
       
       return () => clearTimeout(timer);
     }
-  }, [selectedRegion, location.pathname]);
+  }, [selectedRegion]);
 
   const handleAccept = async () => {
     try {
