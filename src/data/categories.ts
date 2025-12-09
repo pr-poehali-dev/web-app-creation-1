@@ -73,4 +73,9 @@ export const CATEGORIES: Category[] = [
       { id: 'ready-meals', name: 'Полуфабрикаты и готовые блюда', categoryId: 'food' },
     ],
   },
+  {
+    id: 'other',
+    name: 'Прочие',
+    subcategories: [],
+  },
 ];

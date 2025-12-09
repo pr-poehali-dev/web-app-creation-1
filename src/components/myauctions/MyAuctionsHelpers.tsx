@@ -36,7 +36,7 @@ export const getStatusBadge = (status: Auction['status']): JSX.Element | null =>
 
 export const canEdit = (auction: Auction): boolean => {
   if (!auction.startDate) return false;
-  const start = new Date(auction.startDate);
+  const start = auction.startDate instanceof Date ? auction.startDate : new Date(auction.startDate);
   if (isNaN(start.getTime())) return false;
   const now = new Date();
   return start > now;

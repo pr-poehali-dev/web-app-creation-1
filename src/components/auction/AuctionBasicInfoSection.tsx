@@ -36,6 +36,10 @@ export default function AuctionBasicInfoSection({ formData, onInputChange }: Auc
 
   const handleSelectCategory = (categoryId: string) => {
     onInputChange('category', categoryId);
+    const cat = CATEGORIES.find(c => c.id === categoryId);
+    if (cat && cat.subcategories.length === 0) {
+      onInputChange('subcategory', '');
+    }
     setIsCategoryOpen(false);
     setCategorySearch('');
   };

@@ -153,6 +153,10 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
           className="w-full"
           variant={auction.status === 'ended' ? 'secondary' : 'default'}
           disabled={auction.status === 'ended' || auction.status === 'upcoming' || !isAuthenticated}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/auction/${auction.id}`);
+          }}
         >
           {auction.status === 'ended' ? (
             <>

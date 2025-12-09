@@ -134,14 +134,15 @@ export default function MyAuctionCard({
           Просмотр
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Icon name="MoreVertical" className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {canEdit && (
+        {(canEdit || canReducePrice || canStop) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Icon name="MoreVertical" className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {canEdit && (
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/edit-auction/${auction.id}`);
@@ -183,8 +184,9 @@ export default function MyAuctionCard({
                 Остановить
               </DropdownMenuItem>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </CardFooter>
     </Card>
   );
