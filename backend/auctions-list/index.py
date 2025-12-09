@@ -88,15 +88,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         """
         
         if auction_id:
-            query += " WHERE a.id = %s"
+            query += " WHERE a.id = %s AND a.status != 'cancelled'"
             query += " GROUP BY a.id"
             cur.execute(query, (auction_id,))
         else:
             if status_filter:
-                query += " WHERE a.status = %s"
+                query += " WHERE a.status = %s AND a.status != 'cancelled'"
                 query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
                 cur.execute(query, (status_filter,))
             else:
+                query += " WHERE a.status != 'cancelled'"
                 query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
                 cur.execute(query)
         rows = cur.fetchall()

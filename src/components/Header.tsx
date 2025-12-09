@@ -161,7 +161,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               to="/auction"
               className="text-xs lg:text-base font-medium text-foreground transition-colors hover:text-primary"
             >
-              Аукцион
+              Аукционы
             </Link>
             <Link
               to="/trading"
@@ -335,7 +335,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               className="block px-4 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Аукцион
+              Аукционы
             </Link>
             <Link
               to="/trading"
