@@ -40,6 +40,15 @@ export default function MyAuctionCard({
   const navigate = useNavigate();
   const category = CATEGORIES.find(c => c.id === auction.category);
 
+  console.log('MyAuctionCard:', { 
+    auctionId: auction.id, 
+    canEdit, 
+    canReducePrice, 
+    canStop,
+    startDate: auction.startDate,
+    status: auction.status
+  });
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="p-0">

@@ -38,6 +38,10 @@ export default function RequestBasicInfoSection({
 
   const handleSelectCategory = (categoryId: string) => {
     onInputChange('category', categoryId);
+    const cat = CATEGORIES.find(c => c.id === categoryId);
+    if (cat && cat.subcategories.length === 0) {
+      onInputChange('subcategory', '');
+    }
     setIsCategoryOpen(false);
     setCategorySearch('');
   };
@@ -140,30 +144,31 @@ export default function RequestBasicInfoSection({
             )}
           </div>
 
-          <div className="relative">
-            <Label htmlFor="subcategory">Подкатегория *</Label>
+          {subcategories.length > 0 && (
             <div className="relative">
-              <Input
-                id="subcategory"
-                value={isSubcategoryOpen ? subcategorySearch : (subcategories.find(s => s.id === formData.subcategory)?.name || '')}
-                onChange={(e) => setSubcategorySearch(e.target.value)}
-                onFocus={() => setIsSubcategoryOpen(true)}
-                placeholder="Начните вводить название подкатегории..."
-                className="pr-8"
-                required
-                disabled={!formData.category}
-              />
-              <button
-                type="button"
-                onClick={() => setIsSubcategoryOpen(!isSubcategoryOpen)}
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-                disabled={!formData.category}
-              >
-                <Icon name={isSubcategoryOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-            
-            {isSubcategoryOpen && formData.category && (
+              <Label htmlFor="subcategory">Подкатегория *</Label>
+              <div className="relative">
+                <Input
+                  id="subcategory"
+                  value={isSubcategoryOpen ? subcategorySearch : (subcategories.find(s => s.id === formData.subcategory)?.name || '')}
+                  onChange={(e) => setSubcategorySearch(e.target.value)}
+                  onFocus={() => setIsSubcategoryOpen(true)}
+                  placeholder="Начните вводить название подкатегории..."
+                  className="pr-8"
+                  required
+                  disabled={!formData.category}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsSubcategoryOpen(!isSubcategoryOpen)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  disabled={!formData.category}
+                >
+                  <Icon name={isSubcategoryOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              
+              {isSubcategoryOpen && formData.category && (
               <>
                 <div 
                   className="fixed inset-0 z-10" 
@@ -191,7 +196,8 @@ export default function RequestBasicInfoSection({
                 </div>
               </>
             )}
-          </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

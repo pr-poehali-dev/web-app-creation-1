@@ -21,12 +21,11 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
 
   return (
     <Card
-      className={`transition-all hover:shadow-xl cursor-pointer group ${
+      className={`transition-all hover:shadow-xl group ${
         auction.isPremium && auction.status !== 'ended' ? 'border-2 border-primary shadow-lg' : ''
       } ${
         isHighlighted ? 'ring-2 ring-primary ring-offset-2 shadow-2xl' : ''
       }`}
-      onClick={() => navigate(`/auction/${auction.id}`)}
     >
       {auction.isPremium && auction.status !== 'ended' && (
         <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 text-center">
@@ -34,7 +33,7 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
         </div>
       )}
 
-      <CardHeader className="p-0">
+      <CardHeader className="p-0 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
         <div className="relative aspect-video bg-muted overflow-hidden">
           {auction.images.length > 0 ? (
             <img
@@ -58,7 +57,7 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
         </div>
       </CardHeader>
 
-      <CardContent className="pt-4">
+      <CardContent className="pt-4 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
         <div className="space-y-3">
           <div>
             <div className="flex items-start justify-between gap-2 mb-2">
@@ -153,10 +152,7 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
           className="w-full"
           variant={auction.status === 'ended' ? 'secondary' : 'default'}
           disabled={auction.status === 'ended' || auction.status === 'upcoming' || !isAuthenticated}
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/auction/${auction.id}`);
-          }}
+          onClick={() => navigate(`/auction/${auction.id}`)}
         >
           {auction.status === 'ended' ? (
             <>
