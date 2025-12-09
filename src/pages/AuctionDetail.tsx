@@ -47,19 +47,19 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
       setIsLoading(true);
       try {
         const userId = localStorage.getItem('userId');
-        if (!userId) {
-          navigate('/login');
-          return;
-        }
+        console.log('Loading auction:', id, 'userId:', userId);
 
         const response = await fetch(`https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?id=${id}`, {
-          headers: {
+          headers: userId ? {
             'X-User-Id': userId,
-          },
+          } : {},
         });
+
+        console.log('Response status:', response.status);
 
         if (response.ok) {
           const data = await response.json();
+          console.log('Auction data:', data);
           if (data) {
             setAuction({
               ...data,
@@ -75,12 +75,30 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
               })));
             }
           } else {
+            console.error('No auction data received');
+            toast({
+              title: 'Ошибка',
+              description: 'Аукцион не найден',
+              variant: 'destructive'
+            });
             navigate('/auction');
           }
         } else {
+          console.error('Response not ok:', response.status);
+          toast({
+            title: 'Ошибка',
+            description: 'Не удалось загрузить аукцион',
+            variant: 'destructive'
+          });
           navigate('/auction');
         }
       } catch (error) {
+        console.error('Fetch error:', error);
+        toast({
+          title: 'Ошибка соединения',
+          description: 'Проверьте подключение к интернету',
+          variant: 'destructive'
+        });
         navigate('/auction');
       } finally {
         setIsLoading(false);
@@ -88,7 +106,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
     };
 
     loadAuction();
-  }, [id, navigate]);
+  }, [id, navigate, toast]);
 
   useEffect(() => {
     if (searchParams.get('scrollTo') === 'bids' && bidsRef.current) {
