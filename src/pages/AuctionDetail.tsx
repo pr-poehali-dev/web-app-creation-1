@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
@@ -7,13 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-import type { Auction } from '@/types/auction';
+import type { Auction, AuctionBid } from '@/types/auction';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
+import BidHistoryTabs from '@/components/auction/BidHistoryTabs';
 
 interface AuctionDetailProps {
   isAuthenticated: boolean;
@@ -31,6 +34,11 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
   const [auction, setAuction] = useState<Auction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [bids, setBids] = useState<AuctionBid[]>([]);
+  const [bidAmount, setBidAmount] = useState('');
+  const [isPlacingBid, setIsPlacingBid] = useState(false);
+  const [searchParams] = useSearchParams();
+  const bidsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadAuction = async () => {
@@ -57,6 +65,13 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
               endDate: new Date(data.endDate),
               createdAt: new Date(data.createdAt),
             });
+            
+            if (data.bids && Array.isArray(data.bids)) {
+              setBids(data.bids.map((bid: any) => ({
+                ...bid,
+                timestamp: new Date(bid.timestamp)
+              })));
+            }
           } else {
             navigate('/auction');
           }
@@ -72,6 +87,14 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
 
     loadAuction();
   }, [id, navigate]);
+
+  useEffect(() => {
+    if (searchParams.get('scrollTo') === 'bids' && bidsRef.current) {
+      setTimeout(() => {
+        bidsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [searchParams, isLoading]);
 
   const getStatusBadge = (status: Auction['status']) => {
     switch (status) {
@@ -103,6 +126,52 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
     if (days > 0) return `${days} дн. ${hours} ч.`;
     if (hours > 0) return `${hours} ч. ${minutes} мин.`;
     return `${minutes} мин.`;
+  };
+
+  const handlePlaceBid = async () => {
+    if (!bidAmount || !auction || !currentUser) return;
+
+    const amount = parseFloat(bidAmount);
+    const minNextBid = (auction.currentBid || auction.startingPrice || 0) + (auction.minBidStep || 0);
+
+    if (amount < minNextBid) {
+      toast({
+        title: 'Недостаточная ставка',
+        description: `Минимальная ставка: ${minNextBid.toLocaleString()} ₽`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsPlacingBid(true);
+    try {
+      const newBid: AuctionBid = {
+        id: crypto.randomUUID(),
+        userId: currentUser.userId,
+        userName: currentUser.name || 'Участник',
+        amount,
+        timestamp: new Date(),
+        isWinning: true,
+      };
+
+      const updatedBids = [...bids, newBid];
+      setBids(updatedBids);
+      setAuction(prev => prev ? { ...prev, currentBid: amount, bidCount: (prev.bidCount || 0) + 1 } : null);
+      setBidAmount('');
+
+      toast({
+        title: 'Ставка размещена',
+        description: `Ваша ставка ${amount.toLocaleString()} ₽ принята`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось разместить ставку',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsPlacingBid(false);
+    }
   };
 
   if (isLoading) {
@@ -260,6 +329,56 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
             </p>
           </CardContent>
         </Card>
+
+        <div className="mt-6 space-y-6" ref={bidsRef}>
+          {auction.status === 'active' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Сделать ставку</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {currentUser ? (
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bidAmount">Сумма ставки (₽)</Label>
+                      <Input
+                        id="bidAmount"
+                        type="number"
+                        placeholder={`Минимум ${((auction.currentBid || auction.startingPrice || 0) + (auction.minBidStep || 0)).toLocaleString()} ₽`}
+                        value={bidAmount}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                        min={(auction.currentBid || auction.startingPrice || 0) + (auction.minBidStep || 0)}
+                      />
+                    </div>
+                    <Button 
+                      onClick={handlePlaceBid} 
+                      disabled={isPlacingBid || !bidAmount}
+                      className="w-full"
+                    >
+                      <Icon name="Gavel" className="h-4 w-4 mr-2" />
+                      {isPlacingBid ? 'Размещение...' : 'Разместить ставку'}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Icon name="Lock" className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                    <p className="text-muted-foreground mb-4">Войдите, чтобы сделать ставку</p>
+                    <Button onClick={() => navigate('/login')}>
+                      Войти
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          <BidHistoryTabs 
+            bids={bids}
+            categoryName={category?.name || 'Аукцион'}
+            auctionNumber={parseInt(auction.id.slice(-4), 16) % 1000}
+            currentUserId={currentUser?.userId}
+          />
+        </div>
       </main>
 
       <Footer />
