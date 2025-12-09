@@ -103,8 +103,10 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const loadAuctions = async () => {
     setIsLoading(true);
     try {
-      const loadedAuctions = await auctionsAPI.getAllAuctions('active');
-      const publishedAuctions = loadedAuctions.filter(auction => auction.status !== 'draft');
+      const loadedAuctions = await auctionsAPI.getAllAuctions();
+      const publishedAuctions = loadedAuctions.filter(auction => 
+        auction.status !== 'draft' && auction.status !== 'pending'
+      );
       setAuctions(publishedAuctions);
     } catch (error) {
       console.error('Error loading auctions:', error);
