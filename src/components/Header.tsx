@@ -49,6 +49,12 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
     const handleTouchMove = (e: TouchEvent) => {
       touchEndY.current = e.touches[0].clientY;
+      const swipeDistance = touchStartY.current - touchEndY.current;
+      
+      // Предотвращаем прокрутку страницы только при свайпе вверх
+      if (swipeDistance > 0) {
+        e.preventDefault();
+      }
     };
 
     const handleTouchEnd = () => {
@@ -65,9 +71,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
     const menuElement = mobileMenuRef.current;
     if (mobileMenuOpen && menuElement) {
-      menuElement.addEventListener('touchstart', handleTouchStart);
-      menuElement.addEventListener('touchmove', handleTouchMove);
-      menuElement.addEventListener('touchend', handleTouchEnd);
+      menuElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+      menuElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+      menuElement.addEventListener('touchend', handleTouchEnd, { passive: true });
       
       return () => {
         menuElement.removeEventListener('touchstart', handleTouchStart);
