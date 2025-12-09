@@ -104,7 +104,8 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     setIsLoading(true);
     try {
       const loadedAuctions = await auctionsAPI.getAllAuctions('active');
-      setAuctions(loadedAuctions);
+      const publishedAuctions = loadedAuctions.filter(auction => auction.status !== 'draft');
+      setAuctions(publishedAuctions);
     } catch (error) {
       console.error('Error loading auctions:', error);
       setAuctions([]);
@@ -246,12 +247,21 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <BackButton />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+          <div className="flex items-center justify-between gap-2">
+            <BackButton />
+            <div className="md:hidden">
+              <AuctionStatusFilters
+                statusFilter={statusFilter}
+                onFilterChange={setStatusFilter}
+                auctionCounts={auctionCounts}
+              />
+            </div>
+          </div>
           {isAuthenticated && (
-            <Button onClick={() => navigate('/create-auction')} className="flex items-center gap-2 whitespace-nowrap">
+            <Button onClick={handleCreateAuctionClick} className="flex items-center gap-2 whitespace-nowrap w-full md:w-auto">
               <Icon name="Plus" className="h-4 w-4" />
-              <span className="hidden sm:inline">Создать</span>
+              <span>Создать аукцион</span>
             </Button>
           )}
         </div>
@@ -264,11 +274,13 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
           onSearch={handleSearch}
         />
 
-        <AuctionStatusFilters
-          statusFilter={statusFilter}
-          onFilterChange={setStatusFilter}
-          auctionCounts={auctionCounts}
-        />
+        <div className="hidden md:block">
+          <AuctionStatusFilters
+            statusFilter={statusFilter}
+            onFilterChange={setStatusFilter}
+            auctionCounts={auctionCounts}
+          />
+        </div>
 
         {isAuthenticated && (
           <div className="mb-4 flex items-center gap-2">
