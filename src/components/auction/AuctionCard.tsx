@@ -75,7 +75,7 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs md:text-sm">
               <span className="text-muted-foreground">Текущая:</span>
-              <span className="font-bold text-base md:text-lg text-primary">
+              <span className="font-bold text-base md:text-lg text-primary transition-all duration-300">
                 {auction.currentBid.toLocaleString('ru-RU')} ₽
               </span>
             </div>

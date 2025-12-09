@@ -100,25 +100,32 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
 
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'ending-soon' | 'upcoming' | 'ended'>('all');
 
-  const loadAuctions = async () => {
-    setIsLoading(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadAuctions = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    if (silent) setIsRefreshing(true);
+    
     try {
       const loadedAuctions = await auctionsAPI.getAllAuctions();
       setAuctions(loadedAuctions);
     } catch (error) {
       console.error('Error loading auctions:', error);
-      setAuctions([]);
+      if (!silent) setAuctions([]);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
+      if (silent) {
+        setTimeout(() => setIsRefreshing(false), 500);
+      }
     }
   };
 
   useEffect(() => {
-    loadAuctions();
+    loadAuctions(false);
     
     const refreshInterval = setInterval(() => {
-      loadAuctions();
-    }, 10000);
+      loadAuctions(true);
+    }, 3000);
 
     return () => clearInterval(refreshInterval);
   }, []);
@@ -330,12 +337,16 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
                   </span>
                 )}
               </p>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className={`h-1.5 w-1.5 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
+                <span className="hidden sm:inline">Обновление каждые 3 сек</span>
+              </div>
             </div>
 
             <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
               {currentAuctions.map((auction, index) => (
                 <div
-                  key={auction.id}
+                  key={`${auction.id}-${auction.currentBid}-${auction.bidCount}`}
                   ref={index === 0 ? firstAuctionRef : null}
                 >
                   <AuctionCard 

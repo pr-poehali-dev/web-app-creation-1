@@ -140,7 +140,7 @@ export function useAuctionData(id: string | undefined) {
       }
     };
 
-    const interval = setInterval(refreshBids, 5000);
+    const interval = setInterval(refreshBids, 3000);
 
     return () => clearInterval(interval);
   }, [auction?.status, id, bids.length, toast]);

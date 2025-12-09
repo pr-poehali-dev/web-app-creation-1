@@ -102,7 +102,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
             {auction.status === 'active' && (
               <div className="absolute -top-7 right-0 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <div className={`h-1.5 w-1.5 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
-                <span className="hidden sm:inline">Обновление каждые 5 сек</span>
+                <span className="hidden sm:inline">Обновление каждые 3 сек</span>
               </div>
             )}
             <BidHistoryTabs 
