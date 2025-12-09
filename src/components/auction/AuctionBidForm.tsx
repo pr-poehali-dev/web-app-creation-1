@@ -18,14 +18,27 @@ interface AuctionBidFormProps {
 export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced }: AuctionBidFormProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [bidAmount, setBidAmount] = useState('');
+  const minNextBid = (auction.currentBid || auction.startingPrice || 0) + (auction.minBidStep || 0);
+  const [bidAmount, setBidAmount] = useState(minNextBid.toString());
   const [isPlacingBid, setIsPlacingBid] = useState(false);
+
+  const handleIncrease = () => {
+    const current = parseFloat(bidAmount) || minNextBid;
+    setBidAmount((current + (auction.minBidStep || 1000)).toString());
+  };
+
+  const handleDecrease = () => {
+    const current = parseFloat(bidAmount) || minNextBid;
+    const newAmount = current - (auction.minBidStep || 1000);
+    if (newAmount >= minNextBid) {
+      setBidAmount(newAmount.toString());
+    }
+  };
 
   const handlePlaceBid = async () => {
     if (!bidAmount || !auction || !currentUser) return;
 
     const amount = parseFloat(bidAmount);
-    const minNextBid = (auction.currentBid || auction.startingPrice || 0) + (auction.minBidStep || 0);
 
     if (amount < minNextBid) {
       toast({
@@ -99,28 +112,49 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
       <CardHeader className="py-2 md:py-3">
         <CardTitle className="text-sm md:text-base">Сделать ставку</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 md:space-y-3 py-2 md:py-3">
+      <CardContent className="py-2 md:py-3">
         {currentUser ? (
-          <div className="grid gap-2">
-            <div className="space-y-1">
-              <Label htmlFor="bidAmount">Сумма ставки (₽)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="bidAmount" className="text-xs md:text-sm">Сумма ставки (₽)</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleDecrease}
+                disabled={isPlacingBid || parseFloat(bidAmount) <= minNextBid}
+                className="h-10 w-10 shrink-0 bg-red-500 hover:bg-red-600 text-white border-red-600 disabled:bg-red-300 disabled:border-red-300"
+              >
+                <Icon name="ChevronDown" className="h-5 w-5" />
+              </Button>
               <Input
                 id="bidAmount"
                 type="number"
-                placeholder={`Минимум ${((auction.currentBid || auction.startingPrice || 0) + (auction.minBidStep || 0)).toLocaleString()} ₽`}
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
-                min={(auction.currentBid || auction.startingPrice || 0) + (auction.minBidStep || 0)}
+                min={minNextBid}
+                className="text-center font-bold text-base md:text-lg h-10"
               />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={handleIncrease}
+                disabled={isPlacingBid}
+                className="h-10 w-10 shrink-0 bg-green-500 hover:bg-green-600 text-white border-green-600 disabled:bg-green-300 disabled:border-green-300"
+              >
+                <Icon name="ChevronUp" className="h-5 w-5" />
+              </Button>
+              <Button 
+                onClick={handlePlaceBid} 
+                disabled={isPlacingBid || !bidAmount}
+                className="h-10 shrink-0"
+              >
+                <Icon name="Gavel" className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">{isPlacingBid ? 'Размещение...' : 'Разместить'}</span>
+                <span className="sm:hidden">✓</span>
+              </Button>
             </div>
-            <Button 
-              onClick={handlePlaceBid} 
-              disabled={isPlacingBid || !bidAmount}
-              className="w-full"
-            >
-              <Icon name="Gavel" className="h-4 w-4 mr-2" />
-              {isPlacingBid ? 'Размещение...' : 'Разместить ставку'}
-            </Button>
           </div>
         ) : (
           <div className="text-center py-3">
