@@ -94,6 +94,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         duration_days = int(body_data['duration'])
         end_datetime = start_datetime + timedelta(days=duration_days)
         
+        # Определяем начальный статус аукциона
+        now = datetime.now()
+        if start_datetime <= now:
+            # Если дата начала уже прошла, сразу активируем
+            initial_status = 'active'
+        else:
+            # Если аукцион в будущем, ставим upcoming
+            initial_status = 'upcoming'
+        
         # Если availableDistricts пуст, добавляем хотя бы район местонахождения
         available_districts = body_data.get('availableDistricts', [])
         if not available_districts and body_data['district']:
@@ -132,7 +141,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             start_datetime,
             end_datetime,
             duration_days,
-            'pending'
+            initial_status
         ))
         
         auction_id = cur.fetchone()[0]

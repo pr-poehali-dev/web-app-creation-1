@@ -38,11 +38,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Обновляем статусы аукционов
         now = datetime.now()
         
-        # Активируем аукционы, которые должны начаться
+        # Активируем предстоящие аукционы, время которых наступило
         cur.execute("""
             UPDATE t_p42562714_web_app_creation_1.auctions 
             SET status = 'active' 
-            WHERE status = 'pending' AND start_date <= %s
+            WHERE status = 'upcoming' AND start_date <= %s
         """, (now,))
         
         # Завершаем аукционы, время которых истекло
@@ -66,7 +66,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Получаем параметры запроса
         params = event.get('queryStringParameters') or {}
         auction_id = params.get('id')
-        status_filter = params.get('status', 'active')
+        status_filter = params.get('status')
         
         # Получаем список аукционов
         query = """
@@ -92,9 +92,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             query += " GROUP BY a.id"
             cur.execute(query, (auction_id,))
         else:
-            query += " WHERE a.status = %s"
-            query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
-            cur.execute(query, (status_filter,))
+            if status_filter:
+                query += " WHERE a.status = %s"
+                query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
+                cur.execute(query, (status_filter,))
+            else:
+                query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
+                cur.execute(query)
         rows = cur.fetchall()
         
         auctions = []
