@@ -11,13 +11,16 @@ interface AuctionStatusFiltersProps {
     endingSoon: number;
     upcoming: number;
     ended: number;
+    pending?: number;
   };
+  isAdmin?: boolean;
 }
 
 export default function AuctionStatusFilters({ 
   statusFilter, 
   onFilterChange, 
-  auctionCounts 
+  auctionCounts,
+  isAdmin = false
 }: AuctionStatusFiltersProps) {
   return (
     <div className="mb-6">
@@ -77,6 +80,19 @@ export default function AuctionStatusFilters({
           <span className="md:hidden">Заверш.</span>
           <span className="hidden sm:inline">({auctionCounts.ended})</span>
         </Button>
+        {isAdmin && auctionCounts.pending !== undefined && (
+          <Button
+            variant={statusFilter === 'pending' ? 'default' : 'outline'}
+            onClick={() => onFilterChange('pending')}
+            className="gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-10 px-2 md:px-4"
+            size="sm"
+          >
+            <Icon name="Clock" className="h-3 w-3 md:h-4 md:w-4" />
+            <span className="hidden md:inline">Ожидают</span>
+            <span className="md:hidden">Ожид.</span>
+            <span className="hidden sm:inline">({auctionCounts.pending})</span>
+          </Button>
+        )}
       </div>
     </div>
   );

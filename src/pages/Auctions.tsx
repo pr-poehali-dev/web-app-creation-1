@@ -98,15 +98,18 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     district: 'all',
   });
 
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'ending-soon' | 'upcoming' | 'ended'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'ending-soon' | 'upcoming' | 'ended' | 'pending'>('all');
 
   const loadAuctions = async () => {
     setIsLoading(true);
     try {
       const loadedAuctions = await auctionsAPI.getAllAuctions();
-      const publishedAuctions = loadedAuctions.filter(auction => 
-        auction.status !== 'draft' && auction.status !== 'pending'
-      );
+      const isAdmin = currentUser?.role === 'admin';
+      const publishedAuctions = loadedAuctions.filter(auction => {
+        if (auction.status === 'draft') return false;
+        if (auction.status === 'pending' && !isAdmin) return false;
+        return true;
+      });
       setAuctions(publishedAuctions);
     } catch (error) {
       console.error('Error loading auctions:', error);
@@ -234,12 +237,15 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     }, 100);
   };
 
+  const isAdmin = currentUser?.role === 'admin';
+  
   const auctionCounts = {
-    all: filteredAuctions.length,
-    active: filteredAuctions.filter(a => a.status === 'active').length,
-    endingSoon: filteredAuctions.filter(a => a.status === 'ending-soon').length,
-    upcoming: filteredAuctions.filter(a => a.status === 'upcoming').length,
-    ended: filteredAuctions.filter(a => a.status === 'ended').length,
+    all: auctions.length,
+    active: auctions.filter(a => a.status === 'active').length,
+    endingSoon: auctions.filter(a => a.status === 'ending-soon').length,
+    upcoming: auctions.filter(a => a.status === 'upcoming').length,
+    ended: auctions.filter(a => a.status === 'ended').length,
+    pending: isAdmin ? auctions.filter(a => a.status === 'pending').length : undefined,
   };
 
   const premiumCount = currentAuctions.filter((auction) => auction.isPremium && auction.status !== 'ended').length;
@@ -257,6 +263,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
                 statusFilter={statusFilter}
                 onFilterChange={setStatusFilter}
                 auctionCounts={auctionCounts}
+                isAdmin={isAdmin}
               />
             </div>
           </div>
@@ -281,6 +288,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
             statusFilter={statusFilter}
             onFilterChange={setStatusFilter}
             auctionCounts={auctionCounts}
+            isAdmin={isAdmin}
           />
         </div>
 
