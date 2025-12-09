@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "name": "Place bid successfully",
+      "method": "POST",
+      "path": "/",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "body": {
+        "auctionId": 1,
+        "amount": 165000
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "bid": {
+          "auctionId": "number"
+        }
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Reject bid without auth",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "auctionId": 1,
+        "amount": 165000
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

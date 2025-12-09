@@ -38,24 +38,48 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
 
     setIsPlacingBid(true);
     try {
-      const newBid: AuctionBid = {
-        id: crypto.randomUUID(),
-        userId: currentUser.userId,
-        userName: currentUser.name || 'Участник',
-        amount,
-        timestamp: new Date(),
-        isWinning: true,
-      };
-
-      const updatedBids = [...bids, newBid];
-      onBidPlaced(updatedBids, amount);
-      setBidAmount('');
-
-      toast({
-        title: 'Ставка размещена',
-        description: `Ваша ставка ${amount.toLocaleString()} ₽ принята`,
+      const userId = localStorage.getItem('userId');
+      const response = await fetch('https://functions.poehali.dev/4f5819a8-90ce-4cf8-8bee-cbb08e81da8b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId || '',
+        },
+        body: JSON.stringify({
+          auctionId: auction.id,
+          amount: amount,
+        }),
       });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        const newBid: AuctionBid = {
+          id: data.bid.id,
+          userId: data.bid.userId,
+          userName: data.bid.userName,
+          amount: data.bid.amount,
+          timestamp: new Date(data.bid.timestamp),
+          isWinning: data.bid.isWinning,
+        };
+
+        const updatedBids = [...bids, newBid];
+        onBidPlaced(updatedBids, amount);
+        setBidAmount('');
+
+        toast({
+          title: 'Ставка размещена',
+          description: `Ваша ставка ${amount.toLocaleString()} ₽ принята`,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: data.error || 'Не удалось разместить ставку',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
+      console.error('Place bid error:', error);
       toast({
         title: 'Ошибка',
         description: 'Не удалось разместить ставку',

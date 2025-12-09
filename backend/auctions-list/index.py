@@ -136,6 +136,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             auctions.append(auction)
         
+        if auction_id and auctions:
+            # Получаем ставки для конкретного аукциона
+            cur.execute("""
+                SELECT b.id, b.user_id, b.amount, b.created_at,
+                       COALESCE(u.company_name, CONCAT(u.first_name, ' ', u.last_name)) as user_name
+                FROM t_p42562714_web_app_creation_1.bids b
+                LEFT JOIN t_p42562714_web_app_creation_1.users u ON b.user_id = u.id
+                WHERE b.auction_id = %s
+                ORDER BY b.created_at DESC
+            """, (auction_id,))
+            
+            bids_rows = cur.fetchall()
+            bids = []
+            for bid_row in bids_rows:
+                bids.append({
+                    'id': bid_row[0],
+                    'userId': bid_row[1],
+                    'amount': float(bid_row[2]),
+                    'timestamp': bid_row[3].isoformat() if bid_row[3] else None,
+                    'userName': bid_row[4] or 'Участник',
+                    'isWinning': bid_row == bids_rows[0]  # Первая ставка (самая последняя по времени) - выигрышная
+                })
+            
+            auctions[0]['bids'] = bids
+        
         cur.close()
         conn.close()
         

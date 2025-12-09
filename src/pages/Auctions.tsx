@@ -115,6 +115,12 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
 
   useEffect(() => {
     loadAuctions();
+    
+    const refreshInterval = setInterval(() => {
+      loadAuctions();
+    }, 10000);
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const filteredAuctions = useMemo(() => {
