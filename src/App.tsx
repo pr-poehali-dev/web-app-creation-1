@@ -56,6 +56,7 @@ import OfferAgreement from "./pages/OfferAgreement";
 import About from "./pages/About";
 import Support from "./pages/Support";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
+import GeolocationLoadingOverlay from "./components/GeolocationLoadingOverlay";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
@@ -89,6 +90,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <LocationDetectionDialog />
+            <GeolocationLoadingOverlay />
             <BrowserRouter>
             <Routes>
             <Route path="/" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
