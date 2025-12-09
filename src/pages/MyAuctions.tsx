@@ -4,6 +4,7 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
@@ -11,7 +12,6 @@ import type { Auction } from '@/types/auction';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { auctionsAPI } from '@/services/api';
 import MyAuctionCard from '@/components/myauctions/MyAuctionCard';
-import MyAuctionsStats from '@/components/myauctions/MyAuctionsStats';
 import MyAuctionsDialogs from '@/components/myauctions/MyAuctionsDialogs';
 import { getTimeRemaining, getStatusBadge, canEdit, canReducePrice, canStop } from '@/components/myauctions/MyAuctionsHelpers';
 
@@ -27,8 +27,9 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
   const { districts } = useDistrict();
   const currentUser = getSession();
   
-  const [auctions, setAuctions] = useState<Auction[]>([]);
-  const [filterStatus, setFilterStatus] = useState<'all' | Auction['status']>('all');
+  const [myAuctions, setMyAuctions] = useState<Auction[]>([]);
+  const [participatingAuctions, setParticipatingAuctions] = useState<Auction[]>([]);
+  const [activeTab, setActiveTab] = useState('participating');
   const [auctionToDelete, setAuctionToDelete] = useState<string | null>(null);
   const [auctionToStop, setAuctionToStop] = useState<string | null>(null);
   const [priceReduceAuction, setPriceReduceAuction] = useState<{ id: string; currentPrice: number } | null>(null);
@@ -39,10 +40,16 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     setIsLoading(true);
     try {
       const loadedAuctions = await auctionsAPI.getMyAuctions();
-      setAuctions(loadedAuctions);
+      setMyAuctions(loadedAuctions);
+      
+      const participating = loadedAuctions.filter(auction => 
+        auction.bids && auction.bids.some(bid => bid.userId === currentUser?.userId)
+      );
+      setParticipatingAuctions(participating);
     } catch (error) {
       console.error('Error loading auctions:', error);
-      setAuctions([]);
+      setMyAuctions([]);
+      setParticipatingAuctions([]);
     } finally {
       setIsLoading(false);
     }
@@ -57,14 +64,16 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     loadMyAuctions();
   }, []);
 
-  const filteredAuctions = filterStatus === 'all' 
-    ? auctions 
-    : auctions.filter(auction => auction.status === filterStatus);
+  const activeAuctions = myAuctions.filter(a => 
+    a.status === 'active' || a.status === 'upcoming' || a.status === 'pending'
+  );
+  const completedAuctions = myAuctions.filter(a => a.status === 'ended');
+  const archivedAuctions = myAuctions.filter(a => a.status === 'ended');
 
   const handleDeleteAuction = async (auctionId: string) => {
     try {
       await auctionsAPI.deleteAuction(auctionId);
-      setAuctions(auctions.filter(auction => auction.id !== auctionId));
+      setMyAuctions(myAuctions.filter(auction => auction.id !== auctionId));
       setAuctionToDelete(null);
       toast({
         title: 'Успешно',
@@ -141,18 +150,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     }
   };
 
-  const getAuctionStats = () => {
-    return {
-      total: auctions.length,
-      pending: auctions.filter(a => a.status === 'pending').length,
-      active: auctions.filter(a => a.status === 'active').length,
-      endingSoon: auctions.filter(a => a.status === 'ending-soon').length,
-      upcoming: auctions.filter(a => a.status === 'upcoming').length,
-      ended: auctions.filter(a => a.status === 'ended').length,
-    };
-  };
 
-  const stats = getAuctionStats();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -178,59 +176,167 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
           </div>
         </div>
 
-        <MyAuctionsStats stats={stats} onFilterChange={setFilterStatus} />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger value="participating">
+              <Icon name="Gavel" className="h-4 w-4 mr-2" />
+              Участие в аукционах
+            </TabsTrigger>
+            <TabsTrigger value="active">
+              <Icon name="Play" className="h-4 w-4 mr-2" />
+              Активные
+            </TabsTrigger>
+            <TabsTrigger value="completed">
+              <Icon name="CheckCircle" className="h-4 w-4 mr-2" />
+              Завершенные
+            </TabsTrigger>
+            <TabsTrigger value="archived">
+              <Icon name="Archive" className="h-4 w-4 mr-2" />
+              Архив
+            </TabsTrigger>
+          </TabsList>
 
-        {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-96 bg-muted animate-pulse rounded-lg"
-              />
-            ))}
-          </div>
-        ) : filteredAuctions.length === 0 ? (
-          <div className="text-center py-20">
-            <Icon name="Gavel" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
-            <h3 className="text-xl font-semibold mb-2">
-              {filterStatus === 'all' ? 'У вас пока нет аукционов' : 'Нет аукционов с выбранным статусом'}
-            </h3>
-            <p className="text-muted-foreground mb-8">
-              Создайте аукцион, чтобы продать товар по лучшей цене
-            </p>
-            <Button onClick={() => navigate('/create-auction')}>
-              <Icon name="Plus" className="mr-2 h-4 w-4" />
-              Создать аукцион
-            </Button>
-          </div>
-        ) : (
-          <>
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Показано: <span className="font-semibold text-foreground">{filteredAuctions.length}</span>{' '}
-                {filterStatus !== 'all' && `из ${stats.total}`}
-              </p>
-            </div>
+          <TabsContent value="participating">
+            {isLoading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-96 bg-muted animate-pulse rounded-lg" />
+                ))}
+              </div>
+            ) : participatingAuctions.length === 0 ? (
+              <div className="text-center py-20">
+                <Icon name="Gavel" className="h-20 w-20 text-muted-foreground mx-auto mb-6 opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">Вы не участвуете в аукционах</h3>
+                <p className="text-muted-foreground">Сделайте ставку на любой активный аукцион</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {participatingAuctions.map((auction) => (
+                  <div key={auction.id} onClick={() => navigate(`/auction/${auction.id}`)} className="cursor-pointer">
+                    <MyAuctionCard
+                      auction={auction}
+                      districtName={districts.find(d => d.id === auction.district)?.name}
+                      canEdit={false}
+                      canReducePrice={false}
+                      canStop={false}
+                      onDelete={() => {}}
+                      onStop={() => {}}
+                      onReducePrice={() => {}}
+                      getStatusBadge={getStatusBadge}
+                      getTimeRemaining={getTimeRemaining}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredAuctions.map((auction) => (
-                <MyAuctionCard
-                  key={auction.id}
-                  auction={auction}
-                  districtName={districts.find(d => d.id === auction.district)?.name}
-                  canEdit={canEdit(auction)}
-                  canReducePrice={canReducePrice(auction)}
-                  canStop={canStop(auction)}
-                  onDelete={setAuctionToDelete}
-                  onStop={setAuctionToStop}
-                  onReducePrice={(id, price) => setPriceReduceAuction({ id, currentPrice: price })}
-                  getStatusBadge={getStatusBadge}
-                  getTimeRemaining={getTimeRemaining}
-                />
-              ))}
-            </div>
-          </>
-        )}
+          <TabsContent value="active">
+            {isLoading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-96 bg-muted animate-pulse rounded-lg" />
+                ))}
+              </div>
+            ) : activeAuctions.length === 0 ? (
+              <div className="text-center py-20">
+                <Icon name="Play" className="h-20 w-20 text-muted-foreground mx-auto mb-6 opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">Нет активных аукционов</h3>
+                <p className="text-muted-foreground mb-8">Создайте аукцион, чтобы продать товар</p>
+                <Button onClick={() => navigate('/create-auction')}>
+                  <Icon name="Plus" className="mr-2 h-4 w-4" />
+                  Создать аукцион
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {activeAuctions.map((auction) => (
+                  <MyAuctionCard
+                    key={auction.id}
+                    auction={auction}
+                    districtName={districts.find(d => d.id === auction.district)?.name}
+                    canEdit={canEdit(auction)}
+                    canReducePrice={canReducePrice(auction)}
+                    canStop={canStop(auction)}
+                    onDelete={setAuctionToDelete}
+                    onStop={setAuctionToStop}
+                    onReducePrice={(id, price) => setPriceReduceAuction({ id, currentPrice: price })}
+                    getStatusBadge={getStatusBadge}
+                    getTimeRemaining={getTimeRemaining}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="completed">
+            {isLoading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-96 bg-muted animate-pulse rounded-lg" />
+                ))}
+              </div>
+            ) : completedAuctions.length === 0 ? (
+              <div className="text-center py-20">
+                <Icon name="CheckCircle" className="h-20 w-20 text-muted-foreground mx-auto mb-6 opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">Нет завершенных аукционов</h3>
+                <p className="text-muted-foreground">Здесь будут отображаться завершенные аукционы</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {completedAuctions.map((auction) => (
+                  <MyAuctionCard
+                    key={auction.id}
+                    auction={auction}
+                    districtName={districts.find(d => d.id === auction.district)?.name}
+                    canEdit={canEdit(auction)}
+                    canReducePrice={false}
+                    canStop={false}
+                    onDelete={setAuctionToDelete}
+                    onStop={() => {}}
+                    onReducePrice={() => {}}
+                    getStatusBadge={getStatusBadge}
+                    getTimeRemaining={getTimeRemaining}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="archived">
+            {isLoading ? (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="h-96 bg-muted animate-pulse rounded-lg" />
+                ))}
+              </div>
+            ) : archivedAuctions.length === 0 ? (
+              <div className="text-center py-20">
+                <Icon name="Archive" className="h-20 w-20 text-muted-foreground mx-auto mb-6 opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">Архив пуст</h3>
+                <p className="text-muted-foreground">Здесь будут отображаться архивные аукционы</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {archivedAuctions.map((auction) => (
+                  <MyAuctionCard
+                    key={auction.id}
+                    auction={auction}
+                    districtName={districts.find(d => d.id === auction.district)?.name}
+                    canEdit={false}
+                    canReducePrice={false}
+                    canStop={false}
+                    onDelete={setAuctionToDelete}
+                    onStop={() => {}}
+                    onReducePrice={() => {}}
+                    getStatusBadge={getStatusBadge}
+                    getTimeRemaining={getTimeRemaining}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
 
       <MyAuctionsDialogs

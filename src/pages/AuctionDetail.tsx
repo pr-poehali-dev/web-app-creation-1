@@ -387,6 +387,22 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
                 <span>Завершение: {auction.endDate.toLocaleString('ru-RU')}</span>
               </div>
             </div>
+
+            {auction.status === 'active' && (
+              <>
+                <Separator />
+                <Button 
+                  size="lg" 
+                  className="w-full"
+                  onClick={() => {
+                    bidsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  <Icon name="Gavel" className="h-5 w-5 mr-2" />
+                  Сделать ставку
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
