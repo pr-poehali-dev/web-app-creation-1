@@ -76,39 +76,24 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
   };
 
   useEffect(() => {
-    let isSwiping = false;
-    
     const handleTouchStart = (e: TouchEvent) => {
-      const target = e.target as HTMLElement;
-      const isScrollableArea = target.closest('[data-radix-scroll-area-viewport]') || 
-                               target.closest('.overflow-auto') ||
-                               target.closest('[role="listbox"]');
-      
-      if (!isScrollableArea) {
-        touchStartY.current = e.touches[0].clientY;
-        touchEndY.current = e.touches[0].clientY;
-        isSwiping = true;
-      } else {
-        isSwiping = false;
-      }
+      touchStartY.current = e.touches[0].clientY;
+      touchEndY.current = e.touches[0].clientY;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (isSwiping) {
-        touchEndY.current = e.touches[0].clientY;
-      }
+      touchEndY.current = e.touches[0].clientY;
     };
 
-    const handleTouchEnd = () => {
-      if (isSwiping) {
-        const swipeDistance = Math.abs(touchEndY.current - touchStartY.current);
-        
-        if (swipeDistance > 30) {
-          setOpen(false);
-        }
+    const handleTouchEnd = (e: TouchEvent) => {
+      const swipeDistance = Math.abs(touchEndY.current - touchStartY.current);
+      
+      if (swipeDistance > 30) {
+        e.preventDefault();
+        e.stopPropagation();
+        setOpen(false);
       }
       
-      isSwiping = false;
       touchStartY.current = 0;
       touchEndY.current = 0;
     };
@@ -117,7 +102,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
     if (open && popoverElement) {
       popoverElement.addEventListener('touchstart', handleTouchStart, { passive: true });
       popoverElement.addEventListener('touchmove', handleTouchMove, { passive: true });
-      popoverElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+      popoverElement.addEventListener('touchend', handleTouchEnd, { passive: false });
       
       return () => {
         popoverElement.removeEventListener('touchstart', handleTouchStart);
@@ -237,32 +222,41 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                 Все улусы
               </Button>
             </div>
-            <div className="flex items-center justify-between">
-              {selectedCount > 0 && (
-                <span className="text-sm text-muted-foreground">
-                  Выбрано: {selectedCount}
-                </span>
-              )}
-              <div className={`flex gap-2 ${selectedCount === 0 ? 'ml-auto' : ''}`}>
-                {selectedCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleSelectAll}
-                    className="h-7 text-xs"
-                  >
-                    Сбросить
-                  </Button>
-                )}
+            <div className="flex items-center justify-between gap-2">
+              {selectedCount > 0 ? (
+                <>
+                  <span className="text-sm text-muted-foreground">
+                    Выбрано: {selectedCount}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="h-7 text-xs"
+                    >
+                      Сбросить
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setOpen(false)}
+                      className="h-7 text-xs"
+                    >
+                      Закрыть
+                    </Button>
+                  </div>
+                </>
+              ) : (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setOpen(false)}
-                  className="h-7 text-xs"
+                  className="h-7 text-xs ml-auto"
                 >
                   Закрыть
                 </Button>
-              </div>
+              )}
             </div>
           </div>
         </PopoverContent>
