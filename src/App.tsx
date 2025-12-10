@@ -49,6 +49,8 @@ import TradingPlatform from "./pages/TradingPlatform";
 import CreateContract from "./pages/CreateContract";
 import OrderPage from "./pages/OrderPage";
 import OrderDetail from "./pages/OrderDetail";
+import OrderDetailPage from "./pages/OrderDetailPage";
+import ResponseDetailPage from "./pages/ResponseDetailPage";
 import MyReviews from "./pages/MyReviews";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -123,7 +125,9 @@ const App = () => {
             <Route path="/set-admin-password" element={<SetAdminPassword />} />
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-contract" element={<CreateContract isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/order/:id" element={<OrderDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/order/:offerId" element={<OrderPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/order-detail/:id" element={<OrderDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/response-detail/:id" element={<ResponseDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
@@ -131,7 +135,7 @@ const App = () => {
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-auction" element={<CreateAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/edit-auction/:id" element={<EditAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+
             <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/register" element={<Register onRegister={handleLogin} />} />

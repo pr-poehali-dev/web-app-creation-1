@@ -132,7 +132,7 @@ const OrderCard = ({ order, districts, onNavigate, onReview }: OrderCardProps) =
             variant="outline" 
             size="sm" 
             className="flex-1"
-            onClick={() => onNavigate(`/order/${order.id}`)}
+            onClick={() => onNavigate(`/order-detail/${order.id}`)}
           >
             <Icon name="Eye" className="mr-2 h-4 w-4" />
             Детали
