@@ -76,22 +76,39 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
   };
 
   useEffect(() => {
+    let isSwiping = false;
+    
     const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-      touchEndY.current = e.touches[0].clientY;
+      const target = e.target as HTMLElement;
+      const isScrollableArea = target.closest('[data-radix-scroll-area-viewport]') || 
+                               target.closest('.overflow-auto') ||
+                               target.closest('[role="listbox"]');
+      
+      if (!isScrollableArea) {
+        touchStartY.current = e.touches[0].clientY;
+        touchEndY.current = e.touches[0].clientY;
+        isSwiping = true;
+      } else {
+        isSwiping = false;
+      }
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      touchEndY.current = e.touches[0].clientY;
+      if (isSwiping) {
+        touchEndY.current = e.touches[0].clientY;
+      }
     };
 
     const handleTouchEnd = () => {
-      const swipeDistance = Math.abs(touchEndY.current - touchStartY.current);
-      
-      if (swipeDistance > 50) {
-        setOpen(false);
+      if (isSwiping) {
+        const swipeDistance = Math.abs(touchEndY.current - touchStartY.current);
+        
+        if (swipeDistance > 30) {
+          setOpen(false);
+        }
       }
       
+      isSwiping = false;
       touchStartY.current = 0;
       touchEndY.current = 0;
     };
