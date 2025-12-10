@@ -83,15 +83,10 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
 
     const handleTouchMove = (e: TouchEvent) => {
       touchEndY.current = e.touches[0].clientY;
-      const swipeDistance = touchEndY.current - touchStartY.current;
-      
-      if (swipeDistance > 5) {
-        e.preventDefault();
-      }
     };
 
     const handleTouchEnd = () => {
-      const swipeDistance = touchEndY.current - touchStartY.current;
+      const swipeDistance = Math.abs(touchEndY.current - touchStartY.current);
       
       if (swipeDistance > 50) {
         setOpen(false);
@@ -104,7 +99,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
     const popoverElement = popoverRef.current;
     if (open && popoverElement) {
       popoverElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-      popoverElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+      popoverElement.addEventListener('touchmove', handleTouchMove, { passive: true });
       popoverElement.addEventListener('touchend', handleTouchEnd, { passive: true });
       
       return () => {
