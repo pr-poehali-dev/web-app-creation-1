@@ -29,7 +29,8 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
     { value: 'м²', label: 'м²' },
     { value: 'м³', label: 'м³' },
     { value: 'л', label: 'л' },
-    { value: 'упак', label: 'упак' }
+    { value: 'упак', label: 'упак' },
+    { value: 'кВт·ч', label: 'кВт·ч' }
   ];
 
   const vatOptions = [

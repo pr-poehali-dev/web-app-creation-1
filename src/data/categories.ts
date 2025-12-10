@@ -23,7 +23,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: 'household-appliances',
-    name: 'Бытовая техника',
+    name: 'Бытовая техника и мебель',
     subcategories: [],
   },
   {
@@ -48,12 +48,22 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: 'utilities',
-    name: 'Коммунальные услуги',
+    name: 'Услуги',
     subcategories: [],
   },
   {
     id: 'essentials',
     name: 'Продукты и товары первой необходимости',
+    subcategories: [],
+  },
+  {
+    id: 'energy',
+    name: 'Энергетика',
+    subcategories: [],
+  },
+  {
+    id: 'other',
+    name: 'Прочее',
     subcategories: [],
   },
 ];
