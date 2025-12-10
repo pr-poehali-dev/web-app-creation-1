@@ -85,12 +85,10 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
       touchEndY.current = e.touches[0].clientY;
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      const swipeDistance = Math.abs(touchEndY.current - touchStartY.current);
+    const handleTouchEnd = () => {
+      const swipeDistance = touchEndY.current - touchStartY.current;
       
-      if (swipeDistance > 30) {
-        e.preventDefault();
-        e.stopPropagation();
+      if (swipeDistance > 50) {
         setOpen(false);
       }
       
@@ -100,14 +98,15 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
 
     const popoverElement = popoverRef.current;
     if (open && popoverElement) {
-      popoverElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-      popoverElement.addEventListener('touchmove', handleTouchMove, { passive: true });
-      popoverElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+      const contentElement = popoverElement.querySelector('[role="dialog"]') || popoverElement;
+      contentElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+      contentElement.addEventListener('touchmove', handleTouchMove, { passive: true });
+      contentElement.addEventListener('touchend', handleTouchEnd, { passive: true });
       
       return () => {
-        popoverElement.removeEventListener('touchstart', handleTouchStart);
-        popoverElement.removeEventListener('touchmove', handleTouchMove);
-        popoverElement.removeEventListener('touchend', handleTouchEnd);
+        contentElement.removeEventListener('touchstart', handleTouchStart);
+        contentElement.removeEventListener('touchmove', handleTouchMove);
+        contentElement.removeEventListener('touchend', handleTouchEnd);
       };
     }
   }, [open]);
@@ -223,38 +222,29 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
               </Button>
             </div>
             <div className="flex items-center justify-between gap-2">
-              {selectedCount > 0 ? (
-                <>
+              <div className="flex items-center gap-2">
+                {selectedCount > 0 && (
                   <span className="text-sm text-muted-foreground">
                     Выбрано: {selectedCount}
                   </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleSelectAll}
-                      className="h-7 text-xs"
-                    >
-                      Сбросить
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setOpen(false)}
-                      className="h-7 text-xs"
-                    >
-                      Закрыть
-                    </Button>
-                  </div>
-                </>
-              ) : (
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setOpen(false)}
-                  className="h-7 text-xs ml-auto"
+                  className="h-7 text-xs"
                 >
                   Закрыть
+                </Button>
+              </div>
+              {selectedCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="h-7 text-xs"
+                >
+                  Сбросить
                 </Button>
               )}
             </div>
