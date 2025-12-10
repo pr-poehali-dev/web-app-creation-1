@@ -86,7 +86,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
     };
 
     const handleTouchEnd = () => {
-      const swipeDistance = touchStartY.current - touchEndY.current;
+      const swipeDistance = touchEndY.current - touchStartY.current;
       
       if (swipeDistance > 30) {
         setOpen(false);
@@ -98,16 +98,18 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
 
     const popoverElement = popoverRef.current;
     if (open && popoverElement) {
-      const contentElement = popoverElement.querySelector('[role="dialog"]') || popoverElement;
-      contentElement.addEventListener('touchstart', handleTouchStart, { passive: true });
-      contentElement.addEventListener('touchmove', handleTouchMove, { passive: true });
-      contentElement.addEventListener('touchend', handleTouchEnd, { passive: true });
-      
-      return () => {
-        contentElement.removeEventListener('touchstart', handleTouchStart);
-        contentElement.removeEventListener('touchmove', handleTouchMove);
-        contentElement.removeEventListener('touchend', handleTouchEnd);
-      };
+      const listElement = popoverElement.querySelector('[cmdk-list]');
+      if (listElement) {
+        listElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+        listElement.addEventListener('touchmove', handleTouchMove, { passive: true });
+        listElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+        
+        return () => {
+          listElement.removeEventListener('touchstart', handleTouchStart);
+          listElement.removeEventListener('touchmove', handleTouchMove);
+          listElement.removeEventListener('touchend', handleTouchEnd);
+        };
+      }
     }
   }, [open]);
 
@@ -115,32 +117,24 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
     <div className={className}>
       <Popover open={open} onOpenChange={setOpen}>
         <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 border rounded-md py-2 px-3 bg-background">
+            <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="flex flex-col items-start min-w-0">
+              <span className="truncate text-sm font-medium">{getDisplayText()}</span>
+              {getSubtitleText() && (
+                <span className="text-xs text-muted-foreground truncate w-full">{getSubtitleText()}</span>
+              )}
+            </div>
+          </div>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="flex-1 justify-between h-auto py-2 focus:ring-0 focus:ring-offset-0"
+              size="icon"
+              className={`h-10 w-10 shrink-0 border-2 ${open ? 'ring-2 ring-primary ring-offset-2' : ''}`}
             >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div className="flex flex-col items-start min-w-0">
-                  <span className="truncate text-sm font-medium">{getDisplayText()}</span>
-                  {getSubtitleText() && (
-                    <span className="text-xs text-muted-foreground truncate w-full">{getSubtitleText()}</span>
-                  )}
-                </div>
-              </div>
+              <Icon name="ChevronsUpDown" className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setOpen(!open)}
-            className={`h-10 w-10 shrink-0 border-2 ${open ? 'ring-2 ring-primary ring-offset-2' : ''}`}
-          >
-            <Icon name="ChevronsUpDown" className="h-4 w-4" />
-          </Button>
         </div>
         <PopoverContent className="w-[300px] p-0" align="start" ref={popoverRef as any}>
           <Command shouldFilter={true}>
@@ -185,7 +179,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                   </div>
                 </CommandItem>
               </CommandGroup>
-              <CommandGroup heading="Выберите регионы">
+              <CommandGroup heading="Выбери районы">
                 {availableDistricts.map((district) => {
                   const isSelected = selectedDistricts.includes(district.id);
                   return (
