@@ -237,18 +237,39 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                 Все улусы
               </Button>
             </div>
-            {selectedCount > 0 && (
+            {selectedCount > 0 ? (
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">
                   Выбрано: {selectedCount}
                 </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    className="h-7 text-xs"
+                  >
+                    Сбросить
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setOpen(false)}
+                    className="h-7 text-xs"
+                  >
+                    Закрыть
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-end">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleSelectAll}
+                  onClick={() => setOpen(false)}
                   className="h-7 text-xs"
                 >
-                  Сбросить
+                  Закрыть
                 </Button>
               </div>
             )}
