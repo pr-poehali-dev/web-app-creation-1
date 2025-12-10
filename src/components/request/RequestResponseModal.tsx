@@ -30,15 +30,15 @@ export default function RequestResponseModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Отправить отклик</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-lg">Отправить отклик</DialogTitle>
+          <DialogDescription className="text-sm">
             Заполните форму отклика, и автор запроса свяжется с вами
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-3">
           <div>
-            <Label htmlFor="response-quantity">Количество ({unit})</Label>
+            <Label htmlFor="response-quantity" className="text-sm">Количество ({unit})</Label>
             <Input
               id="response-quantity"
               type="number"
@@ -46,41 +46,45 @@ export default function RequestResponseModal({
               max={quantity}
               defaultValue={quantity}
               required
+              className="h-9 mt-1"
             />
           </div>
           
           <div>
-            <Label htmlFor="response-price">Ваша цена за единицу (₽)</Label>
+            <Label htmlFor="response-price" className="text-sm">Ваша цена за единицу (₽)</Label>
             <Input
               id="response-price"
               type="number"
               min="1"
               defaultValue={pricePerUnit}
               required
+              className="h-9 mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="response-delivery">Срок поставки (дней)</Label>
+            <Label htmlFor="response-delivery" className="text-sm">Срок поставки (дней)</Label>
             <Input
               id="response-delivery"
               type="number"
               min="1"
               placeholder="Укажите срок поставки"
               required
+              className="h-9 mt-1"
             />
           </div>
 
           <div>
-            <Label htmlFor="response-comment">Комментарий</Label>
+            <Label htmlFor="response-comment" className="text-sm">Комментарий</Label>
             <Textarea
               id="response-comment"
               placeholder="Дополнительная информация о вашем предложении"
-              rows={3}
+              rows={2}
+              className="text-sm mt-1"
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-2 pt-2">
             <Button type="submit" className="flex-1">
               Отправить отклик
             </Button>

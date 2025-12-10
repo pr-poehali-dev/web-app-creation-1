@@ -175,27 +175,19 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
     <div className="min-h-screen flex flex-col bg-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-4">
         <BackButton />
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-6"
-        >
-          <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-          Назад
-        </Button>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-4 mt-4">
           <div className="lg:col-span-2">
             <Card>
-              <CardHeader>
-                <CardTitle>Оформление заказа</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Оформление заказа</CardTitle>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Количество ({offer.unit})</Label>
+              <CardContent className="pt-3">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="quantity" className="text-sm">Количество ({offer.unit})</Label>
                     <Input
                       id="quantity"
                       type="number"
@@ -204,14 +196,15 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
                       value={quantity}
                       onChange={(e) => setQuantity(e.target.value)}
                       required
+                      className="h-9"
                     />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       Доступно: {offer.quantity} {offer.unit}
                     </p>
                   </div>
 
-                  <div className="space-y-4">
-                    <Label>Способ получения</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm">Способ получения</Label>
                     <RadioGroup value={deliveryType} onValueChange={(value) => setDeliveryType(value as 'pickup' | 'delivery')}>
                       {offer.availableDeliveryTypes.includes('pickup') && (
                         <div className="flex items-center space-x-2">
@@ -252,18 +245,19 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
                     </div>
                   )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="comment">Комментарий (необязательно)</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="comment" className="text-sm">Комментарий (необязательно)</Label>
                     <Textarea
                       id="comment"
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder="Дополнительная информация для продавца"
-                      rows={4}
+                      rows={3}
+                      className="text-sm"
                     />
                   </div>
 
-                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? 'Оформление...' : 'Подтвердить заказ'}
                   </Button>
                 </form>
@@ -273,22 +267,22 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
 
           <div className="lg:col-span-1">
             <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle>Детали заказа</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Детали заказа</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 pt-3">
                 <div>
-                  <h3 className="font-semibold mb-2">{offer.title}</h3>
+                  <h3 className="font-semibold text-sm mb-2">{offer.title}</h3>
                   {offer.images.length > 0 && (
                     <img
                       src={offer.images[0].url}
                       alt={offer.images[0].alt}
-                      className="w-full h-32 object-cover rounded-lg mb-3"
+                      className="w-full h-24 object-cover rounded-lg mb-2"
                     />
                   )}
                 </div>
 
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Цена за {offer.unit}:</span>
                     <span className="font-medium">{offer.pricePerUnit.toLocaleString('ru-RU')} ₽</span>
@@ -305,7 +299,7 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
                       </span>
                     </div>
                   )}
-                  <div className="border-t pt-2 flex justify-between">
+                  <div className="border-t pt-1.5 flex justify-between">
                     <span className="font-semibold">Итого:</span>
                     <span className="font-bold text-primary text-lg">
                       {totalPrice.toLocaleString('ru-RU')} ₽
@@ -313,9 +307,9 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-2">Продавец:</p>
-                  <div className="space-y-1 text-sm text-muted-foreground">
+                <div className="border-t pt-3">
+                  <p className="text-sm font-medium mb-1.5">Продавец:</p>
+                  <div className="space-y-0.5 text-xs text-muted-foreground">
                     <p>{offer.seller?.name}</p>
                     <p>{offer.seller?.phone}</p>
                     <p>{offer.seller?.email}</p>
