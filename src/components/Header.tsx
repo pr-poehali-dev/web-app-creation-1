@@ -2,6 +2,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import ChatNotificationBadge from '@/components/chat/ChatNotificationBadge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number>(0);
@@ -41,6 +43,23 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     window.addEventListener('userSessionChanged', handleSessionChange);
     return () => window.removeEventListener('userSessionChanged', handleSessionChange);
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        setUnreadChatCount(3);
+      } catch (error) {
+        console.error('Error fetching unread chat count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -248,6 +267,15 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                   <DropdownMenuItem onClick={() => navigate('/active-orders')}>
                     <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
                     Мои заказы
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/chat-notifications')}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
+                        Сообщения
+                      </div>
+                      <ChatNotificationBadge count={unreadChatCount} />
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/notifications')}>
                     <Icon name="Bell" className="mr-2 h-4 w-4" />

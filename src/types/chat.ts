@@ -87,3 +87,16 @@ export interface Response {
   updatedAt: Date;
   chat?: ChatThread;
 }
+
+export interface ChatNotification {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  orderTitle: string;
+  messagePreview: string;
+  senderName: string;
+  senderType: 'buyer' | 'seller';
+  timestamp: Date;
+  isRead: boolean;
+  unreadCount: number;
+}
