@@ -239,11 +239,43 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
         return;
       }
 
-      // Конвертируем изображения в base64
+      // Конвертируем и сжимаем изображения в base64
       const imagePromises = images.map(file => {
-        return new Promise<string>((resolve) => {
+        return new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+              
+              // Ограничиваем максимальный размер до 1920px
+              const maxSize = 1920;
+              if (width > maxSize || height > maxSize) {
+                if (width > height) {
+                  height = (height / width) * maxSize;
+                  width = maxSize;
+                } else {
+                  width = (width / height) * maxSize;
+                  height = maxSize;
+                }
+              }
+              
+              canvas.width = width;
+              canvas.height = height;
+              
+              const ctx = canvas.getContext('2d');
+              ctx?.drawImage(img, 0, 0, width, height);
+              
+              // Сжимаем до 85% качества
+              const compressed = canvas.toDataURL('image/jpeg', 0.85);
+              resolve(compressed);
+            };
+            img.onerror = reject;
+            img.src = e.target?.result as string;
+          };
+          reader.onerror = reject;
           reader.readAsDataURL(file);
         });
       });
