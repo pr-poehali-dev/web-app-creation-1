@@ -76,6 +76,10 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
   };
 
   useEffect(() => {
+    const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    if (!isMobile) return;
+
     const handleTouchStart = (e: TouchEvent) => {
       touchStartY.current = e.touches[0].clientY;
       touchEndY.current = e.touches[0].clientY;
