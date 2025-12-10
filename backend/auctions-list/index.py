@@ -35,9 +35,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         
-        # Якутское время (UTC+9)
-        yakutsk_tz = timezone(timedelta(hours=9))
-        now = datetime.now(yakutsk_tz).replace(tzinfo=None)
+        # Получаем часовой пояс из запроса или используем Якутск по умолчанию
+        params = event.get('queryStringParameters') or {}
+        tz_offset = int(params.get('timezoneOffset', 9))
+        user_tz = timezone(timedelta(hours=tz_offset))
+        now = datetime.now(user_tz).replace(tzinfo=None)
         
         # Активируем предстоящие аукционы, время которых наступило
         cur.execute("""
@@ -64,8 +66,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         conn.commit()
         
-        # Получаем параметры запроса
-        params = event.get('queryStringParameters') or {}
+        # Получаем параметры запроса (params уже определены выше)
         auction_id = params.get('id')
         status_filter = params.get('status')
         

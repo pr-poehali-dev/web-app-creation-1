@@ -94,9 +94,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         duration_days = int(body_data['duration'])
         end_datetime = start_datetime + timedelta(days=duration_days)
         
-        # Определяем начальный статус аукциона (якутское время UTC+9)
-        yakutsk_tz = timezone(timedelta(hours=9))
-        now = datetime.now(yakutsk_tz).replace(tzinfo=None)
+        # Определяем начальный статус аукциона с учетом часового пояса пользователя
+        user_tz_offset = body_data.get('timezoneOffset', 9)  # По умолчанию Якутск UTC+9
+        user_tz = timezone(timedelta(hours=user_tz_offset))
+        now = datetime.now(user_tz).replace(tzinfo=None)
         if start_datetime <= now:
             # Если дата начала уже прошла, сразу активируем
             initial_status = 'active'

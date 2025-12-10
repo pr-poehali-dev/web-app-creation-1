@@ -278,6 +278,12 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
       
       const imagesBase64 = await Promise.all(imagePromises);
 
+      // Получаем часовой пояс пользователя
+      const userLocation = localStorage.getItem('userLocation');
+      const timezoneOffset = userLocation 
+        ? JSON.parse(userLocation).timezoneOffset || 9 
+        : 9;
+
       const response = await fetch('https://functions.poehali.dev/54ee04cf-3428-411f-8f87-bc1f19a53f27', {
         method: 'POST',
         headers: {
@@ -287,6 +293,7 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
         body: JSON.stringify({
           ...formData,
           images: imagesBase64,
+          timezoneOffset,
         }),
       });
 

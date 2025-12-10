@@ -3,7 +3,7 @@
 """
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 import psycopg2
 from typing import Dict, Any
@@ -87,8 +87,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
-        # Обновляем статусы аукционов
-        now = datetime.now()
+        # Получаем часовой пояс из запроса или используем Якутск по умолчанию
+        params = event.get('queryStringParameters') or {}
+        tz_offset = int(params.get('timezoneOffset', 9))
+        user_tz = timezone(timedelta(hours=tz_offset))
+        now = datetime.now(user_tz).replace(tzinfo=None)
         
         # Активируем аукционы, которые должны начаться
         cur.execute(f"""

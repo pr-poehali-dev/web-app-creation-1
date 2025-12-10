@@ -375,8 +375,16 @@ export interface AuctionsListResponse {
 
 export const auctionsAPI = {
   async getAllAuctions(status?: string): Promise<Auction[]> {
-    const queryParams = status ? `?status=${status}` : '';
-    const response = await fetch(`${AUCTIONS_LIST_API}${queryParams}`);
+    const userLocation = localStorage.getItem('userLocation');
+    const timezoneOffset = userLocation 
+      ? JSON.parse(userLocation).timezoneOffset || 9 
+      : 9;
+    
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('timezoneOffset', timezoneOffset.toString());
+    
+    const response = await fetch(`${AUCTIONS_LIST_API}?${params.toString()}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch auctions');
@@ -399,7 +407,12 @@ export const auctionsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(AUCTIONS_MY_API, {
+    const userLocation = localStorage.getItem('userLocation');
+    const timezoneOffset = userLocation 
+      ? JSON.parse(userLocation).timezoneOffset || 9 
+      : 9;
+
+    const response = await fetch(`${AUCTIONS_MY_API}?timezoneOffset=${timezoneOffset}`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -419,7 +432,12 @@ export const auctionsAPI = {
   },
 
   async getAuctionById(id: string): Promise<Auction> {
-    const response = await fetch(`${AUCTIONS_LIST_API}?id=${id}`);
+    const userLocation = localStorage.getItem('userLocation');
+    const timezoneOffset = userLocation 
+      ? JSON.parse(userLocation).timezoneOffset || 9 
+      : 9;
+    
+    const response = await fetch(`${AUCTIONS_LIST_API}?id=${id}&timezoneOffset=${timezoneOffset}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch auction');
