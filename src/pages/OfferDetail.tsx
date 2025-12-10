@@ -266,10 +266,10 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8 flex-1">
+      <main className="container mx-auto px-4 py-3 flex-1">
         <BackButton />
 
-        <div className="grid gap-8 lg:grid-cols-3 mb-8">
+        <div className="grid gap-3 lg:grid-cols-3 mb-3 mt-2">
           <div className="lg:col-span-2">
             <OfferMediaGallery
               images={offer.images}

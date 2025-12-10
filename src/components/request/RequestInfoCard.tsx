@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface RequestInfoCardProps {
   title: string;
@@ -40,54 +41,59 @@ export default function RequestInfoCard({
   totalPrice
 }: RequestInfoCardProps) {
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6 space-y-6">
+    <Card className="mb-3">
+      <CardContent className="pt-3 pb-3 space-y-3">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{title}</h1>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">{category}</Badge>
-            <Badge variant="outline">{subcategory}</Badge>
+          <h1 className="text-lg md:text-xl font-bold mb-1.5">{title}</h1>
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="secondary" className="text-xs">{category}</Badge>
+            <Badge variant="outline" className="text-xs">{subcategory}</Badge>
           </div>
         </div>
 
-        <Separator />
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Требуемое количество</p>
-              <p className="font-semibold">{quantity} {unit}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Цена за единицу</p>
-              <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Откликов</p>
-              <p className="font-semibold">{responsesCount || 0}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">НДС</p>
-              <p className="font-semibold">
-                {hasVAT ? `${vatRate}%` : 'Без НДС'}
-              </p>
-            </div>
-          </div>
-
+        {/* Основная информация - всегда видна */}
+        <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Общий бюджет</p>
-            <p className="text-2xl font-bold text-primary">
-              {totalPrice.toLocaleString('ru-RU')} ₽
-            </p>
+            <p className="text-xs text-muted-foreground">Количество</p>
+            <p className="font-semibold">{quantity} {unit}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Цена за {unit}</p>
+            <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
           </div>
         </div>
 
-        <Separator />
-
-        <div>
-          <h3 className="font-semibold mb-2">Описание запроса</h3>
-          <p className="text-muted-foreground whitespace-pre-line">{description}</p>
+        <div className="bg-primary/5 p-2 rounded-md">
+          <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
+          <p className="text-xl font-bold text-primary">
+            {totalPrice.toLocaleString('ru-RU')} ₽
+          </p>
         </div>
+
+        {/* Дополнительная информация в аккордеоне */}
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="details" className="border-0">
+            <AccordionTrigger className="py-2 text-sm font-medium">
+              Подробная информация
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 pt-2">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Откликов</p>
+                  <p className="font-medium">{responsesCount || 0}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">НДС</p>
+                  <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <p className="text-sm font-medium mb-1">Описание запроса</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
+              </div>
 
         <Separator />
 

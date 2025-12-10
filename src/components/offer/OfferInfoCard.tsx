@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 
 interface OfferInfoCardProps {
@@ -45,119 +46,125 @@ export default function OfferInfoCard({
   expiryDate,
 }: OfferInfoCardProps) {
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6 space-y-6">
+    <Card className="mb-3">
+      <CardContent className="pt-3 pb-3 space-y-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">{title}</h1>
-          <div className="flex flex-wrap gap-2">
+          <h1 className="text-lg md:text-xl font-bold mb-1.5">{title}</h1>
+          <div className="flex flex-wrap gap-1.5">
             {category ? (
-              <Badge variant="secondary">{category}</Badge>
+              <Badge variant="secondary" className="text-xs">{category}</Badge>
             ) : (
-              <Badge variant="secondary">Категория не выбрана</Badge>
+              <Badge variant="secondary" className="text-xs">Без категории</Badge>
             )}
           </div>
         </div>
 
-        <Separator />
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Количество</p>
-              <p className="font-semibold">{quantity} {unit}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Цена за единицу</p>
-              <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Осталось</p>
-              <p className="font-semibold">{remainingQuantity} {unit}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">НДС</p>
-              <p className="font-semibold">
-                {hasVAT ? `${vatRate}%` : 'Без НДС'}
-              </p>
-            </div>
-          </div>
-
+        {/* Основная информация - всегда видна */}
+        <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Общая стоимость</p>
-            <p className="text-2xl font-bold text-primary">
-              {totalPrice.toLocaleString('ru-RU')} ₽
-            </p>
-          </div>
-        </div>
-
-        <Separator />
-
-        <div>
-          <h3 className="font-semibold mb-2">Описание</h3>
-          <p className="text-muted-foreground whitespace-pre-line">{description}</p>
-        </div>
-
-        <Separator />
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Местоположение</p>
-            <p className="font-medium">{location}</p>
-            {fullAddress && (
-              <p className="text-sm text-muted-foreground">{fullAddress}</p>
-            )}
+            <p className="text-xs text-muted-foreground">Количество</p>
+            <p className="font-semibold">{quantity} {unit}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Район</p>
-            <p className="font-medium">{district}</p>
+            <p className="text-xs text-muted-foreground">Цена за {unit}</p>
+            <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
           </div>
         </div>
 
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Доступно в районах</p>
-          <div className="flex flex-wrap gap-2">
-            {availableDistricts.map((district) => (
-              <Badge key={district} variant="outline">{district}</Badge>
-            ))}
-          </div>
+        <div className="bg-primary/5 p-2 rounded-md">
+          <p className="text-xs text-muted-foreground mb-0.5">Общая стоимость</p>
+          <p className="text-xl font-bold text-primary">
+            {totalPrice.toLocaleString('ru-RU')} ₽
+          </p>
         </div>
 
-        <Separator />
+        {/* Дополнительная информация в аккордеоне */}
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="details" className="border-0">
+            <AccordionTrigger className="py-2 text-sm font-medium">
+              Подробная информация
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 pt-2">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Осталось</p>
+                  <p className="font-medium">{remainingQuantity} {unit}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">НДС</p>
+                  <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
+                </div>
+              </div>
 
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Способы получения</p>
-          <div className="flex gap-3">
-            {availableDeliveryTypes.includes('pickup') && (
-              <Badge className="gap-1">
-                <Icon name="Store" className="h-3 w-3" />
-                Самовывоз
-              </Badge>
-            )}
-            {availableDeliveryTypes.includes('delivery') && (
-              <Badge className="gap-1">
-                <Icon name="Truck" className="h-3 w-3" />
-                Доставка
-              </Badge>
-            )}
-          </div>
-        </div>
+              <Separator />
 
-        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-          <div>
-            <p>Дата создания</p>
-            <p className="font-medium text-foreground">
-              {createdAt.toLocaleDateString('ru-RU')}
-            </p>
-          </div>
-          {expiryDate && (
-            <div>
-              <p>Срок годности</p>
-              <p className="font-medium text-foreground">
-                {expiryDate.toLocaleDateString('ru-RU')}
-              </p>
-            </div>
-          )}
-        </div>
+              <div>
+                <p className="text-sm font-medium mb-1">Описание</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p className="text-muted-foreground mb-0.5">Местоположение</p>
+                  <p className="font-medium">{location}</p>
+                  {fullAddress && (
+                    <p className="text-muted-foreground">{fullAddress}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-0.5">Район</p>
+                  <p className="font-medium">{district}</p>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Доступно в районах</p>
+                <div className="flex flex-wrap gap-1">
+                  {availableDistricts.map((district) => (
+                    <Badge key={district} variant="outline" className="text-xs px-1.5 py-0">{district}</Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
+                <div className="flex gap-2">
+                  {availableDeliveryTypes.includes('pickup') && (
+                    <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                      <Icon name="Store" className="h-3 w-3" />
+                      Самовывоз
+                    </Badge>
+                  )}
+                  {availableDeliveryTypes.includes('delivery') && (
+                    <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                      <Icon name="Truck" className="h-3 w-3" />
+                      Доставка
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div>
+                  <p>Дата создания</p>
+                  <p className="font-medium text-foreground">
+                    {createdAt.toLocaleDateString('ru-RU')}
+                  </p>
+                </div>
+                {expiryDate && (
+                  <div>
+                    <p>Срок годности</p>
+                    <p className="font-medium text-foreground">
+                      {expiryDate.toLocaleDateString('ru-RU')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
