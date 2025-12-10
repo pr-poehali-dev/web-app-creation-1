@@ -138,7 +138,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
           {/* Mobile menu button */}
           <button
-            className="md:hidden px-3 py-2 text-sm font-bold text-primary uppercase"
+            className="md:hidden px-3 py-2 text-sm font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? "Закрыть" : "Меню"}

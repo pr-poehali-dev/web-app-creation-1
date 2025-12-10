@@ -237,12 +237,14 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                 Все улусы
               </Button>
             </div>
-            {selectedCount > 0 ? (
-              <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
+              {selectedCount > 0 && (
                 <span className="text-sm text-muted-foreground">
                   Выбрано: {selectedCount}
                 </span>
-                <div className="flex gap-2">
+              )}
+              <div className={`flex gap-2 ${selectedCount === 0 ? 'ml-auto' : ''}`}>
+                {selectedCount > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -251,18 +253,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                   >
                     Сбросить
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setOpen(false)}
-                    className="h-7 text-xs"
-                  >
-                    Закрыть
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex justify-end">
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -272,7 +263,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
                   Закрыть
                 </Button>
               </div>
-            )}
+            </div>
           </div>
         </PopoverContent>
       </Popover>
