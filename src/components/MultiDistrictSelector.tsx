@@ -86,9 +86,9 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
     };
 
     const handleTouchEnd = () => {
-      const swipeDistance = touchEndY.current - touchStartY.current;
+      const swipeDistance = touchStartY.current - touchEndY.current;
       
-      if (swipeDistance > 50) {
+      if (swipeDistance > 30) {
         setOpen(false);
       }
       
@@ -222,21 +222,23 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
               </Button>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                {selectedCount > 0 && (
+              {selectedCount > 0 ? (
+                <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
                     Выбрано: {selectedCount}
                   </span>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setOpen(false)}
-                  className="h-7 text-xs"
-                >
-                  Закрыть
-                </Button>
-              </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setOpen(false)}
+                    className="h-7 text-xs"
+                  >
+                    Закрыть
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex-1" />
+              )}
               {selectedCount > 0 && (
                 <Button
                   variant="ghost"
