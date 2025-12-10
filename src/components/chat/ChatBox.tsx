@@ -89,10 +89,10 @@ export default function ChatBox({
   };
 
   return (
-    <Card className="flex flex-col h-[600px]">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Icon name="MessageSquare" className="h-5 w-5" />
+    <Card className="flex flex-col h-[500px] sm:h-[550px] lg:h-[600px]">
+      <CardHeader className="pb-2 px-3 sm:px-6">
+        <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+          <Icon name="MessageSquare" className="h-4 w-4 sm:h-5 sm:w-5" />
           Чат с {currentUserType === 'buyer' ? 'продавцом' : 'покупателем'}
         </CardTitle>
       </CardHeader>
@@ -100,16 +100,16 @@ export default function ChatBox({
       <Separator />
 
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+        <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollRef}>
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <Icon name="MessageCircle" className="h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
+              <Icon name="MessageCircle" className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-2 sm:mb-3" />
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Пока нет сообщений. Начните общение!
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {messages.map((message) => {
                 const isOwnMessage = message.senderId === currentUserId;
                 return (
@@ -118,20 +118,20 @@ export default function ChatBox({
                     className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[70%] ${
+                      className={`max-w-[85%] sm:max-w-[75%] ${
                         isOwnMessage
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'
-                      } rounded-lg p-3 space-y-2`}
+                      } rounded-lg p-2.5 sm:p-3 space-y-1.5`}
                     >
                       {!isOwnMessage && (
-                        <p className="text-xs font-semibold opacity-70">
+                        <p className="text-[10px] sm:text-xs font-semibold opacity-70">
                           {message.senderName}
                         </p>
                       )}
                       
                       {message.text && (
-                        <p className="text-sm whitespace-pre-wrap break-words">
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">
                           {message.text}
                         </p>
                       )}
@@ -144,11 +144,11 @@ export default function ChatBox({
                               href={attachment.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-xs p-2 bg-background/10 rounded hover:bg-background/20 transition-colors"
+                              className="flex items-center gap-1.5 text-[10px] sm:text-xs p-1.5 sm:p-2 bg-background/10 rounded hover:bg-background/20 transition-colors"
                             >
-                              <Icon name="Paperclip" className="h-3 w-3" />
+                              <Icon name="Paperclip" className="h-3 w-3 flex-shrink-0" />
                               <span className="flex-1 truncate">{attachment.name}</span>
-                              <span className="text-xs opacity-70">
+                              <span className="text-[10px] opacity-70 flex-shrink-0">
                                 {formatFileSize(attachment.size)}
                               </span>
                             </a>
@@ -156,7 +156,7 @@ export default function ChatBox({
                         </div>
                       )}
 
-                      <p className={`text-xs ${isOwnMessage ? 'opacity-70' : 'text-muted-foreground'}`}>
+                      <p className={`text-[10px] sm:text-xs ${isOwnMessage ? 'opacity-70' : 'text-muted-foreground'}`}>
                         {formatTime(message.timestamp)}
                       </p>
                     </div>
@@ -169,17 +169,17 @@ export default function ChatBox({
 
         <Separator />
 
-        <div className="p-4 space-y-3">
+        <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
           {attachments.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {attachments.map((file, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 text-sm p-2 bg-muted rounded"
+                  className="flex items-center gap-1.5 text-xs sm:text-sm p-1.5 sm:p-2 bg-muted rounded"
                 >
-                  <Icon name="File" className="h-4 w-4 text-muted-foreground" />
-                  <span className="flex-1 truncate">{file.name}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <Icon name="File" className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="flex-1 truncate text-xs">{file.name}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
                     {formatFileSize(file.size)}
                   </span>
                   <Button
@@ -187,7 +187,7 @@ export default function ChatBox({
                     variant="ghost"
                     size="sm"
                     onClick={() => removeAttachment(index)}
-                    className="h-6 w-6 p-0"
+                    className="h-5 w-5 sm:h-6 sm:w-6 p-0 flex-shrink-0"
                   >
                     <Icon name="X" className="h-3 w-3" />
                   </Button>
@@ -196,7 +196,7 @@ export default function ChatBox({
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2">
             <input
               ref={fileInputRef}
               type="file"
@@ -213,6 +213,7 @@ export default function ChatBox({
               onClick={() => fileInputRef.current?.click()}
               disabled={isLoading || attachments.length >= 5}
               title="Прикрепить файл"
+              className="h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
             >
               <Icon name="Paperclip" className="h-4 w-4" />
             </Button>
@@ -221,23 +222,24 @@ export default function ChatBox({
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Введите сообщение..."
+              placeholder="Сообщение..."
               disabled={isLoading}
-              className="flex-1"
+              className="flex-1 text-sm h-9 sm:h-10"
             />
 
             <Button
               onClick={handleSend}
               disabled={isLoading || (!messageText.trim() && attachments.length === 0)}
-              className="gap-2"
+              className="gap-1.5 h-9 sm:h-10 px-3 sm:px-4 flex-shrink-0"
+              size="sm"
             >
-              <Icon name="Send" className="h-4 w-4" />
-              Отправить
+              <Icon name="Send" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Отправить</span>
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            Можно прикрепить до 5 файлов (макс. 5 МБ)
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
+            До 5 файлов, макс. 5 МБ
           </p>
         </div>
       </CardContent>
