@@ -144,50 +144,50 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             {mobileMenuOpen ? "Закрыть" : "Меню"}
           </button>
 
-          <nav className="hidden md:flex items-center space-x-2 lg:space-x-3 mr-3 lg:mr-4">
+          <nav className="hidden md:flex items-center space-x-1.5 lg:space-x-3 mr-2 lg:mr-4">
             <Link
               to="/predlozheniya"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
+              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
+              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
+              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
+              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
               <span className="flex items-center gap-1">
                 Контракты
-                <Badge variant="secondary" className="text-[10px] lg:text-xs px-1.5 py-0.5">Новое</Badge>
+                <Badge variant="secondary" className="text-[9px] lg:text-xs px-1 lg:px-1.5 py-0.5">Новое</Badge>
               </span>
             </Link>
             <Link
               to="/about"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-4 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
+              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
               О площадке
             </Link>
             <Link
               to="/support"
-              className="text-xs lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40"
+              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
               Поддержка
             </Link>
           </nav>
 
           <div className="flex items-center space-x-2 md:space-x-3">
-            <div className="hidden md:block w-40 lg:w-52">
+            <div className="hidden md:block w-36 lg:w-52">
               <RegionDistrictSelector showBadges={false} />
             </div>
             

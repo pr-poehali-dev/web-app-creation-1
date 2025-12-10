@@ -89,11 +89,11 @@ export default function Footer() {
 
         <div className="mt-8 pt-8 border-t space-y-6">
           <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-6">
-            <div className="flex gap-3">
-              <div className="flex-shrink-0">
-                <Icon name="AlertCircle" className="h-6 w-6 text-amber-600 dark:text-amber-500 mt-0.5" />
+            <div className="flex gap-3 items-start">
+              <div className="shrink-0">
+                <Icon name="AlertCircle" className="h-6 w-6 text-amber-600 dark:text-amber-500" />
               </div>
-              <div className="space-y-2 flex-1 min-w-0">
+              <div className="space-y-2 flex-1">
                 <h4 className="font-semibold text-foreground text-base">Внимание!</h4>
                 <p className="text-sm text-foreground/80 leading-relaxed">
                   Сайт/веб-приложение находится на стадии активной начальной разработки. В связи с этим возможны временные некорректности в работе, изменения в функционале и появление тестовых заявок. Приносим извинения за возможные неудобства.
