@@ -114,25 +114,34 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
   return (
     <div className={className}>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+        <div className="flex items-center gap-2">
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="flex-1 justify-between h-auto py-2 focus:ring-0 focus:ring-offset-0"
+            >
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="truncate text-sm font-medium">{getDisplayText()}</span>
+                  {getSubtitleText() && (
+                    <span className="text-xs text-muted-foreground truncate w-full">{getSubtitleText()}</span>
+                  )}
+                </div>
+              </div>
+            </Button>
+          </PopoverTrigger>
           <Button
             variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between h-auto py-2"
+            size="icon"
+            onClick={() => setOpen(!open)}
+            className={`h-10 w-10 shrink-0 border-2 ${open ? 'ring-2 ring-primary ring-offset-2' : ''}`}
           >
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
-              <div className="flex flex-col items-start min-w-0">
-                <span className="truncate text-sm font-medium">{getDisplayText()}</span>
-                {getSubtitleText() && (
-                  <span className="text-xs text-muted-foreground truncate w-full">{getSubtitleText()}</span>
-                )}
-              </div>
-            </div>
-            <Icon name="ChevronsUpDown" className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <Icon name="ChevronsUpDown" className="h-4 w-4" />
           </Button>
-        </PopoverTrigger>
+        </div>
         <PopoverContent className="w-[300px] p-0" align="start" ref={popoverRef as any}>
           <Command shouldFilter={true}>
             <CommandInput placeholder="Поиск региона..." />
