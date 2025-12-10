@@ -177,20 +177,20 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
-            <TabsTrigger value="participating">
+          <TabsList className="grid w-full grid-cols-4 mb-8 gap-2 p-2 bg-transparent">
+            <TabsTrigger value="participating" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10">
               <Icon name="Gavel" className="h-4 w-4 mr-2" />
               Участие в аукционах
             </TabsTrigger>
-            <TabsTrigger value="active">
+            <TabsTrigger value="active" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10">
               <Icon name="Play" className="h-4 w-4 mr-2" />
               Активные
             </TabsTrigger>
-            <TabsTrigger value="completed">
+            <TabsTrigger value="completed" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10">
               <Icon name="CheckCircle" className="h-4 w-4 mr-2" />
               Завершенные
             </TabsTrigger>
-            <TabsTrigger value="archived">
+            <TabsTrigger value="archived" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10">
               <Icon name="Archive" className="h-4 w-4 mr-2" />
               Архив
             </TabsTrigger>
