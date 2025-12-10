@@ -95,46 +95,47 @@ export default function RequestInfoCard({
                 <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
               </div>
 
-        <Separator />
+              <Separator />
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Адрес доставки</p>
-            <p className="font-medium">{deliveryAddress}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Район</p>
-            <p className="font-medium">{district}</p>
-          </div>
-        </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p className="text-muted-foreground mb-0.5">Адрес доставки</p>
+                  <p className="font-medium">{deliveryAddress}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-0.5">Район</p>
+                  <p className="font-medium">{district}</p>
+                </div>
+              </div>
 
-        <div>
-          <p className="text-sm text-muted-foreground mb-2">Принимаются отклики из районов</p>
-          <div className="flex flex-wrap gap-2">
-            {availableDistricts.map((district) => (
-              <Badge key={district} variant="outline">{district}</Badge>
-            ))}
-          </div>
-        </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Принимаются отклики из районов</p>
+                <div className="flex flex-wrap gap-1">
+                  {availableDistricts.map((district) => (
+                    <Badge key={district} variant="outline" className="text-xs px-1.5 py-0">{district}</Badge>
+                  ))}
+                </div>
+              </div>
 
-        <Separator />
-
-        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-          <div>
-            <p>Дата создания</p>
-            <p className="font-medium text-foreground">
-              {createdAt.toLocaleDateString('ru-RU')}
-            </p>
-          </div>
-          {expiryDate && (
-            <div>
-              <p>Срок актуальности</p>
-              <p className="font-medium text-foreground">
-                {expiryDate.toLocaleDateString('ru-RU')}
-              </p>
-            </div>
-          )}
-        </div>
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div>
+                  <p>Дата создания</p>
+                  <p className="font-medium text-foreground">
+                    {createdAt.toLocaleDateString('ru-RU')}
+                  </p>
+                </div>
+                {expiryDate && (
+                  <div>
+                    <p>Срок актуальности</p>
+                    <p className="font-medium text-foreground">
+                      {expiryDate.toLocaleDateString('ru-RU')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
     </Card>
   );
