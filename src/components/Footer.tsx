@@ -89,17 +89,19 @@ export default function Footer() {
 
         <div className="mt-8 pt-8 border-t space-y-6">
           <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4 md:p-6">
-            <div className="space-y-2 pl-0 md:pl-12">
-              <div className="flex items-center gap-2">
-                <Icon name="AlertCircle" className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0" />
-                <h4 className="font-semibold text-foreground text-base">Внимание!</h4>
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <Icon name="AlertCircle" className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+                <div className="space-y-3 flex-1">
+                  <h4 className="font-semibold text-foreground text-base">Внимание!</h4>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    Сайт/веб-приложение находится на стадии активной начальной разработки. В связи с этим возможны временные некорректности в работе, изменения в функционале и появление тестовых заявок. Приносим извинения за возможные неудобства.
+                  </p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    Мы верим в потенциал этого проекта и приглашаем вас стать частью его успеха! Проект нуждается в финансировании для дальнейшего развития и реализации перспективных возможностей. По вопросам спонсорства и инвестиций просим обращаться к разработчику по контактам, указанным ниже.
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                Сайт/веб-приложение находится на стадии активной начальной разработки. В связи с этим возможны временные некорректности в работе, изменения в функционале и появление тестовых заявок. Приносим извинения за возможные неудобства.
-              </p>
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                Мы верим в потенциал этого проекта и приглашаем вас стать частью его успеха! Проект нуждается в финансировании для дальнейшего развития и реализации перспективных возможностей. По вопросам спонсорства и инвестиций просим обращаться к разработчику по контактам, указанным ниже.
-              </p>
             </div>
           </div>
 
