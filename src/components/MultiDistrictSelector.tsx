@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -26,6 +26,9 @@ interface MultiDistrictSelectorProps {
 export default function MultiDistrictSelector({ className = '', showBadges = true }: MultiDistrictSelectorProps) {
   const { selectedDistricts, toggleDistrict, districts, setSelectedDistricts, isDetecting, requestGeolocation } = useDistrict();
   const [open, setOpen] = useState(false);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
+  const touchEndY = useRef<number>(0);
 
   const availableDistricts = districts.filter(d => d.id !== 'all');
   const selectedCount = selectedDistricts.length;
@@ -72,6 +75,46 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
     return null;
   };
 
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+      touchEndY.current = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      touchEndY.current = e.touches[0].clientY;
+      const swipeDistance = touchEndY.current - touchStartY.current;
+      
+      if (swipeDistance > 5) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchEnd = () => {
+      const swipeDistance = touchEndY.current - touchStartY.current;
+      
+      if (swipeDistance > 50) {
+        setOpen(false);
+      }
+      
+      touchStartY.current = 0;
+      touchEndY.current = 0;
+    };
+
+    const popoverElement = popoverRef.current;
+    if (open && popoverElement) {
+      popoverElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+      popoverElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+      popoverElement.addEventListener('touchend', handleTouchEnd, { passive: true });
+      
+      return () => {
+        popoverElement.removeEventListener('touchstart', handleTouchStart);
+        popoverElement.removeEventListener('touchmove', handleTouchMove);
+        popoverElement.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [open]);
+
   return (
     <div className={className}>
       <Popover open={open} onOpenChange={setOpen}>
@@ -94,7 +137,7 @@ export default function MultiDistrictSelector({ className = '', showBadges = tru
             <Icon name="ChevronsUpDown" className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent className="w-[300px] p-0" align="start" ref={popoverRef as any}>
           <Command shouldFilter={true}>
             <CommandInput placeholder="Поиск региона..." />
             <CommandList>
