@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 interface OfferPricingSectionProps {
   formData: {
     quantity: string;
+    minOrderQuantity: string;
     unit: string;
     pricePerUnit: string;
     hasVAT: boolean;
@@ -54,14 +55,11 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
     <Card>
       <CardHeader>
         <CardTitle>Цена и количество</CardTitle>
-        <CardDescription>
-          Укажите количество и стоимость
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-4 gap-4">
           <div>
-            <Label htmlFor="quantity">Количество *</Label>
+            <Label htmlFor="quantity">Доступное количество *</Label>
             <Input
               id="quantity"
               type="number"
@@ -69,6 +67,19 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
               onChange={(e) => onInputChange('quantity', e.target.value)}
               placeholder="0"
               required
+              min="0.01"
+              step="0.01"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="minOrderQuantity">Минимальное количество заказа</Label>
+            <Input
+              id="minOrderQuantity"
+              type="number"
+              value={formData.minOrderQuantity}
+              onChange={(e) => onInputChange('minOrderQuantity', e.target.value)}
+              placeholder="0"
               min="0.01"
               step="0.01"
             />

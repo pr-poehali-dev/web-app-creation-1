@@ -45,6 +45,7 @@ export interface Offer {
   category: string;
   subcategory?: string;
   quantity: number;
+  minOrderQuantity?: number;
   unit: string;
   pricePerUnit: number;
   hasVAT: boolean;

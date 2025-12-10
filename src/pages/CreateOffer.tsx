@@ -54,6 +54,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     category: '',
     subcategory: '',
     quantity: '',
+    minOrderQuantity: '',
     unit: 'шт',
     pricePerUnit: '',
     hasVAT: false,
@@ -162,6 +163,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         category: formData.category,
         subcategory: formData.subcategory || undefined,
         quantity: parseFloat(formData.quantity) || 0,
+        minOrderQuantity: formData.minOrderQuantity ? parseFloat(formData.minOrderQuantity) : undefined,
         unit: formData.unit,
         pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
         hasVAT: formData.hasVAT,
@@ -255,6 +257,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
             <OfferPricingSection
               formData={{
                 quantity: formData.quantity,
+                minOrderQuantity: formData.minOrderQuantity,
                 unit: formData.unit,
                 pricePerUnit: formData.pricePerUnit,
                 hasVAT: formData.hasVAT,

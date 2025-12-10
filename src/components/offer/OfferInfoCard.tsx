@@ -9,6 +9,7 @@ interface OfferInfoCardProps {
   category: string;
   subcategory: string;
   quantity: number;
+  minOrderQuantity?: number;
   unit: string;
   pricePerUnit: number;
   remainingQuantity: number;
@@ -30,6 +31,7 @@ export default function OfferInfoCard({
   category,
   subcategory,
   quantity,
+  minOrderQuantity,
   unit,
   pricePerUnit,
   remainingQuantity,
@@ -95,6 +97,13 @@ export default function OfferInfoCard({
                   <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
                 </div>
               </div>
+
+              {minOrderQuantity && (
+                <div className="bg-accent/50 p-2 rounded-md">
+                  <p className="text-xs text-muted-foreground">Минимальный заказ</p>
+                  <p className="font-medium text-sm">{minOrderQuantity} {unit}</p>
+                </div>
+              )}
 
               <Separator />
 

@@ -54,6 +54,7 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         const mappedOffer: Offer = {
           ...data,
           pricePerUnit: data.price_per_unit || data.pricePerUnit || 0,
+          minOrderQuantity: data.min_order_quantity || data.minOrderQuantity,
           vatRate: data.vat_rate || data.vatRate,
           hasVAT: data.has_vat !== undefined ? data.has_vat : data.hasVAT,
           isPremium: data.is_premium !== undefined ? data.is_premium : data.isPremium,
@@ -133,6 +134,15 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         return;
       }
 
+      if (offer.minOrderQuantity && orderQuantity < offer.minOrderQuantity) {
+        toast({
+          title: 'Ошибка',
+          description: `Минимальное количество заказа: ${offer.minOrderQuantity} ${offer.unit}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (orderQuantity > offer.quantity) {
         toast({
           title: 'Ошибка',
@@ -192,16 +202,19 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
                     <Input
                       id="quantity"
                       type="number"
-                      min="1"
+                      min={offer.minOrderQuantity || 1}
                       max={offer.quantity}
                       value={quantity}
                       onChange={(e) => setQuantity(e.target.value)}
                       required
                       className="h-9"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Доступно: {offer.quantity} {offer.unit}
-                    </p>
+                    <div className="text-xs text-muted-foreground space-y-0.5">
+                      <p>Доступно: {offer.quantity} {offer.unit}</p>
+                      {offer.minOrderQuantity && (
+                        <p>Минимальный заказ: {offer.minOrderQuantity} {offer.unit}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-2">

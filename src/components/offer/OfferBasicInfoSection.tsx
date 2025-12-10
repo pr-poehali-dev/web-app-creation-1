@@ -53,9 +53,6 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
     <Card>
       <CardHeader>
         <CardTitle>Основная информация</CardTitle>
-        <CardDescription>
-          Название, описание и категория предложения
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
@@ -91,7 +88,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="relative">
-            <Label htmlFor="category">Выберите категорию</Label>
+            <Label htmlFor="category">Категория *</Label>
             <div className="relative">
               <Input
                 id="category"
@@ -142,7 +139,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
 
           {subcategories.length > 0 && (
             <div className="relative">
-              <Label htmlFor="subcategory">Выберите подкатегорию</Label>
+              <Label htmlFor="subcategory">Подкатегория (необязательно)</Label>
               <div className="relative">
                 <Input
                   id="subcategory"

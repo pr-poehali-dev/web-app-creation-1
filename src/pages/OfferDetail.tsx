@@ -51,6 +51,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
         const mappedOffer: Offer = {
           ...data,
           pricePerUnit: data.price_per_unit || data.pricePerUnit || 0,
+          minOrderQuantity: data.min_order_quantity || data.minOrderQuantity,
           vatRate: data.vat_rate || data.vatRate,
           hasVAT: data.has_vat !== undefined ? data.has_vat : data.hasVAT,
           isPremium: data.is_premium !== undefined ? data.is_premium : data.isPremium,
@@ -295,6 +296,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
               category={offer.category}
               subcategory={offer.subcategory}
               quantity={offer.quantity}
+              minOrderQuantity={offer.minOrderQuantity}
               unit={offer.unit}
               pricePerUnit={offer.pricePerUnit}
               remainingQuantity={remainingQuantity}
