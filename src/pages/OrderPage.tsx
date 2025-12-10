@@ -18,7 +18,8 @@ import type { Offer } from '@/types/offer';
 
 export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
   useScrollToTop();
-  const { id } = useParams<{ id: string }>();
+  const { offerId } = useParams<{ offerId: string }>();
+  const id = offerId;
   const navigate = useNavigate();
   const { toast } = useToast();
   const [offer, setOffer] = useState<Offer | null>(null);
