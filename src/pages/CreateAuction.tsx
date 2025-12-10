@@ -250,16 +250,12 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
               let width = img.width;
               let height = img.height;
               
-              // Ограничиваем максимальный размер до 1920px
-              const maxSize = 1920;
+              // Уменьшаем размер пропорционально до 1200px по большей стороне
+              const maxSize = 1200;
               if (width > maxSize || height > maxSize) {
-                if (width > height) {
-                  height = (height / width) * maxSize;
-                  width = maxSize;
-                } else {
-                  width = (width / height) * maxSize;
-                  height = maxSize;
-                }
+                const ratio = Math.min(maxSize / width, maxSize / height);
+                width = Math.round(width * ratio);
+                height = Math.round(height * ratio);
               }
               
               canvas.width = width;
@@ -268,8 +264,8 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
               const ctx = canvas.getContext('2d');
               ctx?.drawImage(img, 0, 0, width, height);
               
-              // Сжимаем до 85% качества
-              const compressed = canvas.toDataURL('image/jpeg', 0.85);
+              // Сжимаем до 80% качества для меньшего размера файла
+              const compressed = canvas.toDataURL('image/jpeg', 0.8);
               resolve(compressed);
             };
             img.onerror = reject;
