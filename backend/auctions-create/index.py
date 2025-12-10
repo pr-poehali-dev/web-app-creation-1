@@ -5,7 +5,7 @@ import json
 import os
 import base64
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import psycopg2
 import boto3
 from typing import Dict, Any
@@ -94,8 +94,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         duration_days = int(body_data['duration'])
         end_datetime = start_datetime + timedelta(days=duration_days)
         
-        # Определяем начальный статус аукциона
-        now = datetime.now()
+        # Определяем начальный статус аукциона (якутское время UTC+9)
+        yakutsk_tz = timezone(timedelta(hours=9))
+        now = datetime.now(yakutsk_tz).replace(tzinfo=None)
         if start_datetime <= now:
             # Если дата начала уже прошла, сразу активируем
             initial_status = 'active'

@@ -103,7 +103,7 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
     }
   };
 
-  if (auction.status !== 'active') {
+  if (auction.status !== 'active' && auction.status !== 'ending-soon') {
     return null;
   }
 
