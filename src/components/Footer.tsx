@@ -88,17 +88,17 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t space-y-6">
-          <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-6">
-            <div className="flex gap-3 items-start">
-              <div className="shrink-0">
-                <Icon name="AlertCircle" className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+          <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4 md:p-6">
+            <div className="flex gap-3 items-start w-full">
+              <div className="shrink-0 w-6 h-6">
+                <Icon name="AlertCircle" className="w-6 h-6 text-amber-600 dark:text-amber-500" />
               </div>
-              <div className="space-y-2 flex-1">
-                <h4 className="font-semibold text-foreground text-base">Внимание!</h4>
-                <p className="text-sm text-foreground/80 leading-relaxed">
+              <div className="space-y-2 flex-1 min-w-0 overflow-visible">
+                <h4 className="font-semibold text-foreground text-base break-words">Внимание!</h4>
+                <p className="text-sm text-foreground/80 leading-relaxed break-words">
                   Сайт/веб-приложение находится на стадии активной начальной разработки. В связи с этим возможны временные некорректности в работе, изменения в функционале и появление тестовых заявок. Приносим извинения за возможные неудобства.
                 </p>
-                <p className="text-sm text-foreground/80 leading-relaxed">
+                <p className="text-sm text-foreground/80 leading-relaxed break-words">
                   Мы верим в потенциал этого проекта и приглашаем вас стать частью его успеха! Проект нуждается в финансировании для дальнейшего развития и реализации перспективных возможностей. По вопросам спонсорства и инвестиций просим обращаться к разработчику по контактам, указанным ниже.
                 </p>
               </div>
