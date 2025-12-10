@@ -57,8 +57,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     };
 
     fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -195,7 +193,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               to="/about"
               className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
-              О площадке
+              О нас
             </Link>
             <Link
               to="/support"
@@ -380,7 +378,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
-              О площадке
+              О нас
             </Link>
             <Link
               to="/support"

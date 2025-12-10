@@ -231,14 +231,6 @@ export default function OrderDetailPage({ isAuthenticated, onLogout }: OrderDeta
                 <CardTitle className="text-base">Информация о заказе</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {order.offerImage && (
-                  <img
-                    src={order.offerImage}
-                    alt={order.offerTitle}
-                    className="w-full h-24 sm:h-28 object-cover rounded-lg"
-                  />
-                )}
-                
                 <div>
                   <h3 className="font-semibold text-sm mb-2">{order.offerTitle}</h3>
                   <div className="space-y-1.5 text-xs sm:text-sm">
