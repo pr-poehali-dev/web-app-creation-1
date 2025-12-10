@@ -74,7 +74,7 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
           </div>
 
           <div>
-            <Label htmlFor="minOrderQuantity">Минимальное количество заказа</Label>
+            <Label htmlFor="minOrderQuantity">Мин. количество заказа</Label>
             <Input
               id="minOrderQuantity"
               type="number"
