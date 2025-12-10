@@ -178,45 +178,45 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-8 gap-2 p-2 bg-transparent h-auto">
-            <TabsTrigger value="participating" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-3 whitespace-normal">
-              <div className="flex items-center gap-1 mb-1">
-                <Icon name="Gavel" className="h-4 w-4" />
-                <span className="text-xs sm:text-sm">Участие</span>
+            <TabsTrigger value="participating" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-2 px-1 whitespace-normal">
+              <div className="flex flex-col items-center gap-0.5">
+                <Icon name="Gavel" className="h-4 w-4 shrink-0" />
+                <span className="text-[10px] sm:text-xs leading-tight text-center">Участие</span>
                 {participatingAuctions.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
+                  <span className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-[10px] font-semibold">
                     {participatingAuctions.length}
                   </span>
                 )}
               </div>
             </TabsTrigger>
-            <TabsTrigger value="active" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-3 whitespace-normal">
-              <div className="flex items-center gap-1 mb-1">
-                <Icon name="Play" className="h-4 w-4" />
-                <span className="text-xs sm:text-sm">Мои</span>
+            <TabsTrigger value="active" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-2 px-1 whitespace-normal">
+              <div className="flex flex-col items-center gap-0.5">
+                <Icon name="Play" className="h-4 w-4 shrink-0" />
+                <span className="text-[10px] sm:text-xs leading-tight text-center">Мои</span>
                 {activeAuctions.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
+                  <span className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-[10px] font-semibold">
                     {activeAuctions.length}
                   </span>
                 )}
               </div>
             </TabsTrigger>
-            <TabsTrigger value="completed" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-3 whitespace-normal">
-              <div className="flex items-center gap-1 mb-1">
-                <Icon name="CheckCircle" className="h-4 w-4" />
-                <span className="text-xs sm:text-sm">Завершенные</span>
+            <TabsTrigger value="completed" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-2 px-1 whitespace-normal">
+              <div className="flex flex-col items-center gap-0.5">
+                <Icon name="CheckCircle" className="h-4 w-4 shrink-0" />
+                <span className="text-[10px] sm:text-xs leading-tight text-center">Завер-<br/>шенные</span>
                 {completedAuctions.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
+                  <span className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-[10px] font-semibold">
                     {completedAuctions.length}
                   </span>
                 )}
               </div>
             </TabsTrigger>
-            <TabsTrigger value="archived" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-3 whitespace-normal">
-              <div className="flex items-center gap-1 mb-1">
-                <Icon name="Archive" className="h-4 w-4" />
-                <span className="text-xs sm:text-sm">Архив</span>
+            <TabsTrigger value="archived" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-2 px-1 whitespace-normal">
+              <div className="flex flex-col items-center gap-0.5">
+                <Icon name="Archive" className="h-4 w-4 shrink-0" />
+                <span className="text-[10px] sm:text-xs leading-tight text-center">Архив</span>
                 {archivedAuctions.length > 0 && (
-                  <span className="ml-1 px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
+                  <span className="px-1.5 py-0.5 bg-primary text-primary-foreground rounded-full text-[10px] font-semibold">
                     {archivedAuctions.length}
                   </span>
                 )}

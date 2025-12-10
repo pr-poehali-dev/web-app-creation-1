@@ -3,7 +3,7 @@
 """
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import psycopg2
 from typing import Dict, Any
 
@@ -35,8 +35,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
         cur = conn.cursor()
         
-        # Обновляем статусы аукционов
-        now = datetime.now()
+        # Якутское время (UTC+9)
+        yakutsk_tz = timezone(timedelta(hours=9))
+        now = datetime.now(yakutsk_tz).replace(tzinfo=None)
         
         # Активируем предстоящие аукционы, время которых наступило
         cur.execute("""
