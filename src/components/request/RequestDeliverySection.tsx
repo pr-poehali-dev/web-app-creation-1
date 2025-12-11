@@ -121,7 +121,7 @@ export default function RequestDeliverySection({
               variant="outline"
               size="sm"
               onClick={() => setShowMapModal(true)}
-              className="flex items-center gap-1.5 text-xs"
+              className="flex items-center gap-1.5 text-xs border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             >
               <Icon name="MapPin" className="h-3.5 w-3.5" />
               <span className="whitespace-nowrap">Указать на карте</span>
