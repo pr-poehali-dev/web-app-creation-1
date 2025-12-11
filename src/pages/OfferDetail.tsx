@@ -336,8 +336,6 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                 </Button>
               </CardContent>
             </Card>
-
-            <OfferSellerCard seller={offer.seller} />
           </div>
         </div>
 
@@ -364,6 +362,7 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
         remainingQuantity={remainingQuantity}
         unit={offer.unit}
         availableDeliveryTypes={offer.availableDeliveryTypes}
+        seller={offer.seller}
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
