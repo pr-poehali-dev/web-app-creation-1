@@ -64,11 +64,11 @@ export default function OfferInfoCard({
         {/* Основная информация - всегда видна */}
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <p className="text-xs text-muted-foreground">Количество</p>
+            <p className="text-xs text-muted-foreground">Общая доступная количество:</p>
             <p className="font-semibold">{quantity} {unit}</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Цена за {unit}</p>
+            <p className="text-xs text-muted-foreground">Цена за единицу:</p>
             <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
           </div>
         </div>

@@ -107,13 +107,17 @@ export default function OfferCard({ offer }: OfferCardProps) {
           {offer.title}
         </h3>
 
-        <div className="flex items-baseline justify-between text-sm">
-          <span className="text-muted-foreground text-xs">
-            {offer.quantity} {offer.unit}
-          </span>
-          <span className="font-bold text-primary text-base">
-            {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-          </span>
+        <div className="space-y-1 text-sm">
+          <div className="flex items-baseline justify-between">
+            <span className="text-muted-foreground text-xs">Общая доступная количество:</span>
+            <span className="font-medium text-xs">{offer.quantity} {offer.unit}</span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-muted-foreground text-xs">Цена за единицу:</span>
+            <span className="font-bold text-primary text-base">
+              {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+            </span>
+          </div>
         </div>
 
         <div className="pt-2 space-y-1 border-t text-xs">
