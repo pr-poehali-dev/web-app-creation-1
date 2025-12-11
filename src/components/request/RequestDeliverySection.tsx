@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
 import type { District } from '@/contexts/DistrictContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+const MapModal = lazy(() => import('@/components/auction/MapModal'));
 
 interface RequestDeliverySectionProps {
   formData: {
@@ -33,6 +35,7 @@ export default function RequestDeliverySection({
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
   const [isDistrictInitialized, setIsDistrictInitialized] = useState(false);
   const [isDistrictsOpen, setIsDistrictsOpen] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
 
   useEffect(() => {
     const selectedDistrict = districts.find(d => d.id === formData.district);
@@ -111,7 +114,19 @@ export default function RequestDeliverySection({
         </div>
 
         <div className="relative">
-          <Label htmlFor="deliveryAddress">Точный адрес доставки *</Label>
+          <div className="flex items-center justify-between mb-2">
+            <Label htmlFor="deliveryAddress">Точный адрес доставки *</Label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMapModal(true)}
+              className="flex items-center gap-2"
+            >
+              <Icon name="MapPin" className="h-4 w-4" />
+              Указать на карте
+            </Button>
+          </div>
           <Input
             id="deliveryAddress"
             value={addressInput}
@@ -195,6 +210,31 @@ export default function RequestDeliverySection({
           </CollapsibleContent>
         </Collapsible>
       </CardContent>
+
+      {showMapModal && (
+        <Suspense fallback={null}>
+          <MapModal
+            isOpen={showMapModal}
+            onClose={() => setShowMapModal(false)}
+            onAddressChange={(address, districtName) => {
+              if (address) {
+                setAddressInput(address);
+                onInputChange('deliveryAddress', address);
+              }
+              if (districtName) {
+                const matchedDistrict = districts.find(d => 
+                  d.name.toLowerCase().includes(districtName.toLowerCase()) ||
+                  districtName.toLowerCase().includes(d.name.toLowerCase())
+                );
+                if (matchedDistrict) {
+                  setDistrictInput(matchedDistrict.name);
+                  onInputChange('district', matchedDistrict.id);
+                }
+              }
+            }}
+          />
+        </Suspense>
+      )}
     </Card>
   );
 }
