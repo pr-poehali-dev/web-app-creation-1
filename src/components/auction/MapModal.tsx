@@ -224,6 +224,10 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       return;
     }
     
+    // Показываем сообщение пользователю
+    const loadingMessage = 'Определяем ваше местоположение...';
+    console.log(loadingMessage);
+    
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         console.log('✅ Геолокация получена:', position.coords);
@@ -320,6 +324,11 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               break;
           }
           alert(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
   };
