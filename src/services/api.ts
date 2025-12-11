@@ -251,6 +251,9 @@ export interface Order {
   id: string;
   orderNumber: string;
   type: 'purchase' | 'sale';
+  offerId?: string;
+  buyer_id?: number;
+  seller_id?: number;
   title: string;
   counterparty: string;
   quantity: number;
@@ -272,6 +275,30 @@ export interface OrdersListResponse {
 }
 
 export const ordersAPI = {
+  async getAll(): Promise<Order[]> {
+    const userId = getUserId();
+    if (!userId) {
+      return [];
+    }
+
+    try {
+      const response = await fetch(`${ORDERS_API}`, {
+        headers: {
+          'X-User-Id': userId,
+        },
+      });
+      
+      if (!response.ok) {
+        return [];
+      }
+      
+      const data = await response.json();
+      return data.orders || [];
+    } catch {
+      return [];
+    }
+  },
+
   async getUserOrders(params?: {
     type?: 'all' | 'purchase' | 'sale';
     status?: string;

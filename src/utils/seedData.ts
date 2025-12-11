@@ -94,16 +94,29 @@ export function initializeSeedData() {
   const offersKey = 'marketplace_offers';
   const requestsKey = 'marketplace_requests';
 
+  const currentUserStr = localStorage.getItem('currentUser');
+  if (!currentUserStr) return;
+
+  let currentUserId = '1';
+  try {
+    const user = JSON.parse(currentUserStr);
+    currentUserId = user.id || '1';
+  } catch {
+    return;
+  }
+
   const existingOffers = localStorage.getItem(offersKey);
   const existingRequests = localStorage.getItem(requestsKey);
 
   if (!existingOffers || JSON.parse(existingOffers).length === 0) {
-    localStorage.setItem(offersKey, JSON.stringify(SEED_OFFERS));
+    const userOffers = SEED_OFFERS.map(offer => ({ ...offer, userId: currentUserId }));
+    localStorage.setItem(offersKey, JSON.stringify(userOffers));
     console.log('Seed offers initialized');
   }
 
   if (!existingRequests || JSON.parse(existingRequests).length === 0) {
-    localStorage.setItem(requestsKey, JSON.stringify(SEED_REQUESTS));
+    const userRequests = SEED_REQUESTS.map(request => ({ ...request, userId: currentUserId }));
+    localStorage.setItem(requestsKey, JSON.stringify(userRequests));
     console.log('Seed requests initialized');
   }
 }

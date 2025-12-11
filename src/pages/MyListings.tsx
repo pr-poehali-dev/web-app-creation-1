@@ -235,11 +235,7 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
           />
 
           <div className="mt-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-              </div>
-            ) : filteredListings.length === 0 ? (
+            {filteredListings.length === 0 ? (
               <Card>
                 <CardContent className="py-12">
                   <div className="text-center">

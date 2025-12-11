@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { getSession } from '@/utils/auth';
-import { ordersAPI } from '@/services/api';
+import { ordersAPI, type Order } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import OrderInfoCard from '@/components/order/OrderInfoCard';
 import OrderManagementCard from '@/components/order/OrderManagementCard';
@@ -20,38 +20,30 @@ interface OrderDetailProps {
 
 type OrderStatus = 'new' | 'processing' | 'shipping' | 'completed' | 'cancelled';
 
-interface OrderDetail {
-  id: string;
-  order_number: string;
-  buyer_id: number;
-  seller_id: number;
-  offer_id: string;
-  title: string;
-  quantity: number;
-  unit: string;
-  price_per_unit: number;
-  total_amount: number;
-  has_vat: boolean;
+interface OrderDetail extends Order {
+  order_number?: string;
+  buyer_id?: number;
+  seller_id?: number;
+  offer_id?: string;
+  price_per_unit?: number;
+  total_amount?: number;
+  has_vat?: boolean;
   vat_amount?: number;
-  delivery_type: string;
+  delivery_type?: string;
   delivery_address?: string;
-  district: string;
-  buyer_name: string;
-  buyer_phone: string;
+  buyer_name?: string;
+  buyer_phone?: string;
   buyer_email?: string;
   buyer_company?: string;
   buyer_inn?: string;
   buyer_comment?: string;
-  status: OrderStatus;
-  orderDate: string;
-  deliveryDate?: string;
   completed_date?: string;
   cancelled_date?: string;
   tracking_number?: string;
   seller_comment?: string;
   cancellation_reason?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   offer_title?: string;
   offer_district?: string;
   buyer_full_name?: string;
@@ -155,38 +147,8 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
     return null;
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-64">
-            <Icon name="Loader2" className="w-8 h-8 animate-spin text-primary" />
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   if (!order) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <Card>
-            <CardContent className="py-8 text-center">
-              <Icon name="AlertCircle" className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600">Заказ не найден</p>
-              <Button onClick={() => navigate('/active-orders')} className="mt-4">
-                К списку заказов
-              </Button>
-            </CardContent>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
+    return null;
   }
 
   const isSeller = order.seller_id === parseInt(currentUser.id);
