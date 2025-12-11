@@ -150,28 +150,18 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!request) return;
     
-    try {
-      deleteRequest(request.id);
-      
-      toast({
-        title: 'Успешно',
-        description: 'Запрос удалён',
-      });
-      
-      setTimeout(() => {
-        navigate('/zaprosy', { replace: true });
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось удалить запрос',
-        variant: 'destructive',
-      });
-    }
+    deleteRequest(request.id);
+    setShowDeleteDialog(false);
+    
+    toast({
+      title: 'Успешно',
+      description: 'Запрос удалён',
+    });
+    
+    navigate('/zaprosy', { replace: true });
   };
 
   const districtName = districts.find(d => d.id === request?.district)?.name || request?.district;

@@ -71,11 +71,19 @@ export function OffersProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteOffer = (id: string) => {
-    setOffers(prev => prev.filter(offer => offer.id !== id));
+    setOffers(prev => {
+      const updated = prev.filter(offer => offer.id !== id);
+      localStorage.setItem(STORAGE_KEY_OFFERS, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const deleteRequest = (id: string) => {
-    setRequests(prev => prev.filter(request => request.id !== id));
+    setRequests(prev => {
+      const updated = prev.filter(request => request.id !== id);
+      localStorage.setItem(STORAGE_KEY_REQUESTS, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   return (

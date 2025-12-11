@@ -138,28 +138,18 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!offer) return;
     
-    try {
-      deleteOffer(offer.id);
-      
-      toast({
-        title: 'Успешно',
-        description: 'Объявление удалено',
-      });
-      
-      setTimeout(() => {
-        navigate('/predlozheniya', { replace: true });
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось удалить объявление',
-        variant: 'destructive',
-      });
-    }
+    deleteOffer(offer.id);
+    setShowDeleteDialog(false);
+    
+    toast({
+      title: 'Успешно',
+      description: 'Объявление удалено',
+    });
+    
+    navigate('/predlozheniya', { replace: true });
   };
 
   const districtName = districts.find(d => d.id === offer?.district)?.name || offer?.district;

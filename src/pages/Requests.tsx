@@ -53,19 +53,11 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     const loadRequests = async () => {
       setIsLoading(true);
       try {
-        const [response, ordersData] = await Promise.all([
-          requestsAPI.getRequests({ status: 'active' }),
-          ordersAPI.getAll()
-        ]);
+        const ordersData = await ordersAPI.getAll();
         setOrders(ordersData);
-        const requestsWithDates = response.requests.map(req => ({
-          ...req,
-          createdAt: new Date(req.createdAt),
-          updatedAt: req.updatedAt ? new Date(req.updatedAt) : undefined,
-        }));
-        setRequests(requestsWithDates);
+        setRequests(contextRequests);
       } catch (error) {
-        console.error('Ошибка загрузки запросов:', error);
+        console.error('Ошибка загрузки данных:', error);
         setRequests(contextRequests);
       } finally {
         setIsLoading(false);
