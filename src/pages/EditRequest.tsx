@@ -8,12 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Icon from '@/components/ui/icon';
 import type { Request } from '@/types/offer';
 import { requestsAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useOffers } from '@/contexts/OffersContext';
 
 interface EditRequestProps {
   isAuthenticated: boolean;
@@ -43,6 +54,8 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   const [responses, setResponses] = useState<any[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState('info');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { deleteRequest } = useOffers();
 
   useEffect(() => {
     if (!currentUser || !isAuthenticated) {
@@ -122,6 +135,28 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
 
   const handleOpenChat = (responseId: string) => {
     navigate(`/response-detail/${responseId}`);
+  };
+
+  const handleEdit = () => {
+    toast({
+      title: 'В разработке',
+      description: 'Редактирование через форму будет добавлено в следующем обновлении',
+    });
+  };
+
+  const handleDelete = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (!request) return;
+    
+    deleteRequest(request.id);
+    toast({
+      title: 'Успешно',
+      description: 'Запрос удалён',
+    });
+    navigate('/zaprosy');
   };
 
   const districtName = districts.find(d => d.id === request?.district)?.name || request?.district;
@@ -248,11 +283,11 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
                   <Separator />
                   
                   <div className="flex gap-2">
-                    <Button className="flex-1" disabled>
+                    <Button className="flex-1" onClick={handleEdit}>
                       <Icon name="Pencil" className="w-4 h-4 mr-2" />
-                      Редактировать (скоро)
+                      Редактировать
                     </Button>
-                    <Button variant="outline" disabled>
+                    <Button variant="destructive" onClick={handleDelete}>
                       <Icon name="Trash2" className="w-4 h-4 mr-2" />
                       Удалить
                     </Button>
@@ -347,6 +382,28 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
       </main>
 
       <Footer />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить запрос?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Запрос будет удалён безвозвратно.
+              {responses.length > 0 && (
+                <span className="block mt-2 text-destructive font-semibold">
+                  На этот запрос уже есть отклики ({responses.length}). Удаление может повлиять на них.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

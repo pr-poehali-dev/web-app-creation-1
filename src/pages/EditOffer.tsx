@@ -8,12 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { useOffers } from '@/contexts/OffersContext';
 
 interface EditOfferProps {
   isAuthenticated: boolean;
@@ -43,6 +54,8 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   const [orders, setOrders] = useState<any[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState('info');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { deleteOffer } = useOffers();
 
   useEffect(() => {
     if (!currentUser || !isAuthenticated) {
@@ -110,6 +123,28 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
 
   const handleOpenChat = (orderId: string) => {
     navigate(`/order-detail/${orderId}`);
+  };
+
+  const handleEdit = () => {
+    toast({
+      title: 'В разработке',
+      description: 'Редактирование через форму будет добавлено в следующем обновлении',
+    });
+  };
+
+  const handleDelete = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (!offer) return;
+    
+    deleteOffer(offer.id);
+    toast({
+      title: 'Успешно',
+      description: 'Объявление удалено',
+    });
+    navigate('/predlozheniya');
   };
 
   const districtName = districts.find(d => d.id === offer?.district)?.name || offer?.district;
@@ -247,11 +282,11 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
                     <Separator />
                     
                     <div className="flex gap-2">
-                      <Button className="flex-1" disabled>
+                      <Button className="flex-1" onClick={handleEdit}>
                         <Icon name="Pencil" className="w-4 h-4 mr-2" />
-                        Редактировать (скоро)
+                        Редактировать
                       </Button>
-                      <Button variant="outline" disabled>
+                      <Button variant="destructive" onClick={handleDelete}>
                         <Icon name="Trash2" className="w-4 h-4 mr-2" />
                         Удалить
                       </Button>
@@ -366,6 +401,28 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       </main>
 
       <Footer />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить объявление?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Объявление будет удалено безвозвратно.
+              {orders.length > 0 && (
+                <span className="block mt-2 text-destructive font-semibold">
+                  У этого объявления есть активные заказы ({orders.length}). Удаление может повлиять на них.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
