@@ -22,7 +22,7 @@ interface OfferLocationSectionProps {
   formData: {
     district: string;
     fullAddress: string;
-    gpsCoordinates?: string;
+    gpsCoordinates: string;
     availableDistricts: string[];
     availableDeliveryTypes: DeliveryType[];
   };
@@ -257,26 +257,25 @@ export default function OfferLocationSection({
             coordinates={formData.gpsCoordinates || ''}
             onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
             onAddressChange={(address, districtName) => {
+              console.log('📬 onAddressChange вызван:', { address, districtName });
+              
               if (address) {
                 setAddressInput(address);
                 onInputChange('fullAddress', address);
               }
+              
               if (districtName) {
                 const normalizedDistrictName = districtName.toLowerCase().trim();
-                console.log('🔍 Searching for district:', normalizedDistrictName);
+                console.log('🔍 Ищу район:', normalizedDistrictName);
+                console.log('📊 Всего районов в базе:', districts.length);
                 
-                // Попытка найти точное совпадение или частичное совпадение
                 const matchedDistrict = districts.find(d => {
                   const normalizedDbName = d.name.toLowerCase().trim();
                   
-                  // Точное совпадение
                   if (normalizedDbName === normalizedDistrictName) return true;
-                  
-                  // Частичное совпадение
                   if (normalizedDbName.includes(normalizedDistrictName)) return true;
                   if (normalizedDistrictName.includes(normalizedDbName)) return true;
                   
-                  // Убираем служебные слова для более точного сопоставления
                   const cleanDbName = normalizedDbName
                     .replace(/район/g, '')
                     .replace(/округ/g, '')
@@ -303,7 +302,6 @@ export default function OfferLocationSection({
                   if (cleanDbName && cleanOsmName && cleanDbName.includes(cleanOsmName)) return true;
                   if (cleanDbName && cleanOsmName && cleanOsmName.includes(cleanDbName)) return true;
                   
-                  // Проверка первого слова
                   const firstWordDb = cleanDbName.split(' ')[0];
                   const firstWordOsm = cleanOsmName.split(' ')[0];
                   if (firstWordDb && firstWordOsm && firstWordDb.length > 3 && firstWordOsm.length > 3) {
@@ -315,11 +313,13 @@ export default function OfferLocationSection({
                 });
                 
                 if (matchedDistrict) {
-                  console.log('✅ District matched:', matchedDistrict.name);
+                  console.log('✅ Район найден:', matchedDistrict.name);
                   setDistrictInput(matchedDistrict.name);
                   onInputChange('district', matchedDistrict.id);
+                  setIsDistrictInitialized(true);
                 } else {
-                  console.log('❌ No district match found for:', normalizedDistrictName);
+                  console.log('❌ Район не найден:', normalizedDistrictName);
+                  console.log('📝 Примеры районов:', districts.slice(0, 5).map(d => d.name));
                 }
               }
             }}

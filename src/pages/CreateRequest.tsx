@@ -231,6 +231,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               formData={{
                 district: formData.district,
                 deliveryAddress: formData.deliveryAddress,
+                gpsCoordinates: formData.gpsCoordinates,
                 availableDistricts: formData.availableDistricts,
               }}
               districts={districts}

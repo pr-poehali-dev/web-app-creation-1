@@ -271,6 +271,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               formData={{
                 district: formData.district,
                 fullAddress: formData.fullAddress,
+                gpsCoordinates: formData.gpsCoordinates,
                 availableDistricts: formData.availableDistricts,
                 availableDeliveryTypes: formData.availableDeliveryTypes,
               }}
