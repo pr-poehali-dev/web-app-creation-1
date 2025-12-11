@@ -210,7 +210,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
           {isAuthenticated && (
             <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap">
               <Icon name="Plus" className="h-4 w-4" />
-              <span className="hidden sm:inline">Создать</span>
+              <span>Создать предложение</span>
             </Button>
           )}
         </div>

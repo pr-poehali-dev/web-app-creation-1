@@ -165,7 +165,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
           {isAuthenticated && (
             <Button onClick={() => navigate('/create-request')} className="flex items-center gap-2 whitespace-nowrap">
               <Icon name="Plus" className="h-4 w-4" />
-              <span className="hidden sm:inline">Создать</span>
+              <span>Создать запрос</span>
             </Button>
           )}
         </div>
