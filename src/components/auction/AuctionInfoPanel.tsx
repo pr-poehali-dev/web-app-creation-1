@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import type { Auction } from '@/types/auction';
+import { getTimeUntilStart } from './AuctionHelpers';
 
 interface AuctionInfoPanelProps {
   auction: Auction;
   categoryName?: string;
   districtName?: string;
   timeRemaining: string;
+  timeUntilStart?: string;
   onMakeBidClick: () => void;
 }
 
@@ -34,6 +36,7 @@ export default function AuctionInfoPanel({
   categoryName, 
   districtName, 
   timeRemaining,
+  timeUntilStart,
   onMakeBidClick 
 }: AuctionInfoPanelProps) {
   return (
@@ -84,9 +87,15 @@ export default function AuctionInfoPanel({
         <div className="space-y-0.5">
           <div className="flex items-center gap-1 text-muted-foreground">
             <Icon name="Clock" className="h-3 w-3 md:h-3.5 md:w-3.5" />
-            <span className="text-[10px] md:text-xs">Осталось</span>
+            <span className="text-[10px] md:text-xs">
+              {auction.status === 'upcoming' ? 'До старта' : 'Осталось'}
+            </span>
           </div>
-          <p className="text-base md:text-lg lg:text-xl font-bold">{timeRemaining}</p>
+          <p className={`text-base md:text-lg lg:text-xl font-bold ${
+            auction.status === 'upcoming' ? 'text-blue-600' : ''
+          }`}>
+            {auction.status === 'upcoming' ? timeUntilStart : timeRemaining}
+          </p>
         </div>
       </div>
 

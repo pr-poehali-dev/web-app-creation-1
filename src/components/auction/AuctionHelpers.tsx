@@ -17,10 +17,35 @@ export const getTimeRemaining = (endTime?: Date | string): string => {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-  if (days > 0) return `${days}д ${hours}ч`;
-  if (hours > 0) return `${hours}ч ${minutes}м`;
-  return `${minutes}м`;
+  if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
+  if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
+  if (minutes > 0) return `${minutes}м ${seconds}с`;
+  return `${seconds}с`;
+};
+
+export const getTimeUntilStart = (startTime?: Date | string): string => {
+  if (!startTime) return 'Неизвестно';
+  
+  const startDate = typeof startTime === 'string' ? new Date(startTime) : startTime;
+  
+  if (isNaN(startDate.getTime())) return 'Неизвестно';
+  
+  const now = new Date();
+  const diff = startDate.getTime() - now.getTime();
+
+  if (diff <= 0) return 'Начался';
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
+  if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
+  if (minutes > 0) return `${minutes}м ${seconds}с`;
+  return `${seconds}с`;
 };
 
 export const getStatusBadge = (status: Auction['status']) => {

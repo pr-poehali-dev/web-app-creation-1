@@ -14,6 +14,7 @@ export function useAuctionData(id: string | undefined) {
   const [bids, setBids] = useState<AuctionBid[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState('');
+  const [timeUntilStart, setTimeUntilStart] = useState('');
   const bidsRef = useRef<HTMLDivElement>(null);
   const notificationSentRef = useRef<boolean>(false);
 
@@ -194,10 +195,12 @@ export function useAuctionData(id: string | undefined) {
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-      if (days > 0) return `${days} дн. ${hours} ч.`;
-      if (hours > 0) return `${hours} ч. ${minutes} мин.`;
-      return `${minutes} мин.`;
+      if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
+      if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
+      if (minutes > 0) return `${minutes}м ${seconds}с`;
+      return `${seconds}с`;
     };
 
     const updateTimer = () => {
@@ -209,6 +212,36 @@ export function useAuctionData(id: string | undefined) {
 
     return () => clearInterval(interval);
   }, [auction?.endDate]);
+
+  useEffect(() => {
+    if (!auction?.startDate || auction.status !== 'upcoming') return;
+
+    const getTimeUntilStart = (startTime: Date) => {
+      const now = new Date();
+      const diff = startTime.getTime() - now.getTime();
+
+      if (diff <= 0) return 'Начался';
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
+      if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
+      if (minutes > 0) return `${minutes}м ${seconds}с`;
+      return `${seconds}с`;
+    };
+
+    const updateTimer = () => {
+      setTimeUntilStart(getTimeUntilStart(auction.startDate));
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction?.startDate, auction?.status]);
 
   const updateBids = (newBids: AuctionBid[], newCurrentBid: number) => {
     setBids(newBids);
@@ -225,6 +258,7 @@ export function useAuctionData(id: string | undefined) {
     bids,
     isRefreshing,
     timeRemaining,
+    timeUntilStart,
     bidsRef,
     updateBids
   };

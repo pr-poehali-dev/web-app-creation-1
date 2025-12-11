@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 interface AuctionCompletionFormProps {
   auctionId: string;
   winnerName: string;
+  winnerId: string;
   winningBid: number;
   isWinner: boolean;
   isSeller: boolean;
@@ -18,6 +19,7 @@ interface AuctionCompletionFormProps {
 export default function AuctionCompletionForm({
   auctionId,
   winnerName,
+  winnerId,
   winningBid,
   isWinner,
   isSeller,
@@ -31,12 +33,31 @@ export default function AuctionCompletionForm({
     notes: '',
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [contactsReceived, setContactsReceived] = useState<any>(null);
+
+  useEffect(() => {
+    const checkReceivedContacts = () => {
+      const keyToCheck = isWinner 
+        ? `auction_contact_${auctionId}_seller`
+        : `auction_contact_${auctionId}_winner`;
+      
+      const storedData = localStorage.getItem(keyToCheck);
+      if (storedData) {
+        setContactsReceived(JSON.parse(storedData));
+      }
+    };
+
+    checkReceivedContacts();
+    const interval = setInterval(checkReceivedContacts, 2000);
+
+    return () => clearInterval(interval);
+  }, [auctionId, isWinner]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const key = `auction_contact_${auctionId}`;
-    localStorage.setItem(key, JSON.stringify({
+    const myKey = `auction_contact_${auctionId}_${isWinner ? 'winner' : 'seller'}`;
+    localStorage.setItem(myKey, JSON.stringify({
       ...formData,
       submittedAt: new Date().toISOString(),
       role: isWinner ? 'winner' : 'seller',
@@ -51,26 +72,77 @@ export default function AuctionCompletionForm({
     });
   };
 
-  if (isSubmitted) {
+  if (isSubmitted || contactsReceived) {
     return (
-      <Card className="border-green-500/50 bg-green-50/50 dark:bg-green-950/20">
-        <CardContent className="py-4 md:py-6">
-          <div className="text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
-              <Icon name="CheckCircle" className="h-6 w-6 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm md:text-base mb-1">Контакты отправлены</h3>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                {isWinner 
-                  ? 'Продавец свяжется с вами для передачи товара'
-                  : 'Победитель получил ваши контакты'
-                }
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        {isSubmitted && (
+          <Card className="border-green-500/50 bg-green-50/50 dark:bg-green-950/20">
+            <CardContent className="py-4 md:py-6">
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+                  <Icon name="CheckCircle" className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm md:text-base mb-1">Контакты отправлены</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    {isWinner 
+                      ? 'Продавец свяжется с вами для передачи товара'
+                      : 'Победитель получил ваши контакты'
+                    }
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
+        {contactsReceived && (
+          <Card className="border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20">
+            <CardHeader className="py-3 md:py-4">
+              <CardTitle className="text-sm md:text-base flex items-center gap-2">
+                <Icon name="User" className="h-4 w-4 md:h-5 md:w-5 text-blue-500" />
+                {isWinner ? 'Контакты продавца' : 'Контакты победителя'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="py-3 md:py-4 space-y-2">
+              {contactsReceived.phone && (
+                <div className="flex items-center gap-2">
+                  <Icon name="Phone" className="h-4 w-4 text-muted-foreground" />
+                  <a href={`tel:${contactsReceived.phone}`} className="text-sm md:text-base font-medium text-blue-600 hover:underline">
+                    {contactsReceived.phone}
+                  </a>
+                </div>
+              )}
+              {contactsReceived.email && (
+                <div className="flex items-center gap-2">
+                  <Icon name="Mail" className="h-4 w-4 text-muted-foreground" />
+                  <a href={`mailto:${contactsReceived.email}`} className="text-sm md:text-base font-medium text-blue-600 hover:underline">
+                    {contactsReceived.email}
+                  </a>
+                </div>
+              )}
+              {contactsReceived.address && (
+                <div className="flex items-start gap-2">
+                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <p className="text-xs md:text-sm text-muted-foreground">{contactsReceived.address}</p>
+                </div>
+              )}
+              {contactsReceived.preferredTime && (
+                <div className="flex items-start gap-2">
+                  <Icon name="Clock" className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <p className="text-xs md:text-sm text-muted-foreground">{contactsReceived.preferredTime}</p>
+                </div>
+              )}
+              {contactsReceived.notes && (
+                <div className="flex items-start gap-2 pt-2 border-t">
+                  <Icon name="MessageSquare" className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <p className="text-xs md:text-sm text-muted-foreground">{contactsReceived.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
     );
   }
 

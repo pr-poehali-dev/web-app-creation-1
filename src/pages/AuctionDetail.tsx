@@ -31,6 +31,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
     bids,
     isRefreshing,
     timeRemaining,
+    timeUntilStart,
     bidsRef,
     updateBids
   } = useAuctionData(id);
@@ -74,6 +75,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
             categoryName={category?.name}
             districtName={districtName}
             timeRemaining={timeRemaining}
+            timeUntilStart={timeUntilStart}
             onMakeBidClick={() => {
               bidsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }}
@@ -96,6 +98,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
             <AuctionCompletionForm
               auctionId={auction.id}
               winnerName={bids[0].userName}
+              winnerId={bids[0].userId}
               winningBid={bids[0].amount}
               isWinner={bids[0].userId === currentUser.userId}
               isSeller={auction.userId === currentUser.userId}
