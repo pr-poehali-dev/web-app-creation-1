@@ -35,7 +35,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/request/${request.id}`);
+    navigate(`/edit-request/${request.id}`);
   };
 
   const handleDelete = (e: React.MouseEvent) => {

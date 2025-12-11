@@ -59,7 +59,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/offer/${offer.id}`);
+    navigate(`/edit-offer/${offer.id}`);
   };
 
   const handleDelete = (e: React.MouseEvent) => {

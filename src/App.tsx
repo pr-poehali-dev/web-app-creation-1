@@ -21,6 +21,8 @@ import Notifications from "./pages/Notifications";
 import SearchResults from "./pages/SearchResults";
 import OfferDetail from "./pages/OfferDetail";
 import RequestDetail from "./pages/RequestDetail";
+import EditOffer from "./pages/EditOffer";
+import EditRequest from "./pages/EditRequest";
 import CreateOffer from "./pages/CreateOffer";
 import CreateRequest from "./pages/CreateRequest";
 import CreateAuction from "./pages/CreateAuction";
@@ -101,8 +103,10 @@ const App = () => {
             <Route path="/search" element={<SearchResults isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/edit-offer/:id" element={<EditOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/request/:id" element={<RequestDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/edit-request/:id" element={<EditRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/auction" element={<Auctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/auction/:id" element={<AuctionDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/about" element={<About isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

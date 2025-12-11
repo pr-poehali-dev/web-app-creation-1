@@ -1,0 +1,370 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import Icon from '@/components/ui/icon';
+import type { Offer } from '@/types/offer';
+import { offersAPI, ordersAPI } from '@/services/api';
+import { getSession } from '@/utils/auth';
+import { useToast } from '@/hooks/use-toast';
+import { useDistrict } from '@/contexts/DistrictContext';
+
+interface EditOfferProps {
+  isAuthenticated: boolean;
+  onLogout: () => void;
+}
+
+interface ChatMessage {
+  id: string;
+  orderId: string;
+  orderNumber: string;
+  buyerName: string;
+  message: string;
+  timestamp: Date;
+  isRead: boolean;
+}
+
+export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps) {
+  useScrollToTop();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const currentUser = getSession();
+  const { districts } = useDistrict();
+  
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [activeTab, setActiveTab] = useState('info');
+
+  useEffect(() => {
+    if (!currentUser || !isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    const loadData = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      try {
+        const [offerData, ordersData] = await Promise.all([
+          offersAPI.getOfferById(id),
+          ordersAPI.getAll()
+        ]);
+        
+        const mappedOffer: Offer = {
+          ...offerData,
+          pricePerUnit: offerData.price_per_unit || offerData.pricePerUnit || 0,
+          userId: offerData.user_id || offerData.userId,
+          createdAt: new Date(offerData.createdAt || offerData.created_at),
+        };
+
+        if (mappedOffer.userId !== currentUser.id) {
+          toast({
+            title: 'Ошибка доступа',
+            description: 'Вы не можете редактировать чужое объявление',
+            variant: 'destructive',
+          });
+          navigate(`/offer/${id}`);
+          return;
+        }
+        
+        setOffer(mappedOffer);
+        
+        const relatedOrders = ordersData.filter(o => o.offerId === id);
+        setOrders(relatedOrders);
+
+        const mockMessages: ChatMessage[] = relatedOrders.slice(0, 3).map((order, index) => ({
+          id: `msg-${index}`,
+          orderId: order.id,
+          orderNumber: order.orderNumber || `ORD-${order.id.slice(0, 8)}`,
+          buyerName: order.counterparty || 'Заказчик',
+          message: index === 0 ? 'Когда можете доставить товар?' : index === 1 ? 'Есть сертификаты качества?' : 'Можно ли заказать больше?',
+          timestamp: new Date(Date.now() - index * 3600000),
+          isRead: index > 0,
+        }));
+        setMessages(mockMessages);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить данные объявления',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [id, currentUser, isAuthenticated, navigate, toast]);
+
+  const handleOpenChat = (orderId: string) => {
+    navigate(`/order-detail/${orderId}`);
+  };
+
+  const districtName = districts.find(d => d.id === offer?.district)?.name || offer?.district;
+  const unreadCount = messages.filter(m => !m.isRead).length;
+
+  if (!currentUser) {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <main className="container mx-auto px-4 py-8 flex-1">
+          <div className="flex justify-center items-center h-64">
+            <Icon name="Loader2" className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!offer) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <main className="container mx-auto px-4 py-8 flex-1">
+          <Card>
+            <CardContent className="py-8 text-center">
+              <Icon name="AlertCircle" className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+              <p className="text-gray-600">Объявление не найдено</p>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      
+      <main className="container mx-auto px-4 py-8 flex-1 max-w-6xl">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <Icon name="ArrowLeft" className="w-4 h-4 mr-2" />
+          Назад
+        </Button>
+
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">Управление объявлением</h1>
+          <Button onClick={() => navigate(`/offer/${id}`)} variant="outline">
+            <Icon name="Eye" className="w-4 h-4 mr-2" />
+            Просмотр
+          </Button>
+        </div>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="info">
+              <Icon name="Info" className="w-4 h-4 mr-2" />
+              Информация
+            </TabsTrigger>
+            <TabsTrigger value="orders">
+              <Icon name="ShoppingCart" className="w-4 h-4 mr-2" />
+              Заказы
+              {orders.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {orders.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="messages">
+              <Icon name="MessageSquare" className="w-4 h-4 mr-2" />
+              Сообщения
+              {unreadCount > 0 && (
+                <Badge variant="destructive" className="ml-2">
+                  {unreadCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Основная информация</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {offer.images && offer.images.length > 0 && (
+                    <div className="aspect-video rounded-lg overflow-hidden">
+                      <img
+                        src={offer.images[0].url}
+                        alt={offer.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-2xl font-bold">{offer.title}</h3>
+                      <p className="text-muted-foreground mt-2">{offer.description}</p>
+                    </div>
+                    
+                    <Separator />
+                    
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Цена за единицу:</span>
+                        <p className="font-bold text-lg text-primary">
+                          {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Количество:</span>
+                        <p className="font-semibold">{offer.quantity} {offer.unit}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Район:</span>
+                        <p className="font-semibold">{districtName}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Просмотры:</span>
+                        <p className="font-semibold">{offer.views || 0}</p>
+                      </div>
+                    </div>
+
+                    <Separator />
+                    
+                    <div className="flex gap-2">
+                      <Button className="flex-1" disabled>
+                        <Icon name="Pencil" className="w-4 h-4 mr-2" />
+                        Редактировать (скоро)
+                      </Button>
+                      <Button variant="outline" disabled>
+                        <Icon name="Trash2" className="w-4 h-4 mr-2" />
+                        Удалить
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="orders" className="space-y-4">
+            {orders.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Icon name="ShoppingCart" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">Пока нет заказов</h3>
+                  <p className="text-muted-foreground">
+                    Заказы по этому объявлению будут отображаться здесь
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {orders.map((order) => (
+                  <Card key={order.id} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold">Заказ №{order.orderNumber || order.id.slice(0, 8)}</h3>
+                            <Badge variant={
+                              order.status === 'completed' ? 'default' :
+                              order.status === 'cancelled' ? 'destructive' :
+                              'secondary'
+                            }>
+                              {order.status === 'new' ? 'Новый' :
+                               order.status === 'processing' ? 'В обработке' :
+                               order.status === 'shipping' ? 'Доставка' :
+                               order.status === 'completed' ? 'Завершён' :
+                               'Отменён'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            <Icon name="User" className="inline w-3 h-3 mr-1" />
+                            {order.counterparty || 'Покупатель'}
+                          </p>
+                          <p className="text-sm font-semibold text-primary">
+                            {order.totalAmount?.toLocaleString('ru-RU') || 0} ₽
+                          </p>
+                        </div>
+                        <Button onClick={() => handleOpenChat(order.id)}>
+                          <Icon name="MessageSquare" className="w-4 h-4 mr-2" />
+                          Открыть чат
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-4">
+            {messages.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Icon name="MessageSquare" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold mb-2">Нет сообщений</h3>
+                  <p className="text-muted-foreground">
+                    Сообщения от заказчиков будут отображаться здесь
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {messages.map((message) => (
+                  <Card 
+                    key={message.id} 
+                    className={`cursor-pointer hover:shadow-lg transition-shadow ${!message.isRead ? 'border-primary' : ''}`}
+                    onClick={() => handleOpenChat(message.orderId)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Icon name="User" className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-semibold">{message.buyerName}</span>
+                            {!message.isRead && (
+                              <Badge variant="destructive" className="h-5">Новое</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Заказ: {message.orderNumber}
+                          </p>
+                          <p className="text-sm mt-2">{message.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {message.timestamp.toLocaleString('ru-RU')}
+                          </p>
+                        </div>
+                        <Button size="sm" variant="outline">
+                          <Icon name="Send" className="w-4 h-4 mr-2" />
+                          Ответить
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
