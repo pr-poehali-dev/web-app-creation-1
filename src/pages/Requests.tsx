@@ -219,14 +219,14 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
                 <div className="flex items-center gap-3 flex-wrap text-xs">
                   {isAuthenticated && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 px-3 py-2 border-2 border-primary rounded-lg bg-primary/5">
                       <Switch
                         id="show-only-my-requests"
                         checked={showOnlyMy}
                         onCheckedChange={setShowOnlyMy}
                         className="scale-75"
                       />
-                      <Label htmlFor="show-only-my-requests" className="cursor-pointer text-muted-foreground">
+                      <Label htmlFor="show-only-my-requests" className="cursor-pointer text-foreground font-medium">
                         Только мои
                       </Label>
                     </div>

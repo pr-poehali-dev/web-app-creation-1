@@ -120,6 +120,24 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await auctionsAPI.deleteAuction(id);
+      setAuctions(prev => prev.filter(a => a.id !== id));
+      toast({
+        title: 'Успешно',
+        description: 'Аукцион удален',
+      });
+    } catch (error) {
+      console.error('Error deleting auction:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить аукцион',
+        variant: 'destructive',
+      });
+    }
+  };
+
   useEffect(() => {
     loadAuctions(false);
     
@@ -290,14 +308,14 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
         )}
 
         {isAuthenticated && (
-          <div className="mb-2 md:mb-3 flex items-center gap-2">
+          <div className="mb-2 md:mb-3 flex items-center gap-2 px-3 py-2 border-2 border-primary rounded-lg bg-primary/5 w-fit">
             <Switch
               id="show-only-my"
               checked={showOnlyMy}
               onCheckedChange={setShowOnlyMy}
               className="scale-75"
             />
-            <Label htmlFor="show-only-my" className="cursor-pointer text-xs md:text-sm text-muted-foreground">
+            <Label htmlFor="show-only-my" className="cursor-pointer text-xs md:text-sm text-foreground font-medium">
               Только мои
             </Label>
           </div>
@@ -354,6 +372,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
                     districts={districts}
                     isAuthenticated={isAuthenticated}
                     isHighlighted={filters.query.length >= 2}
+                    onDelete={handleDelete}
                   />
                 </div>
               ))}

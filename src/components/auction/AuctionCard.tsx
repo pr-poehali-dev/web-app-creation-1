@@ -1,23 +1,57 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Icon from '@/components/ui/icon';
 import type { Auction } from '@/types/auction';
 import { CATEGORIES } from '@/data/categories';
 import { getTimeRemaining, getStatusBadge } from './AuctionHelpers';
+import { getSession } from '@/utils/auth';
 
 interface AuctionCardProps {
   auction: Auction;
   districts: Array<{ id: string; name: string }>;
   isAuthenticated: boolean;
   isHighlighted?: boolean;
+  onDelete?: (id: string) => void;
 }
 
-export default function AuctionCard({ auction, districts, isAuthenticated, isHighlighted = false }: AuctionCardProps) {
+export default function AuctionCard({ auction, districts, isAuthenticated, isHighlighted = false, onDelete }: AuctionCardProps) {
   const navigate = useNavigate();
+  const currentUser = getSession();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  const isOwner = currentUser && auction.userId === currentUser.id;
   const category = CATEGORIES.find(c => c.id === auction.category);
   const districtName = districts.find(d => d.id === auction.district)?.name;
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/edit-auction/${auction.id}`);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (onDelete) {
+      onDelete(auction.id);
+    }
+    setShowDeleteDialog(false);
+  };
 
   return (
     <Card
@@ -148,41 +182,81 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
       </CardContent>
 
       <CardFooter className="pt-0 pb-3">
-        <Button
-          className="w-full h-9 text-sm"
-          size="sm"
-          variant={auction.status === 'ended' ? 'secondary' : 'default'}
-          disabled={auction.status === 'ended' || auction.status === 'upcoming'}
-          onClick={() => {
-            if (!isAuthenticated) {
-              navigate('/login');
-              return;
-            }
-            if (auction.status === 'active') {
-              navigate(`/auction/${auction.id}?scrollTo=bids`);
-            } else {
-              navigate(`/auction/${auction.id}`);
-            }
-          }}
-        >
-          {auction.status === 'ended' ? (
-            <>
-              <Icon name="CheckCircle" className="mr-1.5 h-3.5 w-3.5" />
-              Завершен
-            </>
-          ) : !isAuthenticated ? (
-            <>
-              <Icon name="Lock" className="mr-1.5 h-3.5 w-3.5" />
-              Войти
-            </>
-          ) : (
-            <>
-              <Icon name="Gavel" className="mr-1.5 h-3.5 w-3.5" />
-              Сделать ставку
-            </>
-          )}
-        </Button>
+        {isOwner ? (
+          <div className="flex gap-2 w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 h-9 text-sm"
+              onClick={handleEdit}
+            >
+              <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+              Редактировать
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="flex-1 h-9 text-sm"
+              onClick={handleDelete}
+            >
+              <Icon name="Trash2" className="mr-1.5 h-3.5 w-3.5" />
+              Удалить
+            </Button>
+          </div>
+        ) : (
+          <Button
+            className="w-full h-9 text-sm"
+            size="sm"
+            variant={auction.status === 'ended' ? 'secondary' : 'default'}
+            disabled={auction.status === 'ended' || auction.status === 'upcoming'}
+            onClick={() => {
+              if (!isAuthenticated) {
+                navigate('/login');
+                return;
+              }
+              if (auction.status === 'active') {
+                navigate(`/auction/${auction.id}?scrollTo=bids`);
+              } else {
+                navigate(`/auction/${auction.id}`);
+              }
+            }}
+          >
+            {auction.status === 'ended' ? (
+              <>
+                <Icon name="CheckCircle" className="mr-1.5 h-3.5 w-3.5" />
+                Завершен
+              </>
+            ) : !isAuthenticated ? (
+              <>
+                <Icon name="Lock" className="mr-1.5 h-3.5 w-3.5" />
+                Войти
+              </>
+            ) : (
+              <>
+                <Icon name="Gavel" className="mr-1.5 h-3.5 w-3.5" />
+                Сделать ставку
+              </>
+            )}
+          </Button>
+        )}
       </CardFooter>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить аукцион?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Аукцион будет удален навсегда.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

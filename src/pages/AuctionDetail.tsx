@@ -12,6 +12,7 @@ import AuctionImageGallery from '@/components/auction/AuctionImageGallery';
 import AuctionInfoPanel from '@/components/auction/AuctionInfoPanel';
 import AuctionBidForm from '@/components/auction/AuctionBidForm';
 import BidHistoryTabs from '@/components/auction/BidHistoryTabs';
+import AuctionCompletionForm from '@/components/auction/AuctionCompletionForm';
 
 interface AuctionDetailProps {
   isAuthenticated: boolean;
@@ -91,6 +92,16 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
         </Card>
 
         <div className="space-y-2 md:space-y-3" ref={bidsRef}>
+          {auction.status === 'ended' && bids.length > 0 && currentUser && (
+            <AuctionCompletionForm
+              auctionId={auction.id}
+              winnerName={bids[0].userName}
+              winningBid={bids[0].amount}
+              isWinner={bids[0].userId === currentUser.userId}
+              isSeller={auction.userId === currentUser.userId}
+            />
+          )}
+
           <AuctionBidForm
             auction={auction}
             currentUser={currentUser}
