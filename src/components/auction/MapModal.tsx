@@ -217,14 +217,21 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   };
 
   const handleUseMyLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-          onCoordinatesChange(coords);
-          setMapCenter([lat, lng]);
+    console.log('🗺️ Запрос геолокации...');
+    if (!navigator.geolocation) {
+      console.error('❌ Геолокация не поддерживается браузером');
+      alert('Ваш браузер не поддерживает геолокацию');
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        console.log('✅ Геолокация получена:', position.coords);
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        onCoordinatesChange(coords);
+        setMapCenter([lat, lng]);
           
           // Создаем или перемещаем маркер
           if (mapRef.current) {
@@ -299,10 +306,22 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           }
         },
         (error) => {
-          console.error('Ошибка получения координат:', error);
+          console.error('❌ Ошибка получения координат:', error);
+          let errorMessage = 'Не удалось определить местоположение. ';
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage += 'Разрешите доступ к геолокации в настройках браузера.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage += 'Местоположение недоступно.';
+              break;
+            case error.TIMEOUT:
+              errorMessage += 'Время ожидания истекло.';
+              break;
+          }
+          alert(errorMessage);
         }
       );
-    }
   };
 
   const handleSearch = async () => {
