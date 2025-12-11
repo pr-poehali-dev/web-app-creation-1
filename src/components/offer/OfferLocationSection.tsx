@@ -41,17 +41,15 @@ export default function OfferLocationSection({
 }: OfferLocationSectionProps) {
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.fullAddress);
-  const [isDistrictInitialized, setIsDistrictInitialized] = useState(false);
   const [showDistrictDelivery, setShowDistrictDelivery] = useState(true);
   const [showMapModal, setShowMapModal] = useState(false);
 
   useEffect(() => {
     const selectedDistrict = districts.find(d => d.id === formData.district);
-    if (selectedDistrict && !isDistrictInitialized) {
+    if (selectedDistrict) {
       setDistrictInput(selectedDistrict.name);
-      setIsDistrictInitialized(true);
     }
-  }, [formData.district, districts, isDistrictInitialized]);
+  }, [formData.district, districts]);
 
   const filteredDistricts = useMemo(() => {
     if (!districtInput || districtInput.length < 1) return [];
@@ -314,9 +312,7 @@ export default function OfferLocationSection({
                 
                 if (matchedDistrict) {
                   console.log('✅ Район найден:', matchedDistrict.name);
-                  setDistrictInput(matchedDistrict.name);
                   onInputChange('district', matchedDistrict.id);
-                  setIsDistrictInitialized(true);
                 } else {
                   console.log('❌ Район не найден:', normalizedDistrictName);
                   console.log('📝 Примеры районов:', districts.slice(0, 5).map(d => d.name));
