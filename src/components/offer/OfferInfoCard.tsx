@@ -81,7 +81,7 @@ export default function OfferInfoCard({
         </div>
 
         {/* Дополнительная информация в аккордеоне */}
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible defaultValue="details" className="w-full">
           <AccordionItem value="details" className="border-0">
             <AccordionTrigger className="py-2 text-sm font-medium">
               Подробная информация
