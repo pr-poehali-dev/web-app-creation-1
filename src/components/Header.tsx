@@ -246,13 +246,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     <Icon name="User" className="mr-2 h-4 w-4" />
                     Мои данные
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-offers')}>
-                    <Icon name="Package" className="mr-2 h-4 w-4" />
-                    Мои предложения
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-requests')}>
-                    <Icon name="FileText" className="mr-2 h-4 w-4" />
-                    Мои запросы
+                  <DropdownMenuItem onClick={() => navigate('/my-listings')}>
+                    <Icon name="LayoutList" className="mr-2 h-4 w-4" />
+                    Мои объявления
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/my-auctions')}>
                     <Icon name="Gavel" className="mr-2 h-4 w-4" />

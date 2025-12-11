@@ -14,8 +14,7 @@ import Requests from "./pages/Requests";
 import Auctions from "./pages/Auctions";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
-import MyOffers from "./pages/MyOffers";
-import MyRequests from "./pages/MyRequests";
+import MyListings from "./pages/MyListings";
 import MyAuctions from "./pages/MyAuctions";
 import ActiveOrders from "./pages/ActiveOrders";
 import Notifications from "./pages/Notifications";
@@ -130,9 +129,10 @@ const App = () => {
             <Route path="/order-detail/:id" element={<OrderDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/response-detail/:id" element={<ResponseDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/chat-notifications" element={<ChatNotifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-listings" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-offers" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-requests" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-auction" element={<CreateAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

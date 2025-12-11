@@ -70,13 +70,13 @@ export default function ProfileStatsCard({ registrationDate, formatDate }: Profi
         </div>
         
         <div className="mt-6 flex flex-wrap gap-3">
-          <Button onClick={() => navigate('/predlozheniya')} variant="outline" size="sm">
-            <Icon name="Package" className="mr-2 h-4 w-4" />
-            Мои предложения
+          <Button onClick={() => navigate('/my-listings')} variant="outline" size="sm">
+            <Icon name="LayoutList" className="mr-2 h-4 w-4" />
+            Мои объявления
           </Button>
-          <Button onClick={() => navigate('/zaprosy')} variant="outline" size="sm">
-            <Icon name="FileText" className="mr-2 h-4 w-4" />
-            Мои запросы
+          <Button onClick={() => navigate('/active-orders')} variant="outline" size="sm">
+            <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+            Мои заказы
           </Button>
           <Button onClick={() => navigate('/auction')} variant="outline" size="sm">
             <Icon name="Gavel" className="mr-2 h-4 w-4" />
