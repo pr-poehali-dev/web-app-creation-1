@@ -16,6 +16,7 @@ import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { useOffers } from '@/contexts/OffersContext';
 import { ordersAPI } from '@/services/api';
+import { getUnreadCount } from '@/utils/notifications';
 interface HeaderProps {
   isAuthenticated: boolean;
   onLogout: () => void;
@@ -29,6 +30,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
   const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -67,12 +69,22 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           order => order.buyerId === currentUser.id || order.sellerId === currentUser.id
         );
         setOrdersCount(userOrders.length);
+
+        const notifCount = getUnreadCount(currentUser.id);
+        setUnreadNotifications(notifCount);
       } catch (error) {
         console.error('Error fetching counts:', error);
       }
     };
 
     fetchCounts();
+    
+    const interval = setInterval(() => {
+      const notifCount = getUnreadCount(currentUser.id);
+      setUnreadNotifications(notifCount);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [isAuthenticated, currentUser, offers, requests]);
 
   useEffect(() => {
@@ -293,8 +305,17 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/notifications')}>
-                    <Icon name="Bell" className="mr-2 h-4 w-4" />
-                    Уведомления
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Icon name="Bell" className="mr-2 h-4 w-4" />
+                        Уведомления
+                      </div>
+                      {unreadNotifications > 0 && (
+                        <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
+                          {unreadNotifications}
+                        </Badge>
+                      )}
+                    </div>
                   </DropdownMenuItem>
                   {currentUser?.role === 'admin' && (
                     <>
