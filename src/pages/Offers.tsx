@@ -98,12 +98,12 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       if (selectedDistricts.length > 0) {
         result = result.filter((offer) => 
           selectedDistricts.includes(offer.district) || 
-          offer.availableDistricts.some(d => selectedDistricts.includes(d))
+          (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
       } else {
         result = result.filter((offer) => 
           districtsInRegion.includes(offer.district) || 
-          offer.availableDistricts.some(d => districtsInRegion.includes(d))
+          (offer.availableDistricts || []).some(d => districtsInRegion.includes(d))
         );
       }
     }
