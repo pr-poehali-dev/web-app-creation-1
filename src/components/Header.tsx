@@ -262,19 +262,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     <Icon name="User" className="mr-2 h-4 w-4" />
                     Мои данные
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-listings')}>
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <Icon name="LayoutList" className="mr-2 h-4 w-4" />
-                        Мои объявления
-                      </div>
-                      {listingsCount > 0 && (
-                        <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5">
-                          {listingsCount}
-                        </Badge>
-                      )}
-                    </div>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/my-auctions')}>
                     <Icon name="Gavel" className="mr-2 h-4 w-4" />
                     Мои аукционы

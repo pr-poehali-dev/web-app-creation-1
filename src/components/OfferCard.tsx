@@ -3,19 +3,36 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { getSession } from '@/utils/auth';
 
 interface OfferCardProps {
   offer: Offer;
+  onDelete?: (id: string) => void;
+  unreadMessages?: number;
 }
 
-export default function OfferCard({ offer }: OfferCardProps) {
+export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCardProps) {
   const navigate = useNavigate();
   const { districts } = useDistrict();
+  const currentUser = getSession();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
+  const isOwner = currentUser && offer.userId === currentUser.id;
 
   const category = CATEGORIES.find(c => c.id === offer.category);
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
@@ -38,6 +55,28 @@ export default function OfferCard({ offer }: OfferCardProps) {
   const handleOrderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/offer/${offer.id}`);
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/offer/${offer.id}`);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (onDelete) {
+      onDelete(offer.id);
+    }
+    setShowDeleteDialog(false);
+  };
+
+  const handleMessages = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate('/chat-notifications');
   };
 
   return (
@@ -136,11 +175,51 @@ export default function OfferCard({ offer }: OfferCardProps) {
       </CardContent>
 
       <CardFooter className="p-3 pt-0">
-        <Button onClick={handleOrderClick} className="w-full h-8 text-xs" size="sm">
-          <Icon name="ShoppingCart" className="mr-1.5 h-3.5 w-3.5" />
-          Заказать
-        </Button>
+        {isOwner ? (
+          <div className="w-full space-y-2">
+            <div className="flex gap-2">
+              <Button onClick={handleEdit} variant="outline" className="flex-1 h-8 text-xs" size="sm">
+                <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+                Редактировать
+              </Button>
+              <Button onClick={handleDelete} variant="outline" className="h-8 text-xs px-3" size="sm">
+                <Icon name="Trash2" className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            {unreadMessages && unreadMessages > 0 && (
+              <Button onClick={handleMessages} variant="default" className="w-full h-8 text-xs" size="sm">
+                <Icon name="MessageSquare" className="mr-1.5 h-3.5 w-3.5" />
+                Сообщения
+                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
+                  {unreadMessages}
+                </Badge>
+              </Button>
+            )}
+          </div>
+        ) : (
+          <Button onClick={handleOrderClick} className="w-full h-8 text-xs" size="sm">
+            <Icon name="ShoppingCart" className="mr-1.5 h-3.5 w-3.5" />
+            Заказать
+          </Button>
+        )}
       </CardFooter>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить объявление?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Объявление будет удалено безвозвратно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

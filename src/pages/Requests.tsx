@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import AuctionSearchBlock from '@/components/auction/AuctionSearchBlock';
+import RequestCard from '@/components/RequestCard';
 import OfferCardSkeleton from '@/components/OfferCardSkeleton';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
@@ -15,7 +16,8 @@ import { searchOffers } from '@/utils/searchUtils';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
 import { getSession } from '@/utils/auth';
-import { requestsAPI } from '@/services/api';
+import { requestsAPI, ordersAPI } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -28,14 +30,16 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
-  const { requests: contextRequests } = useOffers();
+  const { requests: contextRequests, deleteRequest } = useOffers();
   const currentUser = getSession();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [requests, setRequests] = useState<Request[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -49,7 +53,11 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     const loadRequests = async () => {
       setIsLoading(true);
       try {
-        const response = await requestsAPI.getRequests({ status: 'active' });
+        const [response, ordersData] = await Promise.all([
+          requestsAPI.getRequests({ status: 'active' }),
+          ordersAPI.getAll()
+        ]);
+        setOrders(ordersData);
         const requestsWithDates = response.requests.map(req => ({
           ...req,
           createdAt: new Date(req.createdAt),
@@ -142,6 +150,20 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
       setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
       setIsLoadingMore(false);
     }, 500);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteRequest(id);
+    setRequests(prev => prev.filter(r => r.id !== id));
+    toast({
+      title: 'Успешно',
+      description: 'Запрос удалён',
+    });
+  };
+
+  const getUnreadMessages = (requestId: string): number => {
+    const order = orders.find(o => o.offerId === requestId);
+    return order ? 2 : 0;
   };
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
@@ -277,24 +299,12 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
               <>
                 <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mb-6">
                   {currentRequests.map((request) => (
-                    <div key={request.id} className="border rounded-lg p-3 hover:shadow-lg transition-shadow">
-                      <div onClick={() => navigate(`/request/${request.id}`)} className="cursor-pointer mb-2">
-                        <h3 className="font-semibold text-sm mb-1 line-clamp-2">{request.title}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{request.description}</p>
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-bold text-primary">
-                          {request.pricePerUnit ? request.pricePerUnit.toLocaleString() : '0'} ₽
-                        </span>
-                        <Button 
-                          size="sm" 
-                          onClick={() => navigate(`/request/${request.id}`)}
-                          className="h-7 text-xs px-2"
-                        >
-                          Отклик
-                        </Button>
-                      </div>
-                    </div>
+                    <RequestCard
+                      key={request.id}
+                      request={request}
+                      onDelete={handleDelete}
+                      unreadMessages={getUnreadMessages(request.id)}
+                    />
                   ))}
                 </div>
 

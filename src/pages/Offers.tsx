@@ -18,7 +18,8 @@ import { useOffers } from '@/contexts/OffersContext';
 import { addToSearchHistory } from '@/utils/searchHistory';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
-import { offersAPI } from '@/services/api';
+import { offersAPI, ordersAPI } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -31,14 +32,16 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
-  const { offers: contextOffers } = useOffers();
+  const { offers: contextOffers, deleteOffer } = useOffers();
   const currentUser = getSession();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -52,7 +55,11 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const loadOffers = async () => {
       setIsLoading(true);
       try {
-        const response = await offersAPI.getOffers({ status: 'active' });
+        const [response, ordersData] = await Promise.all([
+          offersAPI.getOffers({ status: 'active' }),
+          ordersAPI.getAll()
+        ]);
+        setOrders(ordersData);
         const offersWithDates = response.offers.map((offer: any) => ({
           ...offer,
           pricePerUnit: offer.price_per_unit || offer.pricePerUnit || 0,
@@ -175,6 +182,20 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
       setIsLoadingMore(false);
     }, 400);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteOffer(id);
+    setOffers(prev => prev.filter(o => o.id !== id));
+    toast({
+      title: 'Успешно',
+      description: 'Объявление удалено',
+    });
+  };
+
+  const getUnreadMessages = (offerId: string): number => {
+    const order = orders.find(o => o.offerId === offerId);
+    return order ? 2 : 0;
   };
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
@@ -394,7 +415,11 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
                           </div>
                         </div>
                       )}
-                      <OfferCard offer={offer} />
+                      <OfferCard 
+                        offer={offer} 
+                        onDelete={handleDelete}
+                        unreadMessages={getUnreadMessages(offer.id)}
+                      />
                     </div>
                   ))}
                 </div>
