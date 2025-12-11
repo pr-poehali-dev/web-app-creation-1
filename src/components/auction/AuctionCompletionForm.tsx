@@ -34,42 +34,101 @@ export default function AuctionCompletionForm({
   });
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [contactsReceived, setContactsReceived] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const checkReceivedContacts = () => {
-      const keyToCheck = isWinner 
-        ? `auction_contact_${auctionId}_seller`
-        : `auction_contact_${auctionId}_winner`;
-      
-      const storedData = localStorage.getItem(keyToCheck);
-      if (storedData) {
-        setContactsReceived(JSON.parse(storedData));
+    const fetchContacts = async () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      try {
+        const response = await fetch('https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': userId,
+          },
+          body: JSON.stringify({
+            action: 'get',
+            auctionId: auctionId,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.contacts) {
+            setContactsReceived(data.contacts);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch contacts:', error);
       }
     };
 
-    checkReceivedContacts();
-    const interval = setInterval(checkReceivedContacts, 2000);
+    fetchContacts();
+    const interval = setInterval(fetchContacts, 3000);
 
     return () => clearInterval(interval);
-  }, [auctionId, isWinner]);
+  }, [auctionId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    const myKey = `auction_contact_${auctionId}_${isWinner ? 'winner' : 'seller'}`;
-    localStorage.setItem(myKey, JSON.stringify({
-      ...formData,
-      submittedAt: new Date().toISOString(),
-      role: isWinner ? 'winner' : 'seller',
-    }));
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      toast({
+        title: 'Ошибка',
+        description: 'Требуется авторизация',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
 
-    setIsSubmitted(true);
-    toast({
-      title: 'Успешно!',
-      description: isWinner 
-        ? 'Ваши контакты отправлены продавцу' 
-        : 'Ваши контакты отправлены победителю',
-    });
+    try {
+      const response = await fetch('https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId,
+        },
+        body: JSON.stringify({
+          action: 'submit',
+          auctionId: auctionId,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          preferredTime: formData.preferredTime,
+          notes: formData.notes,
+        }),
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+        toast({
+          title: 'Успешно!',
+          description: isWinner 
+            ? 'Ваши контакты отправлены продавцу' 
+            : 'Ваши контакты отправлены победителю',
+        });
+      } else {
+        const error = await response.json();
+        toast({
+          title: 'Ошибка',
+          description: error.error || 'Не удалось отправить контакты',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Проверьте подключение к интернету',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted || contactsReceived) {
@@ -255,9 +314,9 @@ export default function AuctionCompletionForm({
             />
           </div>
 
-          <Button type="submit" className="w-full text-xs md:text-sm">
+          <Button type="submit" className="w-full text-xs md:text-sm" disabled={isLoading}>
             <Icon name="Send" className="h-4 w-4 mr-2" />
-            {isWinner ? 'Отправить контакты продавцу' : 'Отправить контакты победителю'}
+            {isLoading ? 'Отправка...' : (isWinner ? 'Отправить контакты продавцу' : 'Отправить контакты победителю')}
           </Button>
         </form>
       </CardContent>

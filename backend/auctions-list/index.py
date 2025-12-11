@@ -1,11 +1,91 @@
 """
-Получение списка активных аукционов с фильтрацией
+Получение списка активных аукционов с фильтрацией + обмен контактами
 """
 import json
 import os
 from datetime import datetime, timezone, timedelta
 import psycopg2
 from typing import Dict, Any
+
+def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    user_id = event.get('headers', {}).get('X-User-Id')
+    if not user_id:
+        return {
+            'statusCode': 401,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Требуется авторизация'}),
+            'isBase64Encoded': False
+        }
+    
+    body_data = json.loads(event.get('body', '{}'))
+    action = body_data.get('action')
+    auction_id = body_data.get('auctionId')
+    
+    if not auction_id:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'Требуется auctionId'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("SELECT user_id FROM t_p42562714_web_app_creation_1.auctions WHERE id = %s", (auction_id,))
+        auction_row = cur.fetchone()
+        if not auction_row:
+            return {'statusCode': 404, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Аукцион не найден'}), 'isBase64Encoded': False}
+        
+        seller_id = auction_row[0]
+        
+        cur.execute("SELECT user_id FROM t_p42562714_web_app_creation_1.bids WHERE auction_id = %s ORDER BY amount DESC, created_at ASC LIMIT 1", (auction_id,))
+        winner_row = cur.fetchone()
+        if not winner_row:
+            return {'statusCode': 404, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Победитель не найден'}), 'isBase64Encoded': False}
+        
+        winner_id = winner_row[0]
+        is_winner = user_id == winner_id
+        is_seller = user_id == seller_id
+        
+        if not is_winner and not is_seller:
+            return {'statusCode': 403, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Доступ запрещен'}), 'isBase64Encoded': False}
+        
+        if action == 'submit':
+            phone = body_data.get('phone')
+            if not phone:
+                return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Требуется phone'}), 'isBase64Encoded': False}
+            
+            role = 'winner' if is_winner else 'seller'
+            cur.execute("""
+                INSERT INTO t_p42562714_web_app_creation_1.auction_contacts 
+                (auction_id, user_id, role, phone, email, address, preferred_time, notes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (auction_id, role) DO UPDATE SET 
+                    phone = EXCLUDED.phone, email = EXCLUDED.email, address = EXCLUDED.address,
+                    preferred_time = EXCLUDED.preferred_time, notes = EXCLUDED.notes, created_at = CURRENT_TIMESTAMP
+            """, (auction_id, user_id, role, phone, body_data.get('email', ''), body_data.get('address', ''), body_data.get('preferredTime', ''), body_data.get('notes', '')))
+            conn.commit()
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
+        
+        elif action == 'get':
+            role_to_fetch = 'seller' if is_winner else 'winner'
+            cur.execute("SELECT phone, email, address, preferred_time, notes, created_at FROM t_p42562714_web_app_creation_1.auction_contacts WHERE auction_id = %s AND role = %s", (auction_id, role_to_fetch))
+            contact_row = cur.fetchone()
+            
+            if not contact_row:
+                return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': None}), 'isBase64Encoded': False}
+            
+            contacts = {'phone': contact_row[0], 'email': contact_row[1], 'address': contact_row[2], 'preferredTime': contact_row[3], 'notes': contact_row[4], 'submittedAt': contact_row[5].isoformat() if contact_row[5] else None}
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': contacts}), 'isBase64Encoded': False}
+        
+        else:
+            return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Неизвестное действие'}), 'isBase64Encoded': False}
+    
+    finally:
+        cur.close()
+        conn.close()
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -15,13 +95,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
             'isBase64Encoded': False
         }
+    
+    if method == 'POST':
+        return handle_contact_exchange(event, context)
     
     if method != 'GET':
         return {
