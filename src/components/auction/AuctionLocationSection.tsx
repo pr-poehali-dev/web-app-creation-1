@@ -169,7 +169,7 @@ export default function AuctionLocationSection({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative">
-          <Label htmlFor="district">Район местонахождения *</Label>
+          <Label htmlFor="district">Выбери район местонахождения *</Label>
           <div className="relative">
             <Input
               id="district"

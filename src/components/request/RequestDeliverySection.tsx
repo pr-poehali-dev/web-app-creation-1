@@ -76,7 +76,7 @@ export default function RequestDeliverySection({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative">
-          <Label htmlFor="district">Район местоположения *</Label>
+          <Label htmlFor="district">Выбери район местоположения *</Label>
           <Input
             id="district"
             value={districtInput}
