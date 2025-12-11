@@ -32,6 +32,7 @@ interface ListingItem {
   isPremium?: boolean;
   orderId?: string;
   orderStatus?: string;
+  unreadMessages?: number;
   createdAt: Date;
 }
 
@@ -120,7 +121,7 @@ export default function ListingCard({
         </div>
 
         {item.orderId && (
-          <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
+          <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center gap-1">
                 <Icon name="Package" className="h-3 w-3" />
@@ -135,6 +136,20 @@ export default function ListingCard({
                 Детали →
               </Button>
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate('/chat-notifications')}
+            >
+              <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
+              Написать сообщение
+              {item.unreadMessages && item.unreadMessages > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
+                  {item.unreadMessages}
+                </Badge>
+              )}
+            </Button>
           </div>
         )}
 

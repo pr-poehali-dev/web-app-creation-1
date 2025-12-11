@@ -5,7 +5,6 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { TabsContent } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -52,6 +51,7 @@ interface ListingItem {
   isPremium?: boolean;
   orderId?: string;
   orderStatus?: string;
+  unreadMessages?: number;
   createdAt: Date;
 }
 
@@ -141,6 +141,7 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
           isPremium: offer.isPremium,
           orderId: relatedOrder?.id,
           orderStatus: relatedOrder?.status,
+          unreadMessages: relatedOrder ? 2 : 0,
           createdAt: offer.createdAt,
         };
       }),
@@ -165,6 +166,7 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
           responses: request.responses || 0,
           orderId: relatedOrder?.id,
           orderStatus: relatedOrder?.status,
+          unreadMessages: relatedOrder ? 2 : 0,
           createdAt: request.createdAt,
         };
       }),
@@ -232,7 +234,7 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
             stats={stats}
           />
 
-          <TabsContent value={filterStatus} className="mt-0">
+          <div className="mt-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -269,7 +271,7 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
         </div>
       </main>
 
