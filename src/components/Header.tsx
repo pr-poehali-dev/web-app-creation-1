@@ -14,6 +14,8 @@ import Icon from '@/components/ui/icon';
 import RegionDistrictSelector from '@/components/RegionDistrictSelector';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
+import { useOffers } from '@/contexts/OffersContext';
+import { ordersAPI } from '@/services/api';
 interface HeaderProps {
   isAuthenticated: boolean;
   onLogout: () => void;
@@ -25,7 +27,10 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [listingsCount, setListingsCount] = useState(0);
+  const [ordersCount, setOrdersCount] = useState(0);
   const { selectedDistricts, districts, toggleDistrict } = useDistrict();
+  const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number>(0);
   const touchEndY = useRef<number>(0);
@@ -45,19 +50,30 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !currentUser) return;
 
-    const fetchUnreadCount = async () => {
+    const fetchCounts = async () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setUnreadChatCount(3);
+
+        const userListings = [...offers, ...requests].filter(
+          item => item.userId === currentUser.id
+        );
+        setListingsCount(userListings.length);
+
+        const ordersData = await ordersAPI.getAll();
+        const userOrders = ordersData.filter(
+          order => order.buyerId === currentUser.id || order.sellerId === currentUser.id
+        );
+        setOrdersCount(userOrders.length);
       } catch (error) {
-        console.error('Error fetching unread chat count:', error);
+        console.error('Error fetching counts:', error);
       }
     };
 
-    fetchUnreadCount();
-  }, [isAuthenticated]);
+    fetchCounts();
+  }, [isAuthenticated, currentUser, offers, requests]);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -247,8 +263,17 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     Мои данные
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/my-listings')}>
-                    <Icon name="LayoutList" className="mr-2 h-4 w-4" />
-                    Мои объявления
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Icon name="LayoutList" className="mr-2 h-4 w-4" />
+                        Мои объявления
+                      </div>
+                      {listingsCount > 0 && (
+                        <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5">
+                          {listingsCount}
+                        </Badge>
+                      )}
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/my-auctions')}>
                     <Icon name="Gavel" className="mr-2 h-4 w-4" />
@@ -259,8 +284,17 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     Мои отзывы
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/active-orders')}>
-                    <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-                    Мои заказы
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+                        Мои заказы
+                      </div>
+                      {ordersCount > 0 && (
+                        <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5">
+                          {ordersCount}
+                        </Badge>
+                      )}
+                    </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/chat-notifications')}>
                     <div className="flex items-center justify-between w-full">
