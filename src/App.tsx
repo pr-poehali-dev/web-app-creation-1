@@ -61,6 +61,7 @@ import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
+import { initializeSeedData } from "./utils/seedData";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,8 @@ const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    initializeSeedData();
+    
     const session = getSession();
     if (session) {
       setIsAuthenticated(true);

@@ -84,8 +84,6 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
 
   const loadOrder = async () => {
     if (!id) return;
-    
-    setIsLoading(true);
     try {
       const data = await ordersAPI.getOrderById(id);
       setOrder(data);

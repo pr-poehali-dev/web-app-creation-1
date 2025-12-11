@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Offer, Request } from '@/types/offer';
 
 interface OffersContextType {
@@ -14,16 +14,48 @@ interface OffersContextType {
 
 const OffersContext = createContext<OffersContextType | undefined>(undefined);
 
+const STORAGE_KEY_OFFERS = 'marketplace_offers';
+const STORAGE_KEY_REQUESTS = 'marketplace_requests';
+
 export function OffersProvider({ children }: { children: ReactNode }) {
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [requests, setRequests] = useState<Request[]>([]);
+  const [offers, setOffers] = useState<Offer[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_OFFERS);
+    return saved ? JSON.parse(saved).map((o: any) => ({
+      ...o,
+      createdAt: new Date(o.createdAt)
+    })) : [];
+  });
+  
+  const [requests, setRequests] = useState<Request[]>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY_REQUESTS);
+    return saved ? JSON.parse(saved).map((r: any) => ({
+      ...r,
+      createdAt: new Date(r.createdAt)
+    })) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_OFFERS, JSON.stringify(offers));
+  }, [offers]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_REQUESTS, JSON.stringify(requests));
+  }, [requests]);
 
   const addOffer = (offer: Offer) => {
-    setOffers(prev => [offer, ...prev]);
+    setOffers(prev => {
+      const updated = [offer, ...prev];
+      localStorage.setItem(STORAGE_KEY_OFFERS, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const addRequest = (request: Request) => {
-    setRequests(prev => [request, ...prev]);
+    setRequests(prev => {
+      const updated = [request, ...prev];
+      localStorage.setItem(STORAGE_KEY_REQUESTS, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const updateOffer = (id: string, updates: Partial<Offer>) => {

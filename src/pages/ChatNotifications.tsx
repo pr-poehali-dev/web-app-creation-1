@@ -33,7 +33,6 @@ export default function ChatNotifications({ isAuthenticated, onLogout }: ChatNot
 
     const loadNotifications = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 500));
         
         const mockNotifications: ChatNotification[] = [
           {
