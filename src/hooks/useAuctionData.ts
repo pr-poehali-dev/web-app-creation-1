@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Auction, AuctionBid } from '@/types/auction';
+import { notifyAuctionWinner, notifyAuctionSeller } from '@/utils/notifications';
 
 export function useAuctionData(id: string | undefined) {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export function useAuctionData(id: string | undefined) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState('');
   const bidsRef = useRef<HTMLDivElement>(null);
+  const notificationSentRef = useRef<boolean>(false);
 
   useEffect(() => {
     const loadAuction = async () => {
@@ -108,6 +110,7 @@ export function useAuctionData(id: string | undefined) {
           const data = await response.json();
           if (data && data.bids && Array.isArray(data.bids)) {
             const previousBidsCount = bids.length;
+            const previousStatus = auction?.status;
             const newBids = data.bids.map((bid: any) => ({
               ...bid,
               timestamp: new Date(bid.timestamp)
@@ -118,8 +121,31 @@ export function useAuctionData(id: string | undefined) {
             setAuction(prev => prev ? {
               ...prev,
               currentBid: data.currentBid,
-              bidCount: data.bidCount
+              bidCount: data.bidCount,
+              status: data.status
             } : null);
+
+            if (previousStatus !== 'ended' && data.status === 'ended' && newBids.length > 0 && !notificationSentRef.current) {
+              notificationSentRef.current = true;
+              const winner = newBids[0];
+              
+              notifyAuctionWinner(
+                winner.userId,
+                auction?.title || 'Аукцион',
+                winner.amount,
+                id || ''
+              );
+              
+              if (auction?.userId) {
+                notifyAuctionSeller(
+                  auction.userId,
+                  auction.title,
+                  winner.userName,
+                  winner.amount,
+                  id || ''
+                );
+              }
+            }
 
             if (newBids.length > previousBidsCount) {
               try {

@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
+import { getNotifications, markAsRead, clearNotifications } from '@/utils/notifications';
 
 interface NotificationsProps {
   isAuthenticated: boolean;
@@ -116,10 +117,21 @@ export default function Notifications({ isAuthenticated, onLogout }: Notificatio
       return;
     }
 
-    setTimeout(() => {
-      setNotifications(MOCK_NOTIFICATIONS);
+    const loadNotifications = () => {
+      const userNotifications = getNotifications(currentUser.id);
+      
+      if (userNotifications.length === 0) {
+        setNotifications(MOCK_NOTIFICATIONS);
+      } else {
+        setNotifications(userNotifications);
+      }
       setIsLoading(false);
-    }, 800);
+    };
+
+    setTimeout(loadNotifications, 500);
+
+    const interval = setInterval(loadNotifications, 5000);
+    return () => clearInterval(interval);
   }, [isAuthenticated, currentUser, navigate]);
 
   const filteredNotifications = activeTab === 'all' 
@@ -129,12 +141,14 @@ export default function Notifications({ isAuthenticated, onLogout }: Notificatio
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const handleMarkAsRead = (notificationId: string) => {
+    markAsRead(notificationId);
     setNotifications(notifications.map(n => 
       n.id === notificationId ? { ...n, isRead: true } : n
     ));
   };
 
   const handleMarkAllAsRead = () => {
+    notifications.forEach(n => markAsRead(n.id));
     setNotifications(notifications.map(n => ({ ...n, isRead: true })));
     toast({
       title: 'Успешно',
