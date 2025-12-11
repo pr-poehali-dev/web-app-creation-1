@@ -220,14 +220,62 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          const coords = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
           onCoordinatesChange(coords);
-          setMapCenter([position.coords.latitude, position.coords.longitude]);
+          setMapCenter([lat, lng]);
+          
+          // Создаем или перемещаем маркер
+          if (mapRef.current) {
+            if (markerRef.current) {
+              markerRef.current.setLatLng([lat, lng]);
+            } else {
+              const icon = L.icon({
+                iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+              });
+              markerRef.current = L.marker([lat, lng], { icon, draggable: true }).addTo(mapRef.current);
+              
+              markerRef.current.on('dragend', async () => {
+                if (!markerRef.current) return;
+                const position = markerRef.current.getLatLng();
+                const coords = `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`;
+                onCoordinatesChange(coords);
+                
+                if (onAddressChange) {
+                  try {
+                    const response = await fetch(
+                      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru&addressdetails=1`
+                    );
+                    const data = await response.json();
+                    const address = data.address;
+                    const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+                    const district = address.suburb || 
+                                   address.district || 
+                                   address.city_district || 
+                                   address.municipality ||
+                                   address.county ||
+                                   address.state_district ||
+                                   address.neighbourhood ||
+                                   '';
+                    onAddressChange(fullAddress, district);
+                  } catch (error) {
+                    console.error('Ошибка получения адреса:', error);
+                  }
+                }
+              });
+            }
+            mapRef.current.setView([lat, lng], 13);
+          }
           
           if (onAddressChange) {
             try {
               const response = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&accept-language=ru&addressdetails=1`
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru&addressdetails=1`
               );
               const data = await response.json();
               console.log('OpenStreetMap geolocation response:', data);
