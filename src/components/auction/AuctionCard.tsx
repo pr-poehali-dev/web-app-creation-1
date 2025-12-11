@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ import {
 import Icon from '@/components/ui/icon';
 import type { Auction } from '@/types/auction';
 import { CATEGORIES } from '@/data/categories';
-import { getTimeRemaining, getStatusBadge } from './AuctionHelpers';
+import { getTimeRemaining, getTimeUntilStart, getStatusBadge } from './AuctionHelpers';
 import { getSession } from '@/utils/auth';
 
 interface AuctionCardProps {
@@ -31,10 +31,28 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
   const navigate = useNavigate();
   const currentUser = getSession();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [liveTime, setLiveTime] = useState('');
   
   const isOwner = currentUser && auction.userId === currentUser.id;
   const category = CATEGORIES.find(c => c.id === auction.category);
   const districtName = districts.find(d => d.id === auction.district)?.name;
+
+  useEffect(() => {
+    if (auction.status === 'ended') return;
+
+    const updateTime = () => {
+      if (auction.status === 'upcoming' && auction.startTime) {
+        setLiveTime(getTimeUntilStart(auction.startTime));
+      } else if (auction.endTime) {
+        setLiveTime(getTimeRemaining(auction.endTime));
+      }
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction.status, auction.endTime, auction.startTime]);
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -156,14 +174,9 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
             )}
             {auction.status === 'upcoming' && auction.startTime && (
               <div className="flex items-center gap-1.5 text-xs md:text-sm">
-                <Icon name="Calendar" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
+                <Icon name="Clock" className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
                 <span className="font-semibold text-blue-600">
-                  {new Date(auction.startTime).toLocaleString('ru-RU', { 
-                    day: 'numeric', 
-                    month: 'short', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
+                  До старта: {liveTime}
                 </span>
               </div>
             )}
@@ -173,7 +186,7 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
                 <span className={`font-semibold ${
                   auction.status === 'ending-soon' ? 'text-orange-600' : 'text-muted-foreground'
                 }`}>
-                  {getTimeRemaining(auction.endTime)}
+                  {liveTime}
                 </span>
               </div>
             )}
@@ -183,38 +196,56 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
 
       <CardFooter className="pt-0 pb-3">
         {isOwner ? (
-          <div className="flex gap-2 w-full">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-9 text-sm"
-              onClick={handleEdit}
-            >
-              <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
-              Редактировать
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              className="flex-1 h-9 text-sm"
-              onClick={handleDelete}
-            >
-              <Icon name="Trash2" className="mr-1.5 h-3.5 w-3.5" />
-              Удалить
-            </Button>
+          <div className="flex flex-col gap-2 w-full">
+            {auction.status === 'ended' && (
+              <Button
+                variant="default"
+                size="sm"
+                className="w-full h-9 text-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/auction/${auction.id}`);
+                }}
+              >
+                <Icon name="MessageCircle" className="mr-1.5 h-3.5 w-3.5" />
+                Контакты победителя
+              </Button>
+            )}
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-9 text-sm"
+                onClick={handleEdit}
+              >
+                <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+                Редактировать
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1 h-9 text-sm"
+                onClick={handleDelete}
+              >
+                <Icon name="Trash2" className="mr-1.5 h-3.5 w-3.5" />
+                Удалить
+              </Button>
+            </div>
           </div>
         ) : (
           <Button
             className="w-full h-9 text-sm"
             size="sm"
-            variant={auction.status === 'ended' ? 'secondary' : 'default'}
-            disabled={auction.status === 'ended' || auction.status === 'upcoming'}
+            variant={auction.status === 'ended' ? 'default' : 'default'}
+            disabled={auction.status === 'upcoming'}
             onClick={() => {
               if (!isAuthenticated) {
                 navigate('/login');
                 return;
               }
-              if (auction.status === 'active') {
+              if (auction.status === 'ended') {
+                navigate(`/auction/${auction.id}`);
+              } else if (auction.status === 'active') {
                 navigate(`/auction/${auction.id}?scrollTo=bids`);
               } else {
                 navigate(`/auction/${auction.id}`);
@@ -223,8 +254,8 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
           >
             {auction.status === 'ended' ? (
               <>
-                <Icon name="CheckCircle" className="mr-1.5 h-3.5 w-3.5" />
-                Завершен
+                <Icon name="MessageCircle" className="mr-1.5 h-3.5 w-3.5" />
+                Контакты продавца
               </>
             ) : !isAuthenticated ? (
               <>
