@@ -29,45 +29,10 @@ export default function RequestMediaSection({
       <CardHeader>
         <CardTitle>Медиа</CardTitle>
         <CardDescription>
-          Загрузите фотографии и видео (до 10 фото + 1 видео)
+          Можете загрузить видеокомментарий к вашему запросу
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="images">Фотографии (до 10)</Label>
-          <div className="mt-2">
-            <Input
-              id="images"
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={onImageUpload}
-              disabled={images.length >= 10}
-            />
-          </div>
-          
-          {imagePreviews.length > 0 && (
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mt-4">
-              {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
-                  <img
-                    src={preview}
-                    alt={`Preview ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onRemoveImage(index)}
-                    className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
-                  >
-                    <Icon name="X" className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         <div>
           <Label htmlFor="video">Видео (1 файл)</Label>
           <div className="mt-2">
