@@ -53,15 +53,17 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       map.on('click', async (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        console.log('🗺️ MAP CLICK:', coords);
         onCoordinatesChange(coords);
 
         if (onAddressChange) {
+          console.log('🔄 Fetching address from Nominatim...');
           try {
             const response = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ru&addressdetails=1`
             );
             const data = await response.json();
-            console.log('OpenStreetMap response:', data);
+            console.log('📍 OpenStreetMap response:', data);
             
             const address = data.address;
             const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
@@ -76,7 +78,8 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                            address.neighbourhood ||
                            '';
             
-            console.log('Extracted district:', district);
+            console.log('📌 Extracted district:', district);
+            console.log('📬 Calling onAddressChange with:', { fullAddress, district });
             onAddressChange(fullAddress, district);
           } catch (error) {
             console.error('Ошибка получения адреса:', error);
