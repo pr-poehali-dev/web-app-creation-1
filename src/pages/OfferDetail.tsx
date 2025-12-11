@@ -117,11 +117,24 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
           url: url,
         });
       } catch (error) {
-        console.log('Error sharing:', error);
+        if ((error as Error).name !== 'AbortError') {
+          console.log('Error sharing:', error);
+        }
       }
     } else {
-      navigator.clipboard.writeText(url);
-      alert('Ссылка скопирована в буфер обмена');
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({
+          title: 'Ссылка скопирована!',
+          description: 'Теперь можно поделиться с друзьями',
+        });
+      } catch (error) {
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось скопировать ссылку',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
