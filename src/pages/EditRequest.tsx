@@ -117,7 +117,8 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     };
 
     loadData();
-  }, [id, currentUser, isAuthenticated, navigate, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleOpenChat = (responseId: string) => {
     navigate(`/response-detail/${responseId}`);

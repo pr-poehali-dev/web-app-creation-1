@@ -105,7 +105,8 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     };
 
     loadData();
-  }, [id, currentUser, isAuthenticated, navigate, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleOpenChat = (orderId: string) => {
     navigate(`/order-detail/${orderId}`);
