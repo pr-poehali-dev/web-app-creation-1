@@ -60,6 +60,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     vatRate: '20',
     district: '',
     deliveryAddress: '',
+    gpsCoordinates: '',
     availableDistricts: [] as string[],
     expiryDate: '',
   });

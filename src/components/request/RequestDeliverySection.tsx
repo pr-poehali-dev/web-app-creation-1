@@ -18,6 +18,7 @@ interface RequestDeliverySectionProps {
   formData: {
     district: string;
     deliveryAddress: string;
+    gpsCoordinates?: string;
     availableDistricts: string[];
   };
   districts: District[];
@@ -216,6 +217,8 @@ export default function RequestDeliverySection({
           <MapModal
             isOpen={showMapModal}
             onClose={() => setShowMapModal(false)}
+            coordinates={formData.gpsCoordinates || ''}
+            onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
             onAddressChange={(address, districtName) => {
               if (address) {
                 setAddressInput(address);

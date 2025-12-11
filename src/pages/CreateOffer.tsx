@@ -61,6 +61,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     vatRate: '20',
     district: '',
     fullAddress: '',
+    gpsCoordinates: '',
     availableDistricts: [] as string[],
     availableDeliveryTypes: [] as DeliveryType[],
     expiryDate: '',

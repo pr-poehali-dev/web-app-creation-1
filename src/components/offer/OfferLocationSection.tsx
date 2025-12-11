@@ -22,6 +22,7 @@ interface OfferLocationSectionProps {
   formData: {
     district: string;
     fullAddress: string;
+    gpsCoordinates?: string;
     availableDistricts: string[];
     availableDeliveryTypes: DeliveryType[];
   };
@@ -253,6 +254,8 @@ export default function OfferLocationSection({
           <MapModal
             isOpen={showMapModal}
             onClose={() => setShowMapModal(false)}
+            coordinates={formData.gpsCoordinates || ''}
+            onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
             onAddressChange={(address, districtName) => {
               if (address) {
                 setAddressInput(address);
