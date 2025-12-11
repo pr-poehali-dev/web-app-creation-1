@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -30,10 +30,14 @@ interface CreateRequestProps {
 export default function CreateRequest({ isAuthenticated, onLogout }: CreateRequestProps) {
   useScrollToTop();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { addRequest } = useOffers();
+  const { addRequest, updateRequest } = useOffers();
   const currentUser = getSession();
   const accessCheck = canCreateListing(isAuthenticated);
+  
+  const editRequest = location.state?.editRequest as RequestType | undefined;
+  const isEditMode = !!editRequest;
 
   useEffect(() => {
     console.log('CreateRequest: проверка верификации ОТКЛЮЧЕНА, требуется только авторизация');

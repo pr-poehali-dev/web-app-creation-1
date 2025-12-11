@@ -126,9 +126,11 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   };
 
   const handleEdit = () => {
+    if (!offer) return;
+    
     toast({
-      title: 'В разработке',
-      description: 'Редактирование через форму будет добавлено в следующем обновлении',
+      title: 'Редактирование',
+      description: 'Для изменения объявления удалите его и создайте новое с актуальными данными',
     });
   };
 
@@ -136,15 +138,28 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!offer) return;
     
-    deleteOffer(offer.id);
-    toast({
-      title: 'Успешно',
-      description: 'Объявление удалено',
-    });
-    navigate('/predlozheniya');
+    try {
+      deleteOffer(offer.id);
+      
+      toast({
+        title: 'Успешно',
+        description: 'Объявление удалено',
+      });
+      
+      setTimeout(() => {
+        navigate('/predlozheniya', { replace: true });
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить объявление',
+        variant: 'destructive',
+      });
+    }
   };
 
   const districtName = districts.find(d => d.id === offer?.district)?.name || offer?.district;

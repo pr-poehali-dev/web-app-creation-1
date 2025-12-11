@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -30,10 +30,14 @@ interface CreateOfferProps {
 export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferProps) {
   useScrollToTop();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const { addOffer } = useOffers();
+  const { addOffer, updateOffer } = useOffers();
   const currentUser = getSession();
   const accessCheck = canCreateListing(isAuthenticated);
+  
+  const editOffer = location.state?.editOffer as Offer | undefined;
+  const isEditMode = !!editOffer;
 
   useEffect(() => {
     console.log('CreateOffer: проверка верификации ОТКЛЮЧЕНА, требуется только авторизация');
@@ -48,7 +52,24 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   }, [accessCheck.allowed, accessCheck.message, navigate, toast]);
   const { districts } = useDistrict();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(editOffer ? {
+    title: editOffer.title || '',
+    description: editOffer.description || '',
+    category: editOffer.category || '',
+    subcategory: editOffer.subcategory || '',
+    quantity: String(editOffer.quantity || ''),
+    minOrderQuantity: String(editOffer.minOrderQuantity || ''),
+    unit: editOffer.unit || 'шт',
+    pricePerUnit: String(editOffer.pricePerUnit || ''),
+    hasVAT: editOffer.hasVAT || false,
+    vatRate: String(editOffer.vatRate || '20'),
+    district: editOffer.district || '',
+    fullAddress: editOffer.fullAddress || '',
+    gpsCoordinates: '',
+    availableDistricts: editOffer.availableDistricts || [],
+    availableDeliveryTypes: editOffer.availableDeliveryTypes || [],
+    expiryDate: '',
+  } : {
     title: '',
     description: '',
     category: '',
@@ -182,7 +203,13 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         status: isDraft ? 'draft' : 'active',
       };
 
-      const result = await offersAPI.createOffer(offerData);
+      let result;
+      if (isEditMode && editOffer) {
+        result = { id: editOffer.id };
+        updateOffer(editOffer.id, offerData);
+      } else {
+        result = await offersAPI.createOffer(offerData);
+      }
       
       const newOffer: Offer = {
         id: result.id,
@@ -208,16 +235,25 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         createdAt: new Date(),
       };
       
-      addOffer(newOffer);
+      if (isEditMode) {
+        toast({
+          title: 'Успешно',
+          description: 'Предложение обновлено',
+        });
+      } else {
+        addOffer(newOffer);
+        toast({
+          title: 'Успешно',
+          description: isDraft 
+            ? 'Предложение сохранено как черновик'
+            : 'Предложение опубликовано',
+        });
+      }
       
-      toast({
-        title: 'Успешно',
-        description: isDraft 
-          ? 'Предложение сохранено как черновик'
-          : 'Предложение опубликовано',
-      });
-      
-      navigate('/predlozheniya');
+      setTimeout(() => {
+        navigate('/predlozheniya', { replace: true });
+        window.location.reload();
+      }, 500);
     } catch (error) {
       console.error('Ошибка создания предложения:', error);
       toast({
@@ -238,9 +274,11 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         <BackButton />
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">Создание предложения</h1>
+            <h1 className="text-3xl font-bold mb-2">
+              {isEditMode ? 'Редактирование предложения' : 'Создание предложения'}
+            </h1>
             <p className="text-muted-foreground">
-              Заполните информацию о товаре или услуге
+              {isEditMode ? 'Внесите необходимые изменения' : 'Заполните информацию о товаре или услуге'}
             </p>
           </div>
 

@@ -138,9 +138,11 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   };
 
   const handleEdit = () => {
+    if (!request) return;
+    
     toast({
-      title: 'В разработке',
-      description: 'Редактирование через форму будет добавлено в следующем обновлении',
+      title: 'Редактирование',
+      description: 'Для изменения запроса удалите его и создайте новый с актуальными данными',
     });
   };
 
@@ -148,15 +150,28 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!request) return;
     
-    deleteRequest(request.id);
-    toast({
-      title: 'Успешно',
-      description: 'Запрос удалён',
-    });
-    navigate('/zaprosy');
+    try {
+      deleteRequest(request.id);
+      
+      toast({
+        title: 'Успешно',
+        description: 'Запрос удалён',
+      });
+      
+      setTimeout(() => {
+        navigate('/zaprosy', { replace: true });
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить запрос',
+        variant: 'destructive',
+      });
+    }
   };
 
   const districtName = districts.find(d => d.id === request?.district)?.name || request?.district;
