@@ -3,6 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
+import { CATEGORIES } from '@/data/categories';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface OfferInfoCardProps {
   title: string;
@@ -47,14 +49,29 @@ export default function OfferInfoCard({
   createdAt,
   expiryDate,
 }: OfferInfoCardProps) {
+  const { districts } = useDistrict();
+  
+  // Найти название категории
+  const categoryData = CATEGORIES.find(c => c.id === category);
+  const categoryName = categoryData?.name || category;
+  
+  // Найти название района
+  const districtData = districts.find(d => d.id === district);
+  const districtName = districtData?.name || district;
+  
+  // Найти названия доступных районов
+  const availableDistrictNames = availableDistricts
+    .map(id => districts.find(d => d.id === id)?.name || id)
+    .filter(Boolean);
+
   return (
     <Card className="mb-3">
       <CardContent className="pt-3 pb-3 space-y-3">
         <div>
           <h1 className="text-lg md:text-xl font-bold mb-1.5">{title}</h1>
           <div className="flex flex-wrap gap-1.5">
-            {category ? (
-              <Badge variant="secondary" className="text-xs">{category}</Badge>
+            {categoryName ? (
+              <Badge variant="secondary" className="text-xs">{categoryName}</Badge>
             ) : (
               <Badge variant="secondary" className="text-xs">Без категории</Badge>
             )}
@@ -123,18 +140,20 @@ export default function OfferInfoCard({
                 )}
                 <div>
                   <p className="text-muted-foreground mb-0.5">Район</p>
-                  <p className="font-medium">{district}</p>
+                  <p className="font-medium">{districtName}</p>
                 </div>
               </div>
 
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Доступно в районах</p>
-                <div className="flex flex-wrap gap-1">
-                  {availableDistricts.map((district) => (
-                    <Badge key={district} variant="outline" className="text-xs px-1.5 py-0">{district}</Badge>
-                  ))}
+              {availableDistrictNames.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Доступно в районах</p>
+                  <div className="flex flex-wrap gap-1">
+                    {availableDistrictNames.map((name, index) => (
+                      <Badge key={index} variant="outline" className="text-xs px-1.5 py-0">{name}</Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
