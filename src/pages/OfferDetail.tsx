@@ -291,30 +291,33 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
               onVideoPause={() => setIsVideoPlaying(false)}
             />
 
-            <OfferInfoCard
-              title={offer.title}
-              category={offer.category}
-              subcategory={offer.subcategory}
-              quantity={offer.quantity}
-              minOrderQuantity={offer.minOrderQuantity}
-              unit={offer.unit}
-              pricePerUnit={offer.pricePerUnit}
-              remainingQuantity={remainingQuantity}
-              hasVAT={offer.hasVAT}
-              vatRate={offer.vatRate}
-              totalPrice={totalPrice}
-              description={offer.description}
-              location={offer.location}
-              fullAddress={offer.fullAddress}
-              district={offer.district}
-              availableDistricts={offer.availableDistricts}
-              availableDeliveryTypes={offer.availableDeliveryTypes}
-              createdAt={offer.createdAt}
-              expiryDate={offer.expiryDate}
-            />
+            {/* На мобильных показываем информацию сразу после медиа */}
+            <div className="lg:hidden">
+              <OfferInfoCard
+                title={offer.title}
+                category={offer.category}
+                subcategory={offer.subcategory}
+                quantity={offer.quantity}
+                minOrderQuantity={offer.minOrderQuantity}
+                unit={offer.unit}
+                pricePerUnit={offer.pricePerUnit}
+                remainingQuantity={remainingQuantity}
+                hasVAT={offer.hasVAT}
+                vatRate={offer.vatRate}
+                totalPrice={totalPrice}
+                description={offer.description}
+                location={offer.location}
+                fullAddress={offer.fullAddress}
+                district={offer.district}
+                availableDistricts={offer.availableDistricts}
+                availableDeliveryTypes={offer.availableDeliveryTypes}
+                createdAt={offer.createdAt}
+                expiryDate={offer.expiryDate}
+              />
+            </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-3">
             <Card>
               <CardContent className="pt-6 space-y-3">
                 <Button
@@ -336,6 +339,31 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
                 </Button>
               </CardContent>
             </Card>
+
+            {/* На десктопе показываем информацию под кнопками */}
+            <div className="hidden lg:block">
+              <OfferInfoCard
+                title={offer.title}
+                category={offer.category}
+                subcategory={offer.subcategory}
+                quantity={offer.quantity}
+                minOrderQuantity={offer.minOrderQuantity}
+                unit={offer.unit}
+                pricePerUnit={offer.pricePerUnit}
+                remainingQuantity={remainingQuantity}
+                hasVAT={offer.hasVAT}
+                vatRate={offer.vatRate}
+                totalPrice={totalPrice}
+                description={offer.description}
+                location={offer.location}
+                fullAddress={offer.fullAddress}
+                district={offer.district}
+                availableDistricts={offer.availableDistricts}
+                availableDeliveryTypes={offer.availableDeliveryTypes}
+                createdAt={offer.createdAt}
+                expiryDate={offer.expiryDate}
+              />
+            </div>
           </div>
         </div>
 
