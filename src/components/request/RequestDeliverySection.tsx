@@ -114,17 +114,17 @@ export default function RequestDeliverySection({
         </div>
 
         <div className="relative">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
             <Label htmlFor="deliveryAddress">Точный адрес доставки *</Label>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={() => setShowMapModal(true)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1.5 text-xs"
             >
-              <Icon name="MapPin" className="h-4 w-4" />
-              Указать на карте
+              <Icon name="MapPin" className="h-3.5 w-3.5" />
+              <span className="whitespace-nowrap">Указать на карте</span>
             </Button>
           </div>
           <Input
