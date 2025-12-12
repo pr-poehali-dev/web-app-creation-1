@@ -36,12 +36,13 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const currentUser = getSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -52,15 +53,17 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   });
 
   useEffect(() => {
-    const loadOffers = async () => {
+    const loadInitialData = async () => {
       setIsLoading(true);
       try {
         const [offersData, ordersData] = await Promise.all([
-          offersAPI.getOffers({ limit: 100 }),
+          offersAPI.getOffers({ limit: ITEMS_PER_PAGE, offset: 0 }),
           ordersAPI.getAll()
         ]);
         setOffers(offersData.offers || []);
         setOrders(ordersData);
+        setHasMore((offersData.offers || []).length === ITEMS_PER_PAGE);
+        setOffset(ITEMS_PER_PAGE);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
       } finally {
@@ -68,8 +71,28 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
     };
 
-    loadOffers();
+    loadInitialData();
   }, []);
+
+  const loadMoreOffers = async () => {
+    if (isLoadingMore || !hasMore) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const offersData = await offersAPI.getOffers({ 
+        limit: ITEMS_PER_PAGE, 
+        offset: offset 
+      });
+      const newOffers = offersData.offers || [];
+      setOffers(prev => [...prev, ...newOffers]);
+      setHasMore(newOffers.length === ITEMS_PER_PAGE);
+      setOffset(prev => prev + ITEMS_PER_PAGE);
+    } catch (error) {
+      console.error('Ошибка загрузки предложений:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
@@ -127,14 +150,11 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     return [...premiumOffers, ...regularOffers];
   }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
 
-  const currentOffers = filteredOffers.slice(0, displayedCount);
-  const hasMore = displayedCount < filteredOffers.length;
-
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          loadMore();
+          loadMoreOffers();
         }
       },
       { threshold: 0.1 }
@@ -150,17 +170,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
         observer.unobserve(currentTarget);
       }
     };
-  }, [hasMore, isLoadingMore, displayedCount]);
-
-  const loadMore = () => {
-    if (isLoadingMore || !hasMore) return;
-
-    setIsLoadingMore(true);
-    setTimeout(() => {
-      setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
-      setIsLoadingMore(false);
-    }, 400);
-  };
+  }, [hasMore, isLoadingMore, offset]);
 
   const handleDelete = (id: string) => {
     deleteOffer(id);
@@ -191,12 +201,11 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
         contentType: filters.contentType
       });
     }
-    setDisplayedCount(ITEMS_PER_PAGE);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const premiumCount = currentOffers.filter((offer) => offer.isPremium).length;
-  const regularCount = currentOffers.length - premiumCount;
+  const premiumCount = filteredOffers.filter((offer) => offer.isPremium).length;
+  const regularCount = filteredOffers.length - premiumCount;
   const currentDistrictName = districts.find(d => d.id === filters.district)?.name;
 
   return (
@@ -326,7 +335,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
               )}
             </div>
 
-            {currentOffers.length === 0 ? (
+            {filteredOffers.length === 0 ? (
               <div className="text-center py-20 px-4">
                 <div className="max-w-md mx-auto">
                   <Icon name="Package" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
@@ -383,7 +392,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
                 )}
 
                 <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {currentOffers.map((offer, index) => (
+                  {filteredOffers.map((offer, index) => (
                     <div key={offer.id}>
                       {index === premiumCount && premiumCount > 0 && (
                         <div className="col-span-full mb-2 mt-1">
