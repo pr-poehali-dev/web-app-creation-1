@@ -154,7 +154,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           <div className="flex items-baseline justify-between">
             <span className="text-muted-foreground text-xs">Цена за единицу:</span>
             <span className="font-bold text-primary text-base">
-              {offer.pricePerUnit ? offer.pricePerUnit.toLocaleString('ru-RU') : '0'} ₽
+              {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
             </span>
           </div>
         </div>

@@ -146,12 +146,21 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             offer_dict = dict(offer)
             offer_dict['createdAt'] = offer_dict.pop('created_at').isoformat() if offer_dict.get('created_at') else None
             offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
-            if offer_dict.get('price_per_unit'):
-                offer_dict['price_per_unit'] = float(offer_dict['price_per_unit'])
-            if offer_dict.get('vat_rate'):
-                offer_dict['vat_rate'] = float(offer_dict['vat_rate'])
-            if offer_dict.get('seller_rating'):
-                offer_dict['seller_rating'] = float(offer_dict['seller_rating'])
+            offer_dict['userId'] = offer_dict.pop('user_id', None)
+            offer_dict['pricePerUnit'] = float(offer_dict.pop('price_per_unit')) if offer_dict.get('price_per_unit') else None
+            offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
+            offer_dict['vatRate'] = float(offer_dict.pop('vat_rate')) if offer_dict.get('vat_rate') else None
+            offer_dict['fullAddress'] = offer_dict.pop('full_address', None)
+            offer_dict['availableDistricts'] = offer_dict.pop('available_districts', [])
+            offer_dict['availableDeliveryTypes'] = offer_dict.pop('available_delivery_types', [])
+            offer_dict['isPremium'] = offer_dict.pop('is_premium', False)
+            offer_dict['sellerName'] = offer_dict.pop('seller_name', None)
+            offer_dict['sellerType'] = offer_dict.pop('seller_type', None)
+            offer_dict['sellerPhone'] = offer_dict.pop('seller_phone', None)
+            offer_dict['sellerEmail'] = offer_dict.pop('seller_email', None)
+            offer_dict['sellerRating'] = float(offer_dict.pop('seller_rating')) if offer_dict.get('seller_rating') else None
+            offer_dict['sellerReviewsCount'] = offer_dict.pop('seller_reviews_count', 0)
+            offer_dict['sellerIsVerified'] = offer_dict.pop('seller_is_verified', False)
             result.append(offer_dict)
         
         cur.close()
@@ -217,12 +226,21 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     offer_dict = dict(offer)
     offer_dict['createdAt'] = offer_dict.pop('created_at').isoformat() if offer_dict.get('created_at') else None
     offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
-    if offer_dict.get('price_per_unit'):
-        offer_dict['price_per_unit'] = float(offer_dict['price_per_unit'])
-    if offer_dict.get('vat_rate'):
-        offer_dict['vat_rate'] = float(offer_dict['vat_rate'])
-    if offer_dict.get('seller_rating'):
-        offer_dict['seller_rating'] = float(offer_dict['seller_rating'])
+    offer_dict['userId'] = offer_dict.pop('user_id', None)
+    offer_dict['pricePerUnit'] = float(offer_dict.pop('price_per_unit')) if offer_dict.get('price_per_unit') else None
+    offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
+    offer_dict['vatRate'] = float(offer_dict.pop('vat_rate')) if offer_dict.get('vat_rate') else None
+    offer_dict['fullAddress'] = offer_dict.pop('full_address', None)
+    offer_dict['availableDistricts'] = offer_dict.pop('available_districts', [])
+    offer_dict['availableDeliveryTypes'] = offer_dict.pop('available_delivery_types', [])
+    offer_dict['isPremium'] = offer_dict.pop('is_premium', False)
+    offer_dict['sellerName'] = offer_dict.pop('seller_name', None)
+    offer_dict['sellerType'] = offer_dict.pop('seller_type', None)
+    offer_dict['sellerPhone'] = offer_dict.pop('seller_phone', None)
+    offer_dict['sellerEmail'] = offer_dict.pop('seller_email', None)
+    offer_dict['sellerRating'] = float(offer_dict.pop('seller_rating')) if offer_dict.get('seller_rating') else None
+    offer_dict['sellerReviewsCount'] = offer_dict.pop('seller_reviews_count', 0)
+    offer_dict['sellerIsVerified'] = offer_dict.pop('seller_is_verified', False)
     
     return {
         'statusCode': 200,
