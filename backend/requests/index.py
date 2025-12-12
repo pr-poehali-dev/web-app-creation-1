@@ -95,7 +95,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     district = params.get('district', '')
     query = params.get('query', '')
     status = params.get('status', 'active')
-    limit = int(params.get('limit', '50'))
+    limit = min(int(params.get('limit', '10')), 20)
     offset = int(params.get('offset', '0'))
     
     conn = get_db_connection()
@@ -104,16 +104,8 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     sql = """
         SELECT 
             r.*,
-            COALESCE(
-                json_agg(
-                    json_build_object('id', ri.id, 'url', ri.url, 'alt', ri.alt)
-                    ORDER BY rir.sort_order
-                ) FILTER (WHERE ri.id IS NOT NULL),
-                '[]'
-            ) as images
+            '[]'::json as images
         FROM t_p42562714_web_app_creation_1.requests r
-        LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
-        LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
         WHERE r.status = %s
     """
     
@@ -136,7 +128,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         search_term = f'%{query}%'
         query_params.extend([search_term, search_term])
     
-    sql += " GROUP BY r.id ORDER BY r.created_at DESC LIMIT %s OFFSET %s"
+    sql += " ORDER BY r.created_at DESC LIMIT %s OFFSET %s"
     query_params.extend([limit, offset])
     
     cur.execute(sql, query_params)

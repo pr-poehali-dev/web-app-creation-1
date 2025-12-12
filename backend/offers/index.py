@@ -94,7 +94,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         district = params.get('district', '')
         query = params.get('query', '')
         status = params.get('status', 'active')
-        limit = int(params.get('limit', '50'))
+        limit = min(int(params.get('limit', '10')), 20)
         offset = int(params.get('offset', '0'))
         
         conn = get_db_connection()
@@ -110,17 +110,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 5.0 as seller_rating,
                 0 as seller_reviews_count,
                 CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
-                COALESCE(
-                    json_agg(
-                        json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt)
-                        ORDER BY oir.sort_order
-                    ) FILTER (WHERE oi.id IS NOT NULL),
-                    '[]'
-                ) as images
-            FROM offers o
-            LEFT JOIN users u ON o.user_id = u.id
-            LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
-            LEFT JOIN offer_images oi ON oir.image_id = oi.id
+                '[]'::json as images
+            FROM t_p42562714_web_app_creation_1.offers o
+            LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
             WHERE o.status = %s
         """
         
@@ -143,7 +135,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             search_term = f'%{query}%'
             query_params.extend([search_term, search_term])
         
-        sql += " GROUP BY o.id, u.id ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
+        sql += " ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
         query_params.extend([limit, offset])
         
         cur.execute(sql, query_params)
@@ -200,10 +192,10 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
                 ) FILTER (WHERE oi.id IS NOT NULL),
                 '[]'
             ) as images
-        FROM offers o
-        LEFT JOIN users u ON o.user_id = u.id
-        LEFT JOIN offer_image_relations oir ON o.id = oir.offer_id
-        LEFT JOIN offer_images oi ON oir.image_id = oi.id
+        FROM t_p42562714_web_app_creation_1.offers o
+        LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
+        LEFT JOIN t_p42562714_web_app_creation_1.offer_image_relations oir ON o.id = oir.offer_id
+        LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id
         WHERE o.id = %s
         GROUP BY o.id, u.id
     """
@@ -257,7 +249,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
     sql = """
-        INSERT INTO offers (
+        INSERT INTO t_p42562714_web_app_creation_1.offers (
             user_id, title, description, category, subcategory,
             quantity, unit, price_per_unit, has_vat, vat_rate,
             location, district, full_address, available_districts,
@@ -292,12 +284,12 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     if body.get('images'):
         for idx, img in enumerate(body['images']):
             cur.execute(
-                "INSERT INTO offer_images (url, alt) VALUES (%s, %s) RETURNING id",
+                "INSERT INTO t_p42562714_web_app_creation_1.offer_images (url, alt) VALUES (%s, %s) RETURNING id",
                 (img['url'], img.get('alt', ''))
             )
             image_id = cur.fetchone()['id']
             cur.execute(
-                "INSERT INTO offer_image_relations (offer_id, image_id, sort_order) VALUES (%s, %s, %s)",
+                "INSERT INTO t_p42562714_web_app_creation_1.offer_image_relations (offer_id, image_id, sort_order) VALUES (%s, %s, %s)",
                 (offer_id, image_id, idx)
             )
     
@@ -320,7 +312,7 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     cur = conn.cursor()
     
     sql = """
-        UPDATE offers SET
+        UPDATE t_p42562714_web_app_creation_1.offers SET
             title = %s,
             description = %s,
             quantity = %s,
