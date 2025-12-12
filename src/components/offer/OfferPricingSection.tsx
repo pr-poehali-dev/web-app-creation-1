@@ -20,6 +20,7 @@ interface OfferPricingSectionProps {
 export default function OfferPricingSection({ formData, onInputChange }: OfferPricingSectionProps) {
   const [isUnitOpen, setIsUnitOpen] = useState(false);
   const [isVatRateOpen, setIsVatRateOpen] = useState(false);
+  const [minQuantityError, setMinQuantityError] = useState<string>('');
   
   const unitOptions = [
     { value: 'шт', label: 'шт' },
@@ -52,6 +53,25 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
     setIsVatRateOpen(false);
   };
 
+  const handleMinQuantityChange = (value: string) => {
+    onInputChange('minOrderQuantity', value);
+    
+    const minQty = parseFloat(value);
+    const totalQty = parseFloat(formData.quantity);
+    
+    if (value && !isNaN(minQty) && !isNaN(totalQty)) {
+      if (minQty > totalQty) {
+        setMinQuantityError(`Минимальное количество не может быть больше общего количества (${formData.quantity} ${formData.unit})`);
+      } else if (minQty < 0.01) {
+        setMinQuantityError('Минимальное количество должно быть больше 0');
+      } else {
+        setMinQuantityError('');
+      }
+    } else {
+      setMinQuantityError('');
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -79,11 +99,27 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
               id="minOrderQuantity"
               type="number"
               value={formData.minOrderQuantity}
-              onChange={(e) => onInputChange('minOrderQuantity', e.target.value)}
+              onChange={(e) => handleMinQuantityChange(e.target.value)}
+              onBlur={(e) => {
+                const value = parseFloat(e.target.value);
+                const totalQty = parseFloat(formData.quantity);
+                if (!isNaN(value) && !isNaN(totalQty) && value > totalQty) {
+                  onInputChange('minOrderQuantity', formData.quantity);
+                  setMinQuantityError('');
+                }
+              }}
               placeholder="0"
               min="0.01"
+              max={formData.quantity}
               step="0.01"
+              className={minQuantityError ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
+            {minQuantityError && (
+              <div className="flex items-center gap-1 mt-1">
+                <Icon name="XCircle" size={12} className="text-red-500" />
+                <p className="text-xs text-red-500 font-medium">{minQuantityError}</p>
+              </div>
+            )}
           </div>
 
           <div className="relative">
