@@ -108,13 +108,12 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 o.quantity, o.unit, o.price_per_unit, o.has_vat, o.vat_rate,
                 o.district, o.available_districts, o.available_delivery_types,
                 o.is_premium, o.status, o.created_at, o.updated_at,
-                CONCAT(u.first_name, ' ', u.last_name) as seller_name,
-                u.user_type as seller_type,
+                '' as seller_name,
+                '' as seller_type,
                 5.0 as seller_rating,
                 0 as seller_reviews_count,
-                CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified
+                false as seller_is_verified
             FROM t_p42562714_web_app_creation_1.offers o
-            LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
             WHERE o.status = %s
         """
         
