@@ -44,6 +44,8 @@ export default function OfferOrderModal({
   const [comment, setComment] = useState<string>('');
   const [quantityError, setQuantityError] = useState<string>('');
 
+  console.log('🔍 OfferOrderModal - minOrderQuantity:', minOrderQuantity, 'unit:', unit);
+
   useEffect(() => {
     if (currentUser?.legalAddress && selectedDeliveryType === 'delivery') {
       setAddress(currentUser.legalAddress);
