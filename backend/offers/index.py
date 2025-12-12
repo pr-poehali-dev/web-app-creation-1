@@ -200,7 +200,12 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         error_trace = traceback.format_exc()
         print(f'ERROR in get_offers_list: {str(e)}')
         print(f'Traceback: {error_trace}')
-        raise
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e), 'trace': error_trace}),
+            'isBase64Encoded': False
+        }
 
 def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
@@ -257,13 +262,24 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     offer_dict['availableDistricts'] = offer_dict.pop('available_districts', [])
     offer_dict['availableDeliveryTypes'] = offer_dict.pop('available_delivery_types', [])
     offer_dict['isPremium'] = offer_dict.pop('is_premium', False)
-    offer_dict['sellerName'] = offer_dict.pop('seller_name', None)
-    offer_dict['sellerType'] = offer_dict.pop('seller_type', None)
-    offer_dict['sellerPhone'] = offer_dict.pop('seller_phone', None)
-    offer_dict['sellerEmail'] = offer_dict.pop('seller_email', None)
-    offer_dict['sellerRating'] = float(offer_dict.pop('seller_rating')) if offer_dict.get('seller_rating') else None
-    offer_dict['sellerReviewsCount'] = offer_dict.pop('seller_reviews_count', 0)
-    offer_dict['sellerIsVerified'] = offer_dict.pop('seller_is_verified', False)
+    seller_name = offer_dict.pop('seller_name', None)
+    seller_type = offer_dict.pop('seller_type', None)
+    seller_phone = offer_dict.pop('seller_phone', None)
+    seller_email = offer_dict.pop('seller_email', None)
+    seller_rating = float(offer_dict.pop('seller_rating')) if offer_dict.get('seller_rating') else None
+    seller_reviews_count = offer_dict.pop('seller_reviews_count', 0)
+    seller_is_verified = offer_dict.pop('seller_is_verified', False)
+    
+    # Создаем объект seller для фронтенда
+    offer_dict['seller'] = {
+        'name': seller_name,
+        'type': seller_type,
+        'phone': seller_phone,
+        'email': seller_email,
+        'rating': seller_rating,
+        'reviewsCount': seller_reviews_count,
+        'isVerified': seller_is_verified
+    }
     
     return {
         'statusCode': 200,
