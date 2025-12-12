@@ -22,7 +22,7 @@ interface OfferOrderModalProps {
   remainingQuantity: number;
   unit: string;
   availableDeliveryTypes: ('pickup' | 'delivery')[];
-  seller: Seller;
+  seller?: Seller;
 }
 
 export default function OfferOrderModal({
@@ -48,34 +48,36 @@ export default function OfferOrderModal({
           </DialogDescription>
         </DialogHeader>
 
-        <Card className="bg-muted/50">
-          <CardContent className="pt-4 space-y-2">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon name="User" className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-semibold text-sm">Продавец</h3>
-            </div>
-            <div>
-              <p className="text-sm font-medium">{seller.name}</p>
-            </div>
-            <Separator />
-            <div className="space-y-1">
-              <a
-                href={`tel:${seller.phone}`}
-                className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1.5"
-              >
-                <Icon name="Phone" className="h-3.5 w-3.5" />
-                {seller.phone}
-              </a>
-              <a
-                href={`mailto:${seller.email}`}
-                className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
-              >
-                <Icon name="Mail" className="h-3.5 w-3.5" />
-                {seller.email}
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+        {seller && (
+          <Card className="bg-muted/50">
+            <CardContent className="pt-4 space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Icon name="User" className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-semibold text-sm">Продавец</h3>
+              </div>
+              <div>
+                <p className="text-sm font-medium">{seller.name}</p>
+              </div>
+              <Separator />
+              <div className="space-y-1">
+                <a
+                  href={`tel:${seller.phone}`}
+                  className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1.5"
+                >
+                  <Icon name="Phone" className="h-3.5 w-3.5" />
+                  {seller.phone}
+                </a>
+                <a
+                  href={`mailto:${seller.email}`}
+                  className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
+                >
+                  <Icon name="Mail" className="h-3.5 w-3.5" />
+                  {seller.email}
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
