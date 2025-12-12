@@ -100,10 +100,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = f"""
+        sql = """
             SELECT 
                 o.id, o.user_id, o.title, 
-                LEFT(o.description, 200) as description, 
+                COALESCE(SUBSTRING(o.description, 1, 200), '') as description, 
                 o.category, o.subcategory,
                 o.quantity, o.unit, o.price_per_unit, o.has_vat, o.vat_rate,
                 o.district, o.available_districts, o.available_delivery_types,
@@ -142,8 +142,8 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.execute(sql, query_params)
         offers = cur.fetchall()
         
-        # Получаем ID всех предложений
-        offer_ids = [offer['id'] for offer in offers]
+        # Получаем ID всех предложений (конвертируем в строки для SQL)
+        offer_ids = [str(offer['id']) for offer in offers]
         
         # Загружаем только первое изображение для каждого предложения (для списка)
         images_map = {}
