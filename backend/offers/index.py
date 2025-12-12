@@ -256,6 +256,7 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
     offer_dict['userId'] = offer_dict.pop('user_id', None)
     offer_dict['pricePerUnit'] = float(offer_dict.pop('price_per_unit')) if offer_dict.get('price_per_unit') else None
+    offer_dict['minOrderQuantity'] = offer_dict.pop('min_order_quantity', None)
     offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
     offer_dict['vatRate'] = float(offer_dict.pop('vat_rate')) if offer_dict.get('vat_rate') else None
     offer_dict['fullAddress'] = offer_dict.pop('full_address', None)
