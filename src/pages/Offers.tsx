@@ -188,7 +188,6 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
-    setDisplayedCount(ITEMS_PER_PAGE);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
