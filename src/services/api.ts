@@ -69,6 +69,16 @@ function getUserId(): string | null {
 }
 
 export const offersAPI = {
+  async getAll(): Promise<OffersListResponse> {
+    const response = await fetch(OFFERS_API);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch offers');
+    }
+    
+    return response.json();
+  },
+
   async getOffers(params?: {
     category?: string;
     subcategory?: string;
@@ -149,6 +159,16 @@ export const offersAPI = {
 };
 
 export const requestsAPI = {
+  async getAll(): Promise<RequestsListResponse> {
+    const response = await fetch(REQUESTS_API);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch requests');
+    }
+    
+    return response.json();
+  },
+
   async getRequests(params?: {
     category?: string;
     subcategory?: string;

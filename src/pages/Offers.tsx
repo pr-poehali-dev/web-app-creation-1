@@ -55,19 +55,21 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const loadOffers = async () => {
       setIsLoading(true);
       try {
-        const ordersData = await ordersAPI.getAll();
+        const [offersData, ordersData] = await Promise.all([
+          offersAPI.getAll(),
+          ordersAPI.getAll()
+        ]);
+        setOffers(offersData.offers || []);
         setOrders(ordersData);
-        setOffers(contextOffers);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        setOffers(contextOffers);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadOffers();
-  }, [contextOffers]);
+  }, []);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];

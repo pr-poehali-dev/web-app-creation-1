@@ -53,19 +53,21 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     const loadRequests = async () => {
       setIsLoading(true);
       try {
-        const ordersData = await ordersAPI.getAll();
+        const [requestsData, ordersData] = await Promise.all([
+          requestsAPI.getAll(),
+          ordersAPI.getAll()
+        ]);
+        setRequests(requestsData.requests || []);
         setOrders(ordersData);
-        setRequests(contextRequests);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        setRequests(contextRequests);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadRequests();
-  }, [contextRequests]);
+  }, []);
 
   const filteredRequests = useMemo(() => {
     let result = [...requests];

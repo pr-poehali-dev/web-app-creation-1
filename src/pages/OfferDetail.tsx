@@ -109,32 +109,42 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
 
   const handleShare = async () => {
     const url = window.location.href;
-    if (navigator.share) {
+    
+    if (navigator.share && navigator.canShare && navigator.canShare({ url })) {
       try {
         await navigator.share({
-          title: offer?.title,
-          text: offer?.description,
+          title: offer?.title || 'Предложение',
+          text: offer?.description || '',
           url: url,
+        });
+        toast({
+          title: 'Успешно!',
+          description: 'Ссылка отправлена',
         });
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           console.log('Error sharing:', error);
+          copyToClipboard(url);
         }
       }
     } else {
-      try {
-        await navigator.clipboard.writeText(url);
-        toast({
-          title: 'Ссылка скопирована!',
-          description: 'Теперь можно поделиться с друзьями',
-        });
-      } catch (error) {
-        toast({
-          title: 'Ошибка',
-          description: 'Не удалось скопировать ссылку',
-          variant: 'destructive',
-        });
-      }
+      copyToClipboard(url);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: 'Ссылка скопирована!',
+        description: 'Теперь можно поделиться с друзьями',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось скопировать ссылку',
+        variant: 'destructive',
+      });
     }
   };
 

@@ -43,8 +43,16 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   useEffect(() => {
     if (!isOpen || !mapContainerRef.current) return;
 
+    if (mapRef.current) {
+      mapRef.current.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+    }
+
     if (!mapRef.current) {
-      const map = L.map(mapContainerRef.current).setView(mapCenter, 13);
+      setTimeout(() => {
+        if (!mapContainerRef.current) return;
+        const map = L.map(mapContainerRef.current).setView(mapCenter, 13);
       
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -133,18 +141,11 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         }
       });
 
-      mapRef.current = map;
-    }
-
-    if (mapRef.current) {
-      mapRef.current.setView(mapCenter, 13);
-      
-      if (coordinates) {
-        const [lat, lng] = coordinates.split(',').map(c => parseFloat(c.trim()));
-        if (!isNaN(lat) && !isNaN(lng)) {
-          if (markerRef.current) {
-            markerRef.current.setLatLng([lat, lng]);
-          } else {
+        mapRef.current = map;
+        
+        if (coordinates) {
+          const [lat, lng] = coordinates.split(',').map(c => parseFloat(c.trim()));
+          if (!isNaN(lat) && !isNaN(lng)) {
             const icon = L.icon({
               iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
               iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -152,7 +153,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               iconSize: [25, 41],
               iconAnchor: [12, 41],
             });
-            markerRef.current = L.marker([lat, lng], { icon, draggable: true }).addTo(mapRef.current);
+            markerRef.current = L.marker([lat, lng], { icon, draggable: true }).addTo(map);
             
             markerRef.current.on('dragend', async () => {
               if (!markerRef.current) return;
@@ -163,7 +164,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               if (onAddressChange) {
                 try {
                   const response = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru`
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.lat}&lon=${position.lng}&accept-language=ru&addressdetails=1`
                   );
                   const data = await response.json();
                   const address = data.address;
@@ -177,10 +178,10 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             });
           }
         }
-      }
 
-      setTimeout(() => {
-        mapRef.current?.invalidateSize();
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
       }, 100);
     }
   }, [isOpen, mapCenter, coordinates, onCoordinatesChange]);
