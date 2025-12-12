@@ -31,8 +31,6 @@ export function useOfferDetail(id: string | undefined) {
       setIsLoading(true);
       try {
         const data = await offersAPI.getOfferById(id);
-        console.log('🔍 Backend response data:', data);
-        console.log('🔍 minOrderQuantity from backend:', data.minOrderQuantity, data.min_order_quantity);
         
         const mappedOffer: Offer = {
           ...data,
@@ -65,7 +63,6 @@ export function useOfferDetail(id: string | undefined) {
           updatedAt: data.updatedAt || data.updated_at ? new Date(data.updatedAt || data.updated_at) : undefined,
         };
         
-        console.log('🔍 Mapped offer minOrderQuantity:', mappedOffer.minOrderQuantity);
         setOffer(mappedOffer);
         
         if (mappedOffer?.video) {

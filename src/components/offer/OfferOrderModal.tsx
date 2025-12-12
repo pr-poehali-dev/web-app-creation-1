@@ -44,19 +44,30 @@ export default function OfferOrderModal({
   const [comment, setComment] = useState<string>('');
   const [quantityError, setQuantityError] = useState<string>('');
 
-  console.log('🔍 OfferOrderModal - minOrderQuantity:', minOrderQuantity, 'unit:', unit);
-
   useEffect(() => {
     if (currentUser?.legalAddress && selectedDeliveryType === 'delivery') {
       setAddress(currentUser.legalAddress);
     }
   }, [currentUser, selectedDeliveryType]);
 
+  useEffect(() => {
+    if (minOrderQuantity && quantity < minOrderQuantity) {
+      setQuantity(minOrderQuantity);
+    }
+  }, [minOrderQuantity]);
+
   const handleQuantityChange = (value: number) => {
-    setQuantity(value);
-    if (minOrderQuantity && value < minOrderQuantity) {
+    const numValue = Number(value);
+    
+    if (isNaN(numValue) || numValue < 1) {
+      return;
+    }
+    
+    setQuantity(numValue);
+    
+    if (minOrderQuantity && numValue < minOrderQuantity) {
       setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
-    } else if (value > remainingQuantity) {
+    } else if (numValue > remainingQuantity) {
       setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
     } else {
       setQuantityError('');
@@ -65,9 +76,17 @@ export default function OfferOrderModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (minOrderQuantity && quantity < minOrderQuantity) {
+      setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
       return;
     }
+    
+    if (quantity > remainingQuantity) {
+      setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
+      return;
+    }
+    
     onSubmit({
       quantity,
       deliveryType: selectedDeliveryType,
@@ -97,18 +116,32 @@ export default function OfferOrderModal({
               type="number"
               min={minOrderQuantity || 1}
               max={remainingQuantity}
+              step="1"
               value={quantity}
               onChange={(e) => handleQuantityChange(Number(e.target.value))}
+              onBlur={(e) => {
+                const val = Number(e.target.value);
+                if (minOrderQuantity && val < minOrderQuantity) {
+                  setQuantity(minOrderQuantity);
+                  handleQuantityChange(minOrderQuantity);
+                }
+              }}
               required
-              className={quantityError ? 'border-red-500' : ''}
+              className={quantityError ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
             {minOrderQuantity && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Минимальное количество: {minOrderQuantity} {unit}
-              </p>
+              <div className="flex items-center gap-1 mt-1">
+                <Icon name="AlertCircle" size={12} className="text-amber-600" />
+                <p className="text-xs text-amber-600 font-medium">
+                  Минимальное количество: {minOrderQuantity} {unit}
+                </p>
+              </div>
             )}
             {quantityError && (
-              <p className="text-xs text-red-500 mt-1">{quantityError}</p>
+              <div className="flex items-center gap-1 mt-1">
+                <Icon name="XCircle" size={12} className="text-red-500" />
+                <p className="text-xs text-red-500 font-medium">{quantityError}</p>
+              </div>
             )}
           </div>
           

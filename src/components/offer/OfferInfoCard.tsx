@@ -51,8 +51,6 @@ export default function OfferInfoCard({
 }: OfferInfoCardProps) {
   const { districts } = useDistrict();
   
-  console.log('🔍 OfferInfoCard - minOrderQuantity:', minOrderQuantity, 'unit:', unit);
-  
   // Найти название категории
   const categoryData = CATEGORIES.find(c => c.id === category);
   const categoryName = categoryData?.name || category;
