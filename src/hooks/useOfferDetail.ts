@@ -43,15 +43,15 @@ export function useOfferDetail(id: string | undefined) {
           availableDeliveryTypes: data.available_delivery_types || data.availableDeliveryTypes || ['pickup'],
           userId: data.user_id || data.userId,
           fullAddress: data.full_address || data.fullAddress,
-          seller: data.seller_name ? {
+          seller: data.seller ? {
             id: data.user_id || data.userId,
-            name: data.seller_name,
-            type: data.seller_type,
-            phone: data.seller_phone,
-            email: data.seller_email,
-            rating: data.seller_rating || 0,
-            reviewsCount: data.seller_reviews_count || 0,
-            isVerified: data.seller_is_verified || false,
+            name: data.seller.name,
+            type: data.seller.type,
+            phone: data.seller.phone,
+            email: data.seller.email,
+            rating: data.seller.rating || 0,
+            reviewsCount: data.seller.reviewsCount || 0,
+            isVerified: data.seller.isVerified || false,
             statistics: {
               totalOffers: 0,
               activeOffers: 0,
