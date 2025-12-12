@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import type { Seller } from '@/types/offer';
+import { getSession } from '@/utils/auth';
 
 interface OfferOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onSubmit: (orderData: any) => void;
   remainingQuantity: number;
+  minOrderQuantity?: number;
   unit: string;
   availableDeliveryTypes: ('pickup' | 'delivery')[];
   seller?: Seller;
@@ -30,13 +32,49 @@ export default function OfferOrderModal({
   onClose,
   onSubmit,
   remainingQuantity,
+  minOrderQuantity,
   unit,
   availableDeliveryTypes,
   seller,
 }: OfferOrderModalProps) {
+  const currentUser = getSession();
   const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery'>(
     availableDeliveryTypes[0] || 'pickup'
   );
+  const [quantity, setQuantity] = useState<number>(minOrderQuantity || 1);
+  const [address, setAddress] = useState<string>('');
+  const [comment, setComment] = useState<string>('');
+  const [quantityError, setQuantityError] = useState<string>('');
+
+  useEffect(() => {
+    if (currentUser?.legalAddress && selectedDeliveryType === 'delivery') {
+      setAddress(currentUser.legalAddress);
+    }
+  }, [currentUser, selectedDeliveryType]);
+
+  const handleQuantityChange = (value: number) => {
+    setQuantity(value);
+    if (minOrderQuantity && value < minOrderQuantity) {
+      setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
+    } else if (value > remainingQuantity) {
+      setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
+    } else {
+      setQuantityError('');
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (minOrderQuantity && quantity < minOrderQuantity) {
+      return;
+    }
+    onSubmit({
+      quantity,
+      deliveryType: selectedDeliveryType,
+      address: selectedDeliveryType === 'delivery' ? address : undefined,
+      comment,
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -79,18 +117,28 @@ export default function OfferOrderModal({
           </Card>
         )}
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="order-quantity">Количество ({unit})</Label>
             <Input
               id="order-quantity"
               name="order-quantity"
               type="number"
-              min="1"
+              min={minOrderQuantity || 1}
               max={remainingQuantity}
-              defaultValue="1"
+              value={quantity}
+              onChange={(e) => handleQuantityChange(Number(e.target.value))}
               required
+              className={quantityError ? 'border-red-500' : ''}
             />
+            {minOrderQuantity && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Минимальное количество: {minOrderQuantity} {unit}
+              </p>
+            )}
+            {quantityError && (
+              <p className="text-xs text-red-500 mt-1">{quantityError}</p>
+            )}
           </div>
           
           <div>
@@ -120,8 +168,15 @@ export default function OfferOrderModal({
                 name="order-address"
                 type="text"
                 placeholder="Укажите адрес доставки"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
                 required
               />
+              {currentUser?.legalAddress && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Адрес из профиля. Вы можете изменить его.
+                </p>
+              )}
             </div>
           )}
 
@@ -131,12 +186,18 @@ export default function OfferOrderModal({
               id="order-comment"
               name="order-comment"
               placeholder="Дополнительная информация к заказу"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
               rows={3}
             />
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="submit" className="flex-1">
+            <Button 
+              type="submit" 
+              className="flex-1"
+              disabled={!!quantityError}
+            >
               Отправить заказ
             </Button>
             <Button

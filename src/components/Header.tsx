@@ -15,7 +15,6 @@ import RegionDistrictSelector from '@/components/RegionDistrictSelector';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { useOffers } from '@/contexts/OffersContext';
-import { ordersAPI } from '@/services/api';
 import { getUnreadCount } from '@/utils/notifications';
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -64,11 +63,14 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         );
         setListingsCount(userListings.length);
 
-        const ordersData = await ordersAPI.getAll();
-        const userOrders = ordersData.filter(
-          order => order.buyerId === currentUser.id || order.sellerId === currentUser.id
-        );
-        setOrdersCount(userOrders.length);
+        const storedOrders = localStorage.getItem('orders');
+        if (storedOrders) {
+          const ordersData = JSON.parse(storedOrders);
+          const userOrders = ordersData.filter(
+            (order: any) => order.buyerId === currentUser.id?.toString() || order.sellerId === currentUser.id?.toString()
+          );
+          setOrdersCount(userOrders.length);
+        }
 
         const notifCount = getUnreadCount(currentUser.id);
         setUnreadNotifications(notifCount);
@@ -282,7 +284,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     <Icon name="Star" className="mr-2 h-4 w-4" />
                     Мои отзывы
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/active-orders')}>
+                  <DropdownMenuItem onClick={() => navigate('/my-orders')}>
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center">
                         <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />

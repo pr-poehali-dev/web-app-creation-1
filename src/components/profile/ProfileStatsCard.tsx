@@ -74,7 +74,7 @@ export default function ProfileStatsCard({ registrationDate, formatDate }: Profi
             <Icon name="LayoutList" className="mr-2 h-4 w-4" />
             Мои объявления
           </Button>
-          <Button onClick={() => navigate('/active-orders')} variant="outline" size="sm">
+          <Button onClick={() => navigate('/my-orders')} variant="outline" size="sm">
             <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
             Мои заказы
           </Button>

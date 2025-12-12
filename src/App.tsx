@@ -54,6 +54,7 @@ import OrderDetailPage from "./pages/OrderDetailPage";
 import ResponseDetailPage from "./pages/ResponseDetailPage";
 import ChatNotifications from "./pages/ChatNotifications";
 import MyReviews from "./pages/MyReviews";
+import MyOrders from "./pages/MyOrders";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import OfferAgreement from "./pages/OfferAgreement";
@@ -146,6 +147,7 @@ const App = () => {
             <Route path="/edit-auction/:id" element={<EditAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
 
             <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-orders" element={<MyOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/register" element={<Register onRegister={handleLogin} />} />

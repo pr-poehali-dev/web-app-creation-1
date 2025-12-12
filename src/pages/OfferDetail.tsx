@@ -14,7 +14,9 @@ import OfferMediaGallery from '@/components/offer/OfferMediaGallery';
 import OfferInfoCard from '@/components/offer/OfferInfoCard';
 import OfferSellerCard from '@/components/offer/OfferSellerCard';
 import OfferOrderModal from '@/components/offer/OfferOrderModal';
+import OrderChatModal from '@/components/order/OrderChatModal';
 import type { Offer } from '@/types/offer';
+import type { Order, ChatMessage } from '@/types/order';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +41,9 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
     const loadOffer = async () => {
@@ -156,11 +161,9 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     setIsOrderModalOpen(true);
   };
 
-  const handleOrderSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleOrderSubmit = async (orderFormData: any) => {
     if (!offer) return;
 
-    const formData = new FormData(e.target as HTMLFormElement);
     const currentUser = getSession();
     
     if (!currentUser) {
@@ -168,40 +171,47 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
       return;
     }
 
-    try {
-      const orderData = {
-        offerId: offer.id,
-        title: offer.title,
-        quantity: parseInt(formData.get('order-quantity') as string),
-        unit: offer.unit,
-        pricePerUnit: offer.pricePerUnit,
-        hasVAT: offer.hasVAT || false,
-        vatRate: offer.vatRate,
-        deliveryType: formData.get('order-delivery') as string,
-        deliveryAddress: formData.get('order-address') as string,
-        district: offer.district,
-        buyerName: currentUser.firstName + ' ' + currentUser.lastName,
-        buyerPhone: currentUser.phone || '',
-        buyerEmail: currentUser.email,
-        buyerComment: formData.get('order-comment') as string || '',
-      };
+    const newOrder: Order = {
+      id: Date.now().toString(),
+      offerId: offer.id,
+      offerTitle: offer.title,
+      offerImage: offer.images[0]?.url,
+      buyerId: currentUser.id?.toString() || '',
+      buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
+      buyerEmail: currentUser.email,
+      buyerPhone: currentUser.phone || '',
+      sellerId: offer.userId,
+      sellerName: offer.seller?.name || 'Продавец',
+      sellerEmail: offer.seller?.email || '',
+      sellerPhone: offer.seller?.phone || '',
+      quantity: orderFormData.quantity,
+      unit: offer.unit,
+      pricePerUnit: offer.pricePerUnit,
+      totalPrice: orderFormData.quantity * offer.pricePerUnit,
+      deliveryType: orderFormData.deliveryType,
+      deliveryAddress: orderFormData.address,
+      comment: orderFormData.comment,
+      status: 'pending',
+      createdAt: new Date(),
+    };
 
-      const result = await ordersAPI.createOrder(orderData);
-      
-      setIsOrderModalOpen(false);
-      
-      toast({
-        title: 'Заказ оформлен!',
-        description: `Номер заказа: ${result.orderNumber}`,
-      });
-      
-      setTimeout(() => {
-        navigate('/active-orders');
-      }, 1500);
-    } catch (error) {
-      console.error('Error creating order:', error);
-      alert('Ошибка при оформлении заказа. Попробуйте еще раз.');
-    }
+    const storedOrders = localStorage.getItem('orders');
+    const orders = storedOrders ? JSON.parse(storedOrders) : [];
+    orders.push(newOrder);
+    localStorage.setItem('orders', JSON.stringify(orders));
+    
+    setIsOrderModalOpen(false);
+    setCreatedOrder(newOrder);
+    setChatMessages([]);
+    
+    toast({
+      title: 'Заказ оформлен!',
+      description: 'Теперь вы можете общаться с продавцом',
+    });
+
+    setTimeout(() => {
+      setIsChatOpen(true);
+    }, 500);
   };
 
   const openGallery = (index: number) => {
@@ -411,10 +421,37 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
         onClose={() => setIsOrderModalOpen(false)}
         onSubmit={handleOrderSubmit}
         remainingQuantity={remainingQuantity}
+        minOrderQuantity={offer.minOrderQuantity}
         unit={offer.unit}
         availableDeliveryTypes={offer.availableDeliveryTypes}
         seller={offer.seller}
       />
+
+      {createdOrder && (
+        <OrderChatModal
+          isOpen={isChatOpen}
+          onClose={() => {
+            setIsChatOpen(false);
+            navigate('/my-orders');
+          }}
+          order={createdOrder}
+          messages={chatMessages}
+          onSendMessage={(message) => {
+            const newMessage: ChatMessage = {
+              id: Date.now().toString(),
+              orderId: createdOrder.id,
+              senderId: getSession()?.id?.toString() || '',
+              senderName: `${getSession()?.firstName} ${getSession()?.lastName}`,
+              message,
+              timestamp: new Date(),
+              isRead: false,
+            };
+            const updatedMessages = [...chatMessages, newMessage];
+            setChatMessages(updatedMessages);
+            localStorage.setItem(`order_messages_${createdOrder.id}`, JSON.stringify(updatedMessages));
+          }}
+        />
+      )}
 
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
         <DialogContent className="max-w-4xl p-0">
