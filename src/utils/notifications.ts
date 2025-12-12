@@ -1,4 +1,4 @@
-type NotificationType = 'order' | 'message' | 'auction' | 'request' | 'system';
+type NotificationType = 'order' | 'message' | 'auction' | 'request' | 'system' | 'new_order' | 'order_accepted' | 'order_message';
 
 interface Notification {
   id: string;
@@ -124,4 +124,97 @@ export function notifyAuctionSeller(
     `Ваш аукцион "${auctionTitle}" завершен. Победитель: ${winnerName} со ставкой ${winningBid.toLocaleString('ru-RU')} ₽.`,
     `/auction/${auctionId}`
   );
+}
+
+export function notifyNewOrder(
+  sellerId: string,
+  offerTitle: string,
+  buyerName: string,
+  quantity: number,
+  unit: string,
+  orderId: string
+): void {
+  addNotification(
+    sellerId,
+    'new_order',
+    '🛒 Новый заказ!',
+    `Получен заказ на "${offerTitle}" от ${buyerName}. Количество: ${quantity} ${unit}`,
+    `/my-orders`
+  );
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('Новый заказ!', {
+      body: `${buyerName} заказал ${quantity} ${unit}`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `order-${orderId}`,
+      requireInteraction: true,
+    });
+  }
+}
+
+export function notifyOrderAccepted(
+  buyerId: string,
+  sellerName: string,
+  offerTitle: string,
+  orderId: string
+): void {
+  addNotification(
+    buyerId,
+    'order_accepted',
+    '✅ Заказ принят!',
+    `Продавец ${sellerName} принял ваш заказ на "${offerTitle}"`,
+    `/my-orders`
+  );
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('Заказ принят!', {
+      body: `${sellerName} принял ваш заказ`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `order-${orderId}`,
+    });
+  }
+}
+
+export function notifyNewMessage(
+  recipientId: string,
+  senderName: string,
+  message: string,
+  orderId: string
+): void {
+  addNotification(
+    recipientId,
+    'order_message',
+    '💬 Новое сообщение',
+    `${senderName}: ${message.slice(0, 50)}${message.length > 50 ? '...' : ''}`,
+    `/my-orders`
+  );
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(`Сообщение от ${senderName}`, {
+      body: message.slice(0, 100),
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `message-${orderId}`,
+    });
+  }
+}
+
+export async function requestNotificationPermission(): Promise<boolean> {
+  if (!('Notification' in window)) {
+    console.log('Браузер не поддерживает уведомления');
+    return false;
+  }
+
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+
+  if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+
+  return false;
 }

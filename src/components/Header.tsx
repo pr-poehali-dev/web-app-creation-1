@@ -72,7 +72,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           setOrdersCount(userOrders.length);
         }
 
-        const notifCount = getUnreadCount(currentUser.id);
+        const notifCount = getUnreadCount(currentUser.id?.toString());
         setUnreadNotifications(notifCount);
       } catch (error) {
         console.error('Error fetching counts:', error);
@@ -82,11 +82,23 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     fetchCounts();
     
     const interval = setInterval(() => {
-      const notifCount = getUnreadCount(currentUser.id);
+      const notifCount = getUnreadCount(currentUser.id?.toString());
       setUnreadNotifications(notifCount);
     }, 5000);
 
-    return () => clearInterval(interval);
+    const handleNotificationUpdate = () => {
+      const notifCount = getUnreadCount(currentUser.id?.toString());
+      setUnreadNotifications(notifCount);
+    };
+
+    window.addEventListener('newNotification', handleNotificationUpdate);
+    window.addEventListener('notificationsUpdated', handleNotificationUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('newNotification', handleNotificationUpdate);
+      window.removeEventListener('notificationsUpdated', handleNotificationUpdate);
+    };
   }, [isAuthenticated, currentUser, offers, requests]);
 
   useEffect(() => {

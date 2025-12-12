@@ -61,6 +61,7 @@ import OfferAgreement from "./pages/OfferAgreement";
 import About from "./pages/About";
 import Support from "./pages/Support";
 import LocationDetectionDialog from "./components/LocationDetectionDialog";
+import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
@@ -97,6 +98,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <LocationDetectionDialog />
+            {isAuthenticated && <NotificationPermissionBanner />}
             <BrowserRouter>
             <Routes>
             <Route path="/" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

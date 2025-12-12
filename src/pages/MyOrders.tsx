@@ -11,6 +11,7 @@ import Icon from '@/components/ui/icon';
 import OrderChatModal from '@/components/order/OrderChatModal';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
+import { notifyOrderAccepted, notifyNewMessage } from '@/utils/notifications';
 import type { Order, ChatMessage } from '@/types/order';
 
 interface MyOrdersProps {
@@ -92,6 +93,13 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         });
         localStorage.setItem('offers', JSON.stringify(updatedOffers));
       }
+
+      notifyOrderAccepted(
+        order.buyerId,
+        order.sellerName,
+        order.offerTitle,
+        order.id
+      );
     }
 
     toast({
@@ -122,6 +130,17 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     const updatedMessages = [...messages, newMessage];
     setMessages(updatedMessages);
     localStorage.setItem(`order_messages_${selectedOrder.id}`, JSON.stringify(updatedMessages));
+
+    const recipientId = selectedOrder.buyerId === currentUser.id?.toString() 
+      ? selectedOrder.sellerId 
+      : selectedOrder.buyerId;
+
+    notifyNewMessage(
+      recipientId,
+      `${currentUser.firstName} ${currentUser.lastName}`,
+      message,
+      selectedOrder.id
+    );
   };
 
   const myBuyerOrders = orders.filter(order => order.buyerId === currentUser?.id?.toString());

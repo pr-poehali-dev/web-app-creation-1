@@ -20,6 +20,7 @@ import type { Order, ChatMessage } from '@/types/order';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
+import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
 
 interface OfferDetailProps {
   isAuthenticated: boolean;
@@ -199,6 +200,15 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     const orders = storedOrders ? JSON.parse(storedOrders) : [];
     orders.push(newOrder);
     localStorage.setItem('orders', JSON.stringify(orders));
+    
+    notifyNewOrder(
+      offer.userId,
+      offer.title,
+      `${currentUser.firstName} ${currentUser.lastName}`,
+      orderFormData.quantity,
+      offer.unit,
+      newOrder.id
+    );
     
     setIsOrderModalOpen(false);
     setCreatedOrder(newOrder);
@@ -449,6 +459,13 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
             const updatedMessages = [...chatMessages, newMessage];
             setChatMessages(updatedMessages);
             localStorage.setItem(`order_messages_${createdOrder.id}`, JSON.stringify(updatedMessages));
+            
+            notifyNewMessage(
+              createdOrder.sellerId,
+              `${getSession()?.firstName} ${getSession()?.lastName}`,
+              message,
+              createdOrder.id
+            );
           }}
         />
       )}
