@@ -52,26 +52,24 @@ export default function LocationDetectionDialog() {
             </div>
             <DialogTitle className="text-xl">Определить ваш регион?</DialogTitle>
           </div>
-          <DialogDescription className="text-base space-y-3 pt-2">
-            <p>
-              Мы можем автоматически определить ваше местоположение, чтобы показывать
-              предложения и услуги, доступные в вашем регионе.
-            </p>
-            <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
-              <div className="flex items-start gap-2">
-                <Icon name="Shield" className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Ваши координаты не передаются третьим лицам</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Icon name="MapPin" className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Используется только для определения региона</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <Icon name="Settings" className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>Вы можете изменить регион в любое время</span>
-              </div>
-            </div>
+          <DialogDescription className="text-base pt-2">
+            Мы можем автоматически определить ваше местоположение, чтобы показывать
+            предложения и услуги, доступные в вашем регионе.
           </DialogDescription>
+          <div className="bg-muted p-3 rounded-lg space-y-2 text-sm mt-3">
+            <div className="flex items-start gap-2">
+              <Icon name="Shield" className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <span>Ваши координаты не передаются третьим лицам</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Icon name="MapPin" className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <span>Используется только для определения региона</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <Icon name="Settings" className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <span>Вы можете изменить регион в любое время</span>
+            </div>
+          </div>
         </DialogHeader>
         <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button
