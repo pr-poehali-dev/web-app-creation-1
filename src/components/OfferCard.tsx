@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+// Updated: added minOrderQuantity display
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {

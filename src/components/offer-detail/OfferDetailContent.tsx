@@ -204,7 +204,6 @@ export default function OfferDetailContent({
         minOrderQuantity={offer.minOrderQuantity}
         unit={offer.unit}
         availableDeliveryTypes={offer.availableDeliveryTypes}
-        seller={offer.seller}
       />
 
       {createdOrder && (

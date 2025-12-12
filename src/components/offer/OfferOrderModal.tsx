@@ -6,14 +6,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+// Updated: removed seller info from order form modal
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+
 import Icon from '@/components/ui/icon';
-import type { Seller } from '@/types/offer';
+
 import { getSession } from '@/utils/auth';
 
 interface OfferOrderModalProps {
@@ -24,7 +24,6 @@ interface OfferOrderModalProps {
   minOrderQuantity?: number;
   unit: string;
   availableDeliveryTypes: ('pickup' | 'delivery')[];
-  seller?: Seller;
 }
 
 export default function OfferOrderModal({
@@ -35,7 +34,6 @@ export default function OfferOrderModal({
   minOrderQuantity,
   unit,
   availableDeliveryTypes,
-  seller,
 }: OfferOrderModalProps) {
   const currentUser = getSession();
   const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery'>(
