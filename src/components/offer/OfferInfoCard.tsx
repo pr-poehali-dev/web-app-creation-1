@@ -90,6 +90,22 @@ export default function OfferInfoCard({
           </div>
         </div>
 
+        {minOrderQuantity && (
+          <div className="bg-orange-500/10 border border-orange-500/20 p-2.5 rounded-md">
+            <div className="flex items-center gap-2">
+              <Icon name="Info" className="h-4 w-4 text-orange-600" />
+              <div>
+                <p className="text-xs font-medium text-orange-900 dark:text-orange-100">
+                  Минимальное количество для заказа
+                </p>
+                <p className="text-sm font-bold text-orange-600">
+                  {minOrderQuantity} {unit}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-primary/5 p-2 rounded-md">
           <p className="text-xs text-muted-foreground mb-0.5">Общая стоимость</p>
           <p className="text-xl font-bold text-primary">
@@ -114,13 +130,6 @@ export default function OfferInfoCard({
                   <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
                 </div>
               </div>
-
-              {minOrderQuantity && (
-                <div className="bg-accent/50 p-2 rounded-md">
-                  <p className="text-xs text-muted-foreground">Минимальный заказ</p>
-                  <p className="font-medium text-sm">{minOrderQuantity} {unit}</p>
-                </div>
-              )}
 
               <Separator />
 
