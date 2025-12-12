@@ -106,7 +106,11 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
       }
     }
 
-    result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    result.sort((a, b) => {
+      const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt;
+      const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt;
+      return dateB.getTime() - dateA.getTime();
+    });
 
     return result;
   }, [requests, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);

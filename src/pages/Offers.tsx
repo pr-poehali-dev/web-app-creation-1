@@ -113,8 +113,16 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const premiumOffers = result.filter((offer) => offer.isPremium);
     const regularOffers = result.filter((offer) => !offer.isPremium);
 
-    premiumOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    regularOffers.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    premiumOffers.sort((a, b) => {
+      const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt;
+      const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt;
+      return dateB.getTime() - dateA.getTime();
+    });
+    regularOffers.sort((a, b) => {
+      const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt;
+      const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt;
+      return dateB.getTime() - dateA.getTime();
+    });
 
     return [...premiumOffers, ...regularOffers];
   }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
