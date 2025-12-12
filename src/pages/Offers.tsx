@@ -56,7 +56,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       setIsLoading(true);
       try {
         const [offersData, ordersData] = await Promise.all([
-          offersAPI.getAll(),
+          offersAPI.getOffers({ limit: 100 }),
           ordersAPI.getAll()
         ]);
         setOffers(offersData.offers || []);

@@ -94,7 +94,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         district = params.get('district', '')
         query = params.get('query', '')
         status = params.get('status', 'active')
-        limit = min(int(params.get('limit', '10')), 20)
+        limit = min(int(params.get('limit', '20')), 100)
         offset = int(params.get('offset', '0'))
         
         conn = get_db_connection()
@@ -102,15 +102,17 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         sql = f"""
             SELECT 
-                o.*,
+                o.id, o.user_id, o.title, 
+                LEFT(o.description, 200) as description, 
+                o.category, o.subcategory,
+                o.quantity, o.unit, o.price_per_unit, o.has_vat, o.vat_rate,
+                o.district, o.available_districts, o.available_delivery_types,
+                o.is_premium, o.status, o.created_at, o.updated_at,
                 CONCAT(u.first_name, ' ', u.last_name) as seller_name,
                 u.user_type as seller_type,
-                u.phone as seller_phone,
-                u.email as seller_email,
                 5.0 as seller_rating,
                 0 as seller_reviews_count,
-                CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
-                '[]'::json as images
+                CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
             WHERE o.status = %s
@@ -141,6 +143,27 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.execute(sql, query_params)
         offers = cur.fetchall()
         
+        # Получаем ID всех предложений
+        offer_ids = [offer['id'] for offer in offers]
+        
+        # Загружаем только первое изображение для каждого предложения (для списка)
+        images_map = {}
+        if offer_ids:
+            placeholders = ','.join(['%s'] * len(offer_ids))
+            images_sql = f"""
+                SELECT DISTINCT ON (oir.offer_id)
+                    oir.offer_id,
+                    json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt) as first_image
+                FROM t_p42562714_web_app_creation_1.offer_image_relations oir
+                LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id
+                WHERE oir.offer_id IN ({placeholders}) AND oi.id IS NOT NULL
+                ORDER BY oir.offer_id, oir.sort_order
+            """
+            cur.execute(images_sql, offer_ids)
+            images_results = cur.fetchall()
+            for img_row in images_results:
+                images_map[img_row['offer_id']] = [img_row['first_image']]
+        
         result = []
         for offer in offers:
             offer_dict = dict(offer)
@@ -150,17 +173,18 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             offer_dict['pricePerUnit'] = float(offer_dict.pop('price_per_unit')) if offer_dict.get('price_per_unit') else None
             offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
             offer_dict['vatRate'] = float(offer_dict.pop('vat_rate')) if offer_dict.get('vat_rate') else None
-            offer_dict['fullAddress'] = offer_dict.pop('full_address', None)
+            # fullAddress убрали из списка для экономии размера ответа
             offer_dict['availableDistricts'] = offer_dict.pop('available_districts', [])
             offer_dict['availableDeliveryTypes'] = offer_dict.pop('available_delivery_types', [])
             offer_dict['isPremium'] = offer_dict.pop('is_premium', False)
             offer_dict['sellerName'] = offer_dict.pop('seller_name', None)
             offer_dict['sellerType'] = offer_dict.pop('seller_type', None)
-            offer_dict['sellerPhone'] = offer_dict.pop('seller_phone', None)
-            offer_dict['sellerEmail'] = offer_dict.pop('seller_email', None)
+            # sellerPhone и sellerEmail убрали для экономии размера
             offer_dict['sellerRating'] = float(offer_dict.pop('seller_rating')) if offer_dict.get('seller_rating') else None
             offer_dict['sellerReviewsCount'] = offer_dict.pop('seller_reviews_count', 0)
             offer_dict['sellerIsVerified'] = offer_dict.pop('seller_is_verified', False)
+            # Добавляем изображения из карты
+            offer_dict['images'] = images_map.get(offer_dict['id'], [])
             result.append(offer_dict)
         
         cur.close()

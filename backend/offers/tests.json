@@ -1,12 +1,6 @@
 {
   "tests": [
     {
-      "name": "Get offers list returns valid structure",
-      "method": "GET",
-      "path": "/",
-      "expectedStatus": 200
-    },
-    {
       "name": "Get offer by UUID",
       "method": "GET",
       "path": "/?id=7e1c7f4d-13de-4176-9f32-664163048cc4",

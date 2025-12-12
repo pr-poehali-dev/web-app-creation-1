@@ -172,6 +172,10 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
       return;
     }
 
+    const storedUsers = localStorage.getItem('users');
+    const users = storedUsers ? JSON.parse(storedUsers) : [];
+    const seller = users.find((u: any) => u.id?.toString() === offer.userId);
+
     const newOrder: Order = {
       id: Date.now().toString(),
       offerId: offer.id,
@@ -182,9 +186,9 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
       buyerEmail: currentUser.email,
       buyerPhone: currentUser.phone || '',
       sellerId: offer.userId,
-      sellerName: offer.seller?.name || 'Продавец',
-      sellerEmail: offer.seller?.email || '',
-      sellerPhone: offer.seller?.phone || '',
+      sellerName: offer.seller?.name || seller?.organizationName || seller?.companyName || `${seller?.firstName || ''} ${seller?.lastName || ''}`.trim() || 'Продавец',
+      sellerEmail: offer.seller?.email || seller?.email || '',
+      sellerPhone: offer.seller?.phone || seller?.phone || '',
       quantity: orderFormData.quantity,
       unit: offer.unit,
       pricePerUnit: offer.pricePerUnit,
