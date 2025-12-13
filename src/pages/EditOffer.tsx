@@ -4,10 +4,9 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +28,9 @@ import { useOffers } from '@/contexts/OffersContext';
 import OrderChatModal from '@/components/order/OrderChatModal';
 import type { ChatMessage as OrderChatMessage } from '@/types/order';
 import { useOrdersPolling } from '@/hooks/useOrdersPolling';
+import OfferInfoTab from '@/components/edit-offer/OfferInfoTab';
+import OfferOrdersTab from '@/components/edit-offer/OfferOrdersTab';
+import OfferMessagesTab from '@/components/edit-offer/OfferMessagesTab';
 
 interface EditOfferProps {
   isAuthenticated: boolean;
@@ -255,6 +257,11 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     navigate('/predlozheniya', { replace: true });
   };
 
+  const handleMessageClick = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (order) handleOpenChat(order);
+  };
+
   const districtName = districts.find(d => d.id === offer?.district)?.name || offer?.district;
   const unreadCount = messages.filter(m => !m.isRead).length;
 
@@ -342,172 +349,26 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
           </TabsList>
 
           <TabsContent value="info" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Основная информация</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {offer.images && offer.images.length > 0 && (
-                    <div className="aspect-video rounded-lg overflow-hidden">
-                      <img
-                        src={offer.images[0].url}
-                        alt={offer.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <h3 className="text-2xl font-bold">{offer.title}</h3>
-                      <p className="text-muted-foreground mt-2">{offer.description}</p>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Цена за единицу:</span>
-                        <p className="font-bold text-lg text-primary">
-                          {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Количество:</span>
-                        <p className="font-semibold">{offer.quantity} {offer.unit}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Район:</span>
-                        <p className="font-semibold">{districtName}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Просмотры:</span>
-                        <p className="font-semibold">{offer.views || 0}</p>
-                      </div>
-                    </div>
-
-                    <Separator />
-                    
-                    <div className="flex gap-2">
-                      <Button className="flex-1" onClick={handleEdit}>
-                        <Icon name="Pencil" className="w-4 h-4 mr-2" />
-                        Редактировать
-                      </Button>
-                      <Button variant="destructive" onClick={handleDelete}>
-                        <Icon name="Trash2" className="w-4 h-4 mr-2" />
-                        Удалить
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <OfferInfoTab
+              offer={offer}
+              districtName={districtName}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-4">
-            {orders.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Icon name="ShoppingCart" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Пока нет заказов</h3>
-                  <p className="text-muted-foreground">
-                    Заказы по этому объявлению будут отображаться здесь
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {orders.map((order) => (
-                  <Card key={order.id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">Заказ №{order.orderNumber || order.id.slice(0, 8)}</h3>
-                            <Badge variant={
-                              order.status === 'completed' ? 'default' :
-                              order.status === 'rejected' ? 'destructive' :
-                              order.status === 'accepted' ? 'default' :
-                              'secondary'
-                            }>
-                              {order.status === 'pending' ? 'Ожидает' :
-                               order.status === 'accepted' ? 'Принят' :
-                               order.status === 'rejected' ? 'Отклонен' :
-                               order.status === 'completed' ? 'Завершён' :
-                               order.status}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            <Icon name="User" className="inline w-3 h-3 mr-1" />
-                            {order.buyerName || 'Покупатель'}
-                          </p>
-                          <p className="text-sm font-semibold text-primary">
-                            {order.totalAmount?.toLocaleString('ru-RU') || 0} ₽
-                          </p>
-                        </div>
-                        <Button onClick={() => handleOpenChat(order)}>
-                          <Icon name="MessageSquare" className="w-4 h-4 mr-2" />
-                          Открыть чат
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <OfferOrdersTab
+              orders={orders}
+              onOpenChat={handleOpenChat}
+            />
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-4">
-            {messages.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Icon name="MessageSquare" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Нет сообщений</h3>
-                  <p className="text-muted-foreground">
-                    Сообщения от заказчиков будут отображаться здесь
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-3">
-                {messages.map((message) => (
-                  <Card 
-                    key={message.id} 
-                    className={`cursor-pointer hover:shadow-lg transition-shadow ${!message.isRead ? 'border-primary' : ''}`}
-                    onClick={() => {
-                      const order = orders.find(o => o.id === message.orderId);
-                      if (order) handleOpenChat(order);
-                    }}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Icon name="User" className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-semibold">{message.buyerName}</span>
-                            {!message.isRead && (
-                              <Badge variant="destructive" className="h-5">Новое</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            Заказ: {message.orderNumber}
-                          </p>
-                          <p className="text-sm mt-2">{message.message}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {message.timestamp.toLocaleString('ru-RU')}
-                          </p>
-                        </div>
-                        <Button size="sm" variant="outline">
-                          <Icon name="Send" className="w-4 h-4 mr-2" />
-                          Ответить
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <OfferMessagesTab
+              messages={messages}
+              onMessageClick={handleMessageClick}
+            />
           </TabsContent>
         </Tabs>
       </main>
