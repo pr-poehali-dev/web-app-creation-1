@@ -61,7 +61,6 @@ import OfferAgreement from "./pages/OfferAgreement";
 import About from "./pages/About";
 import Support from "./pages/Support";
 import ClearData from "./pages/ClearData";
-import LocationDetectionDialog from "./components/LocationDetectionDialog";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
@@ -98,7 +97,6 @@ const App = () => {
           <OffersProvider>
             <Toaster />
             <Sonner />
-            <LocationDetectionDialog />
             {isAuthenticated && <NotificationPermissionBanner />}
             <BrowserRouter>
             <Routes>
