@@ -56,12 +56,12 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const loadInitialData = async () => {
       setIsLoading(true);
       try {
-        const [offersData, ordersData] = await Promise.all([
+        const [offersData, ordersResponse] = await Promise.all([
           offersAPI.getOffers({ limit: ITEMS_PER_PAGE, offset: 0 }),
-          ordersAPI.getAll()
+          ordersAPI.getAll('all')
         ]);
         setOffers(offersData.offers || []);
-        setOrders(ordersData);
+        setOrders(ordersResponse.orders || []);
         setHasMore((offersData.offers || []).length === ITEMS_PER_PAGE);
         setOffset(ITEMS_PER_PAGE);
       } catch (error) {
