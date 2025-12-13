@@ -414,6 +414,47 @@ export const ordersAPI = {
     
     return response.json();
   },
+
+  async getMessagesByOffer(offerId: string): Promise<any[]> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${ORDERS_API}?offerId=${offerId}&messages=true`, {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch messages');
+    }
+    
+    return response.json();
+  },
+
+  async createMessage(data: { orderId: string; senderId: number; senderType: 'buyer' | 'seller'; message: string }): Promise<any> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${ORDERS_API}?message=true`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to create message');
+    }
+    
+    return response.json();
+  },
 };
 
 export interface AuctionsListResponse {

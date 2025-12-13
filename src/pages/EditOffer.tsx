@@ -68,9 +68,10 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       
       setIsLoading(true);
       try {
-        const [offerData, ordersData] = await Promise.all([
+        const [offerData, ordersData, messagesData] = await Promise.all([
           offersAPI.getOfferById(id),
-          ordersAPI.getAll()
+          ordersAPI.getAll(),
+          ordersAPI.getMessagesByOffer(id)
         ]);
         
         const mappedOffer: Offer = {
@@ -95,16 +96,16 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
         const relatedOrders = ordersData.filter(o => o.offerId === id);
         setOrders(relatedOrders);
 
-        const mockMessages: ChatMessage[] = relatedOrders.slice(0, 3).map((order, index) => ({
-          id: `msg-${index}`,
-          orderId: order.id,
-          orderNumber: order.orderNumber || `ORD-${order.id.slice(0, 8)}`,
-          buyerName: order.counterparty || 'Заказчик',
-          message: index === 0 ? 'Когда можете доставить товар?' : index === 1 ? 'Есть сертификаты качества?' : 'Можно ли заказать больше?',
-          timestamp: new Date(Date.now() - index * 3600000),
-          isRead: index > 0,
+        const mappedMessages: ChatMessage[] = messagesData.map((msg: any) => ({
+          id: msg.id,
+          orderId: msg.order_id,
+          orderNumber: msg.order_number,
+          buyerName: msg.sender_name || 'Пользователь',
+          message: msg.message,
+          timestamp: new Date(msg.created_at),
+          isRead: msg.is_read,
         }));
-        setMessages(mockMessages);
+        setMessages(mappedMessages);
       } catch (error) {
         console.error('Error loading data:', error);
         toast({

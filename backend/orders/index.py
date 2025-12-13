@@ -2,7 +2,9 @@
 API для управления заказами
 GET / - получить список заказов пользователя
 GET /?id=uuid - получить заказ по ID
+GET /?offerId=uuid&messages=true - получить сообщения по предложению
 POST / - создать новый заказ
+POST /?message=true - отправить сообщение по заказу
 PUT /?id=uuid - обновить статус заказа
 '''
 
@@ -61,14 +63,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if method == 'GET':
             query_params = event.get('queryStringParameters', {}) or {}
             order_id = query_params.get('id')
+            offer_id = query_params.get('offerId')
+            messages_flag = query_params.get('messages')
             
-            if order_id:
+            if messages_flag == 'true' and offer_id:
+                return get_messages_by_offer(offer_id, headers)
+            elif order_id:
                 return get_order_by_id(order_id, headers)
             else:
                 return get_user_orders(event, headers)
         
         elif method == 'POST':
-            return create_order(event, headers)
+            query_params = event.get('queryStringParameters', {}) or {}
+            is_message = query_params.get('message') == 'true'
+            
+            if is_message:
+                return create_message(event, headers)
+            else:
+                return create_order(event, headers)
         
         elif method == 'PUT':
             query_params = event.get('queryStringParameters', {}) or {}
@@ -378,5 +390,97 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         'statusCode': 200,
         'headers': headers,
         'body': json.dumps({'message': 'Order updated successfully'}),
+        'isBase64Encoded': False
+    }
+
+def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Получить все сообщения по предложению (из всех заказов)"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    sql = """
+        SELECT 
+            om.id,
+            om.order_id,
+            om.sender_id,
+            om.sender_type,
+            om.message,
+            om.is_read,
+            om.created_at,
+            o.order_number,
+            o.title as order_title,
+            o.buyer_name,
+            u.first_name || ' ' || u.last_name as sender_name
+        FROM order_messages om
+        JOIN orders o ON om.order_id = o.id
+        LEFT JOIN users u ON om.sender_id = u.id
+        WHERE o.offer_id = %s
+        ORDER BY om.created_at DESC
+    """
+    
+    cur.execute(sql, (offer_id,))
+    messages = cur.fetchall()
+    
+    result = []
+    for msg in messages:
+        msg_dict = dict(msg)
+        if msg_dict.get('created_at'):
+            msg_dict['created_at'] = msg_dict['created_at'].isoformat()
+        result.append(msg_dict)
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps(result),
+        'isBase64Encoded': False
+    }
+
+def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    """Создать новое сообщение по заказу"""
+    body = json.loads(event.get('body', '{}'))
+    
+    required_fields = ['orderId', 'senderId', 'senderType', 'message']
+    if not all(field in body for field in required_fields):
+        return {
+            'statusCode': 400,
+            'headers': headers,
+            'body': json.dumps({'error': 'Missing required fields'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    sql = """
+        INSERT INTO order_messages 
+        (order_id, sender_id, sender_type, message, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id, order_id, sender_id, sender_type, message, is_read, created_at
+    """
+    
+    cur.execute(sql, (
+        body['orderId'],
+        int(body['senderId']),
+        body['senderType'],
+        body['message']
+    ))
+    
+    new_message = cur.fetchone()
+    conn.commit()
+    
+    result = dict(new_message)
+    if result.get('created_at'):
+        result['created_at'] = result['created_at'].isoformat()
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 201,
+        'headers': headers,
+        'body': json.dumps(result),
         'isBase64Encoded': False
     }
