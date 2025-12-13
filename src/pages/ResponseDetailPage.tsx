@@ -55,7 +55,7 @@ export default function ResponseDetailPage({ isAuthenticated, onLogout }: Respon
           quantity: 50,
           unit: 'т',
           pricePerUnit: 420,
-          totalPrice: 21000,
+          totalAmount: 21000,
           deliveryDays: 3,
           comment: 'Доставим качественный песок в срок',
           status: 'accepted',

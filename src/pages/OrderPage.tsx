@@ -180,7 +180,7 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
     }
   };
 
-  const totalPrice = parseInt(quantity) * offer.pricePerUnit;
+  const totalAmount = parseInt(quantity) * offer.pricePerUnit;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

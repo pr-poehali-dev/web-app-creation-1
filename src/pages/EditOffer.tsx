@@ -20,11 +20,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
+import type { Order } from '@/types/order';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
+import OrderChatModal from '@/components/order/OrderChatModal';
+import type { ChatMessage as OrderChatMessage } from '@/types/order';
+import { useOrdersPolling } from '@/hooks/useOrdersPolling';
 
 interface EditOfferProps {
   isAuthenticated: boolean;
@@ -51,11 +55,110 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState('info');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [chatMessages, setChatMessages] = useState<OrderChatMessage[]>([]);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { deleteOffer } = useOffers();
+
+  useOrdersPolling({
+    enabled: isAuthenticated && !!id,
+    interval: 15000,
+    onNewOrder: (order: any) => {
+      if ((order.offer_id || order.offerId) === id) {
+        toast({
+          title: '🎉 Новый заказ!',
+          description: `Заказ от ${order.buyer_name || 'покупателя'} на сумму ${order.total_amount?.toLocaleString('ru-RU') || 0} ₽`,
+        });
+        loadData();
+      }
+    },
+  });
+
+  const loadData = async () => {
+    if (!id) return;
+    
+    setIsLoading(true);
+    try {
+      const [offerData, ordersResponse, messagesData] = await Promise.all([
+        offersAPI.getOfferById(id),
+        ordersAPI.getAll('sale'),
+        ordersAPI.getMessagesByOffer(id)
+      ]);
+      
+      const mappedOffer: Offer = {
+        ...offerData,
+        pricePerUnit: offerData.price_per_unit || offerData.pricePerUnit || 0,
+        userId: offerData.user_id || offerData.userId,
+        createdAt: new Date(offerData.createdAt || offerData.created_at),
+      };
+
+      if (mappedOffer.userId !== currentUser?.id) {
+        toast({
+          title: 'Ошибка доступа',
+          description: 'Вы не можете редактировать чужое объявление',
+          variant: 'destructive',
+        });
+        navigate(`/offer/${id}`);
+        return;
+      }
+      
+      setOffer(mappedOffer);
+      
+      const ordersData = ordersResponse.orders || [];
+      const relatedOrders = ordersData
+        .filter((o: any) => (o.offer_id || o.offerId) === id)
+        .map((order: any) => ({
+          id: order.id,
+          offerId: order.offer_id || order.offerId,
+          offerTitle: order.offer_title || order.title,
+          offerImage: order.offer_image,
+          quantity: order.quantity,
+          unit: order.unit,
+          pricePerUnit: order.price_per_unit || order.pricePerUnit,
+          totalAmount: order.total_amount || order.totalAmount,
+          buyerId: order.buyer_id?.toString() || order.buyerId,
+          buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
+          buyerPhone: order.buyer_phone || order.buyerPhone,
+          buyerEmail: order.buyer_email || order.buyerEmail,
+          buyerCompany: order.buyer_company || order.buyerCompany,
+          buyerInn: order.buyer_inn || order.buyerInn,
+          sellerId: order.seller_id?.toString() || order.sellerId,
+          sellerName: order.seller_name || order.sellerName || order.seller_full_name,
+          sellerPhone: order.seller_phone || order.sellerPhone,
+          sellerEmail: order.seller_email || order.sellerEmail,
+          status: order.status,
+          deliveryType: order.delivery_type || order.deliveryType || 'delivery',
+          comment: order.comment,
+          createdAt: new Date(order.createdAt || order.created_at),
+          acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
+        }));
+      setOrders(relatedOrders);
+
+      const mappedMessages: ChatMessage[] = messagesData.map((msg: any) => ({
+        id: msg.id,
+        orderId: msg.order_id,
+        orderNumber: msg.order_number,
+        buyerName: msg.sender_name || 'Пользователь',
+        message: msg.message,
+        timestamp: new Date(msg.created_at),
+        isRead: msg.is_read,
+      }));
+      setMessages(mappedMessages);
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить данные объявления',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!currentUser || !isAuthenticated) {
@@ -63,88 +166,66 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       return;
     }
 
-    const loadData = async () => {
-      if (!id) return;
-      
-      setIsLoading(true);
-      try {
-        const [offerData, ordersResponse, messagesData] = await Promise.all([
-          offersAPI.getOfferById(id),
-          ordersAPI.getAll('sale'),
-          ordersAPI.getMessagesByOffer(id)
-        ]);
-        
-        const mappedOffer: Offer = {
-          ...offerData,
-          pricePerUnit: offerData.price_per_unit || offerData.pricePerUnit || 0,
-          userId: offerData.user_id || offerData.userId,
-          createdAt: new Date(offerData.createdAt || offerData.created_at),
-        };
-
-        if (mappedOffer.userId !== currentUser.id) {
-          toast({
-            title: 'Ошибка доступа',
-            description: 'Вы не можете редактировать чужое объявление',
-            variant: 'destructive',
-          });
-          navigate(`/offer/${id}`);
-          return;
-        }
-        
-        setOffer(mappedOffer);
-        
-        const ordersData = ordersResponse.orders || [];
-        const relatedOrders = ordersData
-          .filter((o: any) => (o.offer_id || o.offerId) === id)
-          .map((order: any) => ({
-            id: order.id,
-            offerId: order.offer_id || order.offerId,
-            offerTitle: order.offer_title || order.title,
-            quantity: order.quantity,
-            unit: order.unit,
-            pricePerUnit: order.price_per_unit || order.pricePerUnit,
-            totalAmount: order.total_amount || order.totalAmount,
-            buyerId: order.buyer_id?.toString() || order.buyerId,
-            buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
-            buyerPhone: order.buyer_phone || order.buyerPhone,
-            buyerEmail: order.buyer_email || order.buyerEmail,
-            buyerCompany: order.buyer_company || order.buyerCompany,
-            buyerInn: order.buyer_inn || order.buyerInn,
-            sellerId: order.seller_id?.toString() || order.sellerId,
-            sellerName: order.seller_name || order.sellerName || order.seller_full_name,
-            status: order.status,
-            createdAt: new Date(order.createdAt || order.created_at),
-          }));
-        setOrders(relatedOrders);
-
-        const mappedMessages: ChatMessage[] = messagesData.map((msg: any) => ({
-          id: msg.id,
-          orderId: msg.order_id,
-          orderNumber: msg.order_number,
-          buyerName: msg.sender_name || 'Пользователь',
-          message: msg.message,
-          timestamp: new Date(msg.created_at),
-          isRead: msg.is_read,
-        }));
-        setMessages(mappedMessages);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        toast({
-          title: 'Ошибка',
-          description: 'Не удалось загрузить данные объявления',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const handleOpenChat = (orderId: string) => {
-    navigate(`/order-detail/${orderId}`);
+  const handleOpenChat = async (order: Order) => {
+    setSelectedOrder(order);
+    await loadChatMessages(order.id);
+    setIsChatOpen(true);
+  };
+
+  const loadChatMessages = async (orderId: string) => {
+    try {
+      setChatMessages([]);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить сообщения',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSendMessage = async (message: string) => {
+    if (!selectedOrder || !currentUser) return;
+
+    try {
+      const senderType = selectedOrder.sellerId === currentUser.id?.toString() ? 'seller' : 'buyer';
+      
+      await ordersAPI.createMessage({
+        orderId: selectedOrder.id,
+        senderId: currentUser.id || 0,
+        senderType,
+        message,
+      });
+
+      const newMessage: OrderChatMessage = {
+        id: Date.now().toString(),
+        orderId: selectedOrder.id,
+        senderId: currentUser.id?.toString() || '',
+        senderName: `${currentUser.firstName} ${currentUser.lastName}`,
+        message,
+        timestamp: new Date(),
+        isRead: false,
+      };
+
+      setChatMessages([...chatMessages, newMessage]);
+
+      toast({
+        title: 'Отправлено',
+        description: 'Сообщение успешно отправлено',
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить сообщение',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleEdit = () => {
@@ -346,25 +427,26 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
                             <h3 className="font-semibold">Заказ №{order.orderNumber || order.id.slice(0, 8)}</h3>
                             <Badge variant={
                               order.status === 'completed' ? 'default' :
-                              order.status === 'cancelled' ? 'destructive' :
+                              order.status === 'rejected' ? 'destructive' :
+                              order.status === 'accepted' ? 'default' :
                               'secondary'
                             }>
-                              {order.status === 'new' ? 'Новый' :
-                               order.status === 'processing' ? 'В обработке' :
-                               order.status === 'shipping' ? 'Доставка' :
+                              {order.status === 'pending' ? 'Ожидает' :
+                               order.status === 'accepted' ? 'Принят' :
+                               order.status === 'rejected' ? 'Отклонен' :
                                order.status === 'completed' ? 'Завершён' :
-                               'Отменён'}
+                               order.status}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
                             <Icon name="User" className="inline w-3 h-3 mr-1" />
-                            {order.counterparty || 'Покупатель'}
+                            {order.buyerName || 'Покупатель'}
                           </p>
                           <p className="text-sm font-semibold text-primary">
                             {order.totalAmount?.toLocaleString('ru-RU') || 0} ₽
                           </p>
                         </div>
-                        <Button onClick={() => handleOpenChat(order.id)}>
+                        <Button onClick={() => handleOpenChat(order)}>
                           <Icon name="MessageSquare" className="w-4 h-4 mr-2" />
                           Открыть чат
                         </Button>
@@ -393,7 +475,10 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
                   <Card 
                     key={message.id} 
                     className={`cursor-pointer hover:shadow-lg transition-shadow ${!message.isRead ? 'border-primary' : ''}`}
-                    onClick={() => handleOpenChat(message.orderId)}
+                    onClick={() => {
+                      const order = orders.find(o => o.id === message.orderId);
+                      if (order) handleOpenChat(order);
+                    }}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
@@ -450,6 +535,16 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {selectedOrder && (
+        <OrderChatModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          order={selectedOrder}
+          messages={chatMessages}
+          onSendMessage={handleSendMessage}
+        />
+      )}
     </div>
   );
 }

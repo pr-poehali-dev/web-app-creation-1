@@ -58,7 +58,7 @@ export default function OrderDetailPage({ isAuthenticated, onLogout }: OrderDeta
           quantity: 100,
           unit: 'мешок',
           pricePerUnit: 450,
-          totalPrice: 45000,
+          totalAmount: 45000,
           hasVAT: true,
           vatRate: 20,
           deliveryType: 'delivery',

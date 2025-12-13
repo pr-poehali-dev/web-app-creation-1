@@ -19,7 +19,7 @@ interface RequestInfoCardProps {
   availableDistricts: string[];
   createdAt: Date;
   expiryDate?: Date;
-  totalPrice: number;
+  totalAmount: number;
 }
 
 export default function RequestInfoCard({
@@ -38,7 +38,7 @@ export default function RequestInfoCard({
   availableDistricts,
   createdAt,
   expiryDate,
-  totalPrice
+  totalAmount
 }: RequestInfoCardProps) {
   return (
     <Card className="mb-3">
@@ -66,7 +66,7 @@ export default function RequestInfoCard({
         <div className="bg-primary/5 p-2 rounded-md">
           <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
           <p className="text-xl font-bold text-primary">
-            {totalPrice.toLocaleString('ru-RU')} ₽
+            {totalAmount.toLocaleString('ru-RU')} ₽
           </p>
         </div>
 

@@ -14,7 +14,7 @@ export interface Order {
   quantity: number;
   unit: string;
   pricePerUnit: number;
-  totalPrice: number;
+  totalAmount: number;
   deliveryType: 'pickup' | 'delivery';
   deliveryAddress?: string;
   comment?: string;

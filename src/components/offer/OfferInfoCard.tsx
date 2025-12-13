@@ -17,7 +17,7 @@ interface OfferInfoCardProps {
   remainingQuantity: number;
   hasVAT: boolean;
   vatRate?: number;
-  totalPrice: number;
+  totalAmount: number;
   description: string;
   location: string;
   fullAddress?: string;
@@ -39,7 +39,7 @@ export default function OfferInfoCard({
   remainingQuantity,
   hasVAT,
   vatRate,
-  totalPrice,
+  totalAmount,
   description,
   location,
   fullAddress,
@@ -109,7 +109,7 @@ export default function OfferInfoCard({
         <div className="bg-primary/5 p-2 rounded-md">
           <p className="text-xs text-muted-foreground mb-0.5">Общая стоимость</p>
           <p className="text-xl font-bold text-primary">
-            {totalPrice.toLocaleString('ru-RU')} ₽
+            {totalAmount.toLocaleString('ru-RU')} ₽
           </p>
         </div>
 
