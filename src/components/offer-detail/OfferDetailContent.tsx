@@ -118,7 +118,7 @@ export default function OfferDetailContent({
                 remainingQuantity={remainingQuantity}
                 hasVAT={offer.hasVAT}
                 vatRate={offer.vatRate}
-                totalPrice={totalPrice}
+                totalAmount={totalPrice}
                 description={offer.description}
                 location={offer.location}
                 fullAddress={offer.fullAddress}
@@ -167,7 +167,7 @@ export default function OfferDetailContent({
                 remainingQuantity={remainingQuantity}
                 hasVAT={offer.hasVAT}
                 vatRate={offer.vatRate}
-                totalPrice={totalPrice}
+                totalAmount={totalPrice}
                 description={offer.description}
                 location={offer.location}
                 fullAddress={offer.fullAddress}

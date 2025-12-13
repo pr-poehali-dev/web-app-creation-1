@@ -109,7 +109,7 @@ export default function OfferInfoCard({
         <div className="bg-primary/5 p-2 rounded-md">
           <p className="text-xs text-muted-foreground mb-0.5">Общая стоимость</p>
           <p className="text-xl font-bold text-primary">
-            {totalAmount.toLocaleString('ru-RU')} ₽
+            {(totalAmount || 0).toLocaleString('ru-RU')} ₽
           </p>
         </div>
 
