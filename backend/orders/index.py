@@ -32,7 +32,10 @@ def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'], cursor_factory=RealDictCursor)
 
 def get_schema():
-    return os.environ.get('DB_SCHEMA', 'public')
+    schema = os.environ.get('DB_SCHEMA', 'public')
+    print(f'DEBUG: Using schema: {schema}')
+    print(f'DEBUG: All env vars: {list(os.environ.keys())}')
+    return schema
 
 def generate_order_number():
     """Генерация уникального номера заказа"""

@@ -175,6 +175,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'normal'
     },
     {
+      id: 'orders',
+      title: 'Мониторинг заказов',
+      description: 'Просмотр всех заказов системы и статистика',
+      icon: 'ShoppingCart',
+      color: 'bg-cyan-500',
+      count: null,
+      path: '/admin/orders',
+      priority: 'high'
+    },
+    {
       id: 'reviews',
       title: 'Модерация отзывов',
       description: 'Проверка отзывов и управление рейтингами',

@@ -45,6 +45,7 @@ import AdminContracts from "./pages/AdminContracts";
 import AdminReviews from "./pages/AdminReviews";
 import AdminManageAdmins from "./pages/AdminManageAdmins";
 import AdminPanel from "./pages/AdminPanel";
+import AdminOrders from "./pages/AdminOrders";
 import SetAdminPassword from "./pages/SetAdminPassword";
 import TradingPlatform from "./pages/TradingPlatform";
 import CreateContract from "./pages/CreateContract";
@@ -127,6 +128,7 @@ const App = () => {
             <Route path="/admin/auctions" element={<AdminAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/contracts" element={<AdminContracts isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/reviews" element={<AdminReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/admin/orders" element={<AdminOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/analytics" element={<AdminAnalytics isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/settings" element={<AdminSettings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/manage-admins" element={<AdminManageAdmins isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
