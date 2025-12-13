@@ -110,7 +110,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': headers,
-            'body': json.dumps({'error': str(e)}),
+            'body': json.dumps({'error': str(e), 'trace': error_trace}),
             'isBase64Encoded': False
         }
 
@@ -134,7 +134,9 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     conn = get_db_connection()
     cur = conn.cursor()
     
-    sql = """
+    user_id_int = int(user_id)
+    
+    sql = f"""
         SELECT 
             o.*,
             of.title as offer_title,
@@ -150,31 +152,26 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         WHERE 1=1
     """
     
-    query_params = []
-    
     if order_type == 'purchase':
-        sql += " AND o.buyer_id = %s"
-        query_params.append(int(user_id))
+        sql += f" AND o.buyer_id = {user_id_int}"
     elif order_type == 'sale':
-        sql += " AND o.seller_id = %s"
-        query_params.append(int(user_id))
+        sql += f" AND o.seller_id = {user_id_int}"
     else:
-        sql += " AND (o.buyer_id = %s OR o.seller_id = %s)"
-        query_params.extend([int(user_id), int(user_id)])
+        sql += f" AND (o.buyer_id = {user_id_int} OR o.seller_id = {user_id_int})"
     
     if status != 'all':
-        sql += " AND o.status = %s"
-        query_params.append(status)
+        status_escaped = status.replace("'", "''")
+        sql += f" AND o.status = '{status_escaped}'"
     
     sql += " ORDER BY o.order_date DESC"
     
-    cur.execute(sql, query_params)
+    cur.execute(sql)
     orders = cur.fetchall()
     
     result = []
     for order in orders:
         order_dict = dict(order)
-        order_dict['type'] = 'purchase' if order_dict['buyer_id'] == int(user_id) else 'sale'
+        order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id_int else 'sale'
         order_dict['counterparty'] = order_dict['seller_full_name'] if order_dict['type'] == 'purchase' else order_dict['buyer_full_name']
         order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
         order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
@@ -198,6 +195,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     conn = get_db_connection()
     cur = conn.cursor()
     
+    order_id_escaped = order_id.replace("'", "''")
+    
     sql = f"""
         SELECT 
             o.*,
@@ -212,10 +211,10 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         LEFT JOIN offers of ON o.offer_id = of.id
         LEFT JOIN users buyer ON o.buyer_id = buyer.id
         LEFT JOIN users seller ON o.seller_id = seller.id
-        WHERE o.id = %s
+        WHERE o.id = '{order_id_escaped}'
     """
     
-    cur.execute(sql, (order_id,))
+    cur.execute(sql)
     order = cur.fetchone()
     
     cur.close()
@@ -260,7 +259,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     conn = get_db_connection()
     cur = conn.cursor()
     
-    cur.execute("SELECT user_id FROM offers WHERE id = %s", (body['offerId'],))
+    offer_id_escaped = body['offerId'].replace("'", "''")
+    cur.execute(f"SELECT user_id FROM offers WHERE id = '{offer_id_escaped}'")
     offer = cur.fetchone()
     
     if not offer:
@@ -285,6 +285,18 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     if vat_amount:
         total_amount += vat_amount
     
+    title_escaped = body['title'].replace("'", "''")
+    unit_escaped = body['unit'].replace("'", "''")
+    delivery_type_escaped = body['deliveryType'].replace("'", "''")
+    delivery_address_escaped = body.get('deliveryAddress', '').replace("'", "''")
+    district_escaped = body['district'].replace("'", "''")
+    buyer_name_escaped = body['buyerName'].replace("'", "''")
+    buyer_phone_escaped = body['buyerPhone'].replace("'", "''")
+    buyer_email_escaped = body.get('buyerEmail', '').replace("'", "''")
+    buyer_company_escaped = body.get('buyerCompany', '').replace("'", "''")
+    buyer_inn_escaped = body.get('buyerInn', '').replace("'", "''")
+    buyer_comment_escaped = body.get('buyerComment', '').replace("'", "''")
+    
     sql = f"""
         INSERT INTO orders (
             order_number, buyer_id, seller_id, offer_id,
@@ -293,34 +305,18 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             delivery_type, delivery_address, district,
             buyer_name, buyer_phone, buyer_email, buyer_company, buyer_inn, buyer_comment,
             status
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ) VALUES (
+            '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
+            '{title_escaped}', {body['quantity']}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
+            {body.get('hasVAT', False)}, {vat_amount if vat_amount else 'NULL'},
+            '{delivery_type_escaped}', '{delivery_address_escaped}', '{district_escaped}',
+            '{buyer_name_escaped}', '{buyer_phone_escaped}', '{buyer_email_escaped}', '{buyer_company_escaped}', '{buyer_inn_escaped}', '{buyer_comment_escaped}',
+            'new'
+        )
         RETURNING id, order_number, order_date
     """
     
-    cur.execute(sql, (
-        order_number,
-        int(user_id),
-        seller_id,
-        body['offerId'],
-        body['title'],
-        body['quantity'],
-        body['unit'],
-        body['pricePerUnit'],
-        total_amount,
-        body.get('hasVAT', False),
-        vat_amount,
-        body['deliveryType'],
-        body.get('deliveryAddress', ''),
-        body['district'],
-        body['buyerName'],
-        body['buyerPhone'],
-        body.get('buyerEmail', ''),
-        body.get('buyerCompany', ''),
-        body.get('buyerInn', ''),
-        body.get('buyerComment', ''),
-        'new'
-    ))
-    
+    cur.execute(sql)
     result = cur.fetchone()
     conn.commit()
     cur.close()
@@ -346,27 +342,26 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     cur = conn.cursor()
     
     updates = []
-    params = []
     
     if 'status' in body:
-        updates.append('status = %s')
-        params.append(body['status'])
+        status_escaped = body['status'].replace("'", "''")
+        updates.append(f"status = '{status_escaped}'")
     
     if 'trackingNumber' in body:
-        updates.append('tracking_number = %s')
-        params.append(body['trackingNumber'])
+        tracking_escaped = body['trackingNumber'].replace("'", "''")
+        updates.append(f"tracking_number = '{tracking_escaped}'")
     
     if 'deliveryDate' in body:
-        updates.append('delivery_date = %s')
-        params.append(body['deliveryDate'])
+        date_escaped = body['deliveryDate'].replace("'", "''")
+        updates.append(f"delivery_date = '{date_escaped}'")
     
     if 'sellerComment' in body:
-        updates.append('seller_comment = %s')
-        params.append(body['sellerComment'])
+        comment_escaped = body['sellerComment'].replace("'", "''")
+        updates.append(f"seller_comment = '{comment_escaped}'")
     
     if 'cancellationReason' in body:
-        updates.append('cancellation_reason = %s')
-        params.append(body['cancellationReason'])
+        reason_escaped = body['cancellationReason'].replace("'", "''")
+        updates.append(f"cancellation_reason = '{reason_escaped}'")
     
     if not updates:
         cur.close()
@@ -378,10 +373,10 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'isBase64Encoded': False
         }
     
-    sql = f"UPDATE orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = %s"
-    params.append(order_id)
+    order_id_escaped = order_id.replace("'", "''")
+    sql = f"UPDATE orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = '{order_id_escaped}'"
     
-    cur.execute(sql, params)
+    cur.execute(sql)
     conn.commit()
     cur.close()
     conn.close()
@@ -394,38 +389,35 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     }
 
 def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
-    """Получить все сообщения по предложению (из всех заказов)"""
+    """Получить все сообщения по предложению"""
     conn = get_db_connection()
     cur = conn.cursor()
     
-    sql = """
+    offer_id_escaped = offer_id.replace("'", "''")
+    
+    sql = f"""
         SELECT 
-            om.id,
-            om.order_id,
-            om.sender_id,
-            om.sender_type,
-            om.message,
-            om.is_read,
-            om.created_at,
+            om.*,
             o.order_number,
-            o.title as order_title,
-            o.buyer_name,
-            u.first_name || ' ' || u.last_name as sender_name
+            CASE 
+                WHEN om.sender_type = 'buyer' THEN buyer.first_name || ' ' || buyer.last_name
+                ELSE seller.first_name || ' ' || seller.last_name
+            END as sender_name
         FROM order_messages om
         JOIN orders o ON om.order_id = o.id
-        LEFT JOIN users u ON om.sender_id = u.id
-        WHERE o.offer_id = %s
+        LEFT JOIN users buyer ON o.buyer_id = buyer.id
+        LEFT JOIN users seller ON o.seller_id = seller.id
+        WHERE o.offer_id = '{offer_id_escaped}'
         ORDER BY om.created_at DESC
     """
     
-    cur.execute(sql, (offer_id,))
+    cur.execute(sql)
     messages = cur.fetchall()
     
     result = []
     for msg in messages:
         msg_dict = dict(msg)
-        if msg_dict.get('created_at'):
-            msg_dict['created_at'] = msg_dict['created_at'].isoformat()
+        msg_dict['createdAt'] = msg_dict.pop('created_at').isoformat() if msg_dict.get('created_at') else None
         result.append(msg_dict)
     
     cur.close()
@@ -441,46 +433,43 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
 def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Создать новое сообщение по заказу"""
     body = json.loads(event.get('body', '{}'))
+    user_headers = event.get('headers', {})
+    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
     
-    required_fields = ['orderId', 'senderId', 'senderType', 'message']
-    if not all(field in body for field in required_fields):
+    if not user_id:
         return {
-            'statusCode': 400,
+            'statusCode': 401,
             'headers': headers,
-            'body': json.dumps({'error': 'Missing required fields'}),
+            'body': json.dumps({'error': 'User ID required'}),
             'isBase64Encoded': False
         }
     
     conn = get_db_connection()
     cur = conn.cursor()
     
-    sql = """
-        INSERT INTO order_messages 
-        (order_id, sender_id, sender_type, message, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        RETURNING id, order_id, sender_id, sender_type, message, is_read, created_at
+    order_id_escaped = body['orderId'].replace("'", "''")
+    sender_type_escaped = body['senderType'].replace("'", "''")
+    message_escaped = body['message'].replace("'", "''")
+    
+    sql = f"""
+        INSERT INTO order_messages (order_id, sender_id, sender_type, message)
+        VALUES ('{order_id_escaped}', {body['senderId']}, '{sender_type_escaped}', '{message_escaped}')
+        RETURNING id, created_at
     """
     
-    cur.execute(sql, (
-        body['orderId'],
-        int(body['senderId']),
-        body['senderType'],
-        body['message']
-    ))
-    
-    new_message = cur.fetchone()
+    cur.execute(sql)
+    result = cur.fetchone()
     conn.commit()
-    
-    result = dict(new_message)
-    if result.get('created_at'):
-        result['created_at'] = result['created_at'].isoformat()
-    
     cur.close()
     conn.close()
     
     return {
         'statusCode': 201,
         'headers': headers,
-        'body': json.dumps(result),
+        'body': json.dumps({
+            'id': str(result['id']),
+            'createdAt': result['created_at'].isoformat(),
+            'message': 'Message created successfully'
+        }),
         'isBase64Encoded': False
     }

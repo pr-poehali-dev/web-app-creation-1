@@ -68,9 +68,9 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       
       setIsLoading(true);
       try {
-        const [offerData, ordersData, messagesData] = await Promise.all([
+        const [offerData, ordersResponse, messagesData] = await Promise.all([
           offersAPI.getOfferById(id),
-          ordersAPI.getAll(),
+          ordersAPI.getAll('sale'),
           ordersAPI.getMessagesByOffer(id)
         ]);
         
@@ -93,7 +93,28 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
         
         setOffer(mappedOffer);
         
-        const relatedOrders = ordersData.filter(o => o.offerId === id);
+        const ordersData = ordersResponse.orders || [];
+        const relatedOrders = ordersData
+          .filter((o: any) => (o.offer_id || o.offerId) === id)
+          .map((order: any) => ({
+            id: order.id,
+            offerId: order.offer_id || order.offerId,
+            offerTitle: order.offer_title || order.title,
+            quantity: order.quantity,
+            unit: order.unit,
+            pricePerUnit: order.price_per_unit || order.pricePerUnit,
+            totalAmount: order.total_amount || order.totalAmount,
+            buyerId: order.buyer_id?.toString() || order.buyerId,
+            buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
+            buyerPhone: order.buyer_phone || order.buyerPhone,
+            buyerEmail: order.buyer_email || order.buyerEmail,
+            buyerCompany: order.buyer_company || order.buyerCompany,
+            buyerInn: order.buyer_inn || order.buyerInn,
+            sellerId: order.seller_id?.toString() || order.sellerId,
+            sellerName: order.seller_name || order.sellerName || order.seller_full_name,
+            status: order.status,
+            createdAt: new Date(order.createdAt || order.created_at),
+          }));
         setOrders(relatedOrders);
 
         const mappedMessages: ChatMessage[] = messagesData.map((msg: any) => ({

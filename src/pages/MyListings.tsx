@@ -93,8 +93,8 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
 
     const loadOrders = async () => {
       try {
-        const ordersData = await ordersAPI.getAll();
-        setOrders(ordersData);
+        const response = await ordersAPI.getAll('sale');
+        setOrders(response.orders || []);
       } catch (error) {
         console.error('Failed to load orders:', error);
       } finally {

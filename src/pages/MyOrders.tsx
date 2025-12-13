@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { notifyOrderAccepted, notifyNewMessage } from '@/utils/notifications';
 import type { Order, ChatMessage } from '@/types/order';
+import { ordersAPI } from '@/services/api';
 
 interface MyOrdersProps {
   isAuthenticated: boolean;
@@ -28,6 +29,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>('buyer');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -35,77 +37,86 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
       return;
     }
     loadOrders();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, activeTab]);
 
-  const loadOrders = () => {
-    const storedOrders = localStorage.getItem('orders');
-    if (storedOrders) {
-      const parsedOrders = JSON.parse(storedOrders).map((order: any) => ({
-        ...order,
-        createdAt: new Date(order.createdAt),
-        acceptedAt: order.acceptedAt ? new Date(order.acceptedAt) : undefined,
+  const loadOrders = async () => {
+    try {
+      setIsLoading(true);
+      const orderType = activeTab === 'buyer' ? 'purchase' : 'sale';
+      const response = await ordersAPI.getAll(orderType);
+      
+      const mappedOrders = response.orders.map((order: any) => ({
+        id: order.id,
+        offerId: order.offer_id,
+        offerTitle: order.offer_title || order.title,
+        offerImage: order.offer_image,
+        quantity: order.quantity,
+        unit: order.unit,
+        pricePerUnit: order.price_per_unit || order.pricePerUnit,
+        totalAmount: order.total_amount || order.totalAmount,
+        buyerId: order.buyer_id?.toString() || order.buyerId,
+        buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
+        sellerId: order.seller_id?.toString() || order.sellerId,
+        sellerName: order.seller_name || order.sellerName || order.seller_full_name,
+        status: order.status,
+        createdAt: new Date(order.createdAt || order.created_at),
+        acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
       }));
-      setOrders(parsedOrders);
+      
+      setOrders(mappedOrders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить заказы',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const loadMessages = (orderId: string) => {
-    const storedMessages = localStorage.getItem(`order_messages_${orderId}`);
-    if (storedMessages) {
-      const parsedMessages = JSON.parse(storedMessages).map((msg: any) => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp),
-      }));
-      setMessages(parsedMessages);
-    } else {
+  const loadMessages = async (orderId: string) => {
+    try {
       setMessages([]);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить сообщения',
+        variant: 'destructive',
+      });
     }
   };
 
-  const handleAcceptOrder = (orderId: string) => {
-    const updatedOrders = orders.map(order => {
-      if (order.id === orderId) {
-        return {
-          ...order,
-          status: 'accepted' as const,
-          acceptedAt: new Date(),
-        };
-      }
-      return order;
-    });
-    setOrders(updatedOrders);
-    localStorage.setItem('orders', JSON.stringify(updatedOrders));
-
-    const order = orders.find(o => o.id === orderId);
-    if (order) {
-      const storedOffers = localStorage.getItem('offers');
-      if (storedOffers) {
-        const offers = JSON.parse(storedOffers);
-        const updatedOffers = offers.map((offer: any) => {
-          if (offer.id === order.offerId) {
-            return {
-              ...offer,
-              quantity: offer.quantity - order.quantity,
-              orderedQuantity: (offer.orderedQuantity || 0) + order.quantity,
-            };
-          }
-          return offer;
-        });
-        localStorage.setItem('offers', JSON.stringify(updatedOffers));
+  const handleAcceptOrder = async (orderId: string) => {
+    try {
+      await ordersAPI.updateOrder(orderId, { status: 'accepted' });
+      
+      const order = orders.find(o => o.id === orderId);
+      if (order) {
+        notifyOrderAccepted(
+          order.buyerId,
+          order.sellerName,
+          order.offerTitle,
+          order.id
+        );
       }
 
-      notifyOrderAccepted(
-        order.buyerId,
-        order.sellerName,
-        order.offerTitle,
-        order.id
-      );
+      toast({
+        title: 'Заказ принят',
+        description: 'Заказ успешно принят в работу',
+      });
+
+      await loadOrders();
+    } catch (error) {
+      console.error('Error accepting order:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось принять заказ',
+        variant: 'destructive',
+      });
     }
-
-    toast({
-      title: 'Заказ принят',
-      description: 'Количество товара обновлено в вашем предложении',
-    });
   };
 
   const handleOpenChat = (order: Order) => {
@@ -114,37 +125,58 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     setIsChatOpen(true);
   };
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = async (message: string) => {
     if (!selectedOrder || !currentUser) return;
 
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      orderId: selectedOrder.id,
-      senderId: currentUser.id?.toString() || '',
-      senderName: `${currentUser.firstName} ${currentUser.lastName}`,
-      message,
-      timestamp: new Date(),
-      isRead: false,
-    };
+    try {
+      const senderType = selectedOrder.buyerId === currentUser.id?.toString() ? 'buyer' : 'seller';
+      
+      await ordersAPI.createMessage({
+        orderId: selectedOrder.id,
+        senderId: currentUser.id || 0,
+        senderType,
+        message,
+      });
 
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
-    localStorage.setItem(`order_messages_${selectedOrder.id}`, JSON.stringify(updatedMessages));
+      const newMessage: ChatMessage = {
+        id: Date.now().toString(),
+        orderId: selectedOrder.id,
+        senderId: currentUser.id?.toString() || '',
+        senderName: `${currentUser.firstName} ${currentUser.lastName}`,
+        message,
+        timestamp: new Date(),
+        isRead: false,
+      };
 
-    const recipientId = selectedOrder.buyerId === currentUser.id?.toString() 
-      ? selectedOrder.sellerId 
-      : selectedOrder.buyerId;
+      const updatedMessages = [...messages, newMessage];
+      setMessages(updatedMessages);
 
-    notifyNewMessage(
-      recipientId,
-      `${currentUser.firstName} ${currentUser.lastName}`,
-      message,
-      selectedOrder.id
-    );
+      const recipientId = selectedOrder.buyerId === currentUser.id?.toString() 
+        ? selectedOrder.sellerId 
+        : selectedOrder.buyerId;
+
+      notifyNewMessage(
+        recipientId,
+        `${currentUser.firstName} ${currentUser.lastName}`,
+        message,
+        selectedOrder.id
+      );
+
+      toast({
+        title: 'Сообщение отправлено',
+        description: 'Ваше сообщение успешно отправлено',
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить сообщение',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const myBuyerOrders = orders.filter(order => order.buyerId === currentUser?.id?.toString());
-  const mySellerOrders = orders.filter(order => order.sellerId === currentUser?.id?.toString());
+  const displayOrders = orders;
 
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
@@ -253,15 +285,21 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller')}>
           <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
             <TabsTrigger value="buyer">
-              Я покупатель ({myBuyerOrders.length})
+              Я покупатель ({displayOrders.length})
             </TabsTrigger>
             <TabsTrigger value="seller">
-              Я продавец ({mySellerOrders.length})
+              Я продавец ({displayOrders.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="buyer" className="space-y-4">
-            {myBuyerOrders.length === 0 ? (
+            {isLoading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">Загрузка заказов...</p>
+                </CardContent>
+              </Card>
+            ) : displayOrders.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Icon name="ShoppingCart" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -277,7 +315,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               </Card>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {myBuyerOrders.map(order => (
+                {displayOrders.map(order => (
                   <OrderCard key={order.id} order={order} isSeller={false} />
                 ))}
               </div>
@@ -285,7 +323,13 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           </TabsContent>
 
           <TabsContent value="seller" className="space-y-4">
-            {mySellerOrders.length === 0 ? (
+            {isLoading ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">Загрузка заказов...</p>
+                </CardContent>
+              </Card>
+            ) : displayOrders.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -294,7 +338,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               </Card>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {mySellerOrders.map(order => (
+                {displayOrders.map(order => (
                   <OrderCard key={order.id} order={order} isSeller={true} />
                 ))}
               </div>

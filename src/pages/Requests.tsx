@@ -53,12 +53,12 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     const loadRequests = async () => {
       setIsLoading(true);
       try {
-        const [requestsData, ordersData] = await Promise.all([
+        const [requestsData, ordersResponse] = await Promise.all([
           requestsAPI.getAll(),
-          ordersAPI.getAll()
+          ordersAPI.getAll('all')
         ]);
         setRequests(requestsData.requests || []);
-        setOrders(ordersData);
+        setOrders(ordersResponse.orders || []);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
       } finally {

@@ -295,60 +295,33 @@ export interface OrdersListResponse {
 }
 
 export const ordersAPI = {
-  async getAll(): Promise<Order[]> {
+  async getAll(type?: 'all' | 'purchase' | 'sale', status?: string): Promise<OrdersListResponse> {
     const userId = getUserId();
     if (!userId) {
-      return [];
+      return { orders: [], total: 0 };
     }
 
     try {
-      const response = await fetch(`${ORDERS_API}`, {
+      const queryParams = new URLSearchParams();
+      if (type) queryParams.append('type', type);
+      if (status) queryParams.append('status', status);
+      
+      const url = `${ORDERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      const response = await fetch(url, {
         headers: {
           'X-User-Id': userId,
         },
       });
       
       if (!response.ok) {
-        return [];
+        return { orders: [], total: 0 };
       }
       
       const data = await response.json();
-      return data.orders || [];
+      return data;
     } catch {
-      return [];
+      return { orders: [], total: 0 };
     }
-  },
-
-  async getUserOrders(params?: {
-    type?: 'all' | 'purchase' | 'sale';
-    status?: string;
-  }): Promise<OrdersListResponse> {
-    const userId = getUserId();
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-
-    const queryParams = new URLSearchParams();
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-          queryParams.append(key, String(value));
-        }
-      });
-    }
-    
-    const url = `${ORDERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    const response = await fetch(url, {
-      headers: {
-        'X-User-Id': userId,
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch orders');
-    }
-    
-    return response.json();
   },
 
   async getOrderById(id: string): Promise<Order> {
