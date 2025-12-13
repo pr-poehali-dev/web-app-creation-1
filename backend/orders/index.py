@@ -32,10 +32,7 @@ def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'], cursor_factory=RealDictCursor)
 
 def get_schema():
-    schema = os.environ.get('DB_SCHEMA', 'public')
-    print(f'DEBUG: Using schema: {schema}')
-    print(f'DEBUG: All env vars: {list(os.environ.keys())}')
-    return schema
+    return os.environ.get('DB_SCHEMA', 'public')
 
 def generate_order_number():
     """Генерация уникального номера заказа"""
@@ -145,36 +142,21 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     
     schema = get_schema()
     
-    # Сначала пробуем простой запрос без JOIN для диагностики
-    try:
-        test_sql = f"SELECT COUNT(*) FROM {schema}.orders"
-        print(f'DEBUG: Testing simple query: {test_sql}')
-        cur.execute(test_sql)
-        count = cur.fetchone()
-        print(f'DEBUG: Simple query result: {count}')
-    except Exception as e:
-        print(f'DEBUG: Simple query failed: {e}')
-    
-    # Пробуем запрос БЕЗ JOIN - только данные из orders
-    sql = f"""
-        SELECT o.*
-        FROM {schema}.orders o
-        WHERE 1=1
-    """
-    print(f'DEBUG: Trying query WITHOUT JOINs: {sql}')
+    # Запрос БЕЗ JOIN - используем только данные из таблицы orders
+    sql = f"SELECT * FROM {schema}.orders WHERE 1=1"
     
     if order_type == 'purchase':
-        sql += f" AND o.buyer_id = {user_id_int}"
+        sql += f" AND buyer_id = {user_id_int}"
     elif order_type == 'sale':
-        sql += f" AND o.seller_id = {user_id_int}"
+        sql += f" AND seller_id = {user_id_int}"
     else:
-        sql += f" AND (o.buyer_id = {user_id_int} OR o.seller_id = {user_id_int})"
+        sql += f" AND (buyer_id = {user_id_int} OR seller_id = {user_id_int})"
     
     if status != 'all':
         status_escaped = status.replace("'", "''")
-        sql += f" AND o.status = '{status_escaped}'"
+        sql += f" AND status = '{status_escaped}'"
     
-    sql += " ORDER BY o.order_date DESC"
+    sql += " ORDER BY order_date DESC"
     
     cur.execute(sql)
     orders = cur.fetchall()
@@ -182,12 +164,22 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     result = []
     for order in orders:
         order_dict = dict(order)
+        
+        # Определяем тип заказа (покупка или продажа)
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id_int else 'sale'
-        order_dict['counterparty'] = order_dict['seller_full_name'] if order_dict['type'] == 'purchase' else order_dict['buyer_full_name']
+        
+        # Используем данные продавца/покупателя из самого заказа (buyer_name, seller_name и т.д.)
+        # Эти поля уже есть в таблице orders
+        order_dict['offer_title'] = order_dict.get('title', '')
+        order_dict['seller_full_name'] = 'Продавец'  # Временная заглушка
+        order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
+        
+        # Преобразуем даты
         order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
         order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
         order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
         order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
+        
         order_dict = decimal_to_float(order_dict)
         result.append(order_dict)
     
@@ -207,29 +199,10 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     cur = conn.cursor()
     
     order_id_escaped = order_id.replace("'", "''")
-    
     schema = get_schema()
-    sql = f"""
-        SELECT 
-            o.*,
-            of.title as offer_title,
-            of.district as offer_district,
-            of.description as offer_description,
-            of.images as offer_image,
-            buyer.email as buyer_email_db,
-            buyer.phone as buyer_phone,
-            buyer.first_name || ' ' || buyer.last_name as buyer_full_name,
-            buyer.company_name as buyer_company,
-            buyer.inn as buyer_inn,
-            seller.email as seller_email_db,
-            seller.phone as seller_phone,
-            seller.first_name || ' ' || seller.last_name as seller_full_name
-        FROM {schema}.orders o
-        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
-        LEFT JOIN {schema}.users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN {schema}.users seller ON o.seller_id = seller.id
-        WHERE o.id = '{order_id_escaped}'
-    """
+    
+    # Простой запрос без JOIN
+    sql = f"SELECT * FROM {schema}.orders WHERE id = '{order_id_escaped}'"
     
     cur.execute(sql)
     order = cur.fetchone()
@@ -246,6 +219,12 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         }
     
     order_dict = dict(order)
+    
+    # Добавляем поля из самого заказа
+    order_dict['offer_title'] = order_dict.get('title', '')
+    order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
+    order_dict['seller_full_name'] = 'Продавец'
+    
     order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
     order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
     order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
@@ -416,28 +395,48 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
     schema = get_schema()
     offer_id_escaped = offer_id.replace("'", "''")
     
-    sql = f"""
-        SELECT 
-            om.*,
-            o.order_number,
-            CASE 
-                WHEN om.sender_type = 'buyer' THEN buyer.first_name || ' ' || buyer.last_name
-                ELSE seller.first_name || ' ' || seller.last_name
-            END as sender_name
-        FROM {schema}.order_messages om
-        JOIN {schema}.orders o ON om.order_id = o.id
-        LEFT JOIN {schema}.users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN {schema}.users seller ON o.seller_id = seller.id
-        WHERE o.offer_id = '{offer_id_escaped}'
-        ORDER BY om.created_at DESC
+    # Сначала находим все заказы по offer_id
+    sql_orders = f"SELECT id, order_number, buyer_name FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}'"
+    cur.execute(sql_orders)
+    orders_data = cur.fetchall()
+    
+    if not orders_data:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps([]),
+            'isBase64Encoded': False
+        }
+    
+    # Получаем ID всех заказов
+    order_ids = [f"'{str(o['id'])}'" for o in orders_data]
+    order_map = {str(o['id']): {'order_number': o['order_number'], 'buyer_name': o.get('buyer_name', 'Пользователь')} for o in orders_data}
+    
+    # Получаем сообщения по этим заказам
+    sql_messages = f"""
+        SELECT * FROM {schema}.order_messages 
+        WHERE order_id IN ({','.join(order_ids)})
+        ORDER BY created_at DESC
     """
     
-    cur.execute(sql)
+    cur.execute(sql_messages)
     messages = cur.fetchall()
     
     result = []
     for msg in messages:
         msg_dict = dict(msg)
+        order_id = str(msg_dict.get('order_id'))
+        
+        # Добавляем данные заказа
+        if order_id in order_map:
+            msg_dict['order_number'] = order_map[order_id]['order_number']
+            msg_dict['sender_name'] = order_map[order_id]['buyer_name']
+        else:
+            msg_dict['order_number'] = 'N/A'
+            msg_dict['sender_name'] = 'Пользователь'
+        
         msg_dict['createdAt'] = msg_dict.pop('created_at').isoformat() if msg_dict.get('created_at') else None
         result.append(msg_dict)
     
