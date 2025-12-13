@@ -222,7 +222,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           </div>
           <div>
             <p className="text-muted-foreground">Сумма</p>
-            <p className="font-bold text-primary">{order.totalPrice.toLocaleString('ru-RU')} ₽</p>
+            <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
           </div>
           <div>
             <p className="text-muted-foreground">Доставка</p>
