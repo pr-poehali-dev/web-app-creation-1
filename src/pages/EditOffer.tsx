@@ -117,7 +117,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
           id: order.id,
           offerId: order.offer_id || order.offerId,
           offerTitle: order.offer_title || order.title,
-          offerImage: order.offer_image,
+          offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,
           quantity: order.quantity,
           unit: order.unit,
           pricePerUnit: order.price_per_unit || order.pricePerUnit,

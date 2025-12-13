@@ -141,9 +141,14 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             o.*,
             of.title as offer_title,
             of.district as offer_district,
+            of.images as offer_image,
             buyer.email as buyer_email,
+            buyer.phone as buyer_phone,
             buyer.first_name || ' ' || buyer.last_name as buyer_full_name,
+            buyer.company_name as buyer_company,
+            buyer.inn as buyer_inn,
             seller.email as seller_email,
+            seller.phone as seller_phone,
             seller.first_name || ' ' || seller.last_name as seller_full_name
         FROM orders o
         LEFT JOIN offers of ON o.offer_id = of.id
@@ -203,9 +208,14 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
             of.title as offer_title,
             of.district as offer_district,
             of.description as offer_description,
+            of.images as offer_image,
             buyer.email as buyer_email_db,
+            buyer.phone as buyer_phone,
             buyer.first_name || ' ' || buyer.last_name as buyer_full_name,
+            buyer.company_name as buyer_company,
+            buyer.inn as buyer_inn,
             seller.email as seller_email_db,
+            seller.phone as seller_phone,
             seller.first_name || ' ' || seller.last_name as seller_full_name
         FROM orders o
         LEFT JOIN offers of ON o.offer_id = of.id
