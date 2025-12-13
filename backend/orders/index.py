@@ -30,6 +30,9 @@ def decimal_to_float(obj):
 def get_db_connection():
     return psycopg2.connect(os.environ['DATABASE_URL'], cursor_factory=RealDictCursor)
 
+def get_schema():
+    return os.environ.get('DB_SCHEMA', 'public')
+
 def generate_order_number():
     """Генерация уникального номера заказа"""
     from datetime import datetime
@@ -136,6 +139,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     
     user_id_int = int(user_id)
     
+    schema = get_schema()
     sql = f"""
         SELECT 
             o.*,
@@ -150,10 +154,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             seller.email as seller_email,
             seller.phone as seller_phone,
             seller.first_name || ' ' || seller.last_name as seller_full_name
-        FROM orders o
-        LEFT JOIN offers of ON o.offer_id = of.id
-        LEFT JOIN users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN users seller ON o.seller_id = seller.id
+        FROM {schema}.orders o
+        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
+        LEFT JOIN {schema}.users buyer ON o.buyer_id = buyer.id
+        LEFT JOIN {schema}.users seller ON o.seller_id = seller.id
         WHERE 1=1
     """
     
@@ -202,6 +206,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     order_id_escaped = order_id.replace("'", "''")
     
+    schema = get_schema()
     sql = f"""
         SELECT 
             o.*,
@@ -217,10 +222,10 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
             seller.email as seller_email_db,
             seller.phone as seller_phone,
             seller.first_name || ' ' || seller.last_name as seller_full_name
-        FROM orders o
-        LEFT JOIN offers of ON o.offer_id = of.id
-        LEFT JOIN users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN users seller ON o.seller_id = seller.id
+        FROM {schema}.orders o
+        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
+        LEFT JOIN {schema}.users buyer ON o.buyer_id = buyer.id
+        LEFT JOIN {schema}.users seller ON o.seller_id = seller.id
         WHERE o.id = '{order_id_escaped}'
     """
     
@@ -269,8 +274,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     conn = get_db_connection()
     cur = conn.cursor()
     
+    schema = get_schema()
     offer_id_escaped = body['offerId'].replace("'", "''")
-    cur.execute(f"SELECT user_id FROM offers WHERE id = '{offer_id_escaped}'")
+    cur.execute(f"SELECT user_id FROM {schema}.offers WHERE id = '{offer_id_escaped}'")
     offer = cur.fetchone()
     
     if not offer:
@@ -307,8 +313,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     buyer_inn_escaped = body.get('buyerInn', '').replace("'", "''")
     buyer_comment_escaped = body.get('buyerComment', '').replace("'", "''")
     
+    schema = get_schema()
     sql = f"""
-        INSERT INTO orders (
+        INSERT INTO {schema}.orders (
             order_number, buyer_id, seller_id, offer_id,
             title, quantity, unit, price_per_unit, total_amount,
             has_vat, vat_amount,
@@ -383,8 +390,9 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'isBase64Encoded': False
         }
     
+    schema = get_schema()
     order_id_escaped = order_id.replace("'", "''")
-    sql = f"UPDATE orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = '{order_id_escaped}'"
+    sql = f"UPDATE {schema}.orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = '{order_id_escaped}'"
     
     cur.execute(sql)
     conn.commit()
@@ -403,6 +411,7 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
     conn = get_db_connection()
     cur = conn.cursor()
     
+    schema = get_schema()
     offer_id_escaped = offer_id.replace("'", "''")
     
     sql = f"""
@@ -413,10 +422,10 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
                 WHEN om.sender_type = 'buyer' THEN buyer.first_name || ' ' || buyer.last_name
                 ELSE seller.first_name || ' ' || seller.last_name
             END as sender_name
-        FROM order_messages om
-        JOIN orders o ON om.order_id = o.id
-        LEFT JOIN users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN users seller ON o.seller_id = seller.id
+        FROM {schema}.order_messages om
+        JOIN {schema}.orders o ON om.order_id = o.id
+        LEFT JOIN {schema}.users buyer ON o.buyer_id = buyer.id
+        LEFT JOIN {schema}.users seller ON o.seller_id = seller.id
         WHERE o.offer_id = '{offer_id_escaped}'
         ORDER BY om.created_at DESC
     """
@@ -461,8 +470,9 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     sender_type_escaped = body['senderType'].replace("'", "''")
     message_escaped = body['message'].replace("'", "''")
     
+    schema = get_schema()
     sql = f"""
-        INSERT INTO order_messages (order_id, sender_id, sender_type, message)
+        INSERT INTO {schema}.order_messages (order_id, sender_id, sender_type, message)
         VALUES ('{order_id_escaped}', {body['senderId']}, '{sender_type_escaped}', '{message_escaped}')
         RETURNING id, created_at
     """
