@@ -66,12 +66,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         if method == 'GET':
             query_params = event.get('queryStringParameters', {}) or {}
-            order_id = query_params.get('id')
+            order_id = query_params.get('id') or query_params.get('orderId')
             offer_id = query_params.get('offerId')
             messages_flag = query_params.get('messages')
             
             if messages_flag == 'true' and offer_id:
                 return get_messages_by_offer(offer_id, headers)
+            elif messages_flag == 'true' and order_id:
+                return get_messages_by_order(order_id, headers)
             elif order_id:
                 return get_order_by_id(order_id, headers)
             else:
@@ -169,9 +171,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id_int else 'sale'
         
         # Используем данные продавца/покупателя из самого заказа (buyer_name, seller_name и т.д.)
-        # Эти поля уже есть в таблице orders
         order_dict['offer_title'] = order_dict.get('title', '')
-        order_dict['seller_full_name'] = 'Продавец'  # Временная заглушка
+        order_dict['seller_full_name'] = order_dict.get('seller_name', 'Продавец')
         order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
         
         # Преобразуем даты
@@ -223,7 +224,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     # Добавляем поля из самого заказа
     order_dict['offer_title'] = order_dict.get('title', '')
     order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
-    order_dict['seller_full_name'] = 'Продавец'
+    order_dict['seller_full_name'] = order_dict.get('seller_name', 'Продавец')
     
     order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
     order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
@@ -272,6 +273,19 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     seller_id = offer['user_id']
     
+    # Получаем данные продавца
+    cur.execute(f"SELECT first_name, last_name, phone, email FROM {schema}.users WHERE id = {seller_id}")
+    seller = cur.fetchone()
+    
+    if seller:
+        seller_name = f"{seller.get('first_name', '')} {seller.get('last_name', '')}".strip()
+        seller_phone = seller.get('phone', '')
+        seller_email = seller.get('email', '')
+    else:
+        seller_name = 'Продавец'
+        seller_phone = ''
+        seller_email = ''
+    
     order_number = generate_order_number()
     
     vat_amount = None
@@ -294,7 +308,10 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     buyer_inn_escaped = body.get('buyerInn', '').replace("'", "''")
     buyer_comment_escaped = body.get('buyerComment', '').replace("'", "''")
     
-    schema = get_schema()
+    seller_name_escaped = seller_name.replace("'", "''")
+    seller_phone_escaped = seller_phone.replace("'", "''")
+    seller_email_escaped = seller_email.replace("'", "''")
+    
     sql = f"""
         INSERT INTO {schema}.orders (
             order_number, buyer_id, seller_id, offer_id,
@@ -302,6 +319,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             has_vat, vat_amount,
             delivery_type, delivery_address, district,
             buyer_name, buyer_phone, buyer_email, buyer_company, buyer_inn, buyer_comment,
+            seller_name, seller_phone, seller_email,
             status
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
@@ -309,6 +327,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {body.get('hasVAT', False)}, {vat_amount if vat_amount else 'NULL'},
             '{delivery_type_escaped}', '{delivery_address_escaped}', '{district_escaped}',
             '{buyer_name_escaped}', '{buyer_phone_escaped}', '{buyer_email_escaped}', '{buyer_company_escaped}', '{buyer_inn_escaped}', '{buyer_comment_escaped}',
+            '{seller_name_escaped}', '{seller_phone_escaped}', '{seller_email_escaped}',
             'new'
         )
         RETURNING id, order_number, order_date
@@ -437,6 +456,35 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
             msg_dict['order_number'] = 'N/A'
             msg_dict['sender_name'] = 'Пользователь'
         
+        msg_dict['createdAt'] = msg_dict.pop('created_at').isoformat() if msg_dict.get('created_at') else None
+        result.append(msg_dict)
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps(result),
+        'isBase64Encoded': False
+    }
+
+def get_messages_by_order(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Получить все сообщения по заказу"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    schema = get_schema()
+    order_id_escaped = order_id.replace("'", "''")
+    
+    sql = f"SELECT * FROM {schema}.order_messages WHERE order_id = '{order_id_escaped}' ORDER BY created_at ASC"
+    
+    cur.execute(sql)
+    messages = cur.fetchall()
+    
+    result = []
+    for msg in messages:
+        msg_dict = dict(msg)
         msg_dict['createdAt'] = msg_dict.pop('created_at').isoformat() if msg_dict.get('created_at') else None
         result.append(msg_dict)
     

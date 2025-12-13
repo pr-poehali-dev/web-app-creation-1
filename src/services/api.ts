@@ -407,6 +407,26 @@ export const ordersAPI = {
     return response.json();
   },
 
+  async getMessagesByOrder(orderId: string): Promise<{ messages: any[] }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${ORDERS_API}?orderId=${orderId}&messages=true`, {
+      headers: {
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch messages');
+    }
+    
+    const messages = await response.json();
+    return { messages: Array.isArray(messages) ? messages : [] };
+  },
+
   async createMessage(data: { orderId: string; senderId: number; senderType: 'buyer' | 'seller'; message: string }): Promise<any> {
     const userId = getUserId();
     if (!userId) {

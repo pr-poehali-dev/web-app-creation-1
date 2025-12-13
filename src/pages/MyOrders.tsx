@@ -39,6 +39,26 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     loadOrders();
   }, [isAuthenticated, navigate, activeTab]);
 
+  useEffect(() => {
+    const handleOpenOrderChat = (event: CustomEvent) => {
+      const { orderId, tab } = event.detail;
+      
+      if (tab) {
+        setActiveTab(tab);
+      }
+      
+      setTimeout(() => {
+        const order = orders.find(o => o.id === orderId);
+        if (order) {
+          handleOpenChat(order);
+        }
+      }, 100);
+    };
+
+    window.addEventListener('openOrderChat' as any, handleOpenOrderChat);
+    return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
+  }, [orders]);
+
   const loadOrders = async () => {
     try {
       setIsLoading(true);
@@ -84,7 +104,19 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
 
   const loadMessages = async (orderId: string) => {
     try {
-      setMessages([]);
+      const data = await ordersAPI.getMessagesByOrder(orderId);
+      
+      const mappedMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+        id: msg.id,
+        orderId: msg.order_id || msg.orderId,
+        senderId: msg.sender_id?.toString() || msg.senderId,
+        senderName: msg.sender_name || msg.senderName || 'Пользователь',
+        message: msg.message,
+        timestamp: new Date(msg.createdAt || msg.created_at),
+        isRead: msg.is_read || msg.isRead || false,
+      }));
+      
+      setMessages(mappedMessages);
     } catch (error) {
       console.error('Error loading messages:', error);
       toast({
@@ -144,18 +176,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         message,
       });
 
-      const newMessage: ChatMessage = {
-        id: Date.now().toString(),
-        orderId: selectedOrder.id,
-        senderId: currentUser.id?.toString() || '',
-        senderName: `${currentUser.firstName} ${currentUser.lastName}`,
-        message,
-        timestamp: new Date(),
-        isRead: false,
-      };
-
-      const updatedMessages = [...messages, newMessage];
-      setMessages(updatedMessages);
+      await loadMessages(selectedOrder.id);
 
       const recipientId = selectedOrder.buyerId === currentUser.id?.toString() 
         ? selectedOrder.sellerId 
@@ -239,7 +260,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <div>
             <p className="text-muted-foreground">{isSeller ? 'Покупатель' : 'Продавец'}</p>
             <p className="font-medium truncate">
-              {isSeller ? order.buyerName : order.sellerName}
+              {isSeller ? order.buyerName : (order.sellerName || 'Продавец')}
             </p>
           </div>
         </div>

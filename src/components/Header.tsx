@@ -2,7 +2,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import ChatNotificationBadge from '@/components/chat/ChatNotificationBadge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +25,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -55,9 +53,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
     const fetchCounts = async () => {
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setUnreadChatCount(3);
-
         const userListings = [...offers, ...requests].filter(
           item => item.userId === currentUser.id
         );
@@ -309,15 +304,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                       )}
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/chat-notifications')}>
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
-                        Сообщения
-                      </div>
-                      <ChatNotificationBadge count={unreadChatCount} />
-                    </div>
-                  </DropdownMenuItem>
+
                   <DropdownMenuItem onClick={() => navigate('/notifications')}>
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center">
