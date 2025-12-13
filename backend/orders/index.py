@@ -144,26 +144,24 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     user_id_int = int(user_id)
     
     schema = get_schema()
+    
+    # Сначала пробуем простой запрос без JOIN для диагностики
+    try:
+        test_sql = f"SELECT COUNT(*) FROM {schema}.orders"
+        print(f'DEBUG: Testing simple query: {test_sql}')
+        cur.execute(test_sql)
+        count = cur.fetchone()
+        print(f'DEBUG: Simple query result: {count}')
+    except Exception as e:
+        print(f'DEBUG: Simple query failed: {e}')
+    
+    # Пробуем запрос БЕЗ JOIN - только данные из orders
     sql = f"""
-        SELECT 
-            o.*,
-            of.title as offer_title,
-            of.district as offer_district,
-            of.images as offer_image,
-            buyer.email as buyer_email,
-            buyer.phone as buyer_phone,
-            buyer.first_name || ' ' || buyer.last_name as buyer_full_name,
-            buyer.company_name as buyer_company,
-            buyer.inn as buyer_inn,
-            seller.email as seller_email,
-            seller.phone as seller_phone,
-            seller.first_name || ' ' || seller.last_name as seller_full_name
+        SELECT o.*
         FROM {schema}.orders o
-        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
-        LEFT JOIN {schema}.users buyer ON o.buyer_id = buyer.id
-        LEFT JOIN {schema}.users seller ON o.seller_id = seller.id
         WHERE 1=1
     """
+    print(f'DEBUG: Trying query WITHOUT JOINs: {sql}')
     
     if order_type == 'purchase':
         sql += f" AND o.buyer_id = {user_id_int}"
