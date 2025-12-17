@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
-import api from '@/services/api';
+import { requestsAPI } from '@/services/api';
 
 interface AdminRequestsProps {
   isAuthenticated: boolean;
@@ -108,7 +108,7 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
   const handleDeleteRequest = async () => {
     if (selectedRequest) {
       try {
-        await api.deleteRequest(selectedRequest.id);
+        await requestsAPI.deleteRequest(selectedRequest.id);
         toast.success(`Запрос "${selectedRequest.title}" удален`);
         setShowDeleteDialog(false);
         setSelectedRequest(null);
