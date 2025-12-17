@@ -246,6 +246,27 @@ export const requestsAPI = {
     
     return response.json();
   },
+
+  async deleteRequest(id: string): Promise<{ message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${REQUESTS_API}?id=${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete request');
+    }
+    
+    return response.json();
+  },
 };
 
 export interface CreateOrderData {
@@ -477,10 +498,17 @@ export interface AuctionsListResponse {
 
 export const auctionsAPI = {
   async getAllAuctions(status?: string): Promise<Auction[]> {
-    const userLocation = localStorage.getItem('userLocation');
-    const timezoneOffset = userLocation 
-      ? JSON.parse(userLocation).timezoneOffset || 9 
-      : 9;
+    let timezoneOffset = 9;
+    try {
+      const userLocation = localStorage.getItem('userLocation');
+      if (userLocation) {
+        const parsed = JSON.parse(userLocation);
+        timezoneOffset = parsed.timezoneOffset || 9;
+      }
+    } catch (error) {
+      console.error('Error parsing userLocation:', error);
+      timezoneOffset = 9;
+    }
     
     const params = new URLSearchParams();
     if (status) params.append('status', status);
@@ -493,14 +521,26 @@ export const auctionsAPI = {
     }
     
     const data = await response.json();
-    return (data.auctions || []).map((a: any) => ({
-      ...a,
-      startDate: a.startDate ? new Date(a.startDate) : undefined,
-      endDate: a.endDate ? new Date(a.endDate) : undefined,
-      startTime: a.startDate ? new Date(a.startDate) : undefined,
-      endTime: a.endDate ? new Date(a.endDate) : undefined,
-      createdAt: a.createdAt ? new Date(a.createdAt) : undefined,
-    }));
+    return (data.auctions || []).map((a: any) => {
+      const safeDate = (dateStr: string | null | undefined): Date | undefined => {
+        if (!dateStr) return undefined;
+        try {
+          const date = new Date(dateStr);
+          return isNaN(date.getTime()) ? undefined : date;
+        } catch {
+          return undefined;
+        }
+      };
+
+      return {
+        ...a,
+        startDate: safeDate(a.startDate),
+        endDate: safeDate(a.endDate),
+        startTime: safeDate(a.startDate),
+        endTime: safeDate(a.endDate),
+        createdAt: safeDate(a.createdAt),
+      };
+    });
   },
 
   async getMyAuctions(): Promise<Auction[]> {
@@ -509,10 +549,17 @@ export const auctionsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const userLocation = localStorage.getItem('userLocation');
-    const timezoneOffset = userLocation 
-      ? JSON.parse(userLocation).timezoneOffset || 9 
-      : 9;
+    let timezoneOffset = 9;
+    try {
+      const userLocation = localStorage.getItem('userLocation');
+      if (userLocation) {
+        const parsed = JSON.parse(userLocation);
+        timezoneOffset = parsed.timezoneOffset || 9;
+      }
+    } catch (error) {
+      console.error('Error parsing userLocation:', error);
+      timezoneOffset = 9;
+    }
 
     const response = await fetch(`${AUCTIONS_MY_API}?timezoneOffset=${timezoneOffset}`, {
       headers: {
@@ -525,19 +572,38 @@ export const auctionsAPI = {
     }
     
     const data = await response.json();
-    return (data.auctions || []).map((a: any) => ({
-      ...a,
-      startDate: new Date(a.startDate),
-      endDate: new Date(a.endDate),
-      createdAt: new Date(a.createdAt),
-    }));
+    return (data.auctions || []).map((a: any) => {
+      const safeDate = (dateStr: string | null | undefined): Date | undefined => {
+        if (!dateStr) return undefined;
+        try {
+          const date = new Date(dateStr);
+          return isNaN(date.getTime()) ? undefined : date;
+        } catch {
+          return undefined;
+        }
+      };
+
+      return {
+        ...a,
+        startDate: safeDate(a.startDate),
+        endDate: safeDate(a.endDate),
+        createdAt: safeDate(a.createdAt),
+      };
+    });
   },
 
   async getAuctionById(id: string): Promise<Auction> {
-    const userLocation = localStorage.getItem('userLocation');
-    const timezoneOffset = userLocation 
-      ? JSON.parse(userLocation).timezoneOffset || 9 
-      : 9;
+    let timezoneOffset = 9;
+    try {
+      const userLocation = localStorage.getItem('userLocation');
+      if (userLocation) {
+        const parsed = JSON.parse(userLocation);
+        timezoneOffset = parsed.timezoneOffset || 9;
+      }
+    } catch (error) {
+      console.error('Error parsing userLocation:', error);
+      timezoneOffset = 9;
+    }
     
     const response = await fetch(`${AUCTIONS_LIST_API}?id=${id}&timezoneOffset=${timezoneOffset}`);
     
@@ -546,13 +612,24 @@ export const auctionsAPI = {
     }
     
     const data = await response.json();
+    
+    const safeDate = (dateStr: string | null | undefined): Date | undefined => {
+      if (!dateStr) return undefined;
+      try {
+        const date = new Date(dateStr);
+        return isNaN(date.getTime()) ? undefined : date;
+      } catch {
+        return undefined;
+      }
+    };
+
     return {
       ...data,
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
-      startTime: data.startDate ? new Date(data.startDate) : undefined,
-      endTime: data.endDate ? new Date(data.endDate) : undefined,
-      createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
+      startDate: safeDate(data.startDate),
+      endDate: safeDate(data.endDate),
+      startTime: safeDate(data.startDate),
+      endTime: safeDate(data.endDate),
+      createdAt: safeDate(data.createdAt),
       images: data.images || [],
     };
   },

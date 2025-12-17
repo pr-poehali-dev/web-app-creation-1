@@ -23,6 +23,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     GET /{id} - получить запрос по ID
     POST / - создать новый запрос
     PUT /{id} - обновить запрос
+    DELETE /{id} - удалить запрос (мягкое удаление)
     """
     method: str = event.get('httpMethod', 'GET')
     
@@ -69,6 +70,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             return update_request(request_id, event, headers)
+        
+        elif method == 'DELETE':
+            query_params = event.get('queryStringParameters', {}) or {}
+            request_id = query_params.get('id')
+            if not request_id:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'Request ID required'}),
+                    'isBase64Encoded': False
+                }
+            return delete_request(request_id, headers)
         
         else:
             return {
@@ -308,5 +321,39 @@ def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, st
         'statusCode': 200,
         'headers': headers,
         'body': json.dumps({'message': 'Request updated successfully'}),
+        'isBase64Encoded': False
+    }
+
+def delete_request(request_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Мягкое удаление запроса (меняем статус на deleted)"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    sql = """
+        UPDATE t_p42562714_web_app_creation_1.requests 
+        SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+        WHERE id = %s
+    """
+    
+    cur.execute(sql, (request_id,))
+    
+    if cur.rowcount == 0:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': headers,
+            'body': json.dumps({'error': 'Request not found'}),
+            'isBase64Encoded': False
+        }
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'message': 'Request deleted successfully'}),
         'isBase64Encoded': False
     }

@@ -150,13 +150,22 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     }, 500);
   };
 
-  const handleDelete = (id: string) => {
-    deleteRequest(id);
-    setRequests(prev => prev.filter(r => r.id !== id));
-    toast({
-      title: 'Успешно',
-      description: 'Запрос удалён',
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await requestsAPI.deleteRequest(id);
+      deleteRequest(id);
+      setRequests(prev => prev.filter(r => r.id !== id));
+      toast({
+        title: 'Успешно',
+        description: 'Запрос удалён',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить запрос',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getUnreadMessages = (requestId: string): number => {
