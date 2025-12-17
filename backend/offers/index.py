@@ -373,26 +373,45 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     conn = get_db_connection()
     cur = conn.cursor()
     
-    sql = """
-        UPDATE t_p42562714_web_app_creation_1.offers SET
-            title = %s,
-            description = %s,
-            quantity = %s,
-            price_per_unit = %s,
-            status = %s,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = %s
-    """
+    updates = []
+    params = []
     
-    cur.execute(sql, (
-        body.get('title'),
-        body.get('description'),
-        body.get('quantity'),
-        body.get('pricePerUnit'),
-        body.get('status'),
-        offer_id
-    ))
+    if 'title' in body:
+        updates.append("title = %s")
+        params.append(body['title'])
     
+    if 'description' in body:
+        updates.append("description = %s")
+        params.append(body['description'])
+    
+    if 'quantity' in body:
+        updates.append("quantity = %s")
+        params.append(body['quantity'])
+    
+    if 'pricePerUnit' in body:
+        updates.append("price_per_unit = %s")
+        params.append(body['pricePerUnit'])
+    
+    if 'status' in body:
+        updates.append("status = %s")
+        params.append(body['status'])
+    
+    if not updates:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 400,
+            'headers': headers,
+            'body': json.dumps({'error': 'No fields to update'}),
+            'isBase64Encoded': False
+        }
+    
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+    params.append(offer_id)
+    
+    sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = %s"
+    
+    cur.execute(sql, params)
     conn.commit()
     cur.close()
     conn.close()

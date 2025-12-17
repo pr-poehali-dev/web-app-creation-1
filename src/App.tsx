@@ -62,6 +62,7 @@ import OfferAgreement from "./pages/OfferAgreement";
 import About from "./pages/About";
 import Support from "./pages/Support";
 import ClearData from "./pages/ClearData";
+import DeleteTestData from "./pages/DeleteTestData";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
@@ -115,6 +116,7 @@ const App = () => {
             <Route path="/about" element={<About isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/support" element={<Support isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/clear-data" element={<ClearData isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/delete-test-data" element={<DeleteTestData />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/verification" element={<VerificationPage />} />
             <Route path="/verification/resubmit" element={<VerificationResubmit isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

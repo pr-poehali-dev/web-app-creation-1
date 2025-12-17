@@ -140,6 +140,34 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
     }
   };
 
+  const handleDeleteTestOffers = async () => {
+    const testOfferIds = [
+      'a235d4f8-c303-40f2-8aa3-b1adf798bb37',
+      '448c6586-8611-4f06-887e-d984653f8fd2'
+    ];
+
+    try {
+      let deletedCount = 0;
+      for (const offerId of testOfferIds) {
+        try {
+          await offersAPI.updateOffer(offerId, { status: 'deleted' });
+          deletedCount++;
+        } catch (err) {
+          console.error(`Failed to delete offer ${offerId}:`, err);
+        }
+      }
+
+      if (deletedCount > 0) {
+        toast.success(`Удалено ${deletedCount} тестовых предложений`);
+        fetchOffers();
+      } else {
+        toast.error('Не удалось удалить тестовые предложения');
+      }
+    } catch (error) {
+      toast.error('Ошибка при удалении тестовых предложений');
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -185,6 +213,15 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                     <SelectItem value="deleted">Удаленные</SelectItem>
                   </SelectContent>
                 </Select>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteTestOffers}
+                  className="md:w-auto"
+                >
+                  <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                  Очистить тест
+                </Button>
               </div>
 
               <div className="rounded-md border">
