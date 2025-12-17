@@ -82,15 +82,15 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       }
       
       setStats({
-        totalUsers: 150,
-        verifiedUsers: 98,
+        totalUsers: 0,
+        verifiedUsers: 0,
         pendingVerifications: pendingCount,
         resubmittedVerifications: resubmittedCount,
-        totalOffers: 320,
-        totalRequests: 180,
-        totalAuctions: 45,
-        activeContracts: 89,
-        totalReviews: 267,
+        totalOffers: 0,
+        totalRequests: 0,
+        totalAuctions: 0,
+        activeContracts: 0,
+        totalReviews: 0,
       });
     } catch (error) {
       toast({
@@ -120,7 +120,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       description: 'Просмотр, редактирование и блокировка пользователей',
       icon: 'Users',
       color: 'bg-blue-500',
-      count: stats.totalUsers,
+      count: null,
       path: '/admin/users',
       priority: 'normal'
     },
@@ -140,7 +140,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       description: 'Проверка и управление предложениями на площадке',
       icon: 'Package',
       color: 'bg-purple-500',
-      count: stats.totalOffers,
+      count: null,
       path: '/admin/offers',
       priority: 'normal'
     },
@@ -150,7 +150,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       description: 'Проверка и управление запросами покупателей',
       icon: 'FileText',
       color: 'bg-orange-500',
-      count: stats.totalRequests,
+      count: null,
       path: '/admin/requests',
       priority: 'normal'
     },
@@ -160,7 +160,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       description: 'Модерация аукционов и контроль ставок',
       icon: 'Gavel',
       color: 'bg-red-500',
-      count: stats.totalAuctions,
+      count: null,
       path: '/admin/auctions',
       priority: 'normal'
     },
@@ -170,7 +170,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       description: 'Просмотр и модерация фьючерсных контрактов',
       icon: 'FileSignature',
       color: 'bg-indigo-500',
-      count: stats.activeContracts,
+      count: null,
       path: '/admin/contracts',
       priority: 'normal'
     },
@@ -190,7 +190,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       description: 'Проверка отзывов и управление рейтингами',
       icon: 'Star',
       color: 'bg-yellow-500',
-      count: stats.totalReviews,
+      count: null,
       path: '/admin/reviews',
       priority: 'normal'
     },
@@ -228,32 +228,11 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
 
   const quickStats = [
     {
-      title: 'Всего пользователей',
-      value: stats.totalUsers,
-      icon: 'Users',
-      color: 'text-blue-600',
-      change: '+12 за неделю'
-    },
-    {
-      title: 'Верифицированные',
-      value: stats.verifiedUsers,
-      icon: 'ShieldCheck',
-      color: 'text-green-600',
-      change: `${Math.round((stats.verifiedUsers / stats.totalUsers) * 100)}% от общего числа`
-    },
-    {
       title: 'На модерации',
       value: stats.pendingVerifications,
       icon: 'Clock',
       color: 'text-orange-600',
       change: 'Требуется проверка'
-    },
-    {
-      title: 'Активных контрактов',
-      value: stats.activeContracts,
-      icon: 'FileSignature',
-      color: 'text-indigo-600',
-      change: '+5 за сутки'
     }
   ];
 
