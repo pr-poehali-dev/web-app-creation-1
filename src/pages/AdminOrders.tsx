@@ -117,6 +117,50 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
     }
   };
 
+  const handleCleanupAll = async () => {
+    if (!confirm('⚠️ ВНИМАНИЕ! Это удалит ВСЕ заказы и сообщения из системы! Продолжить?')) {
+      return;
+    }
+
+    if (!confirm('Вы уверены? Это действие нельзя отменить!')) {
+      return;
+    }
+
+    try {
+      const userId = localStorage.getItem('userId');
+      const response = await fetch(
+        'https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?cleanupAll=true',
+        {
+          method: 'DELETE',
+          headers: {
+            'X-User-Id': userId || '',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to cleanup');
+      }
+
+      const data = await response.json();
+      
+      toast({
+        title: 'Очистка завершена',
+        description: `Удалено: ${data.deleted_orders} заказов и ${data.deleted_messages} сообщений`,
+      });
+
+      await loadOrders();
+    } catch (error) {
+      console.error('Error cleaning up:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось очистить данные',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -262,9 +306,13 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
                 <Icon name="RefreshCw" className="w-4 h-4 mr-2" />
                 Обновить
               </Button>
-              <Button onClick={handleCleanupOrphaned} variant="destructive">
+              <Button onClick={handleCleanupOrphaned} variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
                 <Icon name="Trash2" className="w-4 h-4 mr-2" />
                 Очистить неактуальные
+              </Button>
+              <Button onClick={handleCleanupAll} variant="destructive">
+                <Icon name="Trash2" className="w-4 h-4 mr-2" />
+                Удалить ВСЕ заказы
               </Button>
             </div>
           </CardContent>

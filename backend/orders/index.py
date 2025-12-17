@@ -103,8 +103,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'DELETE':
             query_params = event.get('queryStringParameters', {}) or {}
             cleanup_orphaned = query_params.get('cleanupOrphaned') == 'true'
+            cleanup_all = query_params.get('cleanupAll') == 'true'
             
-            if cleanup_orphaned:
+            if cleanup_all:
+                return cleanup_all_orders(event, headers)
+            elif cleanup_orphaned:
                 return cleanup_orphaned_orders(event, headers)
             else:
                 return {
@@ -618,6 +621,51 @@ def cleanup_orphaned_orders(event: Dict[str, Any], headers: Dict[str, str]) -> D
             'deleted': deleted_count,
             'orphaned_orders': [{'id': str(o['id']), 'title': o['title'], 'offer_id': str(o['offer_id'])} for o in orphaned],
             'message': f'Deleted {deleted_count} orphaned orders'
+        }),
+        'isBase64Encoded': False
+    }
+
+def cleanup_all_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    """Удаление ВСЕХ заказов и сообщений - полная очистка для начала с чистого листа"""
+    user_headers = event.get('headers', {})
+    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    
+    if not user_id:
+        return {
+            'statusCode': 401,
+            'headers': headers,
+            'body': json.dumps({'error': 'Authentication required'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    schema = get_schema()
+    
+    # Считаем сколько было
+    cur.execute(f"SELECT COUNT(*) as cnt FROM {schema}.orders")
+    orders_count = cur.fetchone()['cnt']
+    
+    cur.execute(f"SELECT COUNT(*) as cnt FROM {schema}.order_messages")
+    messages_count = cur.fetchone()['cnt']
+    
+    # Удаляем все сообщения
+    cur.execute(f"DELETE FROM {schema}.order_messages")
+    
+    # Удаляем все заказы
+    cur.execute(f"DELETE FROM {schema}.orders")
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({
+            'deleted_orders': orders_count,
+            'deleted_messages': messages_count,
+            'message': f'Deleted all {orders_count} orders and {messages_count} messages'
         }),
         'isBase64Encoded': False
     }
