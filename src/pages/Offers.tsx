@@ -162,7 +162,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   const handleDelete = async (id: string) => {
     try {
-      await offersAPI.updateOffer(id, { status: 'deleted' });
+      await offersAPI.updateOffer(id, { status: 'archived' });
       setOffers(prev => prev.filter(o => o.id !== id));
       toast({
         title: 'Успешно',

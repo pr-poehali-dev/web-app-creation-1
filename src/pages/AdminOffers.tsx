@@ -150,7 +150,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
       let deletedCount = 0;
       for (const offerId of testOfferIds) {
         try {
-          await offersAPI.updateOffer(offerId, { status: 'deleted' });
+          await offersAPI.updateOffer(offerId, { status: 'archived' });
           deletedCount++;
         } catch (err) {
           console.error(`Failed to delete offer ${offerId}:`, err);

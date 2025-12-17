@@ -29,7 +29,7 @@ export default function DeleteTestData() {
       for (const offerId of testOfferIds) {
         try {
           console.log(`Удаляем предложение: ${offerId}`);
-          await offersAPI.updateOffer(offerId, { status: 'deleted' });
+          await offersAPI.updateOffer(offerId, { status: 'archived' });
           deletedCount++;
           results.push(`✅ Удалено: ${offerId}`);
           console.log(`✅ Успешно удалено: ${offerId}`);
