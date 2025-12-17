@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { safeToLocaleDateString } from '@/utils/dateUtils';
 
 interface RequestInfoCardProps {
   title: string;
@@ -121,18 +122,14 @@ export default function RequestInfoCard({
                 <div>
                   <p>Дата создания</p>
                   <p className="font-medium text-foreground">
-                    {createdAt instanceof Date 
-                      ? createdAt.toLocaleDateString('ru-RU') 
-                      : new Date(createdAt).toLocaleDateString('ru-RU')}
+                    {safeToLocaleDateString(createdAt)}
                   </p>
                 </div>
                 {expiryDate && (
                   <div>
                     <p>Срок актуальности</p>
                     <p className="font-medium text-foreground">
-                      {expiryDate instanceof Date
-                        ? expiryDate.toLocaleDateString('ru-RU')
-                        : new Date(expiryDate).toLocaleDateString('ru-RU')}
+                      {safeToLocaleDateString(expiryDate)}
                     </p>
                   </div>
                 )}

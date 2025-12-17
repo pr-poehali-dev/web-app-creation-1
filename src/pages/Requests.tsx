@@ -18,6 +18,7 @@ import { useOffers } from '@/contexts/OffersContext';
 import { getSession } from '@/utils/auth';
 import { requestsAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { safeGetTime } from '@/utils/dateUtils';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -107,9 +108,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     }
 
     result.sort((a, b) => {
-      const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : a.createdAt;
-      const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : b.createdAt;
-      return dateB.getTime() - dateA.getTime();
+      return safeGetTime(b.createdAt) - safeGetTime(a.createdAt);
     });
 
     return result;

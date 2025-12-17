@@ -342,34 +342,43 @@ def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, st
 
 def delete_request(request_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Мягкое удаление запроса (меняем статус на deleted)"""
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    sql = """
-        UPDATE t_p42562714_web_app_creation_1.requests 
-        SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
-        WHERE id = %s
-    """
-    
-    cur.execute(sql, (request_id,))
-    
-    if cur.rowcount == 0:
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        sql = """
+            UPDATE t_p42562714_web_app_creation_1.requests 
+            SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """
+        
+        cur.execute(sql, (request_id,))
+        
+        if cur.rowcount == 0:
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({'error': 'Request not found'}),
+                'isBase64Encoded': False
+            }
+        
+        conn.commit()
         cur.close()
         conn.close()
+        
         return {
-            'statusCode': 404,
+            'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({'error': 'Request not found'}),
+            'body': json.dumps({'message': 'Request deleted successfully'}),
             'isBase64Encoded': False
         }
-    
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    return {
-        'statusCode': 200,
-        'headers': headers,
-        'body': json.dumps({'message': 'Request deleted successfully'}),
-        'isBase64Encoded': False
-    }
+    except Exception as e:
+        print(f"Error deleting request: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': f'Failed to delete request: {str(e)}'}),
+            'isBase64Encoded': False
+        }

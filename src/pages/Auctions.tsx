@@ -17,6 +17,7 @@ import { getSession } from '@/utils/auth';
 import AuctionCard from '@/components/auction/AuctionCard';
 import AuctionStatusFilters from '@/components/auction/AuctionStatusFilters';
 import { useToast } from '@/hooks/use-toast';
+import { safeGetTime } from '@/utils/dateUtils';
 
 interface AuctionsProps {
   isAuthenticated: boolean;
@@ -190,17 +191,13 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     premiumAuctions.sort((a, b) => {
       if (a.status === 'ending-soon' && b.status !== 'ending-soon') return -1;
       if (a.status !== 'ending-soon' && b.status === 'ending-soon') return 1;
-      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
-      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
-      return bTime - aTime;
+      return safeGetTime(b.createdAt) - safeGetTime(a.createdAt);
     });
 
     regularAuctions.sort((a, b) => {
       if (a.status === 'ending-soon' && b.status !== 'ending-soon') return -1;
       if (a.status !== 'ending-soon' && b.status === 'ending-soon') return 1;
-      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
-      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
-      return bTime - aTime;
+      return safeGetTime(b.createdAt) - safeGetTime(a.createdAt);
     });
 
     return [...premiumAuctions, ...regularAuctions];
