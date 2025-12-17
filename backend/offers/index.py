@@ -114,10 +114,14 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 0 as seller_reviews_count,
                 false as seller_is_verified
             FROM t_p42562714_web_app_creation_1.offers o
-            WHERE o.status = %s
+            WHERE 1=1
         """
         
-        query_params = [status]
+        query_params = []
+        
+        if status and status != 'all':
+            sql += " AND o.status = %s"
+            query_params.append(status)
         
         if category:
             sql += " AND o.category = %s"

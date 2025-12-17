@@ -191,8 +191,11 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   };
 
   const getUnreadMessages = (offerId: string): number => {
-    const order = orders.find(o => o.offerId === offerId);
-    return order ? 2 : 0;
+    const relatedOrders = orders.filter(o => {
+      const orderOfferId = o.offer_id || o.offerId;
+      return orderOfferId === offerId;
+    });
+    return relatedOrders.length > 0 ? relatedOrders.length : 0;
   };
 
   const handleFiltersChange = (newFilters: SearchFilters) => {

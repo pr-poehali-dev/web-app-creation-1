@@ -31,18 +31,20 @@ import {
 } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import { offersAPI } from '@/services/api';
+import type { Offer as OfferType } from '@/types/offer';
 
 interface AdminOffersProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
 
-interface Offer {
+interface AdminOffer {
   id: string;
   title: string;
   seller: string;
   price: number;
-  status: 'active' | 'moderation' | 'rejected' | 'completed';
+  status: 'active' | 'moderation' | 'rejected' | 'completed' | 'deleted';
   createdAt: string;
 }
 
@@ -50,9 +52,9 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<AdminOffer | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [offers, setOffers] = useState<Offer[]>([]);
+  const [offers, setOffers] = useState<AdminOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -62,17 +64,25 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const fetchOffers = async () => {
     setIsLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (filterStatus !== 'all') params.append('status', filterStatus);
+      const params: any = {};
+      if (searchQuery) params.query = searchQuery;
+      if (filterStatus !== 'all') params.status = filterStatus;
+      else params.status = 'all';
 
-      const response = await fetch(`https://functions.poehali.dev/989d9b69-4c39-49f3-abad-1249c04ddc21?${params}`);
-      const data = await response.json();
+      const data = await offersAPI.getOffers(params);
       
-      if (data.offers) {
-        setOffers(data.offers);
-      }
+      const mappedOffers: AdminOffer[] = (data.offers || []).map((offer: any) => ({
+        id: offer.id,
+        title: offer.title,
+        seller: offer.seller?.name || offer.seller_name || 'Неизвестно',
+        price: offer.pricePerUnit || offer.price_per_unit || 0,
+        status: offer.status || 'active',
+        createdAt: offer.createdAt || offer.created_at
+      }));
+      
+      setOffers(mappedOffers);
     } catch (error) {
+      console.error('Ошибка загрузки предложений:', error);
       toast.error('Ошибка при загрузке предложений');
     } finally {
       setIsLoading(false);
@@ -89,24 +99,44 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         return <Badge variant="destructive">Отклонено</Badge>;
       case 'completed':
         return <Badge>Завершено</Badge>;
+      case 'deleted':
+        return <Badge variant="outline" className="bg-gray-100">Удалено</Badge>;
       default:
         return null;
     }
   };
 
-  const handleApproveOffer = (offer: Offer) => {
-    toast.success(`Предложение "${offer.title}" одобрено`);
+  const handleApproveOffer = async (offer: AdminOffer) => {
+    try {
+      await offersAPI.updateOffer(offer.id, { status: 'active' });
+      toast.success(`Предложение "${offer.title}" одобрено`);
+      fetchOffers();
+    } catch (error) {
+      toast.error('Ошибка при одобрении предложения');
+    }
   };
 
-  const handleRejectOffer = (offer: Offer) => {
-    toast.success(`Предложение "${offer.title}" отклонено`);
+  const handleRejectOffer = async (offer: AdminOffer) => {
+    try {
+      await offersAPI.updateOffer(offer.id, { status: 'rejected' });
+      toast.success(`Предложение "${offer.title}" отклонено`);
+      fetchOffers();
+    } catch (error) {
+      toast.error('Ошибка при отклонении предложения');
+    }
   };
 
-  const handleDeleteOffer = () => {
+  const handleDeleteOffer = async () => {
     if (selectedOffer) {
-      toast.success(`Предложение "${selectedOffer.title}" удалено`);
-      setShowDeleteDialog(false);
-      setSelectedOffer(null);
+      try {
+        await offersAPI.updateOffer(selectedOffer.id, { status: 'deleted' });
+        toast.success(`Предложение "${selectedOffer.title}" удалено`);
+        setShowDeleteDialog(false);
+        setSelectedOffer(null);
+        fetchOffers();
+      } catch (error) {
+        toast.error('Ошибка при удалении предложения');
+      }
     }
   };
 
@@ -152,6 +182,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                     <SelectItem value="moderation">На модерации</SelectItem>
                     <SelectItem value="rejected">Отклоненные</SelectItem>
                     <SelectItem value="completed">Завершенные</SelectItem>
+                    <SelectItem value="deleted">Удаленные</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
