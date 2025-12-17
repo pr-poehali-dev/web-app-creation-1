@@ -77,6 +77,46 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
     }
   };
 
+  const handleCleanupOrphaned = async () => {
+    if (!confirm('Удалить все заказы с несуществующими предложениями?')) {
+      return;
+    }
+
+    try {
+      const userId = localStorage.getItem('userId');
+      const response = await fetch(
+        'https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?cleanupOrphaned=true',
+        {
+          method: 'DELETE',
+          headers: {
+            'X-User-Id': userId || '',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to cleanup');
+      }
+
+      const data = await response.json();
+      
+      toast({
+        title: 'Успешно',
+        description: `Удалено заказов: ${data.deleted}`,
+      });
+
+      await loadOrders();
+    } catch (error) {
+      console.error('Error cleaning up:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось очистить заказы',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -196,7 +236,7 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
         {/* Фильтры */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex gap-4 flex-wrap items-center">
               <div className="flex-1 min-w-[200px]">
                 <Input
                   placeholder="Поиск по названию, ID, имени..."
@@ -221,6 +261,10 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
               <Button onClick={loadOrders} variant="outline">
                 <Icon name="RefreshCw" className="w-4 h-4 mr-2" />
                 Обновить
+              </Button>
+              <Button onClick={handleCleanupOrphaned} variant="destructive">
+                <Icon name="Trash2" className="w-4 h-4 mr-2" />
+                Очистить неактуальные
               </Button>
             </div>
           </CardContent>

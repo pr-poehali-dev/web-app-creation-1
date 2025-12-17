@@ -100,6 +100,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             return update_order(order_id, event, headers)
         
+        elif method == 'DELETE':
+            query_params = event.get('queryStringParameters', {}) or {}
+            cleanup_orphaned = query_params.get('cleanupOrphaned') == 'true'
+            
+            if cleanup_orphaned:
+                return cleanup_orphaned_orders(event, headers)
+            else:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'Operation not specified'}),
+                    'isBase64Encoded': False
+                }
+        
         else:
             return {
                 'statusCode': 405,
@@ -546,6 +560,64 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
             'id': str(result['id']),
             'createdAt': result['created_at'].isoformat(),
             'message': 'Message created successfully'
+        }),
+        'isBase64Encoded': False
+    }
+
+def cleanup_orphaned_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    """Удаление заказов с несуществующими предложениями"""
+    user_headers = event.get('headers', {})
+    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    
+    # Проверка прав администратора (можно добавить проверку роли)
+    if not user_id:
+        return {
+            'statusCode': 401,
+            'headers': headers,
+            'body': json.dumps({'error': 'Authentication required'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    schema = get_schema()
+    
+    # Находим заказы с несуществующими предложениями
+    sql_find = f"""
+        SELECT o.id, o.title, o.offer_id 
+        FROM {schema}.orders o
+        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
+        WHERE of.id IS NULL
+    """
+    
+    cur.execute(sql_find)
+    orphaned = cur.fetchall()
+    orphaned_ids = [order['id'] for order in orphaned]
+    
+    deleted_count = 0
+    if orphaned_ids:
+        # Удаляем сообщения по этим заказам
+        ids_str = "', '".join([str(oid).replace("'", "''") for oid in orphaned_ids])
+        sql_delete_messages = f"DELETE FROM {schema}.order_messages WHERE order_id IN ('{ids_str}')"
+        cur.execute(sql_delete_messages)
+        
+        # Удаляем сами заказы
+        sql_delete_orders = f"DELETE FROM {schema}.orders WHERE id IN ('{ids_str}')"
+        cur.execute(sql_delete_orders)
+        deleted_count = cur.rowcount
+        
+        conn.commit()
+    
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({
+            'deleted': deleted_count,
+            'orphaned_orders': [{'id': str(o['id']), 'title': o['title'], 'offer_id': str(o['offer_id'])} for o in orphaned],
+            'message': f'Deleted {deleted_count} orphaned orders'
         }),
         'isBase64Encoded': False
     }
