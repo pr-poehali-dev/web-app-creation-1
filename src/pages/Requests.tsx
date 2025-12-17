@@ -30,7 +30,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
-  const { requests: contextRequests, deleteRequest } = useOffers();
+  const { deleteRequest } = useOffers();
   const currentUser = getSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -239,12 +239,12 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
                   )}
                   
                   <span className="text-muted-foreground">
-                    Сортировка: <span className="font-medium text-foreground">По новизне</span>
+                    Сортировка: <span className="font-medium text-foreground">Новизна</span>
                   </span>
                 </div>
               </div>
 
-              {(filters.category || selectedDistricts.length > 0) && (
+              {filters.category && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {filters.category && (
                     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
@@ -275,27 +275,56 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
                       )}
                     </>
                   )}
-                  {filters.district !== 'all' && (
-                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                      <Icon name="MapPin" className="h-3 w-3" />
-                      {filters.district}
-                    </span>
-                  )}
                 </div>
               )}
             </div>
 
-            {currentRequests.length === 0 ? (
-              <div className="text-center py-20">
-                <Icon name="FileText" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
-                <h3 className="text-xl font-semibold mb-2">Пока нет запросов</h3>
-                <p className="text-muted-foreground mb-8">
-                  Попробуйте изменить параметры поиска или выбрать другой район
-                </p>
+            {filteredRequests.length === 0 ? (
+              <div className="text-center py-20 px-4">
+                <div className="max-w-md mx-auto">
+                  <Icon name="Search" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
+                  <h3 className="text-2xl font-semibold mb-3">Запросов не найдено</h3>
+                  <p className="text-muted-foreground mb-8">
+                    По вашим фильтрам ничего не найдено. Попробуйте изменить параметры поиска.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      onClick={() =>
+                        handleFiltersChange({
+                          query: '',
+                          contentType: 'requests',
+                          category: '',
+                          subcategory: '',
+                          district: filters.district,
+                        })
+                      }
+                      variant="outline"
+                      className="gap-2"
+                    >
+                      <Icon name="RotateCcw" className="h-4 w-4" />
+                      Сбросить фильтры
+                    </Button>
+                    <Button
+                      onClick={() =>
+                        handleFiltersChange({
+                          query: '',
+                          contentType: 'requests',
+                          category: '',
+                          subcategory: '',
+                          district: 'all',
+                        })
+                      }
+                      className="gap-2"
+                    >
+                      <Icon name="Globe" className="h-4 w-4" />
+                      Все районы
+                    </Button>
+                  </div>
+                </div>
               </div>
             ) : (
               <>
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mb-6">
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {currentRequests.map((request) => (
                     <RequestCard
                       key={request.id}
@@ -306,17 +335,31 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
                   ))}
                 </div>
 
-                <div ref={observerTarget} className="flex justify-center py-8">
-                  {isLoadingMore && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Icon name="Loader2" className="h-5 w-5 animate-spin" />
-                      <span>Загрузка...</span>
+                {hasMore && (
+                  <div ref={observerTarget} className="mt-8">
+                    {isLoadingMore && (
+                      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                          <OfferCardSkeleton key={`loading-${index}`} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!hasMore && filteredRequests.length > ITEMS_PER_PAGE && (
+                  <div className="mt-8 text-center py-6 border-t">
+                    <div className="flex flex-col items-center gap-2">
+                      <Icon name="CheckCircle2" className="h-6 w-6 text-green-500" />
+                      <p className="text-sm font-medium text-foreground">
+                        Показаны все запросы
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Всего найдено: {filteredRequests.length} {filteredRequests.length === 1 ? 'запрос' : filteredRequests.length < 5 ? 'запроса' : 'запросов'}
+                      </p>
                     </div>
-                  )}
-                  {!hasMore && currentRequests.length > ITEMS_PER_PAGE && (
-                    <p className="text-muted-foreground">Больше нет запросов</p>
-                  )}
-                </div>
+                  </div>
+                )}
               </>
             )}
           </>
