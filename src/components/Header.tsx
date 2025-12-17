@@ -292,31 +292,13 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     Мои отзывы
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/my-orders')}>
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-                        Мои заказы
-                      </div>
-                      {ordersCount > 0 && (
-                        <Badge variant="secondary" className="ml-2 h-5 min-w-5 px-1.5">
-                          {ordersCount}
-                        </Badge>
-                      )}
-                    </div>
+                    <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+                    Мои заказы
                   </DropdownMenuItem>
 
                   <DropdownMenuItem onClick={() => navigate('/notifications')}>
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <Icon name="Bell" className="mr-2 h-4 w-4" />
-                        Уведомления
-                      </div>
-                      {unreadNotifications > 0 && (
-                        <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
-                          {unreadNotifications}
-                        </Badge>
-                      )}
-                    </div>
+                    <Icon name="Bell" className="mr-2 h-4 w-4" />
+                    Уведомления
                   </DropdownMenuItem>
                   {currentUser?.role === 'admin' && (
                     <>
