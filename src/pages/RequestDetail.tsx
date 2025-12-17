@@ -186,9 +186,9 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
               registrationDate: new Date(),
             },
           },
-          createdAt: data.createdAt || new Date(),
-          updatedAt: data.updatedAt || new Date(),
-          expiryDate: data.expiryDate,
+          createdAt: data.createdAt ? (data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt)) : new Date(),
+          updatedAt: data.updatedAt ? (data.updatedAt instanceof Date ? data.updatedAt : new Date(data.updatedAt)) : new Date(),
+          expiryDate: data.expiryDate ? (data.expiryDate instanceof Date ? data.expiryDate : new Date(data.expiryDate)) : undefined,
           viewsCount: data.views,
           responsesCount: data.responses,
         };

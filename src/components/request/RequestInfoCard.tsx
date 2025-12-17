@@ -121,14 +121,18 @@ export default function RequestInfoCard({
                 <div>
                   <p>Дата создания</p>
                   <p className="font-medium text-foreground">
-                    {createdAt.toLocaleDateString('ru-RU')}
+                    {createdAt instanceof Date 
+                      ? createdAt.toLocaleDateString('ru-RU') 
+                      : new Date(createdAt).toLocaleDateString('ru-RU')}
                   </p>
                 </div>
                 {expiryDate && (
                   <div>
                     <p>Срок актуальности</p>
                     <p className="font-medium text-foreground">
-                      {expiryDate.toLocaleDateString('ru-RU')}
+                      {expiryDate instanceof Date
+                        ? expiryDate.toLocaleDateString('ru-RU')
+                        : new Date(expiryDate).toLocaleDateString('ru-RU')}
                     </p>
                   </div>
                 )}
