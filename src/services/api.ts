@@ -448,6 +448,27 @@ export const ordersAPI = {
     
     return response.json();
   },
+
+  async deleteOrder(id: string): Promise<{ message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetch(`${ORDERS_API}?id=${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete order');
+    }
+    
+    return response.json();
+  },
 };
 
 export interface AuctionsListResponse {

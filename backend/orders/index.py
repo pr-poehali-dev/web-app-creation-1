@@ -104,11 +104,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             query_params = event.get('queryStringParameters', {}) or {}
             cleanup_orphaned = query_params.get('cleanupOrphaned') == 'true'
             cleanup_all = query_params.get('cleanupAll') == 'true'
+            order_id = query_params.get('id')
             
             if cleanup_all:
                 return cleanup_all_orders(event, headers)
             elif cleanup_orphaned:
                 return cleanup_orphaned_orders(event, headers)
+            elif order_id:
+                return delete_order(order_id, event, headers)
             else:
                 return {
                     'statusCode': 400,
@@ -622,6 +625,68 @@ def cleanup_orphaned_orders(event: Dict[str, Any], headers: Dict[str, str]) -> D
             'orphaned_orders': [{'id': str(o['id']), 'title': o['title'], 'offer_id': str(o['offer_id'])} for o in orphaned],
             'message': f'Deleted {deleted_count} orphaned orders'
         }),
+        'isBase64Encoded': False
+    }
+
+def delete_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    """Удаление конкретного заказа по ID"""
+    user_headers = event.get('headers', {})
+    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    
+    if not user_id:
+        return {
+            'statusCode': 401,
+            'headers': headers,
+            'body': json.dumps({'error': 'Authentication required'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    schema = get_schema()
+    
+    order_id_escaped = order_id.replace("'", "''")
+    
+    # Проверяем существование заказа и права доступа
+    cur.execute(f"SELECT buyer_id, seller_id FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    order = cur.fetchone()
+    
+    if not order:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': headers,
+            'body': json.dumps({'error': 'Order not found'}),
+            'isBase64Encoded': False
+        }
+    
+    # Проверяем что пользователь - продавец или покупатель
+    user_id_int = int(user_id)
+    if order['buyer_id'] != user_id_int and order['seller_id'] != user_id_int:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 403,
+            'headers': headers,
+            'body': json.dumps({'error': 'Access denied'}),
+            'isBase64Encoded': False
+        }
+    
+    # Удаляем сообщения по этому заказу
+    cur.execute(f"DELETE FROM {schema}.order_messages WHERE order_id = '{order_id_escaped}'")
+    
+    # Удаляем сам заказ
+    cur.execute(f"DELETE FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'message': 'Order deleted successfully'}),
         'isBase64Encoded': False
     }
 

@@ -262,6 +262,34 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     if (order) handleOpenChat(order);
   };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    try {
+      await ordersAPI.deleteOrder(orderId);
+      
+      const updatedOrders = orders.filter(o => o.id !== orderId);
+      setOrders(updatedOrders);
+      
+      toast({
+        title: 'Заказ удалён',
+        description: 'Заказ успешно удалён',
+      });
+
+      if (updatedOrders.length === 0) {
+        toast({
+          title: 'Готово',
+          description: 'Все заказы удалены. Теперь можно удалить объявление.',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить заказ',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const districtName = districts.find(d => d.id === offer?.district)?.name || offer?.district;
   const unreadCount = messages.filter(m => !m.isRead).length;
 
@@ -376,23 +404,51 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       <Footer />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <AlertDialogHeader>
             <AlertDialogTitle>Удалить объявление?</AlertDialogTitle>
             <AlertDialogDescription>
-              Это действие нельзя отменить. Объявление будет удалено безвозвратно.
-              {orders.length > 0 && (
-                <span className="block mt-2 text-destructive font-semibold">
-                  У этого объявления есть активные заказы ({orders.length}). Удаление может повлиять на них.
-                </span>
+              {orders.length === 0 ? (
+                'Это действие нельзя отменить. Объявление будет удалено безвозвратно.'
+              ) : (
+                <div className="space-y-3">
+                  <span className="block text-destructive font-semibold">
+                    У этого объявления есть активные заказы ({orders.length}). 
+                    Сначала удалите все заказы, чтобы удалить объявление.
+                  </span>
+                  <div className="space-y-2 mt-4">
+                    {orders.map((order) => (
+                      <Card key={order.id} className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">Заказ #{order.id.slice(0, 8)}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {order.buyerName} • {order.totalAmount?.toLocaleString('ru-RU')} ₽
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleDeleteOrder(order.id)}
+                          >
+                            <Icon name="Trash2" className="w-4 h-4 mr-1" />
+                            Удалить
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Удалить
-            </AlertDialogAction>
+            {orders.length === 0 && (
+              <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+                Удалить объявление
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
