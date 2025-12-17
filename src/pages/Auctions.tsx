@@ -190,13 +190,17 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     premiumAuctions.sort((a, b) => {
       if (a.status === 'ending-soon' && b.status !== 'ending-soon') return -1;
       if (a.status !== 'ending-soon' && b.status === 'ending-soon') return 1;
-      return b.createdAt.getTime() - a.createdAt.getTime();
+      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+      return bTime - aTime;
     });
 
     regularAuctions.sort((a, b) => {
       if (a.status === 'ending-soon' && b.status !== 'ending-soon') return -1;
       if (a.status !== 'ending-soon' && b.status === 'ending-soon') return 1;
-      return b.createdAt.getTime() - a.createdAt.getTime();
+      const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : 0;
+      const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : 0;
+      return bTime - aTime;
     });
 
     return [...premiumAuctions, ...regularAuctions];

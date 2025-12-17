@@ -13,6 +13,8 @@ import RequestMediaGallery from '@/components/request/RequestMediaGallery';
 import RequestInfoCard from '@/components/request/RequestInfoCard';
 import RequestAuthorCard from '@/components/request/RequestAuthorCard';
 import RequestResponseModal from '@/components/request/RequestResponseModal';
+import { requestsAPI } from '@/services/api';
+import { toast } from 'sonner';
 
 interface RequestImage {
   id: string;
@@ -145,18 +147,67 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
-    setIsLoading(true);
-    const timer = setTimeout(() => {
-      setRequest(MOCK_REQUEST);
-      setIsLoading(false);
+    const loadRequest = async () => {
+      if (!id) return;
       
-      if (MOCK_REQUEST.video) {
-        setShowVideo(true);
+      setIsLoading(true);
+      try {
+        const data = await requestsAPI.getRequestById(id);
+        const mappedRequest: Request = {
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          category: data.category,
+          subcategory: data.subcategory || '',
+          quantity: data.quantity,
+          unit: data.unit,
+          pricePerUnit: data.pricePerUnit || 0,
+          hasVAT: data.hasVAT,
+          vatRate: data.vatRate,
+          deliveryAddress: data.deliveryAddress || data.fullAddress || '',
+          district: data.district,
+          availableDistricts: data.availableDistricts || [data.district],
+          images: data.images || [],
+          video: data.video,
+          isPremium: data.isPremium,
+          author: {
+            id: data.userId,
+            name: 'Пользователь',
+            type: 'individual',
+            phone: '',
+            email: '',
+            rating: 0,
+            reviewsCount: 0,
+            isVerified: false,
+            statistics: {
+              totalRequests: 0,
+              activeRequests: 0,
+              completedOrders: 0,
+              registrationDate: new Date(),
+            },
+          },
+          createdAt: data.createdAt || new Date(),
+          updatedAt: data.updatedAt || new Date(),
+          expiryDate: data.expiryDate,
+          viewsCount: data.views,
+          responsesCount: data.responses,
+        };
+        setRequest(mappedRequest);
+        
+        if (data.video) {
+          setShowVideo(true);
+        }
+      } catch (error) {
+        console.error('Error loading request:', error);
+        toast.error('Не удалось загрузить запрос');
+        navigate('/zaprosy');
+      } finally {
+        setIsLoading(false);
       }
-    }, 400);
+    };
 
-    return () => clearTimeout(timer);
-  }, [id]);
+    loadRequest();
+  }, [id, navigate]);
 
   const handlePrevImage = () => {
     if (!request) return;
