@@ -180,7 +180,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       result = result.filter(
         (auction) =>
           selectedDistricts.includes(auction.district) ||
-          auction.availableDistricts.some(d => selectedDistricts.includes(d))
+          (auction.availableDistricts && auction.availableDistricts.some(d => selectedDistricts.includes(d)))
       );
     }
 
