@@ -18,6 +18,7 @@ export default function DeleteTestData() {
       '448c6586-8611-4f06-887e-d984653f8fd2'
     ];
 
+    console.log('🗑️ Начинаем удаление тестовых предложений:', testOfferIds);
     setStatus('deleting');
     setMessage('Удаление тестовых предложений...');
 
@@ -27,10 +28,13 @@ export default function DeleteTestData() {
 
       for (const offerId of testOfferIds) {
         try {
+          console.log(`Удаляем предложение: ${offerId}`);
           await offersAPI.updateOffer(offerId, { status: 'deleted' });
           deletedCount++;
           results.push(`✅ Удалено: ${offerId}`);
+          console.log(`✅ Успешно удалено: ${offerId}`);
         } catch (err: any) {
+          console.error(`❌ Ошибка при удалении ${offerId}:`, err);
           results.push(`❌ Ошибка: ${offerId} - ${err.message}`);
         }
       }
