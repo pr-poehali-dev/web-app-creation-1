@@ -142,7 +142,7 @@ export const offersAPI = {
   },
 
   async updateOffer(id: string, data: Partial<CreateOfferData>): Promise<{ message: string }> {
-    const response = await fetch(`${OFFERS_API}/${id}`, {
+    const response = await fetch(`${OFFERS_API}?id=${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -53,13 +53,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return create_offer(event, headers)
         
         elif method == 'PUT':
-            path_params = event.get('pathParams', {})
-            offer_id = path_params.get('id')
+            query_params = event.get('queryStringParameters', {}) or {}
+            offer_id = query_params.get('id')
             if not offer_id:
                 return {
                     'statusCode': 400,
                     'headers': headers,
-                    'body': json.dumps({'error': 'Offer ID required'}),
+                    'body': json.dumps({'error': 'Offer ID required in query params'}),
                     'isBase64Encoded': False
                 }
             return update_offer(offer_id, event, headers)
