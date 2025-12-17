@@ -45,61 +45,7 @@ const NOTIFICATION_COLORS: Record<NotificationType, string> = {
   system: 'text-gray-500',
 };
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'order',
-    title: 'Новый заказ',
-    message: 'Получен новый заказ на "Офисная мебель" от ООО "МебельСтрой"',
-    isRead: false,
-    createdAt: new Date('2024-11-29T14:30:00'),
-    link: '/active-orders',
-  },
-  {
-    id: '2',
-    type: 'auction',
-    title: 'Новая ставка на аукционе',
-    message: 'На ваш аукцион "Строительные материалы" сделана новая ставка: 18 500 ₽',
-    isRead: false,
-    createdAt: new Date('2024-11-29T12:15:00'),
-    link: '/my-auctions',
-  },
-  {
-    id: '3',
-    type: 'message',
-    title: 'Новое сообщение',
-    message: 'Вам написал ИП Иванов А.А. по предложению "Стройматериалы оптом"',
-    isRead: false,
-    createdAt: new Date('2024-11-29T10:45:00'),
-  },
-  {
-    id: '4',
-    type: 'request',
-    title: 'Отклик на запрос',
-    message: 'Получен новый отклик на ваш запрос "Поставка офисной мебели"',
-    isRead: true,
-    createdAt: new Date('2024-11-28T16:20:00'),
-    link: '/my-requests',
-  },
-  {
-    id: '5',
-    type: 'system',
-    title: 'Модерация завершена',
-    message: 'Ваше предложение "Строительные материалы" прошло модерацию и опубликовано',
-    isRead: true,
-    createdAt: new Date('2024-11-28T09:00:00'),
-    link: '/my-offers',
-  },
-  {
-    id: '6',
-    type: 'auction',
-    title: 'Аукцион скоро завершится',
-    message: 'Ваш аукцион "Оборудование для склада" завершится через 2 часа',
-    isRead: true,
-    createdAt: new Date('2024-11-27T18:30:00'),
-    link: '/my-auctions',
-  },
-];
+const MOCK_NOTIFICATIONS: Notification[] = [];
 
 export default function Notifications({ isAuthenticated, onLogout }: NotificationsProps) {
   useScrollToTop();
@@ -119,12 +65,7 @@ export default function Notifications({ isAuthenticated, onLogout }: Notificatio
 
     const loadNotifications = () => {
       const userNotifications = getNotifications(currentUser.id);
-      
-      if (userNotifications.length === 0) {
-        setNotifications(MOCK_NOTIFICATIONS);
-      } else {
-        setNotifications(userNotifications);
-      }
+      setNotifications(userNotifications);
       setIsLoading(false);
     };
 
