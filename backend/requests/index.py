@@ -119,7 +119,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
             r.*,
             '[]'::json as images
         FROM t_p42562714_web_app_creation_1.requests r
-        WHERE r.status != 'deleted'
+        WHERE r.status != 'deleted' AND r.status != 'archived'
     """
     
     query_params = []

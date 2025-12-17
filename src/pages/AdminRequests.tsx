@@ -48,7 +48,7 @@ interface Request {
   category: string;
   subcategory?: string;
   district?: string;
-  status: 'active' | 'moderation' | 'rejected' | 'completed';
+  status: 'active' | 'moderation' | 'rejected' | 'completed' | 'archived' | 'deleted';
   createdAt: string;
   images?: { id: string; url: string; alt?: string }[];
 }
@@ -92,6 +92,10 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
         return <Badge variant="destructive">Отклонено</Badge>;
       case 'completed':
         return <Badge>Завершено</Badge>;
+      case 'archived':
+        return <Badge variant="outline">Архив</Badge>;
+      case 'deleted':
+        return <Badge variant="destructive">Удалён</Badge>;
       default:
         return null;
     }
