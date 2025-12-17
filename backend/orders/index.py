@@ -484,9 +484,16 @@ def get_messages_by_order(order_id: str, headers: Dict[str, str]) -> Dict[str, A
     
     result = []
     for msg in messages:
-        msg_dict = dict(msg)
-        msg_dict['createdAt'] = msg_dict.pop('created_at').isoformat() if msg_dict.get('created_at') else None
-        result.append(msg_dict)
+        result.append({
+            'id': msg['id'],
+            'order_id': msg['order_id'],
+            'sender_id': msg['sender_id'],
+            'sender_name': msg['sender_name'],
+            'sender_type': msg['sender_type'],
+            'message': msg['message'],
+            'is_read': msg['is_read'],
+            'createdAt': msg['created_at'].isoformat() if msg.get('created_at') else None
+        })
     
     cur.close()
     conn.close()
@@ -494,7 +501,7 @@ def get_messages_by_order(order_id: str, headers: Dict[str, str]) -> Dict[str, A
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps(result),
+        'body': json.dumps({'messages': result}),
         'isBase64Encoded': False
     }
 

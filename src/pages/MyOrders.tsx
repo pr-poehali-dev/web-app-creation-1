@@ -40,24 +40,39 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [isAuthenticated, navigate, activeTab]);
 
   useEffect(() => {
-    const handleOpenOrderChat = (event: CustomEvent) => {
+    const handleOpenOrderChat = async (event: CustomEvent) => {
       const { orderId, tab } = event.detail;
+      console.log('Opening order chat:', { orderId, tab, hasOrders: orders.length });
       
-      if (tab) {
+      if (tab && tab !== activeTab) {
         setActiveTab(tab);
+        // Ждем обновления вкладки и перезагрузки заказов
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
       
-      setTimeout(() => {
-        const order = orders.find(o => o.id === orderId);
-        if (order) {
-          handleOpenChat(order);
-        }
-      }, 100);
+      // Пытаемся найти заказ
+      let order = orders.find(o => o.id === orderId);
+      
+      // Если заказ не найден, пробуем перезагрузить
+      if (!order) {
+        console.log('Order not found, reloading...');
+        await loadOrders();
+        // После перезагрузки снова ищем
+        await new Promise(resolve => setTimeout(resolve, 200));
+        order = orders.find(o => o.id === orderId);
+      }
+      
+      if (order) {
+        console.log('Opening chat for order:', order);
+        handleOpenChat(order);
+      } else {
+        console.error('Order not found after reload:', orderId);
+      }
     };
 
     window.addEventListener('openOrderChat' as any, handleOpenOrderChat);
     return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
-  }, [orders]);
+  }, [orders, activeTab]);
 
   const loadOrders = async () => {
     try {
@@ -65,29 +80,35 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
       const orderType = activeTab === 'buyer' ? 'purchase' : 'sale';
       const response = await ordersAPI.getAll(orderType);
       
-      const mappedOrders = response.orders.map((order: any) => ({
-        id: order.id,
-        offerId: order.offer_id,
-        offerTitle: order.offer_title || order.title,
-        offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,
-        quantity: order.quantity,
-        unit: order.unit,
-        pricePerUnit: order.price_per_unit || order.pricePerUnit,
-        totalAmount: order.total_amount || order.totalAmount,
-        buyerId: order.buyer_id?.toString() || order.buyerId,
-        buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
-        buyerPhone: order.buyer_phone || order.buyerPhone,
-        buyerEmail: order.buyer_email || order.buyerEmail,
-        sellerId: order.seller_id?.toString() || order.sellerId,
-        sellerName: order.seller_name || order.sellerName || order.seller_full_name,
-        sellerPhone: order.seller_phone || order.sellerPhone,
-        sellerEmail: order.seller_email || order.sellerEmail,
-        status: order.status,
-        deliveryType: order.delivery_type || order.deliveryType || 'delivery',
-        comment: order.comment,
-        createdAt: new Date(order.createdAt || order.created_at),
-        acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
-      }));
+      const mappedOrders = response.orders.map((order: any) => {
+        console.log('RAW ORDER:', order);
+        const mapped = {
+          id: order.id,
+          offerId: order.offer_id,
+          offerTitle: order.offer_title || order.title,
+          offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,
+          quantity: order.quantity,
+          unit: order.unit,
+          pricePerUnit: order.price_per_unit || order.pricePerUnit,
+          totalAmount: order.total_amount || order.totalAmount,
+          buyerId: order.buyer_id?.toString() || order.buyerId,
+          buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
+          buyerPhone: order.buyer_phone || order.buyerPhone,
+          buyerEmail: order.buyer_email || order.buyerEmail,
+          sellerId: order.seller_id?.toString() || order.sellerId,
+          sellerName: order.seller_name || order.sellerName || order.seller_full_name,
+          sellerPhone: order.seller_phone || order.sellerPhone,
+          sellerEmail: order.seller_email || order.sellerEmail,
+          status: order.status,
+          deliveryType: order.delivery_type || order.deliveryType || 'delivery',
+          comment: order.comment,
+          type: order.type,
+          createdAt: new Date(order.createdAt || order.created_at),
+          acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
+        };
+        console.log('MAPPED ORDER:', mapped);
+        return mapped;
+      });
       
       setOrders(mappedOrders);
     } catch (error) {
