@@ -119,10 +119,15 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
             r.*,
             '[]'::json as images
         FROM t_p42562714_web_app_creation_1.requests r
-        WHERE r.status = %s
+        WHERE r.status != 'deleted'
     """
     
-    query_params = [status]
+    query_params = []
+    
+    # Если передан конкретный статус (не 'all'), добавляем фильтр
+    if status and status != 'all':
+        sql += " AND r.status = %s"
+        query_params.append(status)
     
     if category:
         sql += " AND r.category = %s"
@@ -184,7 +189,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
         FROM t_p42562714_web_app_creation_1.requests r
         LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
-        WHERE r.id = %s
+        WHERE r.id = %s AND r.status != 'deleted'
         GROUP BY r.id
     """
     

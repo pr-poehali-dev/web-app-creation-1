@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
+import api from '@/services/api';
 
 interface AdminRequestsProps {
   isAuthenticated: boolean;
@@ -40,10 +41,16 @@ interface AdminRequestsProps {
 interface Request {
   id: string;
   title: string;
-  buyer: string;
-  budget: number;
+  user_id?: string;
+  quantity?: number;
+  unit?: string;
+  price_per_unit?: number;
+  category: string;
+  subcategory?: string;
+  district?: string;
   status: 'active' | 'moderation' | 'rejected' | 'completed';
   createdAt: string;
+  images?: { id: string; url: string; alt?: string }[];
 }
 
 export default function AdminRequests({ isAuthenticated, onLogout }: AdminRequestsProps) {
@@ -53,6 +60,27 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [requests, setRequests] = useState<Request[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadRequests();
+  }, [filterStatus]);
+
+  const loadRequests = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `https://functions.poehali.dev/a2ecd27a-6043-42df-9941-766c886acdb0?status=${filterStatus === 'all' ? 'all' : filterStatus}`
+      );
+      const data = await response.json();
+      setRequests(data.requests || []);
+    } catch (error) {
+      console.error('Error loading requests:', error);
+      toast.error('Не удалось загрузить запросы');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -77,11 +105,18 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
     toast.success(`Запрос "${request.title}" отклонен`);
   };
 
-  const handleDeleteRequest = () => {
+  const handleDeleteRequest = async () => {
     if (selectedRequest) {
-      toast.success(`Запрос "${selectedRequest.title}" удален`);
-      setShowDeleteDialog(false);
-      setSelectedRequest(null);
+      try {
+        await api.deleteRequest(selectedRequest.id);
+        toast.success(`Запрос "${selectedRequest.title}" удален`);
+        setShowDeleteDialog(false);
+        setSelectedRequest(null);
+        loadRequests();
+      } catch (error) {
+        console.error('Error deleting request:', error);
+        toast.error('Не удалось удалить запрос');
+      }
     }
   };
 
@@ -144,7 +179,13 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requests.length === 0 ? (
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          Загрузка...
+                        </TableCell>
+                      </TableRow>
+                    ) : requests.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           Запросы не найдены
@@ -154,8 +195,8 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                       requests.map((request) => (
                       <TableRow key={request.id}>
                         <TableCell className="font-medium">{request.title}</TableCell>
-                        <TableCell>{request.buyer}</TableCell>
-                        <TableCell>{request.budget.toLocaleString('ru-RU')} ₽</TableCell>
+                        <TableCell>{request.user_id || '-'}</TableCell>
+                        <TableCell>{request.price_per_unit ? `${request.price_per_unit.toLocaleString('ru-RU')} ₽` : '-'}</TableCell>
                         <TableCell>{getStatusBadge(request.status)}</TableCell>
                         <TableCell>{new Date(request.createdAt).toLocaleDateString('ru-RU')}</TableCell>
                         <TableCell className="text-right">
