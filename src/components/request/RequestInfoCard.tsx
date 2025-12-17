@@ -59,14 +59,14 @@ export default function RequestInfoCard({
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Цена за {unit}</p>
-            <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+            <p className="font-semibold">{pricePerUnit?.toLocaleString('ru-RU') || '0'} ₽</p>
           </div>
         </div>
 
         <div className="bg-primary/5 p-2 rounded-md">
           <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
           <p className="text-xl font-bold text-primary">
-            {totalAmount.toLocaleString('ru-RU')} ₽
+            {totalAmount?.toLocaleString('ru-RU') || '0'} ₽
           </p>
         </div>
 
