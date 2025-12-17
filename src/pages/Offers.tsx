@@ -32,7 +32,6 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
-  const { offers: contextOffers, deleteOffer } = useOffers();
   const currentUser = getSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -57,7 +56,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
       setIsLoading(true);
       try {
         const [offersData, ordersResponse] = await Promise.all([
-          offersAPI.getOffers({ limit: ITEMS_PER_PAGE, offset: 0 }),
+          offersAPI.getOffers({ limit: ITEMS_PER_PAGE, offset: 0, status: 'active' }),
           ordersAPI.getAll('all')
         ]);
         setOffers(offersData.offers || []);
@@ -81,7 +80,8 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     try {
       const offersData = await offersAPI.getOffers({ 
         limit: ITEMS_PER_PAGE, 
-        offset: offset 
+        offset: offset,
+        status: 'active'
       });
       const newOffers = offersData.offers || [];
       setOffers(prev => [...prev, ...newOffers]);
@@ -95,7 +95,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
   };
 
   const filteredOffers = useMemo(() => {
-    let result = [...offers];
+    let result = [...offers].filter(offer => offer.status !== 'deleted');
 
     if (showOnlyMy && isAuthenticated && currentUser) {
       result = result.filter(offer => offer.userId === currentUser.id);
@@ -172,13 +172,22 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     };
   }, [hasMore, isLoadingMore, offset]);
 
-  const handleDelete = (id: string) => {
-    deleteOffer(id);
-    setOffers(prev => prev.filter(o => o.id !== id));
-    toast({
-      title: 'Успешно',
-      description: 'Объявление удалено',
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await offersAPI.updateOffer(id, { status: 'deleted' });
+      setOffers(prev => prev.filter(o => o.id !== id));
+      toast({
+        title: 'Успешно',
+        description: 'Объявление удалено',
+      });
+    } catch (error) {
+      console.error('Ошибка удаления предложения:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить предложение',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getUnreadMessages = (offerId: string): number => {

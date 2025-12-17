@@ -24,7 +24,6 @@ import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { useOffers } from '@/contexts/OffersContext';
 import OrderChatModal from '@/components/order/OrderChatModal';
 import type { ChatMessage as OrderChatMessage } from '@/types/order';
 import { useOrdersPolling } from '@/hooks/useOrdersPolling';
@@ -64,7 +63,6 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [chatMessages, setChatMessages] = useState<OrderChatMessage[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { deleteOffer } = useOffers();
 
   useOrdersPolling({
     enabled: isAuthenticated && !!id,
@@ -243,18 +241,27 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!offer) return;
     
-    deleteOffer(offer.id);
-    setShowDeleteDialog(false);
-    
-    toast({
-      title: 'Успешно',
-      description: 'Объявление удалено',
-    });
-    
-    navigate('/predlozheniya', { replace: true });
+    try {
+      await offersAPI.updateOffer(offer.id, { status: 'deleted' });
+      setShowDeleteDialog(false);
+      
+      toast({
+        title: 'Успешно',
+        description: 'Объявление удалено',
+      });
+      
+      navigate('/predlozheniya', { replace: true });
+    } catch (error) {
+      console.error('Error deleting offer:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить объявление',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleMessageClick = (orderId: string) => {
