@@ -18,7 +18,7 @@ export interface Order {
   deliveryType: 'pickup' | 'delivery';
   deliveryAddress?: string;
   comment?: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'completed';
+  status: 'new' | 'pending' | 'accepted' | 'rejected' | 'completed';
   createdAt: Date;
   acceptedAt?: Date;
 }

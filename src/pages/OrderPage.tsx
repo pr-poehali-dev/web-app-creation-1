@@ -13,7 +13,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
-import { offersAPI } from '@/services/api';
+import { offersAPI, ordersAPI } from '@/services/api';
+import { notifyNewOrder } from '@/utils/notifications';
 import type { Offer } from '@/types/offer';
 
 export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
@@ -161,14 +162,50 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         return;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!session) {
+        toast({
+          title: 'Ошибка',
+          description: 'Необходима авторизация',
+          variant: 'destructive',
+        });
+        navigate('/login');
+        return;
+      }
+
+      const orderData = {
+        offerId: offer.id,
+        title: offer.title,
+        quantity: orderQuantity,
+        unit: offer.unit,
+        pricePerUnit: offer.pricePerUnit,
+        hasVAT: offer.hasVAT,
+        vatRate: offer.vatRate,
+        deliveryType,
+        deliveryAddress: deliveryType === 'delivery' ? address : '',
+        district: offer.district,
+        buyerName: `${session.firstName} ${session.lastName}`,
+        buyerPhone: session.phone || '',
+        buyerEmail: session.email || '',
+        buyerComment: comment,
+      };
+
+      const result = await ordersAPI.createOrder(orderData);
+
+      notifyNewOrder(
+        offer.userId.toString(),
+        offer.title,
+        `${session.firstName} ${session.lastName}`,
+        orderQuantity,
+        offer.unit,
+        result.id
+      );
 
       toast({
         title: 'Заказ оформлен!',
         description: 'Продавец свяжется с вами в ближайшее время',
       });
 
-      navigate('/active-orders');
+      navigate('/my-orders');
     } catch (error) {
       toast({
         title: 'Ошибка',

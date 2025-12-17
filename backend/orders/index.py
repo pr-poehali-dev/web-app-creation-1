@@ -542,14 +542,26 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     conn = get_db_connection()
     cur = conn.cursor()
     
+    schema = get_schema()
+    sender_id = body['senderId']
+    
+    # Получаем имя отправителя
+    cur.execute(f"SELECT first_name, last_name FROM {schema}.users WHERE id = {sender_id}")
+    user = cur.fetchone()
+    
+    if user:
+        sender_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip()
+    else:
+        sender_name = 'Пользователь'
+    
     order_id_escaped = body['orderId'].replace("'", "''")
     sender_type_escaped = body['senderType'].replace("'", "''")
     message_escaped = body['message'].replace("'", "''")
+    sender_name_escaped = sender_name.replace("'", "''")
     
-    schema = get_schema()
     sql = f"""
-        INSERT INTO {schema}.order_messages (order_id, sender_id, sender_type, message)
-        VALUES ('{order_id_escaped}', {body['senderId']}, '{sender_type_escaped}', '{message_escaped}')
+        INSERT INTO {schema}.order_messages (order_id, sender_id, sender_name, sender_type, message)
+        VALUES ('{order_id_escaped}', {sender_id}, '{sender_name_escaped}', '{sender_type_escaped}', '{message_escaped}')
         RETURNING id, created_at
     """
     

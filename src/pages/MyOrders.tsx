@@ -214,6 +214,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
 
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
+      case 'new':
+        return <Badge variant="outline" className="bg-blue-50">Новый</Badge>;
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50">Ожидает</Badge>;
       case 'accepted':
@@ -289,7 +291,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
             <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
             Чат
           </Button>
-          {isSeller && order.status === 'pending' && (
+          {isSeller && (order.status === 'new' || order.status === 'pending') && (
             <Button
               onClick={() => handleAcceptOrder(order.id)}
               className="flex-1"
