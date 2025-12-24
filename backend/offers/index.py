@@ -64,6 +64,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return get_migration_status(headers)
             elif action == 'remigrate-all':
                 return remigrate_all_images(headers)
+            elif action == 'rotate-image':
+                image_id = query_params.get('image_id')
+                degrees = int(query_params.get('degrees', 90))
+                if not image_id:
+                    return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'image_id required'}), 'isBase64Encoded': False}
+                return rotate_image(image_id, degrees, headers)
             elif offer_id:
                 return get_offer_by_id(offer_id, headers)
             else:
@@ -590,3 +596,79 @@ def remigrate_all_images(headers: Dict[str, str]) -> Dict[str, Any]:
         'body': json.dumps({'remigrated': remigrated_count, 'errors': errors}),
         'isBase64Encoded': False
     }
+
+def rotate_image(image_id: str, degrees: int, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Повернуть изображение на заданное количество градусов"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    s3 = boto3.client('s3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    )
+    
+    # Получаем URL изображения
+    image_id_esc = image_id.replace("'", "''")
+    cur.execute(f"SELECT url FROM t_p42562714_web_app_creation_1.offer_images WHERE id = '{image_id_esc}'")
+    result = cur.fetchone()
+    
+    if not result:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': headers,
+            'body': json.dumps({'error': 'Image not found'}),
+            'isBase64Encoded': False
+        }
+    
+    cdn_url = result['url']
+    
+    try:
+        import requests
+        
+        # Скачиваем изображение
+        response = requests.get(cdn_url, timeout=10)
+        if response.status_code != 200:
+            raise Exception(f"Failed to download: {response.status_code}")
+        
+        # Открываем и поворачиваем
+        img = Image.open(BytesIO(response.content))
+        
+        # Поворачиваем (PIL поворачивает против часовой стрелки)
+        if degrees == -90 or degrees == 270:
+            img = img.transpose(Image.Transpose.ROTATE_270)
+        elif degrees == 90 or degrees == -270:
+            img = img.transpose(Image.Transpose.ROTATE_90)
+        elif degrees == 180 or degrees == -180:
+            img = img.transpose(Image.Transpose.ROTATE_180)
+        
+        # Сохраняем
+        output = BytesIO()
+        img.save(output, format='JPEG', quality=85, optimize=True)
+        rotated_data = output.getvalue()
+        
+        # Загружаем обратно в S3
+        s3_key = f"offer-images/{image_id}.jpg"
+        s3.put_object(Bucket='files', Key=s3_key, Body=rotated_data, ContentType='image/jpeg')
+        
+        cur.close()
+        conn.close()
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'success': True, 'message': f'Image rotated {degrees} degrees'}),
+            'isBase64Encoded': False
+        }
+        
+    except Exception as e:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e)}),
+            'isBase64Encoded': False
+        }
