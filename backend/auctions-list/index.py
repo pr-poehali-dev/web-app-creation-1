@@ -201,12 +201,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         auctions = []
         # Якутск UTC+9
         yakutsk_tz = timezone(timedelta(hours=9))
+        utc_tz = timezone(timedelta(hours=0))
         
         for row in rows:
-            # Преобразуем даты с часовым поясом
+            # PostgreSQL возвращает timestamp without timezone в UTC
+            # Конвертируем UTC → Якутск
             start_date = row[19]
             end_date = row[20]
             created_at = row[26]
+            
+            # Функция для конвертации UTC → Якутск
+            def utc_to_yakutsk(dt):
+                if dt is None:
+                    return None
+                return dt.replace(tzinfo=utc_tz).astimezone(yakutsk_tz).isoformat()
             
             auction = {
                 'id': row[0],
@@ -228,14 +236,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'gpsCoordinates': row[16],
                 'availableDistricts': row[17],
                 'availableDeliveryTypes': row[18],
-                'startDate': start_date.replace(tzinfo=yakutsk_tz).isoformat() if start_date else None,
-                'endDate': end_date.replace(tzinfo=yakutsk_tz).isoformat() if end_date else None,
+                'startDate': utc_to_yakutsk(start_date),
+                'endDate': utc_to_yakutsk(end_date),
                 'durationDays': row[21],
                 'status': row[22],
                 'isPremium': row[23],
                 'bidCount': row[24],
                 'viewCount': row[25],
-                'createdAt': created_at.replace(tzinfo=yakutsk_tz).isoformat() if created_at else None,
+                'createdAt': utc_to_yakutsk(created_at),
                 'images': json.loads(row[27]) if isinstance(row[27], str) else row[27]
             }
             auctions.append(auction)
@@ -255,12 +263,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             bids = []
             # Якутск UTC+9
             yakutsk_tz = timezone(timedelta(hours=9))
+            utc_tz = timezone(timedelta(hours=0))
             for bid_row in bids_rows:
-                # Преобразуем наивный datetime в aware datetime с часовым поясом Якутска
+                # PostgreSQL возвращает наивный datetime в UTC
+                # Сначала помечаем как UTC, затем конвертируем в Якутск
                 timestamp_naive = bid_row[3]
                 if timestamp_naive:
-                    timestamp_aware = timestamp_naive.replace(tzinfo=yakutsk_tz)
-                    timestamp_str = timestamp_aware.isoformat()
+                    # Помечаем что это UTC время
+                    timestamp_utc = timestamp_naive.replace(tzinfo=utc_tz)
+                    # Конвертируем UTC → Якутск (+9 часов)
+                    timestamp_yakutsk = timestamp_utc.astimezone(yakutsk_tz)
+                    timestamp_str = timestamp_yakutsk.isoformat()
                 else:
                     timestamp_str = None
                 
