@@ -108,11 +108,11 @@ export default function AuctionInfoPanel({
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-[10px] md:text-xs">
           <Icon name="Calendar" className="h-3 w-3" />
-          <span>{auction.startDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+          <span>{auction.startDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yakutsk' })}</span>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-[10px] md:text-xs">
           <Icon name="CalendarX" className="h-3 w-3" />
-          <span>{auction.endDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+          <span>{auction.endDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yakutsk' })}</span>
         </div>
       </div>
 

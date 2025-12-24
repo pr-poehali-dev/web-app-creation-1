@@ -56,7 +56,7 @@ export default function OfferMessagesTab({ messages, onMessageClick }: OfferMess
                 </p>
                 <p className="text-sm mt-2">{message.message}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {message.timestamp.toLocaleString('ru-RU')}
+                  {message.timestamp.toLocaleString('ru-RU', { timeZone: 'Asia/Yakutsk' })}
                 </p>
               </div>
               <Button size="sm" variant="outline">

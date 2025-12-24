@@ -32,11 +32,12 @@ export function safeToLocaleDateString(
   fallback: string = 'Неизвестно'
 ): string {
   const d = safeDate(date);
-  return d ? d.toLocaleDateString(locale) : fallback;
+  return d ? d.toLocaleDateString(locale, { timeZone: 'Asia/Yakutsk' }) : fallback;
 }
 
 /**
  * Безопасно форматирует дату и время в локальную строку
+ * Использует часовой пояс Якутии (Asia/Yakutsk, UTC+9)
  */
 export function safeToLocaleString(
   date: Date | string | null | undefined,
@@ -44,5 +45,5 @@ export function safeToLocaleString(
   fallback: string = 'Неизвестно'
 ): string {
   const d = safeDate(date);
-  return d ? d.toLocaleString(locale) : fallback;
+  return d ? d.toLocaleString(locale, { timeZone: 'Asia/Yakutsk' }) : fallback;
 }

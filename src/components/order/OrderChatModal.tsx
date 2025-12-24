@@ -146,6 +146,7 @@ export default function OrderChatModal({
                           {new Date(msg.timestamp).toLocaleTimeString('ru-RU', {
                             hour: '2-digit',
                             minute: '2-digit',
+                            timeZone: 'Asia/Yakutsk',
                           })}
                         </p>
                       </div>

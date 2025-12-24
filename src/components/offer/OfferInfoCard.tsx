@@ -186,14 +186,14 @@ export default function OfferInfoCard({
                 <div>
                   <p>Дата создания</p>
                   <p className="font-medium text-foreground">
-                    {createdAt.toLocaleDateString('ru-RU')}
+                    {createdAt.toLocaleDateString('ru-RU', { timeZone: 'Asia/Yakutsk' })}
                   </p>
                 </div>
                 {expiryDate && (
                   <div>
                     <p>Срок годности</p>
                     <p className="font-medium text-foreground">
-                      {expiryDate.toLocaleDateString('ru-RU')}
+                      {expiryDate.toLocaleDateString('ru-RU', { timeZone: 'Asia/Yakutsk' })}
                     </p>
                   </div>
                 )}

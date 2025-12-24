@@ -172,12 +172,12 @@ export default function UserDetailsDialog({ user, isOpen, onClose }: UserDetails
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-muted-foreground">Дата регистрации</p>
-                  <p className="text-sm">{new Date(user.registeredAt).toLocaleString('ru-RU')}</p>
+                  <p className="text-sm">{new Date(user.registeredAt).toLocaleString('ru-RU', { timeZone: 'Asia/Yakutsk' })}</p>
                 </div>
                 {user.lockedUntil && (
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Заблокирован до</p>
-                    <p className="text-sm">{new Date(user.lockedUntil).toLocaleString('ru-RU')}</p>
+                    <p className="text-sm">{new Date(user.lockedUntil).toLocaleString('ru-RU', { timeZone: 'Asia/Yakutsk' })}</p>
                   </div>
                 )}
                 <div className="space-y-1">

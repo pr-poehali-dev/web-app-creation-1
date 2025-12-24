@@ -142,7 +142,7 @@ export default function BidHistoryTabs({
                               )}
                             </div>
                             <p className="text-[10px] md:text-xs text-muted-foreground">
-                              {new Date(bid.timestamp).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                              {new Date(bid.timestamp).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yakutsk' })}
                             </p>
                           </div>
                         </div>
