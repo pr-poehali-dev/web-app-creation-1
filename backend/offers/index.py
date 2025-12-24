@@ -98,10 +98,30 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = "SELECT id, title, description, category, district, price_per_unit, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 20"
+        sql = "SELECT id, title, description, category, district, price_per_unit, quantity, unit, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 20"
         
         cur.execute(sql)
         offers = cur.fetchall()
+        
+        offer_ids = [str(offer['id']) for offer in offers]
+        
+        images_map = {}
+        if offer_ids:
+            ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
+            images_sql = f"SELECT oir.offer_id, oi.id, oi.url, oi.alt FROM t_p42562714_web_app_creation_1.offer_image_relations oir LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) AND oi.id IS NOT NULL ORDER BY oir.offer_id, oir.sort_order"
+            
+            cur.execute(images_sql)
+            images_results = cur.fetchall()
+            
+            for img_row in images_results:
+                offer_id = img_row['offer_id']
+                if offer_id not in images_map:
+                    images_map[offer_id] = []
+                images_map[offer_id].append({
+                    'id': str(img_row['id']),
+                    'url': img_row['url'],
+                    'alt': img_row.get('alt', '')
+                })
         
         result = []
         for offer in offers:
@@ -111,9 +131,11 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'description': offer.get('description', ''),
                 'category': offer.get('category'),
                 'district': offer.get('district'),
+                'quantity': offer.get('quantity'),
+                'unit': offer.get('unit'),
                 'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
-                'images': []
+                'images': images_map.get(offer['id'], [])
             })
         
         cur.close()
