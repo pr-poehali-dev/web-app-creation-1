@@ -77,6 +77,7 @@ const About = lazy(() => import("./pages/About"));
 const Support = lazy(() => import("./pages/Support"));
 const ClearData = lazy(() => import("./pages/ClearData"));
 const DeleteTestData = lazy(() => import("./pages/DeleteTestData"));
+const MigrateImages = lazy(() => import("./pages/MigrateImages"));
 
 // Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
@@ -147,6 +148,7 @@ const App = () => {
             <Route path="/support" element={<Support isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/clear-data" element={<ClearData isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/delete-test-data" element={<DeleteTestData />} />
+            <Route path="/migrate-images" element={<MigrateImages isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/verification" element={<VerificationPage />} />
             <Route path="/verification/resubmit" element={<VerificationResubmit isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

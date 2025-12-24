@@ -1,10 +1,14 @@
 import json
 import os
+import base64
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from decimal import Decimal
+from io import BytesIO
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import boto3
+from PIL import Image
 
 
 def decimal_default(obj):
@@ -51,8 +55,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             # Проверяем query параметр id для получения одного предложения
             query_params = event.get('queryStringParameters', {}) or {}
             offer_id = query_params.get('id')
+            action = query_params.get('action')
             
-            if offer_id:
+            # Специальный эндпоинт для миграции изображений
+            if action == 'migrate-images':
+                return migrate_images_to_s3(headers)
+            elif action == 'migration-status':
+                return get_migration_status(headers)
+            elif offer_id:
                 return get_offer_by_id(offer_id, headers)
             else:
                 return get_offers_list(event, headers)
@@ -105,12 +115,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         images_map = {}
         if len(offers) > 0:
-            # Возвращаем изображения только для первых 10 предложений (чтобы избежать 502)
-            first_offers = offers[:10]
-            offer_ids = [str(offer['id']) for offer in first_offers]
+            offer_ids = [str(offer['id']) for offer in offers]
             ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
-            # Берем ПОЛНОЕ изображение (без обрезки base64)
-            images_sql = f"SELECT DISTINCT ON (oir.offer_id) oir.offer_id, oi.id, oi.url FROM t_p42562714_web_app_creation_1.offer_image_relations oir JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) ORDER BY oir.offer_id, oir.sort_order"
+            # Загружаем только CDN изображения (которые уже мигрированы в S3)
+            images_sql = f"SELECT DISTINCT ON (oir.offer_id) oir.offer_id, oi.id, oi.url FROM t_p42562714_web_app_creation_1.offer_image_relations oir JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) AND oi.url LIKE 'https://%' ORDER BY oir.offer_id, oir.sort_order"
             
             cur.execute(images_sql)
             images_results = cur.fetchall()
@@ -392,5 +400,102 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         'statusCode': 200,
         'headers': headers,
         'body': json.dumps({'message': 'Offer updated successfully'}, default=decimal_default),
+        'isBase64Encoded': False
+    }
+
+def optimize_image(image_data: bytes, max_width: int = 800, quality: int = 85) -> bytes:
+    """Оптимизация изображения: resize + сжатие"""
+    img = Image.open(BytesIO(image_data))
+    
+    if img.mode in ('RGBA', 'LA', 'P'):
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+        img = background
+    
+    if img.width > max_width:
+        ratio = max_width / img.width
+        new_height = int(img.height * ratio)
+        img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+    
+    output = BytesIO()
+    img.save(output, format='JPEG', quality=quality, optimize=True)
+    return output.getvalue()
+
+def migrate_images_to_s3(headers: Dict[str, str]) -> Dict[str, Any]:
+    """Миграция base64 изображений в S3 с оптимизацией"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    s3 = boto3.client('s3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    )
+    
+    cur.execute("SELECT id, url FROM t_p42562714_web_app_creation_1.offer_images WHERE url LIKE 'data:image%' LIMIT 10")
+    images = cur.fetchall()
+    
+    migrated_count = 0
+    errors = []
+    
+    for img in images:
+        try:
+            data_url = img['url']
+            header, base64_data = data_url.split(',', 1)
+            image_data = base64.b64decode(base64_data)
+            optimized_data = optimize_image(image_data)
+            
+            s3_key = f"offer-images/{img['id']}.jpg"
+            s3.put_object(Bucket='files', Key=s3_key, Body=optimized_data, ContentType='image/jpeg')
+            
+            cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
+            cdn_url_esc = cdn_url.replace("'", "''")
+            img_id_esc = str(img['id']).replace("'", "''")
+            
+            cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offer_images SET url = '{cdn_url_esc}' WHERE id = '{img_id_esc}'")
+            migrated_count += 1
+            
+        except Exception as e:
+            errors.append({'id': str(img['id']), 'error': str(e)})
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'migrated': migrated_count, 'errors': errors}),
+        'isBase64Encoded': False
+    }
+
+def get_migration_status(headers: Dict[str, str]) -> Dict[str, Any]:
+    """Получить статус миграции изображений"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    cur.execute("SELECT COUNT(*) as count FROM t_p42562714_web_app_creation_1.offer_images WHERE url LIKE 'data:image%'")
+    base64_count = cur.fetchone()['count']
+    
+    cur.execute("SELECT COUNT(*) as count FROM t_p42562714_web_app_creation_1.offer_images WHERE url LIKE 'https://%'")
+    cdn_count = cur.fetchone()['count']
+    
+    cur.close()
+    conn.close()
+    
+    total = base64_count + cdn_count
+    progress = (cdn_count / total * 100) if total > 0 else 0
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({
+            'total': total,
+            'base64': base64_count,
+            'cdn': cdn_count,
+            'progress': round(progress, 2)
+        }),
         'isBase64Encoded': False
     }
