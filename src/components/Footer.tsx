@@ -5,13 +5,41 @@ import { useTimezone } from '@/contexts/TimezoneContext';
 const TIMEZONE_NAMES: Record<string, string> = {
   'Asia/Yakutsk': 'UTC+9 (Якутск)',
   'Asia/Vladivostok': 'UTC+10 (Владивосток)',
-  'Asia/Srednekolymsk': 'UTC+11 (Среднеколымск)',
+  'Asia/Irkutsk': 'UTC+8 (Иркутск)',
+  'Asia/Krasnoyarsk': 'UTC+7 (Красноярск)',
+  'Asia/Novosibirsk': 'UTC+7 (Новосибирск)',
+  'Asia/Omsk': 'UTC+6 (Омск)',
+  'Asia/Yekaterinburg': 'UTC+5 (Екатеринбург)',
+  'Europe/Moscow': 'UTC+3 (Москва)',
+  'Europe/Samara': 'UTC+4 (Самара)',
+  'Asia/Sakhalin': 'UTC+11 (Сахалин)',
+  'Asia/Magadan': 'UTC+11 (Магадан)',
+  'Asia/Kamchatka': 'UTC+12 (Камчатка)',
 };
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { timezone } = useTimezone();
-  const timezoneName = TIMEZONE_NAMES[timezone] || timezone;
+  
+  // Получаем красивое название часового пояса
+  const getTimezoneName = (tz: string): string => {
+    if (TIMEZONE_NAMES[tz]) {
+      return TIMEZONE_NAMES[tz];
+    }
+    // Если часовой пояс неизвестен, показываем его название
+    const cityName = tz.split('/')[1]?.replace(/_/g, ' ') || tz;
+    try {
+      const offset = new Intl.DateTimeFormat('ru-RU', { 
+        timeZone: tz, 
+        timeZoneName: 'shortOffset' 
+      }).formatToParts(new Date()).find(p => p.type === 'timeZoneName')?.value || '';
+      return `${offset} (${cityName})`;
+    } catch {
+      return cityName;
+    }
+  };
+  
+  const timezoneName = getTimezoneName(timezone);
 
   return (
     <footer className="border-t bg-muted/30 mt-16">

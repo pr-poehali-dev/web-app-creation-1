@@ -8,17 +8,15 @@ interface TimezoneContextType {
 
 const TimezoneContext = createContext<TimezoneContextType | undefined>(undefined);
 
-// Карта районов Якутии к часовым поясам
+// Карта районов Якутии к часовому поясу (вся Якутия - UTC+9)
 const DISTRICT_TIMEZONE_MAP: Record<string, string> = {
-  // Западная Якутия (UTC+9)
+  // Вся территория Якутии использует единый часовой пояс UTC+9
   'mirny': 'Asia/Yakutsk',
   'lensky': 'Asia/Yakutsk',
   'nyurbinsky': 'Asia/Yakutsk',
   'yakutsk-nyurbinsky': 'Asia/Yakutsk',
   'suntarsky': 'Asia/Yakutsk',
   'vilyuysky': 'Asia/Yakutsk',
-  
-  // Центральная Якутия (UTC+9)
   'yakutsk': 'Asia/Yakutsk',
   'yakutsk-city': 'Asia/Yakutsk',
   'namsky': 'Asia/Yakutsk',
@@ -29,29 +27,25 @@ const DISTRICT_TIMEZONE_MAP: Record<string, string> = {
   'khangalassky': 'Asia/Yakutsk',
   'gorny': 'Asia/Yakutsk',
   'amginsky': 'Asia/Yakutsk',
-  
-  // Восточная Якутия (UTC+10)
-  'ust-maysky': 'Asia/Vladivostok',
-  'aldansky': 'Asia/Vladivostok',
-  'neryungrinsky': 'Asia/Vladivostok',
-  'olyokminsky': 'Asia/Vladivostok',
-  'tomponsky': 'Asia/Vladivostok',
-  'oymyakonsky': 'Asia/Vladivostok',
-  
-  // Северо-Восточная Якутия (UTC+11)
-  'verkhoyansk': 'Asia/Srednekolymsk',
-  'eveno-bytantaysky': 'Asia/Srednekolymsk',
-  'zhigansky': 'Asia/Srednekolymsk',
-  'bulunsky': 'Asia/Srednekolymsk',
-  'anabarsky': 'Asia/Srednekolymsk',
-  'allaikhovsky': 'Asia/Srednekolymsk',
-  'momsky': 'Asia/Srednekolymsk',
-  'ust-yansky': 'Asia/Srednekolymsk',
-  'verkhoyansky': 'Asia/Srednekolymsk',
-  'abyysky': 'Asia/Srednekolymsk',
-  'nizhnekolymsky': 'Asia/Srednekolymsk',
-  'srednekolymsky': 'Asia/Srednekolymsk',
-  'verkhnekolymsky': 'Asia/Srednekolymsk',
+  'ust-maysky': 'Asia/Yakutsk',
+  'aldansky': 'Asia/Yakutsk',
+  'neryungrinsky': 'Asia/Yakutsk',
+  'olyokminsky': 'Asia/Yakutsk',
+  'tomponsky': 'Asia/Yakutsk',
+  'oymyakonsky': 'Asia/Yakutsk',
+  'verkhoyansk': 'Asia/Yakutsk',
+  'eveno-bytantaysky': 'Asia/Yakutsk',
+  'zhigansky': 'Asia/Yakutsk',
+  'bulunsky': 'Asia/Yakutsk',
+  'anabarsky': 'Asia/Yakutsk',
+  'allaikhovsky': 'Asia/Yakutsk',
+  'momsky': 'Asia/Yakutsk',
+  'ust-yansky': 'Asia/Yakutsk',
+  'verkhoyansky': 'Asia/Yakutsk',
+  'abyysky': 'Asia/Yakutsk',
+  'nizhnekolymsky': 'Asia/Yakutsk',
+  'srednekolymsky': 'Asia/Yakutsk',
+  'verkhnekolymsky': 'Asia/Yakutsk',
 };
 
 // Получить часовой пояс по ID района
@@ -114,10 +108,26 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
           const tz = getTimezoneByDistrict(ipLocation.district);
           setTimezone(tz);
           localStorage.setItem('userTimezone', tz);
+          setIsDetecting(false);
+          return;
         }
+
+        // Если не удалось определить район, используем часовой пояс браузера
+        // Это сработает для пользователей из других регионов (Владивосток, Чита и т.д.)
+        const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setTimezone(browserTimezone);
+        localStorage.setItem('userTimezone', browserTimezone);
       } catch (error) {
         console.error('Timezone detection failed:', error);
-        // Оставляем дефолтный Asia/Yakutsk
+        // В случае ошибки используем часовой пояс браузера
+        try {
+          const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          setTimezone(browserTimezone);
+          localStorage.setItem('userTimezone', browserTimezone);
+        } catch {
+          // Последний fallback - Якутск
+          setTimezone('Asia/Yakutsk');
+        }
       } finally {
         setIsDetecting(false);
       }
