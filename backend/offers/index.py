@@ -95,105 +95,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список предложений с фильтрами"""
     try:
-        params = event.get('queryStringParameters', {}) or {}
-        
-        category = params.get('category', '')
-        subcategory = params.get('subcategory', '')
-        district = params.get('district', '')
-        query = params.get('query', '')
-        status = params.get('status', 'active')
-        limit = min(int(params.get('limit', '20')), 100)
-        offset = int(params.get('offset', '0'))
-        
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = f"""
-            SELECT 
-                o.id, o.title, 
-                COALESCE(SUBSTRING(o.description, 1, 100), '') as description, 
-                o.category, o.subcategory,
-                o.quantity, o.unit, o.price_per_unit,
-                o.district, o.is_premium, o.status, o.created_at
-            FROM t_p42562714_web_app_creation_1.offers o
-            WHERE 1=1
-        """
-        
-        if status and status != 'all':
-            status_escaped = status.replace("'", "''")
-            sql += f" AND o.status = '{status_escaped}'"
-        
-        if category:
-            category_escaped = category.replace("'", "''")
-            sql += f" AND o.category = '{category_escaped}'"
-        
-        if subcategory:
-            subcategory_escaped = subcategory.replace("'", "''")
-            sql += f" AND o.subcategory = '{subcategory_escaped}'"
-        
-        if district:
-            district_escaped = district.replace("'", "''")
-            sql += f" AND o.district = '{district_escaped}'"
-        
-        if query:
-            query_escaped = query.replace("'", "''")
-            sql += f" AND (o.title ILIKE '%{query_escaped}%' OR o.description ILIKE '%{query_escaped}%')"
-        
-        sql += f" ORDER BY o.created_at DESC LIMIT {limit} OFFSET {offset}"
+        sql = "SELECT id, title, description, category, district, price_per_unit, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 20"
         
         cur.execute(sql)
         offers = cur.fetchall()
         
-        # Получаем ID всех предложений (конвертируем в строки для SQL)
-        offer_ids = [str(offer['id']) for offer in offers]
-        
-        # Загружаем только первое изображение для каждого предложения (для списка)
-        images_map = {}
-        if offer_ids:
-            ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
-            images_sql = f"""
-                SELECT DISTINCT ON (oir.offer_id)
-                    oir.offer_id,
-                    json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt) as first_image
-                FROM t_p42562714_web_app_creation_1.offer_image_relations oir
-                LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id
-                WHERE oir.offer_id IN ({ids_list}) AND oi.id IS NOT NULL
-                ORDER BY oir.offer_id, oir.sort_order
-            """
-            cur.execute(images_sql)
-            images_results = cur.fetchall()
-            for img_row in images_results:
-                images_map[img_row['offer_id']] = [img_row['first_image']]
-        
         result = []
         for offer in offers:
-            offer_dict = {
+            result.append({
                 'id': str(offer['id']),
                 'title': offer['title'],
                 'description': offer.get('description', ''),
                 'category': offer.get('category'),
-                'subcategory': offer.get('subcategory'),
-                'quantity': offer.get('quantity'),
-                'unit': offer.get('unit'),
-                'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'district': offer.get('district'),
-                'isPremium': offer.get('is_premium', False),
-                'status': offer.get('status'),
+                'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
-                'images': images_map.get(offer['id'], [])
-            }
-            result.append(offer_dict)
+                'images': []
+            })
         
         cur.close()
         conn.close()
         
-        response_body = {'offers': result, 'total': len(result)}
-        json_body = json.dumps(response_body, default=decimal_default)
-        
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json_body,
+            'body': json.dumps({'offers': result, 'total': len(result)}),
             'isBase64Encoded': False
         }
     except Exception as e:
