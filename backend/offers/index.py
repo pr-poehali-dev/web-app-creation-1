@@ -98,17 +98,19 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = "SELECT id, title, description, category, district, price_per_unit, quantity, unit, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 50"
+        sql = "SELECT id, title, description, category, district, price_per_unit, quantity, unit, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 100"
         
         cur.execute(sql)
         offers = cur.fetchall()
         
         images_map = {}
         if len(offers) > 0:
-            offer_ids = [str(offer['id']) for offer in offers]
+            # Возвращаем изображения только для первых 10 предложений (чтобы избежать 502)
+            first_offers = offers[:10]
+            offer_ids = [str(offer['id']) for offer in first_offers]
             ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
-            # Берем только ПЕРВОЕ изображение, сжатое до 200KB для карточек
-            images_sql = f"SELECT DISTINCT ON (oir.offer_id) oir.offer_id, oi.id, LEFT(oi.url, 200000) as url FROM t_p42562714_web_app_creation_1.offer_image_relations oir JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) ORDER BY oir.offer_id, oir.sort_order"
+            # Берем ПОЛНОЕ изображение (без обрезки base64)
+            images_sql = f"SELECT DISTINCT ON (oir.offer_id) oir.offer_id, oi.id, oi.url FROM t_p42562714_web_app_creation_1.offer_image_relations oir JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) ORDER BY oir.offer_id, oir.sort_order"
             
             cur.execute(images_sql)
             images_results = cur.fetchall()
