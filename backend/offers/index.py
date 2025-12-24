@@ -95,9 +95,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список предложений с фильтрами"""
     try:
-        print('=== get_offers_list START ===')
         params = event.get('queryStringParameters', {}) or {}
-        print(f'Query params: {params}')
         
         category = params.get('category', '')
         subcategory = params.get('subcategory', '')
@@ -107,24 +105,16 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         limit = min(int(params.get('limit', '20')), 100)
         offset = int(params.get('offset', '0'))
         
-        print(f'Connecting to DB...')
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        print(f'Connected successfully')
         
         sql = f"""
             SELECT 
-                o.id, o.user_id, o.title, 
-                COALESCE(SUBSTRING(o.description, 1, 200), '') as description, 
+                o.id, o.title, 
+                COALESCE(SUBSTRING(o.description, 1, 100), '') as description, 
                 o.category, o.subcategory,
-                o.quantity, o.unit, o.price_per_unit, o.has_vat, o.vat_rate,
-                o.district, o.available_districts, o.available_delivery_types,
-                o.is_premium, o.status, o.created_at, o.updated_at,
-                '' as seller_name,
-                '' as seller_type,
-                5.0 as seller_rating,
-                0 as seller_reviews_count,
-                false as seller_is_verified
+                o.quantity, o.unit, o.price_per_unit,
+                o.district, o.is_premium, o.status, o.created_at
             FROM t_p42562714_web_app_creation_1.offers o
             WHERE 1=1
         """
@@ -151,12 +141,8 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         sql += f" ORDER BY o.created_at DESC LIMIT {limit} OFFSET {offset}"
         
-        print(f'Executing SQL query...')
-        print(f'SQL: {sql[:200]}...')
         cur.execute(sql)
-        print(f'Fetching results...')
         offers = cur.fetchall()
-        print(f'Found {len(offers)} offers')
         
         # Получаем ID всех предложений (конвертируем в строки для SQL)
         offer_ids = [str(offer['id']) for offer in offers]
@@ -180,58 +166,29 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 images_map[img_row['offer_id']] = [img_row['first_image']]
         
         result = []
-        print(f'Processing offers...')
-        for idx, offer in enumerate(offers):
-            print(f'Processing offer {idx + 1}/{len(offers)}')
-            offer_dict = dict(offer)
-            
-            # Конвертация дат
-            created_at = offer_dict.pop('created_at', None)
-            offer_dict['createdAt'] = created_at.isoformat() if created_at else None
-            
-            updated_at = offer_dict.pop('updated_at', None)
-            offer_dict['updatedAt'] = updated_at.isoformat() if updated_at else None
-            
-            offer_dict['userId'] = offer_dict.pop('user_id', None)
-            
-            # Конвертация Decimal в float
-            price_per_unit = offer_dict.pop('price_per_unit', None)
-            offer_dict['pricePerUnit'] = float(price_per_unit) if price_per_unit is not None else None
-            
-            offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
-            
-            vat_rate = offer_dict.pop('vat_rate', None)
-            offer_dict['vatRate'] = float(vat_rate) if vat_rate is not None else None
-            
-            # fullAddress убрали из списка для экономии размера ответа
-            offer_dict['availableDistricts'] = offer_dict.pop('available_districts', [])
-            offer_dict['availableDeliveryTypes'] = offer_dict.pop('available_delivery_types', [])
-            offer_dict['isPremium'] = offer_dict.pop('is_premium', False)
-            offer_dict['sellerName'] = offer_dict.pop('seller_name', None)
-            offer_dict['sellerType'] = offer_dict.pop('seller_type', None)
-            
-            # sellerPhone и sellerEmail убрали для экономии размера
-            seller_rating = offer_dict.pop('seller_rating', None)
-            offer_dict['sellerRating'] = float(seller_rating) if seller_rating is not None else None
-            
-            offer_dict['sellerReviewsCount'] = offer_dict.pop('seller_reviews_count', 0)
-            offer_dict['sellerIsVerified'] = offer_dict.pop('seller_is_verified', False)
-            
-            # Добавляем изображения из карты
-            offer_dict['images'] = images_map.get(offer_dict['id'], [])
+        for offer in offers:
+            offer_dict = {
+                'id': str(offer['id']),
+                'title': offer['title'],
+                'description': offer.get('description', ''),
+                'category': offer.get('category'),
+                'subcategory': offer.get('subcategory'),
+                'quantity': offer.get('quantity'),
+                'unit': offer.get('unit'),
+                'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
+                'district': offer.get('district'),
+                'isPremium': offer.get('is_premium', False),
+                'status': offer.get('status'),
+                'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
+                'images': images_map.get(offer['id'], [])
+            }
             result.append(offer_dict)
-            print(f'Offer {idx + 1} processed successfully')
         
-        print(f'All offers processed. Closing connection...')
         cur.close()
         conn.close()
-        print(f'Connection closed. Returning result with {len(result)} items')
         
         response_body = {'offers': result, 'total': len(result)}
-        
-        print(f'Creating JSON response...')
         json_body = json.dumps(response_body, default=decimal_default)
-        print(f'JSON created, length: {len(json_body)}')
         
         return {
             'statusCode': 200,
