@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import Icon from '@/components/ui/icon';
+import OptimizedImage from '@/components/ui/optimized-image';
 import type { Auction } from '@/types/auction';
 import { CATEGORIES } from '@/data/categories';
 import { getTimeRemaining, getTimeUntilStart, getStatusBadge } from './AuctionHelpers';
@@ -88,9 +89,11 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
       <CardHeader className="p-0 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
         <div className="relative aspect-video bg-muted overflow-hidden">
           {auction.images.length > 0 ? (
-            <img
+            <OptimizedImage
               src={auction.images[0].url}
               alt={auction.images[0].alt}
+              width={600}
+              quality={75}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (

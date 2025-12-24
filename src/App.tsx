@@ -1,74 +1,83 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ResetPassword from "./pages/ResetPassword";
-import NewPassword from "./pages/NewPassword";
-import NotFound from "./pages/NotFound";
-import Offers from "./pages/Offers";
-import Requests from "./pages/Requests";
-import Auctions from "./pages/Auctions";
-import Home from "./pages/Home";
-import Profile from "./pages/Profile";
-import MyListings from "./pages/MyListings";
-import MyAuctions from "./pages/MyAuctions";
-import ActiveOrders from "./pages/ActiveOrders";
-import Notifications from "./pages/Notifications";
-import SearchResults from "./pages/SearchResults";
-import OfferDetail from "./pages/OfferDetail";
-import RequestDetail from "./pages/RequestDetail";
-import EditOffer from "./pages/EditOffer";
-import EditRequest from "./pages/EditRequest";
-import CreateOffer from "./pages/CreateOffer";
-import CreateRequest from "./pages/CreateRequest";
-import CreateAuction from "./pages/CreateAuction";
-import EditAuction from "./pages/EditAuction";
-import AuctionDetail from "./pages/AuctionDetail";
-import VerificationPage from "./pages/VerificationPage";
-import VerificationResubmit from "./pages/VerificationResubmit";
-import AdminVerifications from "./pages/AdminVerifications";
-import AdminLogin from "./pages/AdminLogin";
-import AdminChangePassword from "./pages/AdminChangePassword";
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminUsers from "./pages/AdminUsers";
-import AdminDeletedUsers from "./pages/AdminDeletedUsers";
-import AdminOffers from "./pages/AdminOffers";
-import AdminRequests from "./pages/AdminRequests";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminSettings from "./pages/AdminSettings";
-import AdminAuctions from "./pages/AdminAuctions";
-import AdminContracts from "./pages/AdminContracts";
-import AdminReviews from "./pages/AdminReviews";
-import AdminManageAdmins from "./pages/AdminManageAdmins";
-import AdminPanel from "./pages/AdminPanel";
-import AdminOrders from "./pages/AdminOrders";
-import SetAdminPassword from "./pages/SetAdminPassword";
-import TradingPlatform from "./pages/TradingPlatform";
-import CreateContract from "./pages/CreateContract";
-import OrderPage from "./pages/OrderPage";
-import OrderDetail from "./pages/OrderDetail";
-import OrderDetailPage from "./pages/OrderDetailPage";
-import ResponseDetailPage from "./pages/ResponseDetailPage";
-import ChatNotifications from "./pages/ChatNotifications";
-import MyReviews from "./pages/MyReviews";
-import MyOrders from "./pages/MyOrders";
-import TermsOfService from "./pages/TermsOfService";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import OfferAgreement from "./pages/OfferAgreement";
-import About from "./pages/About";
-import Support from "./pages/Support";
-import ClearData from "./pages/ClearData";
-import DeleteTestData from "./pages/DeleteTestData";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
 import { initializeSeedData } from "./utils/seedData";
+
+// Компонент загрузки
+const LoadingScreen = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
+
+// Ленивая загрузка страниц
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const NewPassword = lazy(() => import("./pages/NewPassword"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Offers = lazy(() => import("./pages/Offers"));
+const Requests = lazy(() => import("./pages/Requests"));
+const Auctions = lazy(() => import("./pages/Auctions"));
+const Home = lazy(() => import("./pages/Home"));
+const Profile = lazy(() => import("./pages/Profile"));
+const MyListings = lazy(() => import("./pages/MyListings"));
+const MyAuctions = lazy(() => import("./pages/MyAuctions"));
+const ActiveOrders = lazy(() => import("./pages/ActiveOrders"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
+const OfferDetail = lazy(() => import("./pages/OfferDetail"));
+const RequestDetail = lazy(() => import("./pages/RequestDetail"));
+const EditOffer = lazy(() => import("./pages/EditOffer"));
+const EditRequest = lazy(() => import("./pages/EditRequest"));
+const CreateOffer = lazy(() => import("./pages/CreateOffer"));
+const CreateRequest = lazy(() => import("./pages/CreateRequest"));
+const CreateAuction = lazy(() => import("./pages/CreateAuction"));
+const EditAuction = lazy(() => import("./pages/EditAuction"));
+const AuctionDetail = lazy(() => import("./pages/AuctionDetail"));
+const VerificationPage = lazy(() => import("./pages/VerificationPage"));
+const VerificationResubmit = lazy(() => import("./pages/VerificationResubmit"));
+const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const AdminChangePassword = lazy(() => import("./pages/AdminChangePassword"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
+const AdminDeletedUsers = lazy(() => import("./pages/AdminDeletedUsers"));
+const AdminOffers = lazy(() => import("./pages/AdminOffers"));
+const AdminRequests = lazy(() => import("./pages/AdminRequests"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
+const AdminSettings = lazy(() => import("./pages/AdminSettings"));
+const AdminAuctions = lazy(() => import("./pages/AdminAuctions"));
+const AdminContracts = lazy(() => import("./pages/AdminContracts"));
+const AdminReviews = lazy(() => import("./pages/AdminReviews"));
+const AdminManageAdmins = lazy(() => import("./pages/AdminManageAdmins"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const AdminOrders = lazy(() => import("./pages/AdminOrders"));
+const SetAdminPassword = lazy(() => import("./pages/SetAdminPassword"));
+const TradingPlatform = lazy(() => import("./pages/TradingPlatform"));
+const CreateContract = lazy(() => import("./pages/CreateContract"));
+const OrderPage = lazy(() => import("./pages/OrderPage"));
+const OrderDetail = lazy(() => import("./pages/OrderDetail"));
+const OrderDetailPage = lazy(() => import("./pages/OrderDetailPage"));
+const ResponseDetailPage = lazy(() => import("./pages/ResponseDetailPage"));
+const ChatNotifications = lazy(() => import("./pages/ChatNotifications"));
+const MyReviews = lazy(() => import("./pages/MyReviews"));
+const MyOrders = lazy(() => import("./pages/MyOrders"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const OfferAgreement = lazy(() => import("./pages/OfferAgreement"));
+const About = lazy(() => import("./pages/About"));
+const Support = lazy(() => import("./pages/Support"));
+const ClearData = lazy(() => import("./pages/ClearData"));
+const DeleteTestData = lazy(() => import("./pages/DeleteTestData"));
 
 const queryClient = new QueryClient();
 
@@ -81,6 +90,13 @@ const App = () => {
     const session = getSession();
     if (session) {
       setIsAuthenticated(true);
+    }
+
+    // Регистрируем Service Worker для кэширования
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Игнорируем ошибки регистрации
+      });
     }
   }, []);
 
@@ -103,6 +119,7 @@ const App = () => {
               <Sonner />
               {isAuthenticated && <NotificationPermissionBanner />}
               <BrowserRouter>
+                <Suspense fallback={<LoadingScreen />}>
             <Routes>
             <Route path="/" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
@@ -167,6 +184,7 @@ const App = () => {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+                </Suspense>
         </BrowserRouter>
             </OffersProvider>
           </DistrictProvider>

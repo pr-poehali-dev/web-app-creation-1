@@ -294,25 +294,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Конвертируем все Decimal в float перед сериализацией
         auctions = convert_decimals(auctions)
         
+        # Добавляем заголовки кэширования для ускорения загрузки
+        cache_headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=30, s-maxage=30',  # Кэш на 30 секунд
+        }
+        
         if auction_id:
             if auctions:
                 return {
                     'statusCode': 200,
-                    'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                    'headers': cache_headers,
                     'body': json.dumps(auctions[0]),
                     'isBase64Encoded': False
                 }
             else:
                 return {
                     'statusCode': 404,
-                    'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                    'headers': cache_headers,
                     'body': json.dumps({'error': 'Auction not found'}),
                     'isBase64Encoded': False
                 }
         
         return {
             'statusCode': 200,
-            'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+            'headers': cache_headers,
             'body': json.dumps({'auctions': auctions}),
             'isBase64Encoded': False
         }
