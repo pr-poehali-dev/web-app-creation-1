@@ -103,22 +103,6 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.execute(sql)
         offers = cur.fetchall()
         
-        images_map = {}
-        if len(offers) > 0:
-            offer_ids = [str(offer['id']) for offer in offers]
-            ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
-            images_sql = f"SELECT DISTINCT ON (oir.offer_id) oir.offer_id, oi.id, oi.url, oi.alt FROM t_p42562714_web_app_creation_1.offer_image_relations oir LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) AND oi.id IS NOT NULL ORDER BY oir.offer_id, oir.sort_order"
-            
-            cur.execute(images_sql)
-            images_results = cur.fetchall()
-            
-            for img_row in images_results:
-                images_map[img_row['offer_id']] = [{
-                    'id': str(img_row['id']),
-                    'url': img_row['url'],
-                    'alt': img_row.get('alt', '')
-                }]
-        
         result = []
         for offer in offers:
             result.append({
@@ -131,7 +115,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'unit': offer.get('unit'),
                 'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
-                'images': images_map.get(offer['id'], [])
+                'images': []
             })
         
         cur.close()
