@@ -53,15 +53,19 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const [offersData, ordersResponse] = await Promise.all([
-          offersAPI.getOffers({ status: 'active' }),
-          ordersAPI.getAll('all')
-        ]);
+        // Сначала загружаем только предложения (главное)
+        const offersData = await offersAPI.getOffers({ status: 'active' });
         setOffers(offersData.offers || []);
-        setOrders(ordersResponse.orders || []);
+        setIsLoading(false); // Показываем предложения сразу
+        
+        // Заказы загружаем в фоне (они нужны только для бейджей)
+        ordersAPI.getAll('all').then(ordersResponse => {
+          setOrders(ordersResponse.orders || []);
+        }).catch(() => {
+          // Игнорируем ошибку загрузки заказов
+        });
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-      } finally {
         setIsLoading(false);
       }
     };
@@ -256,7 +260,7 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
               <div className="h-5 w-48 bg-muted animate-pulse rounded" />
             </div>
             <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {Array.from({ length: 10 }).map((_, index) => (
+              {Array.from({ length: 6 }).map((_, index) => (
                 <OfferCardSkeleton key={index} />
               ))}
             </div>

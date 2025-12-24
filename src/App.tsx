@@ -9,7 +9,6 @@ import { DistrictProvider } from "./contexts/DistrictContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
-import { initializeSeedData } from "./utils/seedData";
 
 // Компонент загрузки
 const LoadingScreen = () => (
@@ -79,24 +78,36 @@ const Support = lazy(() => import("./pages/Support"));
 const ClearData = lazy(() => import("./pages/ClearData"));
 const DeleteTestData = lazy(() => import("./pages/DeleteTestData"));
 
-const queryClient = new QueryClient();
+// Оптимизируем QueryClient для быстрой работы на медленном интернете
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Данные считаются свежими 5 минут
+      gcTime: 1000 * 60 * 30, // Кэш хранится 30 минут
+      retry: 1, // Только 1 повтор при ошибке (не 3)
+      refetchOnWindowFocus: false, // Не перезагружать при фокусе окна
+      refetchOnReconnect: false, // Не перезагружать при переподключении
+    },
+  },
+});
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    initializeSeedData();
-    
+    // Быстрая проверка сессии без лишних операций
     const session = getSession();
     if (session) {
       setIsAuthenticated(true);
     }
 
-    // Регистрируем Service Worker для кэширования
+    // Регистрируем Service Worker в фоне
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        // Игнорируем ошибки регистрации
-      });
+      setTimeout(() => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+          // Игнорируем ошибки
+        });
+      }, 1000);
     }
   }, []);
 

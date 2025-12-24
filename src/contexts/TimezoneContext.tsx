@@ -137,7 +137,18 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
     const savedTimezone = localStorage.getItem('userTimezone');
     if (savedTimezone) {
       setTimezone(savedTimezone);
+      // Не делаем detectTimezone() если уже есть сохраненный
     } else {
+      // Сначала используем часовой пояс браузера мгновенно
+      try {
+        const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        setTimezone(browserTimezone);
+        localStorage.setItem('userTimezone', browserTimezone);
+      } catch {
+        setTimezone('Asia/Yakutsk');
+      }
+      
+      // Потом в фоне пробуем определить более точно
       detectTimezone();
     }
   }, []);
