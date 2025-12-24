@@ -30,6 +30,7 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [verification, setVerification] = useState<VerificationDetails | null>(null);
   const [message, setMessage] = useState('');
   const [documents, setDocuments] = useState<Record<string, File>>({});
@@ -201,11 +202,31 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
       }
 
       if (response.ok) {
+        // Показываем состояние успеха
+        setSubmitted(true);
+        
         toast({
-          title: 'Заявка отправлена',
-          description: 'Ваши документы отправлены на повторное рассмотрение',
+          title: (
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center animate-bounce">
+                <Icon name="Check" className="h-4 w-4 text-white" />
+              </div>
+              <span>Документы успешно отправлены!</span>
+            </div>
+          ),
+          description: (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Ваша заявка принята и ожидает проверки модератором.</p>
+              <p className="text-xs text-muted-foreground">Обычно проверка занимает до 24 часов. Вы получите уведомление о результатах на email и в личном кабинете.</p>
+            </div>
+          ),
+          duration: 7000,
         });
-        navigate('/profile');
+        
+        // Перенаправляем через 3 секунды, чтобы пользователь увидел успешное состояние
+        setTimeout(() => {
+          navigate('/profile');
+        }, 3000);
       } else {
         const data = await response.json();
         throw new Error(data.error || 'Failed to resubmit');
@@ -252,6 +273,55 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
   const documentTypes = verification.verificationType === 'individual'
     ? ['passportScan', 'passportRegistration', 'utilityBill']
     : ['registrationCert', 'agreementForm'];
+
+  // Экран успешной отправки
+  if (submitted) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        
+        <main className="flex-1 container mx-auto px-4 py-8 max-w-2xl">
+          <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
+            <CardContent className="pt-8 pb-8 text-center space-y-6">
+              <div className="flex justify-center">
+                <div className="h-20 w-20 rounded-full bg-green-500 flex items-center justify-center animate-bounce">
+                  <Icon name="Check" className="h-10 w-10 text-white" />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400">
+                  Документы успешно отправлены!
+                </h2>
+                <p className="text-muted-foreground">
+                  Ваша заявка принята и ожидает проверки модератором
+                </p>
+              </div>
+              
+              <Alert className="bg-white dark:bg-slate-900 border-green-300">
+                <Icon name="Clock" className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-left">
+                  <p className="font-medium mb-2">Что дальше?</p>
+                  <ul className="space-y-1 text-sm text-muted-foreground">
+                    <li>✓ Модератор проверит ваши документы в течение 24 часов</li>
+                    <li>✓ Вы получите уведомление на email о результатах проверки</li>
+                    <li>✓ Статус заявки можно отслеживать в личном кабинете</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+              
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground animate-pulse">
+                <Icon name="Loader2" className="h-4 w-4 animate-spin" />
+                <span>Переход в профиль через несколько секунд...</span>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+        
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
