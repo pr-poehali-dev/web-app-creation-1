@@ -7,11 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile } from '@/utils/fileUpload';
 import { compressImage, formatFileSize } from '@/utils/imageCompression';
+import VerificationSuccessScreen from '@/components/verification/VerificationSuccessScreen';
+import VerificationRejectionAlert from '@/components/verification/VerificationRejectionAlert';
+import DocumentUploadSection from '@/components/verification/DocumentUploadSection';
 
 interface VerificationResubmitProps {
   isAuthenticated: boolean;
@@ -122,7 +124,6 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
       let fileToUpload = file;
       const originalSize = file.size;
 
-      // Если файл больше 2 МБ, автоматически сжимаем
       if (file.size > 2 * 1024 * 1024) {
         toast({
           title: 'Сжатие изображения...',
@@ -130,7 +131,7 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
         });
 
         try {
-          fileToUpload = await compressImage(file, 1.8); // Сжимаем до 1.8 МБ для запаса
+          fileToUpload = await compressImage(file, 1.8);
           
           const savedSize = originalSize - fileToUpload.size;
           const savedPercent = Math.round((savedSize / originalSize) * 100);
@@ -226,10 +227,8 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
       }
 
       if (response.ok) {
-        // Показываем состояние успеха
         setSubmitted(true);
         
-        // Устанавливаем флаг для обновления статуса на странице профиля
         sessionStorage.setItem('verificationResubmitted', 'true');
         
         toast({
@@ -250,7 +249,6 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
           duration: 7000,
         });
         
-        // Перенаправляем через 3 секунды, чтобы пользователь увидел успешное состояние
         setTimeout(() => {
           navigate('/profile');
         }, 3000);
@@ -270,6 +268,22 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
     }
   };
 
+  const handleAddressMatchChange = (checked: boolean) => {
+    setAddressMatchesRegistration(checked);
+    if (checked) {
+      setDocuments(prev => {
+        const newDocs = { ...prev };
+        delete newDocs.utilityBill;
+        return newDocs;
+      });
+      setDocumentUrls(prev => {
+        const newUrls = { ...prev };
+        delete newUrls.utilityBill;
+        return newUrls;
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -286,70 +300,14 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
     return null;
   }
 
-  const getDocumentLabel = (docType: string) => {
-    const labels: Record<string, string> = {
-      passportScan: 'Скан паспорта',
-      passportRegistration: 'Скан прописки',
-      utilityBill: 'Счёт за коммунальные услуги',
-      registrationCert: 'Свидетельство о регистрации',
-      agreementForm: 'Форма согласия',
-    };
-    return labels[docType] || docType;
-  };
-
   const documentTypes = verification.verificationType === 'individual'
     ? (addressMatchesRegistration 
         ? ['passportScan', 'passportRegistration'] 
         : ['passportScan', 'passportRegistration', 'utilityBill'])
     : ['registrationCert', 'agreementForm'];
 
-  // Экран успешной отправки
   if (submitted) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-        
-        <main className="flex-1 container mx-auto px-4 py-8 max-w-2xl">
-          <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/20">
-            <CardContent className="pt-8 pb-8 text-center space-y-6">
-              <div className="flex justify-center">
-                <div className="h-20 w-20 rounded-full bg-green-500 flex items-center justify-center animate-bounce">
-                  <Icon name="Check" className="h-10 w-10 text-white" />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-green-700 dark:text-green-400">
-                  Документы успешно отправлены!
-                </h2>
-                <p className="text-muted-foreground">
-                  Ваша заявка принята и ожидает проверки модератором
-                </p>
-              </div>
-              
-              <Alert className="bg-white dark:bg-slate-900 border-green-300">
-                <Icon name="Clock" className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-left">
-                  <p className="font-medium mb-2">Что дальше?</p>
-                  <ul className="space-y-1 text-sm text-muted-foreground">
-                    <li>✓ Модератор проверит ваши документы в течение 24 часов</li>
-                    <li>✓ Вы получите уведомление на email о результатах проверки</li>
-                    <li>✓ Статус заявки можно отслеживать в личном кабинете</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-              
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground animate-pulse">
-                <Icon name="Loader2" className="h-4 w-4 animate-spin" />
-                <span>Переход в профиль через несколько секунд...</span>
-              </div>
-            </CardContent>
-          </Card>
-        </main>
-        
-        <Footer />
-      </div>
-    );
+    return <VerificationSuccessScreen isAuthenticated={isAuthenticated} onLogout={onLogout} />;
   }
 
   return (
@@ -378,90 +336,17 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {verification.rejectionReason && (
-              <Alert variant="destructive">
-                <Icon name="AlertCircle" className="h-4 w-4" />
-                <AlertDescription>
-                  <p className="font-semibold mb-1">Причина отклонения:</p>
-                  <p>{verification.rejectionReason}</p>
-                </AlertDescription>
-              </Alert>
-            )}
+            <VerificationRejectionAlert rejectionReason={verification.rejectionReason} />
 
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Загрузите обновленные документы</h3>
-              
-              {verification.verificationType === 'individual' && (
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2 p-4 bg-muted/50 rounded-lg border">
-                    <input
-                      type="checkbox"
-                      id="addressMatch"
-                      checked={addressMatchesRegistration}
-                      onChange={(e) => {
-                        setAddressMatchesRegistration(e.target.checked);
-                        // Если адреса совпадают, удаляем utilityBill из документов
-                        if (e.target.checked) {
-                          setDocuments(prev => {
-                            const newDocs = { ...prev };
-                            delete newDocs.utilityBill;
-                            return newDocs;
-                          });
-                          setDocumentUrls(prev => {
-                            const newUrls = { ...prev };
-                            delete newUrls.utilityBill;
-                            return newUrls;
-                          });
-                        }
-                      }}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                    />
-                    <Label 
-                      htmlFor="addressMatch" 
-                      className="text-sm font-normal cursor-pointer flex items-center gap-2"
-                    >
-                      <Icon name="Home" className="h-4 w-4 text-muted-foreground" />
-                      Место жительства совпадает с местом регистрации
-                    </Label>
-                  </div>
-                  
-                  {addressMatchesRegistration && (
-                    <div className="flex items-start gap-2 text-sm text-muted-foreground bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200">
-                      <Icon name="Info" className="h-4 w-4 mt-0.5 text-green-600" />
-                      <p>Квитанция за коммунальные услуги не требуется, так как адреса совпадают</p>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {documentTypes.map(docType => (
-                <div key={docType} className="space-y-2">
-                  <Label htmlFor={docType}>{getDocumentLabel(docType)}</Label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      id={docType}
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={(e) => handleFileChange(docType, e.target.files?.[0] || null)}
-                      disabled={uploadingDocs[docType]}
-                      className="block w-full text-sm text-muted-foreground
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-md file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-primary file:text-primary-foreground
-                        hover:file:bg-primary/90
-                        cursor-pointer"
-                    />
-                    {uploadingDocs[docType] && (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
-                    )}
-                    {documents[docType] && (
-                      <Icon name="CheckCircle" className="h-5 w-5 text-green-600" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DocumentUploadSection
+              verificationType={verification.verificationType}
+              documentTypes={documentTypes}
+              documents={documents}
+              uploadingDocs={uploadingDocs}
+              addressMatchesRegistration={addressMatchesRegistration}
+              onAddressMatchChange={handleAddressMatchChange}
+              onFileChange={handleFileChange}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="message">Сообщение для модератора (необязательно)</Label>
