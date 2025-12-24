@@ -62,6 +62,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return migrate_images_to_s3(headers)
             elif action == 'migration-status':
                 return get_migration_status(headers)
+            elif action == 'remigrate-all':
+                return remigrate_all_images(headers)
             elif offer_id:
                 return get_offer_by_id(offer_id, headers)
             else:
@@ -532,5 +534,59 @@ def get_migration_status(headers: Dict[str, str]) -> Dict[str, Any]:
             'cdn': cdn_count,
             'progress': round(progress, 2)
         }),
+        'isBase64Encoded': False
+    }
+
+def remigrate_all_images(headers: Dict[str, str]) -> Dict[str, Any]:
+    """Ре-миграция всех CDN изображений с исправлением EXIF ориентации"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    s3 = boto3.client('s3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    )
+    
+    # Получаем CDN изображения
+    cur.execute("SELECT id, url FROM t_p42562714_web_app_creation_1.offer_images WHERE url LIKE 'https://%' LIMIT 5")
+    images = cur.fetchall()
+    
+    remigrated_count = 0
+    errors = []
+    
+    for img in images:
+        try:
+            import requests
+            cdn_url = img['url']
+            
+            # Скачиваем изображение с CDN
+            response = requests.get(cdn_url, timeout=10)
+            if response.status_code != 200:
+                raise Exception(f"Failed to download: {response.status_code}")
+            
+            image_data = response.content
+            
+            # Оптимизируем с исправлением EXIF
+            optimized_data = optimize_image(image_data)
+            
+            # Загружаем обратно в S3 (перезаписываем)
+            s3_key = f"offer-images/{img['id']}.jpg"
+            s3.put_object(Bucket='files', Key=s3_key, Body=optimized_data, ContentType='image/jpeg')
+            
+            remigrated_count += 1
+            
+        except Exception as e:
+            errors.append({'id': str(img['id']), 'error': str(e)})
+            print(f"Failed to remigrate image {img['id']}: {str(e)}")
+    
+    conn.commit()
+    cur.close()
+    conn.close()
+    
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'remigrated': remigrated_count, 'errors': errors}),
         'isBase64Encoded': False
     }
