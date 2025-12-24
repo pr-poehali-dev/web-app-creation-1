@@ -18,7 +18,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     POST / - создать новое предложение
     PUT /{id} - обновить предложение
     """
+    print('=== HANDLER START ===')
+    print(f'Event keys: {list(event.keys())}')
+    print(f'httpMethod: {event.get("httpMethod")}')
+    print(f'queryStringParameters: {event.get("queryStringParameters")}')
+    
     method: str = event.get('httpMethod', 'GET')
+    print(f'Method: {method}')
     
     if method == 'OPTIONS':
         return {
@@ -87,7 +93,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список предложений с фильтрами"""
     try:
+        print('=== get_offers_list START ===')
         params = event.get('queryStringParameters', {}) or {}
+        print(f'Params: {params}')
         
         category = params.get('category', '')
         subcategory = params.get('subcategory', '')
@@ -210,10 +218,14 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.close()
         conn.close()
         
+        print(f'=== Returning {len(result)} offers ===')
+        response_body = {'offers': result, 'total': len(result)}
+        print(f'Response body keys: {list(response_body.keys())}')
+        
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({'offers': result, 'total': len(result)}),
+            'body': json.dumps(response_body),
             'isBase64Encoded': False
         }
     except Exception as e:
