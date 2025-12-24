@@ -180,7 +180,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 images_map[img_row['offer_id']] = [img_row['first_image']]
         
         result = []
-        for offer in offers:
+        print(f'Processing offers...')
+        for idx, offer in enumerate(offers):
+            print(f'Processing offer {idx + 1}/{len(offers)}')
             offer_dict = dict(offer)
             
             # Конвертация дат
@@ -218,16 +220,23 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             # Добавляем изображения из карты
             offer_dict['images'] = images_map.get(offer_dict['id'], [])
             result.append(offer_dict)
+            print(f'Offer {idx + 1} processed successfully')
         
+        print(f'All offers processed. Closing connection...')
         cur.close()
         conn.close()
+        print(f'Connection closed. Returning result with {len(result)} items')
         
         response_body = {'offers': result, 'total': len(result)}
+        
+        print(f'Creating JSON response...')
+        json_body = json.dumps(response_body, default=decimal_default)
+        print(f'JSON created, length: {len(json_body)}')
         
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(response_body, default=decimal_default),
+            'body': json_body,
             'isBase64Encoded': False
         }
     except Exception as e:
