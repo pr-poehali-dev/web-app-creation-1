@@ -157,6 +157,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.execute(sql, query_params)
         offers = cur.fetchall()
         
+        # Конвертируем все Decimal сразу после получения из БД
+        offers = convert_decimals(offers)
+        
         # Получаем ID всех предложений (конвертируем в строки для SQL)
         offer_ids = [str(offer['id']) for offer in offers]
         
@@ -176,7 +179,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             cur.execute(images_sql, offer_ids)
             images_results = cur.fetchall()
             for img_row in images_results:
-                images_map[img_row['offer_id']] = [img_row['first_image']]
+                # Конвертируем Decimal в first_image, если есть
+                first_image = convert_decimals(img_row['first_image'])
+                images_map[img_row['offer_id']] = [first_image]
         
         result = []
         for offer in offers:
