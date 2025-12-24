@@ -108,7 +108,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if verification_data:
         verification_type = verification_data[3]
         # ВАЖНО: используем статус из user_verifications, а не из users
-        verification_status = verification_data[1] if verification_data[1] else user_verification_status
+        # Конвертируем 'approved' в 'verified' для фронтенда
+        db_status = verification_data[1] if verification_data[1] else user_verification_status
+        verification_status = 'verified' if db_status == 'approved' else db_status
         if verification_data[1] == 'rejected':
             rejection_reason = verification_data[2]
         
