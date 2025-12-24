@@ -327,8 +327,34 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     offer_id = result['id']
     
     if body.get('images'):
+        s3 = boto3.client('s3',
+            endpoint_url='https://bucket.poehali.dev',
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        )
+        
         for idx, img in enumerate(body['images']):
-            url_esc = img['url'].replace("'", "''")
+            img_url = img['url']
+            
+            # Если изображение base64 - автоматически мигрируем в S3
+            if img_url.startswith('data:image'):
+                try:
+                    header, base64_data = img_url.split(',', 1)
+                    image_data = base64.b64decode(base64_data)
+                    optimized_data = optimize_image(image_data)
+                    
+                    # Генерируем уникальное имя файла
+                    import uuid
+                    file_id = str(uuid.uuid4())
+                    s3_key = f"offer-images/{file_id}.jpg"
+                    
+                    s3.put_object(Bucket='files', Key=s3_key, Body=optimized_data, ContentType='image/jpeg')
+                    img_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
+                except Exception as e:
+                    print(f"Failed to auto-migrate image: {str(e)}")
+                    # Если миграция не удалась, сохраняем base64 как есть
+            
+            url_esc = img_url.replace("'", "''")
             alt_esc = img.get('alt', '').replace("'", "''")
             cur.execute(
                 f"INSERT INTO t_p42562714_web_app_creation_1.offer_images (url, alt) VALUES ('{url_esc}', '{alt_esc}') RETURNING id"
