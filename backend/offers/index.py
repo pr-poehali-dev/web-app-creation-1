@@ -430,9 +430,17 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     }
 
 def optimize_image(image_data: bytes, max_width: int = 800, quality: int = 85) -> bytes:
-    """Оптимизация изображения: resize + сжатие"""
+    """Оптимизация изображения: resize + сжатие + исправление EXIF ориентации"""
     img = Image.open(BytesIO(image_data))
     
+    # КРИТИЧНО: Исправляем ориентацию по EXIF (для фото с мобильных камер)
+    try:
+        from PIL import ImageOps
+        img = ImageOps.exif_transpose(img)
+    except Exception as e:
+        print(f"Warning: Could not fix EXIF orientation: {str(e)}")
+    
+    # Конвертируем RGBA в RGB
     if img.mode in ('RGBA', 'LA', 'P'):
         background = Image.new('RGB', img.size, (255, 255, 255))
         if img.mode == 'P':
@@ -440,6 +448,7 @@ def optimize_image(image_data: bytes, max_width: int = 800, quality: int = 85) -
         background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
         img = background
     
+    # Resize если нужно
     if img.width > max_width:
         ratio = max_width / img.width
         new_height = int(img.height * ratio)
