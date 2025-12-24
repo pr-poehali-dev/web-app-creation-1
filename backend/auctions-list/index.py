@@ -199,7 +199,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         rows = cur.fetchall()
         
         auctions = []
+        # Якутск UTC+9
+        yakutsk_tz = timezone(timedelta(hours=9))
+        
         for row in rows:
+            # Преобразуем даты с часовым поясом
+            start_date = row[19]
+            end_date = row[20]
+            created_at = row[26]
+            
             auction = {
                 'id': row[0],
                 'userId': row[1],
@@ -220,14 +228,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'gpsCoordinates': row[16],
                 'availableDistricts': row[17],
                 'availableDeliveryTypes': row[18],
-                'startDate': row[19].isoformat() if row[19] else None,
-                'endDate': row[20].isoformat() if row[20] else None,
+                'startDate': start_date.replace(tzinfo=yakutsk_tz).isoformat() if start_date else None,
+                'endDate': end_date.replace(tzinfo=yakutsk_tz).isoformat() if end_date else None,
                 'durationDays': row[21],
                 'status': row[22],
                 'isPremium': row[23],
                 'bidCount': row[24],
                 'viewCount': row[25],
-                'createdAt': row[26].isoformat() if row[26] else None,
+                'createdAt': created_at.replace(tzinfo=yakutsk_tz).isoformat() if created_at else None,
                 'images': json.loads(row[27]) if isinstance(row[27], str) else row[27]
             }
             auctions.append(auction)
@@ -245,12 +253,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             bids_rows = cur.fetchall()
             bids = []
+            # Якутск UTC+9
+            yakutsk_tz = timezone(timedelta(hours=9))
             for bid_row in bids_rows:
+                # Преобразуем наивный datetime в aware datetime с часовым поясом Якутска
+                timestamp_naive = bid_row[3]
+                if timestamp_naive:
+                    timestamp_aware = timestamp_naive.replace(tzinfo=yakutsk_tz)
+                    timestamp_str = timestamp_aware.isoformat()
+                else:
+                    timestamp_str = None
+                
                 bids.append({
                     'id': bid_row[0],
                     'userId': bid_row[1],
                     'amount': float(bid_row[2]),
-                    'timestamp': bid_row[3].isoformat() if bid_row[3] else None,
+                    'timestamp': timestamp_str,
                     'userName': bid_row[4] or 'Участник',
                     'isWinning': bid_row == bids_rows[0]  # Первая ставка (самая последняя по времени) - выигрышная
                 })

@@ -14,11 +14,13 @@ const DISTRICT_TIMEZONE_MAP: Record<string, string> = {
   'mirny': 'Asia/Yakutsk',
   'lensky': 'Asia/Yakutsk',
   'nyurbinsky': 'Asia/Yakutsk',
+  'yakutsk-nyurbinsky': 'Asia/Yakutsk',
   'suntarsky': 'Asia/Yakutsk',
   'vilyuysky': 'Asia/Yakutsk',
   
   // Центральная Якутия (UTC+9)
   'yakutsk': 'Asia/Yakutsk',
+  'yakutsk-city': 'Asia/Yakutsk',
   'namsky': 'Asia/Yakutsk',
   'megino-kangalassky': 'Asia/Yakutsk',
   'churapchinsky': 'Asia/Yakutsk',
@@ -54,7 +56,22 @@ const DISTRICT_TIMEZONE_MAP: Record<string, string> = {
 
 // Получить часовой пояс по ID района
 function getTimezoneByDistrict(districtId: string): string {
-  return DISTRICT_TIMEZONE_MAP[districtId] || 'Asia/Yakutsk'; // По умолчанию - Якутск
+  // Сначала проверяем точное совпадение
+  if (DISTRICT_TIMEZONE_MAP[districtId]) {
+    return DISTRICT_TIMEZONE_MAP[districtId];
+  }
+  
+  // Если это составной ID (например "yakutsk-nyurbinsky"), проверяем части
+  if (districtId.includes('-')) {
+    const parts = districtId.split('-');
+    for (const part of parts) {
+      if (DISTRICT_TIMEZONE_MAP[part]) {
+        return DISTRICT_TIMEZONE_MAP[part];
+      }
+    }
+  }
+  
+  return 'Asia/Yakutsk'; // По умолчанию - Якутск
 }
 
 export function TimezoneProvider({ children }: { children: ReactNode }) {
