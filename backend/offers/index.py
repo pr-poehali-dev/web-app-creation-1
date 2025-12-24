@@ -7,12 +7,11 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 
-class DecimalEncoder(json.JSONEncoder):
-    """JSON Encoder который конвертирует Decimal в float"""
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return float(obj)
-        return super(DecimalEncoder, self).default(obj)
+def decimal_default(obj):
+    """Конвертер для json.dumps - преобразует Decimal в float"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
 def get_db_connection():
@@ -77,7 +76,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 405,
                 'headers': headers,
-                'body': json.dumps({'error': 'Method not allowed'}, cls=DecimalEncoder),
+                'body': json.dumps({'error': 'Method not allowed'}, default=decimal_default),
                 'isBase64Encoded': False
             }
     
@@ -89,7 +88,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': headers,
-            'body': json.dumps({'error': str(e)}, cls=DecimalEncoder),
+            'body': json.dumps({'error': str(e)}, default=decimal_default),
             'isBase64Encoded': False
         }
 
@@ -224,7 +223,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(response_body, cls=DecimalEncoder),
+            'body': json.dumps(response_body, default=decimal_default),
             'isBase64Encoded': False
         }
     except Exception as e:
@@ -235,7 +234,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         return {
             'statusCode': 500,
             'headers': headers,
-            'body': json.dumps({'error': str(e), 'trace': error_trace}, cls=DecimalEncoder),
+            'body': json.dumps({'error': str(e), 'trace': error_trace}, default=decimal_default),
             'isBase64Encoded': False
         }
 
@@ -333,7 +332,7 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps(offer_dict, cls=DecimalEncoder),
+        'body': json.dumps(offer_dict, default=decimal_default),
         'isBase64Encoded': False
     }
 
@@ -347,7 +346,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         return {
             'statusCode': 401,
             'headers': headers,
-            'body': json.dumps({'error': 'User ID required'}, cls=DecimalEncoder),
+            'body': json.dumps({'error': 'User ID required'}, default=decimal_default),
             'isBase64Encoded': False
         }
     
@@ -406,7 +405,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     return {
         'statusCode': 201,
         'headers': headers,
-        'body': json.dumps({'id': str(offer_id), 'message': 'Offer created successfully'}, cls=DecimalEncoder),
+        'body': json.dumps({'id': str(offer_id), 'message': 'Offer created successfully'}, default=decimal_default),
         'isBase64Encoded': False
     }
 
@@ -446,7 +445,7 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': json.dumps({'error': 'No fields to update'}, cls=DecimalEncoder),
+            'body': json.dumps({'error': 'No fields to update'}, default=decimal_default),
             'isBase64Encoded': False
         }
     
@@ -463,6 +462,6 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({'message': 'Offer updated successfully'}, cls=DecimalEncoder),
+        'body': json.dumps({'message': 'Offer updated successfully'}, default=decimal_default),
         'isBase64Encoded': False
     }
