@@ -4,8 +4,19 @@
 import json
 import os
 from datetime import datetime, timezone, timedelta
+from decimal import Decimal
 import psycopg2
 from typing import Dict, Any
+
+def convert_decimals(obj: Any) -> Any:
+    """Рекурсивно конвертирует Decimal в float для JSON сериализации"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_decimals(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_decimals(item) for item in obj]
+    return obj
 
 def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     user_id = event.get('headers', {}).get('X-User-Id')
@@ -248,6 +259,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         cur.close()
         conn.close()
+        
+        # Конвертируем все Decimal в float перед сериализацией
+        auctions = convert_decimals(auctions)
         
         if auction_id:
             if auctions:

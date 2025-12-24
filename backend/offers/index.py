@@ -2,6 +2,7 @@ import json
 import os
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -9,6 +10,16 @@ from psycopg2.extras import RealDictCursor
 def get_db_connection():
     """Подключение к базе данных"""
     return psycopg2.connect(os.environ['DATABASE_URL'])
+
+def convert_decimals(obj: Any) -> Any:
+    """Рекурсивно конвертирует Decimal в float для JSON сериализации"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_decimals(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_decimals(item) for item in obj]
+    return obj
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
@@ -18,13 +29,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     POST / - создать новое предложение
     PUT /{id} - обновить предложение
     """
-    print('=== HANDLER START ===')
-    print(f'Event keys: {list(event.keys())}')
-    print(f'httpMethod: {event.get("httpMethod")}')
-    print(f'queryStringParameters: {event.get("queryStringParameters")}')
-    
     method: str = event.get('httpMethod', 'GET')
-    print(f'Method: {method}')
     
     if method == 'OPTIONS':
         return {
@@ -93,9 +98,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список предложений с фильтрами"""
     try:
-        print('=== get_offers_list START ===')
         params = event.get('queryStringParameters', {}) or {}
-        print(f'Params: {params}')
         
         category = params.get('category', '')
         subcategory = params.get('subcategory', '')
@@ -218,9 +221,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.close()
         conn.close()
         
-        print(f'=== Returning {len(result)} offers ===')
+        # Конвертируем все Decimal в float перед сериализацией
+        result = convert_decimals(result)
+        
         response_body = {'offers': result, 'total': len(result)}
-        print(f'Response body keys: {list(response_body.keys())}')
         
         return {
             'statusCode': 200,
@@ -330,6 +334,9 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         'reviewsCount': seller_reviews_count,
         'isVerified': seller_is_verified
     }
+    
+    # Конвертируем все Decimal в float перед сериализацией
+    offer_dict = convert_decimals(offer_dict)
     
     return {
         'statusCode': 200,
