@@ -653,13 +653,22 @@ def rotate_image(image_id: str, degrees: int, headers: Dict[str, str]) -> Dict[s
         s3_key = f"offer-images/{image_id}.jpg"
         s3.put_object(Bucket='files', Key=s3_key, Body=rotated_data, ContentType='image/jpeg')
         
+        # Обновляем URL с версией для обхода CDN кэша
+        import time
+        version = int(time.time())
+        new_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}?v={version}"
+        new_url_esc = new_url.replace("'", "''")
+        
+        cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offer_images SET url = '{new_url_esc}' WHERE id = '{image_id_esc}'")
+        conn.commit()
+        
         cur.close()
         conn.close()
         
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({'success': True, 'message': f'Image rotated {degrees} degrees'}),
+            'body': json.dumps({'success': True, 'message': f'Image rotated {degrees} degrees', 'new_url': new_url}),
             'isBase64Encoded': False
         }
         
