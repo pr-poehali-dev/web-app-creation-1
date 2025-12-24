@@ -108,7 +108,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = """
+        sql = f"""
             SELECT 
                 o.id, o.user_id, o.title, 
                 COALESCE(SUBSTRING(o.description, 1, 200), '') as description, 
@@ -125,33 +125,29 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             WHERE 1=1
         """
         
-        query_params = []
-        
         if status and status != 'all':
-            sql += " AND o.status = %s"
-            query_params.append(status)
+            status_escaped = status.replace("'", "''")
+            sql += f" AND o.status = '{status_escaped}'"
         
         if category:
-            sql += " AND o.category = %s"
-            query_params.append(category)
+            category_escaped = category.replace("'", "''")
+            sql += f" AND o.category = '{category_escaped}'"
         
         if subcategory:
-            sql += " AND o.subcategory = %s"
-            query_params.append(subcategory)
+            subcategory_escaped = subcategory.replace("'", "''")
+            sql += f" AND o.subcategory = '{subcategory_escaped}'"
         
         if district:
-            sql += " AND o.district = %s"
-            query_params.append(district)
+            district_escaped = district.replace("'", "''")
+            sql += f" AND o.district = '{district_escaped}'"
         
         if query:
-            sql += " AND (o.title ILIKE %s OR o.description ILIKE %s)"
-            search_term = f'%{query}%'
-            query_params.extend([search_term, search_term])
+            query_escaped = query.replace("'", "''")
+            sql += f" AND (o.title ILIKE '%{query_escaped}%' OR o.description ILIKE '%{query_escaped}%')"
         
-        sql += " ORDER BY o.created_at DESC LIMIT %s OFFSET %s"
-        query_params.extend([limit, offset])
+        sql += f" ORDER BY o.created_at DESC LIMIT {limit} OFFSET {offset}"
         
-        cur.execute(sql, query_params)
+        cur.execute(sql)
         offers = cur.fetchall()
         
         # Получаем ID всех предложений (конвертируем в строки для SQL)
@@ -160,17 +156,17 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         # Загружаем только первое изображение для каждого предложения (для списка)
         images_map = {}
         if offer_ids:
-            placeholders = ','.join(['%s'] * len(offer_ids))
+            ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
             images_sql = f"""
                 SELECT DISTINCT ON (oir.offer_id)
                     oir.offer_id,
                     json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt) as first_image
                 FROM t_p42562714_web_app_creation_1.offer_image_relations oir
                 LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id
-                WHERE oir.offer_id IN ({placeholders}) AND oi.id IS NOT NULL
+                WHERE oir.offer_id IN ({ids_list}) AND oi.id IS NOT NULL
                 ORDER BY oir.offer_id, oir.sort_order
             """
-            cur.execute(images_sql, offer_ids)
+            cur.execute(images_sql)
             images_results = cur.fetchall()
             for img_row in images_results:
                 images_map[img_row['offer_id']] = [img_row['first_image']]
@@ -243,7 +239,8 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    sql = """
+    offer_id_escaped = offer_id.replace("'", "''")
+    sql = f"""
         SELECT 
             o.*,
             CONCAT(u.first_name, ' ', u.last_name) as seller_name,
@@ -264,11 +261,11 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_image_relations oir ON o.id = oir.offer_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id
-        WHERE o.id = %s
+        WHERE o.id = '{offer_id_escaped}'
         GROUP BY o.id, u.id
     """
     
-    cur.execute(sql, (offer_id,))
+    cur.execute(sql)
     offer = cur.fetchone()
     
     cur.close()
@@ -353,49 +350,64 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    sql = """
+    # Escape strings
+    user_id_esc = str(user_id).replace("'", "''")
+    title_esc = body['title'].replace("'", "''")
+    description_esc = body['description'].replace("'", "''")
+    category_esc = body['category'].replace("'", "''")
+    subcategory_esc = body.get('subcategory', '').replace("'", "''") if body.get('subcategory') else None
+    unit_esc = body['unit'].replace("'", "''")
+    location_esc = body.get('location', '').replace("'", "''") if body.get('location') else None
+    district_esc = body['district'].replace("'", "''")
+    full_address_esc = body.get('fullAddress', '').replace("'", "''") if body.get('fullAddress') else None
+    
+    # Arrays to JSON strings
+    available_districts_json = json.dumps(body['availableDistricts']).replace("'", "''")
+    available_delivery_types_json = json.dumps(body.get('availableDeliveryTypes', ['pickup'])).replace("'", "''")
+    
+    sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
             user_id, title, description, category, subcategory,
             quantity, unit, price_per_unit, has_vat, vat_rate,
             location, district, full_address, available_districts,
             available_delivery_types, is_premium, status
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ) VALUES (
+            '{user_id_esc}', 
+            '{title_esc}', 
+            '{description_esc}', 
+            '{category_esc}', 
+            {'NULL' if subcategory_esc is None else f"'{subcategory_esc}'"},
+            {body['quantity']}, 
+            '{unit_esc}', 
+            {body['pricePerUnit']}, 
+            {body.get('hasVAT', False)}, 
+            {body.get('vatRate') if body.get('vatRate') is not None else 'NULL'},
+            {'NULL' if location_esc is None else f"'{location_esc}'"},
+            '{district_esc}', 
+            {'NULL' if full_address_esc is None else f"'{full_address_esc}'"},
+            '{available_districts_json}'::jsonb,
+            '{available_delivery_types_json}'::jsonb,
+            {body.get('isPremium', False)}, 
+            '{body.get('status', 'active')}'
+        )
         RETURNING id, created_at
     """
     
-    cur.execute(sql, (
-        user_id,
-        body['title'],
-        body['description'],
-        body['category'],
-        body.get('subcategory'),
-        body['quantity'],
-        body['unit'],
-        body['pricePerUnit'],
-        body.get('hasVAT', False),
-        body.get('vatRate'),
-        body.get('location'),
-        body['district'],
-        body.get('fullAddress'),
-        body['availableDistricts'],
-        body.get('availableDeliveryTypes', ['pickup']),
-        body.get('isPremium', False),
-        body.get('status', 'active')
-    ))
+    cur.execute(sql)
     
     result = cur.fetchone()
     offer_id = result['id']
     
     if body.get('images'):
         for idx, img in enumerate(body['images']):
+            url_esc = img['url'].replace("'", "''")
+            alt_esc = img.get('alt', '').replace("'", "''")
             cur.execute(
-                "INSERT INTO t_p42562714_web_app_creation_1.offer_images (url, alt) VALUES (%s, %s) RETURNING id",
-                (img['url'], img.get('alt', ''))
+                f"INSERT INTO t_p42562714_web_app_creation_1.offer_images (url, alt) VALUES ('{url_esc}', '{alt_esc}') RETURNING id"
             )
             image_id = cur.fetchone()['id']
             cur.execute(
-                "INSERT INTO t_p42562714_web_app_creation_1.offer_image_relations (offer_id, image_id, sort_order) VALUES (%s, %s, %s)",
-                (offer_id, image_id, idx)
+                f"INSERT INTO t_p42562714_web_app_creation_1.offer_image_relations (offer_id, image_id, sort_order) VALUES ('{offer_id}', '{image_id}', {idx})"
             )
     
     conn.commit()
@@ -417,27 +429,24 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     cur = conn.cursor()
     
     updates = []
-    params = []
     
     if 'title' in body:
-        updates.append("title = %s")
-        params.append(body['title'])
+        title_esc = body['title'].replace("'", "''")
+        updates.append(f"title = '{title_esc}'")
     
     if 'description' in body:
-        updates.append("description = %s")
-        params.append(body['description'])
+        desc_esc = body['description'].replace("'", "''")
+        updates.append(f"description = '{desc_esc}'")
     
     if 'quantity' in body:
-        updates.append("quantity = %s")
-        params.append(body['quantity'])
+        updates.append(f"quantity = {body['quantity']}")
     
     if 'pricePerUnit' in body:
-        updates.append("price_per_unit = %s")
-        params.append(body['pricePerUnit'])
+        updates.append(f"price_per_unit = {body['pricePerUnit']}")
     
     if 'status' in body:
-        updates.append("status = %s")
-        params.append(body['status'])
+        status_esc = body['status'].replace("'", "''")
+        updates.append(f"status = '{status_esc}'")
     
     if not updates:
         cur.close()
@@ -450,11 +459,11 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         }
     
     updates.append("updated_at = CURRENT_TIMESTAMP")
-    params.append(offer_id)
+    offer_id_esc = offer_id.replace("'", "''")
     
-    sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = %s"
+    sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
     
-    cur.execute(sql, params)
+    cur.execute(sql)
     conn.commit()
     cur.close()
     conn.close()
