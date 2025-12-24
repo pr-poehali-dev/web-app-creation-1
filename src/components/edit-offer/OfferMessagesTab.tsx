@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import { formatWithTimezone } from '@/utils/dateUtils';
 
 interface ChatMessage {
   id: string;
@@ -56,7 +57,7 @@ export default function OfferMessagesTab({ messages, onMessageClick }: OfferMess
                 </p>
                 <p className="text-sm mt-2">{message.message}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {message.timestamp.toLocaleString('ru-RU', { timeZone: 'Asia/Yakutsk' })}
+                  {formatWithTimezone(message.timestamp)}
                 </p>
               </div>
               <Button size="sm" variant="outline">

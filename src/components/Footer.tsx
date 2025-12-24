@@ -1,8 +1,17 @@
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import { useTimezone } from '@/contexts/TimezoneContext';
+
+const TIMEZONE_NAMES: Record<string, string> = {
+  'Asia/Yakutsk': 'UTC+9 (Якутск)',
+  'Asia/Vladivostok': 'UTC+10 (Владивосток)',
+  'Asia/Srednekolymsk': 'UTC+11 (Среднеколымск)',
+};
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { timezone } = useTimezone();
+  const timezoneName = TIMEZONE_NAMES[timezone] || timezone;
 
   return (
     <footer className="border-t bg-muted/30 mt-16">
@@ -106,9 +115,15 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              © {currentYear} Единая Региональная Товарно-Торговая Площадка. Все права защищены.
-            </p>
+            <div className="flex flex-col items-center md:items-start gap-1">
+              <p className="text-sm text-muted-foreground">
+                © {currentYear} Единая Региональная Товарно-Торговая Площадка. Все права защищены.
+              </p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Icon name="Clock" className="h-3 w-3" />
+                Часовой пояс: {timezoneName}
+              </p>
+            </div>
             <div className="flex items-center gap-4">
               <a
                 href="mailto:doydum-invest@mail.ru"

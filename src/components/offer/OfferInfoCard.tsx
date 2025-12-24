@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { formatDateWithTimezone } from '@/utils/dateUtils';
 
 interface OfferInfoCardProps {
   title: string;
@@ -186,14 +187,14 @@ export default function OfferInfoCard({
                 <div>
                   <p>Дата создания</p>
                   <p className="font-medium text-foreground">
-                    {createdAt.toLocaleDateString('ru-RU', { timeZone: 'Asia/Yakutsk' })}
+                    {formatDateWithTimezone(createdAt)}
                   </p>
                 </div>
                 {expiryDate && (
                   <div>
                     <p>Срок годности</p>
                     <p className="font-medium text-foreground">
-                      {expiryDate.toLocaleDateString('ru-RU', { timeZone: 'Asia/Yakutsk' })}
+                      {formatDateWithTimezone(expiryDate)}
                     </p>
                   </div>
                 )}

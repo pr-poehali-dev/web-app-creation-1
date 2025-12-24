@@ -119,7 +119,7 @@ export default function UsersTable({
                   <Badge variant="secondary">Не верифицирован</Badge>
                 )}
               </TableCell>
-              <TableCell>{new Date(user.registeredAt).toLocaleDateString('ru-RU', { timeZone: 'Asia/Yakutsk' })}</TableCell>
+              <TableCell>{new Date(user.registeredAt).toLocaleDateString('ru-RU')}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button

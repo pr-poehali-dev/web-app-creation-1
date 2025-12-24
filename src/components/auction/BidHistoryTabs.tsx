@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import type { AuctionBid } from '@/types/auction';
+import { useDateFormat } from '@/hooks/useDateFormat';
 
 interface BidHistoryTabsProps {
   bids: AuctionBid[];
@@ -35,6 +36,7 @@ export default function BidHistoryTabs({
   auctionNumber,
   currentUserId 
 }: BidHistoryTabsProps) {
+  const { formatDateTime } = useDateFormat();
   const [activeTab, setActiveTab] = useState('history');
   const [newBidId, setNewBidId] = useState<string | null>(null);
   const prevBidsLength = useRef(bids.length);
@@ -142,7 +144,7 @@ export default function BidHistoryTabs({
                               )}
                             </div>
                             <p className="text-[10px] md:text-xs text-muted-foreground">
-                              {new Date(bid.timestamp).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yakutsk' })}
+                              {formatDateTime(bid.timestamp, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                             </p>
                           </div>
                         </div>

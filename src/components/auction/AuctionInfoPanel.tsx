@@ -4,6 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import type { Auction } from '@/types/auction';
 import { getTimeUntilStart } from './AuctionHelpers';
+import { useDateFormat } from '@/hooks/useDateFormat';
 
 interface AuctionInfoPanelProps {
   auction: Auction;
@@ -39,6 +40,8 @@ export default function AuctionInfoPanel({
   timeUntilStart,
   onMakeBidClick 
 }: AuctionInfoPanelProps) {
+  const { formatDateTime } = useDateFormat();
+  
   return (
     <div className="space-y-2 md:space-y-3">
       <div>
@@ -108,11 +111,11 @@ export default function AuctionInfoPanel({
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-[10px] md:text-xs">
           <Icon name="Calendar" className="h-3 w-3" />
-          <span>{auction.startDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yakutsk' })}</span>
+          <span>{formatDateTime(auction.startDate, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         <div className="flex items-center gap-1 text-muted-foreground text-[10px] md:text-xs">
           <Icon name="CalendarX" className="h-3 w-3" />
-          <span>{auction.endDate.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Yakutsk' })}</span>
+          <span>{formatDateTime(auction.endDate, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
         </div>
       </div>
 

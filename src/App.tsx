@@ -65,6 +65,7 @@ import ClearData from "./pages/ClearData";
 import DeleteTestData from "./pages/DeleteTestData";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import { DistrictProvider } from "./contexts/DistrictContext";
+import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
 import { initializeSeedData } from "./utils/seedData";
@@ -95,12 +96,13 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <DistrictProvider>
-          <OffersProvider>
-            <Toaster />
-            <Sonner />
-            {isAuthenticated && <NotificationPermissionBanner />}
-            <BrowserRouter>
+        <TimezoneProvider>
+          <DistrictProvider>
+            <OffersProvider>
+              <Toaster />
+              <Sonner />
+              {isAuthenticated && <NotificationPermissionBanner />}
+              <BrowserRouter>
             <Routes>
             <Route path="/" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
@@ -166,8 +168,9 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
-          </OffersProvider>
-        </DistrictProvider>
+            </OffersProvider>
+          </DistrictProvider>
+        </TimezoneProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

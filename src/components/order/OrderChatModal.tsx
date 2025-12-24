@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import type { Order, ChatMessage } from '@/types/order';
 import { getSession } from '@/utils/auth';
+import { formatTimeWithTimezone } from '@/utils/dateUtils';
 
 interface OrderChatModalProps {
   isOpen: boolean;
@@ -143,10 +144,9 @@ export default function OrderChatModal({
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
                         <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                          {new Date(msg.timestamp).toLocaleTimeString('ru-RU', {
+                          {formatTimeWithTimezone(msg.timestamp, {
                             hour: '2-digit',
                             minute: '2-digit',
-                            timeZone: 'Asia/Yakutsk',
                           })}
                         </p>
                       </div>
