@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { uploadFile } from '@/utils/fileUpload';
+import { compressImage, formatFileSize } from '@/utils/imageCompression';
 
 interface VerificationResubmitProps {
   isAuthenticated: boolean;
@@ -109,15 +110,6 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
   const handleFileChange = async (docType: string, file: File | null) => {
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Размер файла не должен превышать 2 МБ. Попробуйте сжать изображение',
-      });
-      return;
-    }
-
     setUploadingDocs(prev => ({ ...prev, [docType]: true }));
 
     try {
@@ -126,9 +118,40 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
         throw new Error('User not authenticated');
       }
 
-      const url = await uploadFile(file, docType, userId);
+      let fileToUpload = file;
+      const originalSize = file.size;
+
+      // Если файл больше 2 МБ, автоматически сжимаем
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: 'Сжатие изображения...',
+          description: `Исходный размер: ${formatFileSize(originalSize)}. Подождите немного...`,
+        });
+
+        try {
+          fileToUpload = await compressImage(file, 1.8); // Сжимаем до 1.8 МБ для запаса
+          
+          const savedSize = originalSize - fileToUpload.size;
+          const savedPercent = Math.round((savedSize / originalSize) * 100);
+          
+          toast({
+            title: 'Изображение сжато!',
+            description: `Новый размер: ${formatFileSize(fileToUpload.size)} (сжато на ${savedPercent}%)`,
+          });
+        } catch (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Ошибка сжатия',
+            description: 'Не удалось сжать изображение. Попробуйте другой файл или уменьшите размер вручную.',
+          });
+          setUploadingDocs(prev => ({ ...prev, [docType]: false }));
+          return;
+        }
+      }
+
+      const url = await uploadFile(fileToUpload, docType, userId);
       
-      setDocuments(prev => ({ ...prev, [docType]: file }));
+      setDocuments(prev => ({ ...prev, [docType]: fileToUpload }));
       setDocumentUrls(prev => ({ ...prev, [docType]: url }));
       toast({
         title: 'Успешно',

@@ -81,7 +81,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
-    verification_status = result[0] if result[0] else 'not_verified'
+    user_verification_status = result[0] if result[0] else 'not_verified'
     user_type = result[1] if len(result) > 1 else None
     phone = result[2] if len(result) > 2 else None
     company_name = result[3] if len(result) > 3 else None
@@ -103,9 +103,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     rejection_reason = None
     verification_type = None
     existing_docs = {}
+    verification_status = user_verification_status
     
     if verification_data:
         verification_type = verification_data[3]
+        # ВАЖНО: используем статус из user_verifications, а не из users
+        verification_status = verification_data[1] if verification_data[1] else user_verification_status
         if verification_data[1] == 'rejected':
             rejection_reason = verification_data[2]
         
