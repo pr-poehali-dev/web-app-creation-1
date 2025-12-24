@@ -11,7 +11,7 @@ export function useDateFormat() {
     options?: Intl.DateTimeFormatOptions
   ): string => {
     const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleDateString('ru-RU', options);
+    return d.toLocaleDateString('ru-RU', { ...options, timeZone: timezone });
   };
 
   const formatDateTime = (
@@ -19,7 +19,7 @@ export function useDateFormat() {
     options?: Intl.DateTimeFormatOptions
   ): string => {
     const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleString('ru-RU', options);
+    return d.toLocaleString('ru-RU', { ...options, timeZone: timezone });
   };
 
   const formatTime = (
@@ -27,7 +27,7 @@ export function useDateFormat() {
     options?: Intl.DateTimeFormatOptions
   ): string => {
     const d = date instanceof Date ? date : new Date(date);
-    return d.toLocaleTimeString('ru-RU', options);
+    return d.toLocaleTimeString('ru-RU', { ...options, timeZone: timezone });
   };
 
   return {
