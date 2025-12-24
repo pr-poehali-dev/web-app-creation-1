@@ -170,22 +170,39 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         result = []
         for offer in offers:
             offer_dict = dict(offer)
-            offer_dict['createdAt'] = offer_dict.pop('created_at').isoformat() if offer_dict.get('created_at') else None
-            offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
+            
+            # Конвертация дат
+            created_at = offer_dict.pop('created_at', None)
+            offer_dict['createdAt'] = created_at.isoformat() if created_at else None
+            
+            updated_at = offer_dict.pop('updated_at', None)
+            offer_dict['updatedAt'] = updated_at.isoformat() if updated_at else None
+            
             offer_dict['userId'] = offer_dict.pop('user_id', None)
-            offer_dict['pricePerUnit'] = float(offer_dict.pop('price_per_unit')) if offer_dict.get('price_per_unit') else None
+            
+            # Конвертация Decimal в float
+            price_per_unit = offer_dict.pop('price_per_unit', None)
+            offer_dict['pricePerUnit'] = float(price_per_unit) if price_per_unit is not None else None
+            
             offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
-            offer_dict['vatRate'] = float(offer_dict.pop('vat_rate')) if offer_dict.get('vat_rate') else None
+            
+            vat_rate = offer_dict.pop('vat_rate', None)
+            offer_dict['vatRate'] = float(vat_rate) if vat_rate is not None else None
+            
             # fullAddress убрали из списка для экономии размера ответа
             offer_dict['availableDistricts'] = offer_dict.pop('available_districts', [])
             offer_dict['availableDeliveryTypes'] = offer_dict.pop('available_delivery_types', [])
             offer_dict['isPremium'] = offer_dict.pop('is_premium', False)
             offer_dict['sellerName'] = offer_dict.pop('seller_name', None)
             offer_dict['sellerType'] = offer_dict.pop('seller_type', None)
+            
             # sellerPhone и sellerEmail убрали для экономии размера
-            offer_dict['sellerRating'] = float(offer_dict.pop('seller_rating')) if offer_dict.get('seller_rating') else None
+            seller_rating = offer_dict.pop('seller_rating', None)
+            offer_dict['sellerRating'] = float(seller_rating) if seller_rating is not None else None
+            
             offer_dict['sellerReviewsCount'] = offer_dict.pop('seller_reviews_count', 0)
             offer_dict['sellerIsVerified'] = offer_dict.pop('seller_is_verified', False)
+            
             # Добавляем изображения из карты
             offer_dict['images'] = images_map.get(offer_dict['id'], [])
             result.append(offer_dict)
@@ -256,13 +273,26 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         }
     
     offer_dict = dict(offer)
-    offer_dict['createdAt'] = offer_dict.pop('created_at').isoformat() if offer_dict.get('created_at') else None
-    offer_dict['updatedAt'] = offer_dict.pop('updated_at').isoformat() if offer_dict.get('updated_at') else None
+    
+    # Конвертация дат
+    created_at = offer_dict.pop('created_at', None)
+    offer_dict['createdAt'] = created_at.isoformat() if created_at else None
+    
+    updated_at = offer_dict.pop('updated_at', None)
+    offer_dict['updatedAt'] = updated_at.isoformat() if updated_at else None
+    
     offer_dict['userId'] = offer_dict.pop('user_id', None)
-    offer_dict['pricePerUnit'] = float(offer_dict.pop('price_per_unit')) if offer_dict.get('price_per_unit') else None
+    
+    # Конвертация Decimal в float
+    price_per_unit = offer_dict.pop('price_per_unit', None)
+    offer_dict['pricePerUnit'] = float(price_per_unit) if price_per_unit is not None else None
+    
     offer_dict['minOrderQuantity'] = offer_dict.pop('min_order_quantity', None)
     offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
-    offer_dict['vatRate'] = float(offer_dict.pop('vat_rate')) if offer_dict.get('vat_rate') else None
+    
+    vat_rate = offer_dict.pop('vat_rate', None)
+    offer_dict['vatRate'] = float(vat_rate) if vat_rate is not None else None
+    
     offer_dict['fullAddress'] = offer_dict.pop('full_address', None)
     offer_dict['availableDistricts'] = offer_dict.pop('available_districts', [])
     offer_dict['availableDeliveryTypes'] = offer_dict.pop('available_delivery_types', [])
@@ -271,7 +301,10 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     seller_type = offer_dict.pop('seller_type', None)
     seller_phone = offer_dict.pop('seller_phone', None)
     seller_email = offer_dict.pop('seller_email', None)
-    seller_rating = float(offer_dict.pop('seller_rating')) if offer_dict.get('seller_rating') else None
+    
+    seller_rating = offer_dict.pop('seller_rating', None)
+    seller_rating = float(seller_rating) if seller_rating is not None else None
+    
     seller_reviews_count = offer_dict.pop('seller_reviews_count', 0)
     seller_is_verified = offer_dict.pop('seller_is_verified', False)
     
