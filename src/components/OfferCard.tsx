@@ -130,13 +130,8 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               )}
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex items-center space-x-2 opacity-30">
-                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary">
-                  <Icon name="Building2" className="h-10 w-10 text-white" />
-                </div>
-                <span className="text-4xl font-bold text-primary">ЕРТТП</span>
-              </div>
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <Icon name="Image" className="h-12 w-12 text-muted-foreground/30" />
             </div>
           )}
         </div>
