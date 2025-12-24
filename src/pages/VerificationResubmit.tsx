@@ -37,6 +37,7 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
   const [documents, setDocuments] = useState<Record<string, File>>({});
   const [documentUrls, setDocumentUrls] = useState<Record<string, string>>({});
   const [uploadingDocs, setUploadingDocs] = useState<Record<string, boolean>>({});
+  const [addressMatchesRegistration, setAddressMatchesRegistration] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -297,7 +298,9 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
   };
 
   const documentTypes = verification.verificationType === 'individual'
-    ? ['passportScan', 'passportRegistration', 'utilityBill']
+    ? (addressMatchesRegistration 
+        ? ['passportScan', 'passportRegistration'] 
+        : ['passportScan', 'passportRegistration', 'utilityBill'])
     : ['registrationCert', 'agreementForm'];
 
   // Экран успешной отправки
@@ -387,6 +390,49 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
 
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Загрузите обновленные документы</h3>
+              
+              {verification.verificationType === 'individual' && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2 p-4 bg-muted/50 rounded-lg border">
+                    <input
+                      type="checkbox"
+                      id="addressMatch"
+                      checked={addressMatchesRegistration}
+                      onChange={(e) => {
+                        setAddressMatchesRegistration(e.target.checked);
+                        // Если адреса совпадают, удаляем utilityBill из документов
+                        if (e.target.checked) {
+                          setDocuments(prev => {
+                            const newDocs = { ...prev };
+                            delete newDocs.utilityBill;
+                            return newDocs;
+                          });
+                          setDocumentUrls(prev => {
+                            const newUrls = { ...prev };
+                            delete newUrls.utilityBill;
+                            return newUrls;
+                          });
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                    />
+                    <Label 
+                      htmlFor="addressMatch" 
+                      className="text-sm font-normal cursor-pointer flex items-center gap-2"
+                    >
+                      <Icon name="Home" className="h-4 w-4 text-muted-foreground" />
+                      Место жительства совпадает с местом регистрации
+                    </Label>
+                  </div>
+                  
+                  {addressMatchesRegistration && (
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200">
+                      <Icon name="Info" className="h-4 w-4 mt-0.5 text-green-600" />
+                      <p>Квитанция за коммунальные услуги не требуется, так как адреса совпадают</p>
+                    </div>
+                  )}
+                </div>
+              )}
               
               {documentTypes.map(docType => (
                 <div key={docType} className="space-y-2">
