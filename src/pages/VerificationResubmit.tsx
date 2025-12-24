@@ -205,6 +205,9 @@ export default function VerificationResubmit({ isAuthenticated, onLogout }: Veri
         // Показываем состояние успеха
         setSubmitted(true);
         
+        // Устанавливаем флаг для обновления статуса на странице профиля
+        sessionStorage.setItem('verificationResubmitted', 'true');
+        
         toast({
           title: (
             <div className="flex items-center gap-2">

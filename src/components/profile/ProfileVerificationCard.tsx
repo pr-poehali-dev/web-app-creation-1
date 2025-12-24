@@ -23,6 +23,17 @@ export default function ProfileVerificationCard() {
 
   useEffect(() => {
     checkVerificationStatus();
+    
+    // Проверяем флаг повторной отправки из sessionStorage
+    const wasResubmitted = sessionStorage.getItem('verificationResubmitted');
+    if (wasResubmitted === 'true') {
+      // Очищаем флаг
+      sessionStorage.removeItem('verificationResubmitted');
+      // Перезагружаем статус через секунду для гарантии
+      setTimeout(() => {
+        checkVerificationStatus();
+      }, 1000);
+    }
   }, []);
 
   const checkVerificationStatus = async () => {
@@ -150,12 +161,24 @@ export default function ProfileVerificationCard() {
         )}
 
         {verificationStatus === 'pending' && (
-          <div className="flex items-start gap-3 text-sm text-blue-700 bg-blue-100/80 p-4 rounded-lg border border-blue-200">
-            <Icon name="Clock" className="h-5 w-5 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="font-semibold mb-1">Заявка на рассмотрении</p>
-              <p className="text-blue-600">Пожалуйста, дождитесь проверки документов. Обычно это занимает 1-3 рабочих дня</p>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3 text-sm text-blue-700 bg-blue-100/80 p-4 rounded-lg border border-blue-200">
+              <Icon name="Clock" className="h-5 w-5 mt-0.5 flex-shrink-0 animate-pulse" />
+              <div>
+                <p className="font-semibold mb-1">Заявка на рассмотрении</p>
+                <p className="text-blue-600">Пожалуйста, дождитесь проверки документов. Обычно это занимает 1-3 рабочих дня</p>
+              </div>
             </div>
+            
+            {verificationDetails?.updatedAt && (
+              <Alert className="bg-green-50/80 border-green-200">
+                <Icon name="CheckCircle" className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-sm">
+                  <p className="font-medium text-green-700 mb-1">Повторная отправка принята!</p>
+                  <p className="text-green-600">Ваши обновленные документы успешно получены и находятся на проверке у модератора.</p>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 
