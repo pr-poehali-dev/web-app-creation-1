@@ -7,19 +7,17 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 
+class DecimalEncoder(json.JSONEncoder):
+    """JSON Encoder который конвертирует Decimal в float"""
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
+
 def get_db_connection():
     """Подключение к базе данных"""
     return psycopg2.connect(os.environ['DATABASE_URL'])
-
-def convert_decimals(obj: Any) -> Any:
-    """Рекурсивно конвертирует Decimal в float для JSON сериализации"""
-    if isinstance(obj, Decimal):
-        return float(obj)
-    elif isinstance(obj, dict):
-        return {key: convert_decimals(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_decimals(item) for item in obj]
-    return obj
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
@@ -79,7 +77,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {
                 'statusCode': 405,
                 'headers': headers,
-                'body': json.dumps({'error': 'Method not allowed'}),
+                'body': json.dumps({'error': 'Method not allowed'}, cls=DecimalEncoder),
                 'isBase64Encoded': False
             }
     
@@ -91,7 +89,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         return {
             'statusCode': 500,
             'headers': headers,
-            'body': json.dumps({'error': str(e)}),
+            'body': json.dumps({'error': str(e)}, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
 
@@ -157,9 +155,6 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.execute(sql, query_params)
         offers = cur.fetchall()
         
-        # Конвертируем все Decimal сразу после получения из БД
-        offers = convert_decimals(offers)
-        
         # Получаем ID всех предложений (конвертируем в строки для SQL)
         offer_ids = [str(offer['id']) for offer in offers]
         
@@ -179,9 +174,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             cur.execute(images_sql, offer_ids)
             images_results = cur.fetchall()
             for img_row in images_results:
-                # Конвертируем Decimal в first_image, если есть
-                first_image = convert_decimals(img_row['first_image'])
-                images_map[img_row['offer_id']] = [first_image]
+                images_map[img_row['offer_id']] = [img_row['first_image']]
         
         result = []
         for offer in offers:
@@ -226,15 +219,12 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.close()
         conn.close()
         
-        # Конвертируем все Decimal в float перед сериализацией
-        result = convert_decimals(result)
-        
         response_body = {'offers': result, 'total': len(result)}
         
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps(response_body),
+            'body': json.dumps(response_body, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
     except Exception as e:
@@ -245,7 +235,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         return {
             'statusCode': 500,
             'headers': headers,
-            'body': json.dumps({'error': str(e), 'trace': error_trace}),
+            'body': json.dumps({'error': str(e), 'trace': error_trace}, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
 
@@ -340,13 +330,10 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         'isVerified': seller_is_verified
     }
     
-    # Конвертируем все Decimal в float перед сериализацией
-    offer_dict = convert_decimals(offer_dict)
-    
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps(offer_dict),
+        'body': json.dumps(offer_dict, cls=DecimalEncoder),
         'isBase64Encoded': False
     }
 
@@ -360,7 +347,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         return {
             'statusCode': 401,
             'headers': headers,
-            'body': json.dumps({'error': 'User ID required'}),
+            'body': json.dumps({'error': 'User ID required'}, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
     
@@ -419,7 +406,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     return {
         'statusCode': 201,
         'headers': headers,
-        'body': json.dumps({'id': str(offer_id), 'message': 'Offer created successfully'}),
+        'body': json.dumps({'id': str(offer_id), 'message': 'Offer created successfully'}, cls=DecimalEncoder),
         'isBase64Encoded': False
     }
 
@@ -459,7 +446,7 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': json.dumps({'error': 'No fields to update'}),
+            'body': json.dumps({'error': 'No fields to update'}, cls=DecimalEncoder),
             'isBase64Encoded': False
         }
     
@@ -476,6 +463,6 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({'message': 'Offer updated successfully'}),
+        'body': json.dumps({'message': 'Offer updated successfully'}, cls=DecimalEncoder),
         'isBase64Encoded': False
     }
