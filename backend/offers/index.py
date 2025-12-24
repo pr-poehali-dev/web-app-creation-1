@@ -95,7 +95,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список предложений с фильтрами"""
     try:
+        print('=== get_offers_list START ===')
         params = event.get('queryStringParameters', {}) or {}
+        print(f'Query params: {params}')
         
         category = params.get('category', '')
         subcategory = params.get('subcategory', '')
@@ -105,8 +107,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         limit = min(int(params.get('limit', '20')), 100)
         offset = int(params.get('offset', '0'))
         
+        print(f'Connecting to DB...')
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
+        print(f'Connected successfully')
         
         sql = f"""
             SELECT 
@@ -147,8 +151,12 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         sql += f" ORDER BY o.created_at DESC LIMIT {limit} OFFSET {offset}"
         
+        print(f'Executing SQL query...')
+        print(f'SQL: {sql[:200]}...')
         cur.execute(sql)
+        print(f'Fetching results...')
         offers = cur.fetchall()
+        print(f'Found {len(offers)} offers')
         
         # Получаем ID всех предложений (конвертируем в строки для SQL)
         offer_ids = [str(offer['id']) for offer in offers]
