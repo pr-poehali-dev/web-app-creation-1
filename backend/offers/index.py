@@ -107,9 +107,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         if len(offers) > 0:
             offer_ids = [str(offer['id']) for offer in offers]
             ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
-            # Исключаем base64 изображения, т.к. они слишком большие для списка
-            # В списке показываем только CDN URL (https://cdn.poehali.dev)
-            images_sql = f"SELECT DISTINCT ON (oir.offer_id) oir.offer_id, oi.id, oi.url FROM t_p42562714_web_app_creation_1.offer_image_relations oir JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) AND oi.url LIKE 'https://%%' ORDER BY oir.offer_id, oir.sort_order LIMIT 20"
+            # Берем первое изображение для каждого предложения
+            # Для списка берем только начало base64 (миниатюра ~50KB вместо полного размера)
+            images_sql = f"SELECT DISTINCT ON (oir.offer_id) oir.offer_id, oi.id, LEFT(oi.url, 70000) as url FROM t_p42562714_web_app_creation_1.offer_image_relations oir JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id WHERE oir.offer_id IN ({ids_list}) ORDER BY oir.offer_id, oir.sort_order LIMIT 20"
             
             cur.execute(images_sql)
             images_results = cur.fetchall()
