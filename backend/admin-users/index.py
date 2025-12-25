@@ -125,10 +125,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
+                # Конвертируем datetime в строку для JSON сериализации
+                user_dict = dict(user_data)
+                if user_dict.get('created_at'):
+                    user_dict['created_at'] = user_dict['created_at'].isoformat()
+                
                 return {
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps(dict(user_data)),
+                    'body': json.dumps(user_dict),
                     'isBase64Encoded': False
                 }
             

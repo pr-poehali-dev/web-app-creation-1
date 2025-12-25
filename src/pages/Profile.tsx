@@ -48,11 +48,11 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   const sessionUser = getSession();
   const isViewingOwnProfile = !viewingUserId || viewingUserId === String(sessionUser?.id);
   
-  const [currentUser, setCurrentUser] = useState(isViewingOwnProfile ? sessionUser : null);
+  const [currentUser, setCurrentUser] = useState(sessionUser);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(!!viewingUserId && viewingUserId !== String(sessionUser?.id));
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     firstName: currentUser?.firstName || '',
@@ -71,46 +71,40 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    console.log('Profile useEffect - viewingUserId:', viewingUserId, 'sessionUser.id:', sessionUser?.id);
-    
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     
-    // Сбросить currentUser при изменении viewingUserId
+    // Если просматриваем профиль другого пользователя
     if (viewingUserId && viewingUserId !== String(sessionUser?.id)) {
-      console.log('Will fetch profile for userId:', viewingUserId);
-      setCurrentUser(null); // Сброс перед загрузкой нового профиля
-      setIsLoadingProfile(true);
       fetchUserProfile(viewingUserId);
-    } else if (sessionUser) {
-      console.log('Showing own profile');
+    } else {
+      // Показываем свой профиль
       setCurrentUser(sessionUser);
       setIsLoadingProfile(false);
     }
-  }, [viewingUserId]);
+  }, [viewingUserId, isAuthenticated]);
 
   const fetchUserProfile = async (userId: string) => {
-    console.log('fetchUserProfile called with userId:', userId);
     setIsLoadingProfile(true);
+    setCurrentUser(null);
+    
     try {
       const url = `https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${userId}`;
-      console.log('Fetching profile from:', url);
       const response = await fetch(url, {
         headers: {
-          'X-User-Id': sessionUser?.id || 'anonymous',
+          'X-User-Id': String(sessionUser?.id || 'anonymous'),
         },
       });
       
-      console.log('Response status:', response.status);
-      
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Backend error:', errorText);
         throw new Error('Failed to fetch user profile');
       }
       
       const data = await response.json();
-      console.log('Received user data:', data);
       
       setCurrentUser({
         id: data.id,
@@ -124,6 +118,8 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         inn: data.inn,
         ogrnip: data.ogrnip,
         ogrn: data.ogrn,
+        createdAt: data.created_at,
+        isVerified: false,
       });
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -132,6 +128,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         description: 'Не удалось загрузить профиль пользователя',
         variant: 'destructive',
       });
+      navigate(-1);
     } finally {
       setIsLoadingProfile(false);
     }
