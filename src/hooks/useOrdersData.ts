@@ -38,7 +38,26 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       loadMessages(selectedOrder.id, false);
     }, 2000);
 
-    return () => clearInterval(interval);
+    const handleVisibilityChange = () => {
+      if (!document.hidden && selectedOrder) {
+        loadMessages(selectedOrder.id, false);
+      }
+    };
+
+    const handleFocus = () => {
+      if (selectedOrder) {
+        loadMessages(selectedOrder.id, false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, [isPolling, selectedOrder]);
 
   const loadOrders = async () => {
@@ -265,7 +284,11 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
         message,
       });
 
-      await loadMessages(selectedOrder.id);
+      await loadMessages(selectedOrder.id, true);
+      
+      setTimeout(() => {
+        loadMessages(selectedOrder.id, false);
+      }, 1000);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
