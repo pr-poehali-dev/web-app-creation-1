@@ -73,11 +73,12 @@ export default function OrderChatModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl h-[95vh] sm:h-[90vh] flex flex-col overflow-hidden p-4 sm:p-6">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Заказ #{order.id.slice(0, 8)}</DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto pr-2 space-y-3 min-h-0">
         <Card className="bg-muted/50">
           <CardContent className="pt-4 space-y-2">
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -321,10 +322,11 @@ export default function OrderChatModal({
             )}
           </div>
         )}
+        </div>
 
-        <div className="flex-1 min-h-0 flex flex-col">
-          <div className="flex-1 overflow-y-auto pr-4" ref={scrollRef}>
-            <div className="space-y-3 py-4">
+        <div className="flex-shrink-0 flex flex-col border-t pt-3 mt-3 space-y-3">
+          <div className="h-48 sm:h-64 overflow-y-auto pr-2" ref={scrollRef}>
+            <div className="space-y-3">
               {messages.length === 0 ? (
                 <div className="text-center text-muted-foreground py-8">
                   <Icon name="MessageSquare" className="h-12 w-12 mx-auto mb-2 opacity-50" />
@@ -360,14 +362,15 @@ export default function OrderChatModal({
             </div>
           </div>
 
-          <div className="flex gap-2 pt-4 border-t">
+          <div className="flex gap-2">
             <Input
               placeholder="Введите сообщение..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
+              className="flex-1"
             />
-            <Button onClick={handleSend} disabled={!newMessage.trim()}>
+            <Button onClick={handleSend} disabled={!newMessage.trim()} size="sm">
               <Icon name="Send" className="h-4 w-4" />
             </Button>
           </div>
