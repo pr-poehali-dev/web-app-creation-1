@@ -213,7 +213,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cur.execute("DELETE FROM contracts WHERE id = %s", (offer_id,))
+            cur.execute("DELETE FROM contracts WHERE id::text = %s", (offer_id,))
             conn.commit()
             
             return {
