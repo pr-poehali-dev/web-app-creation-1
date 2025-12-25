@@ -18,16 +18,16 @@ const LoadingScreen = () => (
 );
 
 // Ленивая загрузка страниц
-const Login = lazy(() => import("./pages/Login"));
-const Register = lazy(() => import("./pages/Register"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const NewPassword = lazy(() => import("./pages/NewPassword"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Offers = lazy(() => import("./pages/Offers"));
-const Requests = lazy(() => import("./pages/Requests"));
-const Auctions = lazy(() => import("./pages/Auctions"));
-const Home = lazy(() => import("./pages/Home"));
-const Profile = lazy(() => import("./pages/Profile"));
+const Login = lazy(() => import("./pages/Login").catch(() => window.location.reload()));
+const Register = lazy(() => import("./pages/Register").catch(() => window.location.reload()));
+const ResetPassword = lazy(() => import("./pages/ResetPassword").catch(() => window.location.reload()));
+const NewPassword = lazy(() => import("./pages/NewPassword").catch(() => window.location.reload()));
+const NotFound = lazy(() => import("./pages/NotFound").catch(() => window.location.reload()));
+const Offers = lazy(() => import("./pages/Offers").catch(() => window.location.reload()));
+const Requests = lazy(() => import("./pages/Requests").catch(() => window.location.reload()));
+const Auctions = lazy(() => import("./pages/Auctions").catch(() => window.location.reload()));
+const Home = lazy(() => import("./pages/Home").catch(() => window.location.reload()));
+const Profile = lazy(() => import("./pages/Profile").catch(() => window.location.reload()));
 const MyListings = lazy(() => import("./pages/MyListings"));
 const MyAuctions = lazy(() => import("./pages/MyAuctions"));
 const ActiveOrders = lazy(() => import("./pages/ActiveOrders"));
