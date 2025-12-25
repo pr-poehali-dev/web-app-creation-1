@@ -228,30 +228,30 @@ export function useOfferDetail(id: string | undefined) {
         throw new Error('Failed to load order details');
       }
 
-      const orderData = await orderResponse.json();
+      const fullOrderData = await orderResponse.json();
 
       const newOrder: Order = {
-        id: orderData.id,
-        offerId: orderData.offer_id,
-        offerTitle: orderData.title,
+        id: fullOrderData.id,
+        offerId: fullOrderData.offer_id,
+        offerTitle: fullOrderData.title,
         offerImage: offer.images[0]?.url,
-        buyerId: orderData.buyer_id?.toString() || '',
-        buyerName: orderData.buyer_name,
-        buyerEmail: orderData.buyer_email,
-        buyerPhone: orderData.buyer_phone,
-        sellerId: orderData.seller_id?.toString() || '',
-        sellerName: orderData.seller_name || 'Продавец',
-        sellerEmail: orderData.seller_email || '',
-        sellerPhone: orderData.seller_phone || '',
-        quantity: orderData.quantity,
-        unit: orderData.unit,
-        pricePerUnit: orderData.price_per_unit,
-        totalAmount: orderData.total_amount,
-        deliveryType: orderData.delivery_type,
-        deliveryAddress: orderData.delivery_address,
-        comment: orderData.buyer_comment,
-        status: orderData.status,
-        createdAt: new Date(orderData.createdAt || orderData.created_at),
+        buyerId: fullOrderData.buyer_id?.toString() || '',
+        buyerName: fullOrderData.buyer_name,
+        buyerEmail: fullOrderData.buyer_email,
+        buyerPhone: fullOrderData.buyer_phone,
+        sellerId: fullOrderData.seller_id?.toString() || '',
+        sellerName: fullOrderData.seller_name || 'Продавец',
+        sellerEmail: fullOrderData.seller_email || '',
+        sellerPhone: fullOrderData.seller_phone || '',
+        quantity: fullOrderData.quantity,
+        unit: fullOrderData.unit,
+        pricePerUnit: fullOrderData.price_per_unit,
+        totalAmount: fullOrderData.total_amount,
+        deliveryType: fullOrderData.delivery_type,
+        deliveryAddress: fullOrderData.delivery_address,
+        comment: fullOrderData.buyer_comment,
+        status: fullOrderData.status,
+        createdAt: new Date(fullOrderData.createdAt || fullOrderData.created_at),
       };
       
       setIsOrderModalOpen(false);
