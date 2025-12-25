@@ -315,6 +315,53 @@ export default function OrderChatModal({
               </Card>
             )}
 
+            {/* Встречное предложение от продавца для покупателя */}
+            {isBuyer && order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && (
+              <Card className="bg-orange-50 border-orange-200">
+                <CardContent className="pt-4">
+                  <div className="flex items-start gap-3">
+                    <Icon name="DollarSign" className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm mb-1">Встречное предложение от продавца</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{order.counterOfferMessage || 'Продавец предложил свою цену'}</p>
+                      <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
+                        <div>
+                          <span className="text-muted-foreground">Ваше предложение:</span>{' '}
+                          <span className="font-medium">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
+                        </div>
+                        <Icon name="ArrowRight" className="h-4 w-4 flex-shrink-0" />
+                        <div>
+                          <span className="text-muted-foreground">Предложение продавца:</span>{' '}
+                          <span className="font-bold text-orange-600">
+                            {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium mb-3">
+                        Сумма по предложению: <span className="text-orange-600">{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
+                      </div>
+                      {onAcceptCounter && (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
+                            <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                            Принять предложение продавца
+                          </Button>
+                          <Button 
+                            onClick={() => setShowCounterForm(true)} 
+                            variant="outline" 
+                            size="sm"
+                          >
+                            <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                            Новое предложение
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Заказ принят покупателем после торгов */}
             {order.buyerAcceptedCounter && order.status === 'negotiating' && (
               <Card className="bg-green-50 border-green-200">

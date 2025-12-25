@@ -46,7 +46,8 @@ interface AdminOffer {
   sellerId?: string;
   price: number;
   quantity: number;
-  availableQuantity: number;
+  soldQuantity: number;
+  reservedQuantity: number;
   unit: string;
   status: 'active' | 'moderation' | 'rejected' | 'completed' | 'deleted';
   createdAt: string;
@@ -88,7 +89,8 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         sellerId: offer.sellerId,
         price: offer.pricePerUnit || offer.price_per_unit || offer.price || 0,
         quantity: offer.quantity || 0,
-        availableQuantity: offer.available_quantity || offer.availableQuantity || offer.quantity || 0,
+        soldQuantity: offer.sold_quantity || offer.soldQuantity || 0,
+        reservedQuantity: offer.reserved_quantity || offer.reservedQuantity || 0,
         unit: offer.unit || 'шт',
         status: offer.status || 'active',
         createdAt: offer.createdAt || offer.created_at
@@ -350,8 +352,14 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                         <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <span className="font-semibold text-green-600">{offer.availableQuantity}</span> {offer.unit}{' '}
-                            <span className="text-muted-foreground">из {offer.quantity} {offer.unit}</span>
+                            <span className="font-semibold text-green-600">
+                              {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
+                            </span> {offer.unit}
+                            {offer.soldQuantity > 0 && (
+                              <span className="text-muted-foreground ml-1">
+                                (из {offer.quantity})
+                              </span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(offer.status)}</TableCell>
