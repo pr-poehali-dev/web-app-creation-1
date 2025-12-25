@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
 import type { Offer as OfferType } from '@/types/offer';
 
@@ -51,6 +51,7 @@ interface AdminOffer {
 
 export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterSeller, setFilterSeller] = useState<string>('all');
@@ -91,7 +92,11 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
       setOffers(mappedOffers);
     } catch (error) {
       console.error('Ошибка загрузки предложений:', error);
-      toast.error('Ошибка при загрузке предложений');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить предложения',
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -133,20 +138,34 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const handleApproveOffer = async (offer: AdminOffer) => {
     try {
       await offersAPI.updateOffer(offer.id, { status: 'active' });
-      toast.success(`Предложение "${offer.title}" одобрено`);
+      toast({
+        title: 'Успешно',
+        description: `Предложение "${offer.title}" одобрено`,
+      });
       fetchOffers();
     } catch (error) {
-      toast.error('Ошибка при одобрении предложения');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось одобрить предложение',
+        variant: 'destructive',
+      });
     }
   };
 
   const handleRejectOffer = async (offer: AdminOffer) => {
     try {
       await offersAPI.updateOffer(offer.id, { status: 'rejected' });
-      toast.success(`Предложение "${offer.title}" отклонено`);
+      toast({
+        title: 'Успешно',
+        description: `Предложение "${offer.title}" отклонено`,
+      });
       fetchOffers();
     } catch (error) {
-      toast.error('Ошибка при отклонении предложения');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отклонить предложение',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -154,12 +173,19 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
     if (selectedOffer) {
       try {
         await offersAPI.deleteOffer(selectedOffer.id);
-        toast.success(`Предложение "${selectedOffer.title}" удалено`);
+        toast({
+          title: 'Успешно',
+          description: `Предложение "${selectedOffer.title}" удалено`,
+        });
         setShowDeleteDialog(false);
         setSelectedOffer(null);
         fetchOffers();
       } catch (error) {
-        toast.error('Ошибка при удалении предложения');
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось удалить предложение',
+          variant: 'destructive',
+        });
       }
     }
   };
@@ -182,13 +208,24 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
       }
 
       if (deletedCount > 0) {
-        toast.success(`Удалено ${deletedCount} тестовых предложений`);
+        toast({
+          title: 'Успешно',
+          description: `Удалено ${deletedCount} тестовых предложений`,
+        });
         fetchOffers();
       } else {
-        toast.error('Не удалось удалить тестовые предложения');
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось удалить тестовые предложения',
+          variant: 'destructive',
+        });
       }
     } catch (error) {
-      toast.error('Ошибка при удалении тестовых предложений');
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить тестовые предложения',
+        variant: 'destructive',
+      });
     }
   };
 
