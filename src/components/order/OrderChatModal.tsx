@@ -33,7 +33,7 @@ export default function OrderChatModal({
   const currentUser = getSession();
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
-  const isBuyer = currentUser?.id === order.buyerId;
+  const isBuyer = currentUser?.id?.toString() === order.buyerId?.toString();
 
   useEffect(() => {
     if (scrollRef.current) {

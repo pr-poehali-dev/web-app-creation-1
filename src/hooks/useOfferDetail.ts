@@ -32,6 +32,8 @@ export function useOfferDetail(id: string | undefined) {
       try {
         const data = await offersAPI.getOfferById(id);
         
+        console.log('Raw offer data from API:', data);
+        
         const mappedOffer: Offer = {
           ...data,
           pricePerUnit: data.price_per_unit || data.pricePerUnit || 0,
@@ -63,6 +65,7 @@ export function useOfferDetail(id: string | undefined) {
           updatedAt: data.updatedAt || data.updated_at ? new Date(data.updatedAt || data.updated_at) : undefined,
         };
         
+        console.log('Mapped offer:', { minOrderQuantity: mappedOffer.minOrderQuantity, unit: mappedOffer.unit });
         setOffer(mappedOffer);
         
         if (mappedOffer?.video) {
@@ -304,6 +307,13 @@ export function useOfferDetail(id: string | undefined) {
       };
       
       setChatMessages([...chatMessages, newMessage]);
+      
+      notifyNewMessage(
+        createdOrder.sellerId,
+        `${currentUser.firstName} ${currentUser.lastName}`,
+        message,
+        createdOrder.id
+      );
     } catch (error) {
       console.error('Error sending message:', error);
       toast({
