@@ -131,38 +131,51 @@ export default function OrderChatModal({
           </CardContent>
         </Card>
 
-        {/* Встречное предложение */}
-        {order.counterPricePerUnit && !order.buyerAcceptedCounter && (
-          <Card className="bg-orange-50 border-orange-200">
+        {/* Предложение цены от покупателя */}
+        {order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && (
+          <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <Icon name="TrendingDown" className="h-5 w-5 text-orange-600 mt-0.5" />
+                <Icon name="DollarSign" className="h-5 w-5 text-blue-600 mt-0.5" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-sm mb-1">Встречное предложение от продавца</h3>
-                  <p className="text-sm text-muted-foreground mb-2">{order.counterOfferMessage}</p>
+                  <h3 className="font-semibold text-sm mb-1">
+                    {isSeller ? 'Предложение от покупателя' : 'Ваше предложение цены'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-2">{order.counterOfferMessage || 'Покупатель предложил свою цену'}</p>
                   <div className="flex items-center gap-4 text-sm">
                     <div>
-                      <span className="text-muted-foreground">Было:</span>{' '}
-                      <span className="line-through">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
+                      <span className="text-muted-foreground">Цена продавца:</span>{' '}
+                      <span className="font-medium">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
                     </div>
                     <Icon name="ArrowRight" className="h-4 w-4" />
                     <div>
-                      <span className="text-muted-foreground">Стало:</span>{' '}
-                      <span className="font-bold text-orange-600">
+                      <span className="text-muted-foreground">Предложение:</span>{' '}
+                      <span className="font-bold text-blue-600">
                         {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
                       </span>
                     </div>
                   </div>
                   <div className="mt-2 text-sm font-medium">
-                    Новая сумма: <span className="text-orange-600">{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
+                    Сумма по предложению: <span className="text-blue-600">{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
                   </div>
-                  {isBuyer && onAcceptCounter && (
+                  {isSeller && onAcceptCounter && (
                     <div className="mt-3 flex gap-2">
-                      <Button onClick={onAcceptCounter} size="sm" className="bg-orange-600 hover:bg-orange-700">
+                      <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
                         <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                        Принять встречное предложение
+                        Принять предложение покупателя
+                      </Button>
+                      <Button 
+                        onClick={() => setShowCounterForm(true)} 
+                        variant="outline" 
+                        size="sm"
+                      >
+                        <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                        Встречное предложение
                       </Button>
                     </div>
+                  )}
+                  {isBuyer && (
+                    <Badge className="mt-3 bg-yellow-500">Ожидает ответа продавца</Badge>
                   )}
                 </div>
               </div>
@@ -170,14 +183,17 @@ export default function OrderChatModal({
           </Card>
         )}
 
-        {/* Форма встречного предложения */}
-        {showCounterForm && isSeller && order.status === 'new' && (
+        {/* Форма предложения цены от покупателя */}
+        {showCounterForm && isBuyer && order.status === 'new' && (
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-4 space-y-3">
               <h3 className="font-semibold text-sm">Предложить свою цену</h3>
+              <div className="text-xs text-muted-foreground mb-2">
+                Цена продавца: {order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-muted-foreground">Цена за {order.unit}</label>
+                  <label className="text-xs text-muted-foreground">Ваша цена за {order.unit}</label>
                   <Input
                     type="number"
                     value={counterPrice}
@@ -186,18 +202,18 @@ export default function OrderChatModal({
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">Новая сумма</label>
+                  <label className="text-xs text-muted-foreground">Общая сумма</label>
                   <div className="mt-1 font-bold text-lg text-blue-600">
                     {(parseFloat(counterPrice) * order.quantity).toLocaleString('ru-RU')} ₽
                   </div>
                 </div>
               </div>
               <div>
-                <label className="text-xs text-muted-foreground">Сообщение покупателю</label>
+                <label className="text-xs text-muted-foreground">Комментарий (необязательно)</label>
                 <Textarea
                   value={counterMessage}
                   onChange={(e) => setCounterMessage(e.target.value)}
-                  placeholder="Объясните причину изменения цены..."
+                  placeholder="Почему предлагаете эту цену?"
                   className="mt-1"
                   rows={2}
                 />
@@ -213,6 +229,62 @@ export default function OrderChatModal({
                   size="sm"
                   className="bg-blue-600 hover:bg-blue-700"
                 >
+                  Отправить предложение
+                </Button>
+                <Button onClick={() => setShowCounterForm(false)} size="sm" variant="outline">
+                  Отмена
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Форма встречного предложения от продавца */}
+        {showCounterForm && isSeller && order.status === 'negotiating' && (
+          <Card className="bg-orange-50 border-orange-200">
+            <CardContent className="pt-4 space-y-3">
+              <h3 className="font-semibold text-sm">Встречное предложение</h3>
+              <div className="text-xs text-muted-foreground mb-2">
+                Покупатель предложил: {order.counterPricePerUnit?.toLocaleString('ru-RU')} ₽/{order.unit}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Ваша цена за {order.unit}</label>
+                  <Input
+                    type="number"
+                    value={counterPrice}
+                    onChange={(e) => setCounterPrice(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Общая сумма</label>
+                  <div className="mt-1 font-bold text-lg text-orange-600">
+                    {(parseFloat(counterPrice) * order.quantity).toLocaleString('ru-RU')} ₽
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Комментарий (необязательно)</label>
+                <Textarea
+                  value={counterMessage}
+                  onChange={(e) => setCounterMessage(e.target.value)}
+                  placeholder="Объясните свою цену..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    if (onCounterOffer) {
+                      onCounterOffer(parseFloat(counterPrice), counterMessage);
+                      setShowCounterForm(false);
+                    }
+                  }}
+                  size="sm"
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
                   Отправить встречное предложение
                 </Button>
                 <Button onClick={() => setShowCounterForm(false)} size="sm" variant="outline">
@@ -223,24 +295,28 @@ export default function OrderChatModal({
           </Card>
         )}
 
+        {/* Действия покупателя */}
+        {isBuyer && order.status === 'new' && !showCounterForm && onCounterOffer && (
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => setShowCounterForm(true)} 
+              variant="outline" 
+              className="flex-1"
+              size="sm"
+            >
+              <Icon name="DollarSign" className="mr-1.5 h-4 w-4" />
+              Предложить свою цену
+            </Button>
+          </div>
+        )}
+
         {/* Действия продавца */}
-        {isSeller && (order.status === 'new' || order.status === 'negotiating') && !showCounterForm && (
+        {isSeller && order.status === 'new' && !showCounterForm && (
           <div className="flex gap-2">
             {onAcceptOrder && (
               <Button onClick={onAcceptOrder} className="flex-1" size="sm">
                 <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                Принять заказ
-              </Button>
-            )}
-            {order.status === 'new' && onCounterOffer && (
-              <Button 
-                onClick={() => setShowCounterForm(true)} 
-                variant="outline" 
-                className="flex-1"
-                size="sm"
-              >
-                <Icon name="TrendingDown" className="mr-1.5 h-4 w-4" />
-                Предложить свою цену
+                Принять заказ по текущей цене
               </Button>
             )}
           </div>

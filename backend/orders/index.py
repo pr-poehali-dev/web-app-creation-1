@@ -412,8 +412,13 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     updates = []
     
-    # Встречное предложение от продавца
-    if 'counterPrice' in body:
+    user_headers = event.get('headers', {})
+    user_id = int(user_headers.get('X-User-Id') or user_headers.get('x-user-id') or 0)
+    is_buyer = user_id == order['buyer_id']
+    is_seller = user_id == order['seller_id']
+    
+    # Предложение цены от покупателя
+    if 'counterPrice' in body and is_buyer:
         counter_price = float(body['counterPrice'])
         quantity = order['quantity']
         counter_total = counter_price * quantity
@@ -425,12 +430,34 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
         updates.append(f"status = 'negotiating'")
     
-    # Покупатель принимает встречное предложение
-    if 'acceptCounter' in body and body['acceptCounter']:
+    # Встречное предложение от продавца (после предложения покупателя)
+    if 'counterPrice' in body and is_seller and order['status'] == 'negotiating':
+        counter_price = float(body['counterPrice'])
+        quantity = order['quantity']
+        counter_total = counter_price * quantity
+        counter_message = body.get('counterMessage', '').replace("'", "''")
+        
+        updates.append(f"counter_price_per_unit = {counter_price}")
+        updates.append(f"counter_total_amount = {counter_total}")
+        updates.append(f"counter_offer_message = '{counter_message}'")
+        updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
+        # Статус остается 'negotiating'
+    
+    # Продавец принимает предложение покупателя
+    if 'acceptCounter' in body and body['acceptCounter'] and is_seller:
         updates.append(f"buyer_accepted_counter = TRUE")
         updates.append(f"price_per_unit = counter_price_per_unit")
         updates.append(f"total_amount = counter_total_amount")
         updates.append(f"status = 'accepted'")
+        
+        # Уменьшаем количество в предложении
+        offer_id_escaped = str(order['offer_id']).replace("'", "''")
+        order_quantity = order['quantity']
+        cur.execute(f"""
+            UPDATE {schema}.offers 
+            SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
+            WHERE id = '{offer_id_escaped}'
+        """)
     
     # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
     if 'status' in body and body['status'] == 'accepted':
