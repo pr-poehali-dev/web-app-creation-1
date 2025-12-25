@@ -29,6 +29,12 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       return;
     }
     loadOrders();
+
+    const ordersPollInterval = setInterval(() => {
+      loadOrders();
+    }, 3000);
+
+    return () => clearInterval(ordersPollInterval);
   }, [isAuthenticated, navigate, activeTab]);
 
   useEffect(() => {
@@ -234,7 +240,13 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       });
 
       await loadOrders();
-      await loadMessages(selectedOrder.id);
+      
+      setTimeout(() => {
+        const updatedOrder = orders.find(o => o.id === selectedOrder.id);
+        if (updatedOrder) {
+          setSelectedOrder(updatedOrder);
+        }
+      }, 500);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
@@ -256,8 +268,14 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
         description: 'Продавец получит уведомление',
       });
 
-      setIsChatOpen(false);
       await loadOrders();
+      
+      setTimeout(() => {
+        const updatedOrder = orders.find(o => o.id === selectedOrder.id);
+        if (updatedOrder) {
+          setSelectedOrder(updatedOrder);
+        }
+      }, 500);
     } catch (error) {
       console.error('Error accepting counter offer:', error);
       toast({
