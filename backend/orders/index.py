@@ -64,11 +64,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     }
     
     try:
+        print(f"[ORDERS] Method: {method}, Query: {event.get('queryStringParameters')}, Body: {event.get('body', '')[:200]}")
+        
         if method == 'GET':
             query_params = event.get('queryStringParameters', {}) or {}
             order_id = query_params.get('id') or query_params.get('orderId')
             offer_id = query_params.get('offerId')
             messages_flag = query_params.get('messages')
+            
+            print(f"[GET] order_id={order_id}, offer_id={offer_id}, messages={messages_flag}")
             
             if messages_flag == 'true' and offer_id:
                 return get_messages_by_offer(offer_id, headers)
@@ -82,6 +86,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'POST':
             query_params = event.get('queryStringParameters', {}) or {}
             is_message = query_params.get('message') == 'true'
+            
+            print(f"[POST] is_message={is_message}, query={query_params}")
             
             if is_message:
                 return create_message(event, headers)
@@ -264,6 +270,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     body = json.loads(event.get('body', '{}'))
     user_headers = event.get('headers', {})
     user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    
+    print(f"[CREATE_ORDER] user_id={user_id}, body={body}")
     
     if not user_id:
         return {
@@ -530,6 +538,8 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     body = json.loads(event.get('body', '{}'))
     user_headers = event.get('headers', {})
     user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    
+    print(f"[CREATE_MESSAGE] user_id={user_id}, body={body}")
     
     if not user_id:
         return {
