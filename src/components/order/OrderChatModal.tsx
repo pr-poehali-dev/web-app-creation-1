@@ -26,6 +26,7 @@ interface OrderChatModalProps {
   onAcceptOrder?: () => void;
   onCounterOffer?: (price: number, message: string) => void;
   onAcceptCounter?: () => void;
+  onCompleteOrder?: () => void;
 }
 
 export default function OrderChatModal({
@@ -37,6 +38,7 @@ export default function OrderChatModal({
   onAcceptOrder,
   onCounterOffer,
   onAcceptCounter,
+  onCompleteOrder,
 }: OrderChatModalProps) {
   const currentUser = getSession();
   const [newMessage, setNewMessage] = useState('');
@@ -359,6 +361,25 @@ export default function OrderChatModal({
               </Button>
             )}
           </div>
+        )}
+
+        {/* Завершение заказа продавцом */}
+        {isSeller && order.status === 'accepted' && onCompleteOrder && (
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-3">
+                <Icon name="PackageCheck" className="h-5 w-5 text-green-600" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-1">Заказ принят</h3>
+                  <p className="text-sm text-muted-foreground mb-3">Товар отправлен покупателю? Завершите заказ.</p>
+                  <Button onClick={onCompleteOrder} size="sm" className="bg-green-600 hover:bg-green-700">
+                    <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
+                    Завершить заказ
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
         </div>
         <div className="absolute bottom-0 left-0 right-2 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none z-10 opacity-0 transition-opacity" id="scroll-indicator-bottom" />
