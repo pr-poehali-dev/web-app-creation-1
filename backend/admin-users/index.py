@@ -95,6 +95,43 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         if method == 'GET':
             query_params = event.get('queryStringParameters', {})
+            user_id_param = query_params.get('id')
+            
+            if user_id_param:
+                cur.execute("""
+                    SELECT 
+                        u.id,
+                        u.email,
+                        u.first_name,
+                        u.last_name,
+                        u.middle_name,
+                        u.company_name,
+                        u.user_type,
+                        u.phone,
+                        u.inn,
+                        u.ogrnip,
+                        u.ogrn,
+                        u.created_at
+                    FROM t_p42562714_web_app_creation_1.users u
+                    WHERE u.id = %s AND u.removed_at IS NULL
+                """, (user_id_param,))
+                
+                user_data = cur.fetchone()
+                if not user_data:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'User not found'}),
+                        'isBase64Encoded': False
+                    }
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps(dict(user_data)),
+                    'isBase64Encoded': False
+                }
+            
             search = query_params.get('search', '')
             status_filter = query_params.get('status', 'all')
             type_filter = query_params.get('type', 'all')

@@ -38,49 +38,85 @@ interface AdminRequestsProps {
   onLogout: () => void;
 }
 
-interface Request {
+interface AdminRequest {
   id: string;
   title: string;
-  user_id?: string;
-  quantity?: number;
-  unit?: string;
-  price_per_unit?: number;
-  category: string;
-  subcategory?: string;
-  district?: string;
+  buyer: string;
+  buyerId?: string;
+  pricePerUnit: number;
+  budget: number;
+  quantity: number;
+  unit: string;
   status: 'active' | 'moderation' | 'rejected' | 'completed' | 'archived' | 'deleted';
   createdAt: string;
-  images?: { id: string; url: string; alt?: string }[];
 }
 
 export default function AdminRequests({ isAuthenticated, onLogout }: AdminRequestsProps) {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [filterBuyer, setFilterBuyer] = useState<string>('all');
+  const [selectedRequest, setSelectedRequest] = useState<AdminRequest | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [requests, setRequests] = useState<Request[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [requests, setRequests] = useState<AdminRequest[]>([]);
+  const [allRequests, setAllRequests] = useState<AdminRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadRequests();
-  }, [filterStatus]);
+    fetchRequests();
+  }, [searchQuery, filterStatus]);
 
-  const loadRequests = async () => {
+  useEffect(() => {
+    applyFilters();
+  }, [allRequests, filterBuyer]);
+
+  const fetchRequests = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch(
-        `https://functions.poehali.dev/a2ecd27a-6043-42df-9941-766c886acdb0?status=${filterStatus === 'all' ? 'all' : filterStatus}`
-      );
-      const data = await response.json();
-      setRequests(data.requests || []);
+      const params: any = {};
+      if (searchQuery) params.search = searchQuery;
+      if (filterStatus !== 'all') params.status = filterStatus;
+
+      const data = await requestsAPI.getAdminRequests(params);
+      
+      const mappedRequests: AdminRequest[] = (data.requests || []).map((req: any) => ({
+        id: req.id,
+        title: req.title,
+        buyer: req.buyer || 'Неизвестно',
+        buyerId: req.buyerId,
+        pricePerUnit: req.pricePerUnit || 0,
+        budget: req.budget || 0,
+        quantity: req.quantity || 0,
+        unit: req.unit || '',
+        status: req.status || 'active',
+        createdAt: req.createdAt
+      }));
+      
+      setAllRequests(mappedRequests);
+      setRequests(mappedRequests);
     } catch (error) {
-      console.error('Error loading requests:', error);
-      toast.error('Не удалось загрузить запросы');
+      console.error('Ошибка загрузки запросов:', error);
+      toast.error('Ошибка при загрузке запросов');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
+
+  const applyFilters = () => {
+    if (filterBuyer === 'all') {
+      setRequests(allRequests);
+    } else {
+      setRequests(allRequests.filter(req => req.buyerId === filterBuyer));
+    }
+  };
+
+  const uniqueBuyers = Array.from(
+    new Map(
+      allRequests
+        .filter(r => r.buyerId)
+        .map(r => [r.buyerId, { id: r.buyerId!, name: r.buyer }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -95,31 +131,42 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
       case 'archived':
         return <Badge variant="outline">Архив</Badge>;
       case 'deleted':
-        return <Badge variant="destructive">Удалён</Badge>;
+        return <Badge variant="outline" className="bg-gray-100">Удалено</Badge>;
       default:
         return null;
     }
   };
 
-  const handleApproveRequest = (request: Request) => {
-    toast.success(`Запрос "${request.title}" одобрен`);
+  const handleApproveRequest = async (request: AdminRequest) => {
+    try {
+      await requestsAPI.updateRequest(request.id, { status: 'active' });
+      toast.success(`Запрос "${request.title}" одобрен`);
+      fetchRequests();
+    } catch (error) {
+      toast.error('Ошибка при одобрении запроса');
+    }
   };
 
-  const handleRejectRequest = (request: Request) => {
-    toast.success(`Запрос "${request.title}" отклонен`);
+  const handleRejectRequest = async (request: AdminRequest) => {
+    try {
+      await requestsAPI.updateRequest(request.id, { status: 'rejected' });
+      toast.success(`Запрос "${request.title}" отклонен`);
+      fetchRequests();
+    } catch (error) {
+      toast.error('Ошибка при отклонении запроса');
+    }
   };
 
   const handleDeleteRequest = async () => {
     if (selectedRequest) {
       try {
-        await requestsAPI.deleteRequest(selectedRequest.id);
+        await requestsAPI.deleteAdminRequest(selectedRequest.id);
         toast.success(`Запрос "${selectedRequest.title}" удален`);
         setShowDeleteDialog(false);
         setSelectedRequest(null);
-        loadRequests();
+        fetchRequests();
       } catch (error) {
-        console.error('Error deleting request:', error);
-        toast.error('Не удалось удалить запрос');
+        toast.error('Ошибка при удалении запроса');
       }
     }
   };
@@ -147,27 +194,44 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
               <CardDescription>Всего запросов: {requests.length}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Поиск по названию или покупателю..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
+              <div className="mb-6 flex flex-col gap-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Поиск по названию или покупателю..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full md:w-[200px]">
+                      <SelectValue placeholder="Статус" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все статусы</SelectItem>
+                      <SelectItem value="active">Активные</SelectItem>
+                      <SelectItem value="moderation">На модерации</SelectItem>
+                      <SelectItem value="rejected">Отклоненные</SelectItem>
+                      <SelectItem value="completed">Завершенные</SelectItem>
+                      <SelectItem value="archived">Архивированные</SelectItem>
+                      <SelectItem value="deleted">Удаленные</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterBuyer} onValueChange={setFilterBuyer}>
+                    <SelectTrigger className="w-full md:w-[250px]">
+                      <SelectValue placeholder="Покупатель" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все покупатели</SelectItem>
+                      {uniqueBuyers.map(buyer => (
+                        <SelectItem key={buyer.id} value={buyer.id}>
+                          {buyer.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Статус" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Все статусы</SelectItem>
-                    <SelectItem value="active">Активные</SelectItem>
-                    <SelectItem value="moderation">На модерации</SelectItem>
-                    <SelectItem value="rejected">Отклоненные</SelectItem>
-                    <SelectItem value="completed">Завершенные</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="rounded-md border">
@@ -176,31 +240,45 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                     <TableRow>
                       <TableHead>Название</TableHead>
                       <TableHead>Покупатель</TableHead>
+                      <TableHead>Цена за ед.</TableHead>
                       <TableHead>Бюджет</TableHead>
+                      <TableHead>Количество</TableHead>
                       <TableHead>Статус</TableHead>
                       <TableHead>Дата создания</TableHead>
                       <TableHead className="text-right">Действия</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {loading ? (
+                    {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8">
                           Загрузка...
                         </TableCell>
                       </TableRow>
                     ) : requests.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           Запросы не найдены
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      requests.map((request) => (
+                    ) : requests.map((request) => (
                       <TableRow key={request.id}>
                         <TableCell className="font-medium">{request.title}</TableCell>
-                        <TableCell>{request.user_id || '-'}</TableCell>
-                        <TableCell>{request.price_per_unit ? `${request.price_per_unit.toLocaleString('ru-RU')} ₽` : '-'}</TableCell>
+                        <TableCell>
+                          {request.buyerId ? (
+                            <button
+                              onClick={() => navigate(`/profile?userId=${request.buyerId}`)}
+                              className="text-primary hover:underline"
+                            >
+                              {request.buyer}
+                            </button>
+                          ) : (
+                            <span className="text-muted-foreground">{request.buyer}</span>
+                          )}
+                        </TableCell>
+                        <TableCell>{request.pricePerUnit.toLocaleString('ru-RU')} ₽</TableCell>
+                        <TableCell className="font-semibold">{request.budget.toLocaleString('ru-RU')} ₽</TableCell>
+                        <TableCell>{request.quantity} {request.unit}</TableCell>
                         <TableCell>{getStatusBadge(request.status)}</TableCell>
                         <TableCell>{new Date(request.createdAt).toLocaleDateString('ru-RU')}</TableCell>
                         <TableCell className="text-right">
@@ -243,8 +321,7 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                           </div>
                         </TableCell>
                       </TableRow>
-                    )))
-                    }
+                    ))}
                   </TableBody>
                 </Table>
               </div>

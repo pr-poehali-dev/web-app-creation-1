@@ -1,4 +1,5 @@
 {
+  "admin-requests": "https://functions.poehali.dev/38891ce5-3c83-498b-9852-d9035873dd6a",
   "auctions-place-bid": "https://functions.poehali.dev/4f5819a8-90ce-4cf8-8bee-cbb08e81da8b",
   "auctions-update": "https://functions.poehali.dev/cb45d4d8-14b8-47c5-b800-5809a2cc784b",
   "reviews": "https://functions.poehali.dev/46c10293-ef1f-4f2e-8d35-e5556086482d",

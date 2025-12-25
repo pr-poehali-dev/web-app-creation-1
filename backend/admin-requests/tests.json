@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Get admin requests list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "requests": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

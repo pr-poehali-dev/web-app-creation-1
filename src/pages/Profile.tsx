@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -43,10 +43,16 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [currentUser, setCurrentUser] = useState(getSession());
+  const [searchParams] = useSearchParams();
+  const viewingUserId = searchParams.get('userId');
+  const sessionUser = getSession();
+  const isViewingOwnProfile = !viewingUserId || viewingUserId === String(sessionUser?.id);
+  
+  const [currentUser, setCurrentUser] = useState(sessionUser);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     firstName: currentUser?.firstName || '',
@@ -65,10 +71,55 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (!isAuthenticated || !currentUser) {
-      navigate('/login');
+    if (viewingUserId && viewingUserId !== String(sessionUser?.id)) {
+      fetchUserProfile(viewingUserId);
+    } else {
+      if (!isAuthenticated || !sessionUser) {
+        navigate('/login');
+      } else {
+        setCurrentUser(sessionUser);
+      }
     }
-  }, [isAuthenticated, currentUser, navigate]);
+  }, [viewingUserId, isAuthenticated, sessionUser, navigate]);
+
+  const fetchUserProfile = async (userId: string) => {
+    setIsLoadingProfile(true);
+    try {
+      const response = await fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${userId}`, {
+        headers: {
+          'X-User-Id': sessionUser?.id || 'anonymous',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+      
+      const data = await response.json();
+      setCurrentUser({
+        id: data.id,
+        email: data.email,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        middleName: data.middle_name,
+        companyName: data.company_name,
+        userType: data.user_type,
+        phone: data.phone,
+        inn: data.inn,
+        ogrnip: data.ogrnip,
+        ogrn: data.ogrn,
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить профиль пользователя',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
 
   useEffect(() => {
     if (currentUser) {
@@ -296,7 +347,9 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
               Назад
             </Button>
-            <h1 className="text-3xl font-bold text-foreground">Мой профиль</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {isViewingOwnProfile ? 'Мой профиль' : 'Профиль пользователя'}
+            </h1>
           </div>
 
           <div className="grid gap-6">
@@ -315,65 +368,69 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               </CardHeader>
             </Card>
 
-            <ProfileVerificationCard />
+            {isViewingOwnProfile && <ProfileVerificationCard />}
 
-            <Card>
-              <CardHeader>
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">Быстрые действия</h3>
-                    <p className="text-sm text-muted-foreground">Создавайте предложения и запросы</p>
+            {isViewingOwnProfile && (
+              <Card>
+                <CardHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Быстрые действия</h3>
+                      <p className="text-sm text-muted-foreground">Создавайте предложения и запросы</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Link to="/create-offer">
+                        <Button className="w-full flex items-center justify-center gap-2">
+                          <Icon name="Plus" className="h-4 w-4" />
+                          Создать предложение
+                        </Button>
+                      </Link>
+                      <Link to="/create-request">
+                        <Button className="w-full flex items-center justify-center gap-2">
+                          <Icon name="Plus" className="h-4 w-4" />
+                          Создать запрос
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Link to="/create-offer">
-                      <Button className="w-full flex items-center justify-center gap-2">
-                        <Icon name="Plus" className="h-4 w-4" />
-                        Создать предложение
-                      </Button>
-                    </Link>
-                    <Link to="/create-request">
-                      <Button className="w-full flex items-center justify-center gap-2">
-                        <Icon name="Plus" className="h-4 w-4" />
-                        Создать запрос
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
+                </CardHeader>
+              </Card>
+            )}
 
             <ProfileInfoCard
               email={currentUser.email}
-              isEditing={isEditing}
+              isEditing={isViewingOwnProfile && isEditing}
               formData={formData}
               errors={errors}
               isSaving={isSaving}
               userType={currentUser.userType}
-              onEdit={() => setIsEditing(true)}
+              onEdit={isViewingOwnProfile ? () => setIsEditing(true) : undefined}
               onSave={handleSave}
               onCancel={handleCancel}
               onInputChange={handleInputChange}
             />
 
-            <ProfileSecurityCard
-              isChangingPassword={isChangingPassword}
-              passwordData={passwordData}
-              passwordErrors={passwordErrors}
-              isSaving={isSaving}
-              lastLoginDate={currentUser.createdAt || ''}
-              formatDate={formatDate}
-              onChangePassword={() => setIsChangingPassword(true)}
-              onPasswordSave={handlePasswordSave}
-              onCancelPassword={handleCancelPassword}
-              onPasswordChange={handlePasswordChange}
-            />
+            {isViewingOwnProfile && (
+              <ProfileSecurityCard
+                isChangingPassword={isChangingPassword}
+                passwordData={passwordData}
+                passwordErrors={passwordErrors}
+                isSaving={isSaving}
+                lastLoginDate={currentUser.createdAt || ''}
+                formatDate={formatDate}
+                onChangePassword={() => setIsChangingPassword(true)}
+                onPasswordSave={handlePasswordSave}
+                onCancelPassword={handleCancelPassword}
+                onPasswordChange={handlePasswordChange}
+              />
+            )}
 
             <ProfileStatsCard
               registrationDate={currentUser.createdAt || ''}
               formatDate={formatDate}
             />
 
-            {currentUser.email === 'doydum-invest@mail.ru' && (
+            {isViewingOwnProfile && currentUser.email === 'doydum-invest@mail.ru' && (
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">

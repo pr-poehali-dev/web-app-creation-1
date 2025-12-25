@@ -5,6 +5,7 @@ import func2url from '../../backend/func2url.json';
 const OFFERS_API = func2url.offers;
 const ADMIN_OFFERS_API = func2url['admin-offers'];
 const REQUESTS_API = func2url.requests;
+const ADMIN_REQUESTS_API = func2url['admin-requests'];
 const ORDERS_API = func2url.orders;
 const AUCTIONS_LIST_API = func2url['auctions-list'];
 const AUCTIONS_MY_API = func2url['auctions-my'];
@@ -303,6 +304,49 @@ export const requestsAPI = {
         'Content-Type': 'application/json',
         'X-User-Id': userId,
       },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete request');
+    }
+    
+    return response.json();
+  },
+
+  async getAdminRequests(params?: {
+    search?: string;
+    status?: string;
+  }): Promise<RequestsListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const url = `${ADMIN_REQUESTS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const userId = getUserId();
+    
+    const response = await fetch(url, {
+      headers: {
+        'X-User-Id': userId || 'anonymous',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch admin requests');
+    }
+    
+    return response.json();
+  },
+
+  async deleteAdminRequest(id: string): Promise<{ message: string }> {
+    const userId = getUserId();
+
+    const response = await fetch(ADMIN_REQUESTS_API, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ requestId: id }),
     });
     
     if (!response.ok) {
