@@ -44,6 +44,7 @@ export default function OrderChatModal({
   const [counterPrice, setCounterPrice] = useState(order.pricePerUnit.toString());
   const [counterMessage, setCounterMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
   const isBuyer = currentUser?.id?.toString() === order.buyerId?.toString();
   const isSeller = currentUser?.id?.toString() === order.sellerId?.toString();
 
@@ -52,6 +53,38 @@ export default function OrderChatModal({
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const container = contentScrollRef.current;
+      if (!container) return;
+
+      const topIndicator = document.getElementById('scroll-indicator-top');
+      const bottomIndicator = document.getElementById('scroll-indicator-bottom');
+      
+      const isScrolledFromTop = container.scrollTop > 20;
+      const isScrolledFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight > 20;
+
+      if (topIndicator) {
+        topIndicator.style.opacity = isScrolledFromTop ? '1' : '0';
+      }
+      if (bottomIndicator) {
+        bottomIndicator.style.opacity = isScrolledFromBottom ? '1' : '0';
+      }
+    };
+
+    const container = contentScrollRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      handleScroll(); // Check initial state
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [isOpen, showCounterForm]);
 
   const handleSend = () => {
     if (newMessage.trim()) {
@@ -78,7 +111,12 @@ export default function OrderChatModal({
           <DialogTitle>Заказ #{order.id.slice(0, 8)}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2 space-y-3 min-h-0">
+        <div 
+          ref={contentScrollRef}
+          className="flex-1 overflow-y-auto pr-2 space-y-3 min-h-0 relative scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400"
+        >
+        <div className="absolute top-0 left-0 right-2 h-8 bg-gradient-to-b from-background to-transparent pointer-events-none z-10 opacity-0 transition-opacity" id="scroll-indicator-top" />
+        <div className="relative z-0 space-y-3">
         <Card className="bg-muted/50">
           <CardContent className="pt-4 space-y-2">
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -322,6 +360,8 @@ export default function OrderChatModal({
             )}
           </div>
         )}
+        </div>
+        <div className="absolute bottom-0 left-0 right-2 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none z-10 opacity-0 transition-opacity" id="scroll-indicator-bottom" />
         </div>
 
         <div className="flex-shrink-0 flex flex-col border-t pt-3 mt-3 space-y-3">
