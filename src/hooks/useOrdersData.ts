@@ -35,8 +35,8 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
     if (!isPolling || !selectedOrder) return;
 
     const interval = setInterval(() => {
-      loadMessages(selectedOrder.id, true);
-    }, 3000);
+      loadMessages(selectedOrder.id, false);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [isPolling, selectedOrder]);
@@ -104,18 +104,22 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
         isRead: msg.is_read || msg.isRead || false,
       }));
       
-      const prevCount = messages.length;
-      const newCount = mappedMessages.length;
-      
-      setMessages(mappedMessages);
-      
-      if (!silent && newCount > prevCount && prevCount > 0) {
-        playNotificationSound();
-        toast({
-          title: '💬 Новое сообщение',
-          description: 'Получено новое сообщение в чате заказа',
-        });
-      }
+      setMessages(prevMessages => {
+        const prevCount = prevMessages.length;
+        const newCount = mappedMessages.length;
+        
+        if (newCount > prevCount && prevCount > 0) {
+          playNotificationSound();
+          if (!silent) {
+            toast({
+              title: '💬 Новое сообщение',
+              description: 'Получено новое сообщение в чате заказа',
+            });
+          }
+        }
+        
+        return mappedMessages;
+      });
     } catch (error) {
       console.error('Error loading messages:', error);
       if (!silent) {
