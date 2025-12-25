@@ -122,6 +122,7 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
         counterTotalAmount: order.counter_total_amount || order.counterTotalAmount,
         counterOfferMessage: order.counter_offer_message || order.counterOfferMessage,
         counterOfferedAt: order.counter_offered_at || order.counterOfferedAt ? new Date(order.counter_offered_at || order.counterOfferedAt) : undefined,
+        counterOfferedBy: order.counter_offered_by || order.counterOfferedBy,
         buyerAcceptedCounter: order.buyer_accepted_counter || order.buyerAcceptedCounter,
         buyerId: order.buyer_id?.toString() || order.buyerId,
         buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,

@@ -19,6 +19,7 @@ export interface Order {
   counterTotalAmount?: number;
   counterOfferMessage?: string;
   counterOfferedAt?: Date;
+  counterOfferedBy?: 'buyer' | 'seller';
   buyerAcceptedCounter?: boolean;
   deliveryType: 'pickup' | 'delivery';
   deliveryAddress?: string;

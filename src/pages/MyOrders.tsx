@@ -90,7 +90,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onSendMessage={handleSendMessage}
           onAcceptOrder={currentUser?.id?.toString() === selectedOrder.sellerId ? () => handleAcceptOrder() : undefined}
           onCounterOffer={handleCounterOffer}
-          onAcceptCounter={currentUser?.id?.toString() === selectedOrder.sellerId ? handleAcceptCounter : undefined}
+          onAcceptCounter={handleAcceptCounter}
           onCompleteOrder={currentUser?.id?.toString() === selectedOrder.sellerId ? handleCompleteOrder : undefined}
         />
       )}

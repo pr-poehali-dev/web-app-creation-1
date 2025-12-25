@@ -155,34 +155,44 @@ export default function OrderChatModal({
               </div>
             )}
 
-            {/* Предложение цены от покупателя */}
+            {/* Встречное предложение - показываем тому кто должен ответить */}
             {order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && (
-              <Card className="bg-blue-50 border-blue-200">
+              <Card className={order.counterOfferedBy === 'buyer' ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}>
                 <CardContent className="pt-4">
                   <div className="flex items-start gap-3">
-                    <Icon name="DollarSign" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <Icon name="DollarSign" className={`h-5 w-5 mt-0.5 flex-shrink-0 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-sm mb-1">
-                        {isSeller ? 'Предложение от покупателя' : 'Ваше предложение цены'}
+                        {order.counterOfferedBy === 'buyer' 
+                          ? (isSeller ? 'Предложение от покупателя' : 'Ваше предложение')
+                          : (isBuyer ? 'Встречное предложение от продавца' : 'Ваше встречное предложение')}
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-2">{order.counterOfferMessage || 'Покупатель предложил свою цену'}</p>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {order.counterOfferMessage || (order.counterOfferedBy === 'buyer' ? 'Покупатель предложил свою цену' : 'Продавец предложил встречную цену')}
+                      </p>
                       <div className="flex flex-wrap items-center gap-2 text-sm mb-2">
                         <div>
-                          <span className="text-muted-foreground">Цена продавца:</span>{' '}
+                          <span className="text-muted-foreground">
+                            {order.counterOfferedBy === 'buyer' ? 'Цена продавца:' : 'Предложение покупателя:'}
+                          </span>{' '}
                           <span className="font-medium">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
                         </div>
                         <Icon name="ArrowRight" className="h-4 w-4 flex-shrink-0" />
                         <div>
-                          <span className="text-muted-foreground">Предложение:</span>{' '}
-                          <span className="font-bold text-blue-600">
+                          <span className="text-muted-foreground">
+                            {order.counterOfferedBy === 'buyer' ? 'Предложение:' : 'Встречное предложение:'}
+                          </span>{' '}
+                          <span className={`font-bold ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
                             {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
                           </span>
                         </div>
                       </div>
                       <div className="text-sm font-medium mb-3">
-                        Сумма по предложению: <span className="text-blue-600">{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
+                        Сумма по предложению: <span className={order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}>{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
                       </div>
-                      {isSeller && onAcceptCounter && (
+                      
+                      {/* Кнопки для продавца при предложении от покупателя */}
+                      {isSeller && order.counterOfferedBy === 'buyer' && onAcceptCounter && (
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
                             <Icon name="Check" className="mr-1.5 h-4 w-4" />
@@ -198,8 +208,30 @@ export default function OrderChatModal({
                           </Button>
                         </div>
                       )}
-                      {isBuyer && (
-                        <Badge className="mt-2 bg-yellow-500">Ожидает ответа продавца</Badge>
+                      
+                      {/* Кнопки для покупателя при встречном предложении от продавца */}
+                      {isBuyer && order.counterOfferedBy === 'seller' && onAcceptCounter && (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
+                            <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                            Принять предложение продавца
+                          </Button>
+                          <Button 
+                            onClick={() => setShowCounterForm(true)} 
+                            variant="outline" 
+                            size="sm"
+                          >
+                            <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                            Новое предложение
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {/* Статус ожидания */}
+                      {((isBuyer && order.counterOfferedBy === 'buyer') || (isSeller && order.counterOfferedBy === 'seller')) && (
+                        <Badge className="mt-2 bg-yellow-500">
+                          Ожидает ответа {order.counterOfferedBy === 'buyer' ? 'продавца' : 'покупателя'}
+                        </Badge>
                       )}
                     </div>
                   </div>
