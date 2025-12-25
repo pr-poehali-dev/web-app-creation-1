@@ -151,6 +151,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     user_headers = event.get('headers', {})
     user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
     
+    print(f"[GET_USER_ORDERS] user_id={user_id}, headers={user_headers}")
+    
     if not user_id:
         return {
             'statusCode': 401,
@@ -162,6 +164,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     params = event.get('queryStringParameters', {}) or {}
     order_type = params.get('type', 'all')
     status = params.get('status', 'all')
+    
+    print(f"[GET_USER_ORDERS] type={order_type}, status={status}")
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -186,8 +190,12 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     
     sql += " ORDER BY order_date DESC"
     
+    print(f"[GET_USER_ORDERS] SQL: {sql}")
+    
     cur.execute(sql)
     orders = cur.fetchall()
+    
+    print(f"[GET_USER_ORDERS] Found {len(orders)} orders")
     
     result = []
     for order in orders:
