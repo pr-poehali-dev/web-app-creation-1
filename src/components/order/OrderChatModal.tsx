@@ -137,21 +137,13 @@ export default function OrderChatModal({
               </CardContent>
             </Card>
 
-            {/* Кнопки действий для покупателя - предложить свою цену или принять */}
-            {isBuyer && order.status === 'new' && !showCounterForm && (
+            {/* Кнопки действий для покупателя - предложить свою цену */}
+            {isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && (
               <div className="flex gap-2">
-                {onAcceptOrder && (
-                  <Button onClick={onAcceptOrder} size="sm" className="bg-green-600 hover:bg-green-700 flex-1">
-                    <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                    Принять цену продавца
-                  </Button>
-                )}
-                {onCounterOffer && (
-                  <Button onClick={() => setShowCounterForm(true)} variant="outline" size="sm" className="flex-1">
-                    <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-                    Предложить свою цену
-                  </Button>
-                )}
+                <Button onClick={() => setShowCounterForm(true)} variant="outline" size="sm" className="flex-1">
+                  <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                  Предложить свою цену
+                </Button>
               </div>
             )}
 
@@ -240,7 +232,7 @@ export default function OrderChatModal({
             )}
 
             {/* Форма предложения цены от покупателя */}
-            {showCounterForm && isBuyer && order.status === 'new' && (
+            {showCounterForm && isBuyer && (order.status === 'new' || order.status === 'negotiating') && (
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="pt-4 space-y-3">
                   <h3 className="font-semibold text-sm">Предложить свою цену</h3>
