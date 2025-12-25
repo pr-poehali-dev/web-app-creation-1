@@ -43,7 +43,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
       let order = orders.find(o => o.id === orderId);
       
       if (!order) {
-        await loadOrders();
+        await loadOrders(true);
         await new Promise(resolve => setTimeout(resolve, 200));
         order = orders.find(o => o.id === orderId);
       }

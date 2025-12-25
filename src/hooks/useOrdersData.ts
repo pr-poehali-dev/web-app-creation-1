@@ -16,6 +16,7 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   const playNotificationSound = () => {
     const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjsj6sD5+GfJMKAAAAASUVORK5CYII=');
@@ -28,10 +29,10 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       navigate('/login');
       return;
     }
-    loadOrders();
+    loadOrders(true);
 
     const ordersPollInterval = setInterval(() => {
-      loadOrders();
+      loadOrders(false);
     }, 3000);
 
     return () => clearInterval(ordersPollInterval);
@@ -100,9 +101,11 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
     };
   }, [isPolling, selectedOrder]);
 
-  const loadOrders = async () => {
+  const loadOrders = async (showLoader = false) => {
     try {
-      setIsLoading(true);
+      if (showLoader) {
+        setIsLoading(true);
+      }
       const orderType = activeTab === 'buyer' ? 'purchase' : 'sale';
       const response = await ordersAPI.getAll(orderType);
       
@@ -137,15 +140,23 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       }));
       
       setOrders(mappedOrders);
+      
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
     } catch (error) {
       console.error('Error loading orders:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить заказы',
-        variant: 'destructive',
-      });
+      if (showLoader) {
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить заказы',
+          variant: 'destructive',
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (showLoader) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -214,7 +225,7 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       });
 
       setIsChatOpen(false);
-      await loadOrders();
+      await loadOrders(false);
     } catch (error: any) {
       console.error('Error accepting order:', error);
       toast({
@@ -239,7 +250,7 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
         description: 'Покупатель получит уведомление',
       });
 
-      await loadOrders();
+      await loadOrders(false);
       
       setTimeout(() => {
         const updatedOrder = orders.find(o => o.id === selectedOrder.id);
@@ -268,7 +279,7 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
         description: 'Продавец получит уведомление',
       });
 
-      await loadOrders();
+      await loadOrders(false);
       
       setTimeout(() => {
         const updatedOrder = orders.find(o => o.id === selectedOrder.id);
@@ -298,7 +309,7 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       });
 
       setIsChatOpen(false);
-      await loadOrders();
+      await loadOrders(false);
     } catch (error) {
       console.error('Error completing order:', error);
       toast({
