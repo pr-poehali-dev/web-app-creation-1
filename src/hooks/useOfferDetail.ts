@@ -217,34 +217,57 @@ export function useOfferDetail(id: string | undefined) {
 
       const result = await response.json();
 
+      // Загружаем полный заказ с данными продавца из БД
+      const orderResponse = await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${result.id}`, {
+        headers: {
+          'X-User-Id': currentUser.id?.toString() || '',
+        },
+      });
+
+      if (!orderResponse.ok) {
+        throw new Error('Failed to load order details');
+      }
+
+      const orderData = await orderResponse.json();
+
       const newOrder: Order = {
-        id: result.id,
-        offerId: offer.id,
-        offerTitle: offer.title,
+        id: orderData.id,
+        offerId: orderData.offer_id,
+        offerTitle: orderData.title,
         offerImage: offer.images[0]?.url,
-        buyerId: currentUser.id?.toString() || '',
-        buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
-        buyerEmail: currentUser.email,
-        buyerPhone: currentUser.phone || '',
-        sellerId: offer.userId,
-        sellerName: offer.seller?.name || 'Продавец',
-        sellerEmail: offer.seller?.email || '',
-        sellerPhone: offer.seller?.phone || '',
-        quantity: orderFormData.quantity,
-        unit: offer.unit,
-        pricePerUnit: offer.pricePerUnit,
-        totalAmount: orderFormData.quantity * offer.pricePerUnit,
-        deliveryType: orderFormData.deliveryType,
-        deliveryAddress: orderFormData.address,
-        comment: orderFormData.comment,
-        status: 'new',
-        createdAt: new Date(result.orderDate),
+        buyerId: orderData.buyer_id?.toString() || '',
+        buyerName: orderData.buyer_name,
+        buyerEmail: orderData.buyer_email,
+        buyerPhone: orderData.buyer_phone,
+        sellerId: orderData.seller_id?.toString() || '',
+        sellerName: orderData.seller_name || 'Продавец',
+        sellerEmail: orderData.seller_email || '',
+        sellerPhone: orderData.seller_phone || '',
+        quantity: orderData.quantity,
+        unit: orderData.unit,
+        pricePerUnit: orderData.price_per_unit,
+        totalAmount: orderData.total_amount,
+        deliveryType: orderData.delivery_type,
+        deliveryAddress: orderData.delivery_address,
+        comment: orderData.buyer_comment,
+        status: orderData.status,
+        createdAt: new Date(orderData.createdAt || orderData.created_at),
       };
       
       setIsOrderModalOpen(false);
       setCreatedOrder(newOrder);
       
       await loadMessages(result.id);
+      
+      // Уведомляем продавца о новом заказе
+      notifyNewOrder(
+        newOrder.sellerId,
+        newOrder.offerTitle,
+        newOrder.buyerName,
+        newOrder.quantity,
+        newOrder.unit,
+        newOrder.id
+      );
       
       toast({
         title: 'Заказ оформлен!',
