@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "name": "Get admin statistics",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "totalUsers": "number",
+        "activeUsers": "number",
+        "verifiedUsers": "number",
+        "activeOffers": "number",
+        "activeRequests": "number",
+        "activeAuctions": "number",
+        "completedOrders": "number",
+        "pendingVerifications": "number"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

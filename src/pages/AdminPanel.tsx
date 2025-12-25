@@ -65,33 +65,33 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       setLoading(true);
       const userId = localStorage.getItem('userId');
       
-      // Загружаем заявки на верификацию
-      const verificationsResponse = await fetch('https://functions.poehali.dev/bdff7262-3acc-4253-afcc-26ef5ef8b778?status=pending', {
+      // Загружаем статистику из нового API
+      const statsResponse = await fetch('https://functions.poehali.dev/a764d5ef-b512-4cbd-b25b-36a52baa08b7', {
         headers: {
           'X-User-Id': userId || '',
         },
       });
       
-      let pendingCount = 0;
-      let resubmittedCount = 0;
-      
-      if (verificationsResponse.ok) {
-        const data = await verificationsResponse.json();
-        pendingCount = data.verifications?.length || 0;
-        resubmittedCount = data.verifications?.filter((v: any) => v.isResubmitted).length || 0;
+      if (statsResponse.ok) {
+        const data = await statsResponse.json();
+        setStats({
+          totalUsers: data.totalUsers || 0,
+          verifiedUsers: data.verifiedUsers || 0,
+          pendingVerifications: data.pendingVerifications || 0,
+          resubmittedVerifications: 0,
+          totalOffers: data.activeOffers || 0,
+          totalRequests: data.activeRequests || 0,
+          totalAuctions: data.activeAuctions || 0,
+          activeContracts: 0,
+          totalReviews: 0,
+        });
+      } else {
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить статистику',
+          variant: 'destructive',
+        });
       }
-      
-      setStats({
-        totalUsers: 0,
-        verifiedUsers: 0,
-        pendingVerifications: pendingCount,
-        resubmittedVerifications: resubmittedCount,
-        totalOffers: 0,
-        totalRequests: 0,
-        totalAuctions: 0,
-        activeContracts: 0,
-        totalReviews: 0,
-      });
     } catch (error) {
       toast({
         title: 'Ошибка',
@@ -228,10 +228,31 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
 
   const quickStats = [
     {
-      title: 'На модерации',
+      title: 'Всего пользователей',
+      value: stats.totalUsers,
+      icon: 'Users',
+      color: 'text-blue-600',
+      change: `Верифицировано: ${stats.verifiedUsers}`
+    },
+    {
+      title: 'Активные предложения',
+      value: stats.totalOffers,
+      icon: 'Package',
+      color: 'text-purple-600',
+      change: 'Доступно для покупки'
+    },
+    {
+      title: 'Активные запросы',
+      value: stats.totalRequests,
+      icon: 'FileText',
+      color: 'text-orange-600',
+      change: 'От покупателей'
+    },
+    {
+      title: 'На верификации',
       value: stats.pendingVerifications,
       icon: 'Clock',
-      color: 'text-orange-600',
+      color: 'text-red-600',
       change: 'Требуется проверка'
     }
   ];
