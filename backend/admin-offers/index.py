@@ -105,45 +105,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cur = conn.cursor()
         
         if method == 'GET':
-            query_params = event.get('queryStringParameters', {})
-            search = query_params.get('search', '')
-            status_filter = query_params.get('status', 'all')
+            query_params = event.get('queryStringParameters') or {}
+            search = query_params.get('search', '') if query_params else ''
+            status_filter = query_params.get('status', 'all') if query_params else 'all'
+            
+            print(f"GET: query_params={query_params}, search={search}, status_filter={status_filter}")
             
             where_clauses = []
             params = []
             
             if search:
                 search_pattern = f"%{search}%"
-                where_clauses.append("(c.title ILIKE %s OR c.product_name ILIKE %s OR u.company_name ILIKE %s OR u.first_name ILIKE %s)")
+                where_clauses.append("(o.title ILIKE %s OR o.description ILIKE %s OR u.company_name ILIKE %s OR u.first_name ILIKE %s)")
                 params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
             
             if status_filter != 'all':
-                where_clauses.append("c.status = %s")
+                where_clauses.append("o.status = %s")
                 params.append(status_filter)
             
             where_sql = ' AND '.join(where_clauses) if where_clauses else '1=1'
             
             query = f"""
                 SELECT 
-                    c.id,
-                    c.title,
-                    c.product_name,
-                    c.price_per_unit,
-                    c.quantity,
-                    c.unit,
-                    c.status,
-                    c.created_at,
-                    c.seller_id,
+                    o.id,
+                    o.title,
+                    o.description as product_name,
+                    o.price_per_unit,
+                    o.quantity,
+                    o.unit,
+                    o.status,
+                    o.created_at,
+                    o.user_id as seller_id,
                     COALESCE(u.company_name, CONCAT(u.first_name, ' ', u.last_name)) as seller_name
-                FROM contracts c
-                LEFT JOIN users u ON c.seller_id = u.id
+                FROM t_p42562714_web_app_creation_1.offers o
+                LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
                 WHERE {where_sql}
-                ORDER BY c.created_at DESC
+                ORDER BY o.created_at DESC
                 LIMIT 100
             """
             
+            print(f"GET: Executing query with where_sql='{where_sql}', params={params}")
             cur.execute(query, tuple(params))
             offers = cur.fetchall()
+            print(f"GET: Found {len(offers)} offers")
             
             offers_list = []
             for offer in offers:
@@ -184,7 +188,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             if action == 'approve':
-                cur.execute(f"UPDATE contracts SET status = 'open' WHERE id = %s", (offer_id,))
+                cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET status = 'active' WHERE id = %s", (offer_id,))
                 conn.commit()
                 return {
                     'statusCode': 200,
@@ -194,7 +198,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             elif action == 'reject':
-                cur.execute(f"UPDATE contracts SET status = 'cancelled' WHERE id = %s", (offer_id,))
+                cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET status = 'rejected' WHERE id = %s", (offer_id,))
                 conn.commit()
                 return {
                     'statusCode': 200,
@@ -216,7 +220,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             print(f"DELETE: Attempting to delete offer with ID: {offer_id}")
-            cur.execute("DELETE FROM contracts WHERE id = %s::uuid", (offer_id,))
+            cur.execute("DELETE FROM t_p42562714_web_app_creation_1.offers WHERE id = %s::uuid", (offer_id,))
             deleted_count = cur.rowcount
             conn.commit()
             print(f"DELETE: Deleted {deleted_count} rows")
