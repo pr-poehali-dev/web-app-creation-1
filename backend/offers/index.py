@@ -116,7 +116,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = "SELECT id, title, description, category, district, price_per_unit, quantity, unit, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 100"
+        sql = "SELECT id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 100"
         
         cur.execute(sql)
         offers = cur.fetchall()
@@ -143,6 +143,8 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'category': offer.get('category'),
                 'district': offer.get('district'),
                 'quantity': offer.get('quantity'),
+                'soldQuantity': offer.get('sold_quantity', 0) or 0,
+                'reservedQuantity': offer.get('reserved_quantity', 0) or 0,
                 'unit': offer.get('unit'),
                 'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
@@ -231,6 +233,8 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     offer_dict['pricePerUnit'] = float(price_per_unit) if price_per_unit is not None else None
     
     offer_dict['minOrderQuantity'] = offer_dict.pop('min_order_quantity', None)
+    offer_dict['soldQuantity'] = offer_dict.pop('sold_quantity', 0) or 0
+    offer_dict['reservedQuantity'] = offer_dict.pop('reserved_quantity', 0) or 0
     offer_dict['hasVAT'] = offer_dict.pop('has_vat', False)
     
     vat_rate = offer_dict.pop('vat_rate', None)

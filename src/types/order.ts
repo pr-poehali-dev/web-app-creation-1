@@ -15,10 +15,15 @@ export interface Order {
   unit: string;
   pricePerUnit: number;
   totalAmount: number;
+  counterPricePerUnit?: number;
+  counterTotalAmount?: number;
+  counterOfferMessage?: string;
+  counterOfferedAt?: Date;
+  buyerAcceptedCounter?: boolean;
   deliveryType: 'pickup' | 'delivery';
   deliveryAddress?: string;
   comment?: string;
-  status: 'new' | 'pending' | 'accepted' | 'rejected' | 'completed';
+  status: 'new' | 'pending' | 'accepted' | 'rejected' | 'completed' | 'negotiating';
   createdAt: Date;
   acceptedAt?: Date;
 }

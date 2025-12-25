@@ -80,6 +80,11 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         unit: order.unit,
         pricePerUnit: order.price_per_unit || order.pricePerUnit,
         totalAmount: order.total_amount || order.totalAmount,
+        counterPricePerUnit: order.counter_price_per_unit || order.counterPricePerUnit,
+        counterTotalAmount: order.counter_total_amount || order.counterTotalAmount,
+        counterOfferMessage: order.counter_offer_message || order.counterOfferMessage,
+        counterOfferedAt: order.counter_offered_at || order.counterOfferedAt ? new Date(order.counter_offered_at || order.counterOfferedAt) : undefined,
+        buyerAcceptedCounter: order.buyer_accepted_counter || order.buyerAcceptedCounter,
         buyerId: order.buyer_id?.toString() || order.buyerId,
         buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
         buyerPhone: order.buyer_phone || order.buyerPhone,
@@ -134,11 +139,14 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     }
   };
 
-  const handleAcceptOrder = async (orderId: string) => {
+  const handleAcceptOrder = async (orderId?: string) => {
+    const orderToAccept = orderId || selectedOrder?.id;
+    if (!orderToAccept) return;
+
     try {
-      await ordersAPI.updateOrder(orderId, { status: 'accepted' });
+      await ordersAPI.updateOrder(orderToAccept, { status: 'accepted' });
       
-      const order = orders.find(o => o.id === orderId);
+      const order = orders.find(o => o.id === orderToAccept);
       if (order) {
         notifyOrderAccepted(
           order.buyerId,
@@ -150,15 +158,65 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
 
       toast({
         title: 'Заказ принят',
-        description: 'Заказ успешно принят в работу',
+        description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
+      setIsChatOpen(false);
       await loadOrders();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error accepting order:', error);
       toast({
         title: 'Ошибка',
-        description: 'Не удалось принять заказ',
+        description: error.message || 'Не удалось принять заказ',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCounterOffer = async (price: number, message: string) => {
+    if (!selectedOrder) return;
+
+    try {
+      await ordersAPI.updateOrder(selectedOrder.id, { 
+        counterPrice: price,
+        counterMessage: message 
+      });
+
+      toast({
+        title: 'Встречное предложение отправлено',
+        description: 'Покупатель получит уведомление',
+      });
+
+      await loadOrders();
+      await loadMessages(selectedOrder.id);
+    } catch (error) {
+      console.error('Error sending counter offer:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить встречное предложение',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleAcceptCounter = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      await ordersAPI.updateOrder(selectedOrder.id, { acceptCounter: true });
+
+      toast({
+        title: 'Встречное предложение принято',
+        description: 'Продавец получит уведомление',
+      });
+
+      setIsChatOpen(false);
+      await loadOrders();
+    } catch (error) {
+      console.error('Error accepting counter offer:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось принять встречное предложение',
         variant: 'destructive',
       });
     }
@@ -218,6 +276,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         return <Badge variant="outline" className="bg-blue-50">Новый</Badge>;
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50">Ожидает</Badge>;
+      case 'negotiating':
+        return <Badge variant="outline" className="bg-orange-50">Торг</Badge>;
       case 'accepted':
         return <Badge variant="outline" className="bg-green-50">Принят</Badge>;
       case 'rejected':
@@ -392,6 +452,9 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           order={selectedOrder}
           messages={messages}
           onSendMessage={handleSendMessage}
+          onAcceptOrder={() => handleAcceptOrder()}
+          onCounterOffer={handleCounterOffer}
+          onAcceptCounter={handleAcceptCounter}
         />
       )}
     </div>

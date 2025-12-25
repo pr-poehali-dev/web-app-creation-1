@@ -73,8 +73,8 @@ export default function OfferDetailContent({
   onSendMessage,
   navigate,
 }: OfferDetailContentProps) {
-  const remainingQuantity = offer.quantity - (offer.orderedQuantity || 0);
-  const totalPrice = offer.pricePerUnit * offer.quantity;
+  const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
+  const totalPrice = offer.pricePerUnit * remainingQuantity;
   const similarOffers: Offer[] = [];
 
   return (

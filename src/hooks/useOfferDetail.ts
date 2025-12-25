@@ -38,6 +38,8 @@ export function useOfferDetail(id: string | undefined) {
           ...data,
           pricePerUnit: data.price_per_unit || data.pricePerUnit || 0,
           minOrderQuantity: data.min_order_quantity || data.minOrderQuantity,
+          soldQuantity: data.sold_quantity || data.soldQuantity || 0,
+          reservedQuantity: data.reserved_quantity || data.reservedQuantity || 0,
           vatRate: data.vat_rate || data.vatRate,
           hasVAT: data.has_vat !== undefined ? data.has_vat : data.hasVAT,
           isPremium: data.is_premium !== undefined ? data.is_premium : data.isPremium,

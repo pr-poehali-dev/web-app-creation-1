@@ -388,15 +388,90 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     }
 
 def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    '''Обновить статус заказа'''
+    '''Обновить статус заказа, встречное предложение или принять заказ'''
     body = json.loads(event.get('body', '{}'))
     
     conn = get_db_connection()
     cur = conn.cursor()
+    schema = get_schema()
+    order_id_escaped = order_id.replace("'", "''")
+    
+    # Получаем текущий заказ
+    cur.execute(f"SELECT * FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    order = cur.fetchone()
+    
+    if not order:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': headers,
+            'body': json.dumps({'error': 'Order not found'}),
+            'isBase64Encoded': False
+        }
     
     updates = []
     
-    if 'status' in body:
+    # Встречное предложение от продавца
+    if 'counterPrice' in body:
+        counter_price = float(body['counterPrice'])
+        quantity = order['quantity']
+        counter_total = counter_price * quantity
+        counter_message = body.get('counterMessage', '').replace("'", "''")
+        
+        updates.append(f"counter_price_per_unit = {counter_price}")
+        updates.append(f"counter_total_amount = {counter_total}")
+        updates.append(f"counter_offer_message = '{counter_message}'")
+        updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
+        updates.append(f"status = 'negotiating'")
+    
+    # Покупатель принимает встречное предложение
+    if 'acceptCounter' in body and body['acceptCounter']:
+        updates.append(f"buyer_accepted_counter = TRUE")
+        updates.append(f"price_per_unit = counter_price_per_unit")
+        updates.append(f"total_amount = counter_total_amount")
+        updates.append(f"status = 'accepted'")
+    
+    # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
+    if 'status' in body and body['status'] == 'accepted':
+        # Проверяем доступное количество в предложении
+        offer_id_escaped = str(order['offer_id']).replace("'", "''")
+        cur.execute(f"""
+            SELECT quantity, sold_quantity, reserved_quantity 
+            FROM {schema}.offers 
+            WHERE id = '{offer_id_escaped}'
+        """)
+        offer = cur.fetchone()
+        
+        if offer:
+            available = offer['quantity'] - (offer.get('sold_quantity', 0) or 0) - (offer.get('reserved_quantity', 0) or 0)
+            order_quantity = order['quantity']
+            
+            if available < order_quantity:
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({
+                        'error': 'Insufficient quantity',
+                        'available': available,
+                        'requested': order_quantity
+                    }),
+                    'isBase64Encoded': False
+                }
+            
+            # Уменьшаем количество в предложении
+            cur.execute(f"""
+                UPDATE {schema}.offers 
+                SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
+                WHERE id = '{offer_id_escaped}'
+            """)
+        
+        updates.append(f"status = 'accepted'")
+    
+    # Обычное обновление статуса
+    elif 'status' in body and body['status'] != 'accepted':
         status_escaped = body['status'].replace("'", "''")
         updates.append(f"status = '{status_escaped}'")
     
@@ -426,9 +501,9 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'isBase64Encoded': False
         }
     
-    schema = get_schema()
-    order_id_escaped = order_id.replace("'", "''")
     sql = f"UPDATE {schema}.orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = '{order_id_escaped}'"
+    
+    print(f"[UPDATE_ORDER] SQL: {sql}")
     
     cur.execute(sql)
     conn.commit()

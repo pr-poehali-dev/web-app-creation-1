@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
 
 import Icon from '@/components/ui/icon';
 import type { Order, ChatMessage } from '@/types/order';
@@ -21,6 +23,9 @@ interface OrderChatModalProps {
   order: Order;
   messages: ChatMessage[];
   onSendMessage: (message: string) => void;
+  onAcceptOrder?: () => void;
+  onCounterOffer?: (price: number, message: string) => void;
+  onAcceptCounter?: () => void;
 }
 
 export default function OrderChatModal({
@@ -29,11 +34,18 @@ export default function OrderChatModal({
   order,
   messages,
   onSendMessage,
+  onAcceptOrder,
+  onCounterOffer,
+  onAcceptCounter,
 }: OrderChatModalProps) {
   const currentUser = getSession();
   const [newMessage, setNewMessage] = useState('');
+  const [showCounterForm, setShowCounterForm] = useState(false);
+  const [counterPrice, setCounterPrice] = useState(order.pricePerUnit.toString());
+  const [counterMessage, setCounterMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
   const isBuyer = currentUser?.id?.toString() === order.buyerId?.toString();
+  const isSeller = currentUser?.id?.toString() === order.sellerId?.toString();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -118,6 +130,121 @@ export default function OrderChatModal({
             </div>
           </CardContent>
         </Card>
+
+        {/* Встречное предложение */}
+        {order.counterPricePerUnit && !order.buyerAcceptedCounter && (
+          <Card className="bg-orange-50 border-orange-200">
+            <CardContent className="pt-4">
+              <div className="flex items-start gap-3">
+                <Icon name="TrendingDown" className="h-5 w-5 text-orange-600 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-1">Встречное предложение от продавца</h3>
+                  <p className="text-sm text-muted-foreground mb-2">{order.counterOfferMessage}</p>
+                  <div className="flex items-center gap-4 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Было:</span>{' '}
+                      <span className="line-through">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
+                    </div>
+                    <Icon name="ArrowRight" className="h-4 w-4" />
+                    <div>
+                      <span className="text-muted-foreground">Стало:</span>{' '}
+                      <span className="font-bold text-orange-600">
+                        {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-sm font-medium">
+                    Новая сумма: <span className="text-orange-600">{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
+                  </div>
+                  {isBuyer && onAcceptCounter && (
+                    <div className="mt-3 flex gap-2">
+                      <Button onClick={onAcceptCounter} size="sm" className="bg-orange-600 hover:bg-orange-700">
+                        <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                        Принять встречное предложение
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Форма встречного предложения */}
+        {showCounterForm && isSeller && order.status === 'new' && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-4 space-y-3">
+              <h3 className="font-semibold text-sm">Предложить свою цену</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Цена за {order.unit}</label>
+                  <Input
+                    type="number"
+                    value={counterPrice}
+                    onChange={(e) => setCounterPrice(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Новая сумма</label>
+                  <div className="mt-1 font-bold text-lg text-blue-600">
+                    {(parseFloat(counterPrice) * order.quantity).toLocaleString('ru-RU')} ₽
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Сообщение покупателю</label>
+                <Textarea
+                  value={counterMessage}
+                  onChange={(e) => setCounterMessage(e.target.value)}
+                  placeholder="Объясните причину изменения цены..."
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    if (onCounterOffer) {
+                      onCounterOffer(parseFloat(counterPrice), counterMessage);
+                      setShowCounterForm(false);
+                    }
+                  }}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Отправить встречное предложение
+                </Button>
+                <Button onClick={() => setShowCounterForm(false)} size="sm" variant="outline">
+                  Отмена
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Действия продавца */}
+        {isSeller && (order.status === 'new' || order.status === 'negotiating') && !showCounterForm && (
+          <div className="flex gap-2">
+            {onAcceptOrder && (
+              <Button onClick={onAcceptOrder} className="flex-1" size="sm">
+                <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                Принять заказ
+              </Button>
+            )}
+            {order.status === 'new' && onCounterOffer && (
+              <Button 
+                onClick={() => setShowCounterForm(true)} 
+                variant="outline" 
+                className="flex-1"
+                size="sm"
+              >
+                <Icon name="TrendingDown" className="mr-1.5 h-4 w-4" />
+                Предложить свою цену
+              </Button>
+            )}
+          </div>
+        )}
 
         <div className="flex-1 min-h-0 flex flex-col">
           <div className="flex-1 overflow-y-auto pr-4" ref={scrollRef}>

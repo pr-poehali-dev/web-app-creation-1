@@ -149,8 +149,15 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
         <div className="space-y-1 text-sm">
           <div className="flex items-baseline justify-between">
-            <span className="text-muted-foreground text-xs">Общая доступная количество:</span>
-            <span className="font-medium text-xs">{offer.quantity} {offer.unit}</span>
+            <span className="text-muted-foreground text-xs">Доступно:</span>
+            <span className="font-medium text-xs">
+              {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
+              {(offer.soldQuantity || 0) > 0 && (
+                <span className="text-muted-foreground ml-1">
+                  (из {offer.quantity})
+                </span>
+              )}
+            </span>
           </div>
           {offer.minOrderQuantity && (
             <div className="flex items-baseline justify-between">

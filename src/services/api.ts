@@ -475,7 +475,16 @@ export const ordersAPI = {
     return response.json();
   },
 
-  async updateOrder(id: string, data: { status?: string; trackingNumber?: string; deliveryDate?: string; sellerComment?: string; cancellationReason?: string }): Promise<{ message: string }> {
+  async updateOrder(id: string, data: { 
+    status?: string; 
+    trackingNumber?: string; 
+    deliveryDate?: string; 
+    sellerComment?: string; 
+    cancellationReason?: string;
+    counterPrice?: number;
+    counterMessage?: string;
+    acceptCounter?: boolean;
+  }): Promise<{ message: string }> {
     const userId = getUserId();
     if (!userId) {
       throw new Error('User not authenticated');
@@ -491,7 +500,8 @@ export const ordersAPI = {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to update order');
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update order');
     }
     
     return response.json();
