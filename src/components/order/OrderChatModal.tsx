@@ -183,40 +183,45 @@ export default function OrderChatModal({
                         Сумма по предложению: <span className={order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}>{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
                       </div>
                       
-                      {/* Кнопки для продавца при предложении от покупателя */}
-                      {isSeller && (!order.counterOfferedBy || order.counterOfferedBy === 'buyer') && onAcceptCounter && (
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
-                            <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                            Принять предложение покупателя
-                          </Button>
-                          <Button 
-                            onClick={() => setShowCounterForm(true)} 
-                            variant="outline" 
-                            size="sm"
-                          >
-                            <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-                            Встречное предложение
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {/* Кнопки для покупателя при встречном предложении от продавца */}
-                      {isBuyer && order.counterOfferedBy === 'seller' && onAcceptCounter && (
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
-                            <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                            Принять предложение продавца
-                          </Button>
-                          <Button 
-                            onClick={() => setShowCounterForm(true)} 
-                            variant="outline" 
-                            size="sm"
-                          >
-                            <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-                            Новое предложение
-                          </Button>
-                        </div>
+                      {/* Кнопки торга - показываем в зависимости от того, кто сделал последнее предложение */}
+                      {onAcceptCounter && (
+                        <>
+                          {/* Продавец отвечает на предложение покупателя */}
+                          {isSeller && (!order.counterOfferedBy || order.counterOfferedBy === 'buyer') && (
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
+                                <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                                Принять предложение покупателя
+                              </Button>
+                              <Button 
+                                onClick={() => setShowCounterForm(true)} 
+                                variant="outline" 
+                                size="sm"
+                              >
+                                <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                                Встречное предложение
+                              </Button>
+                            </div>
+                          )}
+                          
+                          {/* Покупатель отвечает на встречное предложение продавца */}
+                          {isBuyer && (!order.counterOfferedBy || order.counterOfferedBy === 'seller') && (
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
+                                <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                                Принять предложение продавца
+                              </Button>
+                              <Button 
+                                onClick={() => setShowCounterForm(true)} 
+                                variant="outline" 
+                                size="sm"
+                              >
+                                <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                                Новое предложение
+                              </Button>
+                            </div>
+                          )}
+                        </>
                       )}
                       
                       {/* Статус ожидания */}
