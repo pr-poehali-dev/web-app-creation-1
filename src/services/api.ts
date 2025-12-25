@@ -3,6 +3,7 @@ import type { Auction } from '@/types/auction';
 import func2url from '../../backend/func2url.json';
 
 const OFFERS_API = func2url.offers;
+const ADMIN_OFFERS_API = func2url['admin-offers'];
 const REQUESTS_API = func2url.requests;
 const ORDERS_API = func2url.orders;
 const AUCTIONS_LIST_API = func2url['auctions-list'];
@@ -158,7 +159,6 @@ export const offersAPI = {
   },
 
   async deleteOffer(id: string): Promise<{ message: string }> {
-    const ADMIN_OFFERS_API = func2url['admin-offers'];
     const userId = getUserId();
 
     const response = await fetch(ADMIN_OFFERS_API, {
@@ -172,6 +172,30 @@ export const offersAPI = {
     
     if (!response.ok) {
       throw new Error('Failed to delete offer');
+    }
+    
+    return response.json();
+  },
+
+  async getAdminOffers(params?: {
+    search?: string;
+    status?: string;
+  }): Promise<OffersListResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+    
+    const url = `${ADMIN_OFFERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const userId = getUserId();
+    
+    const response = await fetch(url, {
+      headers: {
+        'X-User-Id': userId || 'anonymous',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch admin offers');
     }
     
     return response.json();

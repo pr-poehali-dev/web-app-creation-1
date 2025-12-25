@@ -66,11 +66,10 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
     setIsLoading(true);
     try {
       const params: any = {};
-      if (searchQuery) params.query = searchQuery;
+      if (searchQuery) params.search = searchQuery;
       if (filterStatus !== 'all') params.status = filterStatus;
-      else params.status = 'all';
 
-      const data = await offersAPI.getOffers(params);
+      const data = await offersAPI.getAdminOffers(params);
       
       const mappedOffers: AdminOffer[] = (data.offers || []).map((offer: any) => ({
         id: offer.id,
