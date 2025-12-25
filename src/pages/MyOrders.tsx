@@ -30,6 +30,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>('buyer');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -114,7 +115,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     }
   };
 
-  const loadMessages = async (orderId: string) => {
+  const loadMessages = async (orderId: string, silent = false) => {
     try {
       const data = await ordersAPI.getMessagesByOrder(orderId);
       
@@ -128,14 +129,26 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         isRead: msg.is_read || msg.isRead || false,
       }));
       
+      const prevCount = messages.length;
+      const newCount = mappedMessages.length;
+      
       setMessages(mappedMessages);
+      
+      if (!silent && newCount > prevCount && prevCount > 0) {
+        toast({
+          title: '💬 Новое сообщение',
+          description: 'Получено новое сообщение в чате заказа',
+        });
+      }
     } catch (error) {
       console.error('Error loading messages:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить сообщения',
-        variant: 'destructive',
-      });
+      if (!silent) {
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить сообщения',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
@@ -226,7 +239,25 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     setSelectedOrder(order);
     loadMessages(order.id);
     setIsChatOpen(true);
+    setIsPolling(true);
   };
+
+  const handleCloseChat = () => {
+    setIsChatOpen(false);
+    setIsPolling(false);
+    setSelectedOrder(null);
+    setMessages([]);
+  };
+
+  useEffect(() => {
+    if (!isPolling || !selectedOrder) return;
+
+    const interval = setInterval(() => {
+      loadMessages(selectedOrder.id, true);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isPolling, selectedOrder]);
 
   const handleSendMessage = async (message: string) => {
     if (!selectedOrder || !currentUser) return;
@@ -448,7 +479,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
       {selectedOrder && (
         <OrderChatModal
           isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
+          onClose={handleCloseChat}
           order={selectedOrder}
           messages={messages}
           onSendMessage={handleSendMessage}
