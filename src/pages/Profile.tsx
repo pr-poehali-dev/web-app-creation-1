@@ -52,7 +52,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(!!viewingUserId && viewingUserId !== String(sessionUser?.id));
   
   const [formData, setFormData] = useState<FormData>({
     firstName: currentUser?.firstName || '',
@@ -71,16 +71,18 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
     if (viewingUserId && viewingUserId !== String(sessionUser?.id)) {
       fetchUserProfile(viewingUserId);
-    } else {
-      if (!isAuthenticated || !sessionUser) {
-        navigate('/login');
-      } else {
-        setCurrentUser(sessionUser);
-      }
+    } else if (sessionUser) {
+      setCurrentUser(sessionUser);
+      setIsLoadingProfile(false);
     }
-  }, [viewingUserId, isAuthenticated, sessionUser, navigate]);
+  }, [viewingUserId]);
 
   const fetchUserProfile = async (userId: string) => {
     setIsLoadingProfile(true);
@@ -131,6 +133,21 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       });
     }
   }, [currentUser]);
+
+  if (isLoadingProfile) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <main className="container mx-auto px-4 py-8 flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Загрузка профиля...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return null;
