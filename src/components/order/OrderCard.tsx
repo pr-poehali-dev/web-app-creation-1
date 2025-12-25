@@ -25,7 +25,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
       case 'rejected':
         return <Badge variant="outline" className="bg-red-50">Отклонен</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="bg-purple-50">Завершен</Badge>;
+        return <Badge variant="outline" className="bg-gray-200 text-gray-700 border-gray-400">Завершён</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -72,12 +72,12 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
         <div className="flex gap-2">
           <Button
             onClick={() => onOpenChat(order)}
-            variant="outline"
+            variant={order.status === 'completed' ? 'secondary' : 'outline'}
             className="flex-1"
             size="sm"
           >
             <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-            Чат
+            {order.status === 'completed' ? 'Завершён' : 'Чат'}
           </Button>
           {isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder && (
             <Button

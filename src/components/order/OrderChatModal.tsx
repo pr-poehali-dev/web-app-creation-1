@@ -350,6 +350,21 @@ export default function OrderChatModal({
                 </CardContent>
               </Card>
             )}
+
+            {/* Заказ завершён */}
+            {order.status === 'completed' && (
+              <Card className="bg-gray-100 border-gray-300">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <Icon name="CheckCircle2" className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm mb-1">Заказ завершён</h3>
+                      <p className="text-sm text-muted-foreground">Сделка успешно завершена. Спасибо за работу!</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
@@ -392,18 +407,24 @@ export default function OrderChatModal({
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Input
-              placeholder="Введите сообщение..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="flex-1"
-            />
-            <Button onClick={handleSend} disabled={!newMessage.trim()} size="sm">
-              <Icon name="Send" className="h-4 w-4" />
-            </Button>
-          </div>
+          {order.status === 'completed' ? (
+            <div className="text-center py-2 text-sm text-muted-foreground">
+              Чат закрыт — заказ завершён
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Введите сообщение..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1"
+              />
+              <Button onClick={handleSend} disabled={!newMessage.trim()} size="sm">
+                <Icon name="Send" className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
