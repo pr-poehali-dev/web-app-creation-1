@@ -46,6 +46,7 @@ interface AdminOffer {
   sellerId?: string;
   price: number;
   quantity: number;
+  availableQuantity: number;
   unit: string;
   status: 'active' | 'moderation' | 'rejected' | 'completed' | 'deleted';
   createdAt: string;
@@ -87,6 +88,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         sellerId: offer.sellerId,
         price: offer.pricePerUnit || offer.price_per_unit || offer.price || 0,
         quantity: offer.quantity || 0,
+        availableQuantity: offer.available_quantity || offer.availableQuantity || offer.quantity || 0,
         unit: offer.unit || 'шт',
         status: offer.status || 'active',
         createdAt: offer.createdAt || offer.created_at
@@ -311,7 +313,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                       <TableHead>Название</TableHead>
                       <TableHead>Продавец</TableHead>
                       <TableHead>Цена</TableHead>
-                      <TableHead>Остаток</TableHead>
+                      <TableHead>Доступно</TableHead>
                       <TableHead>Статус</TableHead>
                       <TableHead>Дата создания</TableHead>
                       <TableHead className="text-right">Действия</TableHead>
@@ -347,7 +349,10 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                         </TableCell>
                         <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
                         <TableCell>
-                          <span className="font-semibold">{offer.quantity}</span> {offer.unit}
+                          <div className="text-sm">
+                            <span className="font-semibold text-green-600">{offer.availableQuantity}</span> {offer.unit}{' '}
+                            <span className="text-muted-foreground">из {offer.quantity} {offer.unit}</span>
+                          </div>
                         </TableCell>
                         <TableCell>{getStatusBadge(offer.status)}</TableCell>
                         <TableCell>{new Date(offer.createdAt).toLocaleDateString('ru-RU')}</TableCell>
