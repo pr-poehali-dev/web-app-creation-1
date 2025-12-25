@@ -34,58 +34,63 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
   useEffect(() => {
     if (!isPolling || !selectedOrder) return;
 
-    let lastCheck = Date.now();
-    let rafId: number;
-    let timeoutId: NodeJS.Timeout;
+    let isActive = true;
+    let wakeLock: any = null;
 
-    const checkMessages = () => {
-      const now = Date.now();
-      if (now - lastCheck >= 1000) {
-        lastCheck = now;
-        loadMessages(selectedOrder.id, false);
+    const requestWakeLock = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.log('Wake Lock error:', err);
       }
-      rafId = requestAnimationFrame(checkMessages);
     };
 
-    const intervalCheck = () => {
-      loadMessages(selectedOrder.id, false);
-      timeoutId = setTimeout(intervalCheck, 1000);
+    requestWakeLock();
+
+    const aggressivePoll = async () => {
+      while (isActive && selectedOrder) {
+        await loadMessages(selectedOrder.id, false);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     };
 
-    rafId = requestAnimationFrame(checkMessages);
-    timeoutId = setTimeout(intervalCheck, 1000);
+    aggressivePoll();
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && selectedOrder) {
+      if (!document.hidden && selectedOrder && isActive) {
         loadMessages(selectedOrder.id, false);
-        lastCheck = Date.now();
+        requestWakeLock();
       }
     };
 
     const handleFocus = () => {
-      if (selectedOrder) {
+      if (selectedOrder && isActive) {
         loadMessages(selectedOrder.id, false);
-        lastCheck = Date.now();
       }
     };
 
     const handleTouchStart = () => {
-      if (selectedOrder && Date.now() - lastCheck > 800) {
+      if (selectedOrder && isActive) {
         loadMessages(selectedOrder.id, false);
-        lastCheck = Date.now();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchStart, { passive: true });
 
     return () => {
-      cancelAnimationFrame(rafId);
-      clearTimeout(timeoutId);
+      isActive = false;
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+      }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
       window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchStart);
     };
   }, [isPolling, selectedOrder]);
 
