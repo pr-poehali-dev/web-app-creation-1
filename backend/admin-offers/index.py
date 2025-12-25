@@ -213,13 +213,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            print(f"DELETE: Attempting to delete offer with ID: {offer_id}")
             cur.execute("DELETE FROM contracts WHERE id::text = %s", (offer_id,))
+            deleted_count = cur.rowcount
             conn.commit()
+            print(f"DELETE: Deleted {deleted_count} rows")
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'Offer deleted'}),
+                'body': json.dumps({'success': True, 'message': 'Offer deleted', 'deleted_count': deleted_count}),
                 'isBase64Encoded': False
             }
         
