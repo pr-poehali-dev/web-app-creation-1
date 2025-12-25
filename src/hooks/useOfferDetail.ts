@@ -43,22 +43,22 @@ export function useOfferDetail(id: string | undefined) {
           availableDeliveryTypes: data.available_delivery_types || data.availableDeliveryTypes || ['pickup'],
           userId: data.user_id || data.userId,
           fullAddress: data.full_address || data.fullAddress,
-          seller: data.seller ? {
+          seller: {
             id: data.user_id || data.userId,
-            name: data.seller.name,
-            type: data.seller.type,
-            phone: data.seller.phone,
-            email: data.seller.email,
-            rating: data.seller.rating || 0,
-            reviewsCount: data.seller.reviewsCount || 0,
-            isVerified: data.seller.isVerified || false,
+            name: data.seller_name || '',
+            type: data.seller_type || '',
+            phone: data.seller_phone || '',
+            email: data.seller_email || '',
+            rating: data.seller_rating || 0,
+            reviewsCount: data.seller_reviews_count || 0,
+            isVerified: data.seller_is_verified || false,
             statistics: {
               totalOffers: 0,
               activeOffers: 0,
               completedOrders: 0,
               registrationDate: new Date(),
             }
-          } : undefined,
+          },
           createdAt: new Date(data.createdAt || data.created_at),
           updatedAt: data.updatedAt || data.updated_at ? new Date(data.updatedAt || data.updated_at) : undefined,
         };
@@ -140,6 +140,35 @@ export function useOfferDetail(id: string | undefined) {
     setIsOrderModalOpen(true);
   };
 
+  const loadMessages = async (orderId: string) => {
+    try {
+      const currentUser = getSession();
+      if (!currentUser) return;
+
+      const response = await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${orderId}&messages=true`, {
+        headers: {
+          'X-User-Id': currentUser.id?.toString() || '',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const messages: ChatMessage[] = (data.messages || []).map((msg: any) => ({
+          id: msg.id,
+          orderId: msg.order_id,
+          senderId: msg.sender_id?.toString() || '',
+          senderName: msg.sender_name,
+          message: msg.message,
+          timestamp: new Date(msg.createdAt),
+          isRead: msg.is_read || false,
+        }));
+        setChatMessages(messages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
   const handleOrderSubmit = async (orderFormData: any) => {
     if (!offer) return;
 
@@ -150,60 +179,86 @@ export function useOfferDetail(id: string | undefined) {
       return;
     }
 
-    const storedUsers = localStorage.getItem('users');
-    const users = storedUsers ? JSON.parse(storedUsers) : [];
-    const seller = users.find((u: any) => u.id?.toString() === offer.userId);
+    try {
+      const orderData = {
+        offerId: offer.id,
+        title: offer.title,
+        quantity: orderFormData.quantity,
+        unit: offer.unit,
+        pricePerUnit: offer.pricePerUnit,
+        deliveryType: orderFormData.deliveryType,
+        deliveryAddress: orderFormData.address || '',
+        district: offer.district,
+        buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
+        buyerPhone: currentUser.phone || '',
+        buyerEmail: currentUser.email,
+        buyerCompany: currentUser.companyName || '',
+        buyerInn: currentUser.inn || '',
+        buyerComment: orderFormData.comment || '',
+        hasVAT: offer.hasVAT || false,
+        vatRate: offer.vatRate || 0,
+      };
 
-    const newOrder: Order = {
-      id: Date.now().toString(),
-      offerId: offer.id,
-      offerTitle: offer.title,
-      offerImage: offer.images[0]?.url,
-      buyerId: currentUser.id?.toString() || '',
-      buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
-      buyerEmail: currentUser.email,
-      buyerPhone: currentUser.phone || '',
-      sellerId: offer.userId,
-      sellerName: offer.seller?.name || seller?.organizationName || seller?.companyName || `${seller?.firstName || ''} ${seller?.lastName || ''}`.trim() || 'Продавец',
-      sellerEmail: offer.seller?.email || seller?.email || '',
-      sellerPhone: offer.seller?.phone || seller?.phone || '',
-      quantity: orderFormData.quantity,
-      unit: offer.unit,
-      pricePerUnit: offer.pricePerUnit,
-      totalPrice: orderFormData.quantity * offer.pricePerUnit,
-      deliveryType: orderFormData.deliveryType,
-      deliveryAddress: orderFormData.address,
-      comment: orderFormData.comment,
-      status: 'pending',
-      createdAt: new Date(),
-    };
+      const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': currentUser.id?.toString() || '',
+        },
+        body: JSON.stringify(orderData),
+      });
 
-    const storedOrders = localStorage.getItem('orders');
-    const orders = storedOrders ? JSON.parse(storedOrders) : [];
-    orders.push(newOrder);
-    localStorage.setItem('orders', JSON.stringify(orders));
-    
-    notifyNewOrder(
-      offer.userId,
-      offer.title,
-      `${currentUser.firstName} ${currentUser.lastName}`,
-      orderFormData.quantity,
-      offer.unit,
-      newOrder.id
-    );
-    
-    setIsOrderModalOpen(false);
-    setCreatedOrder(newOrder);
-    setChatMessages([]);
-    
-    toast({
-      title: 'Заказ оформлен!',
-      description: 'Теперь вы можете общаться с продавцом',
-    });
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
 
-    setTimeout(() => {
-      setIsChatOpen(true);
-    }, 500);
+      const result = await response.json();
+
+      const newOrder: Order = {
+        id: result.id,
+        offerId: offer.id,
+        offerTitle: offer.title,
+        offerImage: offer.images[0]?.url,
+        buyerId: currentUser.id?.toString() || '',
+        buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
+        buyerEmail: currentUser.email,
+        buyerPhone: currentUser.phone || '',
+        sellerId: offer.userId,
+        sellerName: offer.seller?.name || 'Продавец',
+        sellerEmail: offer.seller?.email || '',
+        sellerPhone: offer.seller?.phone || '',
+        quantity: orderFormData.quantity,
+        unit: offer.unit,
+        pricePerUnit: offer.pricePerUnit,
+        totalAmount: orderFormData.quantity * offer.pricePerUnit,
+        deliveryType: orderFormData.deliveryType,
+        deliveryAddress: orderFormData.address,
+        comment: orderFormData.comment,
+        status: 'new',
+        createdAt: new Date(result.orderDate),
+      };
+      
+      setIsOrderModalOpen(false);
+      setCreatedOrder(newOrder);
+      
+      await loadMessages(result.id);
+      
+      toast({
+        title: 'Заказ оформлен!',
+        description: 'Теперь вы можете общаться с продавцом',
+      });
+
+      setTimeout(() => {
+        setIsChatOpen(true);
+      }, 500);
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось создать заказ',
+        variant: 'destructive',
+      });
+    }
   };
 
   const openGallery = (index: number) => {
@@ -211,30 +266,52 @@ export function useOfferDetail(id: string | undefined) {
     setIsGalleryOpen(true);
   };
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = async (message: string) => {
     if (!createdOrder) return;
     
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      orderId: createdOrder.id,
-      senderId: getSession()?.id?.toString() || '',
-      senderName: `${getSession()?.firstName} ${getSession()?.lastName}`,
-      message,
-      timestamp: new Date(),
-      isRead: false,
-    };
-    
-    const updatedMessages = [...chatMessages, newMessage];
-    setChatMessages(updatedMessages);
-    localStorage.setItem(`order_messages_${createdOrder.id}`, JSON.stringify(updatedMessages));
-    
-    const recipientId = createdOrder.sellerId;
-    notifyNewMessage(
-      recipientId,
-      `${getSession()?.firstName} ${getSession()?.lastName}`,
-      message,
-      createdOrder.id
-    );
+    const currentUser = getSession();
+    if (!currentUser) return;
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?message=true', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': currentUser.id?.toString() || '',
+        },
+        body: JSON.stringify({
+          orderId: createdOrder.id,
+          senderId: currentUser.id,
+          senderType: 'buyer',
+          message: message,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const result = await response.json();
+
+      const newMessage: ChatMessage = {
+        id: result.id,
+        orderId: createdOrder.id,
+        senderId: currentUser.id?.toString() || '',
+        senderName: `${currentUser.firstName} ${currentUser.lastName}`,
+        message,
+        timestamp: new Date(result.createdAt),
+        isRead: false,
+      };
+      
+      setChatMessages([...chatMessages, newMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отправить сообщение',
+        variant: 'destructive',
+      });
+    }
   };
 
   return {
