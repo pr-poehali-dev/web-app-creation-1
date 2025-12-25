@@ -9,6 +9,7 @@ import { DistrictProvider } from "./contexts/DistrictContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { getSession, clearSession } from "./utils/auth";
+import OfferDetail from "./pages/OfferDetail";
 
 // Компонент загрузки
 const LoadingScreen = () => (
@@ -33,7 +34,6 @@ const MyAuctions = lazy(() => import("./pages/MyAuctions"));
 const ActiveOrders = lazy(() => import("./pages/ActiveOrders"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
-const OfferDetail = lazy(() => import("./pages/OfferDetail"));
 const RequestDetail = lazy(() => import("./pages/RequestDetail"));
 const EditOffer = lazy(() => import("./pages/EditOffer"));
 const EditRequest = lazy(() => import("./pages/EditRequest"));
