@@ -34,29 +34,58 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
   useEffect(() => {
     if (!isPolling || !selectedOrder) return;
 
-    const interval = setInterval(() => {
+    let lastCheck = Date.now();
+    let rafId: number;
+    let timeoutId: NodeJS.Timeout;
+
+    const checkMessages = () => {
+      const now = Date.now();
+      if (now - lastCheck >= 1000) {
+        lastCheck = now;
+        loadMessages(selectedOrder.id, false);
+      }
+      rafId = requestAnimationFrame(checkMessages);
+    };
+
+    const intervalCheck = () => {
       loadMessages(selectedOrder.id, false);
-    }, 2000);
+      timeoutId = setTimeout(intervalCheck, 1000);
+    };
+
+    rafId = requestAnimationFrame(checkMessages);
+    timeoutId = setTimeout(intervalCheck, 1000);
 
     const handleVisibilityChange = () => {
       if (!document.hidden && selectedOrder) {
         loadMessages(selectedOrder.id, false);
+        lastCheck = Date.now();
       }
     };
 
     const handleFocus = () => {
       if (selectedOrder) {
         loadMessages(selectedOrder.id, false);
+        lastCheck = Date.now();
+      }
+    };
+
+    const handleTouchStart = () => {
+      if (selectedOrder && Date.now() - lastCheck > 800) {
+        loadMessages(selectedOrder.id, false);
+        lastCheck = Date.now();
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
 
     return () => {
-      clearInterval(interval);
+      cancelAnimationFrame(rafId);
+      clearTimeout(timeoutId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('touchstart', handleTouchStart);
     };
   }, [isPolling, selectedOrder]);
 
