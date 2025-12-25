@@ -48,7 +48,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   const sessionUser = getSession();
   const isViewingOwnProfile = !viewingUserId || viewingUserId === String(sessionUser?.id);
   
-  const [currentUser, setCurrentUser] = useState(sessionUser);
+  const [currentUser, setCurrentUser] = useState(isViewingOwnProfile ? sessionUser : null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -71,33 +71,47 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    console.log('Profile useEffect - viewingUserId:', viewingUserId, 'sessionUser.id:', sessionUser?.id);
+    
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     
+    // Сбросить currentUser при изменении viewingUserId
     if (viewingUserId && viewingUserId !== String(sessionUser?.id)) {
+      console.log('Will fetch profile for userId:', viewingUserId);
+      setCurrentUser(null); // Сброс перед загрузкой нового профиля
+      setIsLoadingProfile(true);
       fetchUserProfile(viewingUserId);
     } else if (sessionUser) {
+      console.log('Showing own profile');
       setCurrentUser(sessionUser);
       setIsLoadingProfile(false);
     }
   }, [viewingUserId]);
 
   const fetchUserProfile = async (userId: string) => {
+    console.log('fetchUserProfile called with userId:', userId);
     setIsLoadingProfile(true);
     try {
-      const response = await fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${userId}`, {
+      const url = `https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${userId}`;
+      console.log('Fetching profile from:', url);
+      const response = await fetch(url, {
         headers: {
           'X-User-Id': sessionUser?.id || 'anonymous',
         },
       });
+      
+      console.log('Response status:', response.status);
       
       if (!response.ok) {
         throw new Error('Failed to fetch user profile');
       }
       
       const data = await response.json();
+      console.log('Received user data:', data);
+      
       setCurrentUser({
         id: data.id,
         email: data.email,
