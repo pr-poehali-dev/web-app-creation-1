@@ -522,7 +522,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${ORDERS_API}?orderId=${orderId}&messages=true`, {
+    const response = await fetch(`${ORDERS_API}?id=${orderId}&messages=true`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -532,8 +532,8 @@ export const ordersAPI = {
       throw new Error('Failed to fetch messages');
     }
     
-    const messages = await response.json();
-    return { messages: Array.isArray(messages) ? messages : [] };
+    const data = await response.json();
+    return { messages: data.messages || [] };
   },
 
   async createMessage(data: { orderId: string; senderId: number; senderType: 'buyer' | 'seller'; message: string }): Promise<any> {
