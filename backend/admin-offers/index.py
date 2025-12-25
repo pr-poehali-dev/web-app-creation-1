@@ -61,7 +61,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     Бэкенд для управления предложениями в админ-панели
     Args: event - dict с httpMethod, body, queryStringParameters
           context - объект с атрибутами request_id, function_name
-    Returns: HTTP response dict
+    Returns: HTTP response dict с данными предложений
     '''
     method: str = event.get('httpMethod', 'GET')
     
