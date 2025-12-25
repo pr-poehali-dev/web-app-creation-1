@@ -71,13 +71,13 @@ export default function OrdersContent({
       <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 h-auto p-1 bg-muted/50">
         <TabsTrigger 
           value="buyer"
-          className="data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-blue-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
+          className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-green-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
         >
           Я покупатель ({displayOrders.length})
         </TabsTrigger>
         <TabsTrigger 
           value="seller"
-          className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-green-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
+          className="data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-red-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
         >
           Я продавец ({displayOrders.length})
         </TabsTrigger>
