@@ -184,7 +184,7 @@ export default function OrderChatModal({
                       </div>
                       
                       {/* Кнопки для продавца при предложении от покупателя */}
-                      {isSeller && order.counterOfferedBy === 'buyer' && onAcceptCounter && (
+                      {isSeller && (!order.counterOfferedBy || order.counterOfferedBy === 'buyer') && onAcceptCounter && (
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700">
                             <Icon name="Check" className="mr-1.5 h-4 w-4" />
@@ -220,10 +220,11 @@ export default function OrderChatModal({
                       )}
                       
                       {/* Статус ожидания */}
-                      {((isBuyer && order.counterOfferedBy === 'buyer') || (isSeller && order.counterOfferedBy === 'seller')) && (
-                        <Badge className="mt-2 bg-yellow-500">
-                          Ожидает ответа {order.counterOfferedBy === 'buyer' ? 'продавца' : 'покупателя'}
-                        </Badge>
+                      {isSeller && order.counterOfferedBy === 'seller' && (
+                        <Badge className="mt-2 bg-yellow-500">Ожидает ответа покупателя</Badge>
+                      )}
+                      {isBuyer && (!order.counterOfferedBy || order.counterOfferedBy === 'buyer') && (
+                        <Badge className="mt-2 bg-yellow-500">Ожидает ответа продавца</Badge>
                       )}
                     </div>
                   </div>
