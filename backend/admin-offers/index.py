@@ -136,7 +136,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     o.status,
                     o.created_at,
                     o.user_id as seller_id,
-                    COALESCE(u.company_name, CONCAT(u.first_name, ' ', u.last_name)) as seller_name
+                    CASE 
+                        WHEN u.company_name IS NOT NULL AND u.company_name != '' THEN u.company_name
+                        WHEN u.first_name IS NOT NULL OR u.last_name IS NOT NULL THEN 
+                            TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')))
+                        ELSE 'ID: ' || o.user_id::text
+                    END as seller_name
                 FROM t_p42562714_web_app_creation_1.offers o
                 LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
                 WHERE {where_sql}
@@ -154,11 +159,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 offer_dict = dict(offer)
                 offer_dict = decimal_to_float(offer_dict)
                 total_price = offer_dict.get('price_per_unit', 0) * offer_dict.get('quantity', 1)
+                seller_id = offer_dict.get('seller_id')
+                seller_name = offer_dict.get('seller_name') or f'ID: {seller_id}' if seller_id else 'Неизвестный пользователь'
+                
                 offers_list.append({
                     'id': str(offer_dict['id']),
                     'title': offer_dict['title'] or offer_dict['product_name'],
-                    'seller': offer_dict['seller_name'] or 'Неизвестный продавец',
-                    'sellerId': str(offer_dict['seller_id']) if offer_dict.get('seller_id') else None,
+                    'seller': seller_name,
+                    'sellerId': str(seller_id) if seller_id else None,
                     'price': offer_dict['price_per_unit'] if offer_dict['price_per_unit'] else 0,
                     'totalPrice': total_price,
                     'quantity': offer_dict['quantity'] if offer_dict['quantity'] else 0,
