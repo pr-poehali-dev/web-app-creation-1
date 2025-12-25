@@ -133,7 +133,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     c.unit,
                     c.status,
                     c.created_at,
-                    COALESCE(u.company_name, u.first_name || ' ' || u.last_name) as seller_name
+                    c.seller_id,
+                    COALESCE(u.company_name, CONCAT(u.first_name, ' ', u.last_name)) as seller_name
                 FROM contracts c
                 LEFT JOIN users u ON c.seller_id = u.id
                 WHERE {where_sql}
@@ -153,6 +154,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'id': str(offer_dict['id']),
                     'title': offer_dict['title'] or offer_dict['product_name'],
                     'seller': offer_dict['seller_name'] or 'Неизвестный продавец',
+                    'sellerId': str(offer_dict['seller_id']) if offer_dict.get('seller_id') else None,
                     'price': offer_dict['price_per_unit'] if offer_dict['price_per_unit'] else 0,
                     'totalPrice': total_price,
                     'quantity': offer_dict['quantity'] if offer_dict['quantity'] else 0,
@@ -214,7 +216,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             print(f"DELETE: Attempting to delete offer with ID: {offer_id}")
-            cur.execute("DELETE FROM contracts WHERE id::text = %s", (offer_id,))
+            cur.execute("DELETE FROM contracts WHERE id = %s::uuid", (offer_id,))
             deleted_count = cur.rowcount
             conn.commit()
             print(f"DELETE: Deleted {deleted_count} rows")

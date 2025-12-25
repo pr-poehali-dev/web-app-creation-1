@@ -43,6 +43,7 @@ interface AdminOffer {
   id: string;
   title: string;
   seller: string;
+  sellerId?: string;
   price: number;
   status: 'active' | 'moderation' | 'rejected' | 'completed' | 'deleted';
   createdAt: string;
@@ -74,8 +75,9 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
       const mappedOffers: AdminOffer[] = (data.offers || []).map((offer: any) => ({
         id: offer.id,
         title: offer.title,
-        seller: offer.seller?.name || offer.seller_name || 'Неизвестно',
-        price: offer.pricePerUnit || offer.price_per_unit || 0,
+        seller: offer.seller || 'Неизвестно',
+        sellerId: offer.sellerId,
+        price: offer.pricePerUnit || offer.price_per_unit || offer.price || 0,
         status: offer.status || 'active',
         createdAt: offer.createdAt || offer.created_at
       }));
@@ -252,7 +254,18 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                     ) : offers.map((offer) => (
                       <TableRow key={offer.id}>
                         <TableCell className="font-medium">{offer.title}</TableCell>
-                        <TableCell>{offer.seller}</TableCell>
+                        <TableCell>
+                          {offer.sellerId ? (
+                            <button
+                              onClick={() => navigate(`/profile?userId=${offer.sellerId}`)}
+                              className="text-primary hover:underline"
+                            >
+                              {offer.seller}
+                            </button>
+                          ) : (
+                            <span className="text-muted-foreground">{offer.seller}</span>
+                          )}
+                        </TableCell>
                         <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
                         <TableCell>{getStatusBadge(offer.status)}</TableCell>
                         <TableCell>{new Date(offer.createdAt).toLocaleDateString('ru-RU')}</TableCell>
