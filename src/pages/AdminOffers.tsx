@@ -45,6 +45,8 @@ interface AdminOffer {
   seller: string;
   sellerId?: string;
   price: number;
+  quantity: number;
+  unit: string;
   status: 'active' | 'moderation' | 'rejected' | 'completed' | 'deleted';
   createdAt: string;
 }
@@ -84,6 +86,8 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         seller: offer.seller || 'Неизвестно',
         sellerId: offer.sellerId,
         price: offer.pricePerUnit || offer.price_per_unit || offer.price || 0,
+        quantity: offer.quantity || 0,
+        unit: offer.unit || 'шт',
         status: offer.status || 'active',
         createdAt: offer.createdAt || offer.created_at
       }));
@@ -307,6 +311,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                       <TableHead>Название</TableHead>
                       <TableHead>Продавец</TableHead>
                       <TableHead>Цена</TableHead>
+                      <TableHead>Остаток</TableHead>
                       <TableHead>Статус</TableHead>
                       <TableHead>Дата создания</TableHead>
                       <TableHead className="text-right">Действия</TableHead>
@@ -315,13 +320,13 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8">
+                        <TableCell colSpan={7} className="text-center py-8">
                           Загрузка...
                         </TableCell>
                       </TableRow>
                     ) : offers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                           Предложения не найдены
                         </TableCell>
                       </TableRow>
@@ -341,6 +346,9 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                           )}
                         </TableCell>
                         <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
+                        <TableCell>
+                          <span className="font-semibold">{offer.quantity}</span> {offer.unit}
+                        </TableCell>
                         <TableCell>{getStatusBadge(offer.status)}</TableCell>
                         <TableCell>{new Date(offer.createdAt).toLocaleDateString('ru-RU')}</TableCell>
                         <TableCell className="text-right">
