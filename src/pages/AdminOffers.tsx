@@ -129,7 +129,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const handleDeleteOffer = async () => {
     if (selectedOffer) {
       try {
-        await offersAPI.updateOffer(selectedOffer.id, { status: 'deleted' });
+        await offersAPI.deleteOffer(selectedOffer.id);
         toast.success(`Предложение "${selectedOffer.title}" удалено`);
         setShowDeleteDialog(false);
         setSelectedOffer(null);

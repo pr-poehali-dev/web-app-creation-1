@@ -156,6 +156,26 @@ export const offersAPI = {
     
     return response.json();
   },
+
+  async deleteOffer(id: string): Promise<{ message: string }> {
+    const ADMIN_OFFERS_API = func2url['admin-offers'];
+    const userId = getUserId();
+
+    const response = await fetch(ADMIN_OFFERS_API, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ offerId: id }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete offer');
+    }
+    
+    return response.json();
+  },
 };
 
 export const requestsAPI = {
