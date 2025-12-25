@@ -53,14 +53,20 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterSeller, setFilterSeller] = useState<string>('all');
   const [selectedOffer, setSelectedOffer] = useState<AdminOffer | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [offers, setOffers] = useState<AdminOffer[]>([]);
+  const [allOffers, setAllOffers] = useState<AdminOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchOffers();
   }, [searchQuery, filterStatus]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [allOffers, filterSeller]);
 
   const fetchOffers = async () => {
     setIsLoading(true);
@@ -81,6 +87,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         createdAt: offer.createdAt || offer.created_at
       }));
       
+      setAllOffers(mappedOffers);
       setOffers(mappedOffers);
     } catch (error) {
       console.error('Ошибка загрузки предложений:', error);
@@ -89,6 +96,22 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
       setIsLoading(false);
     }
   };
+
+  const applyFilters = () => {
+    if (filterSeller === 'all') {
+      setOffers(allOffers);
+    } else {
+      setOffers(allOffers.filter(offer => offer.sellerId === filterSeller));
+    }
+  };
+
+  const uniqueSellers = Array.from(
+    new Map(
+      allOffers
+        .filter(o => o.sellerId)
+        .map(o => [o.sellerId, { id: o.sellerId!, name: o.seller }])
+    ).values()
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -192,37 +215,52 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
               <CardDescription>Всего предложений: {offers.length}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
-                <div className="flex-1">
-                  <Input
-                    placeholder="Поиск по названию или продавцу..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full"
-                  />
+              <div className="mb-6 flex flex-col gap-4">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="Поиск по названию или продавцу..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full"
+                    />
+                  </div>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-full md:w-[200px]">
+                      <SelectValue placeholder="Статус" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все статусы</SelectItem>
+                      <SelectItem value="active">Активные</SelectItem>
+                      <SelectItem value="moderation">На модерации</SelectItem>
+                      <SelectItem value="rejected">Отклоненные</SelectItem>
+                      <SelectItem value="completed">Завершенные</SelectItem>
+                      <SelectItem value="deleted">Удаленные</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterSeller} onValueChange={setFilterSeller}>
+                    <SelectTrigger className="w-full md:w-[250px]">
+                      <SelectValue placeholder="Продавец" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Все продавцы</SelectItem>
+                      {uniqueSellers.map(seller => (
+                        <SelectItem key={seller.id} value={seller.id}>
+                          {seller.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteTestOffers}
+                    className="md:w-auto"
+                  >
+                    <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                    Очистить тест
+                  </Button>
                 </div>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Статус" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Все статусы</SelectItem>
-                    <SelectItem value="active">Активные</SelectItem>
-                    <SelectItem value="moderation">На модерации</SelectItem>
-                    <SelectItem value="rejected">Отклоненные</SelectItem>
-                    <SelectItem value="completed">Завершенные</SelectItem>
-                    <SelectItem value="deleted">Удаленные</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteTestOffers}
-                  className="md:w-auto"
-                >
-                  <Icon name="Trash2" className="mr-2 h-4 w-4" />
-                  Очистить тест
-                </Button>
               </div>
 
               <div className="rounded-md border">
