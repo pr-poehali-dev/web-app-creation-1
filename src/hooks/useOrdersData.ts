@@ -36,7 +36,7 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
     }, 3000);
 
     return () => clearInterval(ordersPollInterval);
-  }, [isAuthenticated, navigate, activeTab]);
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     if (!isPolling || !selectedOrder) return;
@@ -106,8 +106,8 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       if (showLoader) {
         setIsLoading(true);
       }
-      const orderType = activeTab === 'buyer' ? 'purchase' : 'sale';
-      const response = await ordersAPI.getAll(orderType);
+      // Загружаем ВСЕ заказы сразу для правильного подсчета
+      const response = await ordersAPI.getAll('all');
       
       const mappedOrders = response.orders.map((order: any) => ({
         id: order.id,
