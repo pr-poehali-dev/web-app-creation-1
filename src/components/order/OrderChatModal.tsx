@@ -55,26 +55,7 @@ export default function OrderChatModal({
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (isOpen) {
-      const timer1 = setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 150);
-      
-      const timer2 = setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 300);
-      
-      return () => {
-        clearTimeout(timer1);
-        clearTimeout(timer2);
-      };
-    }
-  }, [isOpen]);
+
 
   const handleSend = () => {
     if (newMessage.trim()) {
@@ -101,63 +82,9 @@ export default function OrderChatModal({
           <DialogTitle>Заказ #{order.id.slice(0, 8)}</DialogTitle>
         </DialogHeader>
 
-        {/* Верхняя часть с информацией - прокручивается */}
+        {/* Верхняя часть с функциями торга - прокручивается */}
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 min-h-0">
           <div className="space-y-3 py-3">
-            {/* Информация о заказе */}
-            <Card className="bg-muted/50">
-              <CardContent className="pt-4 space-y-2">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Товар</p>
-                    <p className="font-medium">{order.offerTitle}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Количество</p>
-                    <p className="font-medium">{order.quantity} {order.unit}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Сумма</p>
-                    <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Доставка</p>
-                    <p className="font-medium">
-                      {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
-                    </p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Icon name="User" className="h-4 w-4 text-muted-foreground" />
-                    <h3 className="font-semibold text-sm">
-                      {isBuyer ? 'Продавец' : 'Покупатель'}
-                    </h3>
-                  </div>
-                  <p className="text-sm font-medium">{contactPerson.name}</p>
-                  <div className="space-y-1 mt-2">
-                    <a
-                      href={`tel:${contactPerson.phone}`}
-                      className="text-sm hover:text-primary transition-colors flex items-center gap-1.5"
-                    >
-                      <Icon name="Phone" className="h-3.5 w-3.5" />
-                      {contactPerson.phone}
-                    </a>
-                    <a
-                      href={`mailto:${contactPerson.email}`}
-                      className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
-                    >
-                      <Icon name="Mail" className="h-3.5 w-3.5" />
-                      {contactPerson.email}
-                    </a>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Кнопки действий для покупателя - предложить свою цену */}
             {isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && (
               <div className="flex gap-2">
@@ -397,6 +324,60 @@ export default function OrderChatModal({
                 </CardContent>
               </Card>
             )}
+
+            {/* Информация о заказе - в конце */}
+            <Card className="bg-muted/50">
+              <CardContent className="pt-4 space-y-2">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Товар</p>
+                    <p className="font-medium">{order.offerTitle}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Количество</p>
+                    <p className="font-medium">{order.quantity} {order.unit}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Сумма</p>
+                    <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Доставка</p>
+                    <p className="font-medium">
+                      {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
+                    </p>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon name="User" className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-semibold text-sm">
+                      {isBuyer ? 'Продавец' : 'Покупатель'}
+                    </h3>
+                  </div>
+                  <p className="text-sm font-medium">{contactPerson.name}</p>
+                  <div className="space-y-1 mt-2">
+                    <a
+                      href={`tel:${contactPerson.phone}`}
+                      className="text-sm hover:text-primary transition-colors flex items-center gap-1.5"
+                    >
+                      <Icon name="Phone" className="h-3.5 w-3.5" />
+                      {contactPerson.phone}
+                    </a>
+                    <a
+                      href={`mailto:${contactPerson.email}`}
+                      className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
+                    >
+                      <Icon name="Mail" className="h-3.5 w-3.5" />
+                      {contactPerson.email}
+                    </a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
