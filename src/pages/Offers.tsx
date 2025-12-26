@@ -27,7 +27,7 @@ interface OffersProps {
 
 const ITEMS_PER_PAGE = 20;
 
-export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
+function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
@@ -451,3 +451,5 @@ export default function Offers({ isAuthenticated, onLogout }: OffersProps) {
     </div>
   );
 }
+
+export default Offers;
