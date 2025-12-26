@@ -56,12 +56,23 @@ export default function OrderChatModal({
   }, [messages]);
 
   useEffect(() => {
-    if (isOpen && scrollRef.current) {
-      setTimeout(() => {
+    if (isOpen) {
+      const timer1 = setTimeout(() => {
         if (scrollRef.current) {
           scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
-      }, 100);
+      }, 150);
+      
+      const timer2 = setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 300);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
     }
   }, [isOpen]);
 
