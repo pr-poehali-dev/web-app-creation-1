@@ -25,6 +25,10 @@ export default function OrdersContent({
     activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale'
   );
 
+  // Считаем количество заказов для каждого типа отдельно
+  const buyerOrdersCount = orders.filter(order => order.type === 'purchase').length;
+  const sellerOrdersCount = orders.filter(order => order.type === 'sale').length;
+
   const renderContent = (isSeller: boolean) => {
     if (isLoading) {
       return (
@@ -73,13 +77,13 @@ export default function OrdersContent({
           value="buyer"
           className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-green-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
         >
-          Я покупатель ({displayOrders.length})
+          Я покупатель ({buyerOrdersCount})
         </TabsTrigger>
         <TabsTrigger 
           value="seller"
           className="data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-red-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
         >
-          Я продавец ({displayOrders.length})
+          Я продавец ({sellerOrdersCount})
         </TabsTrigger>
       </TabsList>
 
