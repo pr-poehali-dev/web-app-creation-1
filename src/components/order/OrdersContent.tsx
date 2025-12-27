@@ -77,18 +77,18 @@ export default function OrdersContent({
 
   return (
     <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as 'buyer' | 'seller' | 'archive')}>
-      <TabsList className="grid w-full max-w-3xl grid-cols-3 gap-3 mb-6 h-auto p-0 bg-transparent">
+      <TabsList className="grid w-full max-w-3xl grid-cols-3 gap-1.5 mb-6 h-auto p-0 bg-transparent">
         <TabsTrigger 
           value="buyer"
           className="border-2 border-green-600 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-green-600 transition-all py-2 px-2 text-xs font-medium rounded-md whitespace-nowrap"
         >
-          Покупатель ({buyerOrdersCount})
+          Я покупатель ({buyerOrdersCount})
         </TabsTrigger>
         <TabsTrigger 
           value="seller"
           className="border-2 border-red-600 data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-red-600 transition-all py-2 px-2 text-xs font-medium rounded-md whitespace-nowrap"
         >
-          Продавец ({sellerOrdersCount})
+          Я продавец ({sellerOrdersCount})
         </TabsTrigger>
         <TabsTrigger 
           value="archive"
