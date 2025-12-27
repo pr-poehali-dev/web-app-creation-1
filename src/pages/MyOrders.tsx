@@ -12,7 +12,7 @@ interface MyOrdersProps {
 }
 
 export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
-  const [activeTab, setActiveTab] = useState<'buyer' | 'seller'>('buyer');
+  const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'archive'>('buyer');
   
   const {
     orders,

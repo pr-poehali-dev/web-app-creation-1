@@ -96,7 +96,7 @@ export default function OrderChatModal({
             )}
 
             {/* Встречное предложение - показываем тому кто должен ответить */}
-            {order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && (
+            {order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && order.status !== 'accepted' && (
               <Card className={order.counterOfferedBy === 'buyer' ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}>
                 <CardContent className="pt-4">
                   <div className="flex items-start">

@@ -273,7 +273,10 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
     if (!selectedOrder) return;
 
     try {
-      await ordersAPI.updateOrder(selectedOrder.id, { acceptCounter: true });
+      await ordersAPI.updateOrder(selectedOrder.id, { 
+        acceptCounter: true,
+        status: 'accepted'
+      });
 
       toast({
         title: 'Встречное предложение принято',

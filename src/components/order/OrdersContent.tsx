@@ -5,8 +5,8 @@ import OrderCard from './OrderCard';
 import type { Order } from '@/types/order';
 
 interface OrdersContentProps {
-  activeTab: 'buyer' | 'seller';
-  onTabChange: (tab: 'buyer' | 'seller') => void;
+  activeTab: 'buyer' | 'seller' | 'archive';
+  onTabChange: (tab: 'buyer' | 'seller' | 'archive') => void;
   orders: Order[];
   isLoading: boolean;
   onOpenChat: (order: Order) => void;
@@ -21,13 +21,18 @@ export default function OrdersContent({
   onOpenChat,
   onAcceptOrder,
 }: OrdersContentProps) {
-  const displayOrders = orders.filter(order => 
-    activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale'
-  );
+  const displayOrders = orders.filter(order => {
+    if (activeTab === 'archive') {
+      return order.status === 'completed';
+    }
+    const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
+    return typeMatch && order.status !== 'completed';
+  });
 
   // Считаем количество заказов для каждого типа отдельно
-  const buyerOrdersCount = orders.filter(order => order.type === 'purchase').length;
-  const sellerOrdersCount = orders.filter(order => order.type === 'sale').length;
+  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && order.status !== 'completed').length;
+  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && order.status !== 'completed').length;
+  const archiveOrdersCount = orders.filter(order => order.status === 'completed').length;
 
   const renderContent = (isSeller: boolean) => {
     if (isLoading) {
@@ -71,8 +76,8 @@ export default function OrdersContent({
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as 'buyer' | 'seller')}>
-      <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 h-auto p-1 bg-muted/50">
+    <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as 'buyer' | 'seller' | 'archive')}>
+      <TabsList className="grid w-full max-w-3xl grid-cols-3 mb-6 h-auto p-1 bg-muted/50">
         <TabsTrigger 
           value="buyer"
           className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-green-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
@@ -85,6 +90,12 @@ export default function OrdersContent({
         >
           Я продавец ({sellerOrdersCount})
         </TabsTrigger>
+        <TabsTrigger 
+          value="archive"
+          className="data-[state=active]:bg-gray-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-gray-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
+        >
+          Архив ({archiveOrdersCount})
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="buyer" className="space-y-4">
@@ -93,6 +104,10 @@ export default function OrdersContent({
 
       <TabsContent value="seller" className="space-y-4">
         {renderContent(true)}
+      </TabsContent>
+
+      <TabsContent value="archive" className="space-y-4">
+        {renderContent(false)}
       </TabsContent>
     </Tabs>
   );
