@@ -8,7 +8,6 @@ import OrdersContent from '@/components/order/OrdersContent';
 import MyOffersContent from '@/components/offer/MyOffersContent';
 import { useOrdersData } from '@/hooks/useOrdersData';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getSession } from '@/utils/auth';
 
 interface MyOrdersProps {
   isAuthenticated: boolean;
@@ -17,7 +16,6 @@ interface MyOrdersProps {
 
 export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const navigate = useNavigate();
-  const currentUser = getSession();
   const [mainTab, setMainTab] = useState<'orders' | 'offers'>('offers');
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'archive'>('buyer');
 
