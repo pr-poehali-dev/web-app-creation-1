@@ -102,14 +102,27 @@ export default function OrderChatModal({
                   <div className="flex items-start">
                     <div className="flex-1 min-w-0">
                       <div className="space-y-2">
-                        {/* История торга - компактное отображение */}
-                        <div className="space-y-1 pb-2 border-b border-dashed">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground/60">
-                            <span className="flex items-center gap-1">
-                              <Icon name="Tag" className="h-3 w-3" />
-                              Начальная цена продавца:
+                        {/* История торга - расширенная версия */}
+                        <div className="space-y-1.5 pb-2 border-b border-dashed">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Icon name="History" className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-xs font-medium text-muted-foreground">История торга</span>
+                          </div>
+                          
+                          {/* 1. Начальная цена продавца */}
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="flex items-center gap-1.5 text-muted-foreground/70">
+                              <Icon name="Store" className="h-3 w-3 text-orange-500/50" />
+                              <span>Начальная цена продавца</span>
                             </span>
-                            <span className="line-through">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
+                            <span className="line-through text-muted-foreground/60">
+                              {order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+                            </span>
+                          </div>
+                          
+                          {/* 2. Показываем этапы торга через стрелку */}
+                          <div className="flex items-center justify-center py-0.5">
+                            <Icon name="ArrowDown" className="h-3 w-3 text-muted-foreground/40" />
                           </div>
                         </div>
                         
@@ -120,14 +133,14 @@ export default function OrderChatModal({
                               name={order.counterOfferedBy === 'buyer' ? 'User' : 'Store'} 
                               className={`h-3.5 w-3.5 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} 
                             />
-                            <span className="text-muted-foreground">
+                            <span className="font-medium text-muted-foreground">
                               {isSeller && order.counterOfferedBy === 'seller' ? 'Ваше встречное предложение' : 
                                isSeller ? 'Встречное предложение покупателя' : 
                                order.counterOfferedBy === 'seller' ? 'Встречное предложение продавца' : 'Ваше встречное предложение'}
                             </span>
                           </div>
                           <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Новая цена:</span>
+                            <span className="text-sm font-medium">Актуальная цена:</span>
                             <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
                               {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
                             </span>
