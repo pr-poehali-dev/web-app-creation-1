@@ -101,53 +101,39 @@ export default function OrderChatModal({
                 <CardContent className="pt-4">
                   <div className="flex items-start">
                     <div className="flex-1 min-w-0">
-                      <div className="space-y-2">
-                        {/* История торга - расширенная версия */}
-                        <div className="space-y-1.5 pb-2 border-b border-dashed">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Icon name="History" className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="text-xs font-medium text-muted-foreground">История торга</span>
-                          </div>
-                          
-                          {/* 1. Начальная цена продавца */}
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="flex items-center gap-1.5 text-muted-foreground/70">
-                              <Icon name="Store" className="h-3 w-3 text-orange-500/50" />
-                              <span>Начальная цена продавца</span>
-                            </span>
-                            <span className="line-through text-muted-foreground/60">
-                              {order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
-                            </span>
-                          </div>
-                          
-                          {/* 2. Показываем этапы торга через стрелку */}
-                          <div className="flex items-center justify-center py-0.5">
-                            <Icon name="ArrowDown" className="h-3 w-3 text-muted-foreground/40" />
-                          </div>
+                      <div className="space-y-2.5">
+                        {/* 1. Начальная цена продавца - сверху компактно */}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground/60 pb-2 border-b border-dashed">
+                          <span className="flex items-center gap-1.5">
+                            <Icon name="Tag" className="h-3 w-3" />
+                            <span>Начальная цена продавца</span>
+                          </span>
+                          <span className="line-through">
+                            {order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+                          </span>
                         </div>
                         
-                        {/* Актуальное встречное предложение */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <Icon 
-                              name={order.counterOfferedBy === 'buyer' ? 'User' : 'Store'} 
-                              className={`h-3.5 w-3.5 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} 
-                            />
-                            <span className="font-medium text-muted-foreground">
-                              {isSeller && order.counterOfferedBy === 'seller' ? 'Ваше встречное предложение' : 
-                               isSeller ? 'Встречное предложение покупателя' : 
-                               order.counterOfferedBy === 'seller' ? 'Встречное предложение продавца' : 'Ваше встречное предложение'}
+                        {/* 2. Встречные предложения - показываем последнее */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-1.5">
+                              <Icon 
+                                name={order.counterOfferedBy === 'buyer' ? 'User' : 'Store'} 
+                                className={`h-4 w-4 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} 
+                              />
+                              <span className="font-semibold text-muted-foreground">
+                                {order.counterOfferedBy === 'buyer' ? 'Встречное предложение покупателя:' : 'Встречное предложение продавца:'}
+                              </span>
                             </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Актуальная цена:</span>
                             <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
                               {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Сумма заказа:</span>
-                            <span className={`font-bold ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
+                          
+                          {/* Сумма заказа */}
+                          <div className="flex items-center justify-between pt-1.5 border-t border-dashed">
+                            <span className="text-sm text-muted-foreground">Сумма заказа:</span>
+                            <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
                               {order.counterTotalAmount?.toLocaleString('ru-RU')} ₽
                             </span>
                           </div>
