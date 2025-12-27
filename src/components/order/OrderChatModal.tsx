@@ -100,22 +100,18 @@ export default function OrderChatModal({
               <Card className={order.counterOfferedBy === 'buyer' ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}>
                 <CardContent className="pt-4">
                   <div className="flex items-start gap-3">
-                    <Icon name="DollarSign" className={`h-5 w-5 mt-0.5 flex-shrink-0 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} />
+                    <Icon name="HandCoins" className={`h-5 w-5 mt-0.5 flex-shrink-0 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} />
                     <div className="flex-1 min-w-0">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">
-                            {order.counterOfferedBy === 'buyer' 
-                              ? (isSeller ? 'Ваша цена:' : 'Цена предложения продавца:')
-                              : (isBuyer ? 'Цена предложения продавца:' : 'Предложение покупателя:')}
+                            {isSeller ? 'Вами предложенная цена:' : 'Цена предложения продавца:'}
                           </span>
                           <span className="font-medium">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">
-                            {order.counterOfferedBy === 'buyer' 
-                              ? (isSeller ? 'Предложение покупателя:' : 'Ваше предложение продавцу:')
-                              : (isBuyer ? 'Ваше предложение продавцу:' : 'Ваше встречное:')}
+                            {isSeller ? 'Встречное предложение покупателя:' : 'Ваше встречное предложение:'}
                           </span>
                           <span className={`font-bold ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
                             {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
