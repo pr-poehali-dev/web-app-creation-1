@@ -383,51 +383,21 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
                 f"INSERT INTO t_p42562714_web_app_creation_1.offer_image_relations (offer_id, image_id, sort_order) VALUES ('{offer_id}', '{image_id}', {idx})"
             )
     
-    # Обработка видео
-    if body.get('video'):
-        video_url = body['video']
+    # Обработка видео (теперь принимаем готовый URL)
+    if body.get('videoUrl'):
+        video_url = body['videoUrl']
+        video_url_esc = video_url.replace("'", "''")
         
-        # Если видео base64 - загружаем в S3
-        if video_url.startswith('data:video'):
-            try:
-                header, base64_data = video_url.split(',', 1)
-                video_data = base64.b64decode(base64_data)
-                
-                # Определяем MIME-тип видео
-                content_type = 'video/mp4'
-                extension = 'mp4'
-                if 'video/quicktime' in header or 'video/mov' in header:
-                    content_type = 'video/quicktime'
-                    extension = 'mov'
-                elif 'video/webm' in header:
-                    content_type = 'video/webm'
-                    extension = 'webm'
-                
-                import uuid
-                file_id = str(uuid.uuid4())
-                s3_key = f"offer-videos/{file_id}.{extension}"
-                
-                s3.put_object(Bucket='files', Key=s3_key, Body=video_data, ContentType=content_type)
-                video_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
-                
-                print(f"Video uploaded to S3: {video_url}")
-            except Exception as e:
-                print(f"Failed to upload video to S3: {str(e)}")
-                # Если загрузка не удалась, пропускаем видео
-                video_url = None
+        cur.execute(
+            f"INSERT INTO t_p42562714_web_app_creation_1.offer_videos (url) VALUES ('{video_url_esc}') RETURNING id"
+        )
+        video_id = cur.fetchone()['id']
         
-        if video_url:
-            video_url_esc = video_url.replace("'", "''")
-            cur.execute(
-                f"INSERT INTO t_p42562714_web_app_creation_1.offer_videos (url) VALUES ('{video_url_esc}') RETURNING id"
-            )
-            video_id = cur.fetchone()['id']
-            
-            # Обновляем offer с video_id
-            cur.execute(
-                f"UPDATE t_p42562714_web_app_creation_1.offers SET video_id = '{video_id}' WHERE id = '{offer_id}'"
-            )
-            print(f"Video saved with ID: {video_id}")
+        # Обновляем offer с video_id
+        cur.execute(
+            f"UPDATE t_p42562714_web_app_creation_1.offers SET video_id = '{video_id}' WHERE id = '{offer_id}'"
+        )
+        print(f"Video saved with ID: {video_id}, URL: {video_url}")
     
     conn.commit()
     cur.close()

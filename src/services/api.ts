@@ -10,6 +10,7 @@ const ORDERS_API = func2url.orders;
 const AUCTIONS_LIST_API = func2url['auctions-list'];
 const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
+const UPLOAD_VIDEO_API = func2url['upload-video'];
 
 export interface OffersListResponse {
   offers: Offer[];
@@ -173,6 +174,23 @@ export const offersAPI = {
     
     if (!response.ok) {
       throw new Error('Failed to delete offer');
+    }
+    
+    return response.json();
+  },
+
+  async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
+    const response = await fetch(UPLOAD_VIDEO_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ video: videoBase64 }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload video');
     }
     
     return response.json();

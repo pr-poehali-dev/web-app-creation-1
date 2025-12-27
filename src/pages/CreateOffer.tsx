@@ -161,12 +161,12 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       return;
     }
 
-    // Проверка размера видео (макс 5 МБ для надежной загрузки)
-    const maxSize = 5 * 1024 * 1024; // 5 MB
+    // Проверка размера видео (макс 10 МБ)
+    const maxSize = 10 * 1024 * 1024; // 10 MB
     if (file.size > maxSize) {
       toast({
         title: 'Видео слишком большое',
-        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(1)} МБ. Максимум: 5 МБ. Сожмите видео или снимите более короткое.`,
+        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(1)} МБ. Максимум: 10 МБ. Сожмите видео или снимите более короткое.`,
         variant: 'destructive',
       });
       return;
@@ -192,6 +192,30 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     setIsSubmitting(true);
 
     try {
+      // Если есть видео - сначала загружаем его отдельно
+      let videoUrl: string | undefined = undefined;
+      if (videoPreview) {
+        try {
+          toast({
+            title: 'Загрузка видео...',
+            description: 'Пожалуйста, подождите',
+          });
+          
+          const uploadResult = await offersAPI.uploadVideo(videoPreview);
+          videoUrl = uploadResult.url;
+          console.log('Video uploaded:', videoUrl);
+        } catch (error) {
+          console.error('Failed to upload video:', error);
+          toast({
+            title: 'Ошибка загрузки видео',
+            description: error instanceof Error ? error.message : 'Попробуйте более короткое видео',
+            variant: 'destructive',
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const offerData = {
         title: formData.title,
         description: formData.description,
@@ -212,7 +236,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
         })),
-        video: videoPreview || undefined,
+        videoUrl: videoUrl, // URL вместо base64
         isPremium: false,
         status: isDraft ? 'draft' : 'active',
       };
@@ -220,16 +244,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       // Логирование размера данных
       const dataSize = new Blob([JSON.stringify(offerData)]).size;
       console.log(`Offer data size: ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
-      
-      if (dataSize > 6 * 1024 * 1024) {
-        toast({
-          title: 'Данные слишком большие',
-          description: 'Попробуйте загрузить меньше фото или более короткое видео',
-          variant: 'destructive',
-        });
-        setIsSubmitting(false);
-        return;
-      }
 
       let result;
       if (isEditMode && editOffer) {
