@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from './use-toast';
 import { getSession } from '@/utils/auth';
 import { notifyOrderAccepted } from '@/utils/notifications';
 import type { Order, ChatMessage } from '@/types/order';
