@@ -47,6 +47,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
     setIsSubmitting(true);
 
     try {
+      // Загружаем видео
       let videoUrl: string | undefined = undefined;
       if (videoPreview) {
         try {
@@ -75,7 +76,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
           
           toast({
             title: 'Видео загружено',
-            description: 'Сохраняем предложение...',
+            description: 'Загружаем фото...',
           });
           
           setIsUploadingVideo(false);
@@ -93,9 +94,35 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         }
       }
 
+      // Загружаем все изображения
+      const uploadedImageUrls: string[] = [];
+      if (imagePreviews.length > 0) {
+        toast({
+          title: 'Загрузка фото...',
+          description: `Загружаем ${imagePreviews.length} фото`,
+        });
+
+        for (let i = 0; i < imagePreviews.length; i++) {
+          try {
+            const uploadResult = await offersAPI.uploadVideo(imagePreviews[i]);
+            uploadedImageUrls.push(uploadResult.url);
+            console.log(`Image ${i + 1}/${imagePreviews.length} uploaded:`, uploadResult.url);
+          } catch (error) {
+            console.error(`Failed to upload image ${i + 1}:`, error);
+            toast({
+              title: 'Ошибка загрузки фото',
+              description: `Не удалось загрузить фото ${i + 1}`,
+              variant: 'destructive',
+            });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+
       const offerData = {
         ...formData,
-        images: imagePreviews.map((url, index) => ({
+        images: uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
         })),
@@ -106,6 +133,12 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       
       const dataSize = new Blob([JSON.stringify(offerData)]).size;
       console.log(`Offer data size: ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
+      console.log(`Images uploaded: ${uploadedImageUrls.length}, Video: ${videoUrl ? 'yes' : 'no'}`);
+
+      toast({
+        title: 'Сохранение предложения...',
+        description: 'Почти готово',
+      });
 
       let result;
       if (isEditMode && editOffer) {

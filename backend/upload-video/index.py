@@ -8,8 +8,8 @@ import boto3
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
-    API для загрузки видео файлов
-    POST / - загрузить видео и получить URL
+    API для загрузки видео и изображений
+    POST / - загрузить медиа и получить URL
     """
     method: str = event.get('httpMethod', 'GET')
     
@@ -56,53 +56,72 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
 
 def upload_video(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    """Загрузить видео на S3"""
+    """Загрузить видео или изображение на S3"""
     body = json.loads(event.get('body', '{}'))
     
     if not body.get('video'):
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': json.dumps({'error': 'Video data required'}),
+            'body': json.dumps({'error': 'Video/Image data required'}),
             'isBase64Encoded': False
         }
     
-    video_data_url = body['video']
+    media_data_url = body['video']
     
-    # Проверяем что это base64 видео
-    if not video_data_url.startswith('data:video'):
+    # Проверяем что это base64 медиа (видео или изображение)
+    is_video = media_data_url.startswith('data:video')
+    is_image = media_data_url.startswith('data:image')
+    
+    if not is_video and not is_image:
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': json.dumps({'error': 'Invalid video format'}),
+            'body': json.dumps({'error': 'Invalid media format. Must be video or image'}),
             'isBase64Encoded': False
         }
     
     try:
         # Декодируем base64
-        header, base64_data = video_data_url.split(',', 1)
-        video_data = base64.b64decode(base64_data)
+        header, base64_data = media_data_url.split(',', 1)
+        media_data = base64.b64decode(base64_data)
         
         # Определяем MIME-тип и расширение
-        content_type = 'video/mp4'
-        extension = 'mp4'
-        if 'video/quicktime' in header or 'video/mov' in header:
-            content_type = 'video/quicktime'
-            extension = 'mov'
-        elif 'video/webm' in header:
-            content_type = 'video/webm'
-            extension = 'webm'
+        if is_video:
+            content_type = 'video/mp4'
+            extension = 'mp4'
+            folder = 'offer-videos'
+            if 'video/quicktime' in header or 'video/mov' in header:
+                content_type = 'video/quicktime'
+                extension = 'mov'
+            elif 'video/webm' in header:
+                content_type = 'video/webm'
+                extension = 'webm'
+        else:
+            # Изображение
+            content_type = 'image/jpeg'
+            extension = 'jpg'
+            folder = 'offer-images'
+            if 'image/png' in header:
+                content_type = 'image/png'
+                extension = 'png'
+            elif 'image/webp' in header:
+                content_type = 'image/webp'
+                extension = 'webp'
+            elif 'image/gif' in header:
+                content_type = 'image/gif'
+                extension = 'gif'
         
-        # Проверка размера (макс 10 МБ)
-        max_size = 10 * 1024 * 1024
-        if len(video_data) > max_size:
+        # Проверка размера (макс 10 МБ для видео, 5 МБ для изображений)
+        max_size = 10 * 1024 * 1024 if is_video else 5 * 1024 * 1024
+        if len(media_data) > max_size:
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({
-                    'error': 'Video too large',
-                    'maxSize': '10 MB',
-                    'actualSize': f'{len(video_data) / 1024 / 1024:.1f} MB'
+                    'error': f'{"Video" if is_video else "Image"} too large',
+                    'maxSize': f'{"10" if is_video else "5"} MB',
+                    'actualSize': f'{len(media_data) / 1024 / 1024:.1f} MB'
                 }),
                 'isBase64Encoded': False
             }
@@ -115,32 +134,33 @@ def upload_video(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         )
         
         file_id = str(uuid.uuid4())
-        s3_key = f"offer-videos/{file_id}.{extension}"
+        s3_key = f"{folder}/{file_id}.{extension}"
         
-        s3.put_object(Bucket='files', Key=s3_key, Body=video_data, ContentType=content_type)
+        s3.put_object(Bucket='files', Key=s3_key, Body=media_data, ContentType=content_type)
         
         cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
         
-        print(f"Video uploaded: {cdn_url}, size: {len(video_data) / 1024 / 1024:.2f} MB")
+        media_type = "Video" if is_video else "Image"
+        print(f"{media_type} uploaded: {cdn_url}, size: {len(media_data) / 1024 / 1024:.2f} MB")
         
         return {
             'statusCode': 200,
             'headers': headers,
             'body': json.dumps({
                 'url': cdn_url,
-                'size': len(video_data),
-                'message': 'Video uploaded successfully'
+                'size': len(media_data),
+                'message': f'{media_type} uploaded successfully'
             }),
             'isBase64Encoded': False
         }
         
     except Exception as e:
         import traceback
-        print(f'ERROR uploading video: {str(e)}')
+        print(f'ERROR uploading media: {str(e)}')
         print(traceback.format_exc())
         return {
             'statusCode': 500,
             'headers': headers,
-            'body': json.dumps({'error': f'Failed to upload video: {str(e)}'}),
+            'body': json.dumps({'error': f'Failed to upload media: {str(e)}'}),
             'isBase64Encoded': False
         }

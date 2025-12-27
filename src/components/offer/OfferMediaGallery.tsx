@@ -89,50 +89,14 @@ export default function OfferMediaGallery({
                 src={video!.url}
                 poster={video!.thumbnail}
                 className="w-full h-full object-cover"
+                controls
                 onPlay={onVideoPlay}
                 onPause={onVideoPause}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleTogglePlayPause();
+                }}
               />
-              
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {!isVideoPlaying && (
-                  <button
-                    onClick={handleTogglePlayPause}
-                    className="pointer-events-auto p-4 rounded-full bg-background/80 hover:bg-background shadow-lg transition-all"
-                  >
-                    <Icon name="Play" className="h-8 w-8" />
-                  </button>
-                )}
-              </div>
-
-              <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2">
-                <button
-                  onClick={handleTogglePlayPause}
-                  className="p-2 rounded-full bg-background/80 hover:bg-background shadow-lg transition-all"
-                >
-                  <Icon name={isVideoPlaying ? 'Pause' : 'Play'} className="h-4 w-4" />
-                </button>
-                
-                <button
-                  onClick={() => handleSkip(-10)}
-                  className="p-2 rounded-full bg-background/80 hover:bg-background shadow-lg transition-all"
-                >
-                  <Icon name="RotateCcw" className="h-4 w-4" />
-                </button>
-                
-                <button
-                  onClick={() => handleSkip(10)}
-                  className="p-2 rounded-full bg-background/80 hover:bg-background shadow-lg transition-all"
-                >
-                  <Icon name="RotateCw" className="h-4 w-4" />
-                </button>
-                
-                <button
-                  onClick={handleToggleMute}
-                  className="p-2 rounded-full bg-background/80 hover:bg-background shadow-lg transition-all ml-auto"
-                >
-                  <Icon name={isMuted ? 'VolumeX' : 'Volume2'} className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           ) : images.length > 0 ? (
             <>
