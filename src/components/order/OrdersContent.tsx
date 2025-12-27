@@ -77,22 +77,22 @@ export default function OrdersContent({
 
   return (
     <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as 'buyer' | 'seller' | 'archive')}>
-      <TabsList className="grid w-full max-w-3xl grid-cols-3 mb-6 h-auto p-1 bg-muted/50">
+      <TabsList className="grid w-full max-w-3xl grid-cols-3 gap-3 mb-6 h-auto p-0 bg-transparent">
         <TabsTrigger 
           value="buyer"
-          className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-green-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
+          className="border-2 border-green-600 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-green-600 transition-all py-2 px-3 text-sm font-medium rounded-md"
         >
           Я покупатель ({buyerOrdersCount})
         </TabsTrigger>
         <TabsTrigger 
           value="seller"
-          className="data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-red-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
+          className="border-2 border-red-600 data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-red-600 transition-all py-2 px-3 text-sm font-medium rounded-md"
         >
           Я продавец ({sellerOrdersCount})
         </TabsTrigger>
         <TabsTrigger 
           value="archive"
-          className="data-[state=active]:bg-gray-500 data-[state=active]:text-white data-[state=active]:border-2 data-[state=active]:border-gray-600 data-[state=active]:shadow-lg transition-all py-3 font-semibold"
+          className="border-2 border-gray-600 data-[state=active]:bg-gray-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600 transition-all py-2 px-3 text-sm font-medium rounded-md"
         >
           Архив ({archiveOrdersCount})
         </TabsTrigger>
