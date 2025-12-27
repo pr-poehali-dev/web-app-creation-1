@@ -161,6 +161,17 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       return;
     }
 
+    // Проверка размера видео (макс 10 МБ)
+    const maxSize = 10 * 1024 * 1024; // 10 MB
+    if (file.size > maxSize) {
+      toast({
+        title: 'Видео слишком большое',
+        description: 'Максимальный размер видео: 10 МБ',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setVideo(file);
     const reader = new FileReader();
     reader.onloadend = () => {
