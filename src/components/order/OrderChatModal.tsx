@@ -104,7 +104,7 @@ export default function OrderChatModal({
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">
-                            {isSeller ? 'Вами предложенная цена:' : 'Цена предложения продавца:'}
+                            Цена предложения:
                           </span>
                           <span className="font-medium">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
                         </div>
