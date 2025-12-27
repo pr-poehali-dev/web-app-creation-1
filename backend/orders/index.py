@@ -473,6 +473,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         # Статус остается 'negotiating'
     
     # Продавец принимает предложение покупателя
+    counter_accepted = False
     if 'acceptCounter' in body and body['acceptCounter'] and is_seller:
         if order.get('counter_price_per_unit') is None or order.get('counter_total_amount') is None:
             cur.close()
@@ -488,6 +489,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"price_per_unit = {float(order['counter_price_per_unit'])}")
         updates.append(f"total_amount = {float(order['counter_total_amount'])}")
         updates.append(f"status = 'accepted'")
+        counter_accepted = True
         
         # Уменьшаем количество в предложении
         offer_id_escaped = str(order['offer_id']).replace("'", "''")
@@ -499,7 +501,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         """)
     
     # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
-    if 'status' in body and body['status'] == 'accepted':
+    if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
         # Проверяем доступное количество в предложении
         offer_id_escaped = str(order['offer_id']).replace("'", "''")
         cur.execute(f"""
