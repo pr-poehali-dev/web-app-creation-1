@@ -47,6 +47,7 @@ export function useOfferDetail(id: string | undefined) {
           availableDeliveryTypes: data.available_delivery_types || data.availableDeliveryTypes || ['pickup'],
           userId: data.user_id || data.userId,
           fullAddress: data.full_address || data.fullAddress,
+          video: data.videoUrl ? { url: data.videoUrl } : undefined,
           seller: {
             id: data.user_id || data.userId,
             name: data.seller_name || '',

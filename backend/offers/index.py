@@ -188,6 +188,7 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
             5.0 as seller_rating,
             0 as seller_reviews_count,
             CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
+            ov.url as video_url,
             COALESCE(
                 json_agg(
                     json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt)
@@ -197,10 +198,11 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
             ) as images
         FROM t_p42562714_web_app_creation_1.offers o
         LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
+        LEFT JOIN t_p42562714_web_app_creation_1.offer_videos ov ON o.video_id = ov.id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_image_relations oir ON o.id = oir.offer_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id
         WHERE o.id = '{offer_id_escaped}'
-        GROUP BY o.id, u.id
+        GROUP BY o.id, u.id, ov.url
     """
     
     cur.execute(sql)
@@ -254,6 +256,11 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     seller_reviews_count = offer_dict.pop('seller_reviews_count', 0)
     seller_is_verified = offer_dict.pop('seller_is_verified', False)
+    
+    # Добавляем videoUrl если есть
+    video_url = offer_dict.pop('video_url', None)
+    if video_url:
+        offer_dict['videoUrl'] = video_url
     
     # Создаем объект seller для фронтенда
     offer_dict['seller'] = {
