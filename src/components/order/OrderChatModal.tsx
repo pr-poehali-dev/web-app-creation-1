@@ -102,25 +102,42 @@ export default function OrderChatModal({
                   <div className="flex items-start">
                     <div className="flex-1 min-w-0">
                       <div className="space-y-2">
-                        {/* Начальная цена - всегда сверху компактно */}
-                        <div className="flex items-center justify-between text-xs text-muted-foreground/60">
-                          <span>Начальная цена:</span>
-                          <span className="line-through">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
+                        {/* История торга - компактное отображение */}
+                        <div className="space-y-1 pb-2 border-b border-dashed">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground/60">
+                            <span className="flex items-center gap-1">
+                              <Icon name="Tag" className="h-3 w-3" />
+                              Начальная цена продавца:
+                            </span>
+                            <span className="line-through">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
+                          </div>
                         </div>
                         
-                        {/* Встречное предложение - это теперь основная "Цена предложения" */}
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            {isSeller && order.counterOfferedBy === 'seller' ? 'Ваше встречное предложение:' : 
-                             isSeller ? 'Встречное предложение покупателя:' : 
-                             order.counterOfferedBy === 'seller' ? 'Встречное предложение продавца:' : 'Ваше встречное предложение:'}
-                          </span>
-                          <span className={`font-bold ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
-                            {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
-                          </span>
-                        </div>
-                        <div className="text-sm font-medium pt-1">
-                          Сумма: <span className={order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}>{order.counterTotalAmount?.toLocaleString('ru-RU')} ₽</span>
+                        {/* Актуальное встречное предложение */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <Icon 
+                              name={order.counterOfferedBy === 'buyer' ? 'User' : 'Store'} 
+                              className={`h-3.5 w-3.5 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} 
+                            />
+                            <span className="text-muted-foreground">
+                              {isSeller && order.counterOfferedBy === 'seller' ? 'Ваше встречное предложение' : 
+                               isSeller ? 'Встречное предложение покупателя' : 
+                               order.counterOfferedBy === 'seller' ? 'Встречное предложение продавца' : 'Ваше встречное предложение'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Новая цена:</span>
+                            <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
+                              {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Сумма заказа:</span>
+                            <span className={`font-bold ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
+                              {order.counterTotalAmount?.toLocaleString('ru-RU')} ₽
+                            </span>
+                          </div>
                         </div>
                       </div>
                       
