@@ -99,8 +99,7 @@ export default function OrderChatModal({
             {order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && (
               <Card className={order.counterOfferedBy === 'buyer' ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}>
                 <CardContent className="pt-4">
-                  <div className="flex items-start gap-3">
-                    <Icon name="HandCoins" className={`h-5 w-5 mt-0.5 flex-shrink-0 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} />
+                  <div className="flex items-start">
                     <div className="flex-1 min-w-0">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
