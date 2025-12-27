@@ -27,6 +27,8 @@ export interface Order {
   status: 'new' | 'pending' | 'accepted' | 'rejected' | 'completed' | 'negotiating';
   createdAt: Date;
   acceptedAt?: Date;
+  completedDate?: Date;
+  type?: 'purchase' | 'sale';
 }
 
 export interface ChatMessage {

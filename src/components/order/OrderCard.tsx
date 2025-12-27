@@ -60,6 +60,18 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
               {isSeller ? order.buyerName : (order.sellerName || 'Продавец')}
             </p>
           </div>
+          {order.status === 'completed' && order.completedDate && (
+            <div className="col-span-2">
+              <p className="text-muted-foreground">Дата завершения</p>
+              <p className="font-medium">
+                {new Date(order.completedDate).toLocaleDateString('ru-RU', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
+          )}
         </div>
 
         {order.comment && (

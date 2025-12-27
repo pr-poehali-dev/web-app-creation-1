@@ -212,6 +212,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         # Преобразуем даты
         order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
         order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
+        order_dict['completedDate'] = order_dict.pop('completed_date').isoformat() if order_dict.get('completed_date') else None
         order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
         order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
         order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
@@ -263,6 +264,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
     order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
+    order_dict['completedDate'] = order_dict.pop('completed_date').isoformat() if order_dict.get('completed_date') else None
     order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
     order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
     order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
@@ -498,6 +500,10 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             """)
         
         updates.append(f"status = 'accepted'")
+    
+    # Завершение заказа
+    if 'status' in body and body['status'] == 'completed':
+        updates.append(f"completed_date = CURRENT_TIMESTAMP")
     
     # Обычное обновление статуса
     elif 'status' in body and body['status'] != 'accepted':
