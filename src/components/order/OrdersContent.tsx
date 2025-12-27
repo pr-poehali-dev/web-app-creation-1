@@ -80,19 +80,19 @@ export default function OrdersContent({
       <TabsList className="grid w-full max-w-3xl grid-cols-3 gap-3 mb-6 h-auto p-0 bg-transparent">
         <TabsTrigger 
           value="buyer"
-          className="border-2 border-green-600 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-green-600 transition-all py-2 px-3 text-sm font-medium rounded-md"
+          className="border-2 border-green-600 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-green-600 transition-all py-2 px-2 text-xs font-medium rounded-md whitespace-nowrap"
         >
-          Я покупатель ({buyerOrdersCount})
+          Покупатель ({buyerOrdersCount})
         </TabsTrigger>
         <TabsTrigger 
           value="seller"
-          className="border-2 border-red-600 data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-red-600 transition-all py-2 px-3 text-sm font-medium rounded-md"
+          className="border-2 border-red-600 data-[state=active]:bg-red-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-red-600 transition-all py-2 px-2 text-xs font-medium rounded-md whitespace-nowrap"
         >
-          Я продавец ({sellerOrdersCount})
+          Продавец ({sellerOrdersCount})
         </TabsTrigger>
         <TabsTrigger 
           value="archive"
-          className="border-2 border-gray-600 data-[state=active]:bg-gray-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600 transition-all py-2 px-3 text-sm font-medium rounded-md"
+          className="border-2 border-gray-600 data-[state=active]:bg-gray-500 data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600 transition-all py-2 px-2 text-xs font-medium rounded-md whitespace-nowrap"
         >
           Архив ({archiveOrdersCount})
         </TabsTrigger>
