@@ -320,10 +320,17 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     districts_array = "ARRAY[" + ",".join([f"'{d.replace(chr(39), chr(39)+chr(39))}'" for d in available_districts]) + "]" if available_districts else "ARRAY[]::text[]"
     delivery_types_array = "ARRAY[" + ",".join([f"'{t.replace(chr(39), chr(39)+chr(39))}'" for t in available_delivery_types]) + "]" if available_delivery_types else "ARRAY['pickup']::text[]"
     
+    # Parse minOrderQuantity
+    min_order_qty = body.get('minOrderQuantity')
+    if min_order_qty == '' or min_order_qty == 0:
+        min_order_qty = None
+    elif min_order_qty is not None:
+        min_order_qty = int(min_order_qty)
+    
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
             user_id, title, description, category, subcategory,
-            quantity, unit, price_per_unit, has_vat, vat_rate,
+            quantity, unit, price_per_unit, min_order_quantity, has_vat, vat_rate,
             location, district, full_address, available_districts,
             available_delivery_types, is_premium, status
         ) VALUES (
@@ -334,7 +341,8 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {'NULL' if subcategory_esc is None else f"'{subcategory_esc}'"},
             {body['quantity']}, 
             '{unit_esc}', 
-            {body['pricePerUnit']}, 
+            {body['pricePerUnit']},
+            {min_order_qty if min_order_qty is not None else 'NULL'},
             {body.get('hasVAT', False)}, 
             {body.get('vatRate') if body.get('vatRate') is not None else 'NULL'},
             {'NULL' if location_esc is None else f"'{location_esc}'"},
@@ -449,6 +457,13 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     if 'quantity' in body:
         updates.append(f"quantity = {body['quantity']}")
+    
+    if 'minOrderQuantity' in body:
+        min_order_qty = body['minOrderQuantity']
+        if min_order_qty == '' or min_order_qty == 0:
+            updates.append(f"min_order_quantity = NULL")
+        else:
+            updates.append(f"min_order_quantity = {int(min_order_qty)}")
     
     if 'pricePerUnit' in body:
         updates.append(f"price_per_unit = {body['pricePerUnit']}")

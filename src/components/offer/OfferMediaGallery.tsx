@@ -44,13 +44,12 @@ export default function OfferMediaGallery({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
+    // Не запускаем видео автоматически - пользователь сам нажмёт Play
     if (videoRef.current && showVideo && video) {
-      videoRef.current.play().catch(() => {
-        console.log('Autoplay prevented');
-      });
-      onVideoPlay();
+      // Просто подготавливаем видео к воспроизведению
+      videoRef.current.load();
     }
-  }, [showVideo, video, onVideoPlay]);
+  }, [showVideo, video]);
 
   const handleTogglePlayPause = () => {
     if (!videoRef.current) return;

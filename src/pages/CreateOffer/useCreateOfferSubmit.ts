@@ -122,6 +122,10 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
 
       const offerData = {
         ...formData,
+        quantity: Number(formData.quantity),
+        pricePerUnit: Number(formData.pricePerUnit),
+        minOrderQuantity: formData.minOrderQuantity ? Number(formData.minOrderQuantity) : undefined,
+        vatRate: formData.vatRate ? Number(formData.vatRate) : undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
