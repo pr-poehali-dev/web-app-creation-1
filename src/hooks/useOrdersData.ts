@@ -279,13 +279,24 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
         status: 'accepted'
       });
 
-      toast({
-        title: 'Встречное предложение принято',
-        description: 'Продавец получит уведомление',
+      // Мгновенно обновляем статус локально для быстрого отклика
+      setSelectedOrder({
+        ...selectedOrder,
+        status: 'accepted',
+        buyerAcceptedCounter: true,
+        pricePerUnit: selectedOrder.counterPricePerUnit || selectedOrder.pricePerUnit,
+        totalAmount: selectedOrder.counterTotalAmount || selectedOrder.totalAmount,
       });
 
+      // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
+
+      toast({
+        title: 'Встречное предложение принято',
+        description: 'Заказ переведён в статус "Принято"',
+      });
       
+      // Дополнительно обновляем selectedOrder из свежих данных через 500мс
       setTimeout(() => {
         const updatedOrder = orders.find(o => o.id === selectedOrder.id);
         if (updatedOrder) {
