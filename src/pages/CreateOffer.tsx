@@ -93,6 +93,8 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const [video, setVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -196,16 +198,40 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       let videoUrl: string | undefined = undefined;
       if (videoPreview) {
         try {
+          setIsUploadingVideo(true);
+          setVideoUploadProgress(0);
+          
           toast({
             title: 'Загрузка видео...',
             description: 'Пожалуйста, подождите',
           });
           
+          // Симуляция прогресса для UX
+          const progressInterval = setInterval(() => {
+            setVideoUploadProgress(prev => {
+              if (prev >= 90) return prev;
+              return prev + 10;
+            });
+          }, 200);
+          
           const uploadResult = await offersAPI.uploadVideo(videoPreview);
+          
+          clearInterval(progressInterval);
+          setVideoUploadProgress(100);
+          
           videoUrl = uploadResult.url;
           console.log('Video uploaded:', videoUrl);
+          
+          toast({
+            title: 'Видео загружено',
+            description: 'Сохраняем предложение...',
+          });
+          
+          setIsUploadingVideo(false);
         } catch (error) {
           console.error('Failed to upload video:', error);
+          setIsUploadingVideo(false);
+          setVideoUploadProgress(0);
           toast({
             title: 'Ошибка загрузки видео',
             description: error instanceof Error ? error.message : 'Попробуйте более короткое видео',
@@ -371,6 +397,25 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               onVideoUpload={handleVideoUpload}
               onRemoveVideo={handleRemoveVideo}
             />
+            
+            {isUploadingVideo && (
+              <Card className="border-primary bg-primary/5">
+                <CardContent className="pt-6">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">Загрузка видео...</span>
+                      <span className="text-muted-foreground">{videoUploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-primary h-full transition-all duration-300 ease-out"
+                        style={{ width: `${videoUploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>
