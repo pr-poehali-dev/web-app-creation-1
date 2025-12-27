@@ -134,14 +134,21 @@ export default function OfferDetailContent({
           <div className="space-y-3">
             <Card>
               <CardContent className="pt-6 space-y-3">
-                <Button
-                  onClick={onOrderClick}
-                  size="lg"
-                  className="w-full gap-2"
-                >
-                  <Icon name="ShoppingCart" className="h-5 w-5" />
-                  Заказать
-                </Button>
+                {(() => {
+                  const currentUser = getSession();
+                  const isOwner = currentUser && currentUser.id?.toString() === offer.userId;
+                  
+                  return !isOwner ? (
+                    <Button
+                      onClick={onOrderClick}
+                      size="lg"
+                      className="w-full gap-2"
+                    >
+                      <Icon name="ShoppingCart" className="h-5 w-5" />
+                      Заказать
+                    </Button>
+                  ) : null;
+                })()}
                 <Button
                   onClick={onShare}
                   variant="outline"

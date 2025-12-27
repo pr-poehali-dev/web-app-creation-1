@@ -6,7 +6,11 @@ import { notifyOrderAccepted } from '@/utils/notifications';
 import type { Order, ChatMessage } from '@/types/order';
 import { ordersAPI } from '@/services/api';
 
-export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'seller' | 'archive') {
+export function useOrdersData(
+  isAuthenticated: boolean, 
+  activeTab: 'buyer' | 'seller' | 'archive',
+  onTabChange?: (tab: 'buyer' | 'seller' | 'archive') => void
+) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getSession();
@@ -356,6 +360,12 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
       });
 
       setIsChatOpen(false);
+      
+      // Переключаем на вкладку "Архив" сразу после завершения
+      if (onTabChange) {
+        onTabChange('archive');
+      }
+      
       await loadOrders(false);
     } catch (error) {
       console.error('Error completing order:', error);

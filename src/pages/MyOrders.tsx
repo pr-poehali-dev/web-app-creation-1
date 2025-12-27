@@ -29,7 +29,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleCloseChat,
     handleSendMessage,
     loadOrders,
-  } = useOrdersData(isAuthenticated, activeTab);
+  } = useOrdersData(isAuthenticated, activeTab, setActiveTab);
 
   useEffect(() => {
     const handleOpenOrderChat = async (event: CustomEvent) => {
@@ -91,7 +91,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onAcceptOrder={currentUser?.id?.toString() === selectedOrder.sellerId ? () => handleAcceptOrder() : undefined}
           onCounterOffer={handleCounterOffer}
           onAcceptCounter={handleAcceptCounter}
-          onCompleteOrder={currentUser?.id?.toString() === selectedOrder.sellerId ? handleCompleteOrder : undefined}
+          onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? handleCompleteOrder : undefined}
         />
       )}
     </div>

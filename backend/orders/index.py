@@ -338,6 +338,17 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     seller_id = offer['user_id']
     
+    # ПРОВЕРКА 1: Автор предложения не может купить у самого себя
+    if int(user_id) == seller_id:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 403,
+            'headers': headers,
+            'body': json.dumps({'error': 'Нельзя купить собственное предложение'}),
+            'isBase64Encoded': False
+        }
+    
     # Получаем данные продавца
     cur.execute(f"SELECT first_name, last_name, phone, email FROM {schema}.users WHERE id = {seller_id}")
     seller = cur.fetchone()
@@ -540,9 +551,19 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         
         updates.append(f"status = 'accepted'")
     
-    # Завершение заказа
+    # ПРОВЕРКА 2: Завершить заказ может только покупатель
     if 'status' in body and body['status'] == 'completed':
+        if not is_buyer:
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 403,
+                'headers': headers,
+                'body': json.dumps({'error': 'Только покупатель может завершить заказ'}),
+                'isBase64Encoded': False
+            }
         updates.append(f"completed_date = CURRENT_TIMESTAMP")
+        updates.append(f"status = 'completed'")
     
     # Обычное обновление статуса
     elif 'status' in body and body['status'] != 'accepted':
@@ -827,7 +848,7 @@ def delete_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     order_id_escaped = order_id.replace("'", "''")
     
     # Проверяем существование заказа и права доступа
-    cur.execute(f"SELECT buyer_id, seller_id FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    cur.execute(f"SELECT buyer_id, seller_id, status FROM {schema}.orders WHERE id = '{order_id_escaped}'")
     order = cur.fetchone()
     
     if not order:
@@ -849,6 +870,18 @@ def delete_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'statusCode': 403,
             'headers': headers,
             'body': json.dumps({'error': 'Access denied'}),
+            'isBase64Encoded': False
+        }
+    
+    # ПРОВЕРКА 3: Отменить можно только до статуса "Принят"
+    allowed_statuses = ['new', 'negotiating']
+    if order['status'] not in allowed_statuses:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 403,
+            'headers': headers,
+            'body': json.dumps({'error': f'Нельзя отменить заказ в статусе "{order["status"]}"'}),
             'isBase64Encoded': False
         }
     

@@ -142,6 +142,17 @@ export function useOfferDetail(id: string | undefined) {
       navigate('/login');
       return;
     }
+    
+    const currentUser = getSession();
+    if (currentUser && offer && currentUser.id?.toString() === offer.userId) {
+      toast({
+        title: 'Невозможно создать заказ',
+        description: 'Нельзя купить собственное предложение',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsOrderModalOpen(true);
   };
 
