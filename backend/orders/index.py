@@ -164,8 +164,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     params = event.get('queryStringParameters', {}) or {}
     order_type = params.get('type', 'all')
     status = params.get('status', 'all')
+    limit = int(params.get('limit', '50'))
+    offset = int(params.get('offset', '0'))
     
-    print(f"[GET_USER_ORDERS] type={order_type}, status={status}")
+    print(f"[GET_USER_ORDERS] type={order_type}, status={status}, limit={limit}, offset={offset}")
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -173,6 +175,23 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     user_id_int = int(user_id)
     
     schema = get_schema()
+    
+    # Подсчет общего количества заказов
+    count_sql = f"SELECT COUNT(*) as total FROM {schema}.orders WHERE 1=1"
+    
+    if order_type == 'purchase':
+        count_sql += f" AND buyer_id = {user_id_int}"
+    elif order_type == 'sale':
+        count_sql += f" AND seller_id = {user_id_int}"
+    else:
+        count_sql += f" AND (buyer_id = {user_id_int} OR seller_id = {user_id_int})"
+    
+    if status != 'all':
+        status_escaped = status.replace("'", "''")
+        count_sql += f" AND status = '{status_escaped}'"
+    
+    cur.execute(count_sql)
+    total_count = cur.fetchone()['total']
     
     # Запрос БЕЗ JOIN - используем только данные из таблицы orders
     sql = f"SELECT * FROM {schema}.orders WHERE 1=1"
@@ -188,7 +207,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         status_escaped = status.replace("'", "''")
         sql += f" AND status = '{status_escaped}'"
     
-    sql += " ORDER BY order_date DESC"
+    sql += f" ORDER BY order_date DESC LIMIT {limit} OFFSET {offset}"
     
     print(f"[GET_USER_ORDERS] SQL: {sql}")
     
@@ -226,7 +245,13 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({'orders': result, 'total': len(result)}),
+        'body': json.dumps({
+            'orders': result, 
+            'total': total_count,
+            'limit': limit,
+            'offset': offset,
+            'hasMore': offset + len(result) < total_count
+        }),
         'isBase64Encoded': False
     }
 

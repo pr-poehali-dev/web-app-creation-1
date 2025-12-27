@@ -24,8 +24,6 @@ export default function OrdersContent({
   onAcceptOrder,
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
 
   const displayOrders = orders.filter(order => {
     if (activeTab === 'archive') {
@@ -35,13 +33,6 @@ export default function OrdersContent({
       // Фильтр по названию
       if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false;
-      }
-
-      // Фильтр по дате
-      if (order.completedDate) {
-        const completedDate = new Date(order.completedDate);
-        if (dateFrom && completedDate < new Date(dateFrom)) return false;
-        if (dateTo && completedDate > new Date(dateTo + 'T23:59:59')) return false;
       }
 
       return true;
@@ -130,31 +121,13 @@ export default function OrdersContent({
       <TabsContent value="archive" className="space-y-4">
         <Card className="mb-4">
           <CardContent className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Поиск по названию</label>
-                <Input
-                  placeholder="Название товара..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Дата с</label>
-                <Input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Дата по</label>
-                <Input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                />
-              </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block">Поиск по названию</label>
+              <Input
+                placeholder="Название товара..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
           </CardContent>
         </Card>
