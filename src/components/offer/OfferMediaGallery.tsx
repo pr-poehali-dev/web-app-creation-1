@@ -92,10 +92,6 @@ export default function OfferMediaGallery({
                 controls
                 onPlay={onVideoPlay}
                 onPause={onVideoPause}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleTogglePlayPause();
-                }}
               />
             </div>
           ) : images.length > 0 ? (
