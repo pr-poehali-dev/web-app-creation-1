@@ -276,7 +276,9 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         result = { id: editOffer.id };
         updateOffer(editOffer.id, offerData);
       } else {
+        console.log('Sending offer data:', JSON.stringify(offerData, null, 2));
         result = await offersAPI.createOffer(offerData);
+        console.log('Create offer result:', result);
       }
       
       const newOffer: Offer = {
@@ -324,6 +326,14 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       }, 500);
     } catch (error) {
       console.error('Ошибка создания предложения:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+      
+      // Детальное логирование ошибки
+      if (error instanceof Error) {
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+      }
+      
       toast({
         title: 'Ошибка',
         description: error instanceof Error ? error.message : 'Не удалось создать предложение',

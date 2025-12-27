@@ -279,6 +279,10 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     user_headers = event.get('headers', {})
     user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
     
+    print(f"CREATE OFFER - User ID: {user_id}")
+    print(f"CREATE OFFER - Body keys: {list(body.keys())}")
+    print(f"CREATE OFFER - Has videoUrl: {bool(body.get('videoUrl'))}")
+    
     if not user_id:
         return {
             'statusCode': 401,
@@ -385,19 +389,28 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     # Обработка видео (теперь принимаем готовый URL)
     if body.get('videoUrl'):
-        video_url = body['videoUrl']
-        video_url_esc = video_url.replace("'", "''")
-        
-        cur.execute(
-            f"INSERT INTO t_p42562714_web_app_creation_1.offer_videos (url) VALUES ('{video_url_esc}') RETURNING id"
-        )
-        video_id = cur.fetchone()['id']
-        
-        # Обновляем offer с video_id
-        cur.execute(
-            f"UPDATE t_p42562714_web_app_creation_1.offers SET video_id = '{video_id}' WHERE id = '{offer_id}'"
-        )
-        print(f"Video saved with ID: {video_id}, URL: {video_url}")
+        try:
+            video_url = body['videoUrl']
+            video_url_esc = video_url.replace("'", "''")
+            
+            print(f"Saving video URL to DB: {video_url}")
+            
+            cur.execute(
+                f"INSERT INTO t_p42562714_web_app_creation_1.offer_videos (url) VALUES ('{video_url_esc}') RETURNING id"
+            )
+            video_id = cur.fetchone()['id']
+            
+            print(f"Video record created with ID: {video_id}")
+            
+            # Обновляем offer с video_id
+            cur.execute(
+                f"UPDATE t_p42562714_web_app_creation_1.offers SET video_id = '{video_id}' WHERE id = '{offer_id}'"
+            )
+            print(f"Offer {offer_id} updated with video_id: {video_id}")
+        except Exception as e:
+            print(f"ERROR saving video: {str(e)}")
+            import traceback
+            print(f"Video save traceback: {traceback.format_exc()}")
     
     conn.commit()
     cur.close()
