@@ -102,15 +102,18 @@ export default function OrderChatModal({
                   <div className="flex items-start">
                     <div className="flex-1 min-w-0">
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            Цена предложения:
-                          </span>
-                          <span className="font-medium">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
+                        {/* Начальная цена - всегда сверху компактно */}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground/60">
+                          <span>Начальная цена:</span>
+                          <span className="line-through">{order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}</span>
                         </div>
+                        
+                        {/* Встречное предложение - это теперь основная "Цена предложения" */}
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">
-                            {isSeller ? 'Встречное предложение покупателя:' : 'Ваше встречное предложение:'}
+                            {isSeller && order.counterOfferedBy === 'seller' ? 'Ваше встречное предложение:' : 
+                             isSeller ? 'Встречное предложение покупателя:' : 
+                             order.counterOfferedBy === 'seller' ? 'Встречное предложение продавца:' : 'Ваше встречное предложение:'}
                           </span>
                           <span className={`font-bold ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
                             {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
