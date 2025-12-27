@@ -145,18 +145,18 @@ export default function OrderChatModal({
                           
                           {/* Покупатель отвечает на встречное предложение продавца */}
                           {isBuyer && (!order.counterOfferedBy || order.counterOfferedBy === 'seller') && (
-                            <div className="flex gap-1.5 mt-3">
-                              <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700 text-[11px] px-2.5 py-1.5 h-auto min-w-[90px]">
-                                <Icon name="Check" className="mr-1 h-3.5 w-3.5" />
+                            <div className="flex gap-1 mt-3">
+                              <Button onClick={onAcceptCounter} size="sm" className="bg-green-600 hover:bg-green-700 text-[11px] px-2 py-1.5 h-auto flex-1">
+                                <Icon name="Check" className="mr-0.5 h-3 w-3" />
                                 Принять
                               </Button>
                               <Button 
                                 onClick={() => setShowCounterForm(true)} 
                                 variant="outline" 
                                 size="sm"
-                                className="text-[11px] px-2.5 py-1.5 h-auto min-w-[90px]"
+                                className="text-[11px] px-2 py-1.5 h-auto flex-1"
                               >
-                                <Icon name="MessageSquare" className="mr-1 h-3.5 w-3.5" />
+                                <Icon name="MessageSquare" className="mr-0.5 h-3 w-3" />
                                 Встречное
                               </Button>
                             </div>
