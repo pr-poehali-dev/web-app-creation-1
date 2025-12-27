@@ -199,6 +199,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
         })),
+        video: videoPreview || undefined,
         isPremium: false,
         status: isDraft ? 'draft' : 'active',
       };
