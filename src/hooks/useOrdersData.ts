@@ -57,8 +57,24 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
     requestWakeLock();
 
     const aggressivePoll = async () => {
+      let pollCount = 0;
       while (isActive && selectedOrder) {
         await loadMessages(selectedOrder.id, false);
+        
+        // Каждые 3 секунды обновляем данные заказа для синхронизации встречных предложений
+        if (pollCount % 3 === 0) {
+          await loadOrders(false);
+          // Используем callback для получения актуальных данных из state
+          setOrders(currentOrders => {
+            const updatedOrder = currentOrders.find(o => o.id === selectedOrder.id);
+            if (updatedOrder) {
+              setSelectedOrder(updatedOrder);
+            }
+            return currentOrders;
+          });
+        }
+        
+        pollCount++;
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     };
@@ -242,18 +258,33 @@ export function useOrdersData(isAuthenticated: boolean, activeTab: 'buyer' | 'se
     if (!selectedOrder) return;
 
     try {
+      const currentUser = getSession();
+      const isSeller = currentUser?.id?.toString() === selectedOrder.sellerId;
+      
       await ordersAPI.updateOrder(selectedOrder.id, { 
         counterPrice: price,
         counterMessage: message 
       });
 
-      toast({
-        title: 'Встречное предложение отправлено',
-        description: 'Покупатель получит уведомление',
+      // Мгновенно обновляем данные локально для быстрого отклика
+      setSelectedOrder({
+        ...selectedOrder,
+        counterPricePerUnit: price,
+        counterTotalAmount: price * selectedOrder.quantity,
+        counterOfferedBy: isSeller ? 'seller' : 'buyer',
+        counterOfferMessage: message,
+        counterOfferedAt: new Date(),
       });
 
+      toast({
+        title: 'Встречное предложение отправлено',
+        description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
+      });
+
+      // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
       
+      // Дополнительно обновляем selectedOrder из свежих данных через 500мс
       setTimeout(() => {
         const updatedOrder = orders.find(o => o.id === selectedOrder.id);
         if (updatedOrder) {
