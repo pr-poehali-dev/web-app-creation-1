@@ -61,9 +61,13 @@ export function useCreateOfferForm(editOffer?: Offer) {
   });
 
   const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(
+    editOffer?.images?.map(img => img.url) || []
+  );
   const [video, setVideo] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string>('');
+  const [videoPreview, setVideoPreview] = useState<string>(
+    editOffer?.video?.url || ''
+  );
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));

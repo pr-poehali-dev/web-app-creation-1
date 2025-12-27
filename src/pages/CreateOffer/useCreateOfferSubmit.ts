@@ -142,8 +142,10 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
 
       let result;
       if (isEditMode && editOffer) {
-        result = { id: editOffer.id };
-        updateOffer(editOffer.id, offerData);
+        console.log('Updating offer data:', JSON.stringify(offerData, null, 2));
+        result = await offersAPI.updateOffer(editOffer.id, offerData);
+        result.id = editOffer.id;
+        console.log('Update offer result:', result);
       } else {
         console.log('Sending offer data:', JSON.stringify(offerData, null, 2));
         result = await offersAPI.createOffer(offerData);
@@ -190,7 +192,11 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       }
       
       setTimeout(() => {
-        navigate('/predlozheniya', { replace: true });
+        if (isEditMode) {
+          navigate('/my-orders', { replace: true });
+        } else {
+          navigate('/predlozheniya', { replace: true });
+        }
         window.location.reload();
       }, 500);
     } catch (error) {

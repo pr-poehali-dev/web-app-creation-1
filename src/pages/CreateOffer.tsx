@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -23,12 +23,40 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   useScrollToTop();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const accessCheck = canCreateListing(isAuthenticated);
   const { districts } = useDistrict();
   
-  const editOffer = location.state?.editOffer as Offer | undefined;
+  const [editOffer, setEditOffer] = useState<Offer | undefined>(location.state?.editOffer as Offer | undefined);
+  const [isLoadingOffer, setIsLoadingOffer] = useState(false);
   const isEditMode = !!editOffer;
+
+  useEffect(() => {
+    const editOfferId = searchParams.get('edit');
+    if (editOfferId && !editOffer) {
+      loadOfferForEdit(editOfferId);
+    }
+  }, [searchParams]);
+
+  const loadOfferForEdit = async (offerId: string) => {
+    try {
+      setIsLoadingOffer(true);
+      const { offersAPI } = await import('@/services/api');
+      const offer = await offersAPI.getOfferById(offerId);
+      setEditOffer(offer);
+    } catch (error) {
+      console.error('Error loading offer:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось загрузить предложение',
+        variant: 'destructive',
+      });
+      navigate('/my-orders');
+    } finally {
+      setIsLoadingOffer(false);
+    }
+  };
 
   useEffect(() => {
     console.log('CreateOffer: проверка верификации ОТКЛЮЧЕНА, требуется только авторизация');
@@ -90,6 +118,18 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
 
     submitOffer(submitData, videoPreview, imagePreviews, isDraft);
   };
+
+  if (isLoadingOffer) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <main className="container mx-auto px-4 py-8 flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Загрузка предложения...</p>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
