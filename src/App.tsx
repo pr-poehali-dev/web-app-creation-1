@@ -19,6 +19,7 @@ const LoadingScreen = () => (
 
 // Основные страницы (без ленивой загрузки)
 import Home from "./pages/Home";
+import Offers from "./pages/Offers";
 
 // Ленивая загрузка остальных страниц
 const Login = lazy(() => import("./pages/Login"));
@@ -26,7 +27,6 @@ const Register = lazy(() => import("./pages/Register"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const NewPassword = lazy(() => import("./pages/NewPassword"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const Offers = lazy(() => import("./pages/Offers"));
 const Requests = lazy(() => import("./pages/Requests"));
 const Auctions = lazy(() => import("./pages/Auctions"));
 const Profile = lazy(() => import("./pages/Profile"));
