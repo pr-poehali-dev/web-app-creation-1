@@ -23,63 +23,80 @@ import Offers from "./pages/Offers";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
+// Функция для обработки ошибок динамического импорта
+const lazyWithRetry = (componentImport: () => Promise<any>) =>
+  lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      // Если ошибка импорта - перезагружаем страницу один раз
+      const hasRefreshed = sessionStorage.getItem('retry-lazy-refreshed');
+      if (!hasRefreshed) {
+        sessionStorage.setItem('retry-lazy-refreshed', 'true');
+        window.location.reload();
+        return { default: LoadingScreen };
+      }
+      throw error;
+    }
+  });
+
 // Ленивая загрузка остальных страниц
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const NewPassword = lazy(() => import("./pages/NewPassword"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Requests = lazy(() => import("./pages/Requests"));
-const Auctions = lazy(() => import("./pages/Auctions"));
-const Profile = lazy(() => import("./pages/Profile"));
-const MyListings = lazy(() => import("./pages/MyListings"));
-const MyAuctions = lazy(() => import("./pages/MyAuctions"));
-const ActiveOrders = lazy(() => import("./pages/ActiveOrders"));
-const Notifications = lazy(() => import("./pages/Notifications"));
-const SearchResults = lazy(() => import("./pages/SearchResults"));
-const OfferDetail = lazy(() => import("./pages/OfferDetail"));
-const RequestDetail = lazy(() => import("./pages/RequestDetail"));
-const EditOffer = lazy(() => import("./pages/EditOffer"));
-const EditRequest = lazy(() => import("./pages/EditRequest"));
-const CreateOffer = lazy(() => import("./pages/CreateOffer"));
-const CreateRequest = lazy(() => import("./pages/CreateRequest"));
-const CreateAuction = lazy(() => import("./pages/CreateAuction"));
-const EditAuction = lazy(() => import("./pages/EditAuction"));
-const AuctionDetail = lazy(() => import("./pages/AuctionDetail"));
-const VerificationPage = lazy(() => import("./pages/VerificationPage"));
-const VerificationResubmit = lazy(() => import("./pages/VerificationResubmit"));
-const AdminVerifications = lazy(() => import("./pages/AdminVerifications"));
-const AdminLogin = lazy(() => import("./pages/AdminLogin"));
-const AdminChangePassword = lazy(() => import("./pages/AdminChangePassword"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminUsers = lazy(() => import("./pages/AdminUsers"));
-const AdminDeletedUsers = lazy(() => import("./pages/AdminDeletedUsers"));
-const AdminOffers = lazy(() => import("./pages/AdminOffers"));
-const AdminRequests = lazy(() => import("./pages/AdminRequests"));
-const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
-const AdminSettings = lazy(() => import("./pages/AdminSettings"));
-const AdminAuctions = lazy(() => import("./pages/AdminAuctions"));
-const AdminContracts = lazy(() => import("./pages/AdminContracts"));
-const AdminReviews = lazy(() => import("./pages/AdminReviews"));
-const AdminManageAdmins = lazy(() => import("./pages/AdminManageAdmins"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const AdminOrders = lazy(() => import("./pages/AdminOrders"));
-const SetAdminPassword = lazy(() => import("./pages/SetAdminPassword"));
-const TradingPlatform = lazy(() => import("./pages/TradingPlatform"));
-const CreateContract = lazy(() => import("./pages/CreateContract"));
-const OrderPage = lazy(() => import("./pages/OrderPage"));
-const OrderDetail = lazy(() => import("./pages/OrderDetail"));
-const OrderDetailPage = lazy(() => import("./pages/OrderDetailPage"));
-const ResponseDetailPage = lazy(() => import("./pages/ResponseDetailPage"));
-const ChatNotifications = lazy(() => import("./pages/ChatNotifications"));
-const MyReviews = lazy(() => import("./pages/MyReviews"));
-const MyOrders = lazy(() => import("./pages/MyOrders"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const OfferAgreement = lazy(() => import("./pages/OfferAgreement"));
-const About = lazy(() => import("./pages/About"));
-const Support = lazy(() => import("./pages/Support"));
-const ClearData = lazy(() => import("./pages/ClearData"));
-const DeleteTestData = lazy(() => import("./pages/DeleteTestData"));
-const MigrateImages = lazy(() => import("./pages/MigrateImages"));
+const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
+const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const Requests = lazyWithRetry(() => import("./pages/Requests"));
+const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
+const Profile = lazyWithRetry(() => import("./pages/Profile"));
+const MyListings = lazyWithRetry(() => import("./pages/MyListings"));
+const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
+const ActiveOrders = lazyWithRetry(() => import("./pages/ActiveOrders"));
+const Notifications = lazyWithRetry(() => import("./pages/Notifications"));
+const SearchResults = lazyWithRetry(() => import("./pages/SearchResults"));
+const OfferDetail = lazyWithRetry(() => import("./pages/OfferDetail"));
+const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
+const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
+const EditRequest = lazyWithRetry(() => import("./pages/EditRequest"));
+const CreateOffer = lazyWithRetry(() => import("./pages/CreateOffer"));
+const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
+const CreateAuction = lazyWithRetry(() => import("./pages/CreateAuction"));
+const EditAuction = lazyWithRetry(() => import("./pages/EditAuction"));
+const AuctionDetail = lazyWithRetry(() => import("./pages/AuctionDetail"));
+const VerificationPage = lazyWithRetry(() => import("./pages/VerificationPage"));
+const VerificationResubmit = lazyWithRetry(() => import("./pages/VerificationResubmit"));
+const AdminVerifications = lazyWithRetry(() => import("./pages/AdminVerifications"));
+const AdminLogin = lazyWithRetry(() => import("./pages/AdminLogin"));
+const AdminChangePassword = lazyWithRetry(() => import("./pages/AdminChangePassword"));
+const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
+const AdminUsers = lazyWithRetry(() => import("./pages/AdminUsers"));
+const AdminDeletedUsers = lazyWithRetry(() => import("./pages/AdminDeletedUsers"));
+const AdminOffers = lazyWithRetry(() => import("./pages/AdminOffers"));
+const AdminRequests = lazyWithRetry(() => import("./pages/AdminRequests"));
+const AdminAnalytics = lazyWithRetry(() => import("./pages/AdminAnalytics"));
+const AdminSettings = lazyWithRetry(() => import("./pages/AdminSettings"));
+const AdminAuctions = lazyWithRetry(() => import("./pages/AdminAuctions"));
+const AdminContracts = lazyWithRetry(() => import("./pages/AdminContracts"));
+const AdminReviews = lazyWithRetry(() => import("./pages/AdminReviews"));
+const AdminManageAdmins = lazyWithRetry(() => import("./pages/AdminManageAdmins"));
+const AdminPanel = lazyWithRetry(() => import("./pages/AdminPanel"));
+const AdminOrders = lazyWithRetry(() => import("./pages/AdminOrders"));
+const SetAdminPassword = lazyWithRetry(() => import("./pages/SetAdminPassword"));
+const TradingPlatform = lazyWithRetry(() => import("./pages/TradingPlatform"));
+const CreateContract = lazyWithRetry(() => import("./pages/CreateContract"));
+const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
+const OrderDetail = lazyWithRetry(() => import("./pages/OrderDetail"));
+const OrderDetailPage = lazyWithRetry(() => import("./pages/OrderDetailPage"));
+const ResponseDetailPage = lazyWithRetry(() => import("./pages/ResponseDetailPage"));
+const ChatNotifications = lazyWithRetry(() => import("./pages/ChatNotifications"));
+const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
+const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
+const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
+const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
+const OfferAgreement = lazyWithRetry(() => import("./pages/OfferAgreement"));
+const About = lazyWithRetry(() => import("./pages/About"));
+const Support = lazyWithRetry(() => import("./pages/Support"));
+const ClearData = lazyWithRetry(() => import("./pages/ClearData"));
+const DeleteTestData = lazyWithRetry(() => import("./pages/DeleteTestData"));
+const MigrateImages = lazyWithRetry(() => import("./pages/MigrateImages"));
 
 // Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
