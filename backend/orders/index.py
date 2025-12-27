@@ -474,9 +474,19 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     # Продавец принимает предложение покупателя
     if 'acceptCounter' in body and body['acceptCounter'] and is_seller:
+        if order.get('counter_price_per_unit') is None or order.get('counter_total_amount') is None:
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'No counter offer to accept'}),
+                'isBase64Encoded': False
+            }
+        
         updates.append(f"buyer_accepted_counter = TRUE")
-        updates.append(f"price_per_unit = counter_price_per_unit")
-        updates.append(f"total_amount = counter_total_amount")
+        updates.append(f"price_per_unit = {float(order['counter_price_per_unit'])}")
+        updates.append(f"total_amount = {float(order['counter_total_amount'])}")
         updates.append(f"status = 'accepted'")
         
         # Уменьшаем количество в предложении
