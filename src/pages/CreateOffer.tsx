@@ -161,16 +161,18 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       return;
     }
 
-    // Проверка размера видео (макс 10 МБ)
-    const maxSize = 10 * 1024 * 1024; // 10 MB
+    // Проверка размера видео (макс 5 МБ для надежной загрузки)
+    const maxSize = 5 * 1024 * 1024; // 5 MB
     if (file.size > maxSize) {
       toast({
         title: 'Видео слишком большое',
-        description: 'Максимальный размер видео: 10 МБ',
+        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(1)} МБ. Максимум: 5 МБ. Сожмите видео или снимите более короткое.`,
         variant: 'destructive',
       });
       return;
     }
+    
+    console.log(`Video size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
 
     setVideo(file);
     const reader = new FileReader();
@@ -214,6 +216,20 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         isPremium: false,
         status: isDraft ? 'draft' : 'active',
       };
+      
+      // Логирование размера данных
+      const dataSize = new Blob([JSON.stringify(offerData)]).size;
+      console.log(`Offer data size: ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
+      
+      if (dataSize > 6 * 1024 * 1024) {
+        toast({
+          title: 'Данные слишком большие',
+          description: 'Попробуйте загрузить меньше фото или более короткое видео',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       let result;
       if (isEditMode && editOffer) {
