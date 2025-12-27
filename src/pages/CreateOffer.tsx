@@ -1,26 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
-import { useOffers } from '@/contexts/OffersContext';
-import type { DeliveryType, Offer } from '@/types/offer';
-import { getSession } from '@/utils/auth';
-import OfferBasicInfoSection from '@/components/offer/OfferBasicInfoSection';
-import OfferPricingSection from '@/components/offer/OfferPricingSection';
-import OfferLocationSection from '@/components/offer/OfferLocationSection';
-import OfferMediaSection from '@/components/offer/OfferMediaSection';
-import { offersAPI } from '@/services/api';
-
+import type { Offer } from '@/types/offer';
 import { canCreateListing } from '@/utils/permissions';
+import { useCreateOfferForm } from './CreateOffer/useCreateOfferForm';
+import { useCreateOfferSubmit } from './CreateOffer/useCreateOfferSubmit';
+import CreateOfferFormFields from './CreateOffer/CreateOfferFormFields';
 
 interface CreateOfferProps {
   isAuthenticated: boolean;
@@ -32,9 +24,8 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { addOffer, updateOffer } = useOffers();
-  const currentUser = getSession();
   const accessCheck = canCreateListing(isAuthenticated);
+  const { districts } = useDistrict();
   
   const editOffer = location.state?.editOffer as Offer | undefined;
   const isEditMode = !!editOffer;
@@ -50,298 +41,54 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       navigate('/login');
     }
   }, [accessCheck.allowed, accessCheck.message, navigate, toast]);
-  const { districts } = useDistrict();
 
-  const [formData, setFormData] = useState(editOffer ? {
-    title: editOffer.title || '',
-    description: editOffer.description || '',
-    category: editOffer.category || '',
-    subcategory: editOffer.subcategory || '',
-    quantity: String(editOffer.quantity || ''),
-    minOrderQuantity: String(editOffer.minOrderQuantity || ''),
-    unit: editOffer.unit || 'шт',
-    pricePerUnit: String(editOffer.pricePerUnit || ''),
-    hasVAT: editOffer.hasVAT || false,
-    vatRate: String(editOffer.vatRate || '20'),
-    district: editOffer.district || '',
-    fullAddress: editOffer.fullAddress || '',
-    gpsCoordinates: '',
-    availableDistricts: editOffer.availableDistricts || [],
-    availableDeliveryTypes: editOffer.availableDeliveryTypes || [],
-    expiryDate: '',
-  } : {
-    title: '',
-    description: '',
-    category: '',
-    subcategory: '',
-    quantity: '',
-    minOrderQuantity: '',
-    unit: 'шт',
-    pricePerUnit: '',
-    hasVAT: false,
-    vatRate: '20',
-    district: '',
-    fullAddress: '',
-    gpsCoordinates: '',
-    availableDistricts: [] as string[],
-    availableDeliveryTypes: [] as DeliveryType[],
-    expiryDate: '',
-  });
+  const {
+    formData,
+    images,
+    imagePreviews,
+    video,
+    videoPreview,
+    handleInputChange,
+    handleDistrictToggle,
+    handleDeliveryTypeToggle,
+    handleImageUpload,
+    handleRemoveImage,
+    handleVideoUpload,
+    handleRemoveVideo,
+  } = useCreateOfferForm(editOffer);
 
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [video, setVideo] = useState<File | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string>('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
-  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const {
+    isSubmitting,
+    videoUploadProgress,
+    isUploadingVideo,
+    handleSubmit: submitOffer,
+  } = useCreateOfferSubmit(editOffer, isEditMode);
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    if (field === 'category') {
-      setFormData(prev => ({ ...prev, subcategory: '' }));
-    }
-  };
-
-  const handleDistrictToggle = (districtId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      availableDistricts: prev.availableDistricts.includes(districtId)
-        ? prev.availableDistricts.filter(d => d !== districtId)
-        : [...prev.availableDistricts, districtId]
-    }));
-  };
-
-  const handleDeliveryTypeToggle = (type: DeliveryType) => {
-    setFormData(prev => ({
-      ...prev,
-      availableDeliveryTypes: prev.availableDeliveryTypes.includes(type)
-        ? prev.availableDeliveryTypes.filter(t => t !== type)
-        : [...prev.availableDeliveryTypes, type]
-    }));
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
-    if (images.length + files.length > 10) {
-      toast({
-        title: 'Ошибка',
-        description: 'Максимум 10 фотографий',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setImages(prev => [...prev, ...files]);
-    
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviews(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (video) {
-      toast({
-        title: 'Ошибка',
-        description: 'Можно загрузить только одно видео',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Проверка размера видео (макс 10 МБ)
-    const maxSize = 10 * 1024 * 1024; // 10 MB
-    if (file.size > maxSize) {
-      toast({
-        title: 'Видео слишком большое',
-        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(1)} МБ. Максимум: 10 МБ. Сожмите видео или снимите более короткое.`,
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    console.log(`Video size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
-
-    setVideo(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setVideoPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveVideo = () => {
-    setVideo(null);
-    setVideoPreview('');
-  };
-
-  const handleSubmit = async (e: React.FormEvent, isDraft: boolean = false) => {
+  const handleSubmit = (e: React.FormEvent, isDraft: boolean = false) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    const submitData = {
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      subcategory: formData.subcategory || undefined,
+      quantity: parseFloat(formData.quantity) || 0,
+      minOrderQuantity: formData.minOrderQuantity ? parseFloat(formData.minOrderQuantity) : undefined,
+      unit: formData.unit,
+      pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
+      hasVAT: formData.hasVAT,
+      vatRate: formData.hasVAT ? parseFloat(formData.vatRate) || 20 : undefined,
+      location: formData.fullAddress,
+      district: formData.district,
+      fullAddress: formData.fullAddress,
+      availableDistricts: formData.availableDistricts,
+      availableDeliveryTypes: formData.availableDeliveryTypes,
+      images: [],
+      isPremium: false,
+      status: isDraft ? 'draft' : 'active',
+    };
 
-    try {
-      // Если есть видео - сначала загружаем его отдельно
-      let videoUrl: string | undefined = undefined;
-      if (videoPreview) {
-        try {
-          setIsUploadingVideo(true);
-          setVideoUploadProgress(0);
-          
-          toast({
-            title: 'Загрузка видео...',
-            description: 'Пожалуйста, подождите',
-          });
-          
-          // Симуляция прогресса для UX
-          const progressInterval = setInterval(() => {
-            setVideoUploadProgress(prev => {
-              if (prev >= 90) return prev;
-              return prev + 10;
-            });
-          }, 200);
-          
-          const uploadResult = await offersAPI.uploadVideo(videoPreview);
-          
-          clearInterval(progressInterval);
-          setVideoUploadProgress(100);
-          
-          videoUrl = uploadResult.url;
-          console.log('Video uploaded:', videoUrl);
-          
-          toast({
-            title: 'Видео загружено',
-            description: 'Сохраняем предложение...',
-          });
-          
-          setIsUploadingVideo(false);
-        } catch (error) {
-          console.error('Failed to upload video:', error);
-          setIsUploadingVideo(false);
-          setVideoUploadProgress(0);
-          toast({
-            title: 'Ошибка загрузки видео',
-            description: error instanceof Error ? error.message : 'Попробуйте более короткое видео',
-            variant: 'destructive',
-          });
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      const offerData = {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        subcategory: formData.subcategory || undefined,
-        quantity: parseFloat(formData.quantity) || 0,
-        minOrderQuantity: formData.minOrderQuantity ? parseFloat(formData.minOrderQuantity) : undefined,
-        unit: formData.unit,
-        pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
-        hasVAT: formData.hasVAT,
-        vatRate: formData.hasVAT ? parseFloat(formData.vatRate) || 20 : undefined,
-        location: formData.fullAddress,
-        district: formData.district,
-        fullAddress: formData.fullAddress,
-        availableDistricts: formData.availableDistricts,
-        availableDeliveryTypes: formData.availableDeliveryTypes,
-        images: imagePreviews.map((url, index) => ({
-          url,
-          alt: `${formData.title} - изображение ${index + 1}`,
-        })),
-        videoUrl: videoUrl, // URL вместо base64
-        isPremium: false,
-        status: isDraft ? 'draft' : 'active',
-      };
-      
-      // Логирование размера данных
-      const dataSize = new Blob([JSON.stringify(offerData)]).size;
-      console.log(`Offer data size: ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
-
-      let result;
-      if (isEditMode && editOffer) {
-        result = { id: editOffer.id };
-        updateOffer(editOffer.id, offerData);
-      } else {
-        console.log('Sending offer data:', JSON.stringify(offerData, null, 2));
-        result = await offersAPI.createOffer(offerData);
-        console.log('Create offer result:', result);
-      }
-      
-      const newOffer: Offer = {
-        id: result.id,
-        userId: currentUser?.id || '',
-        ...offerData,
-        seller: {
-          id: currentUser?.id || '',
-          name: `${currentUser?.firstName} ${currentUser?.lastName}`,
-          type: currentUser?.userType || 'individual',
-          rating: 0,
-          reviewsCount: 0,
-          isVerified: currentUser?.verificationStatus === 'verified',
-          phone: currentUser?.phone || '',
-          email: currentUser?.email || '',
-          statistics: {
-            totalOffers: 0,
-            activeOffers: 0,
-            completedOrders: 0,
-            registrationDate: new Date(),
-          }
-        },
-        views: 0,
-        createdAt: new Date(),
-      };
-      
-      if (isEditMode) {
-        toast({
-          title: 'Успешно',
-          description: 'Предложение обновлено',
-        });
-      } else {
-        addOffer(newOffer);
-        toast({
-          title: 'Успешно',
-          description: isDraft 
-            ? 'Предложение сохранено как черновик'
-            : 'Предложение опубликовано',
-        });
-      }
-      
-      setTimeout(() => {
-        navigate('/predlozheniya', { replace: true });
-        window.location.reload();
-      }, 500);
-    } catch (error) {
-      console.error('Ошибка создания предложения:', error);
-      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
-      
-      // Детальное логирование ошибки
-      if (error instanceof Error) {
-        console.error('Error name:', error.name);
-        console.error('Error message:', error.message);
-      }
-      
-      toast({
-        title: 'Ошибка',
-        description: error instanceof Error ? error.message : 'Не удалось создать предложение',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    submitOffer(submitData, videoPreview, imagePreviews, isDraft);
   };
 
   return (
@@ -361,89 +108,23 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
           </div>
 
           <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
-            <OfferBasicInfoSection
-              formData={{
-                title: formData.title,
-                description: formData.description,
-                category: formData.category,
-                subcategory: formData.subcategory,
-              }}
-              onInputChange={handleInputChange}
-            />
-
-            <OfferPricingSection
-              formData={{
-                quantity: formData.quantity,
-                minOrderQuantity: formData.minOrderQuantity,
-                unit: formData.unit,
-                pricePerUnit: formData.pricePerUnit,
-                hasVAT: formData.hasVAT,
-                vatRate: formData.vatRate,
-              }}
-              onInputChange={handleInputChange}
-            />
-
-            <OfferLocationSection
-              formData={{
-                district: formData.district,
-                fullAddress: formData.fullAddress,
-                gpsCoordinates: formData.gpsCoordinates,
-                availableDistricts: formData.availableDistricts,
-                availableDeliveryTypes: formData.availableDeliveryTypes,
-              }}
-              districts={districts}
-              onInputChange={handleInputChange}
-              onDistrictToggle={handleDistrictToggle}
-              onDeliveryTypeToggle={handleDeliveryTypeToggle}
-            />
-
-            <OfferMediaSection
+            <CreateOfferFormFields
+              formData={formData}
               images={images}
               imagePreviews={imagePreviews}
               video={video}
               videoPreview={videoPreview}
+              districts={districts}
+              onInputChange={handleInputChange}
+              onDistrictToggle={handleDistrictToggle}
+              onDeliveryTypeToggle={handleDeliveryTypeToggle}
               onImageUpload={handleImageUpload}
               onRemoveImage={handleRemoveImage}
               onVideoUpload={handleVideoUpload}
               onRemoveVideo={handleRemoveVideo}
+              videoUploadProgress={videoUploadProgress}
+              isUploadingVideo={isUploadingVideo}
             />
-            
-            {isUploadingVideo && (
-              <Card className="border-primary bg-primary/5">
-                <CardContent className="pt-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">Загрузка видео...</span>
-                      <span className="text-muted-foreground">{videoUploadProgress}%</span>
-                    </div>
-                    <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="bg-primary h-full transition-all duration-300 ease-out"
-                        style={{ width: `${videoUploadProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Дополнительно</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <Label htmlFor="expiryDate">Срок годности (необязательно)</Label>
-                  <Input
-                    id="expiryDate"
-                    type="date"
-                    value={formData.expiryDate}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-              </CardContent>
-            </Card>
 
             <div className="flex gap-4">
               <Button
@@ -473,7 +154,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                 type="button"
                 variant="outline"
                 size="lg"
-                onClick={(e) => handleSubmit(e, true)}
+                onClick={(e) => handleSubmit(e as unknown as React.FormEvent, true)}
                 disabled={isSubmitting}
               >
                 <Icon name="Save" className="mr-2 h-4 w-4" />
