@@ -301,9 +301,13 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     district_esc = body['district'].replace("'", "''")
     full_address_esc = body.get('fullAddress', '').replace("'", "''") if body.get('fullAddress') else None
     
-    # Arrays to JSON strings
-    available_districts_json = json.dumps(body['availableDistricts']).replace("'", "''")
-    available_delivery_types_json = json.dumps(body.get('availableDeliveryTypes', ['pickup'])).replace("'", "''")
+    # Arrays to PostgreSQL array format
+    available_districts = body.get('availableDistricts', [])
+    available_delivery_types = body.get('availableDeliveryTypes', ['pickup'])
+    
+    # Convert to PostgreSQL array literal: ARRAY['item1', 'item2']
+    districts_array = "ARRAY[" + ",".join([f"'{d.replace(chr(39), chr(39)+chr(39))}'" for d in available_districts]) + "]" if available_districts else "ARRAY[]::text[]"
+    delivery_types_array = "ARRAY[" + ",".join([f"'{t.replace(chr(39), chr(39)+chr(39))}'" for t in available_delivery_types]) + "]" if available_delivery_types else "ARRAY['pickup']::text[]"
     
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
@@ -325,8 +329,8 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {'NULL' if location_esc is None else f"'{location_esc}'"},
             '{district_esc}', 
             {'NULL' if full_address_esc is None else f"'{full_address_esc}'"},
-            '{available_districts_json}'::jsonb,
-            '{available_delivery_types_json}'::jsonb,
+            {districts_array},
+            {delivery_types_array},
             {body.get('isPremium', False)}, 
             '{body.get('status', 'active')}'
         )
