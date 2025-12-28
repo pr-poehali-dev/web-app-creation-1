@@ -23,6 +23,7 @@ interface OfferOrderModalProps {
   remainingQuantity: number;
   minOrderQuantity?: number;
   unit: string;
+  pricePerUnit: number;
   availableDeliveryTypes: ('pickup' | 'delivery')[];
 }
 
@@ -33,6 +34,7 @@ export default function OfferOrderModal({
   remainingQuantity,
   minOrderQuantity,
   unit,
+  pricePerUnit,
   availableDeliveryTypes,
 }: OfferOrderModalProps) {
   const currentUser = getSession();
@@ -43,6 +45,8 @@ export default function OfferOrderModal({
   const [address, setAddress] = useState<string>('');
   const [comment, setComment] = useState<string>('');
   const [quantityError, setQuantityError] = useState<string>('');
+  const [counterPrice, setCounterPrice] = useState<string>('');
+  const [showCounterPrice, setShowCounterPrice] = useState<boolean>(false);
 
   useEffect(() => {
     if (currentUser?.legalAddress && selectedDeliveryType === 'delivery') {
@@ -96,6 +100,7 @@ export default function OfferOrderModal({
       deliveryType: selectedDeliveryType,
       address: selectedDeliveryType === 'delivery' ? address : undefined,
       comment,
+      counterPrice: showCounterPrice && counterPrice ? parseFloat(counterPrice) : undefined,
     });
   };
 
@@ -210,6 +215,63 @@ export default function OfferOrderModal({
               onChange={(e) => setComment(e.target.value)}
               rows={3}
             />
+          </div>
+
+          <div className="border-t pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Icon name="DollarSign" size={16} className="text-primary" />
+                <Label className="text-sm font-medium mb-0">Предложить свою цену</Label>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCounterPrice(!showCounterPrice)}
+                className="text-sm text-primary hover:underline"
+              >
+                {showCounterPrice ? 'Скрыть' : 'Показать'}
+              </button>
+            </div>
+            
+            {showCounterPrice && (
+              <div className="space-y-2">
+                <div className="bg-muted/50 p-3 rounded-md">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Цена продавца:</span>
+                    <span className="font-medium">{pricePerUnit.toLocaleString('ru-RU')} ₽/{unit}</span>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="counter-price" className="text-sm">Ваша цена за {unit}</Label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      id="counter-price"
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      placeholder={`Например: ${(pricePerUnit * 0.9).toFixed(2)}`}
+                      value={counterPrice}
+                      onChange={(e) => setCounterPrice(e.target.value)}
+                      className="flex-1"
+                    />
+                    <span className="text-sm text-muted-foreground">₽</span>
+                  </div>
+                  {counterPrice && parseFloat(counterPrice) > 0 && (
+                    <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded text-sm">
+                      <div className="flex justify-between">
+                        <span>Сумма заказа:</span>
+                        <span className="font-semibold">
+                          {(parseFloat(counterPrice) * quantity).toLocaleString('ru-RU')} ₽
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <Icon name="Info" size={12} className="inline mr-1" />
+                  Продавец получит уведомление о вашем предложении
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">

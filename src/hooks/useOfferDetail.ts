@@ -244,6 +244,21 @@ export function useOfferDetail(id: string | undefined) {
 
       const fullOrderData = await orderResponse.json();
 
+      // Если есть встречная цена от покупателя - отправляем её
+      if (orderFormData.counterPrice && orderFormData.counterPrice > 0) {
+        await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${result.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': currentUser.id?.toString() || '',
+          },
+          body: JSON.stringify({
+            counterPrice: orderFormData.counterPrice,
+            counterMessage: `Встречное предложение: ${orderFormData.counterPrice} ₽/${offer.unit}`,
+          }),
+        });
+      }
+
       const newOrder: Order = {
         id: fullOrderData.id,
         offerId: fullOrderData.offer_id,
@@ -261,10 +276,13 @@ export function useOfferDetail(id: string | undefined) {
         unit: fullOrderData.unit,
         pricePerUnit: fullOrderData.price_per_unit,
         totalAmount: fullOrderData.total_amount,
+        counterPricePerUnit: orderFormData.counterPrice || undefined,
+        counterTotalAmount: orderFormData.counterPrice ? (orderFormData.counterPrice * fullOrderData.quantity) : undefined,
+        counterOfferedBy: orderFormData.counterPrice ? 'buyer' : undefined,
         deliveryType: fullOrderData.delivery_type,
         deliveryAddress: fullOrderData.delivery_address,
         comment: fullOrderData.buyer_comment,
-        status: fullOrderData.status,
+        status: orderFormData.counterPrice ? 'negotiating' : fullOrderData.status,
         createdAt: new Date(fullOrderData.createdAt || fullOrderData.created_at),
       };
       
@@ -284,8 +302,8 @@ export function useOfferDetail(id: string | undefined) {
       );
       
       toast({
-        title: 'Заказ оформлен!',
-        description: 'Теперь вы можете общаться с продавцом',
+        title: orderFormData.counterPrice ? 'Заказ с встречным предложением отправлен!' : 'Заказ оформлен!',
+        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Теперь вы можете общаться с продавцом',
       });
 
       setTimeout(() => {

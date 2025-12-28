@@ -210,6 +210,7 @@ export default function OfferDetailContent({
         remainingQuantity={remainingQuantity}
         minOrderQuantity={offer.minOrderQuantity}
         unit={offer.unit}
+        pricePerUnit={offer.pricePerUnit}
         availableDeliveryTypes={offer.availableDeliveryTypes}
       />
 
