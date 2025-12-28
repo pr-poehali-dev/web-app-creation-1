@@ -98,6 +98,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'PUT':
             query_params = event.get('queryStringParameters', {}) or {}
             order_id = query_params.get('id')
+            print(f"[PUT] order_id={order_id}, query_params={query_params}")
             if not order_id:
                 return {
                     'statusCode': 400,
@@ -105,6 +106,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Order ID required'}),
                     'isBase64Encoded': False
                 }
+            print(f"[PUT] Calling update_order for order_id={order_id}")
             return update_order(order_id, event, headers)
         
         elif method == 'DELETE':
@@ -430,193 +432,205 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
 
 def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, Any]) -> Dict[str, Any]:
     '''Обновить статус заказа, встречное предложение или принять заказ'''
-    body = json.loads(event.get('body', '{}'))
-    print(f"[UPDATE_ORDER] order_id={order_id}, body={body}")
-    
-    conn = get_db_connection()
-    cur = conn.cursor()
-    schema = get_schema()
-    order_id_escaped = order_id.replace("'", "''")
-    
-    # Получаем текущий заказ
-    cur.execute(f"SELECT * FROM {schema}.orders WHERE id = '{order_id_escaped}'")
-    order = cur.fetchone()
-    
-    if not order:
-        cur.close()
-        conn.close()
-        return {
-            'statusCode': 404,
-            'headers': headers,
-            'body': json.dumps({'error': 'Order not found'}),
-            'isBase64Encoded': False
-        }
-    
-    updates = []
-    
-    user_headers = event.get('headers', {})
-    user_id = int(user_headers.get('X-User-Id') or user_headers.get('x-user-id') or 0)
-    is_buyer = user_id == order['buyer_id']
-    is_seller = user_id == order['seller_id']
-    
-    print(f"[UPDATE_ORDER] user_id={user_id}, buyer_id={order['buyer_id']}, seller_id={order['seller_id']}, is_buyer={is_buyer}, is_seller={is_seller}, body={body}")
-    
-    # Предложение цены от покупателя
-    if 'counterPrice' in body and is_buyer and not is_seller:
-        counter_price = float(body['counterPrice'])
-        quantity = order['quantity']
-        counter_total = counter_price * quantity
-        counter_message = body.get('counterMessage', '').replace("'", "''")
+    try:
+        body = json.loads(event.get('body', '{}'))
+        print(f"[UPDATE_ORDER] order_id={order_id}, body={body}")
         
-        updates.append(f"counter_price_per_unit = {counter_price}")
-        updates.append(f"counter_total_amount = {counter_total}")
-        updates.append(f"counter_offer_message = '{counter_message}'")
-        updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
-        updates.append(f"counter_offered_by = 'buyer'")
-        updates.append(f"buyer_accepted_counter = FALSE")
-        updates.append(f"status = 'negotiating'")
-    
-    # Встречное предложение от продавца (после предложения покупателя)
-    elif 'counterPrice' in body and is_seller and not is_buyer:
-        counter_price = float(body['counterPrice'])
-        quantity = order['quantity']
-        counter_total = counter_price * quantity
-        counter_message = body.get('counterMessage', '').replace("'", "''")
+        conn = get_db_connection()
+        cur = conn.cursor()
+        schema = get_schema()
+        order_id_escaped = order_id.replace("'", "''")
         
-        updates.append(f"counter_price_per_unit = {counter_price}")
-        updates.append(f"counter_total_amount = {counter_total}")
-        updates.append(f"counter_offer_message = '{counter_message}'")
-        updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
-        updates.append(f"counter_offered_by = 'seller'")
-        updates.append(f"buyer_accepted_counter = FALSE")
-        updates.append(f"status = 'negotiating'")
-    
-    # Продавец принимает предложение покупателя
-    counter_accepted = False
-    if 'acceptCounter' in body and body['acceptCounter'] and is_seller:
-        if order.get('counter_price_per_unit') is None or order.get('counter_total_amount') is None:
+        # Получаем текущий заказ
+        cur.execute(f"SELECT * FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+        order = cur.fetchone()
+        
+        if not order:
             cur.close()
             conn.close()
             return {
-                'statusCode': 400,
+                'statusCode': 404,
                 'headers': headers,
-                'body': json.dumps({'error': 'No counter offer to accept'}),
+                'body': json.dumps({'error': 'Order not found'}),
                 'isBase64Encoded': False
             }
         
-        updates.append(f"buyer_accepted_counter = TRUE")
-        updates.append(f"price_per_unit = {float(order['counter_price_per_unit'])}")
-        updates.append(f"total_amount = {float(order['counter_total_amount'])}")
-        updates.append(f"status = 'accepted'")
-        counter_accepted = True
+        updates = []
         
-        # Уменьшаем количество в предложении
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
-        order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
-            WHERE id = '{offer_id_escaped}'
-        """)
-    
-    # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
-    if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
-        # Проверяем доступное количество в предложении
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
-        cur.execute(f"""
-            SELECT quantity, sold_quantity, reserved_quantity 
-            FROM {schema}.offers 
-            WHERE id = '{offer_id_escaped}'
-        """)
-        offer = cur.fetchone()
+        user_headers = event.get('headers', {})
+        user_id = int(user_headers.get('X-User-Id') or user_headers.get('x-user-id') or 0)
+        is_buyer = user_id == order['buyer_id']
+        is_seller = user_id == order['seller_id']
         
-        if offer:
-            available = offer['quantity'] - (offer.get('sold_quantity', 0) or 0) - (offer.get('reserved_quantity', 0) or 0)
-            order_quantity = order['quantity']
+        print(f"[UPDATE_ORDER] user_id={user_id}, buyer_id={order['buyer_id']}, seller_id={order['seller_id']}, is_buyer={is_buyer}, is_seller={is_seller}, body={body}")
+        
+        # Предложение цены от покупателя
+        if 'counterPrice' in body and is_buyer and not is_seller:
+            counter_price = float(body['counterPrice'])
+            quantity = order['quantity']
+            counter_total = counter_price * quantity
+            counter_message = body.get('counterMessage', '').replace("'", "''")
             
-            if available < order_quantity:
+            updates.append(f"counter_price_per_unit = {counter_price}")
+            updates.append(f"counter_total_amount = {counter_total}")
+            updates.append(f"counter_offer_message = '{counter_message}'")
+            updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
+            updates.append(f"counter_offered_by = 'buyer'")
+            updates.append(f"buyer_accepted_counter = FALSE")
+            updates.append(f"status = 'negotiating'")
+        
+        # Встречное предложение от продавца (после предложения покупателя)
+        elif 'counterPrice' in body and is_seller and not is_buyer:
+            counter_price = float(body['counterPrice'])
+            quantity = order['quantity']
+            counter_total = counter_price * quantity
+            counter_message = body.get('counterMessage', '').replace("'", "''")
+            
+            updates.append(f"counter_price_per_unit = {counter_price}")
+            updates.append(f"counter_total_amount = {counter_total}")
+            updates.append(f"counter_offer_message = '{counter_message}'")
+            updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
+            updates.append(f"counter_offered_by = 'seller'")
+            updates.append(f"buyer_accepted_counter = FALSE")
+            updates.append(f"status = 'negotiating'")
+        
+        # Продавец принимает предложение покупателя
+        counter_accepted = False
+        if 'acceptCounter' in body and body['acceptCounter'] and is_seller:
+            if order.get('counter_price_per_unit') is None or order.get('counter_total_amount') is None:
                 cur.close()
                 conn.close()
                 return {
                     'statusCode': 400,
                     'headers': headers,
-                    'body': json.dumps({
-                        'error': 'Insufficient quantity',
-                        'available': available,
-                        'requested': order_quantity
-                    }),
+                    'body': json.dumps({'error': 'No counter offer to accept'}),
                     'isBase64Encoded': False
                 }
             
+            updates.append(f"buyer_accepted_counter = TRUE")
+            updates.append(f"price_per_unit = {float(order['counter_price_per_unit'])}")
+            updates.append(f"total_amount = {float(order['counter_total_amount'])}")
+            updates.append(f"status = 'accepted'")
+            counter_accepted = True
+            
             # Уменьшаем количество в предложении
+            offer_id_escaped = str(order['offer_id']).replace("'", "''")
+            order_quantity = order['quantity']
             cur.execute(f"""
                 UPDATE {schema}.offers 
                 SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
                 WHERE id = '{offer_id_escaped}'
             """)
         
-        updates.append(f"status = 'accepted'")
-    
-    # ПРОВЕРКА 2: Завершить заказ может только покупатель
-    if 'status' in body and body['status'] == 'completed':
-        if not is_buyer:
+        # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
+        if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
+            # Проверяем доступное количество в предложении
+            offer_id_escaped = str(order['offer_id']).replace("'", "''")
+            cur.execute(f"""
+                SELECT quantity, sold_quantity, reserved_quantity 
+                FROM {schema}.offers 
+                WHERE id = '{offer_id_escaped}'
+            """)
+            offer = cur.fetchone()
+            
+            if offer:
+                available = offer['quantity'] - (offer.get('sold_quantity', 0) or 0) - (offer.get('reserved_quantity', 0) or 0)
+                order_quantity = order['quantity']
+                
+                if available < order_quantity:
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 400,
+                        'headers': headers,
+                        'body': json.dumps({
+                            'error': 'Insufficient quantity',
+                            'available': available,
+                            'requested': order_quantity
+                        }),
+                        'isBase64Encoded': False
+                    }
+                
+                # Уменьшаем количество в предложении
+                cur.execute(f"""
+                    UPDATE {schema}.offers 
+                    SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
+                    WHERE id = '{offer_id_escaped}'
+                """)
+            
+            updates.append(f"status = 'accepted'")
+        
+        # ПРОВЕРКА 2: Завершить заказ может только покупатель
+        if 'status' in body and body['status'] == 'completed':
+            if not is_buyer:
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 403,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'Только покупатель может завершить заказ'}),
+                    'isBase64Encoded': False
+                }
+            updates.append(f"completed_date = CURRENT_TIMESTAMP")
+            updates.append(f"status = 'completed'")
+        
+        # Обычное обновление статуса
+        elif 'status' in body and body['status'] != 'accepted':
+            status_escaped = body['status'].replace("'", "''")
+            updates.append(f"status = '{status_escaped}'")
+        
+        if 'trackingNumber' in body:
+            tracking_escaped = body['trackingNumber'].replace("'", "''")
+            updates.append(f"tracking_number = '{tracking_escaped}'")
+        
+        if 'deliveryDate' in body:
+            date_escaped = body['deliveryDate'].replace("'", "''")
+            updates.append(f"delivery_date = '{date_escaped}'")
+        
+        if 'sellerComment' in body:
+            comment_escaped = body['sellerComment'].replace("'", "''")
+            updates.append(f"seller_comment = '{comment_escaped}'")
+        
+        if 'cancellationReason' in body:
+            reason_escaped = body['cancellationReason'].replace("'", "''")
+            updates.append(f"cancellation_reason = '{reason_escaped}'")
+        
+        if not updates:
             cur.close()
             conn.close()
             return {
-                'statusCode': 403,
+                'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': 'Только покупатель может завершить заказ'}),
+                'body': json.dumps({'error': 'No fields to update'}),
                 'isBase64Encoded': False
             }
-        updates.append(f"completed_date = CURRENT_TIMESTAMP")
-        updates.append(f"status = 'completed'")
     
-    # Обычное обновление статуса
-    elif 'status' in body and body['status'] != 'accepted':
-        status_escaped = body['status'].replace("'", "''")
-        updates.append(f"status = '{status_escaped}'")
-    
-    if 'trackingNumber' in body:
-        tracking_escaped = body['trackingNumber'].replace("'", "''")
-        updates.append(f"tracking_number = '{tracking_escaped}'")
-    
-    if 'deliveryDate' in body:
-        date_escaped = body['deliveryDate'].replace("'", "''")
-        updates.append(f"delivery_date = '{date_escaped}'")
-    
-    if 'sellerComment' in body:
-        comment_escaped = body['sellerComment'].replace("'", "''")
-        updates.append(f"seller_comment = '{comment_escaped}'")
-    
-    if 'cancellationReason' in body:
-        reason_escaped = body['cancellationReason'].replace("'", "''")
-        updates.append(f"cancellation_reason = '{reason_escaped}'")
-    
-    if not updates:
+        sql = f"UPDATE {schema}.orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = '{order_id_escaped}'"
+        
+        print(f"[UPDATE_ORDER] SQL: {sql}")
+        
+        cur.execute(sql)
+        conn.commit()
         cur.close()
         conn.close()
+        
         return {
-            'statusCode': 400,
+            'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({'error': 'No fields to update'}),
+            'body': json.dumps({'message': 'Order updated successfully'}),
             'isBase64Encoded': False
         }
-    
-    sql = f"UPDATE {schema}.orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = '{order_id_escaped}'"
-    
-    print(f"[UPDATE_ORDER] SQL: {sql}")
-    
-    cur.execute(sql)
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    return {
-        'statusCode': 200,
-        'headers': headers,
-        'body': json.dumps({'message': 'Order updated successfully'}),
-        'isBase64Encoded': False
-    }
+    except Exception as e:
+        print(f"[UPDATE_ORDER] ERROR: {str(e)}")
+        print(f"[UPDATE_ORDER] ERROR Type: {type(e).__name__}")
+        import traceback
+        print(f"[UPDATE_ORDER] Traceback: {traceback.format_exc()}")
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': f'Internal server error: {str(e)}'}),
+            'isBase64Encoded': False
+        }
 
 def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить все сообщения по предложению"""
