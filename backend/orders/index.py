@@ -427,9 +427,10 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         'isBase64Encoded': False
     }
 
-def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, Any]) -> Dict[str, Any]:
     '''Обновить статус заказа, встречное предложение или принять заказ'''
     body = json.loads(event.get('body', '{}'))
+    print(f"[UPDATE_ORDER] order_id={order_id}, body={body}")
     
     conn = get_db_connection()
     cur = conn.cursor()
