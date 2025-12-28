@@ -265,16 +265,6 @@ export function useOrdersData(
       const currentUser = getSession();
       const isSeller = currentUser?.id?.toString() === selectedOrder.sellerId;
       
-      console.log('[handleCounterOffer] Sending:', { 
-        orderId: selectedOrder.id, 
-        counterPrice: price, 
-        counterMessage: message,
-        isSeller,
-        userId: currentUser?.id,
-        buyerId: selectedOrder.buyerId,
-        sellerId: selectedOrder.sellerId
-      });
-      
       await ordersAPI.updateOrder(selectedOrder.id, { 
         counterPrice: price,
         counterMessage: message 

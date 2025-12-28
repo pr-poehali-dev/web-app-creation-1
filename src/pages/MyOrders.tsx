@@ -78,14 +78,52 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
         </div>
 
-        <OrdersContent
-          activeTab={activeTab}
-          orders={orders}
-          isLoading={isLoading}
-          onOpenChat={handleOpenChat}
-          onAcceptOrder={handleAcceptOrder}
-          onTabChange={setActiveTab}
-        />
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6">
+          <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
+            <TabsTrigger value="buyer" className="py-2.5">
+              Я покупатель
+            </TabsTrigger>
+            <TabsTrigger value="seller" className="py-2.5">
+              Я продавец
+            </TabsTrigger>
+            <TabsTrigger value="archive" className="py-2.5">
+              Архив
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="buyer">
+            <OrdersContent
+              activeTab="buyer"
+              onTabChange={setActiveTab}
+              orders={orders}
+              isLoading={isLoading}
+              onOpenChat={handleOpenChat}
+              onAcceptOrder={handleAcceptOrder}
+            />
+          </TabsContent>
+
+          <TabsContent value="seller">
+            <OrdersContent
+              activeTab="seller"
+              onTabChange={setActiveTab}
+              orders={orders}
+              isLoading={isLoading}
+              onOpenChat={handleOpenChat}
+              onAcceptOrder={handleAcceptOrder}
+            />
+          </TabsContent>
+
+          <TabsContent value="archive">
+            <OrdersContent
+              activeTab="archive"
+              onTabChange={setActiveTab}
+              orders={orders}
+              isLoading={isLoading}
+              onOpenChat={handleOpenChat}
+              onAcceptOrder={handleAcceptOrder}
+            />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <Footer />
