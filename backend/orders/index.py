@@ -682,7 +682,12 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
             msg_dict['order_number'] = 'N/A'
             msg_dict['sender_name'] = 'Пользователь'
         
-        msg_dict['createdAt'] = msg_dict.pop('created_at').isoformat() if msg_dict.get('created_at') else None
+        # Конвертируем все datetime поля в ISO строки
+        for key, value in list(msg_dict.items()):
+            if hasattr(value, 'isoformat'):
+                msg_dict[key] = value.isoformat()
+        
+        msg_dict['createdAt'] = msg_dict.pop('created_at', None)
         result.append(msg_dict)
     
     cur.close()
