@@ -435,7 +435,7 @@ export default function OrderChatModal({
                             : 'bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words text-foreground">{msg.message}</p>
+                        <p className={`text-sm whitespace-pre-wrap break-words ${isOwn ? 'text-primary-foreground' : 'text-foreground'}`}>{msg.message}</p>
                         <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                           {formatTimeWithTimezone(msg.timestamp, {
                             hour: '2-digit',
