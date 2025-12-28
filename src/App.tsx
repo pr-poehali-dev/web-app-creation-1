@@ -26,18 +26,29 @@ import Register from "./pages/Register";
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
   lazy(async () => {
-    try {
-      return await componentImport();
-    } catch (error) {
-      // Если ошибка импорта - перезагружаем страницу один раз
-      const hasRefreshed = sessionStorage.getItem('retry-lazy-refreshed');
-      if (!hasRefreshed) {
-        sessionStorage.setItem('retry-lazy-refreshed', 'true');
-        window.location.reload();
-        return { default: LoadingScreen };
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        return await componentImport();
+      } catch (error) {
+        console.log(`Failed to load module, attempt ${i + 1}/${maxRetries}`);
+        
+        // На последней попытке перезагружаем страницу
+        if (i === maxRetries - 1) {
+          const hasRefreshed = sessionStorage.getItem('retry-lazy-refreshed');
+          if (!hasRefreshed) {
+            sessionStorage.setItem('retry-lazy-refreshed', 'true');
+            window.location.reload();
+            return { default: LoadingScreen };
+          }
+          throw error;
+        }
+        
+        // Ждём перед следующей попыткой
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
       }
-      throw error;
     }
+    throw new Error('Failed to load module after retries');
   });
 
 // Ленивая загрузка остальных страниц
@@ -120,6 +131,9 @@ const App = () => {
     if (session) {
       setIsAuthenticated(true);
     }
+
+    // Очищаем флаг обновления при успешной загрузке приложения
+    sessionStorage.removeItem('retry-lazy-refreshed');
 
     // Регистрируем Service Worker в фоне
     if ('serviceWorker' in navigator) {
