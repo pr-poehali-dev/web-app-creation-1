@@ -389,6 +389,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
               districtName={districtName}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              onUpdate={loadData}
             />
           </TabsContent>
 
