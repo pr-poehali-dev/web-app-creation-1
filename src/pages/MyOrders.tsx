@@ -66,6 +66,11 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
   }, [orders, activeTab]);
 
+  // Считаем количество заказов для каждого типа
+  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && order.status !== 'completed').length;
+  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && order.status !== 'completed').length;
+  const archiveOrdersCount = orders.filter(order => order.status === 'completed').length;
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -81,13 +86,13 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6">
           <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
             <TabsTrigger value="buyer" className="py-2.5">
-              Я покупатель
+              Я покупатель {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}
             </TabsTrigger>
             <TabsTrigger value="seller" className="py-2.5">
-              Я продавец
+              Я продавец {sellerOrdersCount > 0 && `(${sellerOrdersCount})`}
             </TabsTrigger>
             <TabsTrigger value="archive" className="py-2.5">
-              Архив
+              Архив {archiveOrdersCount > 0 && `(${archiveOrdersCount})`}
             </TabsTrigger>
           </TabsList>
 
