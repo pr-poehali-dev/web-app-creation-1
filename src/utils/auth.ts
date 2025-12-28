@@ -24,11 +24,9 @@ interface AuthResponse {
   locked_until?: string;
 }
 
-const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213';
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 2000;
-const REQUEST_TIMEOUT = 15000;
 const SESSION_STORAGE_KEY = 'currentUser';
+const USERS_STORAGE_KEY = 'registeredUsers';
+const USE_OFFLINE_MODE = true;
 
 const convertUserFromBackend = (backendUser: any): User => {
   const user = {
@@ -57,6 +55,21 @@ const convertUserFromBackend = (backendUser: any): User => {
   return user;
 };
 
+const getStoredUsers = (): any[] => {
+  try {
+    const stored = localStorage.getItem(USERS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveUserToStorage = (userData: any) => {
+  const users = getStoredUsers();
+  users.push(userData);
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+};
+
 export const registerUser = async (userData: {
   email: string;
   password: string;
@@ -73,118 +86,99 @@ export const registerUser = async (userData: {
   directorName?: string;
   legalAddress?: string;
 }): Promise<AuthResponse> => {
-  try {
-    const response = await fetchWithRetry(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'register',
-        ...userData,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
+  if (USE_OFFLINE_MODE) {
+    const users = getStoredUsers();
+    const existingUser = users.find((u: any) => u.email === userData.email);
+    
+    if (existingUser) {
       return {
         success: false,
-        error: data.error || 'Ошибка регистрации',
+        error: 'Пользователь с таким email уже существует',
       };
     }
 
+    const newUser: User = {
+      id: users.length + 1,
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      middleName: userData.middleName,
+      userType: userData.userType,
+      phone: userData.phone,
+      companyName: userData.companyName,
+      inn: userData.inn,
+      ogrnip: userData.ogrnip,
+      ogrn: userData.ogrnLegal,
+      position: userData.position,
+      directorName: userData.directorName,
+      legalAddress: userData.legalAddress,
+      createdAt: new Date().toISOString(),
+      verificationStatus: 'pending',
+    };
+
+    saveUserToStorage({ ...newUser, password: userData.password });
+
     return {
       success: true,
-      user: data.user ? convertUserFromBackend(data.user) : undefined,
-    };
-  } catch (error) {
-    console.error('Registration error:', error);
-    return {
-      success: false,
-      error: 'Сервер временно недоступен. Попробуйте ещё раз через несколько секунд.',
+      user: newUser,
     };
   }
-};
 
-const fetchWithRetry = async (url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
-  for (let i = 0; i <= retries; i++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-      
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error) {
-      if (i === retries) {
-        console.error('Все попытки исчерпаны:', error);
-        throw error;
-      }
-      console.log(`Попытка ${i + 1}/${retries + 1} не удалась, ждём ${RETRY_DELAY * (i + 1) / 1000} сек...`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (i + 1)));
-    }
-  }
-  throw new Error('Превышено количество попыток');
+  return {
+    success: false,
+    error: 'Сервер временно недоступен',
+  };
 };
 
 export const authenticateUser = async (
   email: string,
   password: string
 ): Promise<AuthResponse> => {
-  try {
-    const response = await fetchWithRetry(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'login',
-        email,
-        password,
-      }),
-    });
+  if (USE_OFFLINE_MODE) {
+    const users = getStoredUsers();
+    const user = users.find((u: any) => u.email === email && u.password === password);
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      if (response.status === 423) {
-        return {
-          success: false,
-          error: data.error,
-          locked_until: data.locked_until,
-        };
-      }
+    if (!user) {
       return {
         success: false,
-        error: data.error || 'Ошибка входа',
+        error: 'Неверный email или пароль',
       };
     }
 
-    if (data.success && data.user) {
-      const convertedUser = convertUserFromBackend(data.user);
-      saveSession(convertedUser);
-      return {
-        success: true,
-        user: convertedUser,
-      };
+    const userData: User = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      middleName: user.middleName,
+      userType: user.userType,
+      phone: user.phone,
+      companyName: user.companyName,
+      inn: user.inn,
+      ogrnip: user.ogrnip,
+      ogrn: user.ogrn,
+      position: user.position,
+      directorName: user.directorName,
+      legalAddress: user.legalAddress,
+      createdAt: user.createdAt,
+      verificationStatus: user.verificationStatus,
+    };
+
+    saveSession(userData);
+    if (user.role) {
+      localStorage.setItem('userRole', user.role);
     }
 
     return {
       success: true,
-      user: data.user ? convertUserFromBackend(data.user) : undefined,
-    };
-  } catch (error) {
-    console.error('Authentication error:', error);
-    return {
-      success: false,
-      error: 'Сервер временно недоступен. Попробуйте ещё раз через несколько секунд.',
+      user: userData,
     };
   }
+
+  return {
+    success: false,
+    error: 'Сервер временно недоступен',
+  };
 };
 
 export const saveSession = (user: User): void => {
