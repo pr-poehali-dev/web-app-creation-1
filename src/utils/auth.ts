@@ -27,6 +27,24 @@ interface AuthResponse {
 const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213';
 const SESSION_STORAGE_KEY = 'currentUser';
 
+async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
+  let lastError;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      lastError = error;
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
 const convertUserFromBackend = (backendUser: any): User => {
   const user = {
     id: backendUser.id,
@@ -71,7 +89,7 @@ export const registerUser = async (userData: {
   legalAddress?: string;
 }): Promise<AuthResponse> => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetchWithRetry(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +127,7 @@ export const authenticateUser = async (
   password: string
 ): Promise<AuthResponse> => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetchWithRetry(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
