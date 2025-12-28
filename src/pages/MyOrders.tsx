@@ -81,13 +81,13 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6">
           <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
             <TabsTrigger value="buyer" className="py-2.5">
-              Я покупатель
+              Я покупатель ({orders.filter(o => o.type === 'purchase' && o.status !== 'completed').length})
             </TabsTrigger>
             <TabsTrigger value="seller" className="py-2.5">
-              Я продавец
+              Я продавец ({orders.filter(o => o.type === 'sale' && o.status !== 'completed').length})
             </TabsTrigger>
             <TabsTrigger value="archive" className="py-2.5">
-              Архив
+              Архив ({orders.filter(o => o.status === 'completed').length})
             </TabsTrigger>
           </TabsList>
 

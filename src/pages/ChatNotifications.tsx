@@ -33,47 +33,7 @@ export default function ChatNotifications({ isAuthenticated, onLogout }: ChatNot
 
     const loadNotifications = async () => {
       try {
-        
-        const mockNotifications: ChatNotification[] = [
-          {
-            id: '1',
-            orderId: '1',
-            orderNumber: 'ORD-2024-001',
-            orderTitle: 'Цемент М500, 50 кг',
-            messagePreview: 'Здравствуйте! Когда сможете доставить товар?',
-            senderName: 'Иван Петров',
-            senderType: 'buyer',
-            timestamp: new Date('2024-12-10T10:30:00'),
-            isRead: false,
-            unreadCount: 2
-          },
-          {
-            id: '2',
-            orderId: '2',
-            orderNumber: 'RSP-2024-001',
-            orderTitle: 'Нужен строительный песок',
-            messagePreview: 'Спасибо! Жду завтра утром.',
-            senderName: 'ООО "СтройДом"',
-            senderType: 'buyer',
-            timestamp: new Date('2024-12-09T15:45:00'),
-            isRead: false,
-            unreadCount: 1
-          },
-          {
-            id: '3',
-            orderId: '3',
-            orderNumber: 'ORD-2024-002',
-            orderTitle: 'Кирпич облицовочный',
-            messagePreview: 'Товар отгружен, доставка завтра.',
-            senderName: 'ООО "СтройМаркет"',
-            senderType: 'seller',
-            timestamp: new Date('2024-12-09T12:20:00'),
-            isRead: true,
-            unreadCount: 0
-          }
-        ];
-        
-        setNotifications(mockNotifications);
+        setNotifications([]);
       } catch (error) {
         console.error('Error loading notifications:', error);
       } finally {
