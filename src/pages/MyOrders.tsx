@@ -94,7 +94,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <TabsContent value="buyer">
             <OrdersContent
               activeTab="buyer"
-              onTabChange={setActiveTab}
               orders={orders}
               isLoading={isLoading}
               onOpenChat={handleOpenChat}
@@ -105,7 +104,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <TabsContent value="seller">
             <OrdersContent
               activeTab="seller"
-              onTabChange={setActiveTab}
               orders={orders}
               isLoading={isLoading}
               onOpenChat={handleOpenChat}
@@ -116,7 +114,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <TabsContent value="archive">
             <OrdersContent
               activeTab="archive"
-              onTabChange={setActiveTab}
               orders={orders}
               isLoading={isLoading}
               onOpenChat={handleOpenChat}
