@@ -1,3 +1,5 @@
+import func2url from '../../backend/func2url.json';
+
 interface User {
   id?: number;
   email: string;
@@ -24,7 +26,7 @@ interface AuthResponse {
   locked_until?: string;
 }
 
-const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213';
+const API_URL = func2url.auth;
 const SESSION_STORAGE_KEY = 'currentUser';
 
 async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
