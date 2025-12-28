@@ -104,10 +104,18 @@ export const offersAPI = {
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error('Failed to fetch offers');
+      const text = await response.text();
+      console.error('Offers API error:', response.status, text.substring(0, 500));
+      throw new Error(`Failed to fetch offers: ${response.status}`);
     }
     
-    return response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      console.error('Failed to parse JSON:', text.substring(0, 500));
+      throw new Error('Invalid JSON response from server');
+    }
   },
 
   async getOfferById(id: string): Promise<Offer> {
