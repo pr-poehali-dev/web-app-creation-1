@@ -31,9 +31,48 @@ export default function ChatNotifications({ isAuthenticated, onLogout }: ChatNot
       return;
     }
 
+    const mockNotifications: ChatNotification[] = [
+      {
+        id: '1',
+        orderId: 'ORD-2024-001',
+        orderNumber: 'ORD-2024-001',
+        orderTitle: 'Ручки тест',
+        senderName: 'Иван Иванов',
+        senderType: 'buyer',
+        messagePreview: 'Здравствуйте! Можно узнать подробнее о товаре?',
+        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+        isRead: false,
+        unreadCount: 2,
+      },
+      {
+        id: '2',
+        orderId: 'ORD-2024-002',
+        orderNumber: 'ORD-2024-002',
+        orderTitle: 'Карандаши цветные',
+        senderName: 'Петр Петров',
+        senderType: 'seller',
+        messagePreview: 'Товар готов к отправке. Когда удобно получить?',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+        isRead: false,
+        unreadCount: 1,
+      },
+      {
+        id: '3',
+        orderId: 'RSP-2024-003',
+        orderNumber: 'RSP-2024-003',
+        orderTitle: 'Тетради 48 листов',
+        senderName: 'Сидоров Сергей',
+        senderType: 'buyer',
+        messagePreview: 'Спасибо за заказ! Все пришло в отличном состоянии.',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+        isRead: true,
+        unreadCount: 0,
+      },
+    ];
+
     const loadNotifications = async () => {
       try {
-        setNotifications([]);
+        setNotifications(mockNotifications);
       } catch (error) {
         console.error('Error loading notifications:', error);
       } finally {

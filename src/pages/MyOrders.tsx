@@ -78,49 +78,14 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
-            <TabsTrigger value="buyer" className="py-2.5">
-              Я покупатель ({orders.filter(o => o.type === 'purchase' && o.status !== 'completed').length})
-            </TabsTrigger>
-            <TabsTrigger value="seller" className="py-2.5">
-              Я продавец ({orders.filter(o => o.type === 'sale' && o.status !== 'completed').length})
-            </TabsTrigger>
-            <TabsTrigger value="archive" className="py-2.5">
-              Архив ({orders.filter(o => o.status === 'completed').length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="buyer">
-            <OrdersContent
-              activeTab="buyer"
-              orders={orders}
-              isLoading={isLoading}
-              onOpenChat={handleOpenChat}
-              onAcceptOrder={handleAcceptOrder}
-            />
-          </TabsContent>
-
-          <TabsContent value="seller">
-            <OrdersContent
-              activeTab="seller"
-              orders={orders}
-              isLoading={isLoading}
-              onOpenChat={handleOpenChat}
-              onAcceptOrder={handleAcceptOrder}
-            />
-          </TabsContent>
-
-          <TabsContent value="archive">
-            <OrdersContent
-              activeTab="archive"
-              orders={orders}
-              isLoading={isLoading}
-              onOpenChat={handleOpenChat}
-              onAcceptOrder={handleAcceptOrder}
-            />
-          </TabsContent>
-        </Tabs>
+        <OrdersContent
+          activeTab={activeTab}
+          orders={orders}
+          isLoading={isLoading}
+          onOpenChat={handleOpenChat}
+          onAcceptOrder={handleAcceptOrder}
+          onTabChange={setActiveTab}
+        />
       </main>
 
       <Footer />

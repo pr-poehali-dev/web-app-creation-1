@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import OrderCard from './OrderCard';
 import type { Order } from '@/types/order';
@@ -11,6 +12,7 @@ interface OrdersContentProps {
   isLoading: boolean;
   onOpenChat: (order: Order) => void;
   onAcceptOrder: (orderId: string) => void;
+  onTabChange: (tab: 'buyer' | 'seller' | 'archive') => void;
 }
 
 export default function OrdersContent({
@@ -19,6 +21,7 @@ export default function OrdersContent({
   isLoading,
   onOpenChat,
   onAcceptOrder,
+  onTabChange,
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -39,6 +42,10 @@ export default function OrdersContent({
 
   const isSeller = activeTab === 'seller';
 
+  const buyerOrders = orders.filter(o => o.type === 'purchase' && o.status !== 'completed');
+  const sellerOrders = orders.filter(o => o.type === 'sale' && o.status !== 'completed');
+  const archiveOrders = orders.filter(o => o.status === 'completed');
+
   if (isLoading) {
     return (
       <Card>
@@ -49,24 +56,67 @@ export default function OrdersContent({
     );
   }
 
-  if (displayOrders.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground">
-            {isSeller 
-              ? 'У вас пока нет заказов на ваши товары' 
-              : 'У вас пока нет заказов'}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <>
-      {activeTab === 'archive' && (
+    <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as 'buyer' | 'seller' | 'archive')} className="mb-6">
+      <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
+        <TabsTrigger value="buyer" className="py-2.5">
+          Я покупатель ({buyerOrders.length})
+        </TabsTrigger>
+        <TabsTrigger value="seller" className="py-2.5">
+          Я продавец ({sellerOrders.length})
+        </TabsTrigger>
+        <TabsTrigger value="archive" className="py-2.5">
+          Архив ({archiveOrders.length})
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="buyer">
+        {displayOrders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">У вас пока нет заказов</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {displayOrders.map(order => (
+              <OrderCard 
+                key={order.id} 
+                order={order} 
+                isSeller={false}
+                onOpenChat={onOpenChat}
+                onAcceptOrder={undefined}
+              />
+            ))}
+          </div>
+        )}
+      </TabsContent>
+
+      <TabsContent value="seller">
+        {displayOrders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">У вас пока нет заказов на ваши товары</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {displayOrders.map(order => (
+              <OrderCard 
+                key={order.id} 
+                order={order} 
+                isSeller={true}
+                onOpenChat={onOpenChat}
+                onAcceptOrder={onAcceptOrder}
+              />
+            ))}
+          </div>
+        )}
+      </TabsContent>
+
+      <TabsContent value="archive">
         <Card className="mb-4">
           <CardContent className="pt-4">
             <div>
@@ -79,19 +129,27 @@ export default function OrdersContent({
             </div>
           </CardContent>
         </Card>
-      )}
-      
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {displayOrders.map(order => (
-          <OrderCard 
-            key={order.id} 
-            order={order} 
-            isSeller={isSeller}
-            onOpenChat={onOpenChat}
-            onAcceptOrder={isSeller ? onAcceptOrder : undefined}
-          />
-        ))}
-      </div>
-    </>
+        {displayOrders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">Архив пуст</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {displayOrders.map(order => (
+              <OrderCard 
+                key={order.id} 
+                order={order} 
+                isSeller={isSeller}
+                onOpenChat={onOpenChat}
+                onAcceptOrder={undefined}
+              />
+            ))}
+          </div>
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }
