@@ -71,6 +71,25 @@ function getUserId(): string | null {
   }
 }
 
+async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
+  let lastError;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      console.log(`Попытка ${i + 1}/${maxRetries} не удалась, повторяю...`);
+      lastError = error;
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
 export const offersAPI = {
   async getAll(): Promise<OffersListResponse> {
     const response = await fetch(OFFERS_API);
@@ -101,7 +120,7 @@ export const offersAPI = {
     }
     
     const url = `${OFFERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    const response = await fetch(url);
+    const response = await fetchWithRetry(url);
     
     if (!response.ok) {
       throw new Error('Failed to fetch offers');
@@ -440,7 +459,7 @@ export const ordersAPI = {
       if (status) queryParams.append('status', status);
       
       const url = `${ORDERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         headers: {
           'X-User-Id': userId,
         },
