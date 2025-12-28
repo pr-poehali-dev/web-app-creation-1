@@ -1,5 +1,5 @@
 '''
-Secure authentication API with password hashing and brute-force protection
+API аутентификации с хешированием паролей и защитой от брутфорса
 Args: event - dict with httpMethod, body, queryStringParameters
       context - object with attributes: request_id, function_name
 Returns: HTTP response dict with statusCode, headers, body
