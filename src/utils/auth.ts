@@ -29,24 +29,6 @@ interface AuthResponse {
 const API_URL = func2url.auth;
 const SESSION_STORAGE_KEY = 'currentUser';
 
-async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
-  let lastError;
-  
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const response = await fetch(url, options);
-      return response;
-    } catch (error) {
-      lastError = error;
-      if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-      }
-    }
-  }
-  
-  throw lastError;
-}
-
 const convertUserFromBackend = (backendUser: any): User => {
   const user = {
     id: backendUser.id,
@@ -91,7 +73,7 @@ export const registerUser = async (userData: {
   legalAddress?: string;
 }): Promise<AuthResponse> => {
   try {
-    const response = await fetchWithRetry(API_URL, {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -129,7 +111,7 @@ export const authenticateUser = async (
   password: string
 ): Promise<AuthResponse> => {
   try {
-    const response = await fetchWithRetry(API_URL, {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
