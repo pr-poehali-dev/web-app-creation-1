@@ -104,14 +104,16 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
 
         for (let i = 0; i < imagePreviews.length; i++) {
           try {
+            console.log(`Uploading image ${i + 1}/${imagePreviews.length}...`);
             const uploadResult = await offersAPI.uploadVideo(imagePreviews[i]);
             uploadedImageUrls.push(uploadResult.url);
             console.log(`Image ${i + 1}/${imagePreviews.length} uploaded:`, uploadResult.url);
           } catch (error) {
             console.error(`Failed to upload image ${i + 1}:`, error);
+            const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
             toast({
               title: 'Ошибка загрузки фото',
-              description: `Не удалось загрузить фото ${i + 1}`,
+              description: `Не удалось загрузить фото ${i + 1}: ${errorMessage}`,
               variant: 'destructive',
             });
             setIsSubmitting(false);

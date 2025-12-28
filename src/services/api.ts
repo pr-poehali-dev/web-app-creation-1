@@ -180,6 +180,7 @@ export const offersAPI = {
   },
 
   async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
+    console.log('uploadVideo: Starting upload, data size:', videoBase64.length);
     const response = await fetch(UPLOAD_VIDEO_API, {
       method: 'POST',
       headers: {
@@ -188,12 +189,17 @@ export const offersAPI = {
       body: JSON.stringify({ video: videoBase64 }),
     });
     
+    console.log('uploadVideo: Response status:', response.status);
+    
     if (!response.ok) {
       const error = await response.json();
+      console.error('uploadVideo: Error response:', error);
       throw new Error(error.error || 'Failed to upload video');
     }
     
-    return response.json();
+    const result = await response.json();
+    console.log('uploadVideo: Success, URL:', result.url);
+    return result;
   },
 
   async getAdminOffers(params?: {

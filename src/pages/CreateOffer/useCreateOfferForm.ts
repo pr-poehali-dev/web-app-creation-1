@@ -107,12 +107,32 @@ export function useCreateOfferForm(editOffer?: Offer) {
       return;
     }
 
+    // Проверка размера каждого файла (макс 5 МБ)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: 'Файл слишком большой',
+          description: `Файл ${file.name} превышает 5 МБ. Пожалуйста, уменьшите размер изображения.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     setImages(prev => [...prev, ...files]);
     
     files.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.onerror = () => {
+        toast({
+          title: 'Ошибка чтения файла',
+          description: `Не удалось прочитать файл ${file.name}`,
+          variant: 'destructive',
+        });
       };
       reader.readAsDataURL(file);
     });
