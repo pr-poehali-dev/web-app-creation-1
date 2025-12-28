@@ -25,8 +25,9 @@ interface AuthResponse {
 }
 
 const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213';
-const MAX_RETRIES = 2;
-const RETRY_DELAY = 1000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 2000;
+const REQUEST_TIMEOUT = 15000;
 const SESSION_STORAGE_KEY = 'currentUser';
 
 const convertUserFromBackend = (backendUser: any): User => {
@@ -109,11 +110,22 @@ export const registerUser = async (userData: {
 const fetchWithRetry = async (url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
   for (let i = 0; i <= retries; i++) {
     try {
-      const response = await fetch(url, options);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
       return response;
     } catch (error) {
-      if (i === retries) throw error;
-      console.log(`Попытка ${i + 1} не удалась, пробуем снова...`);
+      if (i === retries) {
+        console.error('Все попытки исчерпаны:', error);
+        throw error;
+      }
+      console.log(`Попытка ${i + 1}/${retries + 1} не удалась, ждём ${RETRY_DELAY * (i + 1) / 1000} сек...`);
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (i + 1)));
     }
   }
