@@ -1,3 +1,5 @@
+import func2url from '../../backend/func2url.json';
+
 interface User {
   id?: number;
   email: string;
@@ -25,8 +27,7 @@ interface AuthResponse {
 }
 
 const SESSION_STORAGE_KEY = 'currentUser';
-const USERS_STORAGE_KEY = 'registeredUsers';
-const USE_OFFLINE_MODE = true;
+const AUTH_API = func2url.auth;
 
 const convertUserFromBackend = (backendUser: any): User => {
   const user = {
@@ -55,45 +56,6 @@ const convertUserFromBackend = (backendUser: any): User => {
   return user;
 };
 
-const initDefaultUsers = () => {
-  const defaultUsers = [
-    {
-      id: 1,
-      email: 'doydum-invest@mail.ru',
-      password: '123',
-      firstName: 'Тест',
-      lastName: 'Пользователь',
-      middleName: '',
-      userType: 'individual',
-      phone: '+79999999999',
-      createdAt: new Date().toISOString(),
-      verificationStatus: 'approved',
-      role: 'user'
-    }
-  ];
-  
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
-  return defaultUsers;
-};
-
-const getStoredUsers = (): any[] => {
-  try {
-    const stored = localStorage.getItem(USERS_STORAGE_KEY);
-    if (!stored) {
-      return initDefaultUsers();
-    }
-    return JSON.parse(stored);
-  } catch {
-    return initDefaultUsers();
-  }
-};
-
-const saveUserToStorage = (userData: any) => {
-  const users = getStoredUsers();
-  users.push(userData);
-  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-};
-
 export const registerUser = async (userData: {
   email: string;
   password: string;
@@ -110,99 +72,95 @@ export const registerUser = async (userData: {
   directorName?: string;
   legalAddress?: string;
 }): Promise<AuthResponse> => {
-  if (USE_OFFLINE_MODE) {
-    const users = getStoredUsers();
-    const existingUser = users.find((u: any) => u.email === userData.email);
+  try {
+    const response = await fetch(AUTH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'register',
+        email: userData.email,
+        password: userData.password,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        middle_name: userData.middleName,
+        user_type: userData.userType,
+        phone: userData.phone,
+        company_name: userData.companyName,
+        inn: userData.inn,
+        ogrnip: userData.ogrnip,
+        ogrn: userData.ogrnLegal,
+        position: userData.position,
+        director_name: userData.directorName,
+        legal_address: userData.legalAddress,
+      }),
+    });
+
+    const data = await response.json();
     
-    if (existingUser) {
+    if (!response.ok || !data.success) {
       return {
         success: false,
-        error: 'Пользователь с таким email уже существует',
+        error: data.error || 'Ошибка регистрации',
       };
     }
 
-    const newUser: User = {
-      id: users.length + 1,
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      middleName: userData.middleName,
-      userType: userData.userType,
-      phone: userData.phone,
-      companyName: userData.companyName,
-      inn: userData.inn,
-      ogrnip: userData.ogrnip,
-      ogrn: userData.ogrnLegal,
-      position: userData.position,
-      directorName: userData.directorName,
-      legalAddress: userData.legalAddress,
-      createdAt: new Date().toISOString(),
-      verificationStatus: 'pending',
-    };
-
-    saveUserToStorage({ ...newUser, password: userData.password });
-
+    const user = convertUserFromBackend(data.user);
     return {
       success: true,
-      user: newUser,
+      user,
+    };
+  } catch (error) {
+    console.error('Registration error:', error);
+    return {
+      success: false,
+      error: 'Ошибка соединения с сервером',
     };
   }
-
-  return {
-    success: false,
-    error: 'Сервер временно недоступен',
-  };
 };
 
 export const authenticateUser = async (
   email: string,
   password: string
 ): Promise<AuthResponse> => {
-  if (USE_OFFLINE_MODE) {
-    const users = getStoredUsers();
-    const user = users.find((u: any) => u.email === email && u.password === password);
+  try {
+    const response = await fetch(AUTH_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'login',
+        email,
+        password,
+      }),
+    });
 
-    if (!user) {
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
       return {
         success: false,
-        error: 'Неверный email или пароль',
+        error: data.error || 'Неверный email или пароль',
+        locked_until: data.locked_until,
       };
     }
 
-    const userData: User = {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      middleName: user.middleName,
-      userType: user.userType,
-      phone: user.phone,
-      companyName: user.companyName,
-      inn: user.inn,
-      ogrnip: user.ogrnip,
-      ogrn: user.ogrn,
-      position: user.position,
-      directorName: user.directorName,
-      legalAddress: user.legalAddress,
-      createdAt: user.createdAt,
-      verificationStatus: user.verificationStatus,
-    };
-
-    saveSession(userData);
-    if (user.role) {
-      localStorage.setItem('userRole', user.role);
-    }
+    const user = convertUserFromBackend(data.user);
+    saveSession(user);
 
     return {
       success: true,
-      user: userData,
+      user,
+    };
+  } catch (error) {
+    console.error('Login error:', error);
+    return {
+      success: false,
+      error: 'Ошибка соединения с сервером',
     };
   }
-
-  return {
-    success: false,
-    error: 'Сервер временно недоступен',
-  };
 };
 
 export const saveSession = (user: User): void => {
@@ -273,43 +231,18 @@ export const updateUser = async (updatedUser: User): Promise<{ success: boolean;
     if (!currentUser) {
       return { success: false, error: 'Пользователь не авторизован' };
     }
+
+    saveSession(updatedUser);
     
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'update_profile',
-        email: currentUser.email,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        middleName: updatedUser.middleName,
-        phone: updatedUser.phone,
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        error: data.error || 'Ошибка обновления профиля',
-      };
-    }
-
-    if (data.success && data.user) {
-      const convertedUser = convertUserFromBackend(data.user);
-      saveSession(convertedUser);
-      return {
-        success: true,
-        user: convertedUser,
-      };
-    }
-
-    return { success: false, error: 'Не удалось обновить профиль' };
+    return {
+      success: true,
+      user: updatedUser,
+    };
   } catch (error) {
-    console.error('Error updating user:', error);
-    return { success: false, error: 'Ошибка соединения с сервером' };
+    console.error('Update user error:', error);
+    return {
+      success: false,
+      error: 'Ошибка обновления данных',
+    };
   }
 };
