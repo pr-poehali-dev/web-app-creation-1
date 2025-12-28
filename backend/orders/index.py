@@ -457,8 +457,10 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     is_buyer = user_id == order['buyer_id']
     is_seller = user_id == order['seller_id']
     
+    print(f"[UPDATE_ORDER] user_id={user_id}, buyer_id={order['buyer_id']}, seller_id={order['seller_id']}, is_buyer={is_buyer}, is_seller={is_seller}, body={body}")
+    
     # Предложение цены от покупателя
-    if 'counterPrice' in body and is_buyer:
+    if 'counterPrice' in body and is_buyer and not is_seller:
         counter_price = float(body['counterPrice'])
         quantity = order['quantity']
         counter_total = counter_price * quantity
@@ -473,7 +475,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"status = 'negotiating'")
     
     # Встречное предложение от продавца (после предложения покупателя)
-    if 'counterPrice' in body and is_seller:
+    elif 'counterPrice' in body and is_seller and not is_buyer:
         counter_price = float(body['counterPrice'])
         quantity = order['quantity']
         counter_total = counter_price * quantity
