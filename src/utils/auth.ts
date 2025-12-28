@@ -55,12 +55,36 @@ const convertUserFromBackend = (backendUser: any): User => {
   return user;
 };
 
+const initDefaultUsers = () => {
+  const defaultUsers = [
+    {
+      id: 1,
+      email: 'doydum-invest@mail.ru',
+      password: '123',
+      firstName: 'Тест',
+      lastName: 'Пользователь',
+      middleName: '',
+      userType: 'individual',
+      phone: '+79999999999',
+      createdAt: new Date().toISOString(),
+      verificationStatus: 'approved',
+      role: 'user'
+    }
+  ];
+  
+  localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
+  return defaultUsers;
+};
+
 const getStoredUsers = (): any[] => {
   try {
     const stored = localStorage.getItem(USERS_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    if (!stored) {
+      return initDefaultUsers();
+    }
+    return JSON.parse(stored);
   } catch {
-    return [];
+    return initDefaultUsers();
   }
 };
 
