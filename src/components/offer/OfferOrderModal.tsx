@@ -63,11 +63,15 @@ export default function OfferOrderModal({
       return;
     }
     
-    setQuantity(numValue);
+    // Жёсткая валидация: не позволяем вводить меньше минимума
+    const minValue = minOrderQuantity || 1;
+    const finalValue = Math.max(minValue, Math.min(numValue, remainingQuantity));
     
-    if (minOrderQuantity && numValue < minOrderQuantity) {
-      setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
-    } else if (numValue > remainingQuantity) {
+    setQuantity(finalValue);
+    
+    if (finalValue < minValue) {
+      setQuantityError(`Минимальное количество для заказа: ${minValue} ${unit}`);
+    } else if (finalValue > remainingQuantity) {
       setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
     } else {
       setQuantityError('');
@@ -118,22 +122,34 @@ export default function OfferOrderModal({
               max={remainingQuantity}
               step="1"
               value={quantity}
-              onChange={(e) => handleQuantityChange(Number(e.target.value))}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (!isNaN(val) && val >= (minOrderQuantity || 1)) {
+                  handleQuantityChange(val);
+                }
+              }}
+              onKeyDown={(e) => {
+                // Блокируем ввод минуса и точки
+                if (e.key === '-' || e.key === '.' || e.key === ',') {
+                  e.preventDefault();
+                }
+              }}
               onBlur={(e) => {
                 const val = Number(e.target.value);
-                if (minOrderQuantity && val < minOrderQuantity) {
-                  setQuantity(minOrderQuantity);
-                  handleQuantityChange(minOrderQuantity);
+                const minVal = minOrderQuantity || 1;
+                if (val < minVal) {
+                  setQuantity(minVal);
+                  handleQuantityChange(minVal);
                 }
               }}
               required
               className={quantityError ? 'border-red-500 focus-visible:ring-red-500' : ''}
             />
-            {minOrderQuantity && (
+            {minOrderQuantity && minOrderQuantity > 1 && (
               <div className="flex items-center gap-1 mt-1">
-                <Icon name="AlertCircle" size={12} className="text-amber-600" />
-                <p className="text-xs text-amber-600 font-medium">
-                  Минимальное количество: {minOrderQuantity} {unit}
+                <Icon name="Info" size={12} className="text-blue-600" />
+                <p className="text-xs text-blue-600 font-medium">
+                  Минимум для заказа: {minOrderQuantity} {unit}
                 </p>
               </div>
             )}
