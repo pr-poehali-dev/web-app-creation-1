@@ -1,3 +1,5 @@
+'''API для управления предложениями'''
+
 import json
 import os
 import base64
