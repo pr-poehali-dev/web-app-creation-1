@@ -44,7 +44,6 @@ def generate_order_number():
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
-    print(f"[HANDLER] Received {method} request")
     
     if method == 'OPTIONS':
         return {
@@ -428,10 +427,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         'isBase64Encoded': False
     }
 
-def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, Any]) -> Dict[str, Any]:
+def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     '''Обновить статус заказа, встречное предложение или принять заказ'''
     body = json.loads(event.get('body', '{}'))
-    print(f"[UPDATE_ORDER] order_id={order_id}, body={body}")
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -459,10 +457,8 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, Any]) 
     is_buyer = user_id == order['buyer_id']
     is_seller = user_id == order['seller_id']
     
-    print(f"[UPDATE_ORDER] user_id={user_id}, buyer_id={order['buyer_id']}, seller_id={order['seller_id']}, is_buyer={is_buyer}, is_seller={is_seller}, body={body}")
-    
     # Предложение цены от покупателя
-    if 'counterPrice' in body and is_buyer and not is_seller:
+    if 'counterPrice' in body and is_buyer:
         counter_price = float(body['counterPrice'])
         quantity = order['quantity']
         counter_total = counter_price * quantity
@@ -477,7 +473,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, Any]) 
         updates.append(f"status = 'negotiating'")
     
     # Встречное предложение от продавца (после предложения покупателя)
-    elif 'counterPrice' in body and is_seller and not is_buyer:
+    if 'counterPrice' in body and is_seller:
         counter_price = float(body['counterPrice'])
         quantity = order['quantity']
         counter_total = counter_price * quantity
