@@ -41,7 +41,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const [editQuantity, setEditQuantity] = useState(offer.quantity.toString());
   const [isSaving, setIsSaving] = useState(false);
   
-  const isOwner = currentUser && offer.userId === currentUser.id;
+  const isOwner = currentUser && String(offer.userId) === String(currentUser.id);
 
   const category = CATEGORIES.find(c => c.id === offer.category);
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
