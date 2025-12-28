@@ -88,7 +88,12 @@ export default function OrderChatModal({
             {/* Кнопки действий для покупателя - предложить свою цену */}
             {isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && (
               <div className="flex gap-2">
-                <Button onClick={() => setShowCounterForm(true)} variant="outline" size="sm" className="flex-1">
+                <Button 
+                  onClick={() => setShowCounterForm(true)} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 border-2 border-primary hover:bg-primary/10 font-semibold shadow-sm"
+                >
                   <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
                   Предложить свою цену
                 </Button>
@@ -97,7 +102,7 @@ export default function OrderChatModal({
 
             {/* Встречное предложение - показываем тому кто должен ответить */}
             {order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && order.status !== 'accepted' && (
-              <Card className={order.counterOfferedBy === 'buyer' ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}>
+              <Card className={order.counterOfferedBy === 'buyer' ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' : 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800'}>
                 <CardContent className="pt-4">
                   <div className="flex items-start">
                     <div className="flex-1 min-w-0">
@@ -121,11 +126,11 @@ export default function OrderChatModal({
                                 name={order.counterOfferedBy === 'buyer' ? 'User' : 'Store'} 
                                 className={`h-4 w-4 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} 
                               />
-                              <span className="font-semibold text-muted-foreground">
+                              <span className="font-semibold text-foreground">
                                 {order.counterOfferedBy === 'buyer' ? 'Встречное предложение покупателя:' : 'Встречное предложение продавца:'}
                               </span>
                             </span>
-                            <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
+                            <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
                               {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
                             </span>
                           </div>
@@ -133,7 +138,7 @@ export default function OrderChatModal({
                           {/* Сумма заказа */}
                           <div className="flex items-center justify-between pt-1.5 border-t border-dashed">
                             <span className="text-sm text-muted-foreground">Сумма заказа:</span>
-                            <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`}>
+                            <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
                               {order.counterTotalAmount?.toLocaleString('ru-RU')} ₽
                             </span>
                           </div>
@@ -301,7 +306,7 @@ export default function OrderChatModal({
 
             {/* Заказ принят покупателем после торгов */}
             {order.buyerAcceptedCounter && order.status === 'negotiating' && (
-              <Card className="bg-green-50 border-green-200">
+              <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <Icon name="CheckCircle" className="h-5 w-5 text-green-600" />
@@ -318,7 +323,7 @@ export default function OrderChatModal({
 
             {/* Завершение заказа продавцом */}
             {isSeller && order.status === 'accepted' && onCompleteOrder && (
-              <Card className="bg-green-50 border-green-200">
+              <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <Icon name="PackageCheck" className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -337,7 +342,7 @@ export default function OrderChatModal({
 
             {/* Заказ завершён */}
             {order.status === 'completed' && (
-              <Card className="bg-gray-100 border-gray-300">
+              <Card className="bg-gray-100 dark:bg-gray-900/30 border-gray-300 dark:border-gray-700">
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <Icon name="CheckCircle2" className="h-5 w-5 text-gray-600 flex-shrink-0" />
@@ -427,10 +432,10 @@ export default function OrderChatModal({
                         className={`max-w-[80%] sm:max-w-[70%] rounded-lg px-3 py-2 ${
                           isOwn
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                            : 'bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words text-foreground">{msg.message}</p>
                         <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                           {formatTimeWithTimezone(msg.timestamp, {
                             hour: '2-digit',

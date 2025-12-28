@@ -469,10 +469,11 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"counter_offer_message = '{counter_message}'")
         updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
         updates.append(f"counter_offered_by = 'buyer'")
+        updates.append(f"buyer_accepted_counter = FALSE")
         updates.append(f"status = 'negotiating'")
     
     # Встречное предложение от продавца (после предложения покупателя)
-    if 'counterPrice' in body and is_seller and order['status'] == 'negotiating':
+    if 'counterPrice' in body and is_seller:
         counter_price = float(body['counterPrice'])
         quantity = order['quantity']
         counter_total = counter_price * quantity
@@ -483,7 +484,8 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"counter_offer_message = '{counter_message}'")
         updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
         updates.append(f"counter_offered_by = 'seller'")
-        # Статус остается 'negotiating'
+        updates.append(f"buyer_accepted_counter = FALSE")
+        updates.append(f"status = 'negotiating'")
     
     # Продавец принимает предложение покупателя
     counter_accepted = False
