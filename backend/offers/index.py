@@ -116,7 +116,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = "SELECT id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 100"
+        sql = "SELECT id, user_id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 100"
         
         cur.execute(sql)
         offers = cur.fetchall()
@@ -138,6 +138,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         for offer in offers:
             result.append({
                 'id': str(offer['id']),
+                'userId': str(offer['user_id']) if offer.get('user_id') else None,
                 'title': offer['title'],
                 'description': offer.get('description', ''),
                 'category': offer.get('category'),

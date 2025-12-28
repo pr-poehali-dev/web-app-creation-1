@@ -77,7 +77,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     let result = [...offers];
 
     if (showOnlyMy && isAuthenticated && currentUser) {
-      result = result.filter(offer => offer.userId === currentUser.id);
+      result = result.filter(offer => String(offer.userId) === String(currentUser.id));
     }
 
     if (filters.query && filters.query.length >= 2) {
