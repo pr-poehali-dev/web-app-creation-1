@@ -44,6 +44,7 @@ def generate_order_number():
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
+    print(f"[HANDLER] Received {method} request")
     
     if method == 'OPTIONS':
         return {
