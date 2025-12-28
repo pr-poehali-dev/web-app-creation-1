@@ -61,6 +61,11 @@ export default function Login({ onLogin }: LoginProps) {
     }
 
     setIsLoading(true);
+    
+    toast({
+      title: 'Подключение к серверу...',
+      description: 'Пожалуйста, подождите. Первый вход может занять до 10 секунд.',
+    });
 
     try {
       const result = await authenticateUser(email, password);

@@ -25,6 +25,8 @@ interface AuthResponse {
 }
 
 const API_URL = 'https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213';
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000;
 const SESSION_STORAGE_KEY = 'currentUser';
 
 const convertUserFromBackend = (backendUser: any): User => {
@@ -71,7 +73,7 @@ export const registerUser = async (userData: {
   legalAddress?: string;
 }): Promise<AuthResponse> => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetchWithRetry(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -99,9 +101,23 @@ export const registerUser = async (userData: {
     console.error('Registration error:', error);
     return {
       success: false,
-      error: 'Ошибка соединения с сервером',
+      error: 'Сервер временно недоступен. Попробуйте ещё раз через несколько секунд.',
     };
   }
+};
+
+const fetchWithRetry = async (url: string, options: RequestInit, retries = MAX_RETRIES): Promise<Response> => {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      if (i === retries) throw error;
+      console.log(`Попытка ${i + 1} не удалась, пробуем снова...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * (i + 1)));
+    }
+  }
+  throw new Error('Превышено количество попыток');
 };
 
 export const authenticateUser = async (
@@ -109,7 +125,7 @@ export const authenticateUser = async (
   password: string
 ): Promise<AuthResponse> => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetchWithRetry(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -154,7 +170,7 @@ export const authenticateUser = async (
     console.error('Authentication error:', error);
     return {
       success: false,
-      error: 'Ошибка соединения с сервером',
+      error: 'Сервер временно недоступен. Попробуйте ещё раз через несколько секунд.',
     };
   }
 };
