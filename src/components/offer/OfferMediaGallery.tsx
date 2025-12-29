@@ -103,12 +103,16 @@ export default function OfferMediaGallery({
               />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary/10 to-primary/5">
               <img 
                 src="/favicon.svg" 
                 alt="Логотип площадки" 
                 className="w-32 h-32 opacity-30"
               />
+              <div className="flex items-center gap-2 px-4 py-2 bg-background/80 rounded-lg shadow-sm">
+                <Icon name="ImageOff" className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground font-medium">Фото отсутствует</p>
+              </div>
             </div>
           )}
 
