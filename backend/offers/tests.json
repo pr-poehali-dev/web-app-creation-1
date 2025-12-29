@@ -3,8 +3,15 @@
     {
       "name": "Get offer by UUID",
       "method": "GET",
-      "path": "/?id=7e1c7f4d-13de-4176-9f32-664163048cc4",
+      "path": "/?id=316dfa87-eaa3-464a-a344-ddf6640d448f",
       "expectedStatus": 200
+    },
+    {
+      "name": "Get all active offers",
+      "method": "GET",
+      "path": "/?status=active",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
     }
   ]
 }

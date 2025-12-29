@@ -118,7 +118,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        sql = "SELECT id, user_id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = 'active' ORDER BY created_at DESC LIMIT 100"
+        query_params = event.get('queryStringParameters', {}) or {}
+        status_filter = query_params.get('status', 'active')
+        
+        sql = f"SELECT id, user_id, seller_id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}' ORDER BY created_at DESC LIMIT 100"
         
         cur.execute(sql)
         offers = cur.fetchall()
@@ -138,9 +141,14 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         result = []
         for offer in offers:
+            seller_id = offer.get('seller_id')
+            if not seller_id and offer.get('user_id'):
+                seller_id = offer.get('user_id')
+            
             result.append({
                 'id': str(offer['id']),
                 'userId': str(offer['user_id']) if offer.get('user_id') else None,
+                'sellerId': str(seller_id) if seller_id else None,
                 'title': offer['title'],
                 'description': offer.get('description', ''),
                 'category': offer.get('category'),
