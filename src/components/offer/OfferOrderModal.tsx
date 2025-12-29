@@ -67,18 +67,31 @@ export default function OfferOrderModal({
       return;
     }
     
-    // Жёсткая валидация: не позволяем вводить меньше минимума
+    setQuantity(numValue);
+    
     const minValue = minOrderQuantity || 1;
-    const finalValue = Math.max(minValue, Math.min(numValue, remainingQuantity));
     
-    setQuantity(finalValue);
-    
-    if (finalValue < minValue) {
+    if (numValue < minValue) {
       setQuantityError(`Минимальное количество для заказа: ${minValue} ${unit}`);
-    } else if (finalValue > remainingQuantity) {
+    } else if (numValue > remainingQuantity) {
       setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
     } else {
       setQuantityError('');
+    }
+  };
+
+  const incrementQuantity = () => {
+    const newValue = quantity + 1;
+    if (newValue <= remainingQuantity) {
+      handleQuantityChange(newValue);
+    }
+  };
+
+  const decrementQuantity = () => {
+    const minValue = minOrderQuantity || 1;
+    const newValue = quantity - 1;
+    if (newValue >= minValue) {
+      handleQuantityChange(newValue);
     }
   };
 
@@ -119,49 +132,61 @@ export default function OfferOrderModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="order-quantity">Количество ({unit})</Label>
-            <Input
-              id="order-quantity"
-              name="order-quantity"
-              type="number"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              min={minOrderQuantity || 1}
-              max={remainingQuantity}
-              step="1"
-              value={quantity}
-              onChange={(e) => {
-                const val = e.target.value;
-                // Разрешаем пустое значение для удобства редактирования
-                if (val === '') {
-                  setQuantity(minOrderQuantity || 1);
-                  return;
-                }
-                const numVal = Number(val);
-                if (!isNaN(numVal) && numVal >= 0) {
-                  handleQuantityChange(numVal);
-                }
-              }}
-              onKeyDown={(e) => {
-                // Блокируем ввод минуса и точки
-                if (e.key === '-' || e.key === '.' || e.key === ',') {
-                  e.preventDefault();
-                }
-              }}
-              onBlur={(e) => {
-                const val = Number(e.target.value);
-                const minVal = minOrderQuantity || 1;
-                if (isNaN(val) || val < minVal) {
-                  setQuantity(minVal);
-                  handleQuantityChange(minVal);
-                } else if (val > remainingQuantity) {
-                  setQuantity(remainingQuantity);
-                  handleQuantityChange(remainingQuantity);
-                }
-              }}
-              required
-              className={quantityError ? 'border-red-500 focus-visible:ring-red-500' : ''}
-            />
-            {minOrderQuantity && minOrderQuantity > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={decrementQuantity}
+                disabled={quantity <= (minOrderQuantity || 1)}
+                className="flex-shrink-0 h-10 w-10"
+              >
+                <Icon name="Minus" size={16} />
+              </Button>
+              
+              <Input
+                id="order-quantity"
+                name="order-quantity"
+                type="number"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                min={minOrderQuantity || 1}
+                max={remainingQuantity}
+                step="1"
+                value={quantity}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '') {
+                    setQuantity(minOrderQuantity || 1);
+                    return;
+                  }
+                  const numVal = Number(val);
+                  if (!isNaN(numVal) && numVal >= 0) {
+                    handleQuantityChange(numVal);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === '-' || e.key === '.' || e.key === ',') {
+                    e.preventDefault();
+                  }
+                }}
+                required
+                className={`text-center ${quantityError ? 'border-red-500 text-red-600 focus-visible:ring-red-500' : ''}`}
+              />
+              
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={incrementQuantity}
+                disabled={quantity >= remainingQuantity}
+                className="flex-shrink-0 h-10 w-10"
+              >
+                <Icon name="Plus" size={16} />
+              </Button>
+            </div>
+            
+            {minOrderQuantity && minOrderQuantity > 1 && !quantityError && (
               <div className="flex items-center gap-1 mt-1">
                 <Icon name="Info" size={12} className="text-blue-600" />
                 <p className="text-xs text-blue-600 font-medium">
