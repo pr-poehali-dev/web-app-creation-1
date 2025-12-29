@@ -1,22 +1,17 @@
 import func2url from '../../backend/func2url.json';
 
-async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
+async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2): Promise<Response> {
   let lastError: Error | null = null;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const response = await fetch(url, options);
-      sessionStorage.removeItem('connection_errors');
       return response;
     } catch (error) {
       lastError = error as Error;
-      console.error(`Auth fetch attempt ${attempt + 1}/${maxRetries} failed:`, error);
-      
-      const errorCount = parseInt(sessionStorage.getItem('connection_errors') || '0');
-      sessionStorage.setItem('connection_errors', String(errorCount + 1));
       
       if (attempt < maxRetries - 1) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        const delay = 1000 * (attempt + 1);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }

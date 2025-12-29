@@ -12,30 +12,69 @@ const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
 
-async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
+const fetchCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000;
+
+function getCacheKey(url: string, options?: RequestInit): string {
+  const method = options?.method || 'GET';
+  return `${method}:${url}`;
+}
+
+function getFromCache(key: string): any | null {
+  const cached = fetchCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  fetchCache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: any): void {
+  fetchCache.set(key, { data, timestamp: Date.now() });
+  if (fetchCache.size > 50) {
+    const firstKey = fetchCache.keys().next().value;
+    fetchCache.delete(firstKey);
+  }
+}
+
+async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2): Promise<Response> {
+  const method = options?.method || 'GET';
+  
+  if (method === 'GET') {
+    const cacheKey = getCacheKey(url, options);
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      return new Response(JSON.stringify(cached), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+  
   let lastError: Error | null = null;
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const response = await fetch(url, options);
-      sessionStorage.removeItem('connection_errors');
+      
+      if (response.ok && method === 'GET') {
+        const clonedResponse = response.clone();
+        const data = await clonedResponse.json();
+        const cacheKey = getCacheKey(url, options);
+        setCache(cacheKey, data);
+      }
+      
       return response;
     } catch (error) {
       lastError = error as Error;
-      console.error(`Fetch attempt ${attempt + 1}/${maxRetries} failed for ${url}:`, error);
-      
-      const errorCount = parseInt(sessionStorage.getItem('connection_errors') || '0');
-      sessionStorage.setItem('connection_errors', String(errorCount + 1));
       
       if (attempt < maxRetries - 1) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
-        console.log(`Retrying in ${delay}ms...`);
+        const delay = 1000 * (attempt + 1);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
   }
   
-  console.error(`All ${maxRetries} fetch attempts failed for ${url}`);
   throw lastError || new Error('Failed to fetch after retries');
 }
 
