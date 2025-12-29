@@ -96,13 +96,17 @@ export default function OfferDetailContent({
   const handleTouchEnd = () => {
     if (!touchStart) return;
     
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
     const threshold = 0.25;
+    const distanceMoved = Math.sqrt(
+      touchOffset.x * touchOffset.x + 
+      touchOffset.y * touchOffset.y
+    );
+    const screenDiagonal = Math.sqrt(
+      window.innerWidth * window.innerWidth + 
+      window.innerHeight * window.innerHeight
+    );
     
-    const shouldClose = 
-      Math.abs(touchOffset.x) > screenWidth * threshold ||
-      Math.abs(touchOffset.y) > screenHeight * threshold;
+    const shouldClose = distanceMoved > screenDiagonal * threshold;
     
     if (shouldClose) {
       onVideoPlayingChange(false);
