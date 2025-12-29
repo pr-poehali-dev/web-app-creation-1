@@ -52,20 +52,32 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      
+      const cachedOffers = localStorage.getItem('cached_offers');
+      if (cachedOffers) {
+        try {
+          const parsed = JSON.parse(cachedOffers);
+          setOffers(parsed);
+        } catch (e) {
+          console.error('Failed to parse cached offers');
+        }
+      }
+      
       try {
-        // Сначала загружаем только предложения (главное)
         const offersData = await offersAPI.getOffers({ status: 'active' });
         setOffers(offersData.offers || []);
-        setIsLoading(false); // Показываем предложения сразу
+        localStorage.setItem('cached_offers', JSON.stringify(offersData.offers || []));
+        setIsLoading(false);
         
-        // Заказы загружаем в фоне (они нужны только для бейджей)
         ordersAPI.getAll('all').then(ordersResponse => {
           setOrders(ordersResponse.orders || []);
         }).catch(() => {
-          // Игнорируем ошибку загрузки заказов
         });
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
+        if (!cachedOffers) {
+          setOffers([]);
+        }
         setIsLoading(false);
       }
     };

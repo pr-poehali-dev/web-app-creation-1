@@ -12,6 +12,29 @@ const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
 
+async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Fetch attempt ${attempt + 1}/${maxRetries} failed for ${url}:`, error);
+      
+      if (attempt < maxRetries - 1) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  console.error(`All ${maxRetries} fetch attempts failed for ${url}`);
+  throw lastError || new Error('Failed to fetch after retries');
+}
+
 export interface OffersListResponse {
   offers: Offer[];
   total: number;
@@ -73,7 +96,7 @@ function getUserId(): string | null {
 
 export const offersAPI = {
   async getAll(): Promise<OffersListResponse> {
-    const response = await fetch(OFFERS_API);
+    const response = await fetchWithRetry(OFFERS_API);
     
     if (!response.ok) {
       throw new Error('Failed to fetch offers');
@@ -101,7 +124,7 @@ export const offersAPI = {
     }
     
     const url = `${OFFERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    const response = await fetch(url);
+    const response = await fetchWithRetry(url);
     
     if (!response.ok) {
       const text = await response.text();
@@ -119,7 +142,7 @@ export const offersAPI = {
   },
 
   async getOfferById(id: string): Promise<Offer> {
-    const response = await fetch(`${OFFERS_API}?id=${id}`);
+    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}`);
     
     if (!response.ok) {
       console.error('HTTP', response.status, ':', `${OFFERS_API}?id=${id}`);
@@ -135,7 +158,7 @@ export const offersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(OFFERS_API, {
+    const response = await fetchWithRetry(OFFERS_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -153,7 +176,7 @@ export const offersAPI = {
   },
 
   async updateOffer(id: string, data: Partial<CreateOfferData>): Promise<{ message: string }> {
-    const response = await fetch(`${OFFERS_API}?id=${id}`, {
+    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -171,7 +194,7 @@ export const offersAPI = {
   async deleteOffer(id: string): Promise<{ message: string }> {
     const userId = getUserId();
 
-    const response = await fetch(ADMIN_OFFERS_API, {
+    const response = await fetchWithRetry(ADMIN_OFFERS_API, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -189,7 +212,7 @@ export const offersAPI = {
 
   async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
     console.log('uploadVideo: Starting upload, data size:', videoBase64.length);
-    const response = await fetch(UPLOAD_VIDEO_API, {
+    const response = await fetchWithRetry(UPLOAD_VIDEO_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -221,7 +244,7 @@ export const offersAPI = {
     const url = `${ADMIN_OFFERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const userId = getUserId();
     
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       headers: {
         'X-User-Id': userId || 'anonymous',
       },
@@ -237,7 +260,7 @@ export const offersAPI = {
 
 export const requestsAPI = {
   async getAll(): Promise<RequestsListResponse> {
-    const response = await fetch(REQUESTS_API);
+    const response = await fetchWithRetry(REQUESTS_API);
     
     if (!response.ok) {
       throw new Error('Failed to fetch requests');
@@ -265,7 +288,7 @@ export const requestsAPI = {
     }
     
     const url = `${REQUESTS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    const response = await fetch(url);
+    const response = await fetchWithRetry(url);
     
     if (!response.ok) {
       throw new Error('Failed to fetch requests');
@@ -275,7 +298,7 @@ export const requestsAPI = {
   },
 
   async getRequestById(id: string): Promise<OfferRequest> {
-    const response = await fetch(`${REQUESTS_API}?id=${id}`);
+    const response = await fetchWithRetry(`${REQUESTS_API}?id=${id}`);
     
     if (!response.ok) {
       console.error('HTTP', response.status, ':', `${REQUESTS_API}?id=${id}`);
@@ -291,7 +314,7 @@ export const requestsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(REQUESTS_API, {
+    const response = await fetchWithRetry(REQUESTS_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -309,7 +332,7 @@ export const requestsAPI = {
   },
 
   async updateRequest(id: string, data: Partial<CreateRequestData>): Promise<{ message: string }> {
-    const response = await fetch(`${REQUESTS_API}/${id}`, {
+    const response = await fetchWithRetry(`${REQUESTS_API}/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -330,7 +353,7 @@ export const requestsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${REQUESTS_API}?id=${id}`, {
+    const response = await fetchWithRetry(`${REQUESTS_API}?id=${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -356,7 +379,7 @@ export const requestsAPI = {
     const url = `${ADMIN_REQUESTS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
     const userId = getUserId();
     
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       headers: {
         'X-User-Id': userId || 'anonymous',
       },
@@ -372,7 +395,7 @@ export const requestsAPI = {
   async deleteAdminRequest(id: string): Promise<{ message: string }> {
     const userId = getUserId();
 
-    const response = await fetch(ADMIN_REQUESTS_API, {
+    const response = await fetchWithRetry(ADMIN_REQUESTS_API, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -448,7 +471,7 @@ export const ordersAPI = {
       if (status) queryParams.append('status', status);
       
       const url = `${ORDERS_API}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         headers: {
           'X-User-Id': userId,
         },
@@ -471,7 +494,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${ORDERS_API}?id=${id}`, {
+    const response = await fetchWithRetry(`${ORDERS_API}?id=${id}`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -490,7 +513,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(ORDERS_API, {
+    const response = await fetchWithRetry(ORDERS_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -522,7 +545,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${ORDERS_API}?id=${id}`, {
+    const response = await fetchWithRetry(`${ORDERS_API}?id=${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -545,7 +568,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${ORDERS_API}?offerId=${offerId}&messages=true`, {
+    const response = await fetchWithRetry(`${ORDERS_API}?offerId=${offerId}&messages=true`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -564,7 +587,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${ORDERS_API}?id=${orderId}&messages=true`, {
+    const response = await fetchWithRetry(`${ORDERS_API}?id=${orderId}&messages=true`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -584,7 +607,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${ORDERS_API}?message=true`, {
+    const response = await fetchWithRetry(`${ORDERS_API}?message=true`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -606,7 +629,7 @@ export const ordersAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(`${ORDERS_API}?id=${id}`, {
+    const response = await fetchWithRetry(`${ORDERS_API}?id=${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -644,7 +667,7 @@ export const auctionsAPI = {
     if (status) params.append('status', status);
     params.append('timezoneOffset', timezoneOffset.toString());
     
-    const response = await fetch(`${AUCTIONS_LIST_API}?${params.toString()}`);
+    const response = await fetchWithRetry(`${AUCTIONS_LIST_API}?${params.toString()}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch auctions');
@@ -691,7 +714,7 @@ export const auctionsAPI = {
       timezoneOffset = 9;
     }
 
-    const response = await fetch(`${AUCTIONS_MY_API}?timezoneOffset=${timezoneOffset}`, {
+    const response = await fetchWithRetry(`${AUCTIONS_MY_API}?timezoneOffset=${timezoneOffset}`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -735,7 +758,7 @@ export const auctionsAPI = {
       timezoneOffset = 9;
     }
     
-    const response = await fetch(`${AUCTIONS_LIST_API}?id=${id}&timezoneOffset=${timezoneOffset}`);
+    const response = await fetchWithRetry(`${AUCTIONS_LIST_API}?id=${id}&timezoneOffset=${timezoneOffset}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch auction');
@@ -770,7 +793,7 @@ export const auctionsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(AUCTIONS_MY_API, {
+    const response = await fetchWithRetry(AUCTIONS_MY_API, {
       method: 'DELETE',
       headers: {
         'X-User-Id': userId,
@@ -800,7 +823,7 @@ export const auctionsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetch(AUCTIONS_UPDATE_API, {
+    const response = await fetchWithRetry(AUCTIONS_UPDATE_API, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,

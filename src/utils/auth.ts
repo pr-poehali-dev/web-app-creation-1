@@ -1,5 +1,26 @@
 import func2url from '../../backend/func2url.json';
 
+async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3): Promise<Response> {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Auth fetch attempt ${attempt + 1}/${maxRetries} failed:`, error);
+      
+      if (attempt < maxRetries - 1) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Failed to fetch after retries');
+}
+
 interface User {
   id?: number;
   email: string;
@@ -73,7 +94,7 @@ export const registerUser = async (userData: {
   legalAddress?: string;
 }): Promise<AuthResponse> => {
   try {
-    const response = await fetch(AUTH_API, {
+    const response = await fetchWithRetry(AUTH_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -125,7 +146,7 @@ export const authenticateUser = async (
   password: string
 ): Promise<AuthResponse> => {
   try {
-    const response = await fetch(AUTH_API, {
+    const response = await fetchWithRetry(AUTH_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
