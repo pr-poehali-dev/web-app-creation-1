@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useRef } from 'react';
 import BackButton from '@/components/BackButton';
 import Header from '@/components/Header';
 import OfferCard from '@/components/OfferCard';
@@ -76,6 +77,40 @@ export default function OfferDetailContent({
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
   const totalPrice = offer.pricePerUnit * remainingQuantity;
   const similarOffers: Offer[] = [];
+  
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
+  const [touchOffset, setTouchOffset] = useState({ x: 0, y: 0 });
+  const galleryRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const deltaX = e.touches[0].clientX - touchStart.x;
+    const deltaY = e.touches[0].clientY - touchStart.y;
+    setTouchOffset({ x: deltaX, y: deltaY });
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart) return;
+    
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const threshold = 0.3;
+    
+    const shouldClose = 
+      Math.abs(touchOffset.x) > screenWidth * threshold ||
+      Math.abs(touchOffset.y) > screenHeight * threshold;
+    
+    if (shouldClose) {
+      onGalleryChange(false);
+    }
+    
+    setTouchStart(null);
+    setTouchOffset({ x: 0, y: 0 });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -229,7 +264,17 @@ export default function OfferDetailContent({
 
       <Dialog open={isGalleryOpen} onOpenChange={onGalleryChange}>
         <DialogContent className="max-w-7xl w-full h-[90vh] p-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-black">
+          <div 
+            ref={galleryRef}
+            className="relative w-full h-full flex items-center justify-center bg-black"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            style={{
+              transform: `translate(${touchOffset.x}px, ${touchOffset.y}px)`,
+              transition: touchStart ? 'none' : 'transform 0.3s ease-out',
+            }}
+          >
             <button
               onClick={() => {
                 const totalItems = offer.images.length;
