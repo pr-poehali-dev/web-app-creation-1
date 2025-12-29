@@ -64,15 +64,27 @@ export default function OrderChatModal({
     }
   };
 
-  const handleCounterOffer = () => {
+  const handleCounterOffer = async () => {
     const price = parseFloat(counterPrice);
+    console.log('[OrderChatModal.handleCounterOffer] Validating price:', { counterPrice, price, isValid: !isNaN(price) && price > 0 });
+    
     if (isNaN(price) || price <= 0) {
+      console.error('[OrderChatModal.handleCounterOffer] Invalid price');
       return;
     }
+    
     if (onCounterOffer) {
-      onCounterOffer(price, counterMessage.trim());
-      setShowCounterForm(false);
-      setCounterMessage('');
+      console.log('[OrderChatModal.handleCounterOffer] Calling onCounterOffer with:', { price, message: counterMessage.trim() });
+      try {
+        await onCounterOffer(price, counterMessage.trim());
+        console.log('[OrderChatModal.handleCounterOffer] Success, closing form');
+        setShowCounterForm(false);
+        setCounterMessage('');
+      } catch (error) {
+        console.error('[OrderChatModal.handleCounterOffer] Error:', error);
+      }
+    } else {
+      console.error('[OrderChatModal.handleCounterOffer] onCounterOffer is not defined');
     }
   };
 
