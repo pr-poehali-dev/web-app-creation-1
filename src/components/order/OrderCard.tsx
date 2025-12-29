@@ -19,7 +19,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50">Ожидает</Badge>;
       case 'negotiating':
-        return <Badge variant="outline" className="bg-orange-50">Торг</Badge>;
+        return null; // Будет показана кнопка вместо бейджа
       case 'accepted':
         return <Badge variant="outline" className="bg-green-50">Принят</Badge>;
       case 'rejected':
@@ -34,9 +34,21 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4 space-y-3">
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start gap-2">
           <h3 className="font-semibold text-lg line-clamp-2">{order.offerTitle}</h3>
-          {getStatusBadge(order.status)}
+          {order.status === 'negotiating' ? (
+            <Button
+              onClick={() => onOpenChat(order)}
+              size="sm"
+              variant="outline"
+              className="bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700 font-semibold shrink-0"
+            >
+              <Icon name="MessageSquare" className="mr-1 h-3.5 w-3.5" />
+              Торги
+            </Button>
+          ) : (
+            getStatusBadge(order.status)
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm">

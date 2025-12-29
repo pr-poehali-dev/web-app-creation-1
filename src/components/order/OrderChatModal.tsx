@@ -370,8 +370,8 @@ export default function OrderChatModal({
                   {order.offerImageUrl ? (
                     <img src={order.offerImageUrl} alt={order.offerTitle} className="w-20 h-20 object-cover rounded" />
                   ) : (
-                    <div className="w-20 h-20 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                      <img src="/logo.webp" alt="ERTTN" className="w-12 h-12 object-contain" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded flex items-center justify-center flex-shrink-0">
+                      <Icon name="Package" className="w-10 h-10 text-primary/40" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
