@@ -37,7 +37,7 @@ export function useOrdersData(
 
     const ordersPollInterval = setInterval(() => {
       loadOrders(false);
-    }, 3000);
+    }, 15000);
 
     return () => clearInterval(ordersPollInterval);
   }, [isAuthenticated, navigate]);
@@ -63,23 +63,23 @@ export function useOrdersData(
     const aggressivePoll = async () => {
       let pollCount = 0;
       while (isActive && selectedOrder) {
-        await loadMessages(selectedOrder.id, false);
-        
-        // Каждые 3 секунды обновляем данные заказа для синхронизации встречных предложений
-        if (pollCount % 3 === 0) {
-          await loadOrders(false);
-          // Используем callback для получения актуальных данных из state
-          setOrders(currentOrders => {
-            const updatedOrder = currentOrders.find(o => o.id === selectedOrder.id);
-            if (updatedOrder) {
-              setSelectedOrder(updatedOrder);
-            }
-            return currentOrders;
-          });
+        if (!document.hidden) {
+          await loadMessages(selectedOrder.id, false);
+          
+          if (pollCount % 3 === 0) {
+            await loadOrders(false);
+            setOrders(currentOrders => {
+              const updatedOrder = currentOrders.find(o => o.id === selectedOrder.id);
+              if (updatedOrder) {
+                setSelectedOrder(updatedOrder);
+              }
+              return currentOrders;
+            });
+          }
         }
         
         pollCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     };
 

@@ -96,6 +96,8 @@ export function useAuctionData(id: string | undefined) {
     if (!auction || auction.status !== 'active') return;
 
     const refreshBids = async () => {
+      if (document.hidden) return;
+      
       try {
         setIsRefreshing(true);
         const userId = localStorage.getItem('userId');
@@ -178,7 +180,7 @@ export function useAuctionData(id: string | undefined) {
       }
     };
 
-    const interval = setInterval(refreshBids, 3000);
+    const interval = setInterval(refreshBids, 5000);
 
     return () => clearInterval(interval);
   }, [auction?.status, id, bids.length, toast]);

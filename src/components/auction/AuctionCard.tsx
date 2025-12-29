@@ -19,6 +19,7 @@ import type { Auction } from '@/types/auction';
 import { CATEGORIES } from '@/data/categories';
 import { getTimeRemaining, getTimeUntilStart, getStatusBadge } from './AuctionHelpers';
 import { getSession } from '@/utils/auth';
+import { sharedTimer } from '@/utils/sharedTimer';
 
 interface AuctionCardProps {
   auction: Auction;
@@ -50,9 +51,9 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
     };
 
     updateTime();
-    const interval = setInterval(updateTime, 1000);
+    const unsubscribe = sharedTimer.subscribe(updateTime);
 
-    return () => clearInterval(interval);
+    return unsubscribe;
   }, [auction.status, auction.endTime, auction.startTime]);
 
   const handleEdit = (e: React.MouseEvent) => {

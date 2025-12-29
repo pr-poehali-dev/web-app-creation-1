@@ -39,7 +39,7 @@ export default function AuctionCompletionForm({
   useEffect(() => {
     const fetchContacts = async () => {
       const userId = localStorage.getItem('userId');
-      if (!userId) return;
+      if (!userId || contactsReceived || document.hidden) return;
 
       try {
         const response = await fetch('https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f', {
@@ -66,10 +66,10 @@ export default function AuctionCompletionForm({
     };
 
     fetchContacts();
-    const interval = setInterval(fetchContacts, 3000);
+    const interval = setInterval(fetchContacts, 5000);
 
     return () => clearInterval(interval);
-  }, [auctionId]);
+  }, [auctionId, contactsReceived]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

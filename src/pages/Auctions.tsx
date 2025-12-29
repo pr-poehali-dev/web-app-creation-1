@@ -143,8 +143,10 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     loadAuctions(false);
     
     const refreshInterval = setInterval(() => {
-      loadAuctions(true);
-    }, 3000);
+      if (!document.hidden) {
+        loadAuctions(true);
+      }
+    }, 30000);
 
     return () => clearInterval(refreshInterval);
   }, []);
