@@ -205,11 +205,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex items-center space-x-2 opacity-30">
-                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary">
-                  <Icon name="Building2" className="h-10 w-10 text-white" />
+              <div className="flex items-center gap-2 opacity-30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
+                  <Icon name="Building2" className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-4xl font-bold text-primary">ЕРТТП</span>
+                <span className="text-2xl font-bold text-primary">ЕРТТП</span>
               </div>
             </div>
           )}
