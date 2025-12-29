@@ -34,18 +34,20 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4 space-y-3">
-        <div className="flex justify-between items-start gap-2">
-          <h3 className="font-semibold text-lg line-clamp-2">{order.offerTitle}</h3>
+        <div className="flex justify-between items-start gap-2 mb-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-semibold text-lg line-clamp-1">{order.offerTitle}</h3>
+            </div>
+            {order.orderNumber && (
+              <p className="text-xs text-muted-foreground">Заказ #{order.orderNumber}</p>
+            )}
+          </div>
           {order.status === 'negotiating' ? (
-            <Button
-              onClick={() => onOpenChat(order)}
-              size="sm"
-              variant="outline"
-              className="bg-orange-50 hover:bg-orange-100 border-orange-200 text-orange-700 font-semibold shrink-0"
-            >
-              <Icon name="MessageSquare" className="mr-1 h-3.5 w-3.5" />
-              Торги
-            </Button>
+            <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700 font-semibold shrink-0">
+              <Icon name="MessageSquare" className="mr-1 h-3 w-3" />
+              Торг
+            </Badge>
           ) : (
             getStatusBadge(order.status)
           )}
@@ -60,6 +62,19 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
             <p className="text-muted-foreground">Сумма</p>
             <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
           </div>
+          {order.status === 'negotiating' && order.counterPricePerUnit && (
+            <div className="col-span-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded p-2">
+              <p className="text-xs text-muted-foreground mb-1">
+                {order.counterOfferedBy === 'buyer' ? 'Предложение покупателя' : 'Встречная цена продавца'}
+              </p>
+              <p className="font-bold text-orange-700 dark:text-orange-400">
+                {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Сумма: {order.counterTotalAmount?.toLocaleString('ru-RU')} ₽
+              </p>
+            </div>
+          )}
           <div>
             <p className="text-muted-foreground">Доставка</p>
             <p className="font-medium">

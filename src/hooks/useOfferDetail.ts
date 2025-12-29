@@ -248,6 +248,7 @@ export function useOfferDetail(id: string | undefined) {
 
       const newOrder: Order = {
         id: fullOrderData.id,
+        orderNumber: fullOrderData.order_number,
         offerId: fullOrderData.offer_id,
         offerTitle: fullOrderData.title,
         offerImage: offer.images[0]?.url,
@@ -263,13 +264,13 @@ export function useOfferDetail(id: string | undefined) {
         unit: fullOrderData.unit,
         pricePerUnit: fullOrderData.price_per_unit,
         totalAmount: fullOrderData.total_amount,
-        counterPricePerUnit: orderFormData.counterPrice || undefined,
-        counterTotalAmount: orderFormData.counterPrice ? (orderFormData.counterPrice * fullOrderData.quantity) : undefined,
-        counterOfferedBy: orderFormData.counterPrice ? 'buyer' : undefined,
+        counterPricePerUnit: fullOrderData.counter_price_per_unit || orderFormData.counterPrice || undefined,
+        counterTotalAmount: fullOrderData.counter_total_amount || (orderFormData.counterPrice ? (orderFormData.counterPrice * fullOrderData.quantity) : undefined),
+        counterOfferedBy: fullOrderData.counter_offered_by || (orderFormData.counterPrice ? 'buyer' : undefined),
         deliveryType: fullOrderData.delivery_type,
         deliveryAddress: fullOrderData.delivery_address,
         comment: fullOrderData.buyer_comment,
-        status: orderFormData.counterPrice ? 'negotiating' : fullOrderData.status,
+        status: fullOrderData.status,
         createdAt: new Date(fullOrderData.createdAt || fullOrderData.created_at),
       };
       

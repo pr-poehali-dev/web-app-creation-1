@@ -1,5 +1,6 @@
 export interface Order {
   id: string;
+  orderNumber?: string;
   offerId: string;
   offerTitle: string;
   offerImage?: string;

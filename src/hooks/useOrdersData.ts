@@ -131,6 +131,7 @@ export function useOrdersData(
       
       const mappedOrders = response.orders.map((order: any) => ({
         id: order.id,
+        orderNumber: order.order_number || order.orderNumber,
         offerId: order.offer_id,
         offerTitle: order.offer_title || order.title,
         offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,

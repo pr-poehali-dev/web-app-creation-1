@@ -45,7 +45,7 @@ export default function OrderChatModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl h-[95vh] sm:h-[90vh] flex flex-col p-0">
         <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b">
-          <DialogTitle>Заказ #{order.id.slice(0, 8)}</DialogTitle>
+          <DialogTitle>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</DialogTitle>
         </DialogHeader>
 
         {/* Верхняя часть с функциями торга - прокручивается */}
