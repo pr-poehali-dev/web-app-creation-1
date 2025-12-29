@@ -64,6 +64,18 @@ export default function OrderChatModal({
     }
   };
 
+  const handleCounterOffer = () => {
+    const price = parseFloat(counterPrice);
+    if (isNaN(price) || price <= 0) {
+      return;
+    }
+    if (onCounterOffer) {
+      onCounterOffer(price, counterMessage.trim());
+      setShowCounterForm(false);
+      setCounterMessage('');
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -100,6 +112,19 @@ export default function OrderChatModal({
               </div>
             )}
 
+            {/* Кнопка "Предложить свою цену" для модалки заказа */}
+            {isBuyer && order.status === 'accepted' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && (
+              <Button 
+                onClick={() => setShowCounterForm(true)} 
+                variant="default" 
+                size="sm" 
+                className="w-full border-2 font-semibold shadow-sm"
+              >
+                <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                Предложить свою цену
+              </Button>
+            )}
+
             {/* Встречное предложение - показываем тому кто должен ответить */}
             {order.counterPricePerUnit && order.status === 'negotiating' && !order.buyerAcceptedCounter && order.status !== 'accepted' && (
               <Card className={order.counterOfferedBy === 'buyer' ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' : 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800'}>
@@ -107,16 +132,7 @@ export default function OrderChatModal({
                   <div className="flex items-start">
                     <div className="flex-1 min-w-0">
                       <div className="space-y-2.5">
-                        {/* 1. Начальная цена продавца - сверху компактно */}
-                        <div className="flex items-center justify-between text-xs text-muted-foreground/60 pb-2 border-b border-dashed">
-                          <span className="flex items-center gap-1.5">
-                            <Icon name="Tag" className="h-3 w-3" />
-                            <span>Начальная цена продавца</span>
-                          </span>
-                          <span className="line-through">
-                            {order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
-                          </span>
-                        </div>
+
                         
                         {/* 2. Встречные предложения - показываем последнее */}
                         <div className="space-y-2">
@@ -213,13 +229,10 @@ export default function OrderChatModal({
             )}
 
             {/* Форма предложения цены от покупателя */}
-            {showCounterForm && isBuyer && (order.status === 'new' || order.status === 'negotiating') && (
+            {showCounterForm && isBuyer && (order.status === 'new' || order.status === 'negotiating' || order.status === 'accepted') && (
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="pt-4 space-y-3">
                   <h3 className="font-semibold text-sm">Предложить свою цену</h3>
-                  <div className="text-xs text-muted-foreground">
-                    Цена продавца: {order.pricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
-                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-muted-foreground block mb-1">Ваша цена за {order.unit}</label>
@@ -239,12 +252,7 @@ export default function OrderChatModal({
 
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => {
-                        if (onCounterOffer) {
-                          onCounterOffer(parseFloat(counterPrice), '');
-                          setShowCounterForm(false);
-                        }
-                      }}
+                      onClick={handleCounterOffer}
                       size="sm"
                       className="bg-blue-600 hover:bg-blue-700"
                     >
@@ -358,11 +366,20 @@ export default function OrderChatModal({
             {/* Информация о заказе - в конце */}
             <Card className="bg-muted/50">
               <CardContent className="pt-4 space-y-2">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Товар</p>
+                <div className="flex items-start gap-3 mb-3">
+                  {order.offerImageUrl ? (
+                    <img src={order.offerImageUrl} alt={order.offerTitle} className="w-20 h-20 object-cover rounded" />
+                  ) : (
+                    <div className="w-20 h-20 bg-muted rounded flex items-center justify-center flex-shrink-0">
+                      <img src="/logo.webp" alt="ERTTN" className="w-12 h-12 object-contain" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-muted-foreground text-xs">Товар</p>
                     <p className="font-medium">{order.offerTitle}</p>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Количество</p>
                     <p className="font-medium">{order.quantity} {order.unit}</p>
@@ -415,13 +432,13 @@ export default function OrderChatModal({
         <div className="flex-shrink-0 flex flex-col border-t px-4 sm:px-6 py-3 bg-background">
           <div className="h-40 sm:h-48 overflow-y-auto mb-3 pr-2" ref={scrollRef}>
             <div className="space-y-2">
-              {messages.length === 0 ? (
+              {messages.filter(msg => msg.message && msg.message.trim()).length === 0 ? (
                 <div className="text-center text-muted-foreground py-4">
                   <Icon name="MessageSquare" className="h-10 w-10 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Начните общение</p>
                 </div>
               ) : (
-                messages.map((msg) => {
+                messages.filter(msg => msg.message && msg.message.trim()).map((msg) => {
                   const isOwn = msg.senderId === currentUser?.id?.toString();
                   return (
                     <div

@@ -123,14 +123,22 @@ export default function OfferOrderModal({
               id="order-quantity"
               name="order-quantity"
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               min={minOrderQuantity || 1}
               max={remainingQuantity}
               step="1"
               value={quantity}
               onChange={(e) => {
-                const val = Number(e.target.value);
-                if (!isNaN(val) && val >= (minOrderQuantity || 1)) {
-                  handleQuantityChange(val);
+                const val = e.target.value;
+                // Разрешаем пустое значение для удобства редактирования
+                if (val === '') {
+                  setQuantity(minOrderQuantity || 1);
+                  return;
+                }
+                const numVal = Number(val);
+                if (!isNaN(numVal) && numVal >= 0) {
+                  handleQuantityChange(numVal);
                 }
               }}
               onKeyDown={(e) => {
@@ -142,9 +150,12 @@ export default function OfferOrderModal({
               onBlur={(e) => {
                 const val = Number(e.target.value);
                 const minVal = minOrderQuantity || 1;
-                if (val < minVal) {
+                if (isNaN(val) || val < minVal) {
                   setQuantity(minVal);
                   handleQuantityChange(minVal);
+                } else if (val > remainingQuantity) {
+                  setQuantity(remainingQuantity);
+                  handleQuantityChange(remainingQuantity);
                 }
               }}
               required

@@ -273,6 +273,7 @@ export function useOrdersData(
       // Мгновенно обновляем данные локально для быстрого отклика
       setSelectedOrder({
         ...selectedOrder,
+        status: 'negotiating',
         counterPricePerUnit: price,
         counterTotalAmount: price * selectedOrder.quantity,
         counterOfferedBy: isSeller ? 'seller' : 'buyer',
