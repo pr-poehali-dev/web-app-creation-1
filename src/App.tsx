@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
+import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { OffersProvider } from "./contexts/OffersContext";
@@ -162,6 +163,7 @@ const App = () => {
             <OffersProvider>
               <Toaster />
               <Sonner />
+              <TechnicalIssuesBanner />
               {isAuthenticated && <NotificationPermissionBanner />}
               <BrowserRouter>
                 <Suspense fallback={<LoadingScreen />}>

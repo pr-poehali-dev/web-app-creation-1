@@ -18,10 +18,14 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 3
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const response = await fetch(url, options);
+      sessionStorage.removeItem('connection_errors');
       return response;
     } catch (error) {
       lastError = error as Error;
       console.error(`Fetch attempt ${attempt + 1}/${maxRetries} failed for ${url}:`, error);
+      
+      const errorCount = parseInt(sessionStorage.getItem('connection_errors') || '0');
+      sessionStorage.setItem('connection_errors', String(errorCount + 1));
       
       if (attempt < maxRetries - 1) {
         const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
