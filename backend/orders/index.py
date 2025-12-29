@@ -388,6 +388,26 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     seller_phone_escaped = seller_phone.replace("'", "''")
     seller_email_escaped = seller_email.replace("'", "''")
     
+    # Проверяем наличие встречной цены от покупателя
+    counter_price = body.get('counterPrice')
+    initial_status = 'new'
+    counter_price_sql = 'NULL'
+    counter_total_sql = 'NULL'
+    counter_message_sql = 'NULL'
+    counter_offered_at_sql = 'NULL'
+    counter_offered_by_sql = 'NULL'
+    
+    if counter_price is not None and float(counter_price) > 0:
+        initial_status = 'negotiating'
+        counter_price_float = float(counter_price)
+        counter_total = counter_price_float * body['quantity']
+        counter_price_sql = str(counter_price_float)
+        counter_total_sql = str(counter_total)
+        counter_message = body.get('counterMessage', '').replace("'", "''")
+        counter_message_sql = f"'{counter_message}'" if counter_message else 'NULL'
+        counter_offered_at_sql = 'CURRENT_TIMESTAMP'
+        counter_offered_by_sql = "'buyer'"
+    
     sql = f"""
         INSERT INTO {schema}.orders (
             order_number, buyer_id, seller_id, offer_id,
@@ -396,7 +416,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             delivery_type, delivery_address, district,
             buyer_name, buyer_phone, buyer_email, buyer_company, buyer_inn, buyer_comment,
             seller_name, seller_phone, seller_email,
-            status
+            status,
+            counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
             '{title_escaped}', {body['quantity']}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
@@ -404,7 +425,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             '{delivery_type_escaped}', '{delivery_address_escaped}', '{district_escaped}',
             '{buyer_name_escaped}', '{buyer_phone_escaped}', '{buyer_email_escaped}', '{buyer_company_escaped}', '{buyer_inn_escaped}', '{buyer_comment_escaped}',
             '{seller_name_escaped}', '{seller_phone_escaped}', '{seller_email_escaped}',
-            'new'
+            '{initial_status}',
+            {counter_price_sql}, {counter_total_sql}, {counter_message_sql}, {counter_offered_at_sql}, {counter_offered_by_sql}
         )
         RETURNING id, order_number, order_date
     """

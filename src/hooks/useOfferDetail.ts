@@ -214,6 +214,8 @@ export function useOfferDetail(id: string | undefined) {
         buyerComment: orderFormData.comment || '',
         hasVAT: offer.hasVAT || false,
         vatRate: offer.vatRate || 0,
+        counterPrice: orderFormData.counterPrice || undefined,
+        counterMessage: orderFormData.counterPrice ? `Встречное предложение: ${orderFormData.counterPrice} ₽/${offer.unit}` : undefined,
       };
 
       const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {
@@ -243,21 +245,6 @@ export function useOfferDetail(id: string | undefined) {
       }
 
       const fullOrderData = await orderResponse.json();
-
-      // Если есть встречная цена от покупателя - отправляем её
-      if (orderFormData.counterPrice && orderFormData.counterPrice > 0) {
-        await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${result.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-User-Id': currentUser.id?.toString() || '',
-          },
-          body: JSON.stringify({
-            counterPrice: orderFormData.counterPrice,
-            counterMessage: `Встречное предложение: ${orderFormData.counterPrice} ₽/${offer.unit}`,
-          }),
-        });
-      }
 
       const newOrder: Order = {
         id: fullOrderData.id,
