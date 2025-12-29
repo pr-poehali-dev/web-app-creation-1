@@ -79,42 +79,31 @@ export default function OfferMediaGallery({
 
   return (
     <>
-      <Card className="overflow-hidden mb-6">
-        <div className="relative aspect-video bg-muted">
-          {isShowingVideo ? (
-            <div className="relative w-full h-full">
-              <video
-                ref={videoRef}
-                src={video!.url}
-                poster={video!.thumbnail}
-                className="w-full h-full object-cover"
-                controls
-                onPlay={onVideoPlay}
-                onPause={onVideoPause}
-              />
-            </div>
-          ) : images.length > 0 ? (
-            <>
-              <img
-                src={images[showVideo && video ? currentImageIndex - 1 : currentImageIndex].url}
-                alt={images[showVideo && video ? currentImageIndex - 1 : currentImageIndex].alt}
-                className="w-full h-full object-cover cursor-pointer"
-                onClick={() => onOpenGallery(showVideo && video ? currentImageIndex - 1 : currentImageIndex)}
-              />
-            </>
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary/10 to-primary/5">
-              <img 
-                src="/favicon.svg" 
-                alt="Логотип площадки" 
-                className="w-32 h-32 opacity-30"
-              />
-              <div className="flex items-center gap-2 px-4 py-2 bg-background/80 rounded-lg shadow-sm">
-                <Icon name="ImageOff" className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground font-medium">Фото отсутствует</p>
+      {images.length > 0 || (showVideo && video) ? (
+        <Card className="overflow-hidden mb-6">
+          <div className="relative aspect-video bg-muted">
+            {isShowingVideo ? (
+              <div className="relative w-full h-full">
+                <video
+                  ref={videoRef}
+                  src={video!.url}
+                  poster={video!.thumbnail}
+                  className="w-full h-full object-cover"
+                  controls
+                  onPlay={onVideoPlay}
+                  onPause={onVideoPause}
+                />
               </div>
-            </div>
-          )}
+            ) : (
+              <>
+                <img
+                  src={images[showVideo && video ? currentImageIndex - 1 : currentImageIndex].url}
+                  alt={images[showVideo && video ? currentImageIndex - 1 : currentImageIndex].alt}
+                  className="w-full h-full object-cover cursor-pointer"
+                  onClick={() => onOpenGallery(showVideo && video ? currentImageIndex - 1 : currentImageIndex)}
+                />
+              </>
+            )}
 
           {totalMediaItems > 1 && (
             <>
@@ -153,7 +142,13 @@ export default function OfferMediaGallery({
             </Badge>
           )}
         </div>
-      </Card>
+        </Card>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-3 mb-6 bg-muted/50 rounded-lg border border-border">
+          <Icon name="ImageOff" className="h-5 w-5 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground font-medium">Фото отсутствует</p>
+        </div>
+      )}
 
       {(images.length > 0 || (showVideo && video)) && (
         <div className="grid grid-cols-5 gap-2 mb-6">
