@@ -1,0 +1,80 @@
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import Icon from '@/components/ui/icon';
+import type { Order } from '@/types/order';
+
+interface OrderChatInfoCardProps {
+  order: Order;
+  isBuyer: boolean;
+  contactPerson: {
+    name: string;
+    phone: string;
+    email: string;
+  };
+}
+
+export default function OrderChatInfoCard({ order, isBuyer, contactPerson }: OrderChatInfoCardProps) {
+  return (
+    <Card className="bg-muted/50">
+      <CardContent className="pt-4 space-y-2">
+        <div className="flex items-start gap-3 mb-3">
+          {order.offerImageUrl ? (
+            <img src={order.offerImageUrl} alt={order.offerTitle} className="w-20 h-20 object-cover rounded" />
+          ) : (
+            <div className="w-20 h-20 bg-gradient-to-br from-primary/10 to-primary/5 rounded flex items-center justify-center flex-shrink-0">
+              <Icon name="Package" className="w-10 h-10 text-primary/40" />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <p className="text-muted-foreground text-xs">Товар</p>
+            <p className="font-medium">{order.offerTitle}</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p className="text-muted-foreground">Количество</p>
+            <p className="font-medium">{order.quantity} {order.unit}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Сумма</p>
+            <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Доставка</p>
+            <p className="font-medium">
+              {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
+            </p>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Icon name="User" className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">
+              {isBuyer ? 'Продавец' : 'Покупатель'}
+            </h3>
+          </div>
+          <p className="text-sm font-medium">{contactPerson.name}</p>
+          <div className="space-y-1 mt-2">
+            <a
+              href={`tel:${contactPerson.phone}`}
+              className="text-sm hover:text-primary transition-colors flex items-center gap-1.5"
+            >
+              <Icon name="Phone" className="h-3.5 w-3.5" />
+              {contactPerson.phone}
+            </a>
+            <a
+              href={`mailto:${contactPerson.email}`}
+              className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
+            >
+              <Icon name="Mail" className="h-3.5 w-3.5" />
+              {contactPerson.email}
+            </a>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
