@@ -280,13 +280,6 @@ export default function OfferDetailContent({
           <div 
             ref={galleryRef}
             className="relative w-full h-full flex items-center justify-center bg-black"
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            style={{
-              transform: `translate(${touchOffset.x}px, ${touchOffset.y}px)`,
-              transition: touchStart ? 'none' : 'transform 0.3s ease-out',
-            }}
           >
             <button
               onClick={handleGalleryPrev}
@@ -295,23 +288,34 @@ export default function OfferDetailContent({
               <Icon name="ChevronLeft" className="h-6 w-6" />
             </button>
 
-            {galleryIndex < offer.images.length ? (
-              <img
-                src={offer.images[galleryIndex]?.url}
-                alt={offer.images[galleryIndex]?.alt}
-                className="max-w-full max-h-full object-contain"
-              />
-            ) : offer.video ? (
-              <video
-                src={offer.video.url}
-                className="max-w-full max-h-full object-contain"
-                controls
-                autoPlay={isVideoPlaying}
-                muted={isMuted}
-                onPlay={() => onVideoPlayingChange(true)}
-                onPause={() => onVideoPlayingChange(false)}
-              />
-            ) : null}
+            <div
+              className="w-full h-full flex items-center justify-center"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              style={{
+                transform: `translate(${touchOffset.x}px, ${touchOffset.y}px)`,
+                transition: touchStart ? 'none' : 'transform 0.3s ease-out',
+              }}
+            >
+              {galleryIndex < offer.images.length ? (
+                <img
+                  src={offer.images[galleryIndex]?.url}
+                  alt={offer.images[galleryIndex]?.alt}
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : offer.video ? (
+                <video
+                  src={offer.video.url}
+                  className="max-w-full max-h-full object-contain"
+                  controls
+                  autoPlay={isVideoPlaying}
+                  muted={isMuted}
+                  onPlay={() => onVideoPlayingChange(true)}
+                  onPause={() => onVideoPlayingChange(false)}
+                />
+              ) : null}
+            </div>
 
             <button
               onClick={handleGalleryNext}
