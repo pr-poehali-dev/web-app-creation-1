@@ -118,11 +118,179 @@ export default function OfferInfoCard({
         </div>
 
         {/* Дополнительная информация в аккордеоне */}
-        <Accordion type="single" collapsible defaultValue="details" className="w-full">
+        <Accordion type="single" collapsible defaultValue="" className="w-full md:!hidden">
           <AccordionItem value="details" className="border-0">
             <AccordionTrigger className="py-2 text-sm font-medium">
               Подробная информация
             </AccordionTrigger>
+            <AccordionContent className="space-y-3 pt-2">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Осталось</p>
+                  <p className="font-medium">{remainingQuantity} {unit}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">НДС</p>
+                  <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <p className="text-sm font-medium mb-1">Описание</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
+              </div>
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {fullAddress && (
+                  <div>
+                    <p className="text-muted-foreground mb-0.5">Адрес</p>
+                    <p className="font-medium">{fullAddress}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-muted-foreground mb-0.5">Район</p>
+                  <p className="font-medium">{districtName}</p>
+                </div>
+              </div>
+
+              {availableDistrictNames.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Доступно в районах</p>
+                  <div className="flex flex-wrap gap-1">
+                    {availableDistrictNames.map((name, index) => (
+                      <Badge key={index} variant="outline" className="text-xs px-1.5 py-0">{name}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
+                <div className="flex gap-2">
+                  {availableDeliveryTypes.includes('pickup') && (
+                    <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                      <Icon name="Store" className="h-3 w-3" />
+                      Самовывоз
+                    </Badge>
+                  )}
+                  {availableDeliveryTypes.includes('delivery') && (
+                    <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                      <Icon name="Truck" className="h-3 w-3" />
+                      Доставка
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div>
+                  <p>Дата создания</p>
+                  <p className="font-medium text-foreground">
+                    {formatDateWithTimezone(createdAt)}
+                  </p>
+                </div>
+                {expiryDate && (
+                  <div>
+                    <p>Срок годности</p>
+                    <p className="font-medium text-foreground">
+                      {formatDateWithTimezone(expiryDate)}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Для десктопа - всегда открыто */}
+        <div className="hidden md:block space-y-3">
+          <p className="text-sm font-medium">Подробная информация</p>
+          
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Осталось</p>
+                <p className="font-medium">{remainingQuantity} {unit}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">НДС</p>
+                <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div>
+              <p className="text-sm font-medium mb-1">Описание</p>
+              <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
+            </div>
+
+            <Separator />
+
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {fullAddress && (
+                <div>
+                  <p className="text-muted-foreground mb-0.5">Адрес</p>
+                  <p className="font-medium">{fullAddress}</p>
+                </div>
+              )}
+              <div>
+                <p className="text-muted-foreground mb-0.5">Район</p>
+                <p className="font-medium">{districtName}</p>
+              </div>
+            </div>
+
+            {availableDistrictNames.length > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Доступно в районах</p>
+                <div className="flex flex-wrap gap-1">
+                  {availableDistrictNames.map((name, index) => (
+                    <Badge key={index} variant="outline" className="text-xs px-1.5 py-0">{name}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
+              <div className="flex gap-2">
+                {availableDeliveryTypes.includes('pickup') && (
+                  <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                    <Icon name="Store" className="h-3 w-3" />
+                    Самовывоз
+                  </Badge>
+                )}
+                {availableDeliveryTypes.includes('delivery') && (
+                  <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                    <Icon name="Truck" className="h-3 w-3" />
+                    Доставка
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+              <div>
+                <p>Дата создания</p>
+                <p className="font-medium text-foreground">
+                  {formatDateWithTimezone(createdAt)}
+                </p>
+              </div>
+              {expiryDate && (
+                <div>
+                  <p>Срок годности</p>
+                  <p className="font-medium text-foreground">
+                    {formatDateWithTimezone(expiryDate)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
             <AccordionContent className="space-y-3 pt-2">
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
