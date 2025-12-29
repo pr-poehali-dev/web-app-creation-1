@@ -98,18 +98,31 @@ export default function OfferDetailContent({
     
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-    const threshold = 0.3;
+    const threshold = 0.25;
     
     const shouldClose = 
       Math.abs(touchOffset.x) > screenWidth * threshold ||
       Math.abs(touchOffset.y) > screenHeight * threshold;
     
     if (shouldClose) {
+      onVideoPlayingChange(false);
       onGalleryChange(false);
     }
     
     setTouchStart(null);
     setTouchOffset({ x: 0, y: 0 });
+  };
+
+  const handleGalleryPrev = () => {
+    const totalItems = offer.images.length + (offer.video ? 1 : 0);
+    const newIndex = galleryIndex === 0 ? totalItems - 1 : galleryIndex - 1;
+    onImageIndexChange(newIndex);
+  };
+
+  const handleGalleryNext = () => {
+    const totalItems = offer.images.length + (offer.video ? 1 : 0);
+    const newIndex = galleryIndex === totalItems - 1 ? 0 : galleryIndex + 1;
+    onImageIndexChange(newIndex);
   };
 
   return (
@@ -276,28 +289,32 @@ export default function OfferDetailContent({
             }}
           >
             <button
-              onClick={() => {
-                const totalItems = offer.images.length;
-                const newIndex = galleryIndex === 0 ? totalItems - 1 : galleryIndex - 1;
-                onImageIndexChange(newIndex);
-              }}
+              onClick={handleGalleryPrev}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-colors"
             >
               <Icon name="ChevronLeft" className="h-6 w-6" />
             </button>
 
-            <img
-              src={offer.images[galleryIndex]?.url}
-              alt={offer.images[galleryIndex]?.alt}
-              className="max-w-full max-h-full object-contain"
-            />
+            {galleryIndex < offer.images.length ? (
+              <img
+                src={offer.images[galleryIndex]?.url}
+                alt={offer.images[galleryIndex]?.alt}
+                className="max-w-full max-h-full object-contain"
+              />
+            ) : offer.video ? (
+              <video
+                src={offer.video.url}
+                className="max-w-full max-h-full object-contain"
+                controls
+                autoPlay={isVideoPlaying}
+                muted={isMuted}
+                onPlay={() => onVideoPlayingChange(true)}
+                onPause={() => onVideoPlayingChange(false)}
+              />
+            ) : null}
 
             <button
-              onClick={() => {
-                const totalItems = offer.images.length;
-                const newIndex = galleryIndex === totalItems - 1 ? 0 : galleryIndex + 1;
-                onImageIndexChange(newIndex);
-              }}
+              onClick={handleGalleryNext}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-full p-3 transition-colors"
             >
               <Icon name="ChevronRight" className="h-6 w-6" />
@@ -311,7 +328,7 @@ export default function OfferDetailContent({
             </button>
 
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-              {offer.images.map((_, index) => (
+              {[...offer.images, ...(offer.video ? [{ isVideo: true }] : [])].map((_, index) => (
                 <button
                   key={index}
                   onClick={() => onImageIndexChange(index)}
