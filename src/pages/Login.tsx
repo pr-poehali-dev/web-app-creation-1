@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import LiveDebugLogs from '@/components/LiveDebugLogs';
 import { authenticateUser, saveRememberMe, getRememberMe, clearRememberMe } from '@/utils/auth';
 
 interface LoginProps {
@@ -223,6 +224,7 @@ export default function Login({ onLogin }: LoginProps) {
           </form>
         </CardContent>
       </Card>
+      <LiveDebugLogs />
     </div>
   );
 }

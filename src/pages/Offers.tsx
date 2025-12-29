@@ -6,6 +6,7 @@ import OfferCard from '@/components/OfferCard';
 import OfferCardSkeleton from '@/components/OfferCardSkeleton';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
+import LiveDebugLogs from '@/components/LiveDebugLogs';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -460,6 +461,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       </main>
 
       <Footer />
+      <LiveDebugLogs />
     </div>
   );
 }
