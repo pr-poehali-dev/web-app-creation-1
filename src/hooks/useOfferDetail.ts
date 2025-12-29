@@ -233,18 +233,32 @@ export function useOfferDetail(id: string | undefined) {
 
       const result = await response.json();
 
-      // Загружаем полный заказ с данными продавца из БД
-      const orderResponse = await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${result.id}`, {
-        headers: {
-          'X-User-Id': currentUser.id?.toString() || '',
-        },
-      });
+      // Загружаем полный заказ с данными продавца из БД с retry-логикой
+      let fullOrderData = null;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (attempts < maxAttempts && !fullOrderData) {
+        if (attempts > 0) {
+          await new Promise(resolve => setTimeout(resolve, 200 * attempts));
+        }
+        
+        const orderResponse = await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${result.id}`, {
+          headers: {
+            'X-User-Id': currentUser.id?.toString() || '',
+          },
+        });
 
-      if (!orderResponse.ok) {
-        throw new Error('Failed to load order details');
+        if (orderResponse.ok) {
+          fullOrderData = await orderResponse.json();
+        } else {
+          attempts++;
+        }
       }
 
-      const fullOrderData = await orderResponse.json();
+      if (!fullOrderData) {
+        throw new Error('Failed to load order details');
+      }
 
       const newOrder: Order = {
         id: fullOrderData.id,
