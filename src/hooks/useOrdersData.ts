@@ -261,14 +261,25 @@ export function useOrdersData(
   const handleCounterOffer = async (price: number, message: string) => {
     if (!selectedOrder) return;
 
+    console.log('[handleCounterOffer] Called with:', { price, message, orderId: selectedOrder.id });
+
     try {
       const currentUser = getSession();
       const isSeller = currentUser?.id?.toString() === selectedOrder.sellerId;
       
+      console.log('[handleCounterOffer] Sending to API:', { 
+        orderId: selectedOrder.id,
+        counterPrice: price,
+        counterMessage: message,
+        isSeller
+      });
+
       await ordersAPI.updateOrder(selectedOrder.id, { 
         counterPrice: price,
         counterMessage: message 
       });
+
+      console.log('[handleCounterOffer] API call successful');
 
       // Мгновенно обновляем данные локально для быстрого отклика
       setSelectedOrder({
