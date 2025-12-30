@@ -412,6 +412,22 @@ export function useOrdersData(
     try {
       const senderType = selectedOrder.buyerId === currentUser.id?.toString() ? 'buyer' : 'seller';
       
+      // ⚡ Оптимистичное обновление: добавляем сообщение сразу локально
+      const optimisticMessage: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        orderId: selectedOrder.id,
+        senderId: currentUser.id?.toString() || '',
+        senderName: currentUser.userType === 'legal-entity' && currentUser.companyName 
+          ? currentUser.companyName 
+          : `${currentUser.firstName} ${currentUser.lastName}`,
+        message,
+        timestamp: new Date(),
+        isRead: false,
+      };
+      
+      setMessages(prev => [...prev, optimisticMessage]);
+      
+      // Отправляем на сервер
       await ordersAPI.createMessage({
         orderId: selectedOrder.id,
         senderId: currentUser.id?.toString() || '',
@@ -419,13 +435,14 @@ export function useOrdersData(
         message,
       });
 
+      // Подгружаем актуальные данные с сервера (без звука и уведомлений)
       await loadMessages(selectedOrder.id, true);
-      
-      setTimeout(() => {
-        loadMessages(selectedOrder.id, false);
-      }, 1000);
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Если ошибка - убираем оптимистичное сообщение
+      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
+      
       toast({
         title: 'Ошибка',
         description: 'Не удалось отправить сообщение',
