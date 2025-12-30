@@ -16,9 +16,10 @@ interface OfferInfoTabProps {
   onEdit: () => void;
   onDelete: () => void;
   onUpdate: () => void;
+  onDataChanged?: () => void;
 }
 
-export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, onUpdate }: OfferInfoTabProps) {
+export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, onUpdate, onDataChanged }: OfferInfoTabProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -72,17 +73,18 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
       // Очищаем кэш предложений
       localStorage.removeItem('cached_offers');
       
+      // Отмечаем что были изменения
+      if (onDataChanged) {
+        onDataChanged();
+      }
+      
       toast({
         title: 'Успешно',
-        description: 'Объявление обновлено. Возвращаю на главную...',
+        description: 'Объявление обновлено',
       });
       
       setIsEditing(false);
-      
-      // Переходим на главную с параметром обновления
-      setTimeout(() => {
-        navigate('/predlozheniya?updated=' + Date.now());
-      }, 500);
+      onUpdate();
     } catch (error) {
       console.error('Error updating offer:', error);
       toast({

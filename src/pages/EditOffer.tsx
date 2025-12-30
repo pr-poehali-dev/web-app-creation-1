@@ -63,6 +63,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [chatMessages, setChatMessages] = useState<OrderChatMessage[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useOrdersPolling({
     enabled: isAuthenticated && !!id,
@@ -250,9 +251,6 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       // Очищаем кэш предложений
       localStorage.removeItem('cached_offers');
       
-      // Триггерим обновление списка на главной странице
-      window.dispatchEvent(new Event('offers-updated'));
-      
       setShowDeleteDialog(false);
       
       toast({
@@ -260,7 +258,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
         description: 'Объявление удалено',
       });
       
-      navigate('/predlozheniya', { replace: true });
+      navigate('/predlozheniya?updated=' + Date.now(), { replace: true });
     } catch (error) {
       console.error('Error deleting offer:', error);
       toast({
@@ -349,7 +347,14 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       <main className="container mx-auto px-4 py-8 flex-1 max-w-6xl">
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // Если были изменения - переходим на главную с обновлением
+            if (hasChanges) {
+              navigate('/predlozheniya?updated=' + Date.now());
+            } else {
+              navigate(-1);
+            }
+          }}
           className="mb-6"
         >
           <Icon name="ArrowLeft" className="w-4 h-4 mr-2" />
@@ -397,6 +402,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
               onEdit={handleEdit}
               onDelete={handleDelete}
               onUpdate={loadData}
+              onDataChanged={() => setHasChanges(true)}
             />
           </TabsContent>
 
