@@ -35,11 +35,11 @@ export function useOrdersData(
     }
     loadOrders(true);
 
-    // ⚡ ОПТИМИЗАЦИЯ: Проверяем document.hidden перед обновлением
+    // ⚡ Обновляем заказы каждые 5 секунд для быстрого отображения новых
     const ordersPollInterval = setInterval(() => {
       if (document.hidden) return;
       loadOrders(false);
-    }, 15000);
+    }, 5000);
 
     return () => clearInterval(ordersPollInterval);
   }, [isAuthenticated, navigate]);
@@ -51,14 +51,14 @@ export function useOrdersData(
     let messagePollInterval: NodeJS.Timeout;
     let orderPollInterval: NodeJS.Timeout;
 
-    // Polling сообщений каждые 3 секунды
+    // Polling сообщений каждые 2 секунды для быстрого отображения
     messagePollInterval = setInterval(() => {
       if (!document.hidden && isActive) {
         loadMessages(selectedOrder.id, false);
       }
-    }, 3000);
+    }, 2000);
 
-    // Polling заказов каждые 10 секунд для обновления статуса
+    // Polling заказов каждые 5 секунд для обновления статуса
     orderPollInterval = setInterval(() => {
       if (!document.hidden && isActive) {
         loadOrders(false).then(() => {
@@ -71,7 +71,7 @@ export function useOrdersData(
           });
         });
       }
-    }, 10000);
+    }, 5000);
 
     const handleVisibilityChange = () => {
       if (!document.hidden && isActive) {
@@ -169,8 +169,18 @@ export function useOrdersData(
         // Сохраняем временные сообщения (оптимистичные обновления)
         const tempMessages = prevMessages.filter(msg => msg.id.startsWith('temp-'));
         
-        // Объединяем: сначала реальные сообщения с сервера, потом временные
-        const allMessages = [...mappedMessages, ...tempMessages];
+        // Убираем временные сообщения, которые уже пришли с сервера
+        // (сравниваем по тексту и времени, т.к. ID временные)
+        const filteredTempMessages = tempMessages.filter(tempMsg => {
+          const exists = mappedMessages.some(realMsg => 
+            realMsg.message === tempMsg.message &&
+            Math.abs(new Date(realMsg.timestamp).getTime() - new Date(tempMsg.timestamp).getTime()) < 5000
+          );
+          return !exists;
+        });
+        
+        // Объединяем: сначала реальные сообщения с сервера, потом оставшиеся временные
+        const allMessages = [...mappedMessages, ...filteredTempMessages];
         
         // Проверяем новые сообщения для уведомлений
         const prevRealCount = prevMessages.filter(m => !m.id.startsWith('temp-')).length;
@@ -408,8 +418,8 @@ export function useOrdersData(
         message,
       }).catch((error) => {
         console.error('Error sending message:', error);
-        // Если ошибка - убираем оптимистичное сообщение
-        setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
+        // Если ошибка - убираем только это конкретное сообщение
+        setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
         toast({
           title: 'Ошибка',
           description: 'Не удалось отправить сообщение',
