@@ -53,6 +53,15 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   useEffect(() => {
     const loadRequests = async () => {
       setIsLoading(true);
+      
+      // Проверяем флаг обновления
+      const hasLocalChanges = localStorage.getItem('requests_updated') === 'true';
+      
+      if (hasLocalChanges) {
+        console.log('🔄 Обнаружены изменения в запросах, загружаю свежие данные');
+        localStorage.removeItem('requests_updated');
+      }
+      
       try {
         const [requestsData, ordersResponse] = await Promise.all([
           requestsAPI.getAll(),

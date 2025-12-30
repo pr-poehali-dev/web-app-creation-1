@@ -156,6 +156,9 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     deleteRequest(request.id);
     setShowDeleteDialog(false);
     
+    // Устанавливаем флаг для обновления
+    localStorage.setItem('requests_updated', 'true');
+    
     toast({
       title: 'Успешно',
       description: 'Запрос удалён',
@@ -209,7 +212,11 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
       <main className="container mx-auto px-4 py-8 flex-1 max-w-6xl">
         <Button
           variant="ghost"
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            // Устанавливаем флаг для обновления при возврате
+            localStorage.setItem('requests_updated', 'true');
+            navigate('/zaprosy');
+          }}
           className="mb-6"
         >
           <Icon name="ArrowLeft" className="w-4 h-4 mr-2" />

@@ -58,7 +58,12 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   };
 
   const handleCardClick = () => {
-    navigate(`/offer/${offer.id}`);
+    // Если это своя карточка - открываем редактирование
+    if (isOwner) {
+      navigate(`/edit-offer/${offer.id}`);
+    } else {
+      navigate(`/offer/${offer.id}`);
+    }
   };
 
   const handleOrderClick = (e: React.MouseEvent) => {

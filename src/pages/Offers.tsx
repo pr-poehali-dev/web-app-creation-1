@@ -86,12 +86,19 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     // Проверяем URL параметр updated - если есть, значит были изменения
     const updatedParam = searchParams.get('updated');
-    if (updatedParam) {
-      console.log('🔄 Обнаружен параметр updated, загружаю свежие данные');
+    // Проверяем флаг в localStorage - мог быть установлен при редактировании
+    const hasLocalChanges = localStorage.getItem('offers_updated') === 'true';
+    
+    if (updatedParam || hasLocalChanges) {
+      console.log('🔄 Обнаружены изменения, загружаю свежие данные');
       loadData(true);
       // Убираем параметр из URL
-      searchParams.delete('updated');
-      setSearchParams(searchParams, { replace: true });
+      if (updatedParam) {
+        searchParams.delete('updated');
+        setSearchParams(searchParams, { replace: true });
+      }
+      // Убираем флаг из localStorage
+      localStorage.removeItem('offers_updated');
     } else {
       loadData(false);
     }

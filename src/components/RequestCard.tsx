@@ -30,7 +30,12 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const isOwner = currentUser && request.userId === currentUser.id;
 
   const handleCardClick = () => {
-    navigate(`/request/${request.id}`);
+    // Если это свой запрос - открываем редактирование
+    if (isOwner) {
+      navigate(`/edit-request/${request.id}`);
+    } else {
+      navigate(`/request/${request.id}`);
+    }
   };
 
   const handleEdit = (e: React.MouseEvent) => {

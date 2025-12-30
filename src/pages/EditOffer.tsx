@@ -250,6 +250,8 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       
       // Очищаем кэш предложений
       localStorage.removeItem('cached_offers');
+      // Устанавливаем флаг для обновления
+      localStorage.setItem('offers_updated', 'true');
       
       setShowDeleteDialog(false);
       
@@ -258,7 +260,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
         description: 'Объявление удалено',
       });
       
-      navigate('/predlozheniya?updated=' + Date.now(), { replace: true });
+      navigate('/predlozheniya', { replace: true });
     } catch (error) {
       console.error('Error deleting offer:', error);
       toast({
@@ -348,12 +350,11 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
         <Button
           variant="ghost"
           onClick={() => {
-            // Если были изменения - переходим на главную с обновлением
+            // Если были изменения - ставим флаг для обновления
             if (hasChanges) {
-              navigate('/predlozheniya?updated=' + Date.now());
-            } else {
-              navigate(-1);
+              localStorage.setItem('offers_updated', 'true');
             }
+            navigate('/predlozheniya');
           }}
           className="mb-6"
         >
