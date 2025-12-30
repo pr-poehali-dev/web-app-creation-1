@@ -240,8 +240,8 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-2 md:space-x-3">
-            <div className="hidden md:block w-36 lg:w-52">
+          <div className="flex items-center space-x-1.5 md:space-x-2">
+            <div className="hidden md:block w-44 lg:w-60">
               <RegionDistrictSelector showBadges={false} />
             </div>
             
