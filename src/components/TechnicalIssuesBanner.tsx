@@ -14,13 +14,19 @@ export default function TechnicalIssuesBanner() {
       const recentErrors = sessionStorage.getItem('connection_errors');
       if (recentErrors) {
         const errorCount = parseInt(recentErrors);
+        // Показываем баннер только если есть реальные ошибки (≥2)
         if (errorCount >= 2) {
           setHasConnectionIssue(true);
+        } else {
+          setHasConnectionIssue(false);
         }
+      } else {
+        // Если ошибок нет, скрываем баннер
+        setHasConnectionIssue(false);
       }
     };
 
-    checkConnection();
+    // НЕ проверяем при первой загрузке - только по интервалу
     // ⚡ ОПТИМИЗАЦИЯ: Увеличили интервал с 5 до 10 сек
     const interval = setInterval(checkConnection, 10000);
 
