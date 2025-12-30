@@ -246,6 +246,10 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     
     try {
       await offersAPI.updateOffer(offer.id, { status: 'deleted' });
+      
+      // Очищаем кэш предложений
+      localStorage.removeItem('cached_offers');
+      
       setShowDeleteDialog(false);
       
       toast({
