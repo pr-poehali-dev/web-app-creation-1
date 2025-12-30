@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import BackButton from '@/components/BackButton';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
@@ -30,6 +31,9 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
 
       <main className="container mx-auto px-4 py-4 md:py-6 flex-1">
         <div className="max-w-4xl mx-auto">
+          <div className="md:hidden mb-3">
+            <BackButton />
+          </div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">
             Единая Региональная Товарно-Торговая Площадка (ЕРТТП)
           </h1>
