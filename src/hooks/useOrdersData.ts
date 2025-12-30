@@ -51,16 +51,21 @@ export function useOrdersData(
     let messagePollInterval: NodeJS.Timeout;
     let orderPollInterval: NodeJS.Timeout;
 
-    // Polling сообщений каждые 2 секунды для быстрого отображения
+    // ⚡ МГНОВЕННАЯ загрузка при открытии чата
+    console.log('[Chat Polling] Starting polling for order:', selectedOrder.id);
+    loadMessages(selectedOrder.id, false);
+    
+    // Polling сообщений каждую 1 секунду для мгновенного отображения
     messagePollInterval = setInterval(() => {
-      if (!document.hidden && isActive) {
+      if (isActive && isChatOpen) {
+        console.log('[Chat Polling] Fetching messages...');
         loadMessages(selectedOrder.id, false);
       }
-    }, 2000);
+    }, 1000);
 
-    // Polling заказов каждые 5 секунд для обновления статуса
+    // Polling заказов каждые 3 секунды для обновления статуса
     orderPollInterval = setInterval(() => {
-      if (!document.hidden && isActive) {
+      if (isActive && isChatOpen) {
         loadOrders(false).then(() => {
           setOrders(currentOrders => {
             const updatedOrder = currentOrders.find(o => o.id === selectedOrder.id);
@@ -71,10 +76,10 @@ export function useOrdersData(
           });
         });
       }
-    }, 5000);
+    }, 3000);
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && isActive) {
+      if (!document.hidden && isActive && isChatOpen) {
         loadMessages(selectedOrder.id, false);
       }
     };
@@ -87,7 +92,7 @@ export function useOrdersData(
       clearInterval(orderPollInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isPolling, selectedOrder]);
+  }, [isPolling, selectedOrder, isChatOpen]);
 
   const loadOrders = async (showLoader = false) => {
     try {
@@ -164,6 +169,8 @@ export function useOrdersData(
         timestamp: new Date(msg.createdAt || msg.created_at),
         isRead: msg.is_read || msg.isRead || false,
       }));
+      
+      console.log(`[Chat Polling] Loaded ${mappedMessages.length} messages for order ${orderId}`);
       
       setMessages(prevMessages => {
         // Сохраняем временные сообщения (оптимистичные обновления)
@@ -376,6 +383,7 @@ export function useOrdersData(
   };
 
   const handleOpenChat = (order: Order) => {
+    console.log('[Chat] Opening chat for order:', order.id);
     setSelectedOrder(order);
     loadMessages(order.id);
     setIsChatOpen(true);
@@ -383,6 +391,7 @@ export function useOrdersData(
   };
 
   const handleCloseChat = () => {
+    console.log('[Chat] Closing chat');
     setIsChatOpen(false);
     setIsPolling(false);
     setSelectedOrder(null);
@@ -409,6 +418,7 @@ export function useOrdersData(
       };
       
       setMessages(prev => [...prev, optimisticMessage]);
+      console.log('[Chat] Sending message:', optimisticMessage);
       
       // Отправляем на сервер в фоне (не ждём ответа)
       ordersAPI.createMessage({
@@ -416,6 +426,8 @@ export function useOrdersData(
         senderId: currentUser.id?.toString() || '',
         senderType,
         message,
+      }).then(() => {
+        console.log('[Chat] Message sent successfully');
       }).catch((error) => {
         console.error('Error sending message:', error);
         // Если ошибка - убираем только это конкретное сообщение
