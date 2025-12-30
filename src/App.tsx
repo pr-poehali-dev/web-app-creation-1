@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from "react";
+import { Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -167,8 +168,9 @@ const App = () => {
               <BrowserRouter>
                 <Suspense fallback={<LoadingScreen />}>
             <Routes>
-            <Route path="/" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/" element={<Navigate to="/predlozheniya" replace />} />
             <Route path="/home" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/search" element={<SearchResults isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
