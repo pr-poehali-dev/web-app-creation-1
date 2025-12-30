@@ -104,7 +104,6 @@ const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
 const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
 const OfferAgreement = lazyWithRetry(() => import("./pages/OfferAgreement"));
-const About = lazyWithRetry(() => import("./pages/About"));
 const Support = lazyWithRetry(() => import("./pages/Support"));
 const ClearData = lazyWithRetry(() => import("./pages/ClearData"));
 const DeleteTestData = lazyWithRetry(() => import("./pages/DeleteTestData"));

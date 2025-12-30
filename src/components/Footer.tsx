@@ -76,11 +76,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                  О площадке
-                </Link>
-              </li>
-              <li>
                 <Link to="/support" className="text-muted-foreground hover:text-primary transition-colors">
                   Поддержка
                 </Link>
