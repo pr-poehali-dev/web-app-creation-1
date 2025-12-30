@@ -113,7 +113,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    """Получить список предложений с фильтрами"""
+    """Получить список предложений с фильтрами и пагинацией"""
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -121,7 +121,26 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         query_params = event.get('queryStringParameters', {}) or {}
         status_filter = query_params.get('status', 'active')
         
-        sql = f"SELECT id, user_id, seller_id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}' ORDER BY created_at DESC LIMIT 100"
+        # ⚡ ПАГИНАЦИЯ: Добавляем limit и offset параметры
+        try:
+            limit = int(query_params.get('limit', 20))
+            limit = min(max(limit, 1), 100)  # От 1 до 100
+        except:
+            limit = 20
+        
+        try:
+            offset = int(query_params.get('offset', 0))
+            offset = max(offset, 0)
+        except:
+            offset = 0
+        
+        # Получаем общее количество записей (для hasMore на фронте)
+        count_sql = f"SELECT COUNT(*) as total FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}'"
+        cur.execute(count_sql)
+        total_count = cur.fetchone()['total']
+        
+        # Получаем записи с пагинацией
+        sql = f"SELECT id, user_id, seller_id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}' ORDER BY created_at DESC LIMIT {limit} OFFSET {offset}"
         
         cur.execute(sql)
         offers = cur.fetchall()
@@ -168,7 +187,13 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({'offers': result, 'total': len(result)}),
+            'body': json.dumps({
+                'offers': result, 
+                'total': total_count,
+                'limit': limit,
+                'offset': offset,
+                'hasMore': offset + len(result) < total_count
+            }),
             'isBase64Encoded': False
         }
     except Exception as e:

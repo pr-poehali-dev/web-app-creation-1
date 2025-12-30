@@ -40,6 +40,8 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [totalOffersCount, setTotalOffersCount] = useState(0); // Общее кол-во на сервере
+  const [hasMoreOnServer, setHasMoreOnServer] = useState(true); // Есть ли ещё на сервере
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -53,6 +55,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const loadData = async () => {
       setIsLoading(true);
       
+      // ⚡ ЛЕНИВАЯ ЗАГРУЗКА: Загружаем только первые 20 товаров
       const cachedOffers = localStorage.getItem('cached_offers');
       if (cachedOffers) {
         try {
@@ -64,8 +67,15 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
       
       try {
-        const offersData = await offersAPI.getOffers({ status: 'active' });
+        // ⚡ Загружаем только первую порцию (20 товаров)
+        const offersData = await offersAPI.getOffers({ 
+          status: 'active',
+          limit: 20,
+          offset: 0
+        });
         setOffers(offersData.offers || []);
+        setTotalOffersCount(offersData.total || 0);
+        setHasMoreOnServer(offersData.hasMore || false);
         localStorage.setItem('cached_offers', JSON.stringify(offersData.offers || []));
         setIsLoading(false);
         
@@ -166,14 +176,39 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     };
   }, [hasMore, isLoadingMore, displayedCount]);
 
-  const loadMore = () => {
-    if (isLoadingMore || !hasMore) return;
+  const loadMore = async () => {
+    if (isLoadingMore || (!hasMore && !hasMoreOnServer)) return;
 
     setIsLoadingMore(true);
-    setTimeout(() => {
-      setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
-      setIsLoadingMore(false);
-    }, 500);
+    
+    // Если уже загружено больше чем displayedCount, просто показываем больше
+    if (offers.length > displayedCount) {
+      setTimeout(() => {
+        setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
+        setIsLoadingMore(false);
+      }, 300);
+      return;
+    }
+    
+    // ⚡ Если нужно загрузить с сервера
+    if (hasMoreOnServer) {
+      try {
+        const offersData = await offersAPI.getOffers({ 
+          status: 'active',
+          limit: 20,
+          offset: offers.length
+        });
+        
+        setOffers(prev => [...prev, ...(offersData.offers || [])]);
+        setTotalOffersCount(offersData.total || 0);
+        setHasMoreOnServer(offersData.hasMore || false);
+        setDisplayedCount(prev => prev + ITEMS_PER_PAGE);
+      } catch (error) {
+        console.error('Ошибка загрузки товаров:', error);
+      }
+    }
+    
+    setIsLoadingMore(false);
   };
 
   const handleDelete = async (id: string) => {
