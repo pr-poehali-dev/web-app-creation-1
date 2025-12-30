@@ -21,11 +21,17 @@ export default function OrderChatSection({
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Прокручиваем вниз при изменении сообщений
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      // Используем setTimeout для гарантии что DOM обновился
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 0);
     }
-  }, [messages]);
+  }, [messages.length, messages]);
 
   const handleSend = () => {
     if (newMessage.trim()) {
@@ -51,11 +57,13 @@ export default function OrderChatSection({
               <p className="text-sm">Начните общение</p>
             </div>
           ) : (
-            messages.filter(msg => msg.message && msg.message.trim()).map((msg) => {
+            messages.filter(msg => msg.message && msg.message.trim()).map((msg, index) => {
               const isOwn = msg.senderId === currentUserId;
+              // Используем комбинацию id + index для уникального key (на случай дублей)
+              const uniqueKey = `${msg.id}-${index}`;
               return (
                 <div
-                  key={msg.id}
+                  key={uniqueKey}
                   className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
                   <div

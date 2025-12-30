@@ -173,25 +173,51 @@ export function useOrdersData(
         const tempMessages = prevMessages.filter(msg => msg.id.startsWith('temp-'));
         
         // Убираем временные сообщения, которые уже пришли с сервера
-        // (сравниваем по тексту и времени, т.к. ID временные)
+        // Сравниваем по тексту, отправителю И проверяем что прошло не больше 10 секунд
+        const now = Date.now();
         const filteredTempMessages = tempMessages.filter(tempMsg => {
+          // Если временное сообщение старше 10 секунд - удаляем его в любом случае
+          const tempMsgTime = new Date(tempMsg.timestamp).getTime();
+          if (now - tempMsgTime > 10000) {
+            return false;
+          }
+          
+          // Проверяем есть ли такое же сообщение в реальных
           const exists = mappedMessages.some(realMsg => 
-            realMsg.message === tempMsg.message &&
-            Math.abs(new Date(realMsg.timestamp).getTime() - new Date(tempMsg.timestamp).getTime()) < 5000
+            realMsg.message.trim() === tempMsg.message.trim() && 
+            realMsg.senderId === tempMsg.senderId
           );
           return !exists;
         });
         
         // Объединяем: сначала реальные сообщения с сервера, потом оставшиеся временные
-        const allMessages = [...mappedMessages, ...filteredTempMessages];
+        let allMessages = [...mappedMessages, ...filteredTempMessages];
         
-        // Проверяем новые сообщения для уведомлений
+        // Дедупликация: удаляем дубликаты по содержанию и отправителю
+        const seen = new Map<string, boolean>();
+        allMessages = allMessages.filter(msg => {
+          const key = `${msg.senderId}-${msg.message.trim()}`;
+          if (seen.has(key)) {
+            return false;
+          }
+          seen.set(key, true);
+          return true;
+        });
+        
+        // Проверяем новые сообщения для уведомлений (только от других пользователей)
         const prevRealCount = prevMessages.filter(m => !m.id.startsWith('temp-')).length;
         const newRealCount = mappedMessages.length;
         
-        if (newRealCount > prevRealCount && prevRealCount > 0) {
-          playNotificationSound();
-          if (!silent) {
+        if (newRealCount > prevRealCount && prevRealCount > 0 && !silent) {
+          // Проверяем, что новое сообщение от другого пользователя
+          const currentUserId = currentUser?.id?.toString();
+          const newMessages = allMessages.slice(prevRealCount);
+          const hasNewFromOthers = newMessages.some(msg => 
+            msg.senderId !== currentUserId && !msg.id.startsWith('temp-')
+          );
+          
+          if (hasNewFromOthers) {
+            playNotificationSound();
             toast({
               title: '💬 Новое сообщение',
               description: 'Получено новое сообщение в чате заказа',
