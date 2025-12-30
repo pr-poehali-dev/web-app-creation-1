@@ -40,7 +40,10 @@ function setCache(key: string, data: any): void {
 async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2): Promise<Response> {
   const method = options?.method || 'GET';
   
-  if (method === 'GET') {
+  // ⚡ НЕ кэшируем запросы сообщений чата (они должны обновляться в реальном времени)
+  const isMessageRequest = url.includes('messages=true');
+  
+  if (method === 'GET' && !isMessageRequest) {
     const cacheKey = getCacheKey(url, options);
     const cached = getFromCache(cacheKey);
     if (cached) {
@@ -57,7 +60,8 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2
     try {
       const response = await fetch(url, options);
       
-      if (response.ok && method === 'GET') {
+      // Кэшируем только GET запросы (кроме сообщений чата)
+      if (response.ok && method === 'GET' && !isMessageRequest) {
         const clonedResponse = response.clone();
         const data = await clonedResponse.json();
         const cacheKey = getCacheKey(url, options);

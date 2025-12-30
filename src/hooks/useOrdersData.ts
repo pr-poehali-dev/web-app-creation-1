@@ -52,13 +52,11 @@ export function useOrdersData(
     let orderPollInterval: NodeJS.Timeout;
 
     // ⚡ МГНОВЕННАЯ загрузка при открытии чата
-    console.log('[Chat Polling] Starting polling for order:', selectedOrder.id);
     loadMessages(selectedOrder.id, false);
     
     // Polling сообщений каждую 1 секунду для мгновенного отображения
     messagePollInterval = setInterval(() => {
       if (isActive && isChatOpen) {
-        console.log('[Chat Polling] Fetching messages...');
         loadMessages(selectedOrder.id, false);
       }
     }, 1000);
@@ -169,8 +167,6 @@ export function useOrdersData(
         timestamp: new Date(msg.createdAt || msg.created_at),
         isRead: msg.is_read || msg.isRead || false,
       }));
-      
-      console.log(`[Chat Polling] Loaded ${mappedMessages.length} messages for order ${orderId}`);
       
       setMessages(prevMessages => {
         // Сохраняем временные сообщения (оптимистичные обновления)
@@ -383,7 +379,6 @@ export function useOrdersData(
   };
 
   const handleOpenChat = (order: Order) => {
-    console.log('[Chat] Opening chat for order:', order.id);
     setSelectedOrder(order);
     loadMessages(order.id);
     setIsChatOpen(true);
@@ -391,7 +386,6 @@ export function useOrdersData(
   };
 
   const handleCloseChat = () => {
-    console.log('[Chat] Closing chat');
     setIsChatOpen(false);
     setIsPolling(false);
     setSelectedOrder(null);
@@ -418,7 +412,6 @@ export function useOrdersData(
       };
       
       setMessages(prev => [...prev, optimisticMessage]);
-      console.log('[Chat] Sending message:', optimisticMessage);
       
       // Отправляем на сервер в фоне (не ждём ответа)
       ordersAPI.createMessage({
@@ -426,8 +419,6 @@ export function useOrdersData(
         senderId: currentUser.id?.toString() || '',
         senderType,
         message,
-      }).then(() => {
-        console.log('[Chat] Message sent successfully');
       }).catch((error) => {
         console.error('Error sending message:', error);
         // Если ошибка - убираем только это конкретное сообщение
