@@ -207,25 +207,25 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <nav className="hidden md:flex items-center space-x-1.5 lg:space-x-3 mr-2 lg:mr-4">
             <Link
               to="/predlozheniya"
-              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-2 lg:px-3 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-2 lg:px-3 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/zaprosy' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-2 lg:px-3 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-2 lg:px-3 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 Контракты
@@ -234,7 +234,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/support"
-              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-2 lg:px-3 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/support' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Поддержка
             </Link>
