@@ -48,78 +48,44 @@ export function useOrdersData(
     if (!isPolling || !selectedOrder) return;
 
     let isActive = true;
-    let wakeLock: any = null;
+    let messagePollInterval: NodeJS.Timeout;
+    let orderPollInterval: NodeJS.Timeout;
 
-    const requestWakeLock = async () => {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await (navigator as any).wakeLock.request('screen');
-        }
-      } catch (err) {
-        console.log('Wake Lock error:', err);
+    // Polling сообщений каждые 3 секунды
+    messagePollInterval = setInterval(() => {
+      if (!document.hidden && isActive) {
+        loadMessages(selectedOrder.id, false);
       }
-    };
+    }, 3000);
 
-    requestWakeLock();
-
-    const aggressivePoll = async () => {
-      let pollCount = 0;
-      while (isActive && selectedOrder) {
-        if (!document.hidden) {
-          await loadMessages(selectedOrder.id, false);
-          
-          if (pollCount % 3 === 0) {
-            await loadOrders(false);
-            setOrders(currentOrders => {
-              const updatedOrder = currentOrders.find(o => o.id === selectedOrder.id);
-              if (updatedOrder) {
-                setSelectedOrder(updatedOrder);
-              }
-              return currentOrders;
-            });
-          }
-        }
-        
-        pollCount++;
-        await new Promise(resolve => setTimeout(resolve, 5000));
+    // Polling заказов каждые 10 секунд для обновления статуса
+    orderPollInterval = setInterval(() => {
+      if (!document.hidden && isActive) {
+        loadOrders(false).then(() => {
+          setOrders(currentOrders => {
+            const updatedOrder = currentOrders.find(o => o.id === selectedOrder.id);
+            if (updatedOrder) {
+              setSelectedOrder(updatedOrder);
+            }
+            return currentOrders;
+          });
+        });
       }
-    };
-
-    aggressivePoll();
+    }, 10000);
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && selectedOrder && isActive) {
-        loadMessages(selectedOrder.id, false);
-        requestWakeLock();
-      }
-    };
-
-    const handleFocus = () => {
-      if (selectedOrder && isActive) {
-        loadMessages(selectedOrder.id, false);
-      }
-    };
-
-    const handleTouchStart = () => {
-      if (selectedOrder && isActive) {
+      if (!document.hidden && isActive) {
         loadMessages(selectedOrder.id, false);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchStart, { passive: true });
 
     return () => {
       isActive = false;
-      if (wakeLock) {
-        wakeLock.release().catch(() => {});
-      }
+      clearInterval(messagePollInterval);
+      clearInterval(orderPollInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchStart);
     };
   }, [isPolling, selectedOrder]);
 
@@ -200,10 +166,17 @@ export function useOrdersData(
       }));
       
       setMessages(prevMessages => {
-        const prevCount = prevMessages.length;
-        const newCount = mappedMessages.length;
+        // Сохраняем временные сообщения (оптимистичные обновления)
+        const tempMessages = prevMessages.filter(msg => msg.id.startsWith('temp-'));
         
-        if (newCount > prevCount && prevCount > 0) {
+        // Объединяем: сначала реальные сообщения с сервера, потом временные
+        const allMessages = [...mappedMessages, ...tempMessages];
+        
+        // Проверяем новые сообщения для уведомлений
+        const prevRealCount = prevMessages.filter(m => !m.id.startsWith('temp-')).length;
+        const newRealCount = mappedMessages.length;
+        
+        if (newRealCount > prevRealCount && prevRealCount > 0) {
           playNotificationSound();
           if (!silent) {
             toast({
@@ -213,7 +186,7 @@ export function useOrdersData(
           }
         }
         
-        return mappedMessages;
+        return allMessages;
       });
     } catch (error) {
       console.error('Error loading messages:', error);
@@ -427,27 +400,24 @@ export function useOrdersData(
       
       setMessages(prev => [...prev, optimisticMessage]);
       
-      // Отправляем на сервер
-      await ordersAPI.createMessage({
+      // Отправляем на сервер в фоне (не ждём ответа)
+      ordersAPI.createMessage({
         orderId: selectedOrder.id,
         senderId: currentUser.id?.toString() || '',
         senderType,
         message,
+      }).catch((error) => {
+        console.error('Error sending message:', error);
+        // Если ошибка - убираем оптимистичное сообщение
+        setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось отправить сообщение',
+          variant: 'destructive',
+        });
       });
-
-      // Подгружаем актуальные данные с сервера (без звука и уведомлений)
-      await loadMessages(selectedOrder.id, true);
     } catch (error) {
-      console.error('Error sending message:', error);
-      
-      // Если ошибка - убираем оптимистичное сообщение
-      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
-      
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось отправить сообщение',
-        variant: 'destructive',
-      });
+      console.error('Error in handleSendMessage:', error);
     }
   };
 
