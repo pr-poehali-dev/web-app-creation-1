@@ -12,29 +12,79 @@ const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
 
-const fetchCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000;
+// Продвинутое кэширование с разными TTL для разных типов данных
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+  ttl: number;
+}
+
+const fetchCache = new Map<string, CacheEntry>();
+
+// TTL в миллисекундах для разных типов данных
+const CACHE_TTL = {
+  OFFERS_LIST: 2 * 60 * 1000,        // 2 минуты - списки предложений
+  OFFER_DETAIL: 5 * 60 * 1000,       // 5 минут - детали предложения
+  REQUESTS_LIST: 2 * 60 * 1000,      // 2 минуты - списки запросов
+  AUCTIONS: 1 * 60 * 1000,           // 1 минута - аукционы (активно меняются)
+  STATIC: 30 * 60 * 1000,            // 30 минут - статические данные (категории, районы)
+  DEFAULT: 5 * 60 * 1000,            // 5 минут - по умолчанию
+};
+
+const MAX_CACHE_SIZE = 100; // Увеличиваем размер кэша
 
 function getCacheKey(url: string, options?: RequestInit): string {
   const method = options?.method || 'GET';
-  return `${method}:${url}`;
+  const body = options?.body ? `-${options.body}` : '';
+  return `${method}:${url}${body}`;
+}
+
+function getTTLForUrl(url: string): number {
+  if (url.includes('offers') && url.includes('id=')) return CACHE_TTL.OFFER_DETAIL;
+  if (url.includes('offers')) return CACHE_TTL.OFFERS_LIST;
+  if (url.includes('requests')) return CACHE_TTL.REQUESTS_LIST;
+  if (url.includes('auctions')) return CACHE_TTL.AUCTIONS;
+  if (url.includes('categories') || url.includes('districts')) return CACHE_TTL.STATIC;
+  return CACHE_TTL.DEFAULT;
 }
 
 function getFromCache(key: string): any | null {
   const cached = fetchCache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
     return cached.data;
   }
   fetchCache.delete(key);
   return null;
 }
 
-function setCache(key: string, data: any): void {
-  fetchCache.set(key, { data, timestamp: Date.now() });
-  if (fetchCache.size > 50) {
-    const firstKey = fetchCache.keys().next().value;
-    fetchCache.delete(firstKey);
+function setCache(key: string, data: any, ttl: number): void {
+  fetchCache.set(key, { data, timestamp: Date.now(), ttl });
+  
+  // LRU: удаляем самые старые записи при переполнении
+  if (fetchCache.size > MAX_CACHE_SIZE) {
+    const entriesToDelete = Math.floor(MAX_CACHE_SIZE * 0.2); // Удаляем 20% старых записей
+    const sortedEntries = Array.from(fetchCache.entries())
+      .sort((a, b) => a[1].timestamp - b[1].timestamp)
+      .slice(0, entriesToDelete);
+    
+    sortedEntries.forEach(([key]) => fetchCache.delete(key));
   }
+}
+
+// Инвалидация кэша по паттерну URL
+export function invalidateCache(pattern: string): void {
+  const keysToDelete: string[] = [];
+  fetchCache.forEach((_, key) => {
+    if (key.includes(pattern)) {
+      keysToDelete.push(key);
+    }
+  });
+  keysToDelete.forEach(key => fetchCache.delete(key));
+}
+
+// Очистка всего кэша
+export function clearCache(): void {
+  fetchCache.clear();
 }
 
 async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2): Promise<Response> {
@@ -65,7 +115,8 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2
         const clonedResponse = response.clone();
         const data = await clonedResponse.json();
         const cacheKey = getCacheKey(url, options);
-        setCache(cacheKey, data);
+        const ttl = getTTLForUrl(url);
+        setCache(cacheKey, data, ttl);
       }
       
       return response;
@@ -219,6 +270,9 @@ export const offersAPI = {
       throw new Error(error.error || 'Failed to create offer');
     }
     
+    // Инвалидируем кэш списков предложений
+    invalidateCache('offers');
+    
     return response.json();
   },
 
@@ -234,6 +288,10 @@ export const offersAPI = {
     if (!response.ok) {
       throw new Error('Failed to update offer');
     }
+    
+    // Инвалидируем кэш этого предложения и списков
+    invalidateCache(`id=${id}`);
+    invalidateCache('offers');
     
     return response.json();
   },
@@ -253,6 +311,10 @@ export const offersAPI = {
     if (!response.ok) {
       throw new Error('Failed to delete offer');
     }
+    
+    // Инвалидируем кэш этого предложения и списков
+    invalidateCache(`id=${id}`);
+    invalidateCache('offers');
     
     return response.json();
   },

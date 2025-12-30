@@ -3,6 +3,7 @@
 import json
 import os
 import base64
+import time
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from decimal import Decimal
@@ -11,6 +12,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import boto3
 from PIL import Image
+from cache import offers_cache
+from rate_limiter import rate_limiter
 
 
 def decimal_default(obj):
@@ -33,6 +36,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     PUT /{id} - обновить предложение
     """
     method: str = event.get('httpMethod', 'GET')
+    
+    # ⚡ RATE LIMITING: Проверка лимита запросов
+    request_context = event.get('requestContext', {})
+    source_ip = request_context.get('identity', {}).get('sourceIp', 'unknown')
+    
+    # Разные лимиты для разных методов
+    if method == 'POST' or method == 'PUT' or method == 'DELETE':
+        max_requests = 30  # 30 запросов в минуту для изменяющих методов
+    else:
+        max_requests = 100  # 100 запросов в минуту для GET
+    
+    allowed, remaining = rate_limiter.check_rate_limit(source_ip, max_requests=max_requests, window_seconds=60)
+    
+    if not allowed:
+        retry_after = rate_limiter.get_retry_after(source_ip, window_seconds=60)
+        return {
+            'statusCode': 429,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Retry-After': str(retry_after),
+                'X-RateLimit-Limit': str(max_requests),
+                'X-RateLimit-Remaining': '0',
+                'X-RateLimit-Reset': str(int(time.time()) + retry_after)
+            },
+            'body': json.dumps({
+                'error': 'Too many requests',
+                'message': f'Rate limit exceeded. Try again in {retry_after} seconds.',
+                'retry_after': retry_after
+            }),
+            'isBase64Encoded': False
+        }
     
     if method == 'OPTIONS':
         return {
@@ -115,9 +150,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список предложений с фильтрами и пагинацией"""
     try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        
         query_params = event.get('queryStringParameters', {}) or {}
         status_filter = query_params.get('status', 'active')
         
@@ -133,6 +165,20 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             offset = max(offset, 0)
         except:
             offset = 0
+        
+        # ⚡ КЭШИРОВАНИЕ: Проверяем кэш для списка предложений
+        cache_key = f"offers_list:{status_filter}:{limit}:{offset}"
+        cached_result = offers_cache.get(cache_key)
+        if cached_result is not None:
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps(cached_result),
+                'isBase64Encoded': False
+            }
+        
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
         
         # Получаем общее количество записей (для hasMore на фронте)
         count_sql = f"SELECT COUNT(*) as total FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}'"
@@ -184,16 +230,21 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.close()
         conn.close()
         
+        response_data = {
+            'offers': result, 
+            'total': total_count,
+            'limit': limit,
+            'offset': offset,
+            'hasMore': offset + len(result) < total_count
+        }
+        
+        # ⚡ Кэшируем результат на 2 минуты
+        offers_cache.set(cache_key, response_data, ttl=120)
+        
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({
-                'offers': result, 
-                'total': total_count,
-                'limit': limit,
-                'offset': offset,
-                'hasMore': offset + len(result) < total_count
-            }),
+            'body': json.dumps(response_data),
             'isBase64Encoded': False
         }
     except Exception as e:
@@ -210,6 +261,17 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
 
 def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
+    # ⚡ Кэширование деталей предложения на 5 минут
+    cache_key = f"offer_detail:{offer_id}"
+    cached_result = offers_cache.get(cache_key)
+    if cached_result is not None:
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps(cached_result, default=decimal_default),
+            'isBase64Encoded': False
+        }
+    
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
@@ -308,6 +370,9 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         'reviewsCount': seller_reviews_count,
         'isVerified': seller_is_verified
     }
+    
+    # ⚡ Кэшируем результат на 5 минут
+    offers_cache.set(cache_key, offer_dict, ttl=300)
     
     return {
         'statusCode': 200,
@@ -467,6 +532,9 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     cur.close()
     conn.close()
     
+    # ⚡ Инвалидируем кэш после создания предложения
+    offers_cache.invalidate('offers_list')
+    
     return {
         'statusCode': 201,
         'headers': headers,
@@ -527,6 +595,10 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     conn.commit()
     cur.close()
     conn.close()
+    
+    # ⚡ Инвалидируем кэш после обновления предложения
+    offers_cache.invalidate('offers_list')
+    offers_cache.invalidate(f'offer_detail:{offer_id}')
     
     return {
         'statusCode': 200,
