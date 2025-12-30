@@ -349,7 +349,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button onClick={() => navigate('/login')} className="h-8 md:h-10 px-3 md:px-5 text-[10px] md:text-sm">Авторизация</Button>
+              <Button onClick={() => navigate('/login')} className="h-8 md:h-10 px-3 md:px-5 text-[10px] md:text-sm">Вход/Регистрация</Button>
             )}
           </div>
         </div>
