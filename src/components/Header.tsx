@@ -183,7 +183,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
       <div className="container mx-auto px-4">
         <div className="flex h-14 md:h-18 items-center justify-between">
           <Link 
-            to="/" 
+            to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center space-x-1.5 md:space-x-2.5 px-1.5 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all mr-2 md:mr-3"
           >
