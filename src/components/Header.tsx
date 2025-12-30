@@ -76,10 +76,13 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
     fetchCounts();
     
+    // ⚡ ОПТИМИЗАЦИЯ: Увеличили интервал с 5 до 10 сек + проверка document.hidden
     const interval = setInterval(() => {
+      if (document.hidden) return;
+      
       const notifCount = getUnreadCount(currentUser.id?.toString());
       setUnreadNotifications(notifCount);
-    }, 5000);
+    }, 10000);
 
     const handleNotificationUpdate = () => {
       const notifCount = getUnreadCount(currentUser.id?.toString());

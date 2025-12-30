@@ -66,7 +66,8 @@ export default function AuctionCompletionForm({
     };
 
     fetchContacts();
-    const interval = setInterval(fetchContacts, 5000);
+    // ⚡ ОПТИМИЗАЦИЯ: Увеличили интервал с 5 до 10 сек для экономии
+    const interval = setInterval(fetchContacts, 10000);
 
     return () => clearInterval(interval);
   }, [auctionId, contactsReceived]);

@@ -8,6 +8,9 @@ export default function TechnicalIssuesBanner() {
 
   useEffect(() => {
     const checkConnection = () => {
+      // ⚡ ОПТИМИЗАЦИЯ: Пропускаем проверку если вкладка неактивна
+      if (document.hidden) return;
+      
       const recentErrors = sessionStorage.getItem('connection_errors');
       if (recentErrors) {
         const errorCount = parseInt(recentErrors);
@@ -18,7 +21,8 @@ export default function TechnicalIssuesBanner() {
     };
 
     checkConnection();
-    const interval = setInterval(checkConnection, 5000);
+    // ⚡ ОПТИМИЗАЦИЯ: Увеличили интервал с 5 до 10 сек
+    const interval = setInterval(checkConnection, 10000);
 
     return () => clearInterval(interval);
   }, []);

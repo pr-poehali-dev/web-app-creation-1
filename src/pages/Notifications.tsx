@@ -64,6 +64,9 @@ export default function Notifications({ isAuthenticated, onLogout }: Notificatio
     }
 
     const loadNotifications = () => {
+      // ⚡ ОПТИМИЗАЦИЯ: Пропускаем запрос если вкладка неактивна
+      if (document.hidden) return;
+      
       const userNotifications = getNotifications(currentUser.id);
       setNotifications(userNotifications);
       setIsLoading(false);
@@ -71,7 +74,8 @@ export default function Notifications({ isAuthenticated, onLogout }: Notificatio
 
     setTimeout(loadNotifications, 500);
 
-    const interval = setInterval(loadNotifications, 5000);
+    // ⚡ ОПТИМИЗАЦИЯ: Увеличили интервал с 5 до 10 сек для экономии
+    const interval = setInterval(loadNotifications, 10000);
     return () => clearInterval(interval);
   }, [isAuthenticated, currentUser, navigate]);
 

@@ -35,7 +35,9 @@ export function useOrdersData(
     }
     loadOrders(true);
 
+    // ⚡ ОПТИМИЗАЦИЯ: Проверяем document.hidden перед обновлением
     const ordersPollInterval = setInterval(() => {
+      if (document.hidden) return;
       loadOrders(false);
     }, 15000);
 
