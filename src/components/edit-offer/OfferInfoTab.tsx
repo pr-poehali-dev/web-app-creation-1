@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -19,6 +20,7 @@ interface OfferInfoTabProps {
 
 export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, onUpdate }: OfferInfoTabProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState({
@@ -67,24 +69,20 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
         minOrderQuantity,
       });
       
-      // Очищаем кэш предложений, чтобы на главной отобразились новые данные
+      // Очищаем кэш предложений
       localStorage.removeItem('cached_offers');
-      
-      // Триггерим обновление списка на главной странице
-      console.log('📤 Отправляю событие offers-updated');
-      window.dispatchEvent(new Event('offers-updated'));
       
       toast({
         title: 'Успешно',
-        description: 'Объявление обновлено',
+        description: 'Объявление обновлено. Возвращаю на главную...',
       });
       
       setIsEditing(false);
       
-      // Обновляем локальные данные после небольшой задержки
+      // Переходим на главную с параметром обновления
       setTimeout(() => {
-        onUpdate();
-      }, 100);
+        navigate('/predlozheniya?updated=' + Date.now());
+      }, 500);
     } catch (error) {
       console.error('Error updating offer:', error);
       toast({

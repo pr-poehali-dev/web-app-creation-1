@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import OffersHeader from '@/components/offers/OffersHeader';
@@ -22,6 +23,7 @@ const ITEMS_PER_PAGE = 20;
 
 function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useScrollToTop();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
   const currentUser = getSession();
   const { toast } = useToast();
@@ -46,7 +48,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const loadData = async (forceRefresh = false) => {
       setIsLoading(true);
       
-      // Показываем кэш только при первой загрузке и если не форсируем обновление
+      // Показываем кэш только если не форсируем обновление
       if (!forceRefresh) {
         const cachedOffers = localStorage.getItem('cached_offers');
         if (cachedOffers) {
@@ -82,34 +84,18 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
     };
 
-    loadData(false);
-
-    // Слушаем события обновления предложений
-    const handleOffersUpdate = () => {
-      console.log('🔄 Получено событие offers-updated, перезагружаю данные...');
+    // Проверяем URL параметр updated - если есть, значит были изменения
+    const updatedParam = searchParams.get('updated');
+    if (updatedParam) {
+      console.log('🔄 Обнаружен параметр updated, загружаю свежие данные');
       loadData(true);
-    };
-    
-    // Проверяем при возврате на страницу (смена роута или фокус)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        // Проверяем, был ли очищен кэш (признак того что данные обновились)
-        const hasCache = localStorage.getItem('cached_offers');
-        if (!hasCache) {
-          console.log('🔄 Кэш отсутствует, перезагружаю данные...');
-          loadData(true);
-        }
-      }
-    };
-    
-    window.addEventListener('offers-updated', handleOffersUpdate);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      window.removeEventListener('offers-updated', handleOffersUpdate);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+      // Убираем параметр из URL
+      searchParams.delete('updated');
+      setSearchParams(searchParams, { replace: true });
+    } else {
+      loadData(false);
+    }
+  }, [searchParams, setSearchParams]);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
