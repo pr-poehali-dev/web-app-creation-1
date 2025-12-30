@@ -1,17 +1,10 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
 import Header from '@/components/Header';
-import AuctionSearchBlock from '@/components/auction/AuctionSearchBlock';
-import OfferCard from '@/components/OfferCard';
-import OfferCardSkeleton from '@/components/OfferCardSkeleton';
 import Footer from '@/components/Footer';
-import BackButton from '@/components/BackButton';
+import OffersHeader from '@/components/offers/OffersHeader';
+import OffersFilters from '@/components/offers/OffersFilters';
+import OffersList from '@/components/offers/OffersList';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import Icon from '@/components/ui/icon';
 import type { SearchFilters, Offer } from '@/types/offer';
 import { searchOffers } from '@/utils/searchUtils';
 import { addToSearchHistory } from '@/utils/searchHistory';
@@ -29,7 +22,6 @@ const ITEMS_PER_PAGE = 20;
 
 function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useScrollToTop();
-  const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts } = useDistrict();
   const currentUser = getSession();
   const { toast } = useToast();
@@ -37,11 +29,10 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
-  const observerTarget = useRef<HTMLDivElement>(null);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [totalOffersCount, setTotalOffersCount] = useState(0); // Общее кол-во на сервере
-  const [hasMoreOnServer, setHasMoreOnServer] = useState(true); // Есть ли ещё на сервере
+  const [totalOffersCount, setTotalOffersCount] = useState(0);
+  const [hasMoreOnServer, setHasMoreOnServer] = useState(true);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -55,7 +46,6 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     const loadData = async () => {
       setIsLoading(true);
       
-      // ⚡ ЛЕНИВАЯ ЗАГРУЗКА: Загружаем только первые 20 товаров
       const cachedOffers = localStorage.getItem('cached_offers');
       if (cachedOffers) {
         try {
@@ -67,7 +57,6 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
       
       try {
-        // ⚡ Загружаем только первую порцию (20 товаров)
         const offersData = await offersAPI.getOffers({ 
           status: 'active',
           limit: 20,
@@ -149,39 +138,16 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     });
 
     return [...premiumOffers, ...regularOffers];
-  }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
+  }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
   const hasMore = displayedCount < filteredOffers.length;
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
-          loadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [hasMore, isLoadingMore, displayedCount]);
 
   const loadMore = async () => {
     if (isLoadingMore || (!hasMore && !hasMoreOnServer)) return;
 
     setIsLoadingMore(true);
     
-    // Если уже загружено больше чем displayedCount, просто показываем больше
     if (offers.length > displayedCount) {
       setTimeout(() => {
         setDisplayedCount((prev) => prev + ITEMS_PER_PAGE);
@@ -190,7 +156,6 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       return;
     }
     
-    // ⚡ Если нужно загрузить с сервера
     if (hasMoreOnServer) {
       try {
         const offersData = await offersAPI.getOffers({ 
@@ -265,233 +230,39 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <BackButton />
-          {isAuthenticated && (
-            <Button onClick={() => navigate('/create-offer')} className="flex items-center gap-2 whitespace-nowrap">
-              <Icon name="Plus" className="h-4 w-4" />
-              <span>Создать предложение</span>
-            </Button>
-          )}
-        </div>
+        <OffersHeader isAuthenticated={isAuthenticated} />
         
         <h1 className="text-xl md:text-2xl font-bold text-foreground mb-4">Предложения</h1>
 
-        {filters.district !== 'all' && (
-          <Card className="mb-6 border-primary/20 bg-primary/5">
-            <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Icon name="MapPin" className="h-5 w-5 text-primary" />
-                <p className="text-sm">
-                  Район: <span className="font-semibold">{currentDistrictName}</span>
-                </p>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  Показаны предложения, доступные в этом районе
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <AuctionSearchBlock
+        <OffersFilters
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onSearch={handleSearch}
-          placeholder="Поиск по предложениям..."
-          label="Поиск предложений"
+          showOnlyMy={showOnlyMy}
+          onShowOnlyMyChange={setShowOnlyMy}
+          isAuthenticated={isAuthenticated}
+          filteredOffersCount={filteredOffers.length}
+          premiumCount={premiumCount}
+          selectedDistricts={selectedDistricts}
+          districts={districts}
+          currentDistrictName={currentDistrictName}
         />
 
-        {isLoading ? (
-          <>
-            <div className="mb-6">
-              <div className="h-5 w-48 bg-muted animate-pulse rounded" />
-            </div>
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <OfferCardSkeleton key={index} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="mb-4">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-sm flex-wrap">
-                  <span className="text-muted-foreground">Найдено:</span>
-                  <span className="font-semibold">{filteredOffers.length}</span>
-                  {filters.query && filters.query.length >= 2 && (
-                    <span className="text-muted-foreground">по "{filters.query}"</span>
-                  )}
-                  {premiumCount > 0 && (
-                    <>
-                      <span className="text-muted-foreground">•</span>
-                      <Icon name="Star" className="h-3.5 w-3.5 text-primary inline" />
-                      <span className="text-primary font-semibold">{premiumCount}</span>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 flex-wrap text-xs">
-                  {isAuthenticated && (
-                    <div className="flex items-center gap-1.5 px-3 py-2 border-2 border-primary rounded-lg bg-primary/5">
-                      <Switch
-                        id="show-only-my"
-                        checked={showOnlyMy}
-                        onCheckedChange={setShowOnlyMy}
-                        className="scale-75"
-                      />
-                      <Label htmlFor="show-only-my" className="cursor-pointer text-foreground font-medium">
-                        Только мои
-                      </Label>
-                    </div>
-                  )}
-                  
-                  <span className="text-muted-foreground">
-                    Сортировка: <span className="font-medium text-foreground">Премиум + Новизна</span>
-                  </span>
-                </div>
-              </div>
-
-              {filters.category && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {filters.category && (
-                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                      <Icon name="Tag" className="h-3 w-3" />
-                      {filters.category}
-                    </span>
-                  )}
-                  {filters.subcategory && (
-                    <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                      {filters.subcategory}
-                    </span>
-                  )}
-                  {selectedDistricts.length > 0 && (
-                    <>
-                      {selectedDistricts.slice(0, 3).map((districtId) => {
-                        const district = districts.find(d => d.id === districtId);
-                        return (
-                          <span key={districtId} className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
-                            <Icon name="MapPin" className="h-3 w-3" />
-                            {district?.name}
-                          </span>
-                        );
-                      })}
-                      {selectedDistricts.length > 3 && (
-                        <span className="inline-flex items-center gap-1 bg-muted text-muted-foreground px-3 py-1 rounded-full text-xs font-medium">
-                          +{selectedDistricts.length - 3} еще
-                        </span>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {filteredOffers.length === 0 ? (
-              <div className="text-center py-20 px-4">
-                <div className="max-w-md mx-auto">
-                  <Icon name="Package" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
-                  <h3 className="text-2xl font-semibold mb-3">Пока нет предложений</h3>
-                  <p className="text-muted-foreground mb-8">
-                    {filters.district !== 'all' 
-                      ? `В районе "${currentDistrictName}" пока нет доступных предложений`
-                      : 'По вашим фильтрам ничего не найдено'}
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button
-                      onClick={() =>
-                        handleFiltersChange({
-                          query: '',
-                          contentType: 'offers',
-                          category: '',
-                          subcategory: '',
-                          district: filters.district,
-                        })
-                      }
-                      variant="outline"
-                      className="gap-2"
-                    >
-                      <Icon name="RotateCcw" className="h-4 w-4" />
-                      Сбросить фильтры
-                    </Button>
-                    <Button
-                      onClick={() =>
-                        handleFiltersChange({
-                          query: '',
-                          contentType: 'offers',
-                          category: '',
-                          subcategory: '',
-                          district: 'all',
-                        })
-                      }
-                      className="gap-2"
-                    >
-                      <Icon name="Globe" className="h-4 w-4" />
-                      Все районы
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {premiumCount > 0 && regularCount > 0 && (
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2 text-xs font-medium text-primary">
-                      <Icon name="Star" className="h-3.5 w-3.5" />
-                      <span>Оплаченные ({premiumCount})</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {currentOffers.map((offer, index) => (
-                    <div key={offer.id}>
-                      {index === premiumCount && premiumCount > 0 && (
-                        <div className="col-span-full mb-2 mt-1">
-                          <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                            <Icon name="Package" className="h-3.5 w-3.5" />
-                            <span>Обычные ({regularCount})</span>
-                          </div>
-                        </div>
-                      )}
-                      <OfferCard 
-                        offer={offer} 
-                        onDelete={handleDelete}
-                        unreadMessages={getUnreadMessages(offer.id)}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {hasMore && (
-                  <div ref={observerTarget} className="mt-8">
-                    {isLoadingMore && (
-                      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                        {Array.from({ length: 4 }).map((_, index) => (
-                          <OfferCardSkeleton key={`loading-${index}`} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {!hasMore && filteredOffers.length > ITEMS_PER_PAGE && (
-                  <div className="mt-8 text-center py-6 border-t">
-                    <div className="flex flex-col items-center gap-2">
-                      <Icon name="CheckCircle2" className="h-6 w-6 text-green-500" />
-                      <p className="text-sm font-medium text-foreground">
-                        Показаны все предложения
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Всего найдено: {filteredOffers.length} {filteredOffers.length === 1 ? 'предложение' : filteredOffers.length < 5 ? 'предложения' : 'предложений'}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </>
-        )}
+        <OffersList
+          isLoading={isLoading}
+          filteredOffers={filteredOffers}
+          currentOffers={currentOffers}
+          premiumCount={premiumCount}
+          regularCount={regularCount}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          filters={filters}
+          currentDistrictName={currentDistrictName}
+          onFiltersChange={handleFiltersChange}
+          onDelete={handleDelete}
+          getUnreadMessages={getUnreadMessages}
+          loadMore={loadMore}
+        />
       </main>
 
       <Footer />
