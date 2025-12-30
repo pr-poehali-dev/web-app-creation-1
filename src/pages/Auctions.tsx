@@ -142,11 +142,12 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   useEffect(() => {
     loadAuctions(false);
     
+    // ⚡ ОПТИМИЗАЦИЯ: Автообновление ТОЛЬКО если на странице активно + увеличили до 60 сек
     const refreshInterval = setInterval(() => {
       if (!document.hidden) {
         loadAuctions(true);
       }
-    }, 30000);
+    }, 60000); // Было 30000 (30 сек), стало 60000 (60 сек) = экономия 50%
 
     return () => clearInterval(refreshInterval);
   }, []);

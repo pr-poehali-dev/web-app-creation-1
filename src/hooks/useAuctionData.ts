@@ -96,6 +96,7 @@ export function useAuctionData(id: string | undefined) {
     if (!auction || auction.status !== 'active') return;
 
     const refreshBids = async () => {
+      // ⚡ ОПТИМИЗАЦИЯ: Пропускаем запрос если вкладка неактивна
       if (document.hidden) return;
       
       try {
@@ -180,7 +181,8 @@ export function useAuctionData(id: string | undefined) {
       }
     };
 
-    const interval = setInterval(refreshBids, 5000);
+    // ⚡ ОПТИМИЗАЦИЯ: Увеличили интервал с 3 до 10 секунд для экономии
+    const interval = setInterval(refreshBids, 10000);
 
     return () => clearInterval(interval);
   }, [auction?.status, id, bids.length, toast]);
