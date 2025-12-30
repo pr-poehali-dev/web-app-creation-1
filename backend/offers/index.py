@@ -37,37 +37,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
     method: str = event.get('httpMethod', 'GET')
     
-    # ⚡ RATE LIMITING: Проверка лимита запросов
-    request_context = event.get('requestContext', {})
-    source_ip = request_context.get('identity', {}).get('sourceIp', 'unknown')
-    
-    # Разные лимиты для разных методов
-    if method == 'POST' or method == 'PUT' or method == 'DELETE':
-        max_requests = 30  # 30 запросов в минуту для изменяющих методов
-    else:
-        max_requests = 100  # 100 запросов в минуту для GET
-    
-    allowed, remaining = rate_limiter.check_rate_limit(source_ip, max_requests=max_requests, window_seconds=60)
-    
-    if not allowed:
-        retry_after = rate_limiter.get_retry_after(source_ip, window_seconds=60)
-        return {
-            'statusCode': 429,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'Retry-After': str(retry_after),
-                'X-RateLimit-Limit': str(max_requests),
-                'X-RateLimit-Remaining': '0',
-                'X-RateLimit-Reset': str(int(time.time()) + retry_after)
-            },
-            'body': json.dumps({
-                'error': 'Too many requests',
-                'message': f'Rate limit exceeded. Try again in {retry_after} seconds.',
-                'retry_after': retry_after
-            }),
-            'isBase64Encoded': False
-        }
+    # ⚡ RATE LIMITING: Проверка лимита запросов (только для изменяющих методов)
+    if method in ['POST', 'PUT', 'DELETE']:
+        try:
+            request_context = event.get('requestContext', {})
+            source_ip = request_context.get('identity', {}).get('sourceIp', 'unknown')
+            max_requests = 30  # 30 запросов в минуту
+            
+            allowed, remaining = rate_limiter.check_rate_limit(source_ip, max_requests=max_requests, window_seconds=60)
+            
+            if not allowed:
+                retry_after = rate_limiter.get_retry_after(source_ip, window_seconds=60)
+                return {
+                    'statusCode': 429,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Retry-After': str(retry_after),
+                        'X-RateLimit-Limit': str(max_requests),
+                        'X-RateLimit-Remaining': '0',
+                        'X-RateLimit-Reset': str(int(time.time()) + retry_after)
+                    },
+                    'body': json.dumps({
+                        'error': 'Too many requests',
+                        'message': f'Rate limit exceeded. Try again in {retry_after} seconds.',
+                        'retry_after': retry_after
+                    }),
+                    'isBase64Encoded': False
+                }
+        except Exception as e:
+            # Если rate limiter не работает - продолжаем без него
+            print(f'Rate limiter warning: {str(e)}')
     
     if method == 'OPTIONS':
         return {
