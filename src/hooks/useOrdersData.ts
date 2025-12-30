@@ -35,11 +35,11 @@ export function useOrdersData(
     }
     loadOrders(true);
 
-    // ⚡ Обновляем заказы каждые 5 секунд для быстрого отображения новых
+    // Обновляем заказы каждые 30 секунд
     const ordersPollInterval = setInterval(() => {
       if (document.hidden) return;
       loadOrders(false);
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(ordersPollInterval);
   }, [isAuthenticated, navigate]);
@@ -51,17 +51,17 @@ export function useOrdersData(
     let messagePollInterval: NodeJS.Timeout;
     let orderPollInterval: NodeJS.Timeout;
 
-    // ⚡ МГНОВЕННАЯ загрузка при открытии чата
+    // Загрузка при открытии чата
     loadMessages(selectedOrder.id, false);
     
-    // Polling сообщений каждую 1 секунду для мгновенного отображения
+    // Polling сообщений каждые 5 секунд (экономим запросы)
     messagePollInterval = setInterval(() => {
       if (isActive && isChatOpen) {
         loadMessages(selectedOrder.id, false);
       }
-    }, 1000);
+    }, 5000);
 
-    // Polling заказов каждые 3 секунды для обновления статуса
+    // Polling заказов каждые 15 секунд для обновления статуса
     orderPollInterval = setInterval(() => {
       if (isActive && isChatOpen) {
         loadOrders(false).then(() => {
@@ -74,7 +74,7 @@ export function useOrdersData(
           });
         });
       }
-    }, 3000);
+    }, 15000);
 
     const handleVisibilityChange = () => {
       if (!document.hidden && isActive && isChatOpen) {
