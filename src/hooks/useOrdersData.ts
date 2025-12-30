@@ -204,6 +204,13 @@ export function useOrdersData(
           return true;
         });
         
+        // ⚡ СОРТИРОВКА: упорядочиваем по времени (от старых к новым)
+        allMessages.sort((a, b) => {
+          const timeA = new Date(a.timestamp).getTime();
+          const timeB = new Date(b.timestamp).getTime();
+          return timeA - timeB;
+        });
+        
         // Проверяем новые сообщения для уведомлений (только от других пользователей)
         const prevRealCount = prevMessages.filter(m => !m.id.startsWith('temp-')).length;
         const newRealCount = mappedMessages.length;
