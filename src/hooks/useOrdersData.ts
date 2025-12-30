@@ -35,62 +35,25 @@ export function useOrdersData(
     }
     loadOrders(true);
 
-    // Обновляем заказы каждые 30 секунд
-    const ordersPollInterval = setInterval(() => {
-      if (document.hidden) return;
-      loadOrders(false);
-    }, 30000);
+    // Polling отключен для экономии лимитов - обновление только вручную
+    // const ordersPollInterval = setInterval(() => {
+    //   if (document.hidden) return;
+    //   loadOrders(false);
+    // }, 30000);
 
-    return () => clearInterval(ordersPollInterval);
+    // return () => clearInterval(ordersPollInterval);
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     if (!isPolling || !selectedOrder) return;
 
-    let isActive = true;
-    let messagePollInterval: NodeJS.Timeout;
-    let orderPollInterval: NodeJS.Timeout;
-
-    // Загрузка при открытии чата
+    // Загрузка только при открытии чата (без автоматического polling)
     loadMessages(selectedOrder.id, false);
     
-    // Polling сообщений каждые 5 секунд (экономим запросы)
-    messagePollInterval = setInterval(() => {
-      if (isActive && isChatOpen) {
-        loadMessages(selectedOrder.id, false);
-      }
-    }, 5000);
-
-    // Polling заказов каждые 15 секунд для обновления статуса
-    orderPollInterval = setInterval(() => {
-      if (isActive && isChatOpen) {
-        loadOrders(false).then(() => {
-          setOrders(currentOrders => {
-            const updatedOrder = currentOrders.find(o => o.id === selectedOrder.id);
-            if (updatedOrder) {
-              setSelectedOrder(updatedOrder);
-            }
-            return currentOrders;
-          });
-        });
-      }
-    }, 15000);
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isActive && isChatOpen) {
-        loadMessages(selectedOrder.id, false);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      isActive = false;
-      clearInterval(messagePollInterval);
-      clearInterval(orderPollInterval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [isPolling, selectedOrder, isChatOpen]);
+    // Polling ОТКЛЮЧЕН для экономии лимитов
+    // Сообщения обновляются только при отправке нового или обновлении страницы
+    
+  }, [isPolling, selectedOrder]);
 
   const loadOrders = async (showLoader = false) => {
     try {
