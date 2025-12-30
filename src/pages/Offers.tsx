@@ -43,16 +43,20 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   });
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = async (forceRefresh = false) => {
       setIsLoading(true);
       
-      const cachedOffers = localStorage.getItem('cached_offers');
-      if (cachedOffers) {
-        try {
-          const parsed = JSON.parse(cachedOffers);
-          setOffers(parsed);
-        } catch (e) {
-          console.error('Failed to parse cached offers');
+      // Показываем кэш только при первой загрузке и если не форсируем обновление
+      if (!forceRefresh) {
+        const cachedOffers = localStorage.getItem('cached_offers');
+        if (cachedOffers) {
+          try {
+            const parsed = JSON.parse(cachedOffers);
+            setOffers(parsed);
+            setIsLoading(false);
+          } catch (e) {
+            console.error('Failed to parse cached offers');
+          }
         }
       }
       
@@ -74,24 +78,36 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         });
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        if (!cachedOffers) {
-          setOffers([]);
-        }
         setIsLoading(false);
       }
     };
 
-    loadData();
+    loadData(false);
 
     // Слушаем события обновления предложений
     const handleOffersUpdate = () => {
-      loadData();
+      console.log('🔄 Получено событие offers-updated, перезагружаю данные...');
+      loadData(true);
+    };
+    
+    // Проверяем при возврате на страницу (смена роута или фокус)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // Проверяем, был ли очищен кэш (признак того что данные обновились)
+        const hasCache = localStorage.getItem('cached_offers');
+        if (!hasCache) {
+          console.log('🔄 Кэш отсутствует, перезагружаю данные...');
+          loadData(true);
+        }
+      }
     };
     
     window.addEventListener('offers-updated', handleOffersUpdate);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       window.removeEventListener('offers-updated', handleOffersUpdate);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 

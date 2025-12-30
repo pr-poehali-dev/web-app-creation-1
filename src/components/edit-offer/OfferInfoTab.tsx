@@ -71,6 +71,7 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
       localStorage.removeItem('cached_offers');
       
       // Триггерим обновление списка на главной странице
+      console.log('📤 Отправляю событие offers-updated');
       window.dispatchEvent(new Event('offers-updated'));
       
       toast({
@@ -79,7 +80,11 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
       });
       
       setIsEditing(false);
-      onUpdate();
+      
+      // Обновляем локальные данные после небольшой задержки
+      setTimeout(() => {
+        onUpdate();
+      }, 100);
     } catch (error) {
       console.error('Error updating offer:', error);
       toast({
