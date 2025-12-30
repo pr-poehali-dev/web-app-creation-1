@@ -10,6 +10,8 @@ interface OffersContextType {
   updateRequest: (id: string, updates: Partial<Request>) => void;
   deleteOffer: (id: string) => void;
   deleteRequest: (id: string) => void;
+  refreshOffers: () => void;
+  setOffers: (offers: Offer[]) => void;
 }
 
 const OffersContext = createContext<OffersContextType | undefined>(undefined);
@@ -86,6 +88,13 @@ export function OffersProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const refreshOffers = () => {
+    // Очищаем кэш для принудительной перезагрузки
+    localStorage.removeItem('cached_offers');
+    // Триггерим событие для других компонентов
+    window.dispatchEvent(new Event('offers-updated'));
+  };
+
   return (
     <OffersContext.Provider
       value={{
@@ -97,6 +106,8 @@ export function OffersProvider({ children }: { children: ReactNode }) {
         updateRequest,
         deleteOffer,
         deleteRequest,
+        refreshOffers,
+        setOffers,
       }}
     >
       {children}

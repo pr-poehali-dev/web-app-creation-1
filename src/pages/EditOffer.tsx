@@ -250,6 +250,9 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       // Очищаем кэш предложений
       localStorage.removeItem('cached_offers');
       
+      // Триггерим обновление списка на главной странице
+      window.dispatchEvent(new Event('offers-updated'));
+      
       setShowDeleteDialog(false);
       
       toast({

@@ -82,6 +82,17 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     };
 
     loadData();
+
+    // Слушаем события обновления предложений
+    const handleOffersUpdate = () => {
+      loadData();
+    };
+    
+    window.addEventListener('offers-updated', handleOffersUpdate);
+    
+    return () => {
+      window.removeEventListener('offers-updated', handleOffersUpdate);
+    };
   }, []);
 
   const filteredOffers = useMemo(() => {

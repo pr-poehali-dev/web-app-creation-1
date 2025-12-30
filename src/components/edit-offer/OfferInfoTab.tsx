@@ -70,6 +70,9 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
       // Очищаем кэш предложений, чтобы на главной отобразились новые данные
       localStorage.removeItem('cached_offers');
       
+      // Триггерим обновление списка на главной странице
+      window.dispatchEvent(new Event('offers-updated'));
+      
       toast({
         title: 'Успешно',
         description: 'Объявление обновлено',
