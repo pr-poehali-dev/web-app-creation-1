@@ -230,12 +230,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               </span>
             </Link>
             <Link
-              to="/about"
-              className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
-            >
-              О нас
-            </Link>
-            <Link
               to="/support"
               className="text-[11px] lg:text-sm font-medium text-foreground transition-colors hover:text-primary hover:bg-primary/5 px-2 lg:px-3 py-1.5 rounded-md border-2 border-primary/20 hover:border-primary/40 whitespace-nowrap"
             >
@@ -396,13 +390,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 Контракты
                 <Badge variant="secondary" className="text-xs">Новое</Badge>
               </span>
-            </Link>
-            <Link
-              to="/about"
-              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              О нас
             </Link>
             <Link
               to="/support"
