@@ -1,3 +1,11 @@
 {
-  "offers": "https://functions.poehali.dev/2c8bcee0-2dd9-48ab-8d0e-e8ad34c623aa"
+  "offers": "https://functions.poehali.dev/2c8bcee0-2dd9-48ab-8d0e-e8ad34c623aa",
+  "admin-offers": "https://functions.poehali.dev/admin-offers-placeholder",
+  "requests": "https://functions.poehali.dev/requests-placeholder",
+  "admin-requests": "https://functions.poehali.dev/admin-requests-placeholder",
+  "orders": "https://functions.poehali.dev/orders-placeholder",
+  "auctions-list": "https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f",
+  "auctions-my": "https://functions.poehali.dev/auctions-my-placeholder",
+  "auctions-update": "https://functions.poehali.dev/auctions-update-placeholder",
+  "upload-video": "https://functions.poehali.dev/upload-video-placeholder"
 }
