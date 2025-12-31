@@ -44,7 +44,7 @@ export default function OrderNegotiationModal({
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-          <div className="space-y-4">
+          <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
             <OrderNegotiationSection
               order={order}
               isBuyer={isBuyer}
