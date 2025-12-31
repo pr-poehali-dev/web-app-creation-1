@@ -23,6 +23,9 @@ import Home from "./pages/Home";
 import Offers from "./pages/Offers";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import OfferDetail from "./pages/OfferDetail";
+import MyOrders from "./pages/MyOrders";
+import Profile from "./pages/Profile";
 
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
@@ -66,13 +69,11 @@ const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
 const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
-const Profile = lazyWithRetry(() => import("./pages/Profile"));
 const MyListings = lazyWithRetry(() => import("./pages/MyListings"));
 const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
 const ActiveOrders = lazyWithRetry(() => import("./pages/ActiveOrders"));
 const Notifications = lazyWithRetry(() => import("./pages/Notifications"));
 const SearchResults = lazyWithRetry(() => import("./pages/SearchResults"));
-const OfferDetail = lazyWithRetry(() => import("./pages/OfferDetail"));
 const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
 const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
 const EditRequest = lazyWithRetry(() => import("./pages/EditRequest"));
@@ -108,7 +109,6 @@ const OrderDetailPage = lazyWithRetry(() => import("./pages/OrderDetailPage"));
 const ResponseDetailPage = lazyWithRetry(() => import("./pages/ResponseDetailPage"));
 const ChatNotifications = lazyWithRetry(() => import("./pages/ChatNotifications"));
 const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
-const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
 const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
 const OfferAgreement = lazyWithRetry(() => import("./pages/OfferAgreement"));
