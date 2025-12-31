@@ -27,26 +27,34 @@ import Register from "./pages/Register";
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
   lazy(async () => {
-    const maxRetries = 3;
+    const maxRetries = 2;
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await componentImport();
       } catch (error) {
-        console.log(`Failed to load module, attempt ${i + 1}/${maxRetries}`);
-        
-        // На последней попытке перезагружаем страницу
+        // На последней попытке просто возвращаем компонент с ошибкой
         if (i === maxRetries - 1) {
-          const hasRefreshed = sessionStorage.getItem('retry-lazy-refreshed');
-          if (!hasRefreshed) {
-            sessionStorage.setItem('retry-lazy-refreshed', 'true');
-            window.location.reload();
-            return { default: LoadingScreen };
-          }
-          throw error;
+          console.error('Failed to load module after retries:', error);
+          return { 
+            default: () => (
+              <div className="flex items-center justify-center min-h-screen p-4">
+                <div className="text-center max-w-md">
+                  <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
+                  <p className="text-muted-foreground mb-4">Не удалось загрузить компонент</p>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+                  >
+                    Обновить страницу
+                  </button>
+                </div>
+              </div>
+            )
+          };
         }
         
         // Ждём перед следующей попыткой
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     throw new Error('Failed to load module after retries');
@@ -131,9 +139,6 @@ const App = () => {
     if (session) {
       setIsAuthenticated(true);
     }
-
-    // Очищаем флаг обновления при успешной загрузке приложения
-    sessionStorage.removeItem('retry-lazy-refreshed');
 
     // Регистрируем Service Worker в фоне
     if ('serviceWorker' in navigator) {
