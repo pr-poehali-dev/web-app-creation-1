@@ -1,25 +1,65 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import type { ChatMessage } from '@/types/order';
 import { formatTimeWithTimezone } from '@/utils/dateUtils';
+import { chatPolling } from '@/services/chatPolling';
 
 interface OrderChatSectionProps {
+  orderId: string;
   messages: ChatMessage[];
   currentUserId?: string;
   onSendMessage: (message: string) => void;
+  onNewMessages?: (messages: ChatMessage[]) => void;
   isCompleted: boolean;
+  usePolling?: boolean;
 }
 
 export default function OrderChatSection({
+  orderId,
   messages,
   currentUserId,
   onSendMessage,
+  onNewMessages,
   isCompleted,
+  usePolling = true,
 }: OrderChatSectionProps) {
   const [newMessage, setNewMessage] = useState('');
+  const [isPollingActive, setIsPollingActive] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Polling подключение для получения новых сообщений
+  useEffect(() => {
+    if (!usePolling || !currentUserId || isCompleted) return;
+
+    // Получаем timestamp последнего сообщения
+    const lastMessage = messages.length > 0 
+      ? messages[messages.length - 1]
+      : null;
+    const lastTimestamp = lastMessage?.timestamp 
+      ? new Date(lastMessage.timestamp).toISOString() 
+      : undefined;
+
+    const handleNewMessages = (newMessages: ChatMessage[]) => {
+      console.log(`📨 Получено ${newMessages.length} новых сообщений через polling`);
+      if (onNewMessages && newMessages.length > 0) {
+        onNewMessages(newMessages);
+      }
+    };
+
+    chatPolling.onMessage(handleNewMessages);
+    chatPolling.start(orderId, lastTimestamp);
+    setIsPollingActive(true);
+
+    // Останавливаем при размонтировании
+    return () => {
+      chatPolling.stop();
+      chatPolling.removeMessageHandler(handleNewMessages);
+      setIsPollingActive(false);
+    };
+  }, [orderId, currentUserId, usePolling, isCompleted, onNewMessages]);
 
   // Прокручиваем вниз при изменении сообщений
   useEffect(() => {
@@ -34,7 +74,8 @@ export default function OrderChatSection({
   }, [messages.length, messages]);
 
   const handleSend = () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() && currentUserId) {
+      // Отправляем через обычный HTTP API
       onSendMessage(newMessage.trim());
       setNewMessage('');
     }
@@ -49,6 +90,19 @@ export default function OrderChatSection({
 
   return (
     <div className="flex-shrink-0 flex flex-col border-t px-4 sm:px-6 py-3 bg-background">
+      {usePolling && (
+        <div className="mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isPollingActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+            <span className="text-xs text-muted-foreground">
+              {isPollingActive ? 'Авто-обновление активно' : 'Обычный режим'}
+            </span>
+          </div>
+          {isPollingActive && (
+            <Badge variant="secondary" className="text-xs">Polling</Badge>
+          )}
+        </div>
+      )}
       <div className="h-40 sm:h-48 overflow-y-auto mb-3 pr-2" ref={scrollRef}>
         <div className="space-y-2">
           {messages.filter(msg => msg.message && msg.message.trim()).length === 0 ? (
