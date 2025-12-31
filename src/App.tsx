@@ -26,6 +26,11 @@ import Register from "./pages/Register";
 import OfferDetail from "./pages/OfferDetail";
 import MyOrders from "./pages/MyOrders";
 import Profile from "./pages/Profile";
+import SearchResults from "./pages/SearchResults";
+import Requests from "./pages/Requests";
+import MyListings from "./pages/MyListings";
+import CreateOffer from "./pages/CreateOffer";
+import EditOffer from "./pages/EditOffer";
 
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
@@ -67,17 +72,12 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
-const Requests = lazyWithRetry(() => import("./pages/Requests"));
 const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
-const MyListings = lazyWithRetry(() => import("./pages/MyListings"));
 const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
 const ActiveOrders = lazyWithRetry(() => import("./pages/ActiveOrders"));
 const Notifications = lazyWithRetry(() => import("./pages/Notifications"));
-const SearchResults = lazyWithRetry(() => import("./pages/SearchResults"));
 const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
-const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
 const EditRequest = lazyWithRetry(() => import("./pages/EditRequest"));
-const CreateOffer = lazyWithRetry(() => import("./pages/CreateOffer"));
 const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
 const CreateAuction = lazyWithRetry(() => import("./pages/CreateAuction"));
 const EditAuction = lazyWithRetry(() => import("./pages/EditAuction"));
