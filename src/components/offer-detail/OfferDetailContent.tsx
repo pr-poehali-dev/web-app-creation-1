@@ -10,9 +10,8 @@ import Icon from '@/components/ui/icon';
 import OfferMediaGallery from '@/components/offer/OfferMediaGallery';
 import OfferInfoCard from '@/components/offer/OfferInfoCard';
 import OfferOrderModal from '@/components/offer/OfferOrderModal';
-import OrderChatModal from '@/components/order/OrderChatModal';
 import type { Offer } from '@/types/offer';
-import type { Order, ChatMessage } from '@/types/order';
+import type { Order } from '@/types/order';
 import { getSession } from '@/utils/auth';
 
 interface OfferDetailContentProps {
@@ -28,7 +27,6 @@ interface OfferDetailContentProps {
   showVideo: boolean;
   isChatOpen: boolean;
   createdOrder: Order | null;
-  chatMessages: ChatMessage[];
   onImageIndexChange: (index: number) => void;
   onVideoPlayingChange: (playing: boolean) => void;
   onMuteChange: (muted: boolean) => void;
@@ -41,7 +39,6 @@ interface OfferDetailContentProps {
   onOrderClick: () => void;
   onOrderSubmit: (data: any) => void;
   onOpenGallery: (index: number) => void;
-  onSendMessage: (message: string) => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 

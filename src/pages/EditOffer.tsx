@@ -24,8 +24,7 @@ import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
-import OrderChatModal from '@/components/order/OrderChatModal';
-import type { ChatMessage as OrderChatMessage } from '@/types/order';
+import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import { useOrdersPolling } from '@/hooks/useOrdersPolling';
 import OfferInfoTab from '@/components/edit-offer/OfferInfoTab';
 import OfferOrdersTab from '@/components/edit-offer/OfferOrdersTab';
@@ -61,7 +60,6 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   const [activeTab, setActiveTab] = useState('info');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [chatMessages, setChatMessages] = useState<OrderChatMessage[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -173,60 +171,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
 
   const handleOpenChat = async (order: Order) => {
     setSelectedOrder(order);
-    await loadChatMessages(order.id);
     setIsChatOpen(true);
-  };
-
-  const loadChatMessages = async (orderId: string) => {
-    try {
-      setChatMessages([]);
-    } catch (error) {
-      console.error('Error loading messages:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить сообщения',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleSendMessage = async (message: string) => {
-    if (!selectedOrder || !currentUser) return;
-
-    try {
-      const senderType = selectedOrder.sellerId === currentUser.id?.toString() ? 'seller' : 'buyer';
-      
-      await ordersAPI.createMessage({
-        orderId: selectedOrder.id,
-        senderId: currentUser.id || 0,
-        senderType,
-        message,
-      });
-
-      const newMessage: OrderChatMessage = {
-        id: Date.now().toString(),
-        orderId: selectedOrder.id,
-        senderId: currentUser.id?.toString() || '',
-        senderName: `${currentUser.firstName} ${currentUser.lastName}`,
-        message,
-        timestamp: new Date(),
-        isRead: false,
-      };
-
-      setChatMessages([...chatMessages, newMessage]);
-
-      toast({
-        title: 'Отправлено',
-        description: 'Сообщение успешно отправлено',
-      });
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось отправить сообщение',
-        variant: 'destructive',
-      });
-    }
   };
 
   const handleEdit = () => {
@@ -476,12 +421,65 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       </AlertDialog>
 
       {selectedOrder && (
-        <OrderChatModal
+        <OrderNegotiationModal
           isOpen={isChatOpen}
           onClose={() => setIsChatOpen(false)}
           order={selectedOrder}
-          messages={chatMessages}
-          onSendMessage={handleSendMessage}
+          onCounterOffer={async (price, message) => {
+            try {
+              await ordersAPI.updateOrder(selectedOrder.id, { 
+                counterPrice: price,
+                counterMessage: message 
+              });
+              toast({
+                title: 'Встречное предложение отправлено',
+                description: 'Покупатель получит уведомление',
+              });
+              loadData();
+            } catch (error) {
+              toast({
+                title: 'Ошибка',
+                description: 'Не удалось отправить встречное предложение',
+                variant: 'destructive',
+              });
+            }
+          }}
+          onAcceptCounter={async () => {
+            try {
+              await ordersAPI.updateOrder(selectedOrder.id, { 
+                acceptCounter: true,
+                status: 'accepted'
+              });
+              toast({
+                title: 'Встречное предложение принято',
+                description: 'Заказ переведён в статус "Принято"',
+              });
+              loadData();
+            } catch (error) {
+              toast({
+                title: 'Ошибка',
+                description: 'Не удалось принять встречное предложение',
+                variant: 'destructive',
+              });
+            }
+          }}
+          onCompleteOrder={async () => {
+            try {
+              await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
+              toast({
+                title: 'Заказ завершён',
+                description: 'Заказ успешно завершён',
+              });
+              setIsChatOpen(false);
+              loadData();
+            } catch (error) {
+              toast({
+                title: 'Ошибка',
+                description: 'Не удалось завершить заказ',
+                variant: 'destructive',
+              });
+            }
+          }}
         />
       )}
     </div>

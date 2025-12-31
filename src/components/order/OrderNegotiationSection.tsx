@@ -28,25 +28,25 @@ export default function OrderNegotiationSection({
 
   const handleCounterOffer = async () => {
     const price = parseFloat(counterPrice);
-    console.log('[OrderChatModal.handleCounterOffer] Validating price:', { counterPrice, price, isValid: !isNaN(price) && price > 0 });
+    console.log('[OrderNegotiation.handleCounterOffer] Validating price:', { counterPrice, price, isValid: !isNaN(price) && price > 0 });
     
     if (isNaN(price) || price <= 0) {
-      console.error('[OrderChatModal.handleCounterOffer] Invalid price');
+      console.error('[OrderNegotiation.handleCounterOffer] Invalid price');
       return;
     }
     
     if (onCounterOffer) {
-      console.log('[OrderChatModal.handleCounterOffer] Calling onCounterOffer with:', { price, message: counterMessage.trim() });
+      console.log('[OrderNegotiation.handleCounterOffer] Calling onCounterOffer with:', { price, message: counterMessage.trim() });
       try {
         await onCounterOffer(price, counterMessage.trim());
-        console.log('[OrderChatModal.handleCounterOffer] Success, closing form');
+        console.log('[OrderNegotiation.handleCounterOffer] Success, closing form');
         setShowCounterForm(false);
         setCounterMessage('');
       } catch (error) {
-        console.error('[OrderChatModal.handleCounterOffer] Error:', error);
+        console.error('[OrderNegotiation.handleCounterOffer] Error:', error);
       }
     } else {
-      console.error('[OrderChatModal.handleCounterOffer] onCounterOffer is not defined');
+      console.error('[OrderNegotiation.handleCounterOffer] onCounterOffer is not defined');
     }
   };
 
