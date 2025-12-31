@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { getSession } from '@/utils/auth';
 import { notifyOrderAccepted } from '@/utils/notifications';
-import type { Order, ChatMessage } from '@/types/order';
+import type { Order } from '@/types/order';
 import { ordersAPI } from '@/services/api';
 
 export function useOrdersData(
@@ -16,44 +16,17 @@ export function useOrdersData(
   const currentUser = getSession();
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPolling, setIsPolling] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  const playNotificationSound = () => {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjsj6sD5+GfJMKAAAAASUVORK5CYII=');
-    audio.volume = 0.3;
-    audio.play().catch(() => {});
-  };
-
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
     loadOrders(true);
-
-    // Polling отключен для экономии лимитов - обновление только вручную
-    // const ordersPollInterval = setInterval(() => {
-    //   if (document.hidden) return;
-    //   loadOrders(false);
-    // }, 30000);
-
-    // return () => clearInterval(ordersPollInterval);
   }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
-    if (!isPolling || !selectedOrder) return;
-
-    // Загрузка только при открытии чата (без автоматического polling)
-    loadMessages(selectedOrder.id, false);
-    
-    // Polling ОТКЛЮЧЕН для экономии лимитов
-    // Сообщения обновляются только при отправке нового или обновлении страницы
-    
-  }, [isPolling, selectedOrder]);
 
   const loadOrders = async (showLoader = false) => {
     try {
@@ -117,97 +90,7 @@ export function useOrdersData(
     }
   };
 
-  const loadMessages = async (orderId: string, silent = false) => {
-    try {
-      const data = await ordersAPI.getMessagesByOrder(orderId);
-      
-      const mappedMessages: ChatMessage[] = data.messages.map((msg: any) => ({
-        id: msg.id,
-        orderId: msg.order_id || msg.orderId,
-        senderId: msg.sender_id?.toString() || msg.senderId,
-        senderName: msg.sender_name || msg.senderName || 'Пользователь',
-        message: msg.message,
-        timestamp: new Date(msg.createdAt || msg.created_at),
-        isRead: msg.is_read || msg.isRead || false,
-      }));
-      
-      setMessages(prevMessages => {
-        // Сохраняем временные сообщения (оптимистичные обновления)
-        const tempMessages = prevMessages.filter(msg => msg.id.startsWith('temp-'));
-        
-        // Убираем временные сообщения, которые уже пришли с сервера
-        // Сравниваем по тексту, отправителю И проверяем что прошло не больше 10 секунд
-        const now = Date.now();
-        const filteredTempMessages = tempMessages.filter(tempMsg => {
-          // Если временное сообщение старше 10 секунд - удаляем его в любом случае
-          const tempMsgTime = new Date(tempMsg.timestamp).getTime();
-          if (now - tempMsgTime > 10000) {
-            return false;
-          }
-          
-          // Проверяем есть ли такое же сообщение в реальных
-          const exists = mappedMessages.some(realMsg => 
-            realMsg.message.trim() === tempMsg.message.trim() && 
-            realMsg.senderId === tempMsg.senderId
-          );
-          return !exists;
-        });
-        
-        // Объединяем: сначала реальные сообщения с сервера, потом оставшиеся временные
-        let allMessages = [...mappedMessages, ...filteredTempMessages];
-        
-        // Дедупликация: удаляем дубликаты по содержанию и отправителю
-        const seen = new Map<string, boolean>();
-        allMessages = allMessages.filter(msg => {
-          const key = `${msg.senderId}-${msg.message.trim()}`;
-          if (seen.has(key)) {
-            return false;
-          }
-          seen.set(key, true);
-          return true;
-        });
-        
-        // ⚡ СОРТИРОВКА: упорядочиваем по времени (от старых к новым)
-        allMessages.sort((a, b) => {
-          const timeA = new Date(a.timestamp).getTime();
-          const timeB = new Date(b.timestamp).getTime();
-          return timeA - timeB;
-        });
-        
-        // Проверяем новые сообщения для уведомлений (только от других пользователей)
-        const prevRealCount = prevMessages.filter(m => !m.id.startsWith('temp-')).length;
-        const newRealCount = mappedMessages.length;
-        
-        if (newRealCount > prevRealCount && prevRealCount > 0 && !silent) {
-          // Проверяем, что новое сообщение от другого пользователя
-          const currentUserId = currentUser?.id?.toString();
-          const newMessages = allMessages.slice(prevRealCount);
-          const hasNewFromOthers = newMessages.some(msg => 
-            msg.senderId !== currentUserId && !msg.id.startsWith('temp-')
-          );
-          
-          if (hasNewFromOthers) {
-            playNotificationSound();
-            toast({
-              title: '💬 Новое сообщение',
-              description: 'Получено новое сообщение в чате заказа',
-            });
-          }
-        }
-        
-        return allMessages;
-      });
-    } catch (error) {
-      console.error('Error loading messages:', error);
-      if (!silent) {
-        toast({
-          title: 'Ошибка',
-          description: 'Не удалось загрузить сообщения',
-          variant: 'destructive',
-        });
-      }
-    }
-  };
+
 
   const handleAcceptOrder = async (orderId?: string) => {
     const orderToAccept = orderId || selectedOrder?.id;
@@ -376,64 +259,17 @@ export function useOrdersData(
 
   const handleOpenChat = (order: Order) => {
     setSelectedOrder(order);
-    loadMessages(order.id);
     setIsChatOpen(true);
-    setIsPolling(true);
   };
 
   const handleCloseChat = () => {
     setIsChatOpen(false);
-    setIsPolling(false);
     setSelectedOrder(null);
-    setMessages([]);
-  };
-
-  const handleSendMessage = async (message: string) => {
-    if (!selectedOrder || !currentUser) return;
-
-    try {
-      const senderType = selectedOrder.buyerId === currentUser.id?.toString() ? 'buyer' : 'seller';
-      
-      // ⚡ Оптимистичное обновление: добавляем сообщение сразу локально
-      const optimisticMessage: ChatMessage = {
-        id: `temp-${Date.now()}`,
-        orderId: selectedOrder.id,
-        senderId: currentUser.id?.toString() || '',
-        senderName: currentUser.userType === 'legal-entity' && currentUser.companyName 
-          ? currentUser.companyName 
-          : `${currentUser.firstName} ${currentUser.lastName}`,
-        message,
-        timestamp: new Date(),
-        isRead: false,
-      };
-      
-      setMessages(prev => [...prev, optimisticMessage]);
-      
-      // Отправляем на сервер в фоне (не ждём ответа)
-      ordersAPI.createMessage({
-        orderId: selectedOrder.id,
-        senderId: currentUser.id?.toString() || '',
-        senderType,
-        message,
-      }).catch((error) => {
-        console.error('Error sending message:', error);
-        // Если ошибка - убираем только это конкретное сообщение
-        setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id));
-        toast({
-          title: 'Ошибка',
-          description: 'Не удалось отправить сообщение',
-          variant: 'destructive',
-        });
-      });
-    } catch (error) {
-      console.error('Error in handleSendMessage:', error);
-    }
   };
 
   return {
     orders,
     selectedOrder,
-    messages,
     isChatOpen,
     isLoading,
     currentUser,
@@ -443,7 +279,6 @@ export function useOrdersData(
     handleCompleteOrder,
     handleOpenChat,
     handleCloseChat,
-    handleSendMessage,
     loadOrders,
   };
 }

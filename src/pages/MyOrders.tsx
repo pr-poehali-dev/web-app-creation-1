@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
-import OrderChatModal from '@/components/order/OrderChatModal';
+import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrdersContent from '@/components/order/OrdersContent';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData } from '@/hooks/useOrdersData';
@@ -26,7 +26,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const {
     orders,
     selectedOrder,
-    messages,
     isChatOpen,
     isLoading,
     currentUser,
@@ -36,7 +35,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleCompleteOrder,
     handleOpenChat,
     handleCloseChat,
-    handleSendMessage,
     loadOrders,
   } = useOrdersData(isAuthenticated, activeTab, setActiveTab);
 
@@ -134,12 +132,10 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
       <Footer />
 
       {selectedOrder && (
-        <OrderChatModal
+        <OrderNegotiationModal
           isOpen={isChatOpen}
           onClose={handleCloseChat}
           order={selectedOrder}
-          messages={messages}
-          onSendMessage={handleSendMessage}
           onAcceptOrder={currentUser?.id?.toString() === selectedOrder.sellerId ? () => handleAcceptOrder() : undefined}
           onCounterOffer={handleCounterOffer}
           onAcceptCounter={handleAcceptCounter}
