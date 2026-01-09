@@ -3,32 +3,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useDistrict } from '@/contexts/DistrictContext';
-import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import { useOrdersPolling } from '@/hooks/useOrdersPolling';
-import OfferInfoTab from '@/components/edit-offer/OfferInfoTab';
-import OfferOrdersTab from '@/components/edit-offer/OfferOrdersTab';
-import OfferMessagesTab from '@/components/edit-offer/OfferMessagesTab';
+import EditOfferHeader from '@/components/edit-offer/EditOfferHeader';
+import EditOfferTabs from '@/components/edit-offer/EditOfferTabs';
+import EditOfferDeleteDialog from '@/components/edit-offer/EditOfferDeleteDialog';
+import EditOfferOrderModal from '@/components/edit-offer/EditOfferOrderModal';
 
 interface EditOfferProps {
   isAuthenticated: boolean;
@@ -51,7 +35,6 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getSession();
-  const { districts } = useDistrict();
   
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,6 +102,12 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
           unit: order.unit,
           pricePerUnit: order.price_per_unit || order.pricePerUnit,
           totalAmount: order.total_amount || order.totalAmount,
+          counterPricePerUnit: order.counter_price_per_unit || order.counterPricePerUnit,
+          counterTotalAmount: order.counter_total_amount || order.counterTotalAmount,
+          counterOfferMessage: order.counter_offer_message || order.counterOfferMessage,
+          counterOfferedAt: order.counter_offered_at || order.counterOfferedAt ? new Date(order.counter_offered_at || order.counterOfferedAt) : undefined,
+          counterOfferedBy: order.counter_offered_by || order.counterOfferedBy,
+          buyerAcceptedCounter: order.buyer_accepted_counter || order.buyerAcceptedCounter,
           buyerId: order.buyer_id?.toString() || order.buyerId,
           buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
           buyerPhone: order.buyer_phone || order.buyerPhone,
@@ -193,9 +182,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     try {
       await offersAPI.updateOffer(offer.id, { status: 'deleted' });
       
-      // Очищаем кэш предложений
       localStorage.removeItem('cached_offers');
-      // Устанавливаем флаг для обновления
       localStorage.setItem('offers_updated', 'true');
       
       setShowDeleteDialog(false);
@@ -249,20 +236,33 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     }
   };
 
-  const districtName = districts.find(d => d.id === offer?.district)?.name || offer?.district;
-  const unreadCount = messages.filter(m => !m.isRead).length;
-
-  if (!currentUser) {
-    return null;
-  }
+  const handleAcceptOrder = async (orderId: string) => {
+    try {
+      await ordersAPI.updateOrder(orderId, { status: 'accepted' });
+      
+      toast({
+        title: 'Заказ принят',
+        description: 'Заказ успешно принят в работу',
+      });
+      
+      loadData();
+    } catch (error) {
+      console.error('Error accepting order:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось принять заказ',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen flex flex-col">
         <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-        <main className="container mx-auto px-4 py-8 flex-1">
-          <div className="flex justify-center items-center h-64">
-            <Icon name="Loader2" className="w-8 h-8 animate-spin text-primary" />
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Загрузка...</p>
           </div>
         </main>
         <Footer />
@@ -272,15 +272,12 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
 
   if (!offer) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen flex flex-col">
         <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-        <main className="container mx-auto px-4 py-8 flex-1">
-          <Card>
-            <CardContent className="py-8 text-center">
-              <Icon name="AlertCircle" className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-gray-600">Объявление не найдено</p>
-            </CardContent>
-          </Card>
+        <main className="flex-1 container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Объявление не найдено</p>
+          </div>
         </main>
         <Footer />
       </div>
@@ -288,217 +285,47 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       
-      <main className="container mx-auto px-4 py-8 flex-1 max-w-6xl">
-        <Button
-          variant="ghost"
-          onClick={() => {
-            // Если были изменения - ставим флаг для обновления
-            if (hasChanges) {
-              localStorage.setItem('offers_updated', 'true');
-            }
-            navigate('/predlozheniya');
-          }}
-          className="mb-6"
-        >
-          <Icon name="ArrowLeft" className="w-4 h-4 mr-2" />
-          Назад
-        </Button>
+      <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
+        <EditOfferHeader
+          offer={offer}
+          ordersCount={orders.length}
+          messagesCount={messages.length}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
 
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Управление объявлением</h1>
-          <Button onClick={() => navigate(`/offer/${id}`)} variant="outline">
-            <Icon name="Eye" className="w-4 h-4 mr-2" />
-            Просмотр
-          </Button>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">
-              <Icon name="Info" className="w-4 h-4 mr-2" />
-              Информация
-            </TabsTrigger>
-            <TabsTrigger value="orders">
-              <Icon name="ShoppingCart" className="w-4 h-4 mr-2" />
-              Заказы
-              {orders.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {orders.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="messages">
-              <Icon name="MessageSquare" className="w-4 h-4 mr-2" />
-              Сообщения
-              {unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {unreadCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="info" className="space-y-6">
-            <OfferInfoTab
-              offer={offer}
-              districtName={districtName}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onUpdate={loadData}
-              onDataChanged={() => setHasChanges(true)}
-            />
-          </TabsContent>
-
-          <TabsContent value="orders" className="space-y-4">
-            <OfferOrdersTab
-              orders={orders}
-              onOpenChat={handleOpenChat}
-            />
-          </TabsContent>
-
-          <TabsContent value="messages" className="space-y-4">
-            <OfferMessagesTab
-              messages={messages}
-              onMessageClick={handleMessageClick}
-            />
-          </TabsContent>
-        </Tabs>
+        <EditOfferTabs
+          offer={offer}
+          orders={orders}
+          messages={messages}
+          activeTab={activeTab}
+          hasChanges={hasChanges}
+          onTabChange={setActiveTab}
+          onOpenChat={handleOpenChat}
+          onAcceptOrder={handleAcceptOrder}
+          onMessageClick={handleMessageClick}
+        />
       </main>
 
       <Footer />
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить объявление?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {orders.length === 0 ? (
-                'Это действие нельзя отменить. Объявление будет удалено безвозвратно.'
-              ) : (
-                <div className="space-y-3">
-                  <span className="block text-destructive font-semibold">
-                    У этого объявления есть активные заказы ({orders.length}). 
-                    Сначала удалите все заказы, чтобы удалить объявление.
-                  </span>
-                  <div className="space-y-2 mt-4">
-                    {orders.map((order) => (
-                      <Card key={order.id} className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">Заказ #{order.id.slice(0, 8)}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {order.buyerName} • {order.totalAmount?.toLocaleString('ru-RU')} ₽
-                            </p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteOrder(order.id)}
-                          >
-                            <Icon name="Trash2" className="w-4 h-4 mr-1" />
-                            Удалить
-                          </Button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            {orders.length === 0 && (
-              <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-                Удалить объявление
-              </AlertDialogAction>
-            )}
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <EditOfferDeleteDialog
+        isOpen={showDeleteDialog}
+        orders={orders}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={confirmDelete}
+        onDeleteOrder={handleDeleteOrder}
+      />
 
-      {selectedOrder && (
-        <OrderNegotiationModal
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          order={selectedOrder}
-          onCounterOffer={async (price, message) => {
-            try {
-              await ordersAPI.updateOrder(selectedOrder.id, { 
-                counterPrice: price,
-                counterMessage: message 
-              });
-              toast({
-                title: 'Встречное предложение отправлено',
-                description: 'Покупатель получит уведомление',
-              });
-              loadData();
-            } catch (error) {
-              toast({
-                title: 'Ошибка',
-                description: 'Не удалось отправить встречное предложение',
-                variant: 'destructive',
-              });
-            }
-          }}
-          onAcceptCounter={async () => {
-            try {
-              await ordersAPI.updateOrder(selectedOrder.id, { 
-                acceptCounter: true,
-                status: 'accepted'
-              });
-              toast({
-                title: 'Встречное предложение принято',
-                description: 'Заказ переведён в статус "Принято"',
-              });
-              loadData();
-            } catch (error) {
-              toast({
-                title: 'Ошибка',
-                description: 'Не удалось принять встречное предложение',
-                variant: 'destructive',
-              });
-            }
-          }}
-          onCancelOrder={async () => {
-            try {
-              await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
-              toast({
-                title: 'Заказ отменён',
-                description: 'Заказ успешно отменён',
-              });
-              setIsChatOpen(false);
-              loadData();
-            } catch (error) {
-              toast({
-                title: 'Ошибка',
-                description: 'Не удалось отменить заказ',
-                variant: 'destructive',
-              });
-            }
-          }}
-          onCompleteOrder={async () => {
-            try {
-              await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
-              toast({
-                title: 'Заказ завершён',
-                description: 'Заказ успешно завершён',
-              });
-              setIsChatOpen(false);
-              loadData();
-            } catch (error) {
-              toast({
-                title: 'Ошибка',
-                description: 'Не удалось завершить заказ',
-                variant: 'destructive',
-              });
-            }
-          }}
-        />
-      )}
+      <EditOfferOrderModal
+        selectedOrder={selectedOrder}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        onDataReload={loadData}
+      />
     </div>
   );
 }
