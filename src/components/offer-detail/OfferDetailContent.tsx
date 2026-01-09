@@ -25,14 +25,12 @@ interface OfferDetailContentProps {
   isGalleryOpen: boolean;
   galleryIndex: number;
   showVideo: boolean;
-  isChatOpen: boolean;
   createdOrder: Order | null;
   onImageIndexChange: (index: number) => void;
   onVideoPlayingChange: (playing: boolean) => void;
   onMuteChange: (muted: boolean) => void;
   onOrderModalChange: (open: boolean) => void;
   onGalleryChange: (open: boolean) => void;
-  onChatChange: (open: boolean) => void;
   onPrevImage: () => void;
   onNextImage: () => void;
   onShare: () => void;
@@ -53,22 +51,18 @@ export default function OfferDetailContent({
   isGalleryOpen,
   galleryIndex,
   showVideo,
-  isChatOpen,
   createdOrder,
-  chatMessages,
   onImageIndexChange,
   onVideoPlayingChange,
   onMuteChange,
   onOrderModalChange,
   onGalleryChange,
-  onChatChange,
   onPrevImage,
   onNextImage,
   onShare,
   onOrderClick,
   onOrderSubmit,
   onOpenGallery,
-  onSendMessage,
   navigate,
 }: OfferDetailContentProps) {
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
