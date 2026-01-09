@@ -58,6 +58,7 @@ export function useOrdersData(
         offerTitle: order.offer_title || order.title,
         offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,
         quantity: order.quantity,
+        originalQuantity: order.original_quantity || order.originalQuantity,
         unit: order.unit,
         pricePerUnit: order.price_per_unit || order.pricePerUnit,
         totalAmount: order.total_amount || order.totalAmount,

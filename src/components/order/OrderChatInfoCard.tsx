@@ -33,7 +33,14 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson }: Ord
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-muted-foreground">Количество</p>
-            <p className="font-medium">{order.quantity} {order.unit}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-medium">{order.quantity} {order.unit}</p>
+              {order.originalQuantity && order.originalQuantity !== order.quantity && (
+                <span className="text-xs text-muted-foreground line-through">
+                  {order.originalQuantity} {order.unit}
+                </span>
+              )}
+            </div>
           </div>
           <div>
             <p className="text-muted-foreground">Сумма</p>

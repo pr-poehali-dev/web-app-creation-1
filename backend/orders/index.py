@@ -411,7 +411,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     sql = f"""
         INSERT INTO {schema}.orders (
             order_number, buyer_id, seller_id, offer_id,
-            title, quantity, unit, price_per_unit, total_amount,
+            title, quantity, original_quantity, unit, price_per_unit, total_amount,
             has_vat, vat_amount,
             delivery_type, delivery_address, district,
             buyer_name, buyer_phone, buyer_email, buyer_company, buyer_inn, buyer_comment,
@@ -420,7 +420,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
-            '{title_escaped}', {body['quantity']}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
+            '{title_escaped}', {body['quantity']}, {body['quantity']}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
             {body.get('hasVAT', False)}, {vat_amount if vat_amount else 'NULL'},
             '{delivery_type_escaped}', '{delivery_address_escaped}', '{district_escaped}',
             '{buyer_name_escaped}', '{buyer_phone_escaped}', '{buyer_email_escaped}', '{buyer_company_escaped}', '{buyer_inn_escaped}', '{buyer_comment_escaped}',

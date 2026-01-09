@@ -108,9 +108,21 @@ export default function OrderNegotiationSection({
                           {order.counterOfferedBy === 'buyer' ? 'Встречное предложение покупателя:' : 'Встречное предложение продавца:'}
                         </span>
                       </span>
-                      <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
-                        {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
-                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Количество:</span>
+                        <span className={`font-semibold ml-1 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                          {order.quantity} {order.unit}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Цена:</span>
+                        <span className={`font-semibold ml-1 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                          {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+                        </span>
+                      </div>
                     </div>
                     
                     {/* Сумма заказа */}

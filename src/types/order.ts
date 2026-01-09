@@ -13,6 +13,7 @@ export interface Order {
   sellerEmail: string;
   sellerPhone: string;
   quantity: number;
+  originalQuantity?: number;
   unit: string;
   pricePerUnit: number;
   totalAmount: number;
