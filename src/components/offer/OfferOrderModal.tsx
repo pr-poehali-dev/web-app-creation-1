@@ -41,7 +41,7 @@ export default function OfferOrderModal({
   const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery'>(
     availableDeliveryTypes[0] || 'pickup'
   );
-  const [quantity, setQuantity] = useState<number>(minOrderQuantity || 1);
+  const [quantity, setQuantity] = useState<string>(String(minOrderQuantity || 1));
   const [address, setAddress] = useState<string>('');
   const [comment, setComment] = useState<string>('');
   const [quantityError, setQuantityError] = useState<string>('');
@@ -55,19 +55,20 @@ export default function OfferOrderModal({
   }, [currentUser, selectedDeliveryType]);
 
   useEffect(() => {
-    if (minOrderQuantity && quantity < minOrderQuantity) {
-      setQuantity(minOrderQuantity);
+    const numQuantity = Number(quantity);
+    if (minOrderQuantity && numQuantity < minOrderQuantity) {
+      setQuantity(String(minOrderQuantity));
     }
   }, [minOrderQuantity]);
 
-  const handleQuantityChange = (value: number) => {
+  const handleQuantityChange = (value: string) => {
     const numValue = Number(value);
     
     if (isNaN(numValue) || numValue < 1) {
       return;
     }
     
-    setQuantity(numValue);
+    setQuantity(value);
     
     const minValue = minOrderQuantity || 1;
     
@@ -81,35 +82,35 @@ export default function OfferOrderModal({
   };
 
   const incrementQuantity = () => {
-    const newValue = quantity + 1;
+    const newValue = Number(quantity) + 1;
     if (newValue <= remainingQuantity) {
-      handleQuantityChange(newValue);
+      handleQuantityChange(String(newValue));
     }
   };
 
   const decrementQuantity = () => {
     const minValue = minOrderQuantity || 1;
-    const newValue = quantity - 1;
+    const newValue = Number(quantity) - 1;
     if (newValue >= minValue) {
-      handleQuantityChange(newValue);
+      handleQuantityChange(String(newValue));
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (minOrderQuantity && quantity < minOrderQuantity) {
+    if (minOrderQuantity && Number(quantity) < minOrderQuantity) {
       setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
       return;
     }
     
-    if (quantity > remainingQuantity) {
+    if (Number(quantity) > remainingQuantity) {
       setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
       return;
     }
     
     onSubmit({
-      quantity,
+      quantity: Number(quantity),
       deliveryType: selectedDeliveryType,
       address: selectedDeliveryType === 'delivery' ? address : undefined,
       comment,
@@ -138,7 +139,7 @@ export default function OfferOrderModal({
                 variant="outline"
                 size="icon"
                 onClick={decrementQuantity}
-                disabled={quantity <= (minOrderQuantity || 1)}
+                disabled={Number(quantity) <= (minOrderQuantity || 1)}
                 className="flex-shrink-0 h-10 w-10"
               >
                 <Icon name="Minus" size={16} />
@@ -157,12 +158,14 @@ export default function OfferOrderModal({
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === '') {
-                    setQuantity(minOrderQuantity || 1);
+                    setQuantity('');
+                    const min = minOrderQuantity || 1;
+                    setQuantityError(`Минимальное количество: ${min} ${unit}`);
                     return;
                   }
                   const numVal = Number(val);
                   if (!isNaN(numVal) && numVal >= 0) {
-                    handleQuantityChange(numVal);
+                    handleQuantityChange(val);
                   }
                 }}
                 onKeyDown={(e) => {
@@ -179,7 +182,7 @@ export default function OfferOrderModal({
                 variant="outline"
                 size="icon"
                 onClick={incrementQuantity}
-                disabled={quantity >= remainingQuantity}
+                disabled={Number(quantity) >= remainingQuantity}
                 className="flex-shrink-0 h-10 w-10"
               >
                 <Icon name="Plus" size={16} />
