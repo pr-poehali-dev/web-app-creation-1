@@ -254,19 +254,14 @@ export default function OfferOrderModal({
           </div>
 
           <div className="border-t pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Icon name="DollarSign" size={16} className="text-primary" />
-                <Label className="text-sm font-medium mb-0">Предложить свою цену</Label>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCounterPrice(!showCounterPrice)}
-                className="text-sm text-primary hover:underline"
-              >
-                {showCounterPrice ? 'Скрыть' : 'Показать'}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowCounterPrice(!showCounterPrice)}
+              className="flex items-center gap-2 text-sm font-medium text-primary hover:underline mb-2"
+            >
+              <Icon name="DollarSign" size={16} />
+              {showCounterPrice ? 'Скрыть предложение цены' : 'Предложить свою цену'}
+            </button>
             
             {showCounterPrice && (
               <div className="space-y-2">
