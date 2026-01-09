@@ -66,9 +66,9 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [orders, activeTab]);
 
   // Считаем количество заказов для каждого типа
-  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && order.status !== 'completed').length;
-  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && order.status !== 'completed').length;
-  const archiveOrdersCount = orders.filter(order => order.status === 'completed').length;
+  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && order.status !== 'completed' && order.status !== 'cancelled').length;
+  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && order.status !== 'completed' && order.status !== 'cancelled').length;
+  const archiveOrdersCount = orders.filter(order => order.status === 'completed' || order.status === 'cancelled').length;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">

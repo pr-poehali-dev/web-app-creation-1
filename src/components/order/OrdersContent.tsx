@@ -26,8 +26,8 @@ export default function OrdersContent({
 
   const displayOrders = orders.filter(order => {
     if (activeTab === 'archive') {
-      const isCompleted = order.status === 'completed';
-      if (!isCompleted) return false;
+      const isArchived = order.status === 'completed' || order.status === 'cancelled';
+      if (!isArchived) return false;
 
       // Фильтр по названию
       if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -37,7 +37,7 @@ export default function OrdersContent({
       return true;
     }
     const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-    return typeMatch && order.status !== 'completed';
+    return typeMatch && order.status !== 'completed' && order.status !== 'cancelled';
   });
 
   const isSeller = activeTab === 'seller';

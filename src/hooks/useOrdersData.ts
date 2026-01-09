@@ -82,6 +82,10 @@ export function useOrdersData(
         createdAt: new Date(order.createdAt || order.created_at),
         acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
         completedDate: order.completedDate || order.completed_date ? new Date(order.completedDate || order.completed_date) : undefined,
+        cancelledBy: order.cancelled_by || order.cancelledBy,
+        cancellationReason: order.cancellation_reason || order.cancellationReason,
+        buyerCompany: order.buyer_company || order.buyerCompany,
+        buyerInn: order.buyer_inn || order.buyerInn,
       }));
       
       // Проверяем новые встречные предложения для звукового уведомления

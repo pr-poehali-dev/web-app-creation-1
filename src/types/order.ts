@@ -25,11 +25,15 @@ export interface Order {
   deliveryType: 'pickup' | 'delivery';
   deliveryAddress?: string;
   comment?: string;
-  status: 'new' | 'pending' | 'accepted' | 'rejected' | 'completed' | 'negotiating';
+  status: 'new' | 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' | 'negotiating';
   createdAt: Date;
   acceptedAt?: Date;
   completedDate?: Date;
+  cancelledBy?: 'buyer' | 'seller';
+  cancellationReason?: string;
   type?: 'purchase' | 'sale';
+  buyerCompany?: string;
+  buyerInn?: string;
 }
 
 export interface ChatMessage {

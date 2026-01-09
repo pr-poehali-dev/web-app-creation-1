@@ -589,6 +589,25 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"completed_date = CURRENT_TIMESTAMP")
         updates.append(f"status = 'completed'")
     
+    # Отмена заказа - записываем кто отменил
+    elif 'status' in body and body['status'] == 'cancelled':
+        status_escaped = body['status'].replace("'", "''")
+        updates.append(f"status = '{status_escaped}'")
+        
+        # Определяем кто отменил заказ
+        cancelled_by = 'seller' if is_seller else 'buyer'
+        updates.append(f"cancelled_by = '{cancelled_by}'")
+        
+        # Если отменил продавец - снижаем его рейтинг на 5%
+        if is_seller:
+            seller_id = order['seller_id']
+            cur.execute(f"""
+                UPDATE {schema}.users 
+                SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+                WHERE id = {seller_id}
+            """)
+            print(f"[CANCEL_ORDER] Seller {seller_id} rating decreased by 5%")
+    
     # Обычное обновление статуса
     elif 'status' in body and body['status'] != 'accepted':
         status_escaped = body['status'].replace("'", "''")

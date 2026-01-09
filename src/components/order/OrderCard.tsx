@@ -24,8 +24,10 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
         return <Badge variant="outline" className="bg-green-50">Принят</Badge>;
       case 'rejected':
         return <Badge variant="outline" className="bg-red-50">Отклонен</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-gray-200 text-gray-700 border-gray-400">Отменён</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="bg-gray-200 text-gray-700 border-gray-400">Завершён</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-700 border-green-400">Завершён</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -99,6 +101,17 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
               </p>
             </div>
           )}
+          {order.status === 'cancelled' && (
+            <div className="col-span-2">
+              <p className="text-muted-foreground">Причина отмены</p>
+              <p className="font-medium text-red-600">
+                {order.cancelledBy === 'seller' ? '❌ Отменён продавцом' : '❌ Отменён покупателем'}
+              </p>
+              {order.cancellationReason && (
+                <p className="text-sm text-muted-foreground mt-1">{order.cancellationReason}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {order.comment && (
@@ -111,12 +124,12 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
         <div className="flex gap-2">
           <Button
             onClick={() => onOpenChat(order)}
-            variant={order.status === 'completed' ? 'secondary' : 'outline'}
+            variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
             className="flex-1"
             size="sm"
           >
             <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-            {order.status === 'completed' ? 'Завершён' : 'Чат'}
+            {order.status === 'completed' || order.status === 'cancelled' ? 'История' : 'Чат'}
           </Button>
           {isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder && (
             <Button
