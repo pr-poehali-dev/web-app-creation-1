@@ -185,8 +185,18 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         cur.execute(count_sql)
         total_count = cur.fetchone()['total']
         
-        # Получаем записи с пагинацией
-        sql = f"SELECT id, user_id, seller_id, title, description, category, district, price_per_unit, quantity, unit, sold_quantity, reserved_quantity, created_at FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}' ORDER BY created_at DESC LIMIT {limit} OFFSET {offset}"
+        # Получаем записи с пагинацией с JOIN на users для получения рейтинга
+        sql = f"""
+            SELECT 
+                o.id, o.user_id, o.seller_id, o.title, o.description, o.category, o.district, 
+                o.price_per_unit, o.quantity, o.unit, o.sold_quantity, o.reserved_quantity, o.created_at,
+                COALESCE(u.rating, 100.0) as seller_rating
+            FROM t_p42562714_web_app_creation_1.offers o
+            LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
+            WHERE o.status = '{status_filter}' 
+            ORDER BY o.created_at DESC 
+            LIMIT {limit} OFFSET {offset}
+        """
         
         cur.execute(sql)
         offers = cur.fetchall()
@@ -210,6 +220,8 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             if not seller_id and offer.get('user_id'):
                 seller_id = offer.get('user_id')
             
+            seller_rating = float(offer.get('seller_rating', 100.0)) if offer.get('seller_rating') else 100.0
+            
             result.append({
                 'id': str(offer['id']),
                 'userId': str(offer['user_id']) if offer.get('user_id') else None,
@@ -224,7 +236,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'unit': offer.get('unit'),
                 'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
-                'images': images_map.get(offer['id'], [])
+                'images': images_map.get(offer['id'], []),
+                'seller': {
+                    'rating': seller_rating
+                }
             })
         
         cur.close()
@@ -283,7 +298,7 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
             u.user_type as seller_type,
             u.phone as seller_phone,
             u.email as seller_email,
-            5.0 as seller_rating,
+            COALESCE(u.rating, 100.0) as seller_rating,
             0 as seller_reviews_count,
             CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as seller_is_verified,
             ov.url as video_url,

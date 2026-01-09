@@ -170,6 +170,7 @@ export default function OfferDetailContent({
                 availableDeliveryTypes={offer.availableDeliveryTypes}
                 createdAt={offer.createdAt}
                 expiryDate={offer.expiryDate}
+                sellerRating={offer.seller?.rating}
               />
             </div>
           </div>
@@ -226,6 +227,7 @@ export default function OfferDetailContent({
                 availableDeliveryTypes={offer.availableDeliveryTypes}
                 createdAt={offer.createdAt}
                 expiryDate={offer.expiryDate}
+                sellerRating={offer.seller?.rating}
               />
             </div>
           </div>

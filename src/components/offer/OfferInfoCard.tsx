@@ -27,6 +27,7 @@ interface OfferInfoCardProps {
   availableDeliveryTypes: ('pickup' | 'delivery')[];
   createdAt: Date;
   expiryDate?: Date;
+  sellerRating?: number;
 }
 
 export default function OfferInfoCard({
@@ -49,6 +50,7 @@ export default function OfferInfoCard({
   availableDeliveryTypes,
   createdAt,
   expiryDate,
+  sellerRating,
 }: OfferInfoCardProps) {
   const { districts } = useDistrict();
   
@@ -70,13 +72,20 @@ export default function OfferInfoCard({
       <CardContent className="pt-3 pb-3 space-y-3">
         <div>
           <h1 className="text-lg md:text-xl font-bold mb-1.5">{title}</h1>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 mb-2">
             {categoryName ? (
               <Badge variant="secondary" className="text-xs">{categoryName}</Badge>
             ) : (
               <Badge variant="secondary" className="text-xs">Без категории</Badge>
             )}
           </div>
+          {sellerRating !== undefined && (
+            <div className="flex items-center gap-1.5 text-sm">
+              <Icon name="Star" className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="font-semibold">{sellerRating.toFixed(1)}</span>
+              <span className="text-muted-foreground">— рейтинг продавца</span>
+            </div>
+          )}
         </div>
 
         {/* Основная информация - всегда видна */}

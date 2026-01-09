@@ -227,6 +227,13 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </h3>
 
         <div className="space-y-1 text-sm">
+          {offer.seller?.rating !== undefined && !isOwner && (
+            <div className="flex items-center gap-1 text-xs">
+              <Icon name="Star" className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+              <span className="font-medium">{offer.seller.rating.toFixed(1)}</span>
+              <span className="text-muted-foreground">рейтинг продавца</span>
+            </div>
+          )}
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-muted-foreground text-xs">Доступно:</span>
             {isOwner && isEditingQuantity ? (
