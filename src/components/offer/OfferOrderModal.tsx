@@ -257,7 +257,7 @@ export default function OfferOrderModal({
             <button
               type="button"
               onClick={() => setShowCounterPrice(!showCounterPrice)}
-              className="flex items-center gap-2 text-sm font-medium text-primary hover:underline mb-2"
+              className="flex items-center gap-2 text-sm font-medium text-primary hover:bg-primary/5 mb-2 border border-primary rounded-md px-3 py-2 transition-colors"
             >
               <Icon name="DollarSign" size={16} />
               {showCounterPrice ? 'Скрыть предложение цены' : 'Предложить свою цену'}
