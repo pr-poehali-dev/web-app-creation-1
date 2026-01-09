@@ -16,6 +16,7 @@ interface OrderNegotiationModalProps {
   onAcceptOrder?: () => void;
   onCounterOffer?: (price: number, message: string) => void;
   onAcceptCounter?: () => void;
+  onCancelOrder?: () => void;
   onCompleteOrder?: () => void;
 }
 
@@ -26,6 +27,7 @@ export default function OrderNegotiationModal({
   onAcceptOrder,
   onCounterOffer,
   onAcceptCounter,
+  onCancelOrder,
   onCompleteOrder,
 }: OrderNegotiationModalProps) {
   const currentUser = getSession();
@@ -51,6 +53,7 @@ export default function OrderNegotiationModal({
               isSeller={isSeller}
               onCounterOffer={onCounterOffer}
               onAcceptCounter={onAcceptCounter}
+              onCancelOrder={onCancelOrder}
               onCompleteOrder={onCompleteOrder}
             />
 

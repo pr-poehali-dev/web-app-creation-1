@@ -32,6 +32,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleAcceptOrder,
     handleCounterOffer,
     handleAcceptCounter,
+    handleCancelOrder,
     handleCompleteOrder,
     handleOpenChat,
     handleCloseChat,
@@ -139,6 +140,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onAcceptOrder={currentUser?.id?.toString() === selectedOrder.sellerId ? () => handleAcceptOrder() : undefined}
           onCounterOffer={handleCounterOffer}
           onAcceptCounter={handleAcceptCounter}
+          onCancelOrder={handleCancelOrder}
           onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? handleCompleteOrder : undefined}
         />
       )}

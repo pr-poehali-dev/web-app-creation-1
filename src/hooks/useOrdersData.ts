@@ -311,6 +311,29 @@ export function useOrdersData(
     setSelectedOrder(null);
   };
 
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
+
+      toast({
+        title: 'Заказ отменён',
+        description: 'Заказ успешно отменён',
+      });
+
+      setIsChatOpen(false);
+      await loadOrders(false);
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось отменить заказ',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return {
     orders,
     selectedOrder,
@@ -320,6 +343,7 @@ export function useOrdersData(
     handleAcceptOrder,
     handleCounterOffer,
     handleAcceptCounter,
+    handleCancelOrder,
     handleCompleteOrder,
     handleOpenChat,
     handleCloseChat,

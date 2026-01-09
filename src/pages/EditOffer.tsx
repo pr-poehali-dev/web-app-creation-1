@@ -463,6 +463,23 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
               });
             }
           }}
+          onCancelOrder={async () => {
+            try {
+              await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
+              toast({
+                title: 'Заказ отменён',
+                description: 'Заказ успешно отменён',
+              });
+              setIsChatOpen(false);
+              loadData();
+            } catch (error) {
+              toast({
+                title: 'Ошибка',
+                description: 'Не удалось отменить заказ',
+                variant: 'destructive',
+              });
+            }
+          }}
           onCompleteOrder={async () => {
             try {
               await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
