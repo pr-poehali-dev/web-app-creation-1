@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "Get active banners",
+      "method": "GET",
+      "path": "/?banners=true",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get all content without auth",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}
