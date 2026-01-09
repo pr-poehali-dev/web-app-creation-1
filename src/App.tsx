@@ -101,6 +101,7 @@ const AdminManageAdmins = lazyWithRetry(() => import("./pages/AdminManageAdmins"
 const AdminPanel = lazyWithRetry(() => import("./pages/AdminPanel"));
 const AdminOrders = lazyWithRetry(() => import("./pages/AdminOrders"));
 const SetAdminPassword = lazyWithRetry(() => import("./pages/SetAdminPassword"));
+const AdminContentManagement = lazyWithRetry(() => import("./pages/AdminContentManagement"));
 const TradingPlatform = lazyWithRetry(() => import("./pages/TradingPlatform"));
 const CreateContract = lazyWithRetry(() => import("./pages/CreateContract"));
 const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
@@ -207,6 +208,7 @@ const App = () => {
             <Route path="/admin/manage-admins" element={<AdminManageAdmins isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/verifications" element={<AdminVerifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/admin/change-password" element={<AdminChangePassword />} />
+            <Route path="/admin/content" element={<AdminContentManagement />} />
             <Route path="/set-admin-password" element={<SetAdminPassword />} />
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-contract" element={<CreateContract isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

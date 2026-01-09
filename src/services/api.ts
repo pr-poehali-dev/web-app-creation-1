@@ -11,6 +11,7 @@ const AUCTIONS_LIST_API = func2url['auctions-list'];
 const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
+const CONTENT_MANAGEMENT_API = func2url['content-management'];
 
 // Продвинутое кэширование с разными TTL для разных типов данных
 interface CacheEntry {
@@ -916,6 +917,85 @@ export const auctionsAPI = {
       throw new Error('Failed to delete auction');
     }
   },
+};
+
+export const contentAPI = {
+  async getContent(): Promise<any> {
+    const response = await fetchWithRetry(CONTENT_MANAGEMENT_API);
+    if (!response.ok) {
+      throw new Error('Failed to fetch content');
+    }
+    return response.json();
+  },
+
+  async updateContent(key: string, value: string): Promise<void> {
+    const response = await fetchWithRetry(CONTENT_MANAGEMENT_API, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ key, value }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update content');
+    }
+  },
+
+  async getBanners(): Promise<any[]> {
+    const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?banners=true`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch banners');
+    }
+    const data = await response.json();
+    return data.banners || [];
+  },
+
+  async createBanner(data: {
+    title: string;
+    message: string;
+    type: string;
+    start_date?: string;
+    end_date?: string;
+    is_active: boolean;
+  }): Promise<void> {
+    const response = await fetchWithRetry(CONTENT_MANAGEMENT_API, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to create banner');
+    }
+  },
+
+  async updateBanner(bannerId: number, updates: any): Promise<void> {
+    const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?bannerId=${bannerId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to update banner');
+    }
+  },
+
+  async deleteBanner(bannerId: number): Promise<void> {
+    const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?bannerId=${bannerId}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete banner');
+    }
+  },
+};
 
   async updateAuction(data: {
     auctionId: string;

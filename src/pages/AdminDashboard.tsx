@@ -107,6 +107,15 @@ export default function AdminDashboard({ isAuthenticated, onLogout }: AdminDashb
       color: 'bg-pink-500',
       count: null,
       path: '/admin/manage-admins'
+    },
+    {
+      id: 'content',
+      title: 'Управление контентом',
+      description: 'Тексты сайта и праздничные баннеры',
+      icon: 'FileEdit',
+      color: 'bg-cyan-500',
+      count: null,
+      path: '/admin/content'
     }
   ];
 

@@ -28,6 +28,9 @@ export default function OrderNegotiationSection({
   const [counterPrice, setCounterPrice] = useState(order.pricePerUnit.toString());
   const [counterQuantity, setCounterQuantity] = useState(order.quantity.toString());
   const [counterMessage, setCounterMessage] = useState('');
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [rating, setRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
 
   const handleCounterOffer = async () => {
     const price = parseFloat(counterPrice);
@@ -185,7 +188,13 @@ export default function OrderNegotiationSection({
                             Принять
                           </Button>
                           <Button 
-                            onClick={() => setShowCounterForm(true)} 
+                            onClick={() => {
+                              if (!showCounterForm) {
+                                setCounterPrice(order.counterPricePerUnit?.toString() || order.pricePerUnit.toString());
+                                setCounterQuantity(order.quantity.toString());
+                              }
+                              setShowCounterForm(true);
+                            }} 
                             size="sm"
                             className={`text-[11px] px-2 py-1.5 h-auto flex-1 ${
                               showCounterForm 
@@ -359,6 +368,90 @@ export default function OrderNegotiationSection({
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Завершение заказа покупателем с отзывом */}
+      {isBuyer && order.status === 'accepted' && onCompleteOrder && (
+        <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
+          <CardContent className="pt-4">
+            {!showReviewForm ? (
+              <div className="flex items-center gap-3">
+                <Icon name="PackageCheck" className="h-5 w-5 text-green-600 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm mb-1">Заказ принят</h3>
+                  <p className="text-sm text-muted-foreground mb-3">Товар получен? Завершите заказ и оставьте отзыв.</p>
+                  <Button 
+                    onClick={() => setShowReviewForm(true)} 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Icon name="Star" className="mr-1.5 h-4 w-4" />
+                    Завершить с отзывом
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h3 className="font-semibold text-sm">Оставьте отзыв о продавце</h3>
+                
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-2">Оценка</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setRating(star)}
+                        className="transition-transform hover:scale-110"
+                      >
+                        <Icon 
+                          name="Star" 
+                          className={`h-6 w-6 ${
+                            star <= rating 
+                              ? 'fill-yellow-400 text-yellow-400' 
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-2">
+                    Отзыв (необязательно)
+                  </label>
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Расскажите о вашем опыте работы с продавцом..."
+                    className="w-full p-3 border rounded-lg min-h-[100px] bg-background"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      onCompleteOrder();
+                      setShowReviewForm(false);
+                    }}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
+                    Завершить заказ
+                  </Button>
+                  <Button
+                    onClick={() => setShowReviewForm(false)}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Отмена
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

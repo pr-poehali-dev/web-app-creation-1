@@ -40,7 +40,7 @@ button {
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
+    --background: 220 20% 96%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -55,7 +55,7 @@ button {
     --secondary: 215 20% 52%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
+    --muted: 215 25% 93%;
     --muted-foreground: 215 16% 47%;
 
     --accent: 221 83% 32%;
@@ -88,13 +88,13 @@ button {
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222 50% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 8%;
+    --card: 222 45% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 8%;
+    --popover: 222 45% 12%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 217 91% 60%;
@@ -103,7 +103,7 @@ button {
     --secondary: 217.2 32.6% 25%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 20%;
+    --muted: 217 35% 18%;
     --muted-foreground: 215 20.2% 70%;
 
     --accent: 217.2 32.6% 25%;
