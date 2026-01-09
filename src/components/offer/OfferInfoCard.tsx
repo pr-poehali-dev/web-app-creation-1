@@ -110,13 +110,6 @@ export default function OfferInfoCard({
           </div>
         )}
 
-        <div className="bg-primary/5 p-2 rounded-md">
-          <p className="text-xs text-muted-foreground mb-0.5">Общая стоимость</p>
-          <p className="text-xl font-bold text-primary">
-            {(totalAmount || 0).toLocaleString('ru-RU')} ₽
-          </p>
-        </div>
-
         {/* Дополнительная информация в аккордеоне */}
         <Accordion type="single" collapsible defaultValue="" className="w-full md:!hidden">
           <AccordionItem value="details" className="border-0">
