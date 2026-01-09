@@ -174,10 +174,11 @@ export function useOrdersData(
     }
   };
 
-  const handleCounterOffer = async (price: number, message: string) => {
+  const handleCounterOffer = async (price: number, message: string, quantity?: number) => {
     if (!selectedOrder) return;
 
-    console.log('[handleCounterOffer] Called with:', { price, message, orderId: selectedOrder.id });
+    const finalQuantity = quantity ?? selectedOrder.quantity;
+    console.log('[handleCounterOffer] Called with:', { price, message, quantity: finalQuantity, orderId: selectedOrder.id });
 
     try {
       const currentUser = getSession();
@@ -186,12 +187,14 @@ export function useOrdersData(
       console.log('[handleCounterOffer] Sending to API:', { 
         orderId: selectedOrder.id,
         counterPrice: price,
+        counterQuantity: finalQuantity,
         counterMessage: message,
         isSeller
       });
 
       await ordersAPI.updateOrder(selectedOrder.id, { 
         counterPrice: price,
+        counterQuantity: finalQuantity,
         counterMessage: message 
       });
 
@@ -201,8 +204,9 @@ export function useOrdersData(
       setSelectedOrder({
         ...selectedOrder,
         status: 'negotiating',
+        quantity: finalQuantity,
         counterPricePerUnit: price,
-        counterTotalAmount: price * selectedOrder.quantity,
+        counterTotalAmount: price * finalQuantity,
         counterOfferedBy: isSeller ? 'seller' : 'buyer',
         counterOfferMessage: message,
         counterOfferedAt: new Date(),

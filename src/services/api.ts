@@ -646,6 +646,7 @@ export const ordersAPI = {
     sellerComment?: string; 
     cancellationReason?: string;
     counterPrice?: number;
+    counterQuantity?: number;
     counterMessage?: string;
     acceptCounter?: boolean;
   }): Promise<{ message: string }> {

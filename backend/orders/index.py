@@ -482,12 +482,13 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     # Предложение цены от покупателя
     if 'counterPrice' in body and is_buyer:
         counter_price = float(body['counterPrice'])
-        quantity = order['quantity']
+        quantity = int(body.get('counterQuantity', order['quantity']))
         counter_total = counter_price * quantity
         counter_message = body.get('counterMessage', '').replace("'", "''")
         
         updates.append(f"counter_price_per_unit = {counter_price}")
         updates.append(f"counter_total_amount = {counter_total}")
+        updates.append(f"quantity = {quantity}")
         updates.append(f"counter_offer_message = '{counter_message}'")
         updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
         updates.append(f"counter_offered_by = 'buyer'")
@@ -497,12 +498,13 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     # Встречное предложение от продавца (после предложения покупателя)
     if 'counterPrice' in body and is_seller:
         counter_price = float(body['counterPrice'])
-        quantity = order['quantity']
+        quantity = int(body.get('counterQuantity', order['quantity']))
         counter_total = counter_price * quantity
         counter_message = body.get('counterMessage', '').replace("'", "''")
         
         updates.append(f"counter_price_per_unit = {counter_price}")
         updates.append(f"counter_total_amount = {counter_total}")
+        updates.append(f"quantity = {quantity}")
         updates.append(f"counter_offer_message = '{counter_message}'")
         updates.append(f"counter_offered_at = CURRENT_TIMESTAMP")
         updates.append(f"counter_offered_by = 'seller'")

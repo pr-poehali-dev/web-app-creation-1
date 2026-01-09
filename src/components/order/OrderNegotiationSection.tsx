@@ -9,7 +9,7 @@ interface OrderNegotiationSectionProps {
   order: Order;
   isBuyer: boolean;
   isSeller: boolean;
-  onCounterOffer?: (price: number, message: string) => void;
+  onCounterOffer?: (price: number, message: string, quantity?: number) => void;
   onAcceptCounter?: () => void;
   onCancelOrder?: () => void;
   onCompleteOrder?: () => void;
@@ -26,21 +26,28 @@ export default function OrderNegotiationSection({
 }: OrderNegotiationSectionProps) {
   const [showCounterForm, setShowCounterForm] = useState(false);
   const [counterPrice, setCounterPrice] = useState(order.pricePerUnit.toString());
+  const [counterQuantity, setCounterQuantity] = useState(order.quantity.toString());
   const [counterMessage, setCounterMessage] = useState('');
 
   const handleCounterOffer = async () => {
     const price = parseFloat(counterPrice);
-    console.log('[OrderNegotiation.handleCounterOffer] Validating price:', { counterPrice, price, isValid: !isNaN(price) && price > 0 });
+    const quantity = parseFloat(counterQuantity);
+    console.log('[OrderNegotiation.handleCounterOffer] Validating:', { counterPrice, price, counterQuantity, quantity, isValid: !isNaN(price) && price > 0 && !isNaN(quantity) && quantity > 0 });
     
     if (isNaN(price) || price <= 0) {
       console.error('[OrderNegotiation.handleCounterOffer] Invalid price');
       return;
     }
     
+    if (isNaN(quantity) || quantity <= 0) {
+      console.error('[OrderNegotiation.handleCounterOffer] Invalid quantity');
+      return;
+    }
+    
     if (onCounterOffer) {
-      console.log('[OrderNegotiation.handleCounterOffer] Calling onCounterOffer with:', { price, message: counterMessage.trim() });
+      console.log('[OrderNegotiation.handleCounterOffer] Calling onCounterOffer with:', { price, quantity, message: counterMessage.trim() });
       try {
-        await onCounterOffer(price, counterMessage.trim());
+        await onCounterOffer(price, counterMessage.trim(), quantity);
         console.log('[OrderNegotiation.handleCounterOffer] Success, closing form');
         setShowCounterForm(false);
         setCounterMessage('');
@@ -217,21 +224,32 @@ export default function OrderNegotiationSection({
       {showCounterForm && isBuyer && order.status === 'new' && (
         <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
           <CardContent className="pt-4 space-y-3">
-            <h3 className="font-semibold text-sm">Предложить свою цену</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <h3 className="font-semibold text-sm">Предложить свои условия</h3>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-muted-foreground block mb-1">Ваша цена за {order.unit}</label>
+                <label className="text-xs text-muted-foreground block mb-1">Количество ({order.unit})</label>
+                <Input
+                  type="number"
+                  value={counterQuantity}
+                  onChange={(e) => setCounterQuantity(e.target.value)}
+                  min="1"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Цена за {order.unit}</label>
                 <Input
                   type="number"
                   value={counterPrice}
                   onChange={(e) => setCounterPrice(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground block mb-1">Общая сумма</label>
-                <div className="font-bold text-lg text-blue-600 pt-2">
-                  {(parseFloat(counterPrice || '0') * order.quantity).toLocaleString('ru-RU')} ₽
-                </div>
+            </div>
+            <div className="bg-white/50 dark:bg-gray-900/50 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Общая сумма:</span>
+                <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
+                  {(parseFloat(counterPrice || '0') * parseFloat(counterQuantity || '0')).toLocaleString('ru-RU')} ₽
+                </span>
               </div>
             </div>
 
