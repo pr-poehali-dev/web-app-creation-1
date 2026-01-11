@@ -185,6 +185,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'normal'
     },
     {
+      id: 'ai-chat',
+      title: 'AI-Ассистент',
+      description: 'Чат с ИИ для помощи с контентом и задачами',
+      icon: 'Bot',
+      color: 'bg-purple-500',
+      count: null,
+      path: '/admin/ai-chat',
+      priority: 'high'
+    },
+    {
       id: 'orders',
       title: 'Мониторинг заказов',
       description: 'Просмотр всех заказов системы и статистика',
