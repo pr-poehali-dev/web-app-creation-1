@@ -176,22 +176,12 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
     },
     {
       id: 'content',
-      title: 'Управление контентом',
-      description: 'Редактирование текстов и праздничных баннеров',
-      icon: 'FileText',
-      color: 'bg-teal-500',
-      count: null,
-      path: '/admin/content',
-      priority: 'normal'
-    },
-    {
-      id: 'ai-chat',
-      title: 'AI-Ассистент',
-      description: 'Чат с ИИ для помощи с контентом и задачами',
-      icon: 'Bot',
+      title: 'Редактирование текстов',
+      description: 'Редактирование текстов сайта и праздничных баннеров',
+      icon: 'FileEdit',
       color: 'bg-purple-500',
       count: null,
-      path: '/admin/ai-chat',
+      path: '/admin/content',
       priority: 'high'
     },
     {

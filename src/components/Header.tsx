@@ -179,7 +179,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20 dark:from-gray-900 dark:via-blue-950/20 dark:to-purple-950/10 shadow-md backdrop-blur-sm">
+    <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-br from-white via-blue-100/60 to-purple-100/50 dark:from-gray-900 dark:via-blue-900/40 dark:to-purple-900/30 shadow-lg backdrop-blur-sm">
       <div className="container mx-auto px-4">
         <div className="flex h-14 md:h-18 items-center justify-between">
           <Link 
