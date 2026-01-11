@@ -917,6 +917,39 @@ export const auctionsAPI = {
       throw new Error('Failed to delete auction');
     }
   },
+
+  async updateAuction(data: {
+    auctionId: string;
+    action: 'update' | 'reduce-price' | 'stop';
+    title?: string;
+    description?: string;
+    startingPrice?: number;
+    buyNowPrice?: number;
+    minBidStep?: number;
+    images?: Array<{ url: string; alt?: string }>;
+    newPrice?: number;
+  }): Promise<{ success: boolean; message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(AUCTIONS_UPDATE_API, {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update auction');
+    }
+    
+    return response.json();
+  },
 };
 
 export const contentAPI = {
@@ -994,38 +1027,5 @@ export const contentAPI = {
     if (!response.ok) {
       throw new Error('Failed to delete banner');
     }
-  },
-
-  async updateAuction(data: {
-    auctionId: string;
-    action: 'update' | 'reduce-price' | 'stop';
-    title?: string;
-    description?: string;
-    startingPrice?: number;
-    buyNowPrice?: number;
-    minBidStep?: number;
-    images?: Array<{ url: string; alt?: string }>;
-    newPrice?: number;
-  }): Promise<{ success: boolean; message: string }> {
-    const userId = getUserId();
-    if (!userId) {
-      throw new Error('User not authenticated');
-    }
-
-    const response = await fetchWithRetry(AUCTIONS_UPDATE_API, {
-      method: 'POST',
-      headers: {
-        'X-User-Id': userId,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to update auction');
-    }
-    
-    return response.json();
   },
 };
