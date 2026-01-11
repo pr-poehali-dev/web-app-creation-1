@@ -10,6 +10,7 @@ import Icon from '@/components/ui/icon';
 import OfferMediaGallery from '@/components/offer/OfferMediaGallery';
 import OfferInfoCard from '@/components/offer/OfferInfoCard';
 import OfferOrderModal from '@/components/offer/OfferOrderModal';
+import OfferReviews from '@/components/offer/OfferReviews';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 import { getSession } from '@/utils/auth';
@@ -232,6 +233,16 @@ export default function OfferDetailContent({
             </div>
           </div>
         </div>
+
+        {offer.seller?.reviews && offer.seller.reviews.length > 0 && (
+          <div className="mb-6">
+            <OfferReviews
+              reviews={offer.seller.reviews}
+              averageRating={offer.seller.rating}
+              totalReviews={offer.seller.reviewsCount}
+            />
+          </div>
+        )}
 
         {similarOffers.length > 0 && (
           <div>

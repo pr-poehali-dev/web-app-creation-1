@@ -70,14 +70,4 @@ export interface Auction {
   expiryDate?: string;
   availableDeliveryTypes?: ('pickup' | 'delivery')[];
   winningBidId?: string;
-  reviews?: Array<{
-    id: string;
-    reviewerId: string;
-    reviewerName: string;
-    rating: number;
-    comment: string;
-    createdAt: Date | string;
-  }>;
-  averageRating?: number;
-  reviewsCount?: number;
 }

@@ -13,7 +13,6 @@ import ProfileInfoCard from '@/components/profile/ProfileInfoCard';
 import ProfileSecurityCard from '@/components/profile/ProfileSecurityCard';
 import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
-import ProfileReviewsCard from '@/components/profile/ProfileReviewsCard';
 
 interface ProfileProps {
   isAuthenticated: boolean;
@@ -458,14 +457,6 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               registrationDate={currentUser.createdAt || ''}
               formatDate={formatDate}
             />
-
-            {currentUser.reviews && (
-              <ProfileReviewsCard
-                reviews={currentUser.reviews}
-                averageRating={currentUser.averageRating || 0}
-                totalReviews={currentUser.reviewsCount || 0}
-              />
-            )}
 
             {isViewingOwnProfile && currentUser.email === 'doydum-invest@mail.ru' && (
               <Card>

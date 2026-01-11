@@ -158,14 +158,6 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
                 {auction.bidsCount} {auction.bidsCount === 1 ? 'ставка' : 'ставок'}
               </span>
             </div>
-            {auction.averageRating && auction.reviewsCount && auction.reviewsCount > 0 && (
-              <div className="flex items-center gap-1.5 text-xs md:text-sm">
-                <Icon name="Star" className="h-3 w-3 md:h-4 md:w-4 text-yellow-500 fill-yellow-500" />
-                <span className="font-semibold text-muted-foreground">
-                  {auction.averageRating.toFixed(1)} ({auction.reviewsCount} {auction.reviewsCount === 1 ? 'отзыв' : auction.reviewsCount < 5 ? 'отзыва' : 'отзывов'})
-                </span>
-              </div>
-            )}
             <div className="flex items-center gap-1.5 text-xs md:text-sm">
               <Icon name="MapPin" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
               <span className="text-muted-foreground truncate">{districtName}</span>

@@ -13,7 +13,6 @@ import AuctionInfoPanel from '@/components/auction/AuctionInfoPanel';
 import AuctionBidForm from '@/components/auction/AuctionBidForm';
 import BidHistoryTabs from '@/components/auction/BidHistoryTabs';
 import AuctionCompletionForm from '@/components/auction/AuctionCompletionForm';
-import AuctionReviews from '@/components/auction/AuctionReviews';
 
 interface AuctionDetailProps {
   isAuthenticated: boolean;
@@ -127,13 +126,6 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
               currentUserId={currentUser?.userId}
             />
           </div>
-
-          {auction.reviews && auction.reviews.length > 0 && (
-            <AuctionReviews
-              reviews={auction.reviews}
-              averageRating={auction.averageRating}
-            />
-          )}
         </div>
       </main>
 

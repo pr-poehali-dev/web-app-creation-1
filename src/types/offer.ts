@@ -34,6 +34,15 @@ export interface Seller {
     completedOrders: number;
     registrationDate: Date;
   };
+  reviews?: Array<{
+    id: string;
+    reviewerId: string;
+    reviewerName: string;
+    rating: number;
+    comment: string;
+    createdAt: Date | string;
+    offerTitle?: string;
+  }>;
 }
 
 export interface Offer {

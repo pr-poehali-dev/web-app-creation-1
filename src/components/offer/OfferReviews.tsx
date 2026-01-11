@@ -11,14 +11,16 @@ interface Review {
   rating: number;
   comment: string;
   createdAt: Date | string;
+  offerTitle?: string;
 }
 
-interface AuctionReviewsProps {
+interface OfferReviewsProps {
   reviews: Review[];
-  averageRating?: number;
+  averageRating: number;
+  totalReviews: number;
 }
 
-export default function AuctionReviews({ reviews, averageRating }: AuctionReviewsProps) {
+export default function OfferReviews({ reviews, averageRating, totalReviews }: OfferReviewsProps) {
   if (!reviews || reviews.length === 0) {
     return null;
   }
@@ -46,7 +48,7 @@ export default function AuctionReviews({ reviews, averageRating }: AuctionReview
       <CardHeader className="py-2 md:py-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm md:text-base">
-            Отзывы ({reviews.length})
+            Отзывы о продавце ({totalReviews})
           </CardTitle>
           {averageRating && (
             <div className="flex items-center gap-2">
@@ -81,6 +83,9 @@ export default function AuctionReviews({ reviews, averageRating }: AuctionReview
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-sm">{review.reviewerName}</p>
+                    {review.offerTitle && (
+                      <p className="text-xs text-muted-foreground">{review.offerTitle}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(review.createdAt), {
                         addSuffix: true,

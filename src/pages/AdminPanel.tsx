@@ -175,6 +175,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'normal'
     },
     {
+      id: 'content',
+      title: 'Управление контентом',
+      description: 'Редактирование текстов и праздничных баннеров',
+      icon: 'FileText',
+      color: 'bg-teal-500',
+      count: null,
+      path: '/admin/content',
+      priority: 'normal'
+    },
+    {
       id: 'orders',
       title: 'Мониторинг заказов',
       description: 'Просмотр всех заказов системы и статистика',
