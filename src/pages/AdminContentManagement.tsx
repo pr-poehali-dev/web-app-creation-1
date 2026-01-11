@@ -35,6 +35,8 @@ export default function AdminContentManagement() {
           data.forEach((item: any) => {
             contentMap[item.key] = item.value;
           });
+        } else if (typeof data === 'object') {
+          Object.assign(contentMap, data);
         }
         setContent(contentMap);
       } else {
@@ -43,6 +45,7 @@ export default function AdminContentManagement() {
       }
     } catch (error) {
       console.error('Failed to load data:', error);
+      alert('Ошибка загрузки данных: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -54,13 +57,18 @@ export default function AdminContentManagement() {
       setContent({ ...content, [key]: editValue });
       setEditingKey(null);
       setEditValue('');
+      alert('✓ Текст успешно сохранён');
     } catch (error) {
       console.error('Failed to update content:', error);
-      alert('Ошибка при сохранении');
+      alert('Ошибка при сохранении: ' + (error as Error).message);
     }
   };
 
   const handleCreateBanner = async () => {
+    if (!newBanner.title || !newBanner.message) {
+      alert('Заполните заголовок и сообщение');
+      return;
+    }
     try {
       await contentAPI.createBanner(newBanner);
       setShowBannerForm(false);
@@ -72,20 +80,22 @@ export default function AdminContentManagement() {
         end_date: '',
         is_active: true,
       });
+      alert('✓ Баннер успешно создан');
       loadData();
     } catch (error) {
       console.error('Failed to create banner:', error);
-      alert('Ошибка при создании баннера');
+      alert('Ошибка при создании баннера: ' + (error as Error).message);
     }
   };
 
   const handleToggleBanner = async (bannerId: number, isActive: boolean) => {
     try {
       await contentAPI.updateBanner(bannerId, { is_active: !isActive });
+      alert('✓ Статус баннера изменён');
       loadData();
     } catch (error) {
       console.error('Failed to toggle banner:', error);
-      alert('Ошибка при изменении статуса');
+      alert('Ошибка при изменении статуса: ' + (error as Error).message);
     }
   };
 
@@ -93,10 +103,11 @@ export default function AdminContentManagement() {
     if (!confirm('Удалить баннер?')) return;
     try {
       await contentAPI.deleteBanner(bannerId);
+      alert('✓ Баннер удалён');
       loadData();
     } catch (error) {
       console.error('Failed to delete banner:', error);
-      alert('Ошибка при удалении');
+      alert('Ошибка при удалении: ' + (error as Error).message);
     }
   };
 
@@ -143,6 +154,11 @@ export default function AdminContentManagement() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
         ) : activeTab === 'texts' ? (
+          Object.keys(content).length === 0 ? (
+            <div className="bg-card rounded-lg border p-6">
+              <p className="text-center text-muted-foreground">Нет доступных текстов для редактирования</p>
+            </div>
+          ) : (
           <div className="bg-card rounded-lg border">
             <div className="p-6 space-y-4">
               {Object.entries(content).map(([key, value]) => (
@@ -201,6 +217,7 @@ export default function AdminContentManagement() {
               ))}
             </div>
           </div>
+          )
         ) : (
           <div className="space-y-4">
             <button
