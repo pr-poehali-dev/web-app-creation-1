@@ -30,10 +30,16 @@ export default function AdminContentManagement() {
       setLoading(true);
       if (activeTab === 'texts') {
         const data = await contentAPI.getContent();
-        setContent(data);
+        const contentMap: any = {};
+        if (Array.isArray(data)) {
+          data.forEach((item: any) => {
+            contentMap[item.key] = item.value;
+          });
+        }
+        setContent(contentMap);
       } else {
         const data = await contentAPI.getBanners();
-        setBanners(data);
+        setBanners(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
