@@ -234,12 +234,12 @@ export default function OfferDetailContent({
           </div>
         </div>
 
-        {offer.seller?.reviews && offer.seller.reviews.length > 0 && (
+        {offer.seller && (
           <div className="mb-6">
             <OfferReviews
-              reviews={offer.seller.reviews}
-              averageRating={offer.seller.rating}
-              totalReviews={offer.seller.reviewsCount}
+              reviews={offer.seller.reviews || []}
+              averageRating={offer.seller.rating || 0}
+              totalReviews={offer.seller.reviewsCount || 0}
             />
           </div>
         )}

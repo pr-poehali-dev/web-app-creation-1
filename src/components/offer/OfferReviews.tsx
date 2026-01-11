@@ -21,10 +21,6 @@ interface OfferReviewsProps {
 }
 
 export default function OfferReviews({ reviews, averageRating, totalReviews }: OfferReviewsProps) {
-  if (!reviews || reviews.length === 0) {
-    return null;
-  }
-
   const renderStars = (rating: number) => {
     return (
       <div className="flex gap-0.5">
@@ -50,7 +46,7 @@ export default function OfferReviews({ reviews, averageRating, totalReviews }: O
           <CardTitle className="text-sm md:text-base">
             Отзывы о продавце ({totalReviews})
           </CardTitle>
-          {averageRating && (
+          {averageRating > 0 && (
             <div className="flex items-center gap-2">
               <div className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -70,36 +66,44 @@ export default function OfferReviews({ reviews, averageRating, totalReviews }: O
           )}
         </div>
       </CardHeader>
-      <CardContent className="py-2 md:py-3 space-y-4">
-        {reviews.map((review) => (
-          <div key={review.id} className="border-b last:border-b-0 pb-4 last:pb-0">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  {review.reviewerName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-sm">{review.reviewerName}</p>
-                    {review.offerTitle && (
-                      <p className="text-xs text-muted-foreground">{review.offerTitle}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(review.createdAt), {
-                        addSuffix: true,
-                        locale: ru,
-                      })}
-                    </p>
+      <CardContent className="py-2 md:py-3">
+        {!reviews || reviews.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Пока нет отзывов о продавце
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {reviews.map((review) => (
+              <div key={review.id} className="border-b last:border-b-0 pb-4 last:pb-0">
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {review.reviewerName.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">{review.reviewerName}</p>
+                        {review.offerTitle && (
+                          <p className="text-xs text-muted-foreground">{review.offerTitle}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(review.createdAt), {
+                            addSuffix: true,
+                            locale: ru,
+                          })}
+                        </p>
+                      </div>
+                      {renderStars(review.rating)}
+                    </div>
+                    <p className="text-sm text-muted-foreground">{review.comment}</p>
                   </div>
-                  {renderStars(review.rating)}
                 </div>
-                <p className="text-sm text-muted-foreground">{review.comment}</p>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
+        )}
       </CardContent>
     </Card>
   );
