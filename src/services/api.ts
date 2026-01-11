@@ -995,7 +995,6 @@ export const contentAPI = {
       throw new Error('Failed to delete banner');
     }
   },
-};
 
   async updateAuction(data: {
     auctionId: string;
