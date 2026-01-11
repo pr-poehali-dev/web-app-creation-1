@@ -37,6 +37,17 @@ interface User {
   legalAddress?: string;
   createdAt?: string;
   verificationStatus?: string;
+  reviews?: Array<{
+    id: string;
+    reviewerId: string;
+    reviewerName: string;
+    rating: number;
+    comment: string;
+    createdAt: Date | string;
+    offerTitle?: string;
+  }>;
+  averageRating?: number;
+  reviewsCount?: number;
 }
 
 interface AuthResponse {
@@ -67,6 +78,9 @@ const convertUserFromBackend = (backendUser: any): User => {
     legalAddress: backendUser.legal_address || backendUser.legalAddress,
     createdAt: backendUser.created_at || backendUser.createdAt,
     verificationStatus: backendUser.verification_status || backendUser.verificationStatus,
+    reviews: backendUser.reviews,
+    averageRating: backendUser.average_rating || backendUser.averageRating,
+    reviewsCount: backendUser.reviews_count || backendUser.reviewsCount,
   };
   
   if (backendUser.role) {

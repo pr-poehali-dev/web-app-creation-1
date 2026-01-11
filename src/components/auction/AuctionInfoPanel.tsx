@@ -105,6 +105,15 @@ export default function AuctionInfoPanel({
       <Separator />
 
       <div className="space-y-1">
+        {auction.seller && auction.seller.rating && (
+          <div className="flex items-center gap-1 text-xs md:text-sm mb-2">
+            <Icon name="Star" className="h-3 w-3 md:h-3.5 md:w-3.5 text-yellow-500 fill-yellow-500" />
+            <span className="font-semibold">{auction.seller.rating.toFixed(1)}</span>
+            <span className="text-muted-foreground">
+              ({auction.seller.reviewsCount} {auction.seller.reviewsCount === 1 ? 'отзыв' : auction.seller.reviewsCount < 5 ? 'отзыва' : 'отзывов'})
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-1 text-muted-foreground text-xs md:text-sm">
           <Icon name="MapPin" className="h-3 w-3 md:h-3.5 md:w-3.5" />
           <span>{districtName}</span>
