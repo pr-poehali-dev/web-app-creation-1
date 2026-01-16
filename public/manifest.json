@@ -10,27 +10,27 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "https://cdn.poehali.dev/files/Лого треугольник.png",
+      "src": "https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/25fd980e-d628-4cc6-bec2-acead670dd88.jpg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "https://cdn.poehali.dev/files/Лого треугольник.png",
+      "src": "https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/25fd980e-d628-4cc6-bec2-acead670dd88.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "https://cdn.poehali.dev/files/Лого треугольник.png",
+      "src": "https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/25fd980e-d628-4cc6-bec2-acead670dd88.jpg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "maskable"
     },
     {
-      "src": "https://cdn.poehali.dev/files/Лого треугольник.png",
+      "src": "https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/25fd980e-d628-4cc6-bec2-acead670dd88.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "maskable"
     }
   ],
