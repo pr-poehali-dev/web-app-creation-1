@@ -9,9 +9,9 @@
         "action": "register",
         "email": "test@example.com",
         "password": "AnotherPassword123!",
-        "firstName": "Петр",
-        "lastName": "Петров",
-        "userType": "individual",
+        "first_name": "Петр",
+        "last_name": "Петров",
+        "user_type": "individual",
         "phone": "+7 (900) 111-11-11"
       },
       "expectedStatus": 409,

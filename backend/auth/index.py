@@ -187,10 +187,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if action == 'register':
                 email = body_data.get('email', '').strip()
                 password = body_data.get('password', '')
-                first_name = body_data.get('firstName', '').strip()
-                last_name = body_data.get('lastName', '').strip()
-                middle_name = body_data.get('middleName', '').strip()
-                user_type = body_data.get('userType', '')
+                first_name = body_data.get('first_name', '').strip()
+                last_name = body_data.get('last_name', '').strip()
+                middle_name = body_data.get('middle_name', '').strip()
+                user_type = body_data.get('user_type', '')
                 phone = body_data.get('phone', '').strip()
                 
                 if not all([email, password, first_name, last_name, user_type, phone]):
@@ -220,9 +220,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                            RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
                                      company_name, inn, ogrnip, ogrn, position, director_name, legal_address, role, created_at""",
                         (email, password_hash, first_name, last_name, middle_name or None, user_type, phone,
-                         body_data.get('companyName'), body_data.get('inn'), body_data.get('ogrnip'),
-                         body_data.get('ogrnLegal'), body_data.get('position'), body_data.get('directorName'),
-                         body_data.get('legalAddress'), role)
+                         body_data.get('company_name'), body_data.get('inn'), body_data.get('ogrnip'),
+                         body_data.get('ogrn'), body_data.get('position'), body_data.get('director_name'),
+                         body_data.get('legal_address'), role)
                     )
                     user = cur.fetchone()
                     conn.commit()
