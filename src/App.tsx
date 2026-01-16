@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
+import InstallPrompt from "./components/InstallPrompt";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import { OffersProvider } from "./contexts/OffersContext";
@@ -170,6 +171,7 @@ const App = () => {
               <Sonner />
               <TechnicalIssuesBanner />
               {isAuthenticated && <NotificationPermissionBanner />}
+              <InstallPrompt />
               <BrowserRouter>
                 <Suspense fallback={<LoadingScreen />}>
             <Routes>

@@ -2,7 +2,7 @@
   "name": "Единая Региональная Товарно-Торговая Площадка",
   "short_name": "ЕРТТП",
   "description": "B2B платформа для бизнеса",
-  "start_url": "https://preview--web-app-creation-1.poehali.dev/?source=pwa",
+  "start_url": "/predlozheniya?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e40af",
