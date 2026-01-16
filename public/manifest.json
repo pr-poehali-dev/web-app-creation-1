@@ -1,0 +1,20 @@
+{
+  "name": "Единая Региональная Товарно-Торговая Площадка",
+  "short_name": "ЕРТТП",
+  "description": "B2B платформа для бизнеса",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/d8aebc51-46ec-4cfa-9380-8f3f81308221.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "ru"
+}
