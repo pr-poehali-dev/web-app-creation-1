@@ -1,15 +1,8 @@
 // Service Worker для кэширования статики
-const CACHE_NAME = 'erttp-v1';
-const urlsToCache = [
-  '/',
-  '/manifest.json'
-];
+const CACHE_NAME = 'erttp-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -40,15 +33,5 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
+  event.waitUntil(clients.claim());
 });
