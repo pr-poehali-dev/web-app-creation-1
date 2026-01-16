@@ -4,34 +4,19 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
-import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
-import InstallPrompt from "./components/InstallPrompt";
-import { DistrictProvider } from "./contexts/DistrictContext";
-import { TimezoneProvider } from "./contexts/TimezoneContext";
-import { OffersProvider } from "./contexts/OffersContext";
+import SplashScreen from "./components/SplashScreen";
 import { getSession, clearSession } from "./utils/auth";
 
-// Компонент загрузки
-const LoadingScreen = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-  </div>
-);
+// Ленивая загрузка второстепенных компонентов
+const NotificationPermissionBanner = lazy(() => import("./components/NotificationPermissionBanner"));
+const TechnicalIssuesBanner = lazy(() => import("./components/TechnicalIssuesBanner"));
+const InstallPrompt = lazy(() => import("./components/InstallPrompt"));
+const DistrictProvider = lazy(() => import("./contexts/DistrictContext").then(m => ({ default: m.DistrictProvider })));
+const TimezoneProvider = lazy(() => import("./contexts/TimezoneContext").then(m => ({ default: m.TimezoneProvider })));
+const OffersProvider = lazy(() => import("./contexts/OffersContext").then(m => ({ default: m.OffersProvider })));
 
-// Основные страницы (без ленивой загрузки)
-import Home from "./pages/Home";
-import Offers from "./pages/Offers";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import OfferDetail from "./pages/OfferDetail";
-import MyOrders from "./pages/MyOrders";
-import Profile from "./pages/Profile";
-import SearchResults from "./pages/SearchResults";
-import Requests from "./pages/Requests";
-import MyListings from "./pages/MyListings";
-import CreateOffer from "./pages/CreateOffer";
-import EditOffer from "./pages/EditOffer";
+// Компонент загрузки
+const LoadingScreen = () => <SplashScreen />;
 
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
@@ -69,7 +54,21 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
     throw new Error('Failed to load module after retries');
   });
 
+// Критически важные страницы загружаем сразу
+import Login from "./pages/Login";
+import Offers from "./pages/Offers";
+
 // Ленивая загрузка остальных страниц
+const Home = lazyWithRetry(() => import("./pages/Home"));
+const Register = lazyWithRetry(() => import("./pages/Register"));
+const OfferDetail = lazyWithRetry(() => import("./pages/OfferDetail"));
+const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
+const Profile = lazyWithRetry(() => import("./pages/Profile"));
+const SearchResults = lazyWithRetry(() => import("./pages/SearchResults"));
+const Requests = lazyWithRetry(() => import("./pages/Requests"));
+const MyListings = lazyWithRetry(() => import("./pages/MyListings"));
+const CreateOffer = lazyWithRetry(() => import("./pages/CreateOffer"));
+const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
@@ -164,15 +163,16 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <TimezoneProvider>
-          <DistrictProvider>
-            <OffersProvider>
-              <Toaster />
-              <Sonner />
-              <TechnicalIssuesBanner />
-              {isAuthenticated && <NotificationPermissionBanner />}
-              <InstallPrompt />
-              <BrowserRouter>
+        <Suspense fallback={<LoadingScreen />}>
+          <TimezoneProvider>
+            <DistrictProvider>
+              <OffersProvider>
+                <Toaster />
+                <Sonner />
+                <TechnicalIssuesBanner />
+                {isAuthenticated && <NotificationPermissionBanner />}
+                <InstallPrompt />
+                <BrowserRouter>
                 <Suspense fallback={<LoadingScreen />}>
             <Routes>
             <Route path="/" element={<Navigate to="/predlozheniya" replace />} />
@@ -245,6 +245,7 @@ const App = () => {
             </OffersProvider>
           </DistrictProvider>
         </TimezoneProvider>
+        </Suspense>
       </TooltipProvider>
     </QueryClientProvider>
   );
