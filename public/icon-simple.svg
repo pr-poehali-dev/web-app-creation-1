@@ -1,21 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#5b51d8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#4a3fb8;stop-opacity:1" />
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Фиолетовый фон -->
+  <rect width="64" height="64" rx="12" fill="#5b51d8"/>
   
-  <!-- Фон -->
-  <rect width="512" height="512" rx="90" fill="url(#grad)"/>
-  
-  <!-- Увеличенное рукопожатие -->
-  <image 
-    href="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
-    x="64" 
-    y="64" 
-    width="384" 
-    height="384"
-    style="filter: brightness(1.5) contrast(1.3) drop-shadow(0 0 8px rgba(255,255,255,0.8));"
-  />
+  <!-- Белое рукопожатие - крупное и простое -->
+  <g transform="translate(32, 32)">
+    <!-- Левая рука -->
+    <path d="M -16,-8 L -16,-2 L -10,4 L -4,2 L -4,-4 L -10,-6 Z" 
+          fill="white" 
+          stroke="white" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+    
+    <!-- Правая рука -->
+    <path d="M 16,-8 L 16,-2 L 10,4 L 4,2 L 4,-4 L 10,-6 Z" 
+          fill="white" 
+          stroke="white" 
+          stroke-width="2" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+    
+    <!-- Центральное соединение -->
+    <ellipse cx="0" cy="-1" rx="12" ry="7" 
+             fill="none" 
+             stroke="white" 
+             stroke-width="3"/>
+    
+    <!-- Акцентные точки -->
+    <circle cx="-6" cy="-1" r="3" fill="white"/>
+    <circle cx="6" cy="-1" r="3" fill="white"/>
+  </g>
 </svg>
