@@ -94,7 +94,7 @@ export default function ChatNotifications({ isAuthenticated, onLogout }: ChatNot
 
     loadNotifications();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, currentUser, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleRefresh = () => {
     loadNotifications(true);
