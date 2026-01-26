@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import DataSyncIndicator from '@/components/DataSyncIndicator';
@@ -16,13 +16,21 @@ interface MyOrdersProps {
 
 export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'archive'>('buyer');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as 'buyer' | 'seller' | 'archive' | null;
+  const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'archive'>(tabParam || 'buyer');
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
     }
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (tabParam && (tabParam === 'buyer' || tabParam === 'seller' || tabParam === 'archive')) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
   
   const {
     orders,

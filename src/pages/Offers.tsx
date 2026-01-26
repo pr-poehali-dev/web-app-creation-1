@@ -236,11 +236,18 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   };
 
   const getUnreadMessages = (offerId: string): number => {
+    if (!currentUser) return 0;
+    
     const relatedOrders = orders.filter(o => {
       const orderOfferId = o.offer_id || o.offerId;
-      return orderOfferId === offerId;
+      const isSeller = String(currentUser.id) === String(o.seller_id || o.sellerId);
+      
+      return orderOfferId === offerId && 
+             o.status === 'new' && 
+             isSeller;
     });
-    return relatedOrders.length > 0 ? relatedOrders.length : 0;
+    
+    return relatedOrders.length;
   };
 
   const handleFiltersChange = (newFilters: SearchFilters) => {

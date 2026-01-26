@@ -156,7 +156,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
   const handleMessages = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate('/chat-notifications');
+    navigate('/my-orders?tab=seller');
   };
 
   return (

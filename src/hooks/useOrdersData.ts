@@ -45,6 +45,29 @@ export function useOrdersData(
     return () => clearInterval(pollInterval);
   }, [isAuthenticated, navigate]);
 
+  // Отмечаем заказы как просмотренные при открытии вкладки продавца
+  useEffect(() => {
+    if (activeTab === 'seller' && currentUser && orders.length > 0) {
+      const newOrders = orders.filter(o => 
+        o.status === 'new' && 
+        o.type === 'sale' &&
+        String(o.sellerId) === String(currentUser.id)
+      );
+      
+      newOrders.forEach(async (order) => {
+        try {
+          await ordersAPI.updateOrder(order.id, { status: 'pending' });
+        } catch (error) {
+          console.error('Error updating order status:', error);
+        }
+      });
+      
+      if (newOrders.length > 0) {
+        setTimeout(() => loadOrders(false), 500);
+      }
+    }
+  }, [activeTab, orders.length]);
+
   const loadOrders = async (showLoader = false) => {
     try {
       if (showLoader) {
