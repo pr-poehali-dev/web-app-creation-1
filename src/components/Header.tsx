@@ -283,19 +283,19 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                       <DropdownMenuSeparator />
                     </>
                   )}
-                  <DropdownMenuItem onClick={() => navigate('/profile')} className="border rounded-md mb-1">
+                  <DropdownMenuItem onClick={() => navigate('/profile')} className="border-2 border-border rounded-md mb-1">
                     <Icon name="User" className="mr-2 h-4 w-4" />
                     Мои данные
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-auctions')} className="border rounded-md mb-1">
+                  <DropdownMenuItem onClick={() => navigate('/my-auctions')} className="border-2 border-border rounded-md mb-1">
                     <Icon name="Gavel" className="mr-2 h-4 w-4" />
                     Мои аукционы
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-reviews')} className="border rounded-md mb-1">
+                  <DropdownMenuItem onClick={() => navigate('/my-reviews')} className="border-2 border-border rounded-md mb-1">
                     <Icon name="Star" className="mr-2 h-4 w-4" />
                     Мои отзывы
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-orders')} className="border rounded-md mb-1">
+                  <DropdownMenuItem onClick={() => navigate('/my-orders')} className="border-2 border-border rounded-md mb-1">
                     <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
                     Мои заказы
                   </DropdownMenuItem>
@@ -305,46 +305,46 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                       <div className="px-2 py-1.5 text-xs font-semibold text-primary uppercase">
                         Администрирование
                       </div>
-                      <DropdownMenuItem onClick={() => navigate('/admin/panel')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/panel')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="LayoutDashboard" className="mr-2 h-4 w-4" />
                         Админ-панель
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/verifications')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/verifications')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="ShieldCheck" className="mr-2 h-4 w-4" />
                         Верификация
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/users')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/users')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="Users" className="mr-2 h-4 w-4" />
                         Пользователи
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/offers')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/offers')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="Package" className="mr-2 h-4 w-4" />
                         Предложения
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/requests')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/requests')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="FileText" className="mr-2 h-4 w-4" />
                         Запросы
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/auctions')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/auctions')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="Gavel" className="mr-2 h-4 w-4" />
                         Аукционы
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/contracts')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/contracts')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="FileSignature" className="mr-2 h-4 w-4" />
                         Контракты
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/analytics')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/analytics')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="TrendingUp" className="mr-2 h-4 w-4" />
                         Аналитика
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/settings')} className="border rounded-md mb-1">
+                      <DropdownMenuItem onClick={() => navigate('/admin/settings')} className="border-2 border-border rounded-md mb-1">
                         <Icon name="Settings" className="mr-2 h-4 w-4" />
                         Настройки
                       </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive border rounded-md">
+                  <DropdownMenuItem onClick={handleLogout} className="text-destructive border-2 border-border rounded-md">
                     <Icon name="LogOut" className="mr-2 h-4 w-4" />
                     Выйти
                   </DropdownMenuItem>
