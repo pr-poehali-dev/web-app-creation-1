@@ -7,9 +7,9 @@ const SplashScreen = () => {
     const timer = setInterval(() => {
       setProgress(prev => {
         if (prev >= 90) return prev;
-        return prev + 10;
+        return prev + 20;
       });
-    }, 100);
+    }, 50);
 
     return () => clearInterval(timer);
   }, []);

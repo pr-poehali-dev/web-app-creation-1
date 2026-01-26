@@ -180,6 +180,8 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                 src={offer.images[currentImageIndex].url}
                 alt={offer.images[currentImageIndex].alt}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                decoding="async"
               />
               {offer.images.length > 1 && (
                 <>

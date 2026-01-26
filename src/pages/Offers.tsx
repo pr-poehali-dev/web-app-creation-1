@@ -46,21 +46,22 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   useEffect(() => {
     const loadData = async (forceRefresh = false) => {
-      setIsLoading(true);
+      const cachedOffers = localStorage.getItem('cached_offers');
+      const cacheTimestamp = localStorage.getItem('cached_offers_time');
+      const cacheAge = cacheTimestamp ? Date.now() - parseInt(cacheTimestamp) : Infinity;
       
-      // Показываем кэш только если не форсируем обновление
-      if (!forceRefresh) {
-        const cachedOffers = localStorage.getItem('cached_offers');
-        if (cachedOffers) {
-          try {
-            const parsed = JSON.parse(cachedOffers);
-            setOffers(parsed);
-            setIsLoading(false);
-          } catch (e) {
-            console.error('Failed to parse cached offers');
-          }
+      if (!forceRefresh && cachedOffers && cacheAge < 5 * 60 * 1000) {
+        try {
+          const parsed = JSON.parse(cachedOffers);
+          setOffers(parsed);
+          setIsLoading(false);
+          return;
+        } catch (e) {
+          console.error('Failed to parse cached offers');
         }
       }
+      
+      setIsLoading(true);
       
       try {
         const offersData = await offersAPI.getOffers({ 
@@ -72,12 +73,14 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         setTotalOffersCount(offersData.total || 0);
         setHasMoreOnServer(offersData.hasMore || false);
         localStorage.setItem('cached_offers', JSON.stringify(offersData.offers || []));
+        localStorage.setItem('cached_offers_time', Date.now().toString());
         setIsLoading(false);
         
-        ordersAPI.getAll('all').then(ordersResponse => {
-          setOrders(ordersResponse.orders || []);
-        }).catch(() => {
-        });
+        setTimeout(() => {
+          ordersAPI.getAll('all').then(ordersResponse => {
+            setOrders(ordersResponse.orders || []);
+          }).catch(() => {});
+        }, 500);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
         setIsLoading(false);

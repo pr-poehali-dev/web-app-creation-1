@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { createRoot } from 'react-dom/client'
-import App from './App'
 import './index.css'
 
 const rootElement = document.getElementById("root");
@@ -9,20 +8,21 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
-createRoot(rootElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const root = createRoot(rootElement);
+
+const loadApp = async () => {
+  const { default: App } = await import('./App');
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+};
+
+loadApp();
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('SW registered:', registration);
-      })
-      .catch(error => {
-        console.log('SW registration failed:', error);
-      });
-  });
+  setTimeout(() => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }, 2000);
 }
