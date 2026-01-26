@@ -187,14 +187,12 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center space-x-1.5 md:space-x-2.5 px-1.5 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all mr-2 md:mr-3"
           >
-            <div className="h-9 w-9 md:h-12 md:w-12 flex items-center justify-center">
-              <img 
-                src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
-                alt="ЕРТТП" 
-                className="h-[calc(100%-10px)] w-[calc(100%-10px)] rounded-md md:rounded-lg brightness-125 contrast-125" 
-                style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))' }}
-              />
-            </div>
+            <img 
+              src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+              alt="ЕРТТП" 
+              className="h-12 w-12 md:h-16 md:w-16 rounded-md md:rounded-lg brightness-125 contrast-125 p-[5px]" 
+              style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))' }}
+            />
             <div className="flex flex-col items-start">
               <span className="text-[11px] md:text-base font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
               <span className="text-[7px] md:text-[10px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
