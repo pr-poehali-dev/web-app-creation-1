@@ -182,6 +182,12 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
                     <span className="text-muted-foreground">Количество:</span>
                     <p className="font-semibold">{offer.quantity} {offer.unit}</p>
                   </div>
+                  <div>
+                    <span className="text-muted-foreground">Доступно:</span>
+                    <p className="font-semibold text-green-600">
+                      {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
+                    </p>
+                  </div>
                   {offer.minOrderQuantity && (
                     <div>
                       <span className="text-muted-foreground">Мин. заказ:</span>
