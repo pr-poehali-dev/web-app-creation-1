@@ -201,6 +201,18 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         result.id
       );
 
+      // Отправляем событие о новом заказе
+      window.dispatchEvent(new CustomEvent('newOrderCreated', {
+        detail: {
+          orderId: result.id,
+          sellerId: offer.userId.toString(),
+          buyerName: `${session.firstName} ${session.lastName}`,
+          quantity: orderQuantity,
+          unit: offer.unit,
+          offerTitle: offer.title
+        }
+      }));
+
       // Помечаем что заказы обновились
       markDataAsUpdated('orders');
       

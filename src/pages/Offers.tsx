@@ -116,56 +116,42 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     loadData(false);
 
-    // Проверяем новые заказы только если у пользователя есть активные предложения
-    let checkOrdersInterval: NodeJS.Timeout | null = null;
-    
-    if (isAuthenticated && currentUser && offers.length > 0) {
-      const hasMyOffers = offers.some(o => String(o.userId) === String(currentUser.id));
+    // Слушаем событие нового заказа
+    const handleNewOrder = (event: CustomEvent) => {
+      const { orderId, sellerId, buyerName, quantity, unit, offerTitle } = event.detail;
+      const currentUserId = currentUser?.id?.toString();
       
-      if (hasMyOffers) {
-        checkOrdersInterval = setInterval(() => {
-          if (!document.hidden) {
-            ordersAPI.getAll('all').then(ordersResponse => {
-              const newOrders = ordersResponse.orders || [];
-              const currentUserId = currentUser.id?.toString();
-              
-              // Проверяем новые заказы
-              newOrders.forEach((newOrder: any) => {
-                const sellerId = newOrder.seller_id || newOrder.sellerId;
-                const oldOrder = orders.find(o => o.id === newOrder.id);
-                
-                if (!oldOrder && newOrder.status === 'new' && currentUserId === String(sellerId)) {
-                  // Звук
-                  const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjs=');
-                  audio.volume = 0.3;
-                  audio.play().catch(() => {});
-                  
-                  // Push уведомление
-                  if ('Notification' in window && Notification.permission === 'granted') {
-                    const buyerName = newOrder.buyer_name || newOrder.buyerName;
-                    const offerTitle = newOrder.offer_title || newOrder.offerTitle;
-                    new Notification('🛒 Новый заказ!', {
-                      body: `${buyerName} заказал ${newOrder.quantity} ${newOrder.unit} - "${offerTitle}"`,
-                      icon: '/favicon.ico',
-                      badge: '/favicon.ico',
-                      tag: `order-${newOrder.id}`,
-                      requireInteraction: true,
-                    });
-                  }
-                }
-              });
-              
-              setOrders(newOrders);
-            }).catch(() => {});
-          }
-        }, 60000); // Каждую минуту вместо 10 секунд
+      // Если заказ для текущего пользователя
+      if (currentUserId === String(sellerId)) {
+        // Звук
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjs=');
+        audio.volume = 0.3;
+        audio.play().catch(() => {});
+        
+        // Push уведомление
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('🛒 Новый заказ!', {
+            body: `${buyerName} заказал ${quantity} ${unit} - "${offerTitle}"`,
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+            tag: `order-${orderId}`,
+            requireInteraction: true,
+          });
+        }
+        
+        // Обновляем список заказов для бейджа
+        ordersAPI.getAll('all').then(ordersResponse => {
+          setOrders(ordersResponse.orders || []);
+        }).catch(() => {});
       }
-    }
-
-    return () => {
-      if (checkOrdersInterval) clearInterval(checkOrdersInterval);
     };
-  }, [isAuthenticated, currentUser, offers.length]);
+
+    window.addEventListener('newOrderCreated' as any, handleNewOrder);
+    
+    return () => {
+      window.removeEventListener('newOrderCreated' as any, handleNewOrder);
+    };
+  }, [isAuthenticated, currentUser]);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];

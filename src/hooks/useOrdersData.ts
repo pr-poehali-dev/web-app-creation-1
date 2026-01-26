@@ -35,14 +35,7 @@ export function useOrdersData(
     }
     loadOrders(true);
 
-    // Автоматическое обновление каждую минуту для проверки новых заказов
-    const pollInterval = setInterval(() => {
-      if (!document.hidden) {
-        loadOrders(false);
-      }
-    }, 60000);
-
-    return () => clearInterval(pollInterval);
+    return () => {};
   }, [isAuthenticated, navigate]);
 
   // Отмечаем заказы как просмотренные при открытии вкладки продавца
@@ -115,57 +108,6 @@ export function useOrdersData(
         buyerCompany: order.buyer_company || order.buyerCompany,
         buyerInn: order.buyer_inn || order.buyerInn,
       }));
-      
-      // Проверяем новые встречные предложения для звукового уведомления
-      if (!isInitialLoad && orders.length > 0) {
-        const currentUserId = currentUser?.id?.toString();
-        
-        mappedOrders.forEach((newOrder: Order) => {
-          const oldOrder = orders.find(o => o.id === newOrder.id);
-          
-          // Если появился НОВЫЙ заказ для продавца
-          if (!oldOrder && newOrder.status === 'new' && currentUserId === newOrder.sellerId) {
-            playNotificationSound();
-            
-            // Browser push уведомление
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('🛒 Новый заказ!', {
-                body: `${newOrder.buyerName} заказал ${newOrder.quantity} ${newOrder.unit} - "${newOrder.offerTitle}"`,
-                icon: '/favicon.ico',
-                badge: '/favicon.ico',
-                tag: `order-${newOrder.id}`,
-                requireInteraction: true,
-              });
-            }
-            
-            toast({
-              title: '🛒 Новый заказ!',
-              description: `${newOrder.buyerName} заказал ${newOrder.quantity} ${newOrder.unit}`,
-              duration: 7000,
-            });
-          }
-          
-          // Если появилось новое встречное предложение от другой стороны
-          if (newOrder.counterPricePerUnit && 
-              (!oldOrder?.counterPricePerUnit || oldOrder.counterOfferedAt !== newOrder.counterOfferedAt)) {
-            
-            // Проверяем что это предложение для текущего пользователя
-            const isForMe = (
-              (newOrder.counterOfferedBy === 'seller' && currentUserId === newOrder.buyerId) ||
-              (newOrder.counterOfferedBy === 'buyer' && currentUserId === newOrder.sellerId)
-            );
-            
-            if (isForMe) {
-              playNotificationSound();
-              toast({
-                title: '💰 Новое встречное предложение',
-                description: `Заказ #${newOrder.orderNumber || newOrder.id.slice(0, 8)} - ${newOrder.counterPricePerUnit.toLocaleString('ru-RU')} ₽/${newOrder.unit}`,
-                duration: 5000,
-              });
-            }
-          }
-        });
-      }
       
       setOrders(mappedOrders);
       
