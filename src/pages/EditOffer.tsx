@@ -163,15 +163,6 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     setIsChatOpen(true);
   };
 
-  const handleEdit = () => {
-    if (!offer) return;
-    
-    toast({
-      title: 'Редактирование',
-      description: 'Для изменения объявления удалите его и создайте новое с актуальными данными',
-    });
-  };
-
   const handleDelete = () => {
     setShowDeleteDialog(true);
   };
@@ -293,7 +284,6 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
           offer={offer}
           ordersCount={orders.length}
           messagesCount={messages.length}
-          onEdit={handleEdit}
           onDelete={handleDelete}
         />
 
