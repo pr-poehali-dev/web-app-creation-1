@@ -35,12 +35,12 @@ export function useOrdersData(
     }
     loadOrders(true);
 
-    // Автоматическое обновление каждые 30 секунд для проверки встречных предложений
+    // Автоматическое обновление каждые 10 секунд для быстрых уведомлений
     const pollInterval = setInterval(() => {
       if (!document.hidden) {
         loadOrders(false);
       }
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(pollInterval);
   }, [isAuthenticated, navigate]);
@@ -122,6 +122,28 @@ export function useOrdersData(
         
         mappedOrders.forEach((newOrder: Order) => {
           const oldOrder = orders.find(o => o.id === newOrder.id);
+          
+          // Если появился НОВЫЙ заказ для продавца
+          if (!oldOrder && newOrder.status === 'new' && currentUserId === newOrder.sellerId) {
+            playNotificationSound();
+            
+            // Browser push уведомление
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('🛒 Новый заказ!', {
+                body: `${newOrder.buyerName} заказал ${newOrder.quantity} ${newOrder.unit} - "${newOrder.offerTitle}"`,
+                icon: '/favicon.ico',
+                badge: '/favicon.ico',
+                tag: `order-${newOrder.id}`,
+                requireInteraction: true,
+              });
+            }
+            
+            toast({
+              title: '🛒 Новый заказ!',
+              description: `${newOrder.buyerName} заказал ${newOrder.quantity} ${newOrder.unit}`,
+              duration: 7000,
+            });
+          }
           
           // Если появилось новое встречное предложение от другой стороны
           if (newOrder.counterPricePerUnit && 
