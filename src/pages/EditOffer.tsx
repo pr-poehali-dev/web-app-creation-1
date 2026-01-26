@@ -280,12 +280,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       
       <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
-        <EditOfferHeader
-          offer={offer}
-          ordersCount={orders.length}
-          messagesCount={messages.length}
-          onDelete={handleDelete}
-        />
+        <EditOfferHeader />
 
         <EditOfferTabs
           offer={offer}
