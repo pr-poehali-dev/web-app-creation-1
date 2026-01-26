@@ -35,12 +35,12 @@ export function useOrdersData(
     }
     loadOrders(true);
 
-    // Автоматическое обновление каждые 10 секунд для быстрых уведомлений
+    // Автоматическое обновление каждую минуту для проверки новых заказов
     const pollInterval = setInterval(() => {
       if (!document.hidden) {
         loadOrders(false);
       }
-    }, 10000);
+    }, 60000);
 
     return () => clearInterval(pollInterval);
   }, [isAuthenticated, navigate]);
