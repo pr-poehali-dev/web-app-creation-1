@@ -21,16 +21,14 @@
     <link rel="manifest" href="/manifest.json">
     
     <!-- Preconnect для ускорения загрузки -->
-    <link rel="preconnect" href="https://functions.poehali.dev" crossorigin>
-    <link rel="preconnect" href="https://cdn.poehali.dev" crossorigin>
-    <link rel="preconnect" href="https://mc.yandex.ru" crossorigin>
-    <link rel="dns-prefetch" href="https://functions.poehali.dev">
+    <link rel="preconnect" href="https://cdn.poehali.dev">
+    <link rel="preconnect" href="https://functions.poehali.dev">
     <link rel="dns-prefetch" href="https://cdn.poehali.dev">
-    <link rel="dns-prefetch" href="https://mc.yandex.ru">
+    <link rel="dns-prefetch" href="https://functions.poehali.dev">
     
     <!-- Предзагрузка критичных ресурсов -->
     <link rel="modulepreload" href="/src/main.tsx">
-    <link rel="prefetch" href="/manifest.json">
+    <link rel="preload" as="image" href="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png">
     
     <meta property="og:title" content="Единая Региональная Товарно-Торговая Площадка">
     <meta property="og:description" content="Единая Региональная Товарно-Торговая Площадка — (B2B)-(СС)-(СВ)-(ВС) -платформа для бизнеса">
@@ -56,30 +54,32 @@
 <div id="root"></div>
 <script type="module" src="/src/main.tsx"></script>
 
-<!-- Yandex.Metrika counter -->
+<!-- Yandex.Metrika counter (отложенная загрузка) -->
 <script type="text/javascript">
-    (function (m, e, t, r, i, k, a) {
-        m[i] = m[i] || function () {
-            (m[i].a = m[i].a || []).push(arguments)
-        };
-        m[i].l = 1 * new Date();
-        for (var j = 0; j < document.scripts.length; j++) {
-            if (document.scripts[j].src === r) {
-                return;
+    setTimeout(function() {
+        (function (m, e, t, r, i, k, a) {
+            m[i] = m[i] || function () {
+                (m[i].a = m[i].a || []).push(arguments)
+            };
+            m[i].l = 1 * new Date();
+            for (var j = 0; j < document.scripts.length; j++) {
+                if (document.scripts[j].src === r) {
+                    return;
+                }
             }
-        }
-        k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
-    })
-    (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+            k = e.createElement(t), a = e.getElementsByTagName(t)[0], k.async = 1, k.src = r, a.parentNode.insertBefore(k, a)
+        })
+        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
 
-    ym(101026698, "init", {
-        trustedDomains: ["poehali.dev"],
-        clickmap: true,
-        trackLinks: true,
-        accurateTrackBounce: true,
-        webvisor: true,
-        trackHash: true
-    });
+        ym(101026698, "init", {
+            trustedDomains: ["poehali.dev"],
+            clickmap: true,
+            trackLinks: true,
+            accurateTrackBounce: true,
+            webvisor: true,
+            trackHash: true
+        });
+    }, 2000);
 </script>
 <noscript>
     <div><img src="https://mc.yandex.ru/watch/101026698" style="position:absolute; left:-9999px;" alt=""/></div>
