@@ -187,14 +187,16 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex items-center space-x-1.5 md:space-x-2.5 px-1.5 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all mr-2 md:mr-3"
           >
-            <img 
-              src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
-              alt="ЕРТТП" 
-              className="h-[54px] w-[54px] md:h-[75px] md:w-[75px] rounded-md md:rounded-lg drop-shadow-[0_0_10px_rgba(255,255,255,1)]" 
-            />
+            <div className="relative h-8 w-8 md:h-11 md:w-11">
+              <img 
+                src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+                alt="ЕРТТП" 
+                className="absolute inset-0 h-full w-full scale-[1.7] rounded-md md:rounded-lg drop-shadow-[0_0_12px_rgba(255,255,255,1)]" 
+              />
+            </div>
             <div className="flex flex-col items-start">
-              <span className="text-sm md:text-xl font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
-              <span className="text-[7px] md:text-[10px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
+              <span className="text-xs md:text-lg font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
+              <span className="text-[6px] md:text-[9px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
             </div>
           </Link>
 
