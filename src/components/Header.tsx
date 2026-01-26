@@ -190,12 +190,12 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             <img 
               src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
               alt="ЕРТТП" 
-              className="h-[52px] w-[52px] md:h-[70px] md:w-[70px] rounded-md md:rounded-lg" 
-              style={{ filter: 'drop-shadow(0 0 3px rgba(255,255,255,1)) drop-shadow(0 0 6px rgba(255,255,255,0.8)) drop-shadow(0 0 10px rgba(255,255,255,0.6))' }}
+              className="h-9 w-9 md:h-12 md:w-12 rounded-md md:rounded-lg brightness-125 contrast-125" 
+              style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))' }}
             />
             <div className="flex flex-col items-start">
-              <span className="text-xs md:text-lg font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
-              <span className="text-[6px] md:text-[9px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
+              <span className="text-[11px] md:text-base font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
+              <span className="text-[7px] md:text-[10px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
             </div>
           </Link>
 
