@@ -190,8 +190,8 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               <img 
                 src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                 alt="ЕРТТП" 
-                className="h-full w-full scale-[2.5] brightness-125 contrast-125"
-                style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))', transform: 'scaleX(-1)' }}
+                className="h-full w-full brightness-125 contrast-125"
+                style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))', transform: 'scale(2.5) scaleX(-1)' }}
               />
             </div>
             <div className="flex flex-col items-start">
