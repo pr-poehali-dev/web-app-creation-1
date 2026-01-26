@@ -217,8 +217,8 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                   <img 
                     src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                     alt="ЕРТТП" 
-                    className="h-full w-full scale-[1.8] brightness-125 contrast-125" 
-                    style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)' }}
+                    className="h-full w-full scale-[1.8] brightness-125 contrast-125"
+                    style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)', transform: 'scaleX(-1)' }}
                   />
                 </div>
               </div>

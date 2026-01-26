@@ -23,6 +23,7 @@ const SplashScreen = () => {
               src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
               alt="ЕРТТП" 
               className="w-full h-full object-contain animate-pulse"
+              style={{ transform: 'scaleX(-1)' }}
             />
           </div>
           <div className="absolute -inset-2 bg-gradient-to-br from-primary/20 to-blue-600/20 rounded-3xl blur-xl animate-pulse"></div>
