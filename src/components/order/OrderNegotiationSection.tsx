@@ -135,6 +135,16 @@ export default function OrderNegotiationSection({
                         {order.counterTotalAmount?.toLocaleString('ru-RU')} ₽
                       </span>
                     </div>
+                    
+                    {/* Комментарий к встречному предложению */}
+                    {order.counterOfferMessage && (
+                      <div className="pt-2 border-t border-dashed">
+                        <span className="text-xs text-muted-foreground block mb-1">Комментарий:</span>
+                        <p className="text-sm text-foreground bg-white/50 dark:bg-gray-800/50 p-2 rounded">
+                          {order.counterOfferMessage}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -274,6 +284,17 @@ export default function OrderNegotiationSection({
               </div>
             </div>
 
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Комментарий (необязательно)</label>
+              <textarea
+                className="w-full px-3 py-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows={2}
+                placeholder="Добавьте комментарий к предложению..."
+                value={counterMessage}
+                onChange={(e) => setCounterMessage(e.target.value)}
+              />
+            </div>
+
             <div className="flex gap-2">
               <Button
                 onClick={handleCounterOffer}
@@ -315,12 +336,23 @@ export default function OrderNegotiationSection({
                 </div>
               </div>
             </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Комментарий (необязательно)</label>
+              <textarea
+                className="w-full px-3 py-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
+                rows={2}
+                placeholder="Добавьте комментарий к предложению..."
+                value={counterMessage}
+                onChange={(e) => setCounterMessage(e.target.value)}
+              />
+            </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => {
                   if (onCounterOffer) {
-                    onCounterOffer(parseFloat(counterPrice), '');
+                    onCounterOffer(parseFloat(counterPrice), counterMessage.trim());
                     setShowCounterForm(false);
+                    setCounterMessage('');
                   }
                 }}
                 size="sm"
