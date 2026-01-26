@@ -109,7 +109,7 @@ const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
 const OrderDetail = lazyWithRetry(() => import("./pages/OrderDetail"));
 const OrderDetailPage = lazyWithRetry(() => import("./pages/OrderDetailPage"));
 const ResponseDetailPage = lazyWithRetry(() => import("./pages/ResponseDetailPage"));
-const ChatNotifications = lazyWithRetry(() => import("./pages/ChatNotifications"));
+
 const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
 const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
@@ -218,7 +218,7 @@ const App = () => {
             <Route path="/order/:offerId" element={<OrderPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/order-detail/:id" element={<OrderDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/response-detail/:id" element={<ResponseDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/chat-notifications" element={<ChatNotifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+
             <Route path="/my-listings" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-offers" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-requests" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
@@ -231,7 +231,7 @@ const App = () => {
             <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-orders" element={<MyOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/notifications" element={<Notifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+
             <Route path="/register" element={<Register onRegister={handleLogin} />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/new-password" element={<NewPassword />} />
