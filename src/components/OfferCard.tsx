@@ -211,10 +211,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
               <div className="flex items-center gap-2 opacity-30">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
-                  <Icon name="Building2" className="h-6 w-6 text-white" />
+                <div className="h-16 w-16 overflow-hidden rounded-md flex items-center justify-center">
+                  <img 
+                    src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+                    alt="ЕРТТП" 
+                    className="h-full w-full scale-[1.8] brightness-125 contrast-125" 
+                    style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)' }}
+                  />
                 </div>
-                <span className="text-2xl font-bold text-primary">ЕРТТП</span>
               </div>
             </div>
           )}
