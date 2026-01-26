@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import DataSyncIndicator from '@/components/DataSyncIndicator';
 import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrdersContent from '@/components/order/OrdersContent';
@@ -28,6 +29,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     selectedOrder,
     isChatOpen,
     isLoading,
+    isSyncing,
     currentUser,
     handleAcceptOrder,
     handleCounterOffer,
@@ -73,6 +75,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      <DataSyncIndicator isVisible={isSyncing} />
       
       <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
         <BackButton />

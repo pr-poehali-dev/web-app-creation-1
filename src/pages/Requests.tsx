@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import DataSyncIndicator from '@/components/DataSyncIndicator';
 import AuctionSearchBlock from '@/components/auction/AuctionSearchBlock';
 import RequestCard from '@/components/RequestCard';
 import OfferCardSkeleton from '@/components/OfferCardSkeleton';
@@ -19,6 +20,7 @@ import { getSession } from '@/utils/auth';
 import { requestsAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
+import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -41,6 +43,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
   const [requests, setRequests] = useState<Request[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -52,14 +55,31 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
   useEffect(() => {
     const loadRequests = async () => {
-      setIsLoading(true);
+      const hasUpdates = checkForUpdates('requests');
       
-      // Проверяем флаг обновления
-      const hasLocalChanges = localStorage.getItem('requests_updated') === 'true';
+      // Пробуем загрузить из кэша если нет обновлений
+      if (!hasUpdates) {
+        const cached = SmartCache.get<Request[]>('requests_list');
+        if (cached && cached.length > 0) {
+          setRequests(cached);
+          setIsLoading(false);
+          
+          // В фоне проверяем нужно ли обновить
+          if (SmartCache.shouldRefresh('requests_list')) {
+            loadFreshRequests(false);
+          }
+          return;
+        }
+      }
       
-      if (hasLocalChanges) {
-        console.log('🔄 Обнаружены изменения в запросах, загружаю свежие данные');
-        localStorage.removeItem('requests_updated');
+      await loadFreshRequests(true);
+    };
+
+    const loadFreshRequests = async (showLoading = true) => {
+      if (showLoading) {
+        setIsLoading(true);
+      } else {
+        setIsSyncing(true);
       }
       
       try {
@@ -67,12 +87,20 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
           requestsAPI.getAll(),
           ordersAPI.getAll('all')
         ]);
+        
         setRequests(requestsData.requests || []);
         setOrders(ordersResponse.orders || []);
+        
+        // Сохраняем в умный кэш
+        SmartCache.set('requests_list', requestsData.requests || []);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
       } finally {
-        setIsLoading(false);
+        if (showLoading) {
+          setIsLoading(false);
+        } else {
+          setIsSyncing(false);
+        }
       }
     };
 
@@ -195,6 +223,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      <DataSyncIndicator isVisible={isSyncing} />
 
       <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
         <div className="flex items-center justify-between gap-2 mb-4">

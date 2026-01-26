@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import DataSyncIndicator from '@/components/DataSyncIndicator';
 import OffersHeader from '@/components/offers/OffersHeader';
 import OffersFilters from '@/components/offers/OffersFilters';
 import OffersList from '@/components/offers/OffersList';
@@ -36,6 +37,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const [orders, setOrders] = useState<any[]>([]);
   const [totalOffersCount, setTotalOffersCount] = useState(0);
   const [hasMoreOnServer, setHasMoreOnServer] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -70,7 +72,11 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     };
 
     const loadFreshData = async (showLoading = true) => {
-      if (showLoading) setIsLoading(true);
+      if (showLoading) {
+        setIsLoading(true);
+      } else {
+        setIsSyncing(true);
+      }
       
       try {
         const offersData = await offersAPI.getOffers({ 
@@ -86,7 +92,11 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         // Сохраняем в умный кэш
         SmartCache.set('offers_list', offersData.offers || []);
         
-        if (showLoading) setIsLoading(false);
+        if (showLoading) {
+          setIsLoading(false);
+        } else {
+          setIsSyncing(false);
+        }
         
         // Загружаем заказы в фоне
         setTimeout(() => {
@@ -96,7 +106,11 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         }, 500);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        if (showLoading) setIsLoading(false);
+        if (showLoading) {
+          setIsLoading(false);
+        } else {
+          setIsSyncing(false);
+        }
       }
     };
 
@@ -247,6 +261,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      <DataSyncIndicator isVisible={isSyncing} />
 
       <main className="container mx-auto px-4 py-4 md:py-8 flex-1">
         <OffersHeader isAuthenticated={isAuthenticated} />
