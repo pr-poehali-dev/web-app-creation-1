@@ -120,6 +120,14 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const filteredOffers = useMemo(() => {
     let result = [...offers];
 
+    // Скрываем предложения с нулевым доступным количеством
+    if (!showOnlyMy) {
+      result = result.filter((offer) => {
+        const availableQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
+        return availableQuantity > 0;
+      });
+    }
+
     if (showOnlyMy && isAuthenticated && currentUser) {
       result = result.filter(offer => String(offer.userId) === String(currentUser.id));
     }
