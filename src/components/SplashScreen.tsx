@@ -18,8 +18,12 @@ const SplashScreen = () => {
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 via-background to-primary/5">
       <div className="flex flex-col items-center space-y-6 px-4">
         <div className="relative">
-          <div className="w-24 h-24 bg-gradient-to-br from-primary to-blue-600 rounded-2xl shadow-2xl flex items-center justify-center animate-pulse">
-            <span className="text-3xl font-bold text-white">B2B</span>
+          <div className="w-24 h-24 rounded-2xl shadow-2xl flex items-center justify-center">
+            <img 
+              src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+              alt="ЕРТТП" 
+              className="w-full h-full object-contain animate-pulse"
+            />
           </div>
           <div className="absolute -inset-2 bg-gradient-to-br from-primary/20 to-blue-600/20 rounded-3xl blur-xl animate-pulse"></div>
         </div>

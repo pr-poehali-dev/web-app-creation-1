@@ -65,9 +65,9 @@ const InstallPrompt = () => {
         </button>
         
         <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 w-14 h-14 bg-white rounded-xl p-2">
+          <div className="flex-shrink-0 w-14 h-14 bg-white rounded-xl p-1.5">
             <img
-              src="https://cdn.poehali.dev/files/Лого треугольник.png"
+              src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png"
               alt="ЕРТТП"
               className="w-full h-full object-contain"
             />
