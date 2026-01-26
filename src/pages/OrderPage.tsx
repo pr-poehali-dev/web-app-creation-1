@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { notifyNewOrder } from '@/utils/notifications';
+import { markDataAsUpdated } from '@/utils/smartCache';
 import type { Offer } from '@/types/offer';
 
 export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
@@ -200,6 +201,9 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         result.id
       );
 
+      // Помечаем что заказы обновились
+      markDataAsUpdated('orders');
+      
       toast({
         title: 'Заказ оформлен!',
         description: 'Продавец свяжется с вами в ближайшее время',

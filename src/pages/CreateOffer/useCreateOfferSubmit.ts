@@ -5,6 +5,7 @@ import { useOffers } from '@/contexts/OffersContext';
 import type { Offer } from '@/types/offer';
 import { getSession } from '@/utils/auth';
 import { offersAPI } from '@/services/api';
+import { markDataAsUpdated } from '@/utils/smartCache';
 
 interface SubmitData {
   title: string;
@@ -182,6 +183,9 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         createdAt: new Date(),
       };
       
+      // Помечаем что предложения обновились
+      markDataAsUpdated('offers');
+      
       if (isEditMode) {
         toast({
           title: 'Успешно',
@@ -203,7 +207,6 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         } else {
           navigate('/predlozheniya', { replace: true });
         }
-        window.location.reload();
       }, 500);
     } catch (error) {
       console.error('Ошибка создания предложения:', error);

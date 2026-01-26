@@ -19,7 +19,7 @@ import RequestPricingSection from '@/components/request/RequestPricingSection';
 import RequestDeliverySection from '@/components/request/RequestDeliverySection';
 import RequestMediaSection from '@/components/request/RequestMediaSection';
 import { requestsAPI } from '@/services/api';
-
+import { markDataAsUpdated } from '@/utils/smartCache';
 import { canCreateListing } from '@/utils/permissions';
 
 interface CreateRequestProps {
@@ -173,6 +173,9 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
       };
 
       const result = await requestsAPI.createRequest(requestData);
+      
+      // Помечаем что запросы обновились
+      markDataAsUpdated('requests');
       
       toast({
         title: 'Успешно',

@@ -13,6 +13,7 @@ import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -46,22 +47,30 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   useEffect(() => {
     const loadData = async (forceRefresh = false) => {
-      const cachedOffers = localStorage.getItem('cached_offers');
-      const cacheTimestamp = localStorage.getItem('cached_offers_time');
-      const cacheAge = cacheTimestamp ? Date.now() - parseInt(cacheTimestamp) : Infinity;
+      // Проверяем были ли обновления при переходах между страницами
+      const hasUpdates = checkForUpdates('offers');
+      const shouldForceRefresh = forceRefresh || hasUpdates;
       
-      if (!forceRefresh && cachedOffers && cacheAge < 5 * 60 * 1000) {
-        try {
-          const parsed = JSON.parse(cachedOffers);
-          setOffers(parsed);
+      // Пробуем загрузить из кэша если не требуется обновление
+      if (!shouldForceRefresh) {
+        const cached = SmartCache.get<Offer[]>('offers_list');
+        if (cached && cached.length > 0) {
+          setOffers(cached);
           setIsLoading(false);
+          
+          // В фоне проверяем нужно ли обновить
+          if (SmartCache.shouldRefresh('offers_list')) {
+            loadFreshData(false);
+          }
           return;
-        } catch (e) {
-          console.error('Failed to parse cached offers');
         }
       }
       
-      setIsLoading(true);
+      await loadFreshData(true);
+    };
+
+    const loadFreshData = async (showLoading = true) => {
+      if (showLoading) setIsLoading(true);
       
       try {
         const offersData = await offersAPI.getOffers({ 
@@ -69,13 +78,17 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           limit: 20,
           offset: 0
         });
+        
         setOffers(offersData.offers || []);
         setTotalOffersCount(offersData.total || 0);
         setHasMoreOnServer(offersData.hasMore || false);
-        localStorage.setItem('cached_offers', JSON.stringify(offersData.offers || []));
-        localStorage.setItem('cached_offers_time', Date.now().toString());
-        setIsLoading(false);
         
+        // Сохраняем в умный кэш
+        SmartCache.set('offers_list', offersData.offers || []);
+        
+        if (showLoading) setIsLoading(false);
+        
+        // Загружаем заказы в фоне
         setTimeout(() => {
           ordersAPI.getAll('all').then(ordersResponse => {
             setOrders(ordersResponse.orders || []);
@@ -83,29 +96,12 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         }, 500);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        setIsLoading(false);
+        if (showLoading) setIsLoading(false);
       }
     };
 
-    // Проверяем URL параметр updated - если есть, значит были изменения
-    const updatedParam = searchParams.get('updated');
-    // Проверяем флаг в localStorage - мог быть установлен при редактировании
-    const hasLocalChanges = localStorage.getItem('offers_updated') === 'true';
-    
-    if (updatedParam || hasLocalChanges) {
-      console.log('🔄 Обнаружены изменения, загружаю свежие данные');
-      loadData(true);
-      // Убираем параметр из URL
-      if (updatedParam) {
-        searchParams.delete('updated');
-        setSearchParams(searchParams, { replace: true });
-      }
-      // Убираем флаг из localStorage
-      localStorage.removeItem('offers_updated');
-    } else {
-      loadData(false);
-    }
-  }, [searchParams, setSearchParams]);
+    loadData(false);
+  }, []);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
