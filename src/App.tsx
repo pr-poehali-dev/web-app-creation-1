@@ -76,7 +76,6 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
 const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
 const ActiveOrders = lazyWithRetry(() => import("./pages/ActiveOrders"));
-const Notifications = lazyWithRetry(() => import("./pages/Notifications"));
 const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
 const EditRequest = lazyWithRetry(() => import("./pages/EditRequest"));
 const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
