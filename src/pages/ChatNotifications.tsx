@@ -25,6 +25,66 @@ export default function ChatNotifications({ isAuthenticated, onLogout }: ChatNot
   
   const [notifications, setNotifications] = useState<ChatNotification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadNotifications = async (showRefreshing = false) => {
+    if (showRefreshing) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+
+    try {
+      const ordersResponse = await ordersAPI.getAll('all');
+      const allOrders = ordersResponse.orders || [];
+      
+      const notificationsData: ChatNotification[] = [];
+      
+      for (const order of allOrders) {
+        try {
+          const messagesResponse = await ordersAPI.getMessagesByOrder(order.id);
+          const messages = messagesResponse.messages || [];
+          
+          if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            const unreadMessages = messages.filter((msg: any) => 
+              !msg.is_read && msg.sender_id?.toString() !== currentUser.id?.toString()
+            );
+            
+            const isSeller = order.seller_id?.toString() === currentUser.id?.toString();
+            const isMessageFromOtherUser = lastMessage.sender_id?.toString() !== currentUser.id?.toString();
+            
+            notificationsData.push({
+              id: order.id,
+              orderId: order.id,
+              orderNumber: order.orderNumber || order.order_number || 'ORD-000',
+              orderTitle: order.title,
+              messagePreview: lastMessage.message,
+              senderName: isSeller ? (order.buyerName || order.buyer_name || 'Покупатель') : (order.sellerName || order.seller_name || 'Продавец'),
+              senderType: isSeller ? 'buyer' : 'seller',
+              timestamp: new Date(lastMessage.created_at || lastMessage.timestamp),
+              isRead: !isMessageFromOtherUser || lastMessage.is_read,
+              unreadCount: unreadMessages.length
+            });
+          }
+        } catch (error) {
+          console.error(`Error loading messages for order ${order.id}:`, error);
+        }
+      }
+      
+      notificationsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      
+      setNotifications(notificationsData);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      if (showRefreshing) {
+        setIsRefreshing(false);
+      } else {
+        setIsLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -32,57 +92,13 @@ export default function ChatNotifications({ isAuthenticated, onLogout }: ChatNot
       return;
     }
 
-    const loadNotifications = async () => {
-      try {
-        const ordersResponse = await ordersAPI.getAll('all');
-        const allOrders = ordersResponse.orders || [];
-        
-        const notificationsData: ChatNotification[] = [];
-        
-        for (const order of allOrders) {
-          try {
-            const messagesResponse = await ordersAPI.getMessagesByOrder(order.id);
-            const messages = messagesResponse.messages || [];
-            
-            if (messages.length > 0) {
-              const lastMessage = messages[messages.length - 1];
-              const unreadMessages = messages.filter((msg: any) => 
-                !msg.is_read && msg.sender_id?.toString() !== currentUser.id?.toString()
-              );
-              
-              const isSeller = order.seller_id?.toString() === currentUser.id?.toString();
-              const isMessageFromOtherUser = lastMessage.sender_id?.toString() !== currentUser.id?.toString();
-              
-              notificationsData.push({
-                id: order.id,
-                orderId: order.id,
-                orderNumber: order.orderNumber || order.order_number || 'ORD-000',
-                orderTitle: order.title,
-                messagePreview: lastMessage.message,
-                senderName: isSeller ? (order.buyerName || order.buyer_name || 'Покупатель') : (order.sellerName || order.seller_name || 'Продавец'),
-                senderType: isSeller ? 'buyer' : 'seller',
-                timestamp: new Date(lastMessage.created_at || lastMessage.timestamp),
-                isRead: !isMessageFromOtherUser || lastMessage.is_read,
-                unreadCount: unreadMessages.length
-              });
-            }
-          } catch (error) {
-            console.error(`Error loading messages for order ${order.id}:`, error);
-          }
-        }
-        
-        notificationsData.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-        
-        setNotifications(notificationsData);
-      } catch (error) {
-        console.error('Error loading notifications:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, currentUser, navigate]);
+
+  const handleRefresh = () => {
+    loadNotifications(true);
+  };
 
   const handleNotificationClick = (notification: ChatNotification) => {
     navigate(`/my-orders?orderId=${notification.orderId}`);
@@ -132,15 +148,26 @@ export default function ChatNotifications({ isAuthenticated, onLogout }: ChatNot
                 <Badge variant="destructive">{unreadCount}</Badge>
               )}
             </div>
-            {unreadCount > 0 && (
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleMarkAllRead}
+                onClick={handleRefresh}
+                disabled={isRefreshing}
               >
-                Прочитать все
+                <Icon name={isRefreshing ? "Loader2" : "RefreshCw"} className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Обновить
               </Button>
-            )}
+              {unreadCount > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleMarkAllRead}
+                >
+                  Прочитать все
+                </Button>
+              )}
+            </div>
           </div>
           <p className="text-muted-foreground">
             Новые сообщения по вашим заказам и откликам
