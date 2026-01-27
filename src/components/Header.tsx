@@ -1,27 +1,23 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import Icon from '@/components/ui/icon';
 import RegionDistrictSelector from '@/components/RegionDistrictSelector';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { useOffers } from '@/contexts/OffersContext';
 import { getUnreadCount } from '@/utils/notifications';
+import HeaderMobileMenu from '@/components/header/HeaderMobileMenu';
+import HeaderDistrictsModal from '@/components/header/HeaderDistrictsModal';
+import HeaderUserMenu from '@/components/header/HeaderUserMenu';
+
 interface HeaderProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
 
 export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
-  const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -109,7 +105,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
       touchEndY.current = e.touches[0].clientY;
       const swipeDistance = touchStartY.current - touchEndY.current;
       
-      // Блокируем прокрутку страницы только при свайпе вверх
       if (swipeDistance > 5) {
         e.preventDefault();
       }
@@ -118,7 +113,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     const handleTouchEnd = () => {
       const swipeDistance = touchStartY.current - touchEndY.current;
       
-      // Закрываем только если это свайп вверх больше 30px
       if (swipeDistance > 30) {
         setMobileMenuOpen(false);
       }
@@ -141,17 +135,11 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
     }
   }, [mobileMenuOpen]);
 
-  const handleLogout = () => {
-    onLogout();
-    navigate('/');
-  };
-
   const shortenCompanyName = (fullName: string): string => {
     if (!fullName) return fullName;
     
     let shortened = fullName.trim();
     
-    // Замены с учетом разных форматов
     shortened = shortened.replace(/ОБЩЕСТВО\s+С\s+ОГРАНИЧЕННОЙ\s+ОТВЕТСТВЕННОСТЬЮ\s*/gi, 'ООО ');
     shortened = shortened.replace(/Общество\s+с\s+ограниченной\s+ответственностью\s*/gi, 'ООО ');
     shortened = shortened.replace(/ЗАКРЫТОЕ\s+АКЦИОНЕРНОЕ\s+ОБЩЕСТВО\s*/gi, 'ЗАО ');
@@ -265,162 +253,22 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               <RegionDistrictSelector showBadges={false} />
             </div>
             
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center space-x-1 md:space-x-1.5 h-8 md:h-10 px-2 md:px-4 text-xs md:text-sm">
-                    {currentUser?.role === 'admin' ? (
-                      <>
-                        <Icon name="ShieldCheck" className="h-3 w-3 md:h-4 md:w-4 text-primary" />
-                        <span className="max-w-[100px] lg:max-w-[160px] truncate text-[10px] md:text-sm font-semibold text-primary">Администратор</span>
-                      </>
-                    ) : (
-                      <>
-                        {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-3 w-3 md:h-4 md:w-4" />}
-                        <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[150px] lg:max-w-[220px] truncate text-[10px] md:text-sm' : 'max-w-[80px] lg:max-w-[140px] truncate text-[10px] md:text-sm'}>{getUserDisplayName()}</span>
-                      </>
-                    )}
-                    <Icon name="ChevronDown" className="h-3 w-3 md:h-4 md:w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {currentUser && (
-                    <>
-                      <div className="px-2 py-1.5 text-sm font-medium">
-                        {currentUser.userType === 'legal-entity' && currentUser.companyName ? (
-                          shortenCompanyName(currentUser.companyName)
-                        ) : (
-                          <>{currentUser.firstName} {currentUser.lastName}</>
-                        )}
-                      </div>
-                      <div className="px-2 pb-2 text-xs text-muted-foreground">
-                        {currentUser.email}
-                      </div>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem onClick={() => navigate('/profile')} className="border-2 border-border rounded-md mb-1">
-                    <Icon name="User" className="mr-2 h-4 w-4" />
-                    Мои данные
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-auctions')} className="border-2 border-border rounded-md mb-1">
-                    <Icon name="Gavel" className="mr-2 h-4 w-4" />
-                    Мои аукционы
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-reviews')} className="border-2 border-border rounded-md mb-1">
-                    <Icon name="Star" className="mr-2 h-4 w-4" />
-                    Мои отзывы
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/my-orders')} className="border-2 border-border rounded-md mb-1">
-                    <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-                    Мои заказы
-                  </DropdownMenuItem>
-                  {currentUser?.role === 'admin' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1.5 text-xs font-semibold text-primary uppercase">
-                        Администрирование
-                      </div>
-                      <DropdownMenuItem onClick={() => navigate('/admin/panel')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="LayoutDashboard" className="mr-2 h-4 w-4" />
-                        Админ-панель
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/verifications')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="ShieldCheck" className="mr-2 h-4 w-4" />
-                        Верификация
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/users')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="Users" className="mr-2 h-4 w-4" />
-                        Пользователи
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/offers')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="Package" className="mr-2 h-4 w-4" />
-                        Предложения
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/requests')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="FileText" className="mr-2 h-4 w-4" />
-                        Запросы
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/auctions')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="Gavel" className="mr-2 h-4 w-4" />
-                        Аукционы
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/contracts')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="FileSignature" className="mr-2 h-4 w-4" />
-                        Контракты
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/analytics')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="TrendingUp" className="mr-2 h-4 w-4" />
-                        Аналитика
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/admin/settings')} className="border-2 border-border rounded-md mb-1">
-                        <Icon name="Settings" className="mr-2 h-4 w-4" />
-                        Настройки
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive border-2 border-border rounded-md">
-                    <Icon name="LogOut" className="mr-2 h-4 w-4" />
-                    Выйти
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button onClick={() => navigate('/login')} className="h-8 md:h-10 px-3 md:px-5 text-[10px] md:text-sm">Вход/Регистрация</Button>
-            )}
+            <HeaderUserMenu
+              isAuthenticated={isAuthenticated}
+              currentUser={currentUser}
+              onLogout={onLogout}
+              shortenCompanyName={shortenCompanyName}
+              getUserDisplayName={getUserDisplayName}
+            />
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {mobileMenuOpen && (
-          <div 
-            ref={mobileMenuRef}
-            className="md:hidden border-t py-4 space-y-2 touch-pan-y"
-          >
-            <Link
-              to="/predlozheniya"
-              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Предложения
-            </Link>
-            <Link
-              to="/zaprosy"
-              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Запросы
-            </Link>
-            <Link
-              to="/auction"
-              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Аукционы
-            </Link>
-            <Link
-              to="/trading"
-              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span className="flex items-center gap-2">
-                Контракты
-                <Badge variant="secondary" className="text-xs">Новое</Badge>
-              </span>
-            </Link>
-            <Link
-              to="/support"
-              className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Поддержка
-            </Link>
-            <div className="px-4 pt-2">
-              <RegionDistrictSelector showBadges={false} />
-            </div>
-          </div>
-        )}
+        <HeaderMobileMenu
+          isOpen={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          currentPath={location.pathname}
+          menuRef={mobileMenuRef}
+        />
 
         {selectedDistricts.length > 0 && shouldShowDistricts() && (
           <div className="hidden md:block border-t py-2">
@@ -473,101 +321,14 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           </div>
         )}
 
-        {/* Mobile Districts Modal */}
-        {districtsModalOpen && (
-          <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setDistrictsModalOpen(false)}>
-            <div 
-              className="bg-background w-full rounded-t-2xl max-h-[80vh] overflow-hidden flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center justify-between">
-                <h3 className="text-lg font-bold">Выбор районов</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDistrictsModalOpen(false)}
-                >
-                  <Icon name="X" className="h-5 w-5" />
-                </Button>
-              </div>
-
-              <div className="overflow-y-auto flex-1 p-4 space-y-3">
-                {/* Selected count */}
-                {selectedDistricts.length > 0 && (
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-center justify-between">
-                    <span className="text-sm font-medium text-primary">
-                      Выбрано: {selectedDistricts.length} {selectedDistricts.length === districts.length ? '(все)' : ''}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setSelectedDistricts([])}
-                      className="text-xs h-7"
-                    >
-                      Сбросить
-                    </Button>
-                  </div>
-                )}
-
-                {/* Select all button */}
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => {
-                    if (selectedDistricts.length === districts.length) {
-                      setSelectedDistricts([]);
-                    } else {
-                      setSelectedDistricts(districts.map(d => d.id));
-                    }
-                  }}
-                >
-                  <Icon 
-                    name={selectedDistricts.length === districts.length ? "CheckSquare" : "Square"} 
-                    className="h-4 w-4 mr-2" 
-                  />
-                  {selectedDistricts.length === districts.length ? 'Отменить все' : 'Выбрать все'}
-                </Button>
-
-                {/* Districts list */}
-                <div className="space-y-2">
-                  {districts.map((district) => {
-                    const isSelected = selectedDistricts.includes(district.id);
-                    return (
-                      <button
-                        key={district.id}
-                        onClick={() => toggleDistrict(district.id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                          isSelected 
-                            ? 'border-primary bg-primary/5' 
-                            : 'border-border hover:border-primary/40 hover:bg-primary/5'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-primary bg-primary' : 'border-gray-300'
-                        }`}>
-                          {isSelected && (
-                            <Icon name="Check" className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                        <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="text-sm font-medium text-left">{district.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="sticky bottom-0 bg-background border-t p-4">
-                <Button
-                  className="w-full"
-                  onClick={() => setDistrictsModalOpen(false)}
-                >
-                  Применить
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        <HeaderDistrictsModal
+          isOpen={districtsModalOpen}
+          onClose={() => setDistrictsModalOpen(false)}
+          districts={districts}
+          selectedDistricts={selectedDistricts}
+          toggleDistrict={toggleDistrict}
+          setSelectedDistricts={setSelectedDistricts}
+        />
       </div>
     </header>
   );
