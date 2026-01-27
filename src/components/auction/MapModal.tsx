@@ -74,7 +74,14 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             console.log('📍 OpenStreetMap response:', data);
             
             const address = data.address;
-            const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+            
+            // Формируем полный адрес: населенный пункт + улица + дом
+            const settlement = address.city || address.town || address.village || address.hamlet || '';
+            const street = address.road || '';
+            const houseNumber = address.house_number || '';
+            
+            const addressParts = [settlement, street, houseNumber].filter(Boolean);
+            const fullAddress = addressParts.join(', ');
             
             // Приоритет полей для определения района (county = улус/район)
             const district = address.county ||
@@ -269,13 +276,22 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                     );
                     const data = await response.json();
                     const address = data.address;
-                    const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-                    const district = address.suburb || 
+                    
+                    // Формируем полный адрес: населенный пункт + улица + дом
+                    const settlement = address.city || address.town || address.village || address.hamlet || '';
+                    const street = address.road || '';
+                    const houseNumber = address.house_number || '';
+                    
+                    const addressParts = [settlement, street, houseNumber].filter(Boolean);
+                    const fullAddress = addressParts.join(', ');
+                    
+                    const district = address.county ||
+                                   address.city ||
+                                   address.municipality ||
                                    address.district || 
                                    address.city_district || 
-                                   address.municipality ||
-                                   address.county ||
                                    address.state_district ||
+                                   address.suburb || 
                                    address.neighbourhood ||
                                    '';
                     onAddressChange(fullAddress, district);
@@ -297,13 +313,22 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               console.log('OpenStreetMap geolocation response:', data);
               
               const address = data.address;
-              const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-              const district = address.suburb || 
+              
+              // Формируем полный адрес: населенный пункт + улица + дом
+              const settlement = address.city || address.town || address.village || address.hamlet || '';
+              const street = address.road || '';
+              const houseNumber = address.house_number || '';
+              
+              const addressParts = [settlement, street, houseNumber].filter(Boolean);
+              const fullAddress = addressParts.join(', ');
+              
+              const district = address.county ||
+                             address.city ||
+                             address.municipality ||
                              address.district || 
                              address.city_district || 
-                             address.municipality ||
-                             address.county ||
                              address.state_district ||
+                             address.suburb || 
                              address.neighbourhood ||
                              '';
               
@@ -369,7 +394,15 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         console.log('OpenStreetMap search response:', data);
         
         const address = data.address;
-        const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
+        
+        // Формируем полный адрес: населенный пункт + улица + дом
+        const settlement = address.city || address.town || address.village || address.hamlet || '';
+        const street = address.road || '';
+        const houseNumber = address.house_number || '';
+        
+        const addressParts = [settlement, street, houseNumber].filter(Boolean);
+        const fullAddress = addressParts.join(', ');
+        
         const district = address.county ||
                        address.city ||
                        address.municipality ||
@@ -381,6 +414,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                        '';
         
         console.log('Extracted district (search):', district);
+        console.log('Formed full address:', fullAddress);
         onAddressChange(fullAddress, district);
       } catch (error) {
         console.error('Ошибка получения адреса:', error);
