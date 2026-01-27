@@ -29,6 +29,7 @@ interface FormData {
   availableDistricts: string[];
   availableDeliveryTypes: DeliveryType[];
   expiryDate: string;
+  noNegotiation: boolean;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -86,6 +87,7 @@ export default function CreateOfferFormFields({
           pricePerUnit: formData.pricePerUnit,
           hasVAT: formData.hasVAT,
           vatRate: formData.vatRate,
+          noNegotiation: formData.noNegotiation,
         }}
         onInputChange={onInputChange}
       />

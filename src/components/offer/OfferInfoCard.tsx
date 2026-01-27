@@ -28,6 +28,7 @@ interface OfferInfoCardProps {
   createdAt: Date;
   expiryDate?: Date;
   sellerRating?: number;
+  noNegotiation?: boolean;
 }
 
 export default function OfferInfoCard({
@@ -51,6 +52,7 @@ export default function OfferInfoCard({
   createdAt,
   expiryDate,
   sellerRating,
+  noNegotiation,
 }: OfferInfoCardProps) {
   const { districts } = useDistrict();
   
@@ -99,7 +101,14 @@ export default function OfferInfoCard({
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Цена за единицу:</p>
-            <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+              {noNegotiation && (
+                <Badge variant="secondary" className="text-[10px] h-5">
+                  Без торга
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 

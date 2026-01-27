@@ -61,6 +61,7 @@ export interface Offer {
   pricePerUnit: number;
   hasVAT: boolean;
   vatRate?: number;
+  noNegotiation?: boolean;
   location?: string;
   district: string;
   fullAddress?: string;

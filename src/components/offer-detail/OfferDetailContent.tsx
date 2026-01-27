@@ -172,6 +172,7 @@ export default function OfferDetailContent({
                 createdAt={offer.createdAt}
                 expiryDate={offer.expiryDate}
                 sellerRating={offer.seller?.rating}
+                noNegotiation={offer.noNegotiation}
               />
             </div>
           </div>
@@ -229,6 +230,7 @@ export default function OfferDetailContent({
                 createdAt={offer.createdAt}
                 expiryDate={offer.expiryDate}
                 sellerRating={offer.seller?.rating}
+                noNegotiation={offer.noNegotiation}
               />
             </div>
           </div>

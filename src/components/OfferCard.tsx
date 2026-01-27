@@ -295,10 +295,17 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                 </Button>
               </div>
             ) : (
-              <span className="font-bold text-primary text-base cursor-pointer" onClick={(e) => { if (isOwner) { e.stopPropagation(); setIsEditingPrice(true); } }}>
-                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-                {isOwner && <Icon name="Pencil" className="h-3 w-3 inline ml-1 text-muted-foreground" />}
-              </span>
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="font-bold text-primary text-base cursor-pointer" onClick={(e) => { if (isOwner) { e.stopPropagation(); setIsEditingPrice(true); } }}>
+                  {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+                  {isOwner && <Icon name="Pencil" className="h-3 w-3 inline ml-1 text-muted-foreground" />}
+                </span>
+                {offer.noNegotiation && (
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                    Без торга
+                  </Badge>
+                )}
+              </div>
             )}
           </div>
         </div>

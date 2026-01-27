@@ -114,6 +114,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       images: [],
       isPremium: false,
       status: isDraft ? 'draft' : 'active',
+      noNegotiation: formData.noNegotiation,
     };
 
     submitOffer(submitData, videoPreview, imagePreviews, isDraft);
