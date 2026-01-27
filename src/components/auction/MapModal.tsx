@@ -332,7 +332,9 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                              address.neighbourhood ||
                              '';
               
-              console.log('Extracted district (geolocation):', district);
+              console.log('📍 Geolocation: Extracted district:', district);
+              console.log('📍 Geolocation: Full address:', fullAddress);
+              console.log('📍 Geolocation: Calling onAddressChange with:', { fullAddress, district });
               onAddressChange(fullAddress, district);
             } catch (error) {
               console.error('Ошибка получения адреса:', error);
