@@ -82,6 +82,7 @@ const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
 const CreateAuction = lazyWithRetry(() => import("./pages/CreateAuction"));
 const EditAuction = lazyWithRetry(() => import("./pages/EditAuction"));
 const AuctionDetail = lazyWithRetry(() => import("./pages/AuctionDetail"));
+const TelegramConnect = lazyWithRetry(() => import("./pages/TelegramConnect"));
 const VerificationPage = lazyWithRetry(() => import("./pages/VerificationPage"));
 const VerificationResubmit = lazyWithRetry(() => import("./pages/VerificationResubmit"));
 const AdminVerifications = lazyWithRetry(() => import("./pages/AdminVerifications"));
@@ -246,6 +247,7 @@ const App = () => {
             <Route path="/privacy" element={<PrivacyPolicy isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer-agreement" element={<OfferAgreement isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/telegram-setup" element={<TelegramSetup isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/telegram-connect" element={<TelegramConnect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
