@@ -179,6 +179,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   const handleGetCurrentLocation = () => {
     console.log('🎯 handleGetCurrentLocation вызван');
     console.log('🎯 onAddressChange существует:', !!onAddressChange);
+    alert('🎯 Кнопка "Мое местоположение" нажата! onAddressChange=' + !!onAddressChange);
     const loadingMessage = 'Определяем ваше местоположение...';
     console.log(loadingMessage);
     
@@ -218,13 +219,16 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             try {
               const result = await geocodeCoordinates(lat, lng, '📍 Geolocation:');
               console.log('🎉 Геокодирование завершено, вызываем onAddressChange:', result);
+              alert(`📍 Получен адрес: ${result.fullAddress}, Район: ${result.district}`);
               onAddressChange(result.fullAddress, result.district);
               console.log('✅ onAddressChange вызван успешно');
             } catch (error) {
               console.error('❌ Ошибка получения адреса:', error);
+              alert('❌ Ошибка: ' + error);
             }
           } else {
             console.log('⚠️ onAddressChange не передан в MapModal');
+            alert('⚠️ onAddressChange не передан в MapModal!');
           }
         },
         (error) => {

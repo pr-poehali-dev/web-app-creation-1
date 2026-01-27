@@ -257,6 +257,7 @@ export default function OfferLocationSection({
             onAddressChange={(address, districtName) => {
               console.log('🔔 OfferLocationSection: onAddressChange ВЫЗВАН!');
               console.log('📬 onAddressChange вызван:', { address, districtName });
+              alert(`🔔 OfferLocationSection получил: адрес="${address}", район="${districtName}"`);
               
               if (address) {
                 setAddressInput(address);
