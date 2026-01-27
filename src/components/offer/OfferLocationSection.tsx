@@ -312,6 +312,7 @@ export default function OfferLocationSection({
                 
                 if (matchedDistrict) {
                   console.log('✅ Район найден:', matchedDistrict.name);
+                  setDistrictInput(matchedDistrict.name);
                   onInputChange('district', matchedDistrict.id);
                 } else {
                   console.log('❌ Район не найден:', normalizedDistrictName);
