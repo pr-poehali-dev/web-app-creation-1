@@ -1,21 +1,42 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import RegionDistrictSelector from '@/components/RegionDistrictSelector';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
+
+interface District {
+  id: string;
+  name: string;
+}
 
 interface HeaderMobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
   currentPath: string;
   menuRef: React.RefObject<HTMLDivElement>;
+  districts: District[];
+  selectedDistricts: string[];
+  onOpenDistrictsModal: () => void;
+  onResetDistricts: () => void;
 }
 
 export default function HeaderMobileMenu({ 
   isOpen, 
   onClose, 
   currentPath,
-  menuRef 
+  menuRef,
+  districts,
+  selectedDistricts,
+  onOpenDistrictsModal,
+  onResetDistricts
 }: HeaderMobileMenuProps) {
+  const location = useLocation();
+
   if (!isOpen) return null;
+
+  const shouldShowDistricts = () => {
+    const hiddenPaths = ['/', '/support'];
+    return !hiddenPaths.includes(location.pathname);
+  };
 
   return (
     <div 
@@ -60,9 +81,64 @@ export default function HeaderMobileMenu({
       >
         Поддержка
       </Link>
-      <div className="px-4 pt-2">
-        <RegionDistrictSelector showBadges={false} />
-      </div>
+      
+      {shouldShowDistricts() && (
+        <div className="mx-4 mt-4 pt-4 border-t space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-foreground">Районы</h4>
+            {selectedDistricts.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onResetDistricts}
+                className="h-7 text-xs text-muted-foreground hover:text-destructive"
+              >
+                <Icon name="X" className="h-3 w-3 mr-1" />
+                Сбросить
+              </Button>
+            )}
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full justify-between h-11"
+            onClick={onOpenDistrictsModal}
+          >
+            <span className="flex items-center gap-2">
+              <Icon name="MapPin" className="h-4 w-4" />
+              {selectedDistricts.length === 0 
+                ? 'Выбрать районы' 
+                : selectedDistricts.length === districts.length
+                  ? 'Выбраны все районы'
+                  : `Выбрано: ${selectedDistricts.length}`
+              }
+            </span>
+            <Icon name="ChevronRight" className="h-4 w-4" />
+          </Button>
+
+          {selectedDistricts.length > 0 && selectedDistricts.length < districts.length && (
+            <div className="flex flex-wrap gap-2">
+              {selectedDistricts.slice(0, 5).map((districtId) => {
+                const district = districts.find(d => d.id === districtId);
+                return (
+                  <Badge
+                    key={districtId}
+                    variant="secondary"
+                    className="text-xs"
+                  >
+                    {district?.name}
+                  </Badge>
+                );
+              })}
+              {selectedDistricts.length > 5 && (
+                <Badge variant="outline" className="text-xs">
+                  +{selectedDistricts.length - 5} ещё
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

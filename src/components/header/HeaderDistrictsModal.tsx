@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
+import { useState } from 'react';
 
 interface District {
   id: string;
@@ -23,15 +25,21 @@ export default function HeaderDistrictsModal({
   toggleDistrict,
   setSelectedDistricts
 }: HeaderDistrictsModalProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
   if (!isOpen) return null;
 
+  const filteredDistricts = districts.filter(district => 
+    district.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-end" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 z-[100] flex items-end" onClick={onClose}>
       <div 
-        className="bg-background w-full rounded-t-2xl max-h-[80vh] overflow-hidden flex flex-col"
+        className="bg-background w-full rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col safe-bottom"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center justify-between">
+        <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center justify-between z-10">
           <h3 className="text-lg font-bold">Выбор районов</h3>
           <Button
             variant="ghost"
@@ -42,7 +50,19 @@ export default function HeaderDistrictsModal({
           </Button>
         </div>
 
-        <div className="overflow-y-auto flex-1 p-4 space-y-3">
+        <div className="overflow-y-auto flex-1 p-4 space-y-3 overscroll-contain">
+          {/* Search */}
+          <div className="relative">
+            <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Поиск района..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-10"
+            />
+          </div>
+
           {/* Selected count */}
           {selectedDistricts.length > 0 && (
             <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-center justify-between">
@@ -63,7 +83,7 @@ export default function HeaderDistrictsModal({
           {/* Select all button */}
           <Button
             variant="outline"
-            className="w-full justify-start"
+            className="w-full justify-start h-11"
             onClick={() => {
               if (selectedDistricts.length === districts.length) {
                 setSelectedDistricts([]);
@@ -80,40 +100,47 @@ export default function HeaderDistrictsModal({
           </Button>
 
           {/* Districts list */}
-          <div className="space-y-2">
-            {districts.map((district) => {
-              const isSelected = selectedDistricts.includes(district.id);
-              return (
-                <button
-                  key={district.id}
-                  onClick={() => toggleDistrict(district.id)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                    isSelected 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-border hover:border-primary/40 hover:bg-primary/5'
-                  }`}
-                >
-                  <div className={`w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 ${
-                    isSelected ? 'border-primary bg-primary' : 'border-gray-300'
-                  }`}>
-                    {isSelected && (
-                      <Icon name="Check" className="h-3 w-3 text-white" />
-                    )}
-                  </div>
-                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm font-medium text-left">{district.name}</span>
-                </button>
-              );
-            })}
+          <div className="space-y-2 pb-2">
+            {filteredDistricts.length > 0 ? (
+              filteredDistricts.map((district) => {
+                const isSelected = selectedDistricts.includes(district.id);
+                return (
+                  <button
+                    key={district.id}
+                    onClick={() => toggleDistrict(district.id)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                      isSelected 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/40 hover:bg-primary/5'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 ${
+                      isSelected ? 'border-primary bg-primary' : 'border-gray-300'
+                    }`}>
+                      {isSelected && (
+                        <Icon name="Check" className="h-3 w-3 text-white" />
+                      )}
+                    </div>
+                    <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="text-sm font-medium text-left">{district.name}</span>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Icon name="Search" className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Районы не найдены</p>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-background border-t p-4">
+        <div className="sticky bottom-0 bg-background border-t p-4 z-10">
           <Button
-            className="w-full"
+            className="w-full h-11"
             onClick={onClose}
           >
-            Применить
+            Применить ({selectedDistricts.length})
           </Button>
         </div>
       </div>

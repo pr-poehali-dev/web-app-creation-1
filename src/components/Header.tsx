@@ -191,19 +191,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
           {/* Mobile buttons */}
           <div className="md:hidden flex items-center gap-2">
-            {shouldShowDistricts() && (
-              <button
-                className="relative px-2.5 py-2 text-sm font-bold text-primary border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors"
-                onClick={() => setDistrictsModalOpen(true)}
-              >
-                <Icon name="MapPin" className="h-4 w-4" />
-                {selectedDistricts.length > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {selectedDistricts.length}
-                  </span>
-                )}
-              </button>
-            )}
             <button
               className="px-3 py-2 text-sm font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -268,6 +255,10 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           onClose={() => setMobileMenuOpen(false)}
           currentPath={location.pathname}
           menuRef={mobileMenuRef}
+          districts={districts}
+          selectedDistricts={selectedDistricts}
+          onOpenDistrictsModal={() => setDistrictsModalOpen(true)}
+          onResetDistricts={() => setSelectedDistricts([])}
         />
 
         {selectedDistricts.length > 0 && shouldShowDistricts() && (
