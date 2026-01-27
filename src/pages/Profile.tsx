@@ -398,8 +398,6 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
 
             {isViewingOwnProfile && <ProfileVerificationCard />}
 
-            {isViewingOwnProfile && <PushNotificationManager />}
-
             {isViewingOwnProfile && (
               <Card>
                 <CardHeader>
