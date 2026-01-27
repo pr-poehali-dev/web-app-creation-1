@@ -29,6 +29,7 @@ interface OfferInfoCardProps {
   expiryDate?: Date;
   sellerRating?: number;
   noNegotiation?: boolean;
+  deliveryTime?: string;
 }
 
 export default function OfferInfoCard({
@@ -53,6 +54,7 @@ export default function OfferInfoCard({
   expiryDate,
   sellerRating,
   noNegotiation,
+  deliveryTime,
 }: OfferInfoCardProps) {
   const { districts } = useDistrict();
   
@@ -197,6 +199,13 @@ export default function OfferInfoCard({
                 </div>
               </div>
 
+              {deliveryTime && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Срок доставки/поставки</p>
+                  <p className="text-sm font-medium">{deliveryTime}</p>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div>
                   <p>Дата создания</p>
@@ -283,6 +292,13 @@ export default function OfferInfoCard({
                 )}
               </div>
             </div>
+
+            {deliveryTime && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Срок доставки/поставки</p>
+                <p className="text-sm font-medium">{deliveryTime}</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
               <div>

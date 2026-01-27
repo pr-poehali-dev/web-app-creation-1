@@ -20,6 +20,7 @@ interface FormData {
   availableDeliveryTypes: DeliveryType[];
   expiryDate: string;
   noNegotiation: boolean;
+  deliveryTime: string;
 }
 
 export function useCreateOfferForm(editOffer?: Offer) {
@@ -43,6 +44,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     availableDeliveryTypes: editOffer.availableDeliveryTypes || [],
     expiryDate: '',
     noNegotiation: (editOffer as any).noNegotiation || false,
+    deliveryTime: editOffer.deliveryTime || '',
   } : {
     title: '',
     description: '',
@@ -61,6 +63,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     availableDeliveryTypes: [] as DeliveryType[],
     expiryDate: '',
     noNegotiation: false,
+    deliveryTime: '',
   });
 
   const [images, setImages] = useState<File[]>([]);

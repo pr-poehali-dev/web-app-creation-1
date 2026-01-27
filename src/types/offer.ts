@@ -62,6 +62,7 @@ export interface Offer {
   hasVAT: boolean;
   vatRate?: number;
   noNegotiation?: boolean;
+  deliveryTime?: string;
   location?: string;
   district: string;
   fullAddress?: string;

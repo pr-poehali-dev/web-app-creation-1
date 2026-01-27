@@ -30,6 +30,7 @@ interface FormData {
   availableDeliveryTypes: DeliveryType[];
   expiryDate: string;
   noNegotiation: boolean;
+  deliveryTime: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -140,7 +141,17 @@ export default function CreateOfferFormFields({
         <CardHeader>
           <CardTitle>Дополнительно</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="deliveryTime">Срок доставки/поставки (необязательно)</Label>
+            <Input
+              id="deliveryTime"
+              type="text"
+              placeholder="Например: 1-2 дня, 3-5 рабочих дней"
+              value={formData.deliveryTime}
+              onChange={(e) => onInputChange('deliveryTime', e.target.value)}
+            />
+          </div>
           <div>
             <Label htmlFor="expiryDate">Срок годности (необязательно)</Label>
             <Input
