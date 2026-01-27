@@ -1,6 +1,6 @@
 '''Управление предложениями товаров и услуг'''
 
-import json 
+import json
 import os
 import base64
 import time
