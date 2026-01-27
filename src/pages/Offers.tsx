@@ -49,23 +49,18 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   useEffect(() => {
     let isMounted = true;
-    let isLoadingData = false;
 
     const loadData = async (forceRefresh = false) => {
-      if (isLoadingData || !isMounted) return;
-      
       const hasUpdates = checkForUpdates('offers');
       const shouldForceRefresh = forceRefresh || hasUpdates;
       
       if (!shouldForceRefresh) {
         const cached = SmartCache.get<Offer[]>('offers_list');
         if (cached && cached.length > 0) {
-          if (isMounted) {
-            setOffers(cached);
-            setIsLoading(false);
-          }
+          setOffers(cached);
+          setIsLoading(false);
           
-          if (SmartCache.shouldRefresh('offers_list') && isMounted) {
+          if (SmartCache.shouldRefresh('offers_list')) {
             loadFreshData(false);
           }
           return;
@@ -76,13 +71,9 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     };
 
     const loadFreshData = async (showLoading = true) => {
-      if (isLoadingData || !isMounted) return;
-      
-      isLoadingData = true;
-      
-      if (showLoading && isMounted) {
+      if (showLoading) {
         setIsLoading(true);
-      } else if (isMounted) {
+      } else {
         setIsSyncing(true);
       }
       
@@ -108,25 +99,20 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         }
         
         setTimeout(() => {
-          if (isMounted) {
-            ordersAPI.getAll('all').then(ordersResponse => {
-              if (isMounted) {
-                setOrders(ordersResponse.orders || []);
-              }
-            }).catch(() => {});
-          }
+          ordersAPI.getAll('all').then(ordersResponse => {
+            if (isMounted) {
+              setOrders(ordersResponse.orders || []);
+            }
+          }).catch(() => {});
         }, 500);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
-        if (!isMounted) return;
         
         if (showLoading) {
           setIsLoading(false);
         } else {
           setIsSyncing(false);
         }
-      } finally {
-        isLoadingData = false;
       }
     };
 
