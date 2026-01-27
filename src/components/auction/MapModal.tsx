@@ -76,13 +76,14 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             const address = data.address;
             const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
             
-            // Пробуем разные поля для определения района
-            const district = address.suburb || 
+            // Приоритет полей для определения района (county = улус/район)
+            const district = address.county ||
+                           address.city ||
+                           address.municipality ||
                            address.district || 
                            address.city_district || 
-                           address.municipality ||
-                           address.county ||
                            address.state_district ||
+                           address.suburb || 
                            address.neighbourhood ||
                            '';
             
@@ -369,12 +370,13 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         
         const address = data.address;
         const fullAddress = `${address.road || ''} ${address.house_number || ''}`.trim();
-        const district = address.suburb || 
+        const district = address.county ||
+                       address.city ||
+                       address.municipality ||
                        address.district || 
                        address.city_district || 
-                       address.municipality ||
-                       address.county ||
                        address.state_district ||
+                       address.suburb || 
                        address.neighbourhood ||
                        '';
         
