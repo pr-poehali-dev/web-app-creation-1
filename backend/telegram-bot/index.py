@@ -46,6 +46,8 @@ def handler(event: dict, context) -> dict:
         first_name = message.get('from', {}).get('first_name', 'Пользователь')
         
         bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://erttp.ru')
+        
         if not bot_token:
             return {
                 'statusCode': 500,
@@ -87,7 +89,7 @@ def handler(event: dict, context) -> dict:
             # Создаем inline кнопку для перехода на сайт с Chat ID в URL
             keyboard = {
                 'inline_keyboard': [[
-                    {'text': '🌐 Открыть профиль на сайте', 'url': f'https://your-domain.com/profile?telegram_chat_id={chat_id}'}
+                    {'text': '🌐 Открыть профиль на сайте', 'url': f'{frontend_url}/profile?telegram_chat_id={chat_id}'}
                 ]]
             }
             
@@ -106,7 +108,7 @@ def handler(event: dict, context) -> dict:
             
             keyboard = {
                 'inline_keyboard': [[
-                    {'text': '🌐 Открыть профиль на сайте', 'url': f'https://your-domain.com/profile?telegram_chat_id={chat_id}'}
+                    {'text': '🌐 Открыть профиль на сайте', 'url': f'{frontend_url}/profile?telegram_chat_id={chat_id}'}
                 ]]
             }
             
@@ -123,7 +125,7 @@ def handler(event: dict, context) -> dict:
             
             keyboard = {
                 'inline_keyboard': [[
-                    {'text': '🌐 Открыть профиль на сайте', 'url': f'https://your-domain.com/profile?telegram_chat_id={chat_id}'}
+                    {'text': '🌐 Открыть профиль на сайте', 'url': f'{frontend_url}/profile?telegram_chat_id={chat_id}'}
                 ]]
             }
             
