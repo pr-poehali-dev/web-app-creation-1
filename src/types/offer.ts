@@ -63,6 +63,8 @@ export interface Offer {
   vatRate?: number;
   noNegotiation?: boolean;
   deliveryTime?: string;
+  deliveryPeriodStart?: string;
+  deliveryPeriodEnd?: string;
   location?: string;
   district: string;
   fullAddress?: string;

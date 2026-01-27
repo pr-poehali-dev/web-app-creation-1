@@ -361,6 +361,12 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     offer_dict['isPremium'] = offer_dict.pop('is_premium', False)
     offer_dict['noNegotiation'] = offer_dict.pop('no_negotiation', False)
     offer_dict['deliveryTime'] = offer_dict.pop('delivery_time', None)
+    
+    delivery_period_start = offer_dict.pop('delivery_period_start', None)
+    offer_dict['deliveryPeriodStart'] = delivery_period_start.isoformat() if delivery_period_start else None
+    
+    delivery_period_end = offer_dict.pop('delivery_period_end', None)
+    offer_dict['deliveryPeriodEnd'] = delivery_period_end.isoformat() if delivery_period_end else None
     seller_name = offer_dict.pop('seller_name', None)
     seller_type = offer_dict.pop('seller_type', None)
     seller_phone = offer_dict.pop('seller_phone', None)
@@ -446,13 +452,16 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         min_order_qty = int(min_order_qty)
     
     delivery_time_esc = body.get('deliveryTime', '').replace("'", "''") if body.get('deliveryTime') else None
+    delivery_period_start = body.get('deliveryPeriodStart')
+    delivery_period_end = body.get('deliveryPeriodEnd')
     
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
             user_id, title, description, category, subcategory,
             quantity, unit, price_per_unit, min_order_quantity, has_vat, vat_rate,
             location, district, full_address, available_districts,
-            available_delivery_types, is_premium, status, no_negotiation, delivery_time
+            available_delivery_types, is_premium, status, no_negotiation, delivery_time,
+            delivery_period_start, delivery_period_end
         ) VALUES (
             '{user_id_esc}', 
             '{title_esc}', 
@@ -473,7 +482,9 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {body.get('isPremium', False)}, 
             '{body.get('status', 'active')}',
             {body.get('noNegotiation', False)},
-            {'NULL' if delivery_time_esc is None else f"'{delivery_time_esc}'"}
+            {'NULL' if delivery_time_esc is None else f"'{delivery_time_esc}'"},
+            {'NULL' if not delivery_period_start else f"'{delivery_period_start}'"},
+            {'NULL' if not delivery_period_end else f"'{delivery_period_end}'"}
         )
         RETURNING id, created_at
     """

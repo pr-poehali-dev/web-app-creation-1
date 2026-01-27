@@ -30,6 +30,8 @@ interface OfferInfoCardProps {
   sellerRating?: number;
   noNegotiation?: boolean;
   deliveryTime?: string;
+  deliveryPeriodStart?: Date | string;
+  deliveryPeriodEnd?: Date | string;
 }
 
 export default function OfferInfoCard({
@@ -55,6 +57,8 @@ export default function OfferInfoCard({
   sellerRating,
   noNegotiation,
   deliveryTime,
+  deliveryPeriodStart,
+  deliveryPeriodEnd,
 }: OfferInfoCardProps) {
   const { districts } = useDistrict();
   
@@ -206,6 +210,17 @@ export default function OfferInfoCard({
                 </div>
               )}
 
+              {(deliveryPeriodStart || deliveryPeriodEnd) && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Период поставки</p>
+                  <p className="text-sm font-medium">
+                    {deliveryPeriodStart && formatDateWithTimezone(deliveryPeriodStart)}
+                    {deliveryPeriodStart && deliveryPeriodEnd && ' — '}
+                    {deliveryPeriodEnd && formatDateWithTimezone(deliveryPeriodEnd)}
+                  </p>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div>
                   <p>Дата создания</p>
@@ -297,6 +312,17 @@ export default function OfferInfoCard({
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Срок доставки/поставки</p>
                 <p className="text-sm font-medium">{deliveryTime}</p>
+              </div>
+            )}
+
+            {(deliveryPeriodStart || deliveryPeriodEnd) && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Период поставки</p>
+                <p className="text-sm font-medium">
+                  {deliveryPeriodStart && formatDateWithTimezone(deliveryPeriodStart)}
+                  {deliveryPeriodStart && deliveryPeriodEnd && ' — '}
+                  {deliveryPeriodEnd && formatDateWithTimezone(deliveryPeriodEnd)}
+                </p>
               </div>
             )}
 

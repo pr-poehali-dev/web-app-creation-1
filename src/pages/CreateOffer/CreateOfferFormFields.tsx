@@ -31,6 +31,8 @@ interface FormData {
   expiryDate: string;
   noNegotiation: boolean;
   deliveryTime: string;
+  deliveryPeriodStart: string;
+  deliveryPeriodEnd: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -151,6 +153,31 @@ export default function CreateOfferFormFields({
               value={formData.deliveryTime}
               onChange={(e) => onInputChange('deliveryTime', e.target.value)}
             />
+          </div>
+          <div>
+            <Label htmlFor="deliveryPeriod">Период поставки (необязательно)</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="deliveryPeriodStart" className="text-xs text-muted-foreground">Дата начала</Label>
+                <Input
+                  id="deliveryPeriodStart"
+                  type="date"
+                  value={formData.deliveryPeriodStart}
+                  onChange={(e) => onInputChange('deliveryPeriodStart', e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <Label htmlFor="deliveryPeriodEnd" className="text-xs text-muted-foreground">Дата окончания</Label>
+                <Input
+                  id="deliveryPeriodEnd"
+                  type="date"
+                  value={formData.deliveryPeriodEnd}
+                  onChange={(e) => onInputChange('deliveryPeriodEnd', e.target.value)}
+                  min={formData.deliveryPeriodStart || new Date().toISOString().split('T')[0]}
+                />
+              </div>
+            </div>
           </div>
           <div>
             <Label htmlFor="expiryDate">Срок годности (необязательно)</Label>

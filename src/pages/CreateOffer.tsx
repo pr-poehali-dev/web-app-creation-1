@@ -112,6 +112,8 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       availableDistricts: formData.availableDistricts,
       availableDeliveryTypes: formData.availableDeliveryTypes,
       deliveryTime: formData.deliveryTime || undefined,
+      deliveryPeriodStart: formData.deliveryPeriodStart || undefined,
+      deliveryPeriodEnd: formData.deliveryPeriodEnd || undefined,
       images: [],
       isPremium: false,
       status: isDraft ? 'draft' : 'active',

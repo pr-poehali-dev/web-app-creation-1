@@ -173,6 +173,9 @@ export default function OfferDetailContent({
                 expiryDate={offer.expiryDate}
                 sellerRating={offer.seller?.rating}
                 noNegotiation={offer.noNegotiation}
+                deliveryTime={offer.deliveryTime}
+                deliveryPeriodStart={offer.deliveryPeriodStart}
+                deliveryPeriodEnd={offer.deliveryPeriodEnd}
               />
             </div>
           </div>
@@ -231,6 +234,9 @@ export default function OfferDetailContent({
                 expiryDate={offer.expiryDate}
                 sellerRating={offer.seller?.rating}
                 noNegotiation={offer.noNegotiation}
+                deliveryTime={offer.deliveryTime}
+                deliveryPeriodStart={offer.deliveryPeriodStart}
+                deliveryPeriodEnd={offer.deliveryPeriodEnd}
               />
             </div>
           </div>
