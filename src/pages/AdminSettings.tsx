@@ -47,6 +47,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
               <TabsTrigger value="general">Общие</TabsTrigger>
               <TabsTrigger value="moderation">Модерация</TabsTrigger>
               <TabsTrigger value="notifications">Уведомления</TabsTrigger>
+              <TabsTrigger value="telegram">Telegram</TabsTrigger>
               <TabsTrigger value="security">Безопасность</TabsTrigger>
             </TabsList>
 
@@ -161,6 +162,70 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
                     <Input id="smtp-user" defaultValue="notifications@platform.ru" />
                   </div>
                   <Button onClick={handleSaveSettings}>Сохранить изменения</Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="telegram" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Настройка Telegram бота</CardTitle>
+                  <CardDescription>Подключение и настройка уведомлений через Telegram</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-primary/5 rounded-lg">
+                    <p className="text-sm mb-2">
+                      Telegram бот позволяет пользователям получать моментальные уведомления об откликах на их запросы и предложения.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Работает на всех устройствах, включая iOS. Не требует разрешений браузера.
+                    </p>
+                  </div>
+
+                  <Button 
+                    onClick={() => navigate('/telegram-setup')}
+                    className="w-full"
+                  >
+                    <Icon name="Settings" className="mr-2 h-4 w-4" />
+                    Открыть мастер настройки
+                  </Button>
+
+                  <div className="border-t pt-4 space-y-3">
+                    <p className="text-sm font-medium">Быстрые действия:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Button 
+                        variant="outline"
+                        onClick={() => window.open('https://t.me/BotFather', '_blank')}
+                        className="w-full"
+                      >
+                        <Icon name="ExternalLink" className="mr-2 h-4 w-4" />
+                        Открыть BotFather
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => navigate('/telegram-setup')}
+                        className="w-full"
+                      >
+                        <Icon name="Info" className="mr-2 h-4 w-4" />
+                        Инструкция
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-blue-500/10 text-blue-900 dark:text-blue-100 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Icon name="Info" className="h-5 w-5 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm space-y-2">
+                        <p className="font-semibold">Статус интеграции</p>
+                        <ul className="space-y-1 list-disc list-inside">
+                          <li>Бот создан и задеплоен</li>
+                          <li>API endpoints готовы</li>
+                          <li>UI компоненты установлены</li>
+                          <li>Требуется настройка вебхука</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
