@@ -196,7 +196,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </div>
             <div className="flex flex-col items-start">
               <span className="text-[11px] md:text-base font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
-              <span className="text-[7px] md:text-[10px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
+              <span className="text-[10.5px] md:text-[15px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
             </div>
           </Link>
 
