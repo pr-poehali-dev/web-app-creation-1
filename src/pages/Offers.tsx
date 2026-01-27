@@ -49,8 +49,11 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   useEffect(() => {
     let isMounted = true;
+    let isLoading = false;
 
     const loadData = async (forceRefresh = false) => {
+      if (isLoading) return;
+      isLoading = true;
       const hasUpdates = checkForUpdates('offers');
       const shouldForceRefresh = forceRefresh || hasUpdates;
       
@@ -120,8 +123,9 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     
     return () => {
       isMounted = false;
+      isLoading = false;
     };
-  }, [isAuthenticated, currentUser]);
+  }, []);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];

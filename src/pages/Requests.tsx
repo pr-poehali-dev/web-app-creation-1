@@ -54,8 +54,11 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   });
 
   useEffect(() => {
+    let isLoading = false;
     
     const loadRequests = async () => {
+      if (isLoading) return;
+      isLoading = true;
       const hasUpdates = checkForUpdates('requests');
       
       // Пробуем загрузить из кэша если нет обновлений
@@ -106,7 +109,11 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     };
 
     loadRequests();
-  }, [isAuthenticated, currentUser]);
+    
+    return () => {
+      isLoading = false;
+    };
+  }, []);
 
   const filteredRequests = useMemo(() => {
     let result = [...requests];
