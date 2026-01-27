@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { DISTRICTS } from '@/data/districts';
 import type { Offer } from '@/types/offer';
 import { canCreateListing } from '@/utils/permissions';
 import { useCreateOfferForm } from './CreateOffer/useCreateOfferForm';
@@ -26,7 +27,10 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const accessCheck = canCreateListing(isAuthenticated);
-  const { districts } = useDistrict();
+  const { districts: contextDistricts } = useDistrict();
+  
+  // Используем все районы для автозаполнения при выборе на карте
+  const allDistricts = DISTRICTS.map(d => ({ id: d.id, name: d.name }));
   
   const [editOffer, setEditOffer] = useState<Offer | undefined>(location.state?.editOffer as Offer | undefined);
   const [isLoadingOffer, setIsLoadingOffer] = useState(false);
@@ -173,7 +177,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               imagePreviews={imagePreviews}
               video={video}
               videoPreview={videoPreview}
-              districts={districts}
+              districts={allDistricts}
               onInputChange={handleInputChange}
               onDistrictToggle={handleDistrictToggle}
               onDeliveryTypeToggle={handleDeliveryTypeToggle}
