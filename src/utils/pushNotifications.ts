@@ -151,7 +151,7 @@ export async function unsubscribeFromPush(userId: string): Promise<boolean> {
         'Content-Type': 'application/json',
         'X-User-Id': userId,
       },
-      body: JSON.dumps({
+      body: JSON.stringify({
         action: 'unsubscribe',
         subscription: subscription.toJSON(),
       }),
