@@ -22,6 +22,27 @@ export default function TelegramNotificationSettings({ userId }: TelegramNotific
 
   useEffect(() => {
     checkConnection();
+    
+    // Проверяем URL параметр telegram_chat_id
+    const urlParams = new URLSearchParams(window.location.search);
+    const chatIdFromUrl = urlParams.get('telegram_chat_id');
+    if (chatIdFromUrl) {
+      setChatId(chatIdFromUrl);
+      // Показываем уведомление
+      toast({
+        title: 'Chat ID получен!',
+        description: 'Нажмите "Подключить" чтобы включить Telegram уведомления',
+      });
+      // Прокручиваем к секции Telegram
+      setTimeout(() => {
+        const telegramSection = document.querySelector('[data-telegram-settings]');
+        if (telegramSection) {
+          telegramSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
+      // Очищаем URL от параметра
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, [userId]);
 
   const checkConnection = async () => {
@@ -136,7 +157,7 @@ export default function TelegramNotificationSettings({ userId }: TelegramNotific
   const telegramBotLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${userId}`;
 
   return (
-    <Card>
+    <Card data-telegram-settings>
       <CardHeader>
         <div className="flex items-center gap-2">
           <Icon name="MessageCircle" className="h-5 w-5" />
@@ -203,10 +224,18 @@ export default function TelegramNotificationSettings({ userId }: TelegramNotific
                   value={chatId}
                   onChange={(e) => setChatId(e.target.value)}
                   disabled={isConnecting}
+                  className={chatId ? 'border-primary' : ''}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Chat ID это число, которое бот отправит вам после команды /start
-                </p>
+                {chatId ? (
+                  <p className="text-xs text-primary flex items-center gap-1">
+                    <Icon name="CheckCircle" className="h-3 w-3" />
+                    Chat ID готов к подключению
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Chat ID это число, которое бот отправит вам после команды /start
+                  </p>
+                )}
               </div>
 
               <Button
