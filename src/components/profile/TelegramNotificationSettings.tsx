@@ -83,7 +83,7 @@ export default function TelegramNotificationSettings({ userId }: TelegramNotific
           'X-User-Id': userId,
         },
         body: JSON.stringify({
-          telegramChatId: chatId.trim(),
+          telegram_chat_id: chatId.trim(),
         }),
       });
 
