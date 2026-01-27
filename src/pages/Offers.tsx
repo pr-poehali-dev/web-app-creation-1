@@ -38,7 +38,6 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const [totalOffersCount, setTotalOffersCount] = useState(0);
   const [hasMoreOnServer, setHasMoreOnServer] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [loadAttempted, setLoadAttempted] = useState(false);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -49,10 +48,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   });
 
   useEffect(() => {
-    if (loadAttempted) return;
-    
     let isMounted = true;
-    setLoadAttempted(true);
 
     const loadData = async (forceRefresh = false) => {
       const hasUpdates = checkForUpdates('offers');
