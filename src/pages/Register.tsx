@@ -228,7 +228,29 @@ export default function Register({ onRegister }: RegisterProps) {
           title: 'Успешно',
           description: 'Регистрация прошла успешно! Добро пожаловать!',
         });
-        setTimeout(() => {
+
+        // Предлагаем включить уведомления после успешной регистрации
+        setTimeout(async () => {
+          if ('Notification' in window && Notification.permission === 'default') {
+            const enableNotifications = window.confirm(
+              'Хотите получать уведомления о новых запросах и предложениях в вашем районе?'
+            );
+            
+            if (enableNotifications) {
+              try {
+                const { setupPushNotifications } = await import('@/services/pushNotifications');
+                const success = await setupPushNotifications(result.user.id);
+                if (success) {
+                  toast({
+                    title: 'Уведомления включены',
+                    description: 'Вы будете получать важные обновления',
+                  });
+                }
+              } catch (error) {
+                console.error('Ошибка настройки уведомлений:', error);
+              }
+            }
+          }
           navigate('/');
         }, 1500);
       } else {

@@ -13,6 +13,7 @@ import ProfileInfoCard from '@/components/profile/ProfileInfoCard';
 import ProfileSecurityCard from '@/components/profile/ProfileSecurityCard';
 import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
+import NotificationSettings from '@/components/profile/NotificationSettings';
 
 interface ProfileProps {
   isAuthenticated: boolean;
@@ -452,6 +453,8 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
                 onPasswordChange={handlePasswordChange}
               />
             )}
+
+            {isViewingOwnProfile && <NotificationSettings userId={String(currentUser.id)} />}
 
             <ProfileStatsCard
               registrationDate={currentUser.createdAt || ''}

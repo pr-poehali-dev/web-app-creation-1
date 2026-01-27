@@ -1,0 +1,35 @@
+{
+  "tests": [
+    {
+      "name": "Subscribe to push notifications",
+      "method": "POST",
+      "body": {
+        "userId": "test-user-123",
+        "subscription": {
+          "endpoint": "https://fcm.googleapis.com/fcm/send/test",
+          "keys": {
+            "p256dh": "test-key",
+            "auth": "test-auth"
+          }
+        }
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Unsubscribe from push notifications",
+      "method": "DELETE",
+      "body": {
+        "userId": "test-user-123"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
