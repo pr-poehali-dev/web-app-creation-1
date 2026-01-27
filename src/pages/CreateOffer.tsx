@@ -95,6 +95,21 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const handleSubmit = (e: React.FormEvent, isDraft: boolean = false) => {
     e.preventDefault();
     
+    // Валидация периода поставки
+    if (formData.deliveryPeriodStart && formData.deliveryPeriodEnd) {
+      const startDate = new Date(formData.deliveryPeriodStart);
+      const endDate = new Date(formData.deliveryPeriodEnd);
+      
+      if (endDate <= startDate) {
+        toast({
+          title: "Ошибка валидации",
+          description: "Дата окончания периода поставки должна быть позже даты начала",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     const submitData = {
       title: formData.title,
       description: formData.description,
