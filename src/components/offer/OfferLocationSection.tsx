@@ -255,6 +255,7 @@ export default function OfferLocationSection({
             coordinates={formData.gpsCoordinates || ''}
             onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
             onAddressChange={(address, districtName) => {
+              console.log('🔔 OfferLocationSection: onAddressChange ВЫЗВАН!');
               console.log('📬 onAddressChange вызван:', { address, districtName });
               
               if (address) {
