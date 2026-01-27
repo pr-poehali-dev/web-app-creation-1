@@ -41,6 +41,7 @@ export default function RequestResponseModal({
             <Label htmlFor="response-quantity" className="text-sm">Количество ({unit})</Label>
             <Input
               id="response-quantity"
+              name="response-quantity"
               type="number"
               min="1"
               max={quantity}
@@ -54,6 +55,7 @@ export default function RequestResponseModal({
             <Label htmlFor="response-price" className="text-sm">Ваша цена за единицу (₽)</Label>
             <Input
               id="response-price"
+              name="response-price"
               type="number"
               min="1"
               defaultValue={pricePerUnit}
@@ -66,6 +68,7 @@ export default function RequestResponseModal({
             <Label htmlFor="response-delivery" className="text-sm">Срок поставки (дней)</Label>
             <Input
               id="response-delivery"
+              name="response-delivery"
               type="number"
               min="1"
               placeholder="Укажите срок поставки"
@@ -78,6 +81,7 @@ export default function RequestResponseModal({
             <Label htmlFor="response-comment" className="text-sm">Комментарий</Label>
             <Textarea
               id="response-comment"
+              name="response-comment"
               placeholder="Дополнительная информация о вашем предложении"
               rows={2}
               className="text-sm mt-1"

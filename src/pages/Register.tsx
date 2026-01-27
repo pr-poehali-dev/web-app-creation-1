@@ -233,7 +233,7 @@ export default function Register({ onRegister }: RegisterProps) {
         setTimeout(async () => {
           if ('Notification' in window && Notification.permission === 'default') {
             const enableNotifications = window.confirm(
-              'Хотите получать уведомления о новых запросах и предложениях в вашем районе?'
+              'Хотите получать уведомления об откликах на ваши запросы и предложения?'
             );
             
             if (enableNotifications) {
@@ -243,7 +243,7 @@ export default function Register({ onRegister }: RegisterProps) {
                 if (success) {
                   toast({
                     title: 'Уведомления включены',
-                    description: 'Вы будете получать важные обновления',
+                    description: 'Вы будете получать уведомления об откликах',
                   });
                 }
               } catch (error) {

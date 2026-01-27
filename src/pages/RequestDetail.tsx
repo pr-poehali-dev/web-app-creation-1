@@ -13,8 +13,9 @@ import RequestMediaGallery from '@/components/request/RequestMediaGallery';
 import RequestInfoCard from '@/components/request/RequestInfoCard';
 import RequestAuthorCard from '@/components/request/RequestAuthorCard';
 import RequestResponseModal from '@/components/request/RequestResponseModal';
-import { requestsAPI } from '@/services/api';
+import { requestsAPI, ordersAPI } from '@/services/api';
 import { toast } from 'sonner';
+import { getSession } from '@/utils/auth';
 
 interface RequestImage {
   id: string;
@@ -247,10 +248,75 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
     setIsResponseModalOpen(true);
   };
 
-  const handleResponseSubmit = (e: React.FormEvent) => {
+  const handleResponseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsResponseModalOpen(false);
-    alert('Отклик успешно отправлен! Мы свяжемся с вами в ближайшее время.');
+    
+    if (!request) return;
+    
+    const session = getSession();
+    if (!session) {
+      toast.error('Необходима авторизация');
+      navigate('/login');
+      return;
+    }
+
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    const responseQuantity = parseFloat(formData.get('response-quantity') as string);
+    const responsePrice = parseFloat(formData.get('response-price') as string);
+    const deliveryTime = parseInt(formData.get('response-delivery') as string);
+    const comment = formData.get('response-comment') as string;
+
+    try {
+      // Создаём заказ (отклик на запрос)
+      const orderData = {
+        offerId: request.id, // В случае запроса это будет requestId
+        title: request.title,
+        quantity: responseQuantity,
+        unit: request.unit,
+        pricePerUnit: responsePrice,
+        hasVAT: request.hasVAT,
+        vatRate: request.vatRate,
+        deliveryType: 'delivery',
+        deliveryAddress: request.deliveryAddress,
+        district: request.district,
+        buyerName: `${session.firstName} ${session.lastName}`,
+        buyerPhone: session.phone || '',
+        buyerEmail: session.email || '',
+        buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+      };
+
+      const result = await ordersAPI.createOrder(orderData);
+
+      // Отправляем push-уведомление автору запроса
+      try {
+        await fetch('https://functions.poehali.dev/d84dd37e-ac91-473e-a3a8-5cf34f66c9b5', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: request.author.id,
+            type: 'new_response',
+            title: 'Новый отклик на запрос',
+            message: `${session.firstName} ${session.lastName} откликнулся на "${request.title}"`,
+            url: `/my-orders?id=${result.id}`
+          })
+        });
+      } catch (error) {
+        console.error('Ошибка отправки push-уведомления:', error);
+      }
+
+      setIsResponseModalOpen(false);
+      toast.success('Отклик успешно отправлен!', {
+        description: 'Автор запроса свяжется с вами в ближайшее время'
+      });
+    } catch (error) {
+      console.error('Ошибка отправки отклика:', error);
+      toast.error('Не удалось отправить отклик', {
+        description: 'Попробуйте позже'
+      });
+    }
   };
 
   const openGallery = (index: number) => {

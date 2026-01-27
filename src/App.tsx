@@ -148,6 +148,13 @@ const App = () => {
           // Игнорируем ошибки
         });
       }, 1000);
+
+      // Слушаем сообщения от Service Worker (клики по уведомлениям)
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data.type === 'NOTIFICATION_CLICK') {
+          window.location.href = event.data.url;
+        }
+      });
     }
   }, []);
 

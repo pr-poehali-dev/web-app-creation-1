@@ -213,6 +213,25 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         }
       }));
 
+      // Отправляем push-уведомление продавцу
+      try {
+        await fetch('https://functions.poehali.dev/d84dd37e-ac91-473e-a3a8-5cf34f66c9b5', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: offer.userId.toString(),
+            type: 'new_response',
+            title: 'Новый отклик на предложение',
+            message: `${session.firstName} ${session.lastName} откликнулся на "${offer.title}"`,
+            url: `/my-orders?id=${result.id}`
+          })
+        });
+      } catch (error) {
+        console.error('Ошибка отправки push-уведомления:', error);
+      }
+
       // Помечаем что заказы обновились
       markDataAsUpdated('orders');
       

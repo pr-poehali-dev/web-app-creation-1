@@ -108,7 +108,7 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
           <CardTitle>Push-уведомления</CardTitle>
         </div>
         <CardDescription>
-          Получайте уведомления о новых запросах и предложениях в вашем районе
+          Получайте моментальные уведомления об откликах на ваши запросы и предложения
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -146,14 +146,6 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
                   <p className="text-sm font-medium">Вы получаете уведомления о:</p>
                 </div>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-6">
-                  <li className="flex items-center gap-2">
-                    <Icon name="Dot" className="h-4 w-4" />
-                    Новых запросах в вашем районе
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Icon name="Dot" className="h-4 w-4" />
-                    Новых предложениях в вашем районе
-                  </li>
                   <li className="flex items-center gap-2">
                     <Icon name="Dot" className="h-4 w-4" />
                     Откликах на ваши запросы и предложения
