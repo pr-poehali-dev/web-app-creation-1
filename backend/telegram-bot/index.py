@@ -65,8 +65,9 @@ def handler(event: dict, context) -> dict:
             
             response_text = (
                 f"👋 Привет, {first_name}!\n\n"
-                f"🔢 Ваш Chat ID: `{chat_id}`\n\n"
-                f"Скопируйте это число и вставьте в поле на сайте ЕРТТП для подключения уведомлений.\n\n"
+                f"🔢 Ваш Chat ID:\n"
+                f"<code>{chat_id}</code>\n\n"
+                f"👆 Нажмите на число выше, чтобы скопировать его, затем вставьте в поле на сайте ЕРТТП для подключения уведомлений.\n\n"
             )
             
             if user_id:
@@ -79,7 +80,7 @@ def handler(event: dict, context) -> dict:
                     "💡 Чтобы автоматически привязать бота к вашему аккаунту, используйте кнопку 'Открыть бота в Telegram' в настройках профиля на сайте."
                 )
             
-            send_telegram_message(bot_token, chat_id, response_text)
+            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML')
         
         elif text == '/help':
             response_text = (
@@ -88,17 +89,20 @@ def handler(event: dict, context) -> dict:
                 "Команды:\n"
                 "/start - Получить ваш Chat ID\n"
                 "/help - Показать эту справку\n\n"
-                f"Ваш Chat ID: `{chat_id}`"
+                f"Ваш Chat ID:\n<code>{chat_id}</code>\n\n"
+                "👆 Нажмите на число, чтобы скопировать"
             )
-            send_telegram_message(bot_token, chat_id, response_text)
+            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML')
         
         else:
             # Любое другое сообщение - отправляем Chat ID
             response_text = (
-                f"🔢 Ваш Chat ID: `{chat_id}`\n\n"
+                f"🔢 Ваш Chat ID:\n"
+                f"<code>{chat_id}</code>\n\n"
+                "👆 Нажмите на число, чтобы скопировать\n\n"
                 "Используйте команду /start для получения инструкций."
             )
-            send_telegram_message(bot_token, chat_id, response_text)
+            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML')
         
         return {
             'statusCode': 200,
@@ -117,7 +121,7 @@ def handler(event: dict, context) -> dict:
         }
 
 
-def send_telegram_message(bot_token: str, chat_id: int, text: str) -> bool:
+def send_telegram_message(bot_token: str, chat_id: int, text: str, parse_mode: str = 'Markdown') -> bool:
     '''Отправка сообщения через Telegram Bot API'''
     import urllib.request
     import urllib.parse
@@ -127,7 +131,7 @@ def send_telegram_message(bot_token: str, chat_id: int, text: str) -> bool:
     data = {
         'chat_id': chat_id,
         'text': text,
-        'parse_mode': 'Markdown'
+        'parse_mode': parse_mode
     }
     
     try:
