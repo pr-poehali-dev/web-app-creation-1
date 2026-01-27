@@ -77,10 +77,17 @@ def handler(event: dict, context) -> dict:
                 )
             else:
                 response_text += (
-                    "💡 Чтобы автоматически привязать бота к вашему аккаунту, используйте кнопку 'Открыть бота в Telegram' в настройках профиля на сайте."
+                    "💡 Используйте кнопку ниже, чтобы перейти в профиль и подключить уведомления."
                 )
             
-            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML')
+            # Создаем inline кнопку для перехода на сайт
+            keyboard = {
+                'inline_keyboard': [[
+                    {'text': '🌐 Открыть профиль на сайте', 'url': 'https://your-domain.com/profile'}
+                ]]
+            }
+            
+            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML', reply_markup=keyboard)
         
         elif text == '/help':
             response_text = (
@@ -92,7 +99,14 @@ def handler(event: dict, context) -> dict:
                 f"Ваш Chat ID:\n<code>{chat_id}</code>\n\n"
                 "👆 Нажмите на число, чтобы скопировать"
             )
-            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML')
+            
+            keyboard = {
+                'inline_keyboard': [[
+                    {'text': '🌐 Открыть профиль на сайте', 'url': 'https://your-domain.com/profile'}
+                ]]
+            }
+            
+            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML', reply_markup=keyboard)
         
         else:
             # Любое другое сообщение - отправляем Chat ID
@@ -102,7 +116,14 @@ def handler(event: dict, context) -> dict:
                 "👆 Нажмите на число, чтобы скопировать\n\n"
                 "Используйте команду /start для получения инструкций."
             )
-            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML')
+            
+            keyboard = {
+                'inline_keyboard': [[
+                    {'text': '🌐 Открыть профиль на сайте', 'url': 'https://your-domain.com/profile'}
+                ]]
+            }
+            
+            send_telegram_message(bot_token, chat_id, response_text, parse_mode='HTML', reply_markup=keyboard)
         
         return {
             'statusCode': 200,
@@ -121,10 +142,9 @@ def handler(event: dict, context) -> dict:
         }
 
 
-def send_telegram_message(bot_token: str, chat_id: int, text: str, parse_mode: str = 'Markdown') -> bool:
+def send_telegram_message(bot_token: str, chat_id: int, text: str, parse_mode: str = 'Markdown', reply_markup: dict = None) -> bool:
     '''Отправка сообщения через Telegram Bot API'''
     import urllib.request
-    import urllib.parse
     
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     
@@ -134,9 +154,16 @@ def send_telegram_message(bot_token: str, chat_id: int, text: str, parse_mode: s
         'parse_mode': parse_mode
     }
     
+    if reply_markup:
+        data['reply_markup'] = reply_markup
+    
     try:
-        req_data = urllib.parse.urlencode(data).encode('utf-8')
-        req = urllib.request.Request(url, data=req_data, method='POST')
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(data).encode('utf-8'),
+            headers={'Content-Type': 'application/json'},
+            method='POST'
+        )
         with urllib.request.urlopen(req) as response:
             result = json.loads(response.read().decode('utf-8'))
             return result.get('ok', False)
