@@ -15,6 +15,7 @@ import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
 import NotificationSettings from '@/components/profile/NotificationSettings';
 import TelegramNotificationSettings from '@/components/profile/TelegramNotificationSettings';
+import EmailNotificationSettings from '@/components/profile/EmailNotificationSettings';
 
 interface ProfileProps {
   isAuthenticated: boolean;
@@ -456,6 +457,8 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             )}
 
             {isViewingOwnProfile && <NotificationSettings userId={String(currentUser.id)} />}
+
+            {isViewingOwnProfile && <EmailNotificationSettings userId={String(currentUser.id)} userEmail={currentUser.email} />}
 
             {isViewingOwnProfile && <TelegramNotificationSettings userId={String(currentUser.id)} />}
 

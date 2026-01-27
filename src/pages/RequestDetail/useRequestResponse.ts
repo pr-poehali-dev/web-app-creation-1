@@ -56,21 +56,35 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
 
       const result = await ordersAPI.createOrder(orderData);
 
+      const notificationData = {
+        userId: request.author.id,
+        title: 'Новый отклик на запрос',
+        message: `${session.firstName} ${session.lastName} откликнулся на "${request.title}"`,
+        url: `/my-orders?id=${result.id}`
+      };
+
+      try {
+        await fetch('https://functions.poehali.dev/a2f5cfb9-ceec-46de-b675-2174dc5241a7', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+      } catch (error) {
+        console.error('Ошибка отправки Email уведомления:', error);
+      }
+
       try {
         await fetch('https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            userId: request.author.id,
-            title: 'Новый отклик на запрос',
-            message: `${session.firstName} ${session.lastName} откликнулся на "${request.title}"`,
-            url: `/my-orders?id=${result.id}`
-          })
+          body: JSON.stringify(notificationData)
         });
       } catch (error) {
-        console.error('Ошибка отправки уведомления:', error);
+        console.error('Ошибка отправки Telegram уведомления:', error);
       }
 
       setIsResponseModalOpen(false);
