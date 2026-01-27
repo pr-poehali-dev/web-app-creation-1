@@ -6,7 +6,7 @@ GET /?offerId=uuid&messages=true - получить сообщения по пр
 POST / - создать новый заказ
 POST /?message=true - отправить сообщение по заказу
 PUT /?id=uuid - обновить статус заказа
-Использует DB_SCHEMA для доступа к схеме БД
+Использует DB_SCHEMA для доступа к схеме БД.
 '''
 
 import json
