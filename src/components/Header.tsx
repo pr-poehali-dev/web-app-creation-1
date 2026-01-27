@@ -25,6 +25,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [districtsModalOpen, setDistrictsModalOpen] = useState(false);
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -200,13 +201,28 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </div>
           </Link>
 
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden px-3 py-2 text-sm font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? "Закрыть" : "Меню"}
-          </button>
+          {/* Mobile buttons */}
+          <div className="md:hidden flex items-center gap-2">
+            {shouldShowDistricts() && (
+              <button
+                className="relative px-2.5 py-2 text-sm font-bold text-primary border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors"
+                onClick={() => setDistrictsModalOpen(true)}
+              >
+                <Icon name="MapPin" className="h-4 w-4" />
+                {selectedDistricts.length > 0 && (
+                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {selectedDistricts.length}
+                  </span>
+                )}
+              </button>
+            )}
+            <button
+              className="px-3 py-2 text-sm font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? "Закрыть" : "Меню"}
+            </button>
+          </div>
 
           <nav className="hidden md:flex items-center space-x-1.5 lg:space-x-3 mr-2 lg:mr-4">
             <Link
@@ -407,7 +423,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         )}
 
         {selectedDistricts.length > 0 && shouldShowDistricts() && (
-          <div className="border-t py-2">
+          <div className="hidden md:block border-t py-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2 flex-1">
                 <span className="text-xs text-foreground font-bold">Выбранные районы:</span>
@@ -453,6 +469,102 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 <Icon name="X" className="h-3 w-3 mr-1" />
                 Сбросить
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Districts Modal */}
+        {districtsModalOpen && (
+          <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setDistrictsModalOpen(false)}>
+            <div 
+              className="bg-background w-full rounded-t-2xl max-h-[80vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center justify-between">
+                <h3 className="text-lg font-bold">Выбор районов</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDistrictsModalOpen(false)}
+                >
+                  <Icon name="X" className="h-5 w-5" />
+                </Button>
+              </div>
+
+              <div className="overflow-y-auto flex-1 p-4 space-y-3">
+                {/* Selected count */}
+                {selectedDistricts.length > 0 && (
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-center justify-between">
+                    <span className="text-sm font-medium text-primary">
+                      Выбрано: {selectedDistricts.length} {selectedDistricts.length === districts.length ? '(все)' : ''}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedDistricts([])}
+                      className="text-xs h-7"
+                    >
+                      Сбросить
+                    </Button>
+                  </div>
+                )}
+
+                {/* Select all button */}
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    if (selectedDistricts.length === districts.length) {
+                      setSelectedDistricts([]);
+                    } else {
+                      setSelectedDistricts(districts.map(d => d.id));
+                    }
+                  }}
+                >
+                  <Icon 
+                    name={selectedDistricts.length === districts.length ? "CheckSquare" : "Square"} 
+                    className="h-4 w-4 mr-2" 
+                  />
+                  {selectedDistricts.length === districts.length ? 'Отменить все' : 'Выбрать все'}
+                </Button>
+
+                {/* Districts list */}
+                <div className="space-y-2">
+                  {districts.map((district) => {
+                    const isSelected = selectedDistricts.includes(district.id);
+                    return (
+                      <button
+                        key={district.id}
+                        onClick={() => toggleDistrict(district.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                          isSelected 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border hover:border-primary/40 hover:bg-primary/5'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 border-2 rounded flex items-center justify-center shrink-0 ${
+                          isSelected ? 'border-primary bg-primary' : 'border-gray-300'
+                        }`}>
+                          {isSelected && (
+                            <Icon name="Check" className="h-3 w-3 text-white" />
+                          )}
+                        </div>
+                        <Icon name="MapPin" className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm font-medium text-left">{district.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 bg-background border-t p-4">
+                <Button
+                  className="w-full"
+                  onClick={() => setDistrictsModalOpen(false)}
+                >
+                  Применить
+                </Button>
+              </div>
             </div>
           </div>
         )}
