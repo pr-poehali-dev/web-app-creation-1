@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request returns CORS headers",
+      "method": "OPTIONS",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Subscribe without auth returns 401",
+      "method": "POST",
+      "body": {
+        "action": "subscribe",
+        "subscription": {
+          "endpoint": "https://example.com/push",
+          "keys": {
+            "p256dh": "test-key",
+            "auth": "test-auth"
+          }
+        }
+      },
+      "expectedStatus": 401,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

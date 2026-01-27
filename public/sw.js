@@ -1,4 +1,4 @@
-// Service Worker для кэширования и ускорения загрузки
+// Service Worker для кэширования и push-уведомлений
 const CACHE_NAME = 'erttp-v3';
 const STATIC_CACHE = 'erttp-static-v3';
 const DYNAMIC_CACHE = 'erttp-dynamic-v3';
@@ -10,6 +10,7 @@ const STATIC_FILES = [
 ];
 
 self.addEventListener('install', (event) => {
+  console.log('[SW] Installing service worker...');
   event.waitUntil(
     caches.open(STATIC_CACHE).then((cache) => {
       return cache.addAll(STATIC_FILES.map(url => new Request(url, { cache: 'reload' })));
@@ -67,6 +68,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  console.log('[SW] Activating service worker...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -76,4 +78,74 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => clients.claim())
   );
+});
+
+// ========== PUSH NOTIFICATIONS ==========
+
+// Обработка push-уведомлений
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push notification received:', event);
+  
+  let data = { 
+    title: 'Новое уведомление', 
+    body: 'У вас новое уведомление', 
+    icon: '/favicon.ico' 
+  };
+  
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+  
+  const options = {
+    body: data.body,
+    icon: data.icon || '/favicon.ico',
+    badge: '/favicon.ico',
+    data: {
+      url: data.url || '/',
+      orderId: data.orderId,
+      type: data.type
+    },
+    tag: data.tag || `notification-${Date.now()}`,
+    requireInteraction: data.requireInteraction || false,
+    vibrate: [200, 100, 200],
+    actions: data.actions || []
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Обработка клика по уведомлению
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event);
+  
+  event.notification.close();
+  
+  const urlToOpen = event.notification.data?.url || '/';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Если окно приложения уже открыто - фокусируем его
+        for (let client of clientList) {
+          if (client.url === new URL(urlToOpen, self.location.origin).href && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        // Если нет открытого окна - открываем новое
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Обработка закрытия уведомления
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification closed:', event.notification.tag);
 });
