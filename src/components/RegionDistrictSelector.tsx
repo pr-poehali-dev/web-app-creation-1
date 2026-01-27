@@ -264,24 +264,37 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
 
       {showBadges && selectedDistricts.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
-          {selectedDistricts.slice(0, 3).map((districtId) => {
-            const district = districts.find(d => d.id === districtId);
-            return (
-              <Badge
-                key={districtId}
-                variant="secondary"
-                className="cursor-pointer hover:bg-secondary/80"
-                onClick={() => toggleDistrict(districtId)}
-              >
-                {district?.name}
-                <Icon name="X" className="ml-1 h-3 w-3" />
-              </Badge>
-            );
-          })}
-          {selectedDistricts.length > 3 && (
-            <Badge variant="outline">
-              +{selectedDistricts.length - 3} еще
+          {selectedDistricts.length === districts.length && districts.length > 0 ? (
+            <Badge
+              variant="default"
+              className="cursor-pointer hover:bg-primary/80 transition-colors"
+              onClick={() => setSelectedDistricts([])}
+            >
+              Выбраны все районы
+              <Icon name="X" className="ml-1 h-3 w-3" />
             </Badge>
+          ) : (
+            <>
+              {selectedDistricts.slice(0, 3).map((districtId) => {
+                const district = districts.find(d => d.id === districtId);
+                return (
+                  <Badge
+                    key={districtId}
+                    variant="secondary"
+                    className="cursor-pointer hover:bg-secondary/80"
+                    onClick={() => toggleDistrict(districtId)}
+                  >
+                    {district?.name}
+                    <Icon name="X" className="ml-1 h-3 w-3" />
+                  </Badge>
+                );
+              })}
+              {selectedDistricts.length > 3 && (
+                <Badge variant="outline">
+                  +{selectedDistricts.length - 3} еще
+                </Badge>
+              )}
+            </>
           )}
         </div>
       )}
