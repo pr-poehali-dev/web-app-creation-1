@@ -48,20 +48,24 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   });
 
   useEffect(() => {
+    const isMounted = true;
+    let isLoadingData = false;
+
     const loadData = async (forceRefresh = false) => {
-      // Проверяем были ли обновления при переходах между страницами
+      if (isLoadingData || !isMounted) return;
+      
       const hasUpdates = checkForUpdates('offers');
       const shouldForceRefresh = forceRefresh || hasUpdates;
       
-      // Пробуем загрузить из кэша если не требуется обновление
       if (!shouldForceRefresh) {
         const cached = SmartCache.get<Offer[]>('offers_list');
         if (cached && cached.length > 0) {
-          setOffers(cached);
-          setIsLoading(false);
+          if (isMounted) {
+            setOffers(cached);
+            setIsLoading(false);
+          }
           
-          // В фоне проверяем нужно ли обновить
-          if (SmartCache.shouldRefresh('offers_list')) {
+          if (SmartCache.shouldRefresh('offers_list') && isMounted) {
             loadFreshData(false);
           }
           return;
@@ -72,9 +76,13 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     };
 
     const loadFreshData = async (showLoading = true) => {
-      if (showLoading) {
+      if (isLoadingData || !isMounted) return;
+      
+      isLoadingData = true;
+      
+      if (showLoading && isMounted) {
         setIsLoading(true);
-      } else {
+      } else if (isMounted) {
         setIsSyncing(true);
       }
       
@@ -85,11 +93,12 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           offset: 0
         });
         
+        if (!isMounted) return;
+        
         setOffers(offersData.offers || []);
         setTotalOffersCount(offersData.total || 0);
         setHasMoreOnServer(offersData.hasMore || false);
         
-        // Сохраняем в умный кэш
         SmartCache.set('offers_list', offersData.offers || []);
         
         if (showLoading) {
@@ -98,19 +107,26 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           setIsSyncing(false);
         }
         
-        // Загружаем заказы в фоне
         setTimeout(() => {
-          ordersAPI.getAll('all').then(ordersResponse => {
-            setOrders(ordersResponse.orders || []);
-          }).catch(() => {});
+          if (isMounted) {
+            ordersAPI.getAll('all').then(ordersResponse => {
+              if (isMounted) {
+                setOrders(ordersResponse.orders || []);
+              }
+            }).catch(() => {});
+          }
         }, 500);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
+        if (!isMounted) return;
+        
         if (showLoading) {
           setIsLoading(false);
         } else {
           setIsSyncing(false);
         }
+      } finally {
+        isLoadingData = false;
       }
     };
 
@@ -149,6 +165,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     window.addEventListener('newOrderCreated' as any, handleNewOrder);
     
     return () => {
+      isMounted = false;
       window.removeEventListener('newOrderCreated' as any, handleNewOrder);
     };
   }, [isAuthenticated, currentUser]);
