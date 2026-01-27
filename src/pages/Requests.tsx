@@ -44,6 +44,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   const [requests, setRequests] = useState<Request[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [loadAttempted, setLoadAttempted] = useState(false);
 
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
@@ -54,6 +55,9 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   });
 
   useEffect(() => {
+    if (loadAttempted) return;
+    setLoadAttempted(true);
+    
     const loadRequests = async () => {
       const hasUpdates = checkForUpdates('requests');
       

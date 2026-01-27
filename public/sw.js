@@ -1,7 +1,7 @@
 // Service Worker для кэширования и push-уведомлений
-const CACHE_NAME = 'erttp-v3';
-const STATIC_CACHE = 'erttp-static-v3';
-const DYNAMIC_CACHE = 'erttp-dynamic-v3';
+const CACHE_NAME = 'erttp-v4';
+const STATIC_CACHE = 'erttp-static-v4';
+const DYNAMIC_CACHE = 'erttp-dynamic-v4';
 
 const STATIC_FILES = [
   '/',
@@ -20,9 +20,15 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  const { url, method } = event.request;
   
-  const { url } = event.request;
+  // Пропускаем API запросы (к functions.poehali.dev) без кэширования
+  if (url.includes('functions.poehali.dev')) {
+    return;
+  }
+  
+  // Только GET запросы кэшируем
+  if (method !== 'GET') return;
   
   // Стратегия для CDN (изображения) - Cache First
   if (url.includes('cdn.poehali.dev')) {
