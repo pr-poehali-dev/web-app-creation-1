@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "name": "Check Telegram connection status",
+      "method": "GET",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "connected": false
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Connect Telegram",
+      "method": "POST",
+      "headers": {
+        "X-User-Id": "1"
+      },
+      "body": {
+        "telegram_chat_id": "123456789"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -13,316 +12,42 @@ import RequestMediaGallery from '@/components/request/RequestMediaGallery';
 import RequestInfoCard from '@/components/request/RequestInfoCard';
 import RequestAuthorCard from '@/components/request/RequestAuthorCard';
 import RequestResponseModal from '@/components/request/RequestResponseModal';
-import { requestsAPI, ordersAPI } from '@/services/api';
-import { toast } from 'sonner';
-import { getSession } from '@/utils/auth';
-
-interface RequestImage {
-  id: string;
-  url: string;
-  alt: string;
-}
-
-interface RequestVideo {
-  id: string;
-  url: string;
-  thumbnail?: string;
-}
-
-interface Author {
-  id: string;
-  name: string;
-  type: 'individual' | 'self-employed' | 'entrepreneur' | 'legal-entity';
-  phone: string;
-  email: string;
-  rating: number;
-  reviewsCount: number;
-  isVerified: boolean;
-  responsiblePerson?: {
-    id: string;
-    name: string;
-    phone: string;
-    email: string;
-  };
-  statistics: {
-    totalRequests: number;
-    activeRequests: number;
-    completedOrders: number;
-    registrationDate: Date;
-  };
-}
-
-interface Request {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  subcategory: string;
-  quantity: number;
-  unit: string;
-  pricePerUnit: number;
-  hasVAT: boolean;
-  vatRate?: number;
-  deliveryAddress: string;
-  district: string;
-  availableDistricts: string[];
-  images: RequestImage[];
-  video?: RequestVideo;
-  isPremium: boolean;
-  author: Author;
-  createdAt: Date;
-  updatedAt: Date;
-  expiryDate?: Date;
-  viewsCount?: number;
-  responsesCount?: number;
-}
+import { useRequestData } from './RequestDetail/useRequestData';
+import { useRequestGallery } from './RequestDetail/useRequestGallery';
+import { useRequestResponse } from './RequestDetail/useRequestResponse';
 
 interface RequestDetailProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
 
-const MOCK_REQUEST: Request = {
-  id: '1',
-  title: 'Требуется песок строительный 50 тонн',
-  description: 'Необходим качественный строительный песок для фундамента. Требования: модуль крупности 2.0-2.5, влажность не более 5%. Доставка на строительную площадку обязательна.',
-  category: 'Стройматериалы',
-  subcategory: 'Песок и щебень',
-  quantity: 50,
-  unit: 'т',
-  pricePerUnit: 450,
-  hasVAT: true,
-  vatRate: 20,
-  deliveryAddress: 'ул. Строителей, 15, стройплощадка №3',
-  district: 'Ленинский',
-  availableDistricts: ['Ленинский', 'Советский', 'Октябрьский'],
-  images: [
-    {
-      id: '1',
-      url: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800',
-      alt: 'Строительная площадка'
-    }
-  ],
-  isPremium: false,
-  author: {
-    id: '1',
-    name: 'ООО "СтройДом"',
-    type: 'legal-entity',
-    phone: '+7 (999) 123-45-67',
-    email: 'info@stroydom.ru',
-    rating: 4.7,
-    reviewsCount: 89,
-    isVerified: true,
-    responsiblePerson: {
-      id: '1',
-      name: 'Петров Петр Петрович',
-      phone: '+7 (999) 123-45-68',
-      email: 'petrov@stroydom.ru'
-    },
-    statistics: {
-      totalRequests: 45,
-      activeRequests: 12,
-      completedOrders: 156,
-      registrationDate: new Date('2023-01-15')
-    }
-  },
-  createdAt: new Date('2024-02-15'),
-  updatedAt: new Date('2024-02-15'),
-  viewsCount: 245,
-  responsesCount: 8
-};
-
 export default function RequestDetail({ isAuthenticated, onLogout }: RequestDetailProps) {
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   
-  const [request, setRequest] = useState<Request | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [galleryIndex, setGalleryIndex] = useState(0);
-  const [showVideo, setShowVideo] = useState(false);
-
-  useEffect(() => {
-    const loadRequest = async () => {
-      if (!id) return;
-      
-      setIsLoading(true);
-      try {
-        const data = await requestsAPI.getRequestById(id);
-        const mappedRequest: Request = {
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          category: data.category,
-          subcategory: data.subcategory || '',
-          quantity: data.quantity,
-          unit: data.unit,
-          pricePerUnit: data.pricePerUnit || 0,
-          hasVAT: data.hasVAT,
-          vatRate: data.vatRate,
-          deliveryAddress: data.deliveryAddress || data.fullAddress || '',
-          district: data.district,
-          availableDistricts: data.availableDistricts || [data.district],
-          images: data.images || [],
-          video: data.video,
-          isPremium: data.isPremium,
-          author: {
-            id: data.userId,
-            name: 'Пользователь',
-            type: 'individual',
-            phone: '',
-            email: '',
-            rating: 0,
-            reviewsCount: 0,
-            isVerified: false,
-            statistics: {
-              totalRequests: 0,
-              activeRequests: 0,
-              completedOrders: 0,
-              registrationDate: new Date(),
-            },
-          },
-          createdAt: data.createdAt ? (data.createdAt instanceof Date ? data.createdAt : new Date(data.createdAt)) : new Date(),
-          updatedAt: data.updatedAt ? (data.updatedAt instanceof Date ? data.updatedAt : new Date(data.updatedAt)) : new Date(),
-          expiryDate: data.expiryDate ? (data.expiryDate instanceof Date ? data.expiryDate : new Date(data.expiryDate)) : undefined,
-          viewsCount: data.views,
-          responsesCount: data.responses,
-        };
-        setRequest(mappedRequest);
-        
-        if (data.video) {
-          setShowVideo(true);
-        }
-      } catch (error) {
-        console.error('Error loading request:', error);
-        toast.error('Не удалось загрузить запрос');
-        navigate('/zaprosy');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadRequest();
-  }, [id, navigate]);
-
-  const handlePrevImage = () => {
-    if (!request) return;
-    const totalItems = (showVideo && request.video ? 1 : 0) + request.images.length;
-    setCurrentImageIndex((prev) => prev === 0 ? totalItems - 1 : prev - 1);
-  };
-
-  const handleNextImage = () => {
-    if (!request) return;
-    const totalItems = (showVideo && request.video ? 1 : 0) + request.images.length;
-    setCurrentImageIndex((prev) => prev === totalItems - 1 ? 0 : prev + 1);
-  };
-
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: request?.title,
-          text: request?.description,
-          url: url,
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-      }
-    } else {
-      navigator.clipboard.writeText(url);
-      alert('Ссылка скопирована в буфер обмена');
-    }
-  };
-
-  const handleResponseClick = () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-    setIsResponseModalOpen(true);
-  };
-
-  const handleResponseSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!request) return;
-    
-    const session = getSession();
-    if (!session) {
-      toast.error('Необходима авторизация');
-      navigate('/login');
-      return;
-    }
-
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
-    const responseQuantity = parseFloat(formData.get('response-quantity') as string);
-    const responsePrice = parseFloat(formData.get('response-price') as string);
-    const deliveryTime = parseInt(formData.get('response-delivery') as string);
-    const comment = formData.get('response-comment') as string;
-
-    try {
-      // Создаём заказ (отклик на запрос)
-      const orderData = {
-        offerId: request.id, // В случае запроса это будет requestId
-        title: request.title,
-        quantity: responseQuantity,
-        unit: request.unit,
-        pricePerUnit: responsePrice,
-        hasVAT: request.hasVAT,
-        vatRate: request.vatRate,
-        deliveryType: 'delivery',
-        deliveryAddress: request.deliveryAddress,
-        district: request.district,
-        buyerName: `${session.firstName} ${session.lastName}`,
-        buyerPhone: session.phone || '',
-        buyerEmail: session.email || '',
-        buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
-      };
-
-      const result = await ordersAPI.createOrder(orderData);
-
-      // Отправляем push-уведомление автору запроса
-      try {
-        await fetch('https://functions.poehali.dev/d84dd37e-ac91-473e-a3a8-5cf34f66c9b5', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            userId: request.author.id,
-            type: 'new_response',
-            title: 'Новый отклик на запрос',
-            message: `${session.firstName} ${session.lastName} откликнулся на "${request.title}"`,
-            url: `/my-orders?id=${result.id}`
-          })
-        });
-      } catch (error) {
-        console.error('Ошибка отправки push-уведомления:', error);
-      }
-
-      setIsResponseModalOpen(false);
-      toast.success('Отклик успешно отправлен!', {
-        description: 'Автор запроса свяжется с вами в ближайшее время'
-      });
-    } catch (error) {
-      console.error('Ошибка отправки отклика:', error);
-      toast.error('Не удалось отправить отклик', {
-        description: 'Попробуйте позже'
-      });
-    }
-  };
-
-  const openGallery = (index: number) => {
-    setGalleryIndex(index);
-    setIsGalleryOpen(true);
-  };
+  const { request, isLoading, showVideo } = useRequestData(id);
+  
+  const {
+    currentImageIndex,
+    isVideoPlaying,
+    setIsVideoPlaying,
+    isMuted,
+    setIsMuted,
+    isGalleryOpen,
+    setIsGalleryOpen,
+    galleryIndex,
+    handlePrevImage,
+    handleNextImage,
+    openGallery,
+    handleShare,
+  } = useRequestGallery(request, showVideo);
+  
+  const {
+    isResponseModalOpen,
+    setIsResponseModalOpen,
+    handleResponseClick,
+    handleResponseSubmit,
+  } = useRequestResponse(request, isAuthenticated);
 
   if (isLoading) {
     return (
@@ -346,19 +71,15 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                 </CardContent>
               </Card>
             </div>
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <Skeleton className="h-12 w-full" />
-                </CardContent>
-              </Card>
+            <div>
               <Card>
                 <CardHeader>
-                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-6 w-32 mb-2" />
+                  <Skeleton className="h-4 w-full" />
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-16 w-full" />
+                <CardContent className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
                 </CardContent>
               </Card>
             </div>
@@ -374,97 +95,187 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       <div className="min-h-screen bg-background flex flex-col">
         <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
         <main className="container mx-auto px-4 py-8 flex-1">
-          <div className="text-center py-20">
-            <Icon name="AlertCircle" className="h-20 w-20 text-muted-foreground mx-auto mb-6" />
-            <h2 className="text-2xl font-bold mb-3">Контент не найден</h2>
-            <p className="text-muted-foreground mb-8">
-              Запрос с таким ID не существует или был удален
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Button onClick={() => navigate(-1)} className="gap-2">
-                <Icon name="ArrowLeft" className="h-4 w-4" />
-                Назад
-              </Button>
-              <Button onClick={() => navigate('/zaprosy')} variant="outline" className="gap-2">
-                <Icon name="MessageSquare" className="h-4 w-4" />
-                К запросам
-              </Button>
-            </div>
-          </div>
+          <BackButton />
+          <p className="text-center text-muted-foreground">Запрос не найден</p>
         </main>
         <Footer />
       </div>
     );
   }
 
-  const totalPrice = request.pricePerUnit * request.quantity;
+  const totalItems = (showVideo && request.video ? 1 : 0) + request.images.length;
+  const isVideoIndex = showVideo && request.video && currentImageIndex === 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-3 flex-1">
+      <main className="container mx-auto px-4 py-8 flex-1">
         <BackButton />
 
-        <div className="grid gap-3 lg:grid-cols-3 mb-3 mt-2">
+        <div className="grid gap-8 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-2">
-            <RequestMediaGallery
-              images={request.images}
-              video={request.video}
-              isPremium={request.isPremium}
-              showVideo={showVideo}
-              currentImageIndex={currentImageIndex}
-              isVideoPlaying={isVideoPlaying}
-              isMuted={isMuted}
-              onPrevImage={handlePrevImage}
-              onNextImage={handleNextImage}
-              onImageIndexChange={setCurrentImageIndex}
-              onTogglePlayPause={() => setIsVideoPlaying(!isVideoPlaying)}
-              onSkip={(seconds) => {}}
-              onToggleMute={() => setIsMuted(!isMuted)}
-              onOpenGallery={openGallery}
-              onVideoPlay={() => setIsVideoPlaying(true)}
-              onVideoPause={() => setIsVideoPlaying(false)}
-            />
+            <div className="relative mb-4">
+              {isVideoIndex && request.video ? (
+                <div className="aspect-video bg-black rounded-lg overflow-hidden relative group">
+                  <video
+                    src={request.video.url}
+                    className="w-full h-full object-contain"
+                    controls
+                    autoPlay={isVideoPlaying}
+                    muted={isMuted}
+                    onPlay={() => setIsVideoPlaying(true)}
+                    onPause={() => setIsVideoPlaying(false)}
+                  />
+                  
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => setIsMuted(!isMuted)}
+                      className="bg-black/50 hover:bg-black/70"
+                    >
+                      <Icon name={isMuted ? "VolumeX" : "Volume2"} className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={handleShare}
+                      className="bg-black/50 hover:bg-black/70"
+                    >
+                      <Icon name="Share2" className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  className="aspect-video bg-muted rounded-lg overflow-hidden relative group cursor-pointer"
+                  onClick={() => {
+                    const imageIndex = showVideo && request.video ? currentImageIndex - 1 : currentImageIndex;
+                    openGallery(imageIndex);
+                  }}
+                >
+                  {request.images.length > 0 && (
+                    <>
+                      <img
+                        src={request.images[showVideo && request.video ? currentImageIndex - 1 : currentImageIndex]?.url}
+                        alt={request.images[showVideo && request.video ? currentImageIndex - 1 : currentImageIndex]?.alt}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 hover:bg-black/70"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShare();
+                        }}
+                      >
+                        <Icon name="Share2" className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
 
-            <RequestInfoCard
-              title={request.title}
-              category={request.category}
-              subcategory={request.subcategory}
-              quantity={request.quantity}
-              unit={request.unit}
-              pricePerUnit={request.pricePerUnit}
-              hasVAT={request.hasVAT}
-              vatRate={request.vatRate}
-              responsesCount={request.responsesCount}
-              description={request.description}
-              deliveryAddress={request.deliveryAddress}
-              district={request.district}
-              availableDistricts={request.availableDistricts}
-              createdAt={request.createdAt}
-              expiryDate={request.expiryDate}
-              totalPrice={totalPrice}
-            />
+              {totalItems > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70"
+                    onClick={handlePrevImage}
+                  >
+                    <Icon name="ChevronLeft" className="h-6 w-6" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70"
+                    onClick={handleNextImage}
+                  >
+                    <Icon name="ChevronRight" className="h-6 w-6" />
+                  </Button>
+                </>
+              )}
+            </div>
+
+            {(request.images.length > 0 || (showVideo && request.video)) && (
+              <div className="grid grid-cols-4 gap-2 mb-6">
+                {showVideo && request.video && (
+                  <button
+                    onClick={() => currentImageIndex !== 0 && handlePrevImage()}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                      currentImageIndex === 0 ? 'border-primary' : 'border-transparent hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="w-full h-full bg-black flex items-center justify-center">
+                      <Icon name="Play" className="h-8 w-8 text-white" />
+                    </div>
+                  </button>
+                )}
+                {request.images.slice(0, showVideo && request.video ? 3 : 4).map((image, index) => (
+                  <button
+                    key={image.id}
+                    onClick={() => {
+                      const targetIndex = showVideo && request.video ? index + 1 : index;
+                      while (currentImageIndex !== targetIndex) {
+                        if (currentImageIndex < targetIndex) handleNextImage();
+                        else handlePrevImage();
+                      }
+                    }}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                      currentImageIndex === (showVideo && request.video ? index + 1 : index)
+                        ? 'border-primary'
+                        : 'border-transparent hover:border-primary/50'
+                    }`}
+                  >
+                    <img
+                      src={image.url}
+                      alt={image.alt}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <RequestInfoCard request={request} />
           </div>
 
           <div className="space-y-6">
             <Card>
-              <CardContent className="pt-6 space-y-3">
-                <Button
-                  onClick={handleResponseClick}
+              <CardHeader>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-2xl font-bold">
+                      {request.pricePerUnit.toLocaleString('ru-RU')} ₽
+                    </h3>
+                    <p className="text-sm text-muted-foreground">за {request.unit}</p>
+                  </div>
+                  {request.hasVAT && (
+                    <div className="px-2 py-1 bg-primary/10 rounded text-xs text-primary">
+                      НДС {request.vatRate}%
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button 
+                  className="w-full" 
                   size="lg"
-                  className="w-full gap-2"
+                  onClick={handleResponseClick}
                 >
-                  <Icon name="Send" className="h-5 w-5" />
+                  <Icon name="Send" className="mr-2 h-4 w-4" />
                   Отправить отклик
                 </Button>
-                <Button
+                <Button 
+                  variant="outline" 
+                  className="w-full"
                   onClick={handleShare}
-                  variant="outline"
-                  size="lg"
-                  className="w-full gap-2"
                 >
-                  <Icon name="Share2" className="h-5 w-5" />
+                  <Icon name="Share2" className="mr-2 h-4 w-4" />
                   Поделиться
                 </Button>
               </CardContent>
@@ -474,6 +285,8 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
           </div>
         </div>
       </main>
+
+      <Footer />
 
       <RequestResponseModal
         isOpen={isResponseModalOpen}
@@ -485,39 +298,14 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-        <DialogContent className="max-w-4xl p-0">
-          <div className="relative">
-            {request.images[galleryIndex] && (
-              <img
-                src={request.images[galleryIndex].url}
-                alt={request.images[galleryIndex].alt}
-                className="w-full h-auto max-h-[80vh] object-contain"
-              />
-            )}
-            {request.images.length > 1 && (
-              <>
-                <button
-                  onClick={() => setGalleryIndex((prev) => prev === 0 ? request.images.length - 1 : prev - 1)}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/90 hover:bg-background shadow-lg"
-                >
-                  <Icon name="ChevronLeft" className="h-6 w-6" />
-                </button>
-                <button
-                  onClick={() => setGalleryIndex((prev) => prev === request.images.length - 1 ? 0 : prev + 1)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-background/90 hover:bg-background shadow-lg"
-                >
-                  <Icon name="ChevronRight" className="h-6 w-6" />
-                </button>
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-background/90 text-sm font-medium">
-                  {galleryIndex + 1} / {request.images.length}
-                </div>
-              </>
-            )}
-          </div>
+        <DialogContent className="max-w-7xl w-full p-0 bg-black/95">
+          <RequestMediaGallery
+            images={request.images}
+            currentIndex={galleryIndex}
+            onClose={() => setIsGalleryOpen(false)}
+          />
         </DialogContent>
       </Dialog>
-
-      <Footer />
     </div>
   );
 }
