@@ -410,20 +410,31 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <div className="border-t py-2">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-foreground font-bold">Выбранные районы:</span>
-              {selectedDistricts.map((districtId) => {
-                const district = districts.find(d => d.id === districtId);
-                return (
-                  <Badge
-                    key={districtId}
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors text-xs"
-                    onClick={() => toggleDistrict(districtId)}
-                  >
-                    {district?.name}
-                    <Icon name="X" className="ml-1 h-3 w-3" />
-                  </Badge>
-                );
-              })}
+              {selectedDistricts.length === districts.length && districts.length > 0 ? (
+                <Badge
+                  variant="default"
+                  className="cursor-pointer hover:bg-primary/80 transition-colors text-xs"
+                  onClick={() => setSelectedDistricts([])}
+                >
+                  Выбраны все районы
+                  <Icon name="X" className="ml-1 h-3 w-3" />
+                </Badge>
+              ) : (
+                selectedDistricts.map((districtId) => {
+                  const district = districts.find(d => d.id === districtId);
+                  return (
+                    <Badge
+                      key={districtId}
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors text-xs"
+                      onClick={() => toggleDistrict(districtId)}
+                    >
+                      {district?.name}
+                      <Icon name="X" className="ml-1 h-3 w-3" />
+                    </Badge>
+                  );
+                })
+              )}
             </div>
           </div>
         )}
