@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { notifyNewOrder } from '@/utils/notifications';
-import { sendPushNotification } from '@/utils/pushNotifications';
 import { markDataAsUpdated } from '@/utils/smartCache';
 import type { Offer } from '@/types/offer';
 
@@ -213,19 +212,6 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
           offerTitle: offer.title
         }
       }));
-
-      // Отправляем push-уведомление продавцу (работает даже если продавец оффлайн)
-      sendPushNotification(
-        offer.userId.toString(),
-        {
-          title: '🛒 Новый заказ!',
-          body: `${session.firstName} ${session.lastName} заказал ${orderQuantity} ${offer.unit} - "${offer.title}"`,
-          icon: '/favicon.ico',
-          url: '/my-orders?tab=seller',
-          tag: `order-${result.id}`,
-          requireInteraction: true,
-        }
-      ).catch((err) => console.log('[Push] Ошибка отправки push:', err));
 
       // Помечаем что заказы обновились
       markDataAsUpdated('orders');

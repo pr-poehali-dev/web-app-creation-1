@@ -13,7 +13,6 @@ import ProfileInfoCard from '@/components/profile/ProfileInfoCard';
 import ProfileSecurityCard from '@/components/profile/ProfileSecurityCard';
 import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
-import PushNotificationManager from '@/components/PushNotificationManager';
 
 interface ProfileProps {
   isAuthenticated: boolean;
