@@ -48,7 +48,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   });
 
   useEffect(() => {
-    const isMounted = true;
+    let isMounted = true;
     let isLoadingData = false;
 
     const loadData = async (forceRefresh = false) => {
