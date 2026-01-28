@@ -79,11 +79,11 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 z-[100] flex items-end md:hidden" 
+      className="fixed inset-0 bg-black/50 z-[100] md:hidden" 
       onClick={onClose}
     >
       <div 
-        className="bg-background w-full h-[90vh] rounded-t-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300"
+        className="absolute bottom-0 left-0 right-0 bg-background w-full max-h-[90vh] rounded-t-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
