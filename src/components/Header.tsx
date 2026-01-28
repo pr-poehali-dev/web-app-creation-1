@@ -209,32 +209,14 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <div className="md:hidden flex items-center gap-1 flex-1 justify-end">
             {shouldShowDistricts() && (
               <button
-                className="flex flex-col items-start px-1.5 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0"
+                className="flex items-center px-1.5 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0 gap-1"
                 onClick={() => setRegionModalOpen(true)}
               >
-                <span className="font-bold text-primary truncate text-[9px] leading-tight w-full">
-                  {getShortRegionName(selectedRegion)}
+                <Icon name="MapPin" className="h-3 w-3 text-primary shrink-0" />
+                <span className="font-bold text-primary text-[10px]">
+                  {selectedDistricts.length > 1 ? `+${selectedDistricts.length - 1}` : getShortRegionName(selectedRegion)}
                 </span>
-                <span className="text-[9px] leading-tight text-primary/70 font-bold truncate w-full">
-                  {(() => {
-                    if (selectedDistricts.length === 0) return 'Все районы';
-                    if (selectedDistricts.length === districts.length) return 'Все районы';
-                    
-                    const detectedDistrict = detectedDistrictId 
-                      ? districts.find(d => d.id === detectedDistrictId)
-                      : null;
-                    
-                    const districtName = detectedDistrict?.name || districts.find(d => d.id === selectedDistricts[0])?.name || 'Район';
-                    
-                    const cityPrefix = detectedCity && detectedCity !== 'Не определен' ? `${detectedCity}, ` : '';
-                    
-                    if (selectedDistricts.length === 1) {
-                      return `${cityPrefix}${districtName}`;
-                    }
-                    
-                    return `${cityPrefix}${districtName}, еще +${selectedDistricts.length - 1}`;
-                  })()}
-                </span>
+                <Icon name="ChevronsUpDown" className="h-3 w-3 text-primary/50 shrink-0" />
               </button>
             )}
             <button
