@@ -77,6 +77,31 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
+    // Валидация дат актуальности запроса
+    if (field === 'expiryDate' && typeof value === 'string') {
+      const startDate = formData.startDate;
+      if (startDate && value && new Date(value) < new Date(startDate)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата окончания не может быть раньше даты начала',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
+    if (field === 'startDate' && typeof value === 'string') {
+      const endDate = formData.expiryDate;
+      if (endDate && value && new Date(value) > new Date(endDate)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата начала не может быть позже даты окончания',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (field === 'category') {
@@ -275,6 +300,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                           value={formData.startDate}
                           onChange={(e) => handleInputChange('startDate', e.target.value)}
                           min={new Date().toISOString().split('T')[0]}
+                          max={formData.expiryDate || undefined}
                         />
                         {formData.startDate && (
                           <Button
