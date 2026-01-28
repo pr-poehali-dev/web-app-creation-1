@@ -75,7 +75,15 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         setIsDetecting(true);
         try {
           const location = await detectLocationByIP();
+          console.log('🌍 Определено местоположение:', {
+            city: location.city,
+            district: location.district,
+            coordinates: location.coordinates,
+            source: location.source
+          });
+          
           const regionId = findRegionByLocation(location.city, location.district);
+          console.log('📍 Найден регион:', regionId);
           
           if (regionId !== 'all') {
             setSelectedRegionState(regionId);
@@ -87,6 +95,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
             
             const district = findDistrictByName(location.district, regionId);
             if (district) {
+              console.log('✅ Найден район:', district.name);
               setDetectedDistrictId(district.id);
               setSelectedDistrictsState([district.id]);
             }
