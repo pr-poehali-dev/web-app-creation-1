@@ -266,17 +266,9 @@ export default function OfferInfoCard({
 
             <Separator />
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {fullAddress && (
-                <div>
-                  <p className="text-muted-foreground mb-0.5">Адрес</p>
-                  <p className="font-medium">{fullAddress}</p>
-                </div>
-              )}
-              <div>
-                <p className="text-muted-foreground mb-0.5">Район</p>
-                <p className="font-medium">{districtName}</p>
-              </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">Район</p>
+              <p className="text-sm font-medium">{districtName}</p>
             </div>
 
             {availableDistrictNames.length > 0 && (
