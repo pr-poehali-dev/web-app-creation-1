@@ -218,18 +218,20 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     {(() => {
                       if (selectedDistricts.length === 0) return 'Все районы';
                       if (selectedDistricts.length === districts.length) return 'Все районы';
+                      
+                      const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
+                      const firstName = firstDistrict?.name || 'Район';
+                      
                       if (selectedDistricts.length === 1) {
-                        const district = districts.find(d => d.id === selectedDistricts[0]);
-                        return district?.name || 'Район';
+                        return firstName;
                       }
-                      return `${selectedDistricts.length} район${selectedDistricts.length < 5 ? 'а' : 'ов'}`;
+                      
+                      return `${firstName}, еще +${selectedDistricts.length - 1}`;
                     })()}
                   </span>
                 </div>
                 <span className="text-[10px] leading-tight text-primary/70 font-bold truncate w-full">
-                  {selectedDistricts.length === 0 || selectedDistricts.length === districts.length 
-                    ? 'Все районы' 
-                    : getShortRegionName(selectedRegion)}
+                  {getShortRegionName(selectedRegion)}
                 </span>
               </button>
             )}
