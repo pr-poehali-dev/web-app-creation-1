@@ -36,10 +36,10 @@ export default function HeaderDistrictsModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-end" onClick={onClose}>
       <div 
-        className="bg-background w-full rounded-t-2xl max-h-[70vh] overflow-hidden flex flex-col safe-bottom"
+        className="bg-background w-full rounded-t-2xl max-h-[65vh] overflow-hidden flex flex-col safe-bottom"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-background border-b px-4 py-2 flex items-center justify-between z-10">
           <h3 className="text-lg font-bold">Выбор районов</h3>
           <Button
             variant="ghost"
@@ -50,7 +50,7 @@ export default function HeaderDistrictsModal({
           </Button>
         </div>
 
-        <div className="overflow-y-auto flex-1 p-4 space-y-3 overscroll-contain">
+        <div className="overflow-y-auto flex-1 p-3 space-y-2 overscroll-contain">
           {/* Search */}
           <div className="relative">
             <Icon name="Search" className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -65,7 +65,7 @@ export default function HeaderDistrictsModal({
 
           {/* Selected count */}
           {selectedDistricts.length > 0 && (
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 flex items-center justify-between">
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-2 flex items-center justify-between">
               <span className="text-sm font-medium text-primary">
                 Выбрано: {selectedDistricts.length} {selectedDistricts.length === districts.length ? '(все)' : ''}
               </span>
@@ -83,7 +83,7 @@ export default function HeaderDistrictsModal({
           {/* Select all button */}
           <Button
             variant="outline"
-            className="w-full justify-start h-11"
+            className="w-full justify-start h-10"
             onClick={() => {
               if (selectedDistricts.length === districts.length) {
                 setSelectedDistricts([]);
@@ -100,7 +100,7 @@ export default function HeaderDistrictsModal({
           </Button>
 
           {/* Districts list */}
-          <div className="space-y-2 pb-2">
+          <div className="space-y-1.5">
             {filteredDistricts.length > 0 ? (
               filteredDistricts.map((district) => {
                 const isSelected = selectedDistricts.includes(district.id);
@@ -108,7 +108,7 @@ export default function HeaderDistrictsModal({
                   <button
                     key={district.id}
                     onClick={() => toggleDistrict(district.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                    className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border-2 transition-all ${
                       isSelected 
                         ? 'border-primary bg-primary/5' 
                         : 'border-border hover:border-primary/40 hover:bg-primary/5'
@@ -135,7 +135,7 @@ export default function HeaderDistrictsModal({
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-background border-t p-4 z-10">
+        <div className="sticky bottom-0 bg-background border-t p-3 z-10">
           <Button
             className="w-full h-11"
             onClick={onClose}
