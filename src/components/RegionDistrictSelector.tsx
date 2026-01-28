@@ -183,13 +183,15 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </Button>
                 </div>
               </div>
-              <Command shouldFilter={false}>
-                <CommandInput 
-                  placeholder="Поиск района..." 
-                  value={searchQuery}
-                  onValueChange={setSearchQuery}
-                />
-                <CommandList>
+              <Command shouldFilter={false} className="flex flex-col h-[400px]">
+                <div className="sticky top-0 z-10 bg-background border-b">
+                  <CommandInput 
+                    placeholder="Поиск района..." 
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                  />
+                </div>
+                <CommandList className="flex-1 overflow-y-auto">
                   {filteredDistricts.length === 0 ? (
                     <div className="py-6 text-center text-sm text-muted-foreground">
                       Район не найден
