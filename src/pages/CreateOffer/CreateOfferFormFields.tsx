@@ -168,6 +168,7 @@ export default function CreateOfferFormFields({
                     value={formData.deliveryPeriodStart}
                     onChange={(e) => onInputChange('deliveryPeriodStart', e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
+                    max={formData.deliveryPeriodEnd || undefined}
                   />
                   {formData.deliveryPeriodStart && (
                     <Button
