@@ -90,9 +90,10 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
       <div className="shrink-0 bg-background border-b px-4 py-3 flex items-center gap-3 min-h-[56px]">
         <button
           onClick={onClose}
-          className="p-1.5 hover:bg-muted rounded-md transition-colors border-2 border-border"
+          className="px-2 py-1.5 hover:bg-muted rounded-md transition-colors border-2 border-border flex items-center gap-1"
         >
           <Icon name="ArrowLeft" className="h-5 w-5" />
+          <span className="text-sm font-medium">Назад</span>
         </button>
         <h3 className="text-lg font-bold flex-1 text-center">
           {selectedRegion === 'all' ? 'Выбери регион и районы' : 'Выбор районов'}
