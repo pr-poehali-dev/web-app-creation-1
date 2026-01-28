@@ -227,13 +227,15 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                       ? districts.find(d => d.id === detectedDistrictId)
                       : null;
                     
-                    const firstName = detectedDistrict?.name || districts.find(d => d.id === selectedDistricts[0])?.name || 'Район';
+                    const districtName = detectedDistrict?.name || districts.find(d => d.id === selectedDistricts[0])?.name || 'Район';
+                    
+                    const cityPrefix = detectedCity && detectedCity !== 'Не определен' ? `${detectedCity}, ` : '';
                     
                     if (selectedDistricts.length === 1) {
-                      return firstName;
+                      return `${cityPrefix}${districtName}`;
                     }
                     
-                    return `${firstName}, еще +${selectedDistricts.length - 1}`;
+                    return `${cityPrefix}${districtName}, еще +${selectedDistricts.length - 1}`;
                   })()}
                 </span>
               </button>
