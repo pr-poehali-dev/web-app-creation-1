@@ -25,9 +25,25 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity } = useDistrict();
+  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity, selectedRegion, regions } = useDistrict();
   const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+  const getShortRegionName = (regionId: string): string => {
+    if (regionId === 'all') return 'Все районы';
+    
+    const region = regions.find(r => r.id === regionId);
+    if (!region) return 'Якутия';
+    
+    let name = region.name;
+    name = name.replace('Республика', 'Респ.');
+    name = name.replace('область', 'обл.');
+    name = name.replace('Область', 'Обл.');
+    name = name.replace('край', 'кр.');
+    name = name.replace('Край', 'Кр.');
+    
+    return name;
+  };
   const touchStartY = useRef<number>(0);
   const touchEndY = useRef<number>(0);
   
@@ -211,7 +227,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                   </span>
                 </div>
                 <span className="text-[10px] leading-tight text-primary/70 font-bold truncate w-full">
-                  {detectedCity && detectedCity !== 'Не определен' ? detectedCity : 'Якутия'}
+                  {selectedDistricts.length === 0 || selectedDistricts.length === districts.length 
+                    ? 'Все районы' 
+                    : getShortRegionName(selectedRegion)}
                 </span>
               </button>
             )}
