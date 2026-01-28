@@ -1,16 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useDistrict } from '@/contexts/DistrictContext';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
 
 interface HeaderRegionModalProps {
   isOpen: boolean;
@@ -75,10 +68,24 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
     return counts;
   }, [districts]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed top-0 left-0 right-0 bottom-0 z-[200] md:hidden bg-background flex flex-col">
+  const modalContent = (
+    <div 
+      className="fixed top-0 left-0 w-full h-full z-[9999] md:hidden bg-background flex flex-col"
+      style={{ position: 'fixed', inset: 0 }}
+    >
       {/* Fixed Header */}
       <div className="shrink-0 bg-background border-b px-4 py-3 flex items-center gap-3 min-h-[56px]">
         <button
@@ -249,4 +256,6 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
       )}
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
