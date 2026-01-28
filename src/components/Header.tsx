@@ -25,7 +25,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts } = useDistrict();
+  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity } = useDistrict();
   const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number>(0);
@@ -191,8 +191,32 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
           {/* Mobile buttons */}
           <div className="md:hidden flex items-center gap-2">
+            {shouldShowDistricts() && (
+              <button
+                className="flex flex-col items-start px-2 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0 flex-1 max-w-[180px]"
+                onClick={() => setDistrictsModalOpen(true)}
+              >
+                <div className="flex items-center gap-1 w-full">
+                  <Icon name="MapPin" className="h-3 w-3 text-primary shrink-0" />
+                  <span className="font-bold text-primary truncate text-[10px] leading-tight">
+                    {(() => {
+                      if (selectedDistricts.length === 0) return 'Все районы';
+                      if (selectedDistricts.length === districts.length) return 'Все районы';
+                      if (selectedDistricts.length === 1) {
+                        const district = districts.find(d => d.id === selectedDistricts[0]);
+                        return district?.name || 'Район';
+                      }
+                      return `${selectedDistricts.length} район${selectedDistricts.length < 5 ? 'а' : 'ов'}`;
+                    })()}
+                  </span>
+                </div>
+                <span className="text-[10px] leading-tight text-primary/70 font-bold truncate w-full">
+                  {detectedCity && detectedCity !== 'Не определен' ? detectedCity : 'Якутия'}
+                </span>
+              </button>
+            )}
             <button
-              className="px-3 py-2 text-sm font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors"
+              className="px-3 py-2 text-sm font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors shrink-0"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? "Закрыть" : "Меню"}
@@ -255,10 +279,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           onClose={() => setMobileMenuOpen(false)}
           currentPath={location.pathname}
           menuRef={mobileMenuRef}
-          districts={districts}
-          selectedDistricts={selectedDistricts}
-          onOpenDistrictsModal={() => setDistrictsModalOpen(true)}
-          onResetDistricts={() => setSelectedDistricts([])}
         />
 
         {selectedDistricts.length > 0 && shouldShowDistricts() && (
