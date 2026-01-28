@@ -121,7 +121,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
             <Icon name="ChevronsUpDown" className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50 group-hover:text-white" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
+        <PopoverContent className="w-[400px] p-0 flex flex-col max-h-[600px]" align="start">
           {selectedRegion === 'all' ? (
             <div className="p-4">
               <Command shouldFilter={true}>
@@ -170,7 +170,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
             </div>
           ) : (
             <>
-              <div className="border-b px-3 py-2 bg-muted/50">
+              <div className="border-b px-3 py-2 bg-muted/50 shrink-0">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
                     {selectedRegionData?.name}
@@ -186,7 +186,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </Button>
                 </div>
               </div>
-              <div className="border-b">
+              <div className="border-b shrink-0">
                 <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Поиск района..." 
@@ -195,7 +195,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   />
                 </Command>
               </div>
-              <div className="max-h-[300px] overflow-y-auto">
+              <div className="overflow-y-auto flex-1 min-h-0">
                 <Command shouldFilter={false}>
                   <CommandList>
                     {filteredDistricts.length === 0 ? (
@@ -237,7 +237,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </CommandList>
                 </Command>
               </div>
-              <div className="border-t p-3 space-y-2">
+              <div className="border-t p-3 space-y-2 shrink-0">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
