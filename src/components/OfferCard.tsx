@@ -46,6 +46,15 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const category = CATEGORIES.find(c => c.id === offer.category);
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
+  
+  // Debug: проверим данные
+  if (offer.title?.includes('Сено')) {
+    console.log('OfferCard - Сено данные:', {
+      location: offer.location,
+      availableDeliveryTypes: offer.availableDeliveryTypes,
+      district: offer.district
+    });
+  }
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
