@@ -82,6 +82,7 @@ export default function Login({ onLogin }: LoginProps) {
         toast({
           title: 'Успешно',
           description: `Добро пожаловать, ${result.user.firstName} ${result.user.lastName}!`,
+          duration: 1000,
         });
         
         setTimeout(() => {
