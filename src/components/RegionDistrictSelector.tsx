@@ -166,8 +166,8 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
               </Command>
             </div>
           ) : (
-            <>
-              <div className="border-b px-3 py-2 bg-muted/50">
+            <div className="flex flex-col max-h-[500px]">
+              <div className="border-b px-3 py-2 bg-muted/50 sticky top-0 z-20 bg-background">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
                     {selectedRegionData?.name}
@@ -183,54 +183,58 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </Button>
                 </div>
               </div>
-              <Command shouldFilter={false} className="flex flex-col h-[400px]">
-                <div className="sticky top-0 z-10 bg-background border-b">
+              <div className="sticky top-[52px] z-10 bg-background border-b">
+                <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Поиск района..." 
                     value={searchQuery}
                     onValueChange={setSearchQuery}
                   />
-                </div>
-                <CommandList className="flex-1 overflow-y-auto">
-                  {filteredDistricts.length === 0 ? (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      Район не найден
-                    </div>
-                  ) : (
-                    <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
-                      {filteredDistricts.map((district) => {
-                        const isSelected = selectedDistricts.includes(district.id);
-                        const count = districtCounts[district.id] || 0;
-                        return (
-                          <CommandItem
-                            key={district.id}
-                            value={district.name}
-                            onSelect={() => handleToggleDistrict(district.id)}
-                          >
-                            <div className="flex items-center justify-between gap-2 flex-1">
-                              <div className="flex items-center gap-2">
-                                <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
-                                  {isSelected && (
-                                    <Icon name="Check" className="h-3 w-3 text-white" />
-                                  )}
+                </Command>
+              </div>
+              <div className="overflow-y-auto flex-1">
+                <Command shouldFilter={false}>
+                  <CommandList>
+                    {filteredDistricts.length === 0 ? (
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        Район не найден
+                      </div>
+                    ) : (
+                      <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
+                        {filteredDistricts.map((district) => {
+                          const isSelected = selectedDistricts.includes(district.id);
+                          const count = districtCounts[district.id] || 0;
+                          return (
+                            <CommandItem
+                              key={district.id}
+                              value={district.name}
+                              onSelect={() => handleToggleDistrict(district.id)}
+                            >
+                              <div className="flex items-center justify-between gap-2 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                                    {isSelected && (
+                                      <Icon name="Check" className="h-3 w-3 text-white" />
+                                    )}
+                                  </div>
+                                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                                  <span>{district.name}</span>
                                 </div>
-                                <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-                                <span>{district.name}</span>
+                                {count > 0 && (
+                                  <Badge variant="secondary" className="ml-auto text-xs">
+                                    {count}
+                                  </Badge>
+                                )}
                               </div>
-                              {count > 0 && (
-                                <Badge variant="secondary" className="ml-auto text-xs">
-                                  {count}
-                                </Badge>
-                              )}
-                            </div>
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-              <div className="border-t p-3 space-y-2">
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </div>
+              <div className="border-t p-3 space-y-2 sticky bottom-0 z-20 bg-background">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -257,7 +261,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
         </PopoverContent>
       </Popover>
