@@ -74,6 +74,10 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
 
     setIsSaving(true);
     try {
+      console.log('Updating offer with images:', images.length, 'images');
+      const imagesSize = JSON.stringify(images).length;
+      console.log('Images data size:', imagesSize, 'bytes', (imagesSize / 1024 / 1024).toFixed(2), 'MB');
+      
       await offersAPI.updateOffer(offer.id, {
         pricePerUnit,
         quantity,
@@ -99,9 +103,10 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       onUpdate();
     } catch (error) {
       console.error('Error updating offer:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       toast({
         title: 'Ошибка',
-        description: 'Не удалось обновить объявление',
+        description: `Не удалось обновить объявление: ${errorMessage}`,
         variant: 'destructive',
       });
     } finally {
@@ -121,6 +126,52 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     setIsEditing(false);
   };
 
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxWidth = 1200;
+          const maxHeight = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          // Рассчитываем новые размеры
+          if (width > height) {
+            if (width > maxWidth) {
+              height = height * (maxWidth / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = width * (maxHeight / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Сжимаем с качеством 0.8
+          const compressed = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(compressed);
+        };
+        img.onerror = reject;
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -128,23 +179,31 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     setIsUploadingImage(true);
     try {
       const file = files[0];
-      const reader = new FileReader();
       
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        const newImage: OfferImage = {
-          id: Date.now().toString(),
-          url: base64,
-          alt: offer.title,
-        };
-        setImages([...images, newImage]);
+      // Проверяем размер файла (макс 10MB)
+      if (file.size > 10 * 1024 * 1024) {
         toast({
-          title: 'Фото добавлено',
-          description: 'Не забудьте сохранить изменения',
+          title: 'Ошибка',
+          description: 'Файл слишком большой. Максимум 10 МБ',
+          variant: 'destructive',
         });
-      };
+        return;
+      }
       
-      reader.readAsDataURL(file);
+      // Сжимаем изображение
+      const compressed = await compressImage(file);
+      console.log('Original size:', file.size, 'Compressed size:', compressed.length);
+      
+      const newImage: OfferImage = {
+        id: Date.now().toString(),
+        url: compressed,
+        alt: offer.title,
+      };
+      setImages([...images, newImage]);
+      toast({
+        title: 'Фото добавлено',
+        description: 'Не забудьте сохранить изменения',
+      });
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({

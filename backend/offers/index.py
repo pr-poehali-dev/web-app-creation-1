@@ -1,4 +1,4 @@
-'''Управление предложениями товаров и услуг'''
+'''Управление предложениями товаров и услуг - v2'''
 
 import json
 import os 
@@ -579,40 +579,55 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
 
 def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Обновить предложение"""
-    body = json.loads(event.get('body', '{}'))
+    try:
+        body = json.loads(event.get('body', '{}'))
+        print(f"UPDATE OFFER - Offer ID: {offer_id}")
+        print(f"UPDATE OFFER - Body keys: {list(body.keys())}")
+        print(f"UPDATE OFFER - Has images: {bool(body.get('images'))}")
+        if body.get('images'):
+            print(f"UPDATE OFFER - Images count: {len(body['images'])}")
+    except Exception as e:
+        print(f"ERROR parsing request body: {str(e)}")
+        return {
+            'statusCode': 400,
+            'headers': headers,
+            'body': json.dumps({'error': f'Invalid JSON: {str(e)}'}, default=decimal_default),
+            'isBase64Encoded': False
+        }
     
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    
-    updates = []
-    
-    if 'title' in body:
-        title_esc = body['title'].replace("'", "''")
-        updates.append(f"title = '{title_esc}'")
-    
-    if 'description' in body:
-        desc_esc = body['description'].replace("'", "''")
-        updates.append(f"description = '{desc_esc}'")
-    
-    if 'quantity' in body:
-        updates.append(f"quantity = {body['quantity']}")
-    
-    if 'minOrderQuantity' in body:
-        min_order_qty = body['minOrderQuantity']
-        if min_order_qty == '' or min_order_qty == 0:
-            updates.append(f"min_order_quantity = NULL")
-        else:
-            updates.append(f"min_order_quantity = {int(min_order_qty)}")
-    
-    if 'pricePerUnit' in body:
-        updates.append(f"price_per_unit = {body['pricePerUnit']}")
-    
-    if 'status' in body:
-        status_esc = body['status'].replace("'", "''")
-        updates.append(f"status = '{status_esc}'")
-    
-    # Обработка изображений
-    if 'images' in body:
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        updates = []
+        
+        if 'title' in body:
+            title_esc = body['title'].replace("'", "''")
+            updates.append(f"title = '{title_esc}'")
+        
+        if 'description' in body:
+            desc_esc = body['description'].replace("'", "''")
+            updates.append(f"description = '{desc_esc}'")
+        
+        if 'quantity' in body:
+            updates.append(f"quantity = {body['quantity']}")
+        
+        if 'minOrderQuantity' in body:
+            min_order_qty = body['minOrderQuantity']
+            if min_order_qty == '' or min_order_qty == 0:
+                updates.append(f"min_order_quantity = NULL")
+            else:
+                updates.append(f"min_order_quantity = {int(min_order_qty)}")
+        
+        if 'pricePerUnit' in body:
+            updates.append(f"price_per_unit = {body['pricePerUnit']}")
+        
+        if 'status' in body:
+            status_esc = body['status'].replace("'", "''")
+            updates.append(f"status = '{status_esc}'")
+        
+        # Обработка изображений
+        if 'images' in body:
         s3 = boto3.client('s3',
             endpoint_url='https://bucket.poehali.dev',
             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
@@ -665,27 +680,38 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 f"INSERT INTO t_p42562714_web_app_creation_1.offer_image_relations (offer_id, image_id, sort_order) VALUES ('{offer_id_esc}', '{image_id}', {idx})"
             )
     
-    if updates:
-        updates.append("updated_at = CURRENT_TIMESTAMP")
-        offer_id_esc = offer_id.replace("'", "''")
+        if updates:
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            offer_id_esc = offer_id.replace("'", "''")
+            
+            sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
+            cur.execute(sql)
         
-        sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
-        cur.execute(sql)
-    
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    # ⚡ Инвалидируем кэш после обновления предложения
-    offers_cache.invalidate('offers_list')
-    offers_cache.invalidate(f'offer_detail:{offer_id}')
-    
-    return {
-        'statusCode': 200,
-        'headers': headers,
-        'body': json.dumps({'message': 'Offer updated successfully'}, default=decimal_default),
-        'isBase64Encoded': False
-    }
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # ⚡ Инвалидируем кэш после обновления предложения
+        offers_cache.invalidate('offers_list')
+        offers_cache.invalidate(f'offer_detail:{offer_id}')
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'Offer updated successfully'}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f'ERROR in update_offer: {str(e)}')
+        print(f'Traceback: {error_trace}')
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e), 'trace': error_trace}, default=decimal_default),
+            'isBase64Encoded': False
+        }
 
 def optimize_image(image_data: bytes, max_width: int = 800, quality: int = 85) -> bytes:
     """Оптимизация изображения: resize + сжатие + исправление EXIF ориентации"""

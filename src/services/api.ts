@@ -287,7 +287,16 @@ export const offersAPI = {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to update offer');
+      const errorText = await response.text();
+      console.error('Update offer error:', response.status, errorText);
+      let errorMessage = 'Failed to update offer';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch {
+        errorMessage = errorText.substring(0, 200);
+      }
+      throw new Error(errorMessage);
     }
     
     // Инвалидируем кэш этого предложения и списков
