@@ -161,7 +161,7 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
                   className="h-7 text-xs"
                 >
                   <Icon name="X" className="h-3 w-3 mr-1" />
-                  Сбросить
+                  Сбросить регион
                 </Button>
               </div>
             </div>
@@ -243,7 +243,7 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
               className="flex-1 h-9 text-xs"
             >
               <Icon name="X" className="mr-1 h-3 w-3" />
-              Сбросить
+              Сбросить районы
             </Button>
           </div>
 
