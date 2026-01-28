@@ -319,7 +319,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           </div>
         </div>
 
-        <div className="pt-2 space-y-1 border-t text-xs">
+        <div className="pt-2 border-t text-xs">
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">
@@ -330,13 +330,6 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               )}
             </span>
           </div>
-
-          {offer.seller && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Icon name="Building2" className="h-3.5 w-3.5" />
-              <span className="truncate">{offer.seller.name}</span>
-            </div>
-          )}
         </div>
       </CardContent>
 
