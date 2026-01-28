@@ -308,6 +308,16 @@ export default function OfferInfoCard({
               </div>
             </div>
 
+            {availableDeliveryTypes.includes('pickup') && location && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
+                <div className="flex items-center gap-1.5">
+                  <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-sm font-medium">{location}</p>
+                </div>
+              </div>
+            )}
+
             {deliveryTime && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Срок доставки/поставки</p>
