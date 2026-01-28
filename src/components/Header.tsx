@@ -209,14 +209,15 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <div className="md:hidden flex items-center gap-1 flex-1 justify-end">
             {shouldShowDistricts() && (
               <button
-                className="flex items-center px-1.5 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0 gap-1"
+                className="flex items-center px-1.5 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0 gap-0.5"
                 onClick={() => setRegionModalOpen(true)}
               >
                 <Icon name="MapPin" className="h-3 w-3 text-primary shrink-0" />
-                <span className="font-bold text-primary text-[10px]">
-                  {selectedDistricts.length > 1 ? `+${selectedDistricts.length - 1}` : getShortRegionName(selectedRegion)}
+                <span className="font-bold text-primary text-[9px] truncate">
+                  {getShortRegionName(selectedRegion)}
+                  {selectedDistricts.length > 1 && ` +${selectedDistricts.length - 1}`}
                 </span>
-                <Icon name="ChevronsUpDown" className="h-3 w-3 text-primary/50 shrink-0" />
+                <Icon name="ChevronsUpDown" className="h-3 w-3 text-primary/50 shrink-0 ml-0.5" />
               </button>
             )}
             <button
