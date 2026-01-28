@@ -78,9 +78,9 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] md:hidden bg-background flex flex-col">
+    <div className="fixed top-0 left-0 right-0 bottom-0 z-[200] md:hidden bg-background flex flex-col">
       {/* Fixed Header */}
-      <div className="shrink-0 bg-background border-b px-4 py-3 flex items-center gap-3">
+      <div className="shrink-0 bg-background border-b px-4 py-3 flex items-center gap-3 min-h-[56px]">
         <button
           onClick={onClose}
           className="p-1.5 hover:bg-muted rounded-md transition-colors"
