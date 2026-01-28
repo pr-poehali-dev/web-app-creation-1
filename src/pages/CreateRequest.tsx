@@ -66,6 +66,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     deliveryAddress: '',
     gpsCoordinates: '',
     availableDistricts: [] as string[],
+    startDate: '',
     expiryDate: '',
   });
 
@@ -261,16 +262,31 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               <CardHeader>
                 <CardTitle>Дополнительно</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="expiryDate">Срок актуальности запроса (необязательно)</Label>
-                  <Input
-                    id="expiryDate"
-                    type="date"
-                    value={formData.expiryDate}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
+                  <Label>Срок актуальности запроса (необязательно)</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                    <div>
+                      <Label htmlFor="startDate" className="text-sm text-muted-foreground">Дата начала</Label>
+                      <Input
+                        id="startDate"
+                        type="date"
+                        value={formData.startDate}
+                        onChange={(e) => handleInputChange('startDate', e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="expiryDate" className="text-sm text-muted-foreground">Дата окончания</Label>
+                      <Input
+                        id="expiryDate"
+                        type="date"
+                        value={formData.expiryDate}
+                        onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                        min={formData.startDate || new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
