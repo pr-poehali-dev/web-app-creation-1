@@ -25,10 +25,8 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
   
   const [searchQuery, setSearchQuery] = useState('');
 
-  if (!isOpen) return null;
-
-  const availableRegions = regions.filter(r => r.id !== 'all');
-  const selectedRegionData = regions.find(r => r.id === selectedRegion);
+  const availableRegions = useMemo(() => regions.filter(r => r.id !== 'all'), [regions]);
+  const selectedRegionData = useMemo(() => regions.find(r => r.id === selectedRegion), [regions, selectedRegion]);
 
   const handleSelectRegion = (regionId: string) => {
     setSelectedRegion(regionId);
@@ -43,6 +41,11 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
       d.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [districts, searchQuery]);
+
+  const isAllSelected = useMemo(() => 
+    selectedDistricts.length === districts.length && districts.length > 0,
+    [selectedDistricts.length, districts.length]
+  );
 
   const handleToggleDistrict = (districtId: string) => {
     toggleDistrict(districtId);
@@ -61,7 +64,7 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
     await requestGeolocation();
   };
 
-  const isAllSelected = selectedDistricts.length === districts.length && districts.length > 0;
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-end" onClick={onClose}>
