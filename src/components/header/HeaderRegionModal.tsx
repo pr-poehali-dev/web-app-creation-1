@@ -78,25 +78,19 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 z-[100] md:hidden" 
-      onClick={onClose}
-    >
-      <div 
-        className="absolute bottom-0 left-0 right-0 bg-background w-full max-h-[90vh] rounded-t-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom duration-300"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-[100] md:hidden bg-background">
+      <div className="h-full w-full flex flex-col">
         {/* Header */}
-        <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center justify-between z-10">
-          <h3 className="text-lg font-bold">
-            {selectedRegion === 'all' ? 'Выбор региона' : 'Выбор районов'}
-          </h3>
+        <div className="bg-background border-b px-4 py-3 flex items-center gap-3 safe-top">
           <button
             onClick={onClose}
             className="p-1.5 hover:bg-muted rounded-md transition-colors"
           >
-            <Icon name="X" className="h-5 w-5" />
+            <Icon name="ArrowLeft" className="h-5 w-5" />
           </button>
+          <h3 className="text-lg font-bold flex-1">
+            {selectedRegion === 'all' ? 'Выбор региона' : 'Выбор районов'}
+          </h3>
         </div>
 
         {/* Content */}
@@ -227,7 +221,7 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
               </div>
 
               {/* Actions footer */}
-              <div className="border-t p-3 bg-background space-y-2">
+              <div className="border-t p-3 bg-background space-y-2 safe-bottom">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
