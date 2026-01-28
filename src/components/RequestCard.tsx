@@ -79,13 +79,14 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
         <div className="space-y-2">
           {districtName && (
             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-              <Icon name="MapPin" className="h-3.5 w-3.5" />
-              <div className="flex flex-col truncate">
-                {(request.deliveryAddress || request.location) && (
-                  <span className="text-[10px] text-muted-foreground/70">{request.deliveryAddress || request.location}</span>
+              <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="truncate">
+                {(request.deliveryAddress || request.location) ? (
+                  <>{request.deliveryAddress || request.location}, {districtName}</>
+                ) : (
+                  districtName
                 )}
-                <span className="truncate">{districtName}</span>
-              </div>
+              </span>
             </div>
           )}
           
