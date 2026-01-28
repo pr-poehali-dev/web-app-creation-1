@@ -293,6 +293,8 @@ export default function EditOffer() {
           onOpenChat={handleOpenChat}
           onAcceptOrder={handleAcceptOrder}
           onMessageClick={handleMessageClick}
+          onDelete={handleDelete}
+          onUpdate={loadData}
         />
       </main>
 

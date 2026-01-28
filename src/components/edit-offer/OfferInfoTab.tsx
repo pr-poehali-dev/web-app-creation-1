@@ -10,17 +10,21 @@ import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
 import { offersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface OfferInfoTabProps {
   offer: Offer;
-  districtName: string;
-  onEdit: () => void;
+  districtName?: string;
+  onEdit?: () => void;
   onDelete: () => void;
   onUpdate: () => void;
   onDataChanged?: () => void;
+  hasChanges?: boolean;
 }
 
-export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, onUpdate, onDataChanged }: OfferInfoTabProps) {
+export default function OfferInfoTab({ offer, districtName: propDistrictName, onEdit, onDelete, onUpdate, onDataChanged }: OfferInfoTabProps) {
+  const { districts } = useDistrict();
+  const districtName = propDistrictName || districts.find(d => d.id === offer.district)?.name || offer.district;
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);

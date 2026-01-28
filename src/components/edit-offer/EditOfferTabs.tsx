@@ -25,6 +25,8 @@ interface EditOfferTabsProps {
   onOpenChat: (order: Order) => void;
   onAcceptOrder: (orderId: string) => void;
   onMessageClick: (orderId: string) => void;
+  onDelete?: () => void;
+  onUpdate?: () => void;
 }
 
 export default function EditOfferTabs({
@@ -37,6 +39,8 @@ export default function EditOfferTabs({
   onOpenChat,
   onAcceptOrder,
   onMessageClick,
+  onDelete,
+  onUpdate,
 }: EditOfferTabsProps) {
   const unreadCount = messages.filter(m => !m.isRead).length;
 
@@ -58,7 +62,12 @@ export default function EditOfferTabs({
       </TabsList>
 
       <TabsContent value="info">
-        <OfferInfoTab offer={offer} hasChanges={hasChanges} />
+        <OfferInfoTab 
+          offer={offer} 
+          hasChanges={hasChanges}
+          onDelete={onDelete || (() => {})}
+          onUpdate={onUpdate || (() => {})}
+        />
       </TabsContent>
 
       <TabsContent value="orders">
