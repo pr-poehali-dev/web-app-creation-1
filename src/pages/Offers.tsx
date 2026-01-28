@@ -26,7 +26,7 @@ const ITEMS_PER_PAGE = 20;
 function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useScrollToTop();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { selectedRegion, selectedDistricts, districts } = useDistrict();
+  const { selectedRegion, selectedDistricts, districts, detectedDistrictId } = useDistrict();
   const currentUser = getSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -166,6 +166,11 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           selectedDistricts.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
+      } else if (detectedDistrictId) {
+        result = result.filter((offer) => 
+          offer.district === detectedDistrictId || 
+          (offer.availableDistricts || []).includes(detectedDistrictId)
+        );
       } else {
         result = result.filter((offer) => 
           districtsInRegion.includes(offer.district) || 
@@ -189,7 +194,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     });
 
     return [...premiumOffers, ...regularOffers];
-  }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts]);
+  }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts, detectedDistrictId]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
   const hasMore = displayedCount < filteredOffers.length;

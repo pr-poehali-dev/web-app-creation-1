@@ -15,6 +15,7 @@ import {
 import Icon from '@/components/ui/icon';
 import type { Request } from '@/types/offer';
 import { getSession } from '@/utils/auth';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface RequestCardProps {
   request: Request;
@@ -24,10 +25,12 @@ interface RequestCardProps {
 
 export default function RequestCard({ request, onDelete, unreadMessages }: RequestCardProps) {
   const navigate = useNavigate();
+  const { districts } = useDistrict();
   const currentUser = getSession();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const isOwner = currentUser && request.userId === currentUser.id;
+  const districtName = districts.find(d => d.id === request.district)?.name;
 
   const handleCardClick = () => {
     // Если это свой запрос - открываем редактирование
@@ -74,6 +77,18 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
         </div>
         
         <div className="space-y-2">
+          {districtName && (
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+              <Icon name="MapPin" className="h-3.5 w-3.5" />
+              <div className="flex flex-col truncate">
+                {request.location && (
+                  <span className="text-[10px] text-muted-foreground/70">{request.location}</span>
+                )}
+                <span className="truncate">{districtName}</span>
+              </div>
+            </div>
+          )}
+          
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-bold text-primary">
               {request.pricePerUnit ? request.pricePerUnit.toLocaleString() : '0'} ₽

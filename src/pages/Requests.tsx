@@ -32,7 +32,7 @@ const ITEMS_PER_PAGE = 20;
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   useScrollToTop();
   const navigate = useNavigate();
-  const { selectedRegion, selectedDistricts, districts } = useDistrict();
+  const { selectedRegion, selectedDistricts, districts, detectedDistrictId } = useDistrict();
   const { deleteRequest } = useOffers();
   const currentUser = getSession();
   const { toast } = useToast();
@@ -143,6 +143,12 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
             selectedDistricts.includes(offer.district) ||
             (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
+      } else if (detectedDistrictId) {
+        result = result.filter(
+          (offer) =>
+            offer.district === detectedDistrictId ||
+            (offer.availableDistricts || []).includes(detectedDistrictId)
+        );
       } else {
         result = result.filter(
           (offer) =>
@@ -157,7 +163,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     });
 
     return result;
-  }, [requests, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
+  }, [requests, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts, detectedDistrictId]);
 
   const currentRequests = filteredRequests.slice(0, displayedCount);
   const hasMore = displayedCount < filteredRequests.length;
