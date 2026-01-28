@@ -98,6 +98,7 @@ export interface Request {
   hasVAT: boolean;
   vatRate?: number;
   district: string;
+  location?: string;
   deliveryAddress?: string;
   availableDistricts: string[];
   images: OfferImage[];

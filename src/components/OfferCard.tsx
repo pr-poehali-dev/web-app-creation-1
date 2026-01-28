@@ -224,6 +224,15 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               </div>
             </div>
           )}
+          
+          {offer.availableDeliveryTypes.includes('pickup') && offer.location && (
+            <div className="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-sm rounded-md px-2 py-1">
+              <div className="flex items-center gap-1.5 text-white text-xs">
+                <Icon name="MapPin" className="h-3.5 w-3.5" />
+                <span className="truncate font-medium">{offer.location}</span>
+              </div>
+            </div>
+          )}
         </div>
       </CardHeader>
 
