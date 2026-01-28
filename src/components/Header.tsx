@@ -215,23 +215,23 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 <div className="flex items-center gap-1 w-full">
                   <Icon name="MapPin" className="h-3 w-3 text-primary shrink-0" />
                   <span className="font-bold text-primary truncate text-[10px] leading-tight">
-                    {(() => {
-                      if (selectedDistricts.length === 0) return 'Все районы';
-                      if (selectedDistricts.length === districts.length) return 'Все районы';
-                      
-                      const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
-                      const firstName = firstDistrict?.name || 'Район';
-                      
-                      if (selectedDistricts.length === 1) {
-                        return firstName;
-                      }
-                      
-                      return `${firstName}, еще +${selectedDistricts.length - 1}`;
-                    })()}
+                    {getShortRegionName(selectedRegion)}
                   </span>
                 </div>
                 <span className="text-[10px] leading-tight text-primary/70 font-bold truncate w-full">
-                  {getShortRegionName(selectedRegion)}
+                  {(() => {
+                    if (selectedDistricts.length === 0) return 'Все районы';
+                    if (selectedDistricts.length === districts.length) return 'Все районы';
+                    
+                    const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
+                    const firstName = firstDistrict?.name || 'Район';
+                    
+                    if (selectedDistricts.length === 1) {
+                      return firstName;
+                    }
+                    
+                    return `${firstName}, еще +${selectedDistricts.length - 1}`;
+                  })()}
                 </span>
               </button>
             )}
