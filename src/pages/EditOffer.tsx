@@ -251,7 +251,7 @@ export default function EditOffer() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Загрузка...</p>
@@ -265,7 +265,7 @@ export default function EditOffer() {
   if (!offer) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Объявление не найдено</p>
