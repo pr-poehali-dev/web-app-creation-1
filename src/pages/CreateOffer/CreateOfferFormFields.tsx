@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
 import OfferBasicInfoSection from '@/components/offer/OfferBasicInfoSection';
 import OfferPricingSection from '@/components/offer/OfferPricingSection';
 import OfferLocationSection from '@/components/offer/OfferLocationSection';
@@ -156,38 +158,74 @@ export default function CreateOfferFormFields({
           </div>
           <div>
             <Label htmlFor="deliveryPeriod">Период поставки (необязательно)</Label>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
               <div>
-                <Label htmlFor="deliveryPeriodStart" className="text-xs text-muted-foreground">Дата начала</Label>
-                <Input
-                  id="deliveryPeriodStart"
-                  type="date"
-                  value={formData.deliveryPeriodStart}
-                  onChange={(e) => onInputChange('deliveryPeriodStart', e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
+                <Label htmlFor="deliveryPeriodStart" className="text-sm text-muted-foreground">Дата начала</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="deliveryPeriodStart"
+                    type="date"
+                    value={formData.deliveryPeriodStart}
+                    onChange={(e) => onInputChange('deliveryPeriodStart', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                  {formData.deliveryPeriodStart && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onInputChange('deliveryPeriodStart', '')}
+                    >
+                      <Icon name="X" className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <div>
-                <Label htmlFor="deliveryPeriodEnd" className="text-xs text-muted-foreground">Дата окончания</Label>
-                <Input
-                  id="deliveryPeriodEnd"
-                  type="date"
-                  value={formData.deliveryPeriodEnd}
-                  onChange={(e) => onInputChange('deliveryPeriodEnd', e.target.value)}
-                  min={formData.deliveryPeriodStart || new Date().toISOString().split('T')[0]}
-                />
+                <Label htmlFor="deliveryPeriodEnd" className="text-sm text-muted-foreground">Дата окончания</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="deliveryPeriodEnd"
+                    type="date"
+                    value={formData.deliveryPeriodEnd}
+                    onChange={(e) => onInputChange('deliveryPeriodEnd', e.target.value)}
+                    min={formData.deliveryPeriodStart || new Date().toISOString().split('T')[0]}
+                  />
+                  {formData.deliveryPeriodEnd && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onInputChange('deliveryPeriodEnd', '')}
+                    >
+                      <Icon name="X" className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
           <div>
             <Label htmlFor="expiryDate">Срок годности (необязательно)</Label>
-            <Input
-              id="expiryDate"
-              type="date"
-              value={formData.expiryDate}
-              onChange={(e) => onInputChange('expiryDate', e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-            />
+            <div className="flex gap-2 mt-2">
+              <Input
+                id="expiryDate"
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => onInputChange('expiryDate', e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+              {formData.expiryDate && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onInputChange('expiryDate', '')}
+                >
+                  <Icon name="X" className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

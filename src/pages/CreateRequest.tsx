@@ -268,23 +268,47 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                     <div>
                       <Label htmlFor="startDate" className="text-sm text-muted-foreground">Дата начала</Label>
-                      <Input
-                        id="startDate"
-                        type="date"
-                        value={formData.startDate}
-                        onChange={(e) => handleInputChange('startDate', e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => handleInputChange('startDate', e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                        />
+                        {formData.startDate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleInputChange('startDate', '')}
+                          >
+                            <Icon name="X" className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="expiryDate" className="text-sm text-muted-foreground">Дата окончания</Label>
-                      <Input
-                        id="expiryDate"
-                        type="date"
-                        value={formData.expiryDate}
-                        onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                        min={formData.startDate || new Date().toISOString().split('T')[0]}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="expiryDate"
+                          type="date"
+                          value={formData.expiryDate}
+                          onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                          min={formData.startDate || new Date().toISOString().split('T')[0]}
+                        />
+                        {formData.expiryDate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleInputChange('expiryDate', '')}
+                          >
+                            <Icon name="X" className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
