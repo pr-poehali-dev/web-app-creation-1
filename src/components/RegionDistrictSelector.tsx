@@ -50,11 +50,23 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
   };
 
   const filteredDistricts = useMemo(() => {
-    if (!searchQuery) return districts;
-    return districts.filter(d => 
-      d.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [districts, searchQuery]);
+    let result = districts;
+    
+    if (searchQuery) {
+      result = districts.filter(d => 
+        d.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    return result.sort((a, b) => {
+      const aSelected = selectedDistricts.includes(a.id);
+      const bSelected = selectedDistricts.includes(b.id);
+      
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [districts, searchQuery, selectedDistricts]);
 
   const districtCounts = useMemo(() => {
     const counts: Record<string, number> = {};
