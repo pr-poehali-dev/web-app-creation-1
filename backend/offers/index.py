@@ -190,6 +190,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             SELECT 
                 o.id, o.user_id, o.seller_id, o.title, o.description, o.category, o.district, o.location,
                 o.price_per_unit, o.quantity, o.unit, o.sold_quantity, o.reserved_quantity, o.created_at,
+                o.available_delivery_types,
                 COALESCE(u.rating, 100.0) as seller_rating
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
@@ -231,6 +232,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'category': offer.get('category'),
                 'district': offer.get('district'),
                 'location': offer.get('location'),
+                'availableDeliveryTypes': offer.get('available_delivery_types', []),
                 'quantity': offer.get('quantity'),
                 'soldQuantity': offer.get('sold_quantity', 0) or 0,
                 'reservedQuantity': offer.get('reserved_quantity', 0) or 0,
