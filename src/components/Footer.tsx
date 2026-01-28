@@ -52,7 +52,7 @@ export default function Footer() {
                   src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                   alt="ЕРТТП" 
                   className="h-[28px] w-[28px]"
-                  style={{ filter: 'drop-shadow(0 0 0.5px white)', transform: 'scale(1.9) scaleX(-1)' }}
+                  style={{ filter: 'brightness(3) contrast(2) saturate(0)', transform: 'scale(1.9) scaleX(-1)' }}
                 />
               </div>
               <span className="font-bold text-primary">ЕРТТП</span>
