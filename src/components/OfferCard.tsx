@@ -35,11 +35,6 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const { toast } = useToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isEditingPrice, setIsEditingPrice] = useState(false);
-  const [isEditingQuantity, setIsEditingQuantity] = useState(false);
-  const [editPrice, setEditPrice] = useState(offer.pricePerUnit.toString());
-  const [editQuantity, setEditQuantity] = useState(offer.quantity.toString());
-  const [isSaving, setIsSaving] = useState(false);
   
   const isOwner = currentUser && String(offer.userId) === String(currentUser.id);
 
@@ -88,71 +83,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
     setShowDeleteDialog(false);
   };
 
-  const handleSavePrice = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newPrice = parseFloat(editPrice);
-    if (isNaN(newPrice) || newPrice <= 0) {
-      toast({
-        title: 'Ошибка',
-        description: 'Укажите корректную цену',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      await offersAPI.updateOffer(offer.id, { pricePerUnit: newPrice });
-      offer.pricePerUnit = newPrice;
-      setIsEditingPrice(false);
-      toast({
-        title: 'Успешно',
-        description: 'Цена обновлена',
-      });
-    } catch (error) {
-      console.error('Error updating price:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить цену',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
-  const handleSaveQuantity = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newQuantity = parseInt(editQuantity);
-    if (isNaN(newQuantity) || newQuantity <= 0) {
-      toast({
-        title: 'Ошибка',
-        description: 'Укажите корректное количество',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      await offersAPI.updateOffer(offer.id, { quantity: newQuantity });
-      offer.quantity = newQuantity;
-      setIsEditingQuantity(false);
-      toast({
-        title: 'Успешно',
-        description: 'Количество обновлено',
-      });
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить количество',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleMessages = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -242,33 +173,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           )}
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-muted-foreground text-xs">Доступно:</span>
-            {isOwner && isEditingQuantity ? (
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  type="number"
-                  value={editQuantity}
-                  onChange={(e) => setEditQuantity(e.target.value)}
-                  className="h-6 w-20 text-xs px-2"
-                  disabled={isSaving}
-                />
-                <Button onClick={handleSaveQuantity} size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="Check" className="h-3 w-3" />
-                </Button>
-                <Button onClick={(e) => { e.stopPropagation(); setIsEditingQuantity(false); setEditQuantity(offer.quantity.toString()); }} variant="ghost" size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="X" className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <span className="font-medium text-xs" onClick={(e) => { if (isOwner) { e.stopPropagation(); setIsEditingQuantity(true); } }}>
-                {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
-                {(offer.soldQuantity || 0) > 0 && (
-                  <span className="text-muted-foreground ml-1">
-                    (из {offer.quantity})
-                  </span>
-                )}
-                {isOwner && <Icon name="Pencil" className="h-3 w-3 inline ml-1 text-muted-foreground" />}
-              </span>
-            )}
+            <span className="font-medium text-xs">
+              {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
+              {(offer.soldQuantity || 0) > 0 && (
+                <span className="text-muted-foreground ml-1">
+                  (из {offer.quantity})
+                </span>
+              )}
+            </span>
           </div>
           {offer.minOrderQuantity && (
             <div className="flex items-baseline justify-between">
@@ -278,35 +190,16 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           )}
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-muted-foreground text-xs">Цена за единицу:</span>
-            {isOwner && isEditingPrice ? (
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  type="number"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                  className="h-6 w-20 text-xs px-2"
-                  disabled={isSaving}
-                />
-                <Button onClick={handleSavePrice} size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="Check" className="h-3 w-3" />
-                </Button>
-                <Button onClick={(e) => { e.stopPropagation(); setIsEditingPrice(false); setEditPrice(offer.pricePerUnit.toString()); }} variant="ghost" size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="X" className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="font-bold text-primary text-base cursor-pointer" onClick={(e) => { if (isOwner) { e.stopPropagation(); setIsEditingPrice(true); } }}>
-                  {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-                  {isOwner && <Icon name="Pencil" className="h-3 w-3 inline ml-1 text-muted-foreground" />}
-                </span>
-                {offer.noNegotiation && (
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                    Без торга
-                  </Badge>
-                )}
-              </div>
-            )}
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="font-bold text-primary text-base">
+                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+              </span>
+              {offer.noNegotiation && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                  Без торга
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
