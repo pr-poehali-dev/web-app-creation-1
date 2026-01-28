@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
 import { offersAPI } from '@/services/api';
@@ -28,6 +29,7 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
     pricePerUnit: offer.pricePerUnit.toString(),
     quantity: offer.quantity.toString(),
     minOrderQuantity: offer.minOrderQuantity?.toString() || '',
+    description: offer.description || '',
   });
 
   const handleSave = async () => {
@@ -68,6 +70,7 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
         pricePerUnit,
         quantity,
         minOrderQuantity,
+        description: editData.description,
       });
       
       // Очищаем кэш предложений
@@ -102,6 +105,7 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
       pricePerUnit: offer.pricePerUnit.toString(),
       quantity: offer.quantity.toString(),
       minOrderQuantity: offer.minOrderQuantity?.toString() || '',
+      description: offer.description || '',
     });
     setIsEditing(false);
   };
@@ -126,7 +130,9 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
           <div className="space-y-3">
             <div>
               <h3 className="text-2xl font-bold">{offer.title}</h3>
-              <p className="text-muted-foreground mt-2">{offer.description}</p>
+              {!isEditing ? (
+                <p className="text-muted-foreground mt-2">{offer.description}</p>
+              ) : null}
             </div>
             
             <Separator />
@@ -134,6 +140,17 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
             <div className="space-y-3">
               {isEditing ? (
                 <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Описание</Label>
+                    <Textarea
+                      id="description"
+                      value={editData.description}
+                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                      disabled={isSaving}
+                      rows={3}
+                      placeholder="Опишите ваше предложение"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="pricePerUnit">Цена за единицу (₽)</Label>
                     <Input
@@ -226,7 +243,15 @@ export default function OfferInfoTab({ offer, districtName, onEdit, onDelete, on
                     <Icon name="Pencil" className="w-4 h-4 mr-2" />
                     Редактировать
                   </Button>
-                  <Button variant="destructive" onClick={onDelete}>
+                  <Button 
+                    variant="destructive" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onDelete();
+                    }}
+                    type="button"
+                  >
                     <Icon name="Trash2" className="w-4 h-4 mr-2" />
                     Удалить
                   </Button>
