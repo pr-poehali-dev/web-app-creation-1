@@ -47,12 +47,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="h-7 w-7 overflow-hidden rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 overflow-hidden rounded-lg flex items-center justify-center">
                 <img 
                   src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                   alt="ЕРТТП" 
-                  className="h-full w-full brightness-[2] contrast-[1.5]"
-                  style={{ filter: 'brightness(2) contrast(1.5) drop-shadow(0 0 3px white) drop-shadow(0 0 6px white) drop-shadow(0 0 10px rgba(255,255,255,0.9)) drop-shadow(0 0 1px white)', transform: 'scale(1.9) scaleX(-1)' }}
+                  className="h-[28px] w-[28px]"
+                  style={{ filter: 'drop-shadow(0 0 0.5px white)', transform: 'scale(1.9) scaleX(-1)' }}
                 />
               </div>
               <span className="font-bold text-primary">ЕРТТП</span>
