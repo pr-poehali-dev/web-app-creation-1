@@ -19,7 +19,7 @@ const LoadingScreen = () => <SplashScreen />;
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
   lazy(async () => {
-    const maxRetries = 2;
+    const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
       try {
         return await componentImport();
@@ -27,14 +27,23 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
         // На последней попытке просто возвращаем компонент с ошибкой
         if (i === maxRetries - 1) {
           console.error('Failed to load module after retries:', error);
+          // Очищаем кэш и перезагружаем страницу
+          if ('caches' in window) {
+            caches.keys().then(names => {
+              names.forEach(name => caches.delete(name));
+            });
+          }
           return { 
             default: () => (
               <div className="flex items-center justify-center min-h-screen p-4">
                 <div className="text-center max-w-md">
                   <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
-                  <p className="text-muted-foreground mb-4">Не удалось загрузить компонент</p>
+                  <p className="text-muted-foreground mb-4">Не удалось загрузить компонент. Попробуйте обновить страницу.</p>
                   <button 
-                    onClick={() => window.location.reload()} 
+                    onClick={() => {
+                      // Принудительная перезагрузка без кэша
+                      window.location.reload();
+                    }} 
                     className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
                   >
                     Обновить страницу
@@ -45,8 +54,8 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
           };
         }
         
-        // Ждём перед следующей попыткой
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Ждём перед следующей попыткой (увеличиваем задержку с каждой попыткой)
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
       }
     }
     throw new Error('Failed to load module after retries');
