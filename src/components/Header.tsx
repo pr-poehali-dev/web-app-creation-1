@@ -9,7 +9,7 @@ import { getSession } from '@/utils/auth';
 import { useOffers } from '@/contexts/OffersContext';
 import { getUnreadCount } from '@/utils/notifications';
 import HeaderMobileMenu from '@/components/header/HeaderMobileMenu';
-import HeaderDistrictsModal from '@/components/header/HeaderDistrictsModal';
+import HeaderRegionModal from '@/components/header/HeaderRegionModal';
 import HeaderUserMenu from '@/components/header/HeaderUserMenu';
 
 interface HeaderProps {
@@ -21,7 +21,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [districtsModalOpen, setDistrictsModalOpen] = useState(false);
+  const [regionModalOpen, setRegionModalOpen] = useState(false);
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -194,7 +194,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             {shouldShowDistricts() && (
               <button
                 className="flex flex-col items-start px-2 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0 flex-1 max-w-[180px]"
-                onClick={() => setDistrictsModalOpen(true)}
+                onClick={() => setRegionModalOpen(true)}
               >
                 <div className="flex items-center gap-1 w-full">
                   <Icon name="MapPin" className="h-3 w-3 text-primary shrink-0" />
@@ -332,13 +332,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           </div>
         )}
 
-        <HeaderDistrictsModal
-          isOpen={districtsModalOpen}
-          onClose={() => setDistrictsModalOpen(false)}
-          districts={districts}
-          selectedDistricts={selectedDistricts}
-          toggleDistrict={toggleDistrict}
-          setSelectedDistricts={setSelectedDistricts}
+        <HeaderRegionModal
+          isOpen={regionModalOpen}
+          onClose={() => setRegionModalOpen(false)}
         />
       </div>
     </header>
