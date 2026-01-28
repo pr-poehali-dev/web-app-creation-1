@@ -143,7 +143,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   };
 
   const setSelectedDistricts = (districts: string[]) => {
-    setSelectedDistrictsState(districts);
+    if (detectedDistrictId && districts.length > 0 && !districts.includes(detectedDistrictId)) {
+      setSelectedDistrictsState([detectedDistrictId, ...districts]);
+    } else {
+      setSelectedDistrictsState(districts);
+    }
   };
 
   const toggleDistrict = (districtId: string) => {
@@ -153,9 +157,17 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
     }
 
     setSelectedDistrictsState(prev => {
+      const isDetectedDistrict = districtId === detectedDistrictId;
+      
       if (prev.includes(districtId)) {
+        if (isDetectedDistrict && prev.length === 1) {
+          return prev;
+        }
         return prev.filter(id => id !== districtId);
       } else {
+        if (detectedDistrictId && !prev.includes(detectedDistrictId)) {
+          return [detectedDistrictId, districtId];
+        }
         return [...prev, districtId];
       }
     });

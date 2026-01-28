@@ -88,13 +88,11 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
       return 'Все регионы';
     }
     
-    return selectedRegionData?.name || 'Выбран регион';
+    const additionalCount = selectedDistricts.length > 1 ? selectedDistricts.length - 1 : 0;
+    return additionalCount > 0 ? `+${additionalCount}` : selectedRegionData?.name || 'Выбран регион';
   };
 
   const getSubtitleText = () => {
-    if (selectedRegion !== 'all' && detectedCity && detectedCity !== 'Не определен') {
-      return detectedCity;
-    }
     return null;
   };
 
