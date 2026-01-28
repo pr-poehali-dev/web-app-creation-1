@@ -19,6 +19,7 @@ interface DistrictContextType {
   isDetecting: boolean;
   requestGeolocation: () => Promise<void>;
   detectedCity: string | null;
+  detectedDistrictId: string | null;
 }
 
 const DistrictContext = createContext<DistrictContextType | undefined>(undefined);
@@ -38,6 +39,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
     return stored ? JSON.parse(stored) : [];
   });
   const [detectedCity, setDetectedCity] = useState<string | null>(null);
+  const [detectedDistrictId, setDetectedDistrictId] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [availableDistricts, setAvailableDistricts] = useState<DistrictType[]>([]);
 
@@ -55,6 +57,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         
         const district = findDistrictByName(storedLocation.district, regionId);
         if (district) {
+          setDetectedDistrictId(district.id);
           setSelectedDistrictsState([district.id]);
         }
         return;
@@ -84,6 +87,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
             
             const district = findDistrictByName(location.district, regionId);
             if (district) {
+              setDetectedDistrictId(district.id);
               setSelectedDistrictsState([district.id]);
             }
           }
@@ -198,6 +202,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         setAvailableDistricts(districts);
         
         if (districtToSelect) {
+          setDetectedDistrictId(districtToSelect.id);
           const districtIds = [districtToSelect.id];
           setSelectedDistrictsState(districtIds);
           localStorage.setItem('selectedDistricts', JSON.stringify(districtIds));
@@ -221,7 +226,8 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       districts: availableDistricts,
       isDetecting, 
       requestGeolocation,
-      detectedCity
+      detectedCity,
+      detectedDistrictId
     }}>
       {children}
     </DistrictContext.Provider>

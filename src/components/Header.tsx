@@ -25,7 +25,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity, selectedRegion, regions } = useDistrict();
+  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity, selectedRegion, regions, detectedDistrictId } = useDistrict();
   const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -223,8 +223,11 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     if (selectedDistricts.length === 0) return 'Все районы';
                     if (selectedDistricts.length === districts.length) return 'Все районы';
                     
-                    const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
-                    const firstName = firstDistrict?.name || 'Район';
+                    const detectedDistrict = detectedDistrictId 
+                      ? districts.find(d => d.id === detectedDistrictId)
+                      : null;
+                    
+                    const firstName = detectedDistrict?.name || districts.find(d => d.id === selectedDistricts[0])?.name || 'Район';
                     
                     if (selectedDistricts.length === 1) {
                       return firstName;
