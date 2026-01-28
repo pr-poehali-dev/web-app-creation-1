@@ -94,34 +94,36 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
           {selectedRegion === 'all' ? (
             // Region selection view
-            <div className="h-full overflow-y-auto p-4">
-              <Command shouldFilter={true}>
-                <CommandInput placeholder="Поиск региона..." className="mb-3" />
-                <CommandList>
+            <div className="p-4">
+              <Command shouldFilter={true} className="border rounded-lg">
+                <CommandInput placeholder="Поиск региона..." />
+                <CommandList className="max-h-none">
                   <CommandEmpty>Регион не найден</CommandEmpty>
                   <CommandGroup>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDetectLocation}
-                      disabled={isDetecting}
-                      className="w-full justify-start mb-3 h-10"
-                    >
-                      {isDetecting ? (
-                        <>
-                          <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                          Определяем...
-                        </>
-                      ) : (
-                        <>
-                          <Icon name="MapPinned" className="mr-2 h-4 w-4" />
-                          Определить мой регион
-                        </>
-                      )}
-                    </Button>
+                    <div className="p-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDetectLocation}
+                        disabled={isDetecting}
+                        className="w-full justify-start h-10"
+                      >
+                        {isDetecting ? (
+                          <>
+                            <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                            Определяем...
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="MapPinned" className="mr-2 h-4 w-4" />
+                            Определить мой регион
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </CommandGroup>
                   <CommandGroup heading="Выберите регион">
                     {availableRegions.map((region) => (
@@ -143,9 +145,9 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
             </div>
           ) : (
             // District selection view
-            <div className="h-full flex flex-col">
+            <div className="flex flex-col pb-24">
               {/* Region header with reset */}
-              <div className="border-b px-4 py-3 bg-muted/50">
+              <div className="border-b px-4 py-3 bg-muted/50 sticky top-0 z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-medium">
@@ -170,14 +172,14 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
               </div>
 
               {/* Districts with search */}
-              <div className="flex-1 overflow-hidden">
-                <Command shouldFilter={false}>
+              <div className="p-4">
+                <Command shouldFilter={false} className="border rounded-lg">
                   <CommandInput 
                     placeholder="Поиск района..." 
                     value={searchQuery}
                     onValueChange={setSearchQuery}
                   />
-                  <CommandList>
+                  <CommandList className="max-h-none">
                     {filteredDistricts.length === 0 ? (
                       <div className="py-6 text-center text-sm text-muted-foreground">
                         Район не найден
@@ -220,8 +222,10 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
                 </Command>
               </div>
 
-              {/* Actions footer */}
-              <div className="border-t p-3 bg-background space-y-2 safe-bottom">
+            </div>
+
+            {/* Actions footer - fixed at bottom */}
+            <div className="fixed bottom-0 left-0 right-0 border-t p-3 bg-background space-y-2 safe-bottom z-20">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -249,7 +253,6 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
                   </div>
                 )}
               </div>
-            </div>
           )}
         </div>
       </div>
