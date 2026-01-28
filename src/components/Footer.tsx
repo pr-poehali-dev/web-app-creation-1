@@ -55,7 +55,7 @@ export default function Footer() {
               </defs>
             </svg>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="h-8 w-8 overflow-hidden rounded-lg flex items-center justify-center bg-transparent">
+              <div className="h-8 w-8 overflow-hidden rounded-lg flex items-center justify-center bg-primary">
                 <img 
                   src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                   alt="ЕРТТП" 
