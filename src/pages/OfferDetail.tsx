@@ -44,7 +44,6 @@ export default function OfferDetail() {
     handleOrderSubmit,
     openGallery,
     handleSendMessage,
-    navigate,
   } = useOfferDetail(id);
 
   if (isLoading) {
