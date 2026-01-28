@@ -36,7 +36,7 @@ export default function HeaderDistrictsModal({
   return (
     <div className="fixed inset-0 bg-black/50 z-[100] flex items-end" onClick={onClose}>
       <div 
-        className="bg-background w-full rounded-t-2xl max-h-[85vh] overflow-hidden flex flex-col safe-bottom"
+        className="bg-background w-full rounded-t-2xl max-h-[70vh] overflow-hidden flex flex-col safe-bottom"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center justify-between z-10">
