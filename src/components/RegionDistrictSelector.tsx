@@ -169,8 +169,8 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
               </Command>
             </div>
           ) : (
-            <div className="flex flex-col max-h-[500px]">
-              <div className="border-b px-3 py-2 bg-muted/50 sticky top-0 z-20 bg-background">
+            <>
+              <div className="border-b px-3 py-2 bg-muted/50">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
                     {selectedRegionData?.name}
@@ -186,7 +186,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </Button>
                 </div>
               </div>
-              <div className="sticky top-[52px] z-10 bg-background border-b">
+              <div className="border-b">
                 <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Поиск района..." 
@@ -195,7 +195,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   />
                 </Command>
               </div>
-              <div className="overflow-y-auto flex-1">
+              <div className="max-h-[300px] overflow-y-auto">
                 <Command shouldFilter={false}>
                   <CommandList>
                     {filteredDistricts.length === 0 ? (
@@ -237,7 +237,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </CommandList>
                 </Command>
               </div>
-              <div className="border-t p-3 space-y-2 sticky bottom-0 z-20 bg-background">
+              <div className="border-t p-3 space-y-2">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -264,7 +264,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </div>
                 )}
               </div>
-            </div>
+            </>
           )}
         </PopoverContent>
       </Popover>
