@@ -46,21 +46,13 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <svg width="0" height="0" style={{ position: 'absolute' }}>
-              <defs>
-                <filter id="thicken-white">
-                  <feMorphology operator="dilate" radius="0.5" />
-                  <feColorMatrix type="matrix" values="0 0 0 0 1   0 0 0 0 1   0 0 0 0 1   0 0 0 1 0" />
-                </filter>
-              </defs>
-            </svg>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="h-8 w-8 overflow-hidden rounded-lg flex items-center justify-center bg-primary">
+              <div className="h-8 w-8 overflow-hidden rounded-lg flex items-center justify-center">
                 <img 
                   src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                   alt="ЕРТТП" 
-                  className="h-[28px] w-[28px]"
-                  style={{ filter: 'url(#thicken-white)', transform: 'scale(1.9) scaleX(-1)' }}
+                  className="h-full w-full brightness-125 contrast-125"
+                  style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))', transform: 'scale(1.9) scaleX(-1)' }}
                 />
               </div>
               <span className="font-bold text-primary">ЕРТТП</span>
