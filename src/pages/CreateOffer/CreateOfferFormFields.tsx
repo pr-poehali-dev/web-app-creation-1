@@ -158,7 +158,7 @@ export default function CreateOfferFormFields({
           </div>
           <div>
             <Label htmlFor="deliveryPeriod">Период поставки (необязательно)</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+            <div className="space-y-3 mt-2">
               <div>
                 <Label htmlFor="deliveryPeriodStart" className="text-sm text-muted-foreground">Дата начала</Label>
                 <div className="flex gap-2">
