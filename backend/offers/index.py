@@ -582,7 +582,7 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     body = json.loads(event.get('body', '{}'))
     
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     
     updates = []
     
@@ -611,22 +611,67 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         status_esc = body['status'].replace("'", "''")
         updates.append(f"status = '{status_esc}'")
     
-    if not updates:
-        cur.close()
-        conn.close()
-        return {
-            'statusCode': 400,
-            'headers': headers,
-            'body': json.dumps({'error': 'No fields to update'}, default=decimal_default),
-            'isBase64Encoded': False
-        }
+    # Обработка изображений
+    if 'images' in body:
+        s3 = boto3.client('s3',
+            endpoint_url='https://bucket.poehali.dev',
+            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+        )
+        
+        offer_id_esc = offer_id.replace("'", "''")
+        
+        # Удаляем старые связи изображений
+        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
+        
+        # Добавляем новые изображения
+        for idx, img in enumerate(body['images']):
+            img_url = img['url']
+            
+            # Если изображение base64 - загружаем в S3
+            if img_url.startswith('data:image'):
+                try:
+                    header, base64_data = img_url.split(',', 1)
+                    image_data = base64.b64decode(base64_data)
+                    optimized_data = optimize_image(image_data)
+                    
+                    import uuid
+                    file_id = str(uuid.uuid4())
+                    s3_key = f"offer-images/{file_id}.jpg"
+                    
+                    s3.put_object(Bucket='files', Key=s3_key, Body=optimized_data, ContentType='image/jpeg')
+                    img_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
+                except Exception as e:
+                    print(f"Failed to upload image to S3: {str(e)}")
+                    continue
+            
+            url_esc = img_url.replace("'", "''")
+            alt_esc = img.get('alt', '').replace("'", "''")
+            
+            # Проверяем существует ли изображение с таким URL
+            cur.execute(f"SELECT id FROM t_p42562714_web_app_creation_1.offer_images WHERE url = '{url_esc}'")
+            existing_image = cur.fetchone()
+            
+            if existing_image:
+                image_id = existing_image['id']
+            else:
+                cur.execute(
+                    f"INSERT INTO t_p42562714_web_app_creation_1.offer_images (url, alt) VALUES ('{url_esc}', '{alt_esc}') RETURNING id"
+                )
+                image_id = cur.fetchone()['id']
+            
+            # Создаем связь
+            cur.execute(
+                f"INSERT INTO t_p42562714_web_app_creation_1.offer_image_relations (offer_id, image_id, sort_order) VALUES ('{offer_id_esc}', '{image_id}', {idx})"
+            )
     
-    updates.append("updated_at = CURRENT_TIMESTAMP")
-    offer_id_esc = offer_id.replace("'", "''")
+    if updates:
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        offer_id_esc = offer_id.replace("'", "''")
+        
+        sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
+        cur.execute(sql)
     
-    sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
-    
-    cur.execute(sql)
     conn.commit()
     cur.close()
     conn.close()
