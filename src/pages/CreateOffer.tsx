@@ -207,7 +207,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                 ) : (
                   <>
                     <Icon name="Send" className="mr-2 h-4 w-4" />
-                    Отправить на модерацию
+                    Отправить на публикацию
                   </>
                 )}
               </Button>

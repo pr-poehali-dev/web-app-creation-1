@@ -275,7 +275,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               </CardContent>
             </Card>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3">
               <Button
                 type="submit"
                 size="lg"
@@ -285,7 +285,6 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                   !formData.category || 
                   !formData.district
                 }
-                className="flex-1"
               >
                 {isSubmitting ? (
                   <>
