@@ -82,6 +82,31 @@ export function useCreateOfferForm(editOffer?: Offer) {
   );
 
   const handleInputChange = (field: string, value: string | boolean) => {
+    // Валидация дат периода поставки
+    if (field === 'deliveryPeriodEnd' && typeof value === 'string') {
+      const startDate = formData.deliveryPeriodStart;
+      if (startDate && value && new Date(value) < new Date(startDate)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата окончания не может быть раньше даты начала',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
+    if (field === 'deliveryPeriodStart' && typeof value === 'string') {
+      const endDate = formData.deliveryPeriodEnd;
+      if (endDate && value && new Date(value) > new Date(endDate)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата начала не может быть позже даты окончания',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (field === 'category') {
