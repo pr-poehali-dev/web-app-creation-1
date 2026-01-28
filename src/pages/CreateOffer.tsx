@@ -189,7 +189,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               isUploadingVideo={isUploadingVideo}
             />
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3">
               <Button
                 type="submit"
                 size="lg"
@@ -198,7 +198,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                   !formData.title || 
                   !formData.district
                 }
-                className="flex-1"
               >
                 {isSubmitting ? (
                   <>
