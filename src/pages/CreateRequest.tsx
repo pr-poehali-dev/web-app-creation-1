@@ -265,7 +265,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               <CardContent className="space-y-4">
                 <div>
                   <Label>Срок актуальности запроса (необязательно)</Label>
-                  <div className="space-y-3 mt-2">
+                  <div className="grid grid-cols-2 gap-3 mt-2">
                     <div>
                       <Label htmlFor="startDate" className="text-sm text-muted-foreground">Дата начала</Label>
                       <div className="flex gap-2">
