@@ -6,18 +6,13 @@ import Footer from '@/components/Footer';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 import { offersAPI, ordersAPI } from '@/services/api';
-import { getSession } from '@/utils/auth';
+import { getSession, clearSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useOrdersPolling } from '@/hooks/useOrdersPolling';
 import EditOfferHeader from '@/components/edit-offer/EditOfferHeader';
 import EditOfferTabs from '@/components/edit-offer/EditOfferTabs';
 import EditOfferDeleteDialog from '@/components/edit-offer/EditOfferDeleteDialog';
 import EditOfferOrderModal from '@/components/edit-offer/EditOfferOrderModal';
-
-interface EditOfferProps {
-  isAuthenticated: boolean;
-  onLogout: () => void;
-}
 
 interface ChatMessage {
   id: string;
@@ -29,12 +24,18 @@ interface ChatMessage {
   isRead: boolean;
 }
 
-export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps) {
+export default function EditOffer() {
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getSession();
+  const isAuthenticated = !!currentUser;
+  
+  const handleLogout = () => {
+    clearSession();
+    navigate('/login');
+  };
   
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -277,7 +278,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
       
       <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
         <EditOfferHeader />
