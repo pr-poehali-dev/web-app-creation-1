@@ -222,10 +222,8 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
                 </Command>
               </div>
 
-            </div>
-
-            {/* Actions footer - fixed at bottom */}
-            <div className="fixed bottom-0 left-0 right-0 border-t p-3 bg-background space-y-2 safe-bottom z-20">
+              {/* Actions footer - fixed at bottom */}
+              <div className="fixed bottom-0 left-0 right-0 border-t p-3 bg-background space-y-2 safe-bottom z-20">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -253,6 +251,7 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
                   </div>
                 )}
               </div>
+            </div>
           )}
         </div>
       </div>
