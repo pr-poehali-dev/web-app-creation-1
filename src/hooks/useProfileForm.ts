@@ -168,10 +168,11 @@ export const useProfileForm = (
       }
       
       toast({
-        title: 'Успешно',
+        title: '✅ Профиль сохранен!',
         description: typeChanged && needsVerification
-          ? 'Профиль обновлён. Заявка на верификацию отправлена администратору.'
-          : 'Профиль обновлён',
+          ? 'Заявка на верификацию отправлена администратору.'
+          : 'Ваши изменения успешно сохранены',
+        duration: 2000,
       });
     } catch (error) {
       setIsEditing(true);
