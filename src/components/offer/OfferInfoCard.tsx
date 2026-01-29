@@ -75,9 +75,10 @@ export default function OfferInfoCard({
     .map(id => districts.find(d => d.id === id)?.name || id)
     .filter(Boolean);
 
-  // Извлечь город из location
+  // Извлечь город из location (более гибкое регулярное выражение)
   const getCityFromLocation = (loc: string) => {
-    const cityMatch = loc.match(/(г|с|пгт|рп)\.\s*([А-Яа-яЁё-]+)/);
+    // Пробуем найти "г. Нюрба", "с. Сунтар", "пгт. Черский" и т.д.
+    const cityMatch = loc.match(/(г|с|пгт|рп)\.?\s*([А-Яа-яЁё\-]+)/i);
     if (cityMatch) {
       return `${cityMatch[1]}. ${cityMatch[2]}`;
     }
@@ -87,7 +88,8 @@ export default function OfferInfoCard({
   // Извлечь только адрес без города
   const getAddressWithoutCity = (loc: string) => {
     return loc
-      .replace(/(г|с|пгт|рп)\.\s*[А-Яа-яЁё-]+,?\s*/, '')
+      .replace(/(г|с|пгт|рп)\.?\s*[А-Яа-яЁё\-]+,?\s*/i, '')
+      .replace(/улица/gi, 'ул.')
       .trim();
   };
 
