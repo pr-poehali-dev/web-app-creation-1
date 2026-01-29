@@ -433,6 +433,15 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     cur.execute(sql)
     result = cur.fetchone()
+    
+    # Обновляем reserved_quantity в таблице offers
+    update_offer_sql = f"""
+        UPDATE {schema}.offers 
+        SET reserved_quantity = COALESCE(reserved_quantity, 0) + {body['quantity']}
+        WHERE id = '{offer_id_escaped}'
+    """
+    cur.execute(update_offer_sql)
+    
     conn.commit()
     cur.close()
     conn.close()
