@@ -68,6 +68,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     availableDistricts: [] as string[],
     startDate: '',
     expiryDate: '',
+    publicationDuration: '',
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -337,6 +338,32 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                       </div>
                     </div>
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="publicationDuration">Срок публикации *</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      id="publicationDuration"
+                      type="date"
+                      value={formData.publicationDuration}
+                      onChange={(e) => handleInputChange('publicationDuration', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      required
+                    />
+                    {formData.publicationDuration && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleInputChange('publicationDuration', '')}
+                      >
+                        <Icon name="X" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Дата, до которой запрос будет активен
+                  </p>
                 </div>
               </CardContent>
             </Card>

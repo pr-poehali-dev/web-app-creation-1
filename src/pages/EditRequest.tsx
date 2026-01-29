@@ -150,8 +150,19 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!request) return;
+    
+    // Проверяем наличие активных откликов
+    if (responses.length > 0) {
+      toast({
+        title: 'Невозможно удалить',
+        description: 'Нельзя удалить при имеющихся активных откликах',
+        variant: 'destructive',
+      });
+      setShowDeleteDialog(false);
+      return;
+    }
     
     deleteRequest(request.id);
     setShowDeleteDialog(false);

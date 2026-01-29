@@ -245,15 +245,10 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
       <CardFooter className="p-3 pt-0">
         {isOwner ? (
           <div className="w-full space-y-2">
-            <div className="flex gap-2">
-              <Button onClick={handleEdit} variant="outline" className="flex-1 h-8 text-xs" size="sm">
-                <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
-                Редактировать
-              </Button>
-              <Button onClick={handleDelete} variant="outline" className="h-8 text-xs px-3" size="sm">
-                <Icon name="Trash2" className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <Button onClick={handleEdit} variant="outline" className="w-full h-8 text-xs" size="sm">
+              <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+              Редактировать
+            </Button>
             {unreadMessages && unreadMessages > 0 && (
               <Button onClick={handleMessages} variant="default" className="w-full h-8 text-xs" size="sm">
                 <Icon name="MessageSquare" className="mr-1.5 h-3.5 w-3.5" />

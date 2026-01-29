@@ -23,6 +23,7 @@ interface FormData {
   deliveryTime: string;
   deliveryPeriodStart: string;
   deliveryPeriodEnd: string;
+  publicationDuration: string;
 }
 
 export function useCreateOfferForm(editOffer?: Offer) {
@@ -49,6 +50,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     deliveryTime: editOffer.deliveryTime || '',
     deliveryPeriodStart: editOffer.deliveryPeriodStart || '',
     deliveryPeriodEnd: editOffer.deliveryPeriodEnd || '',
+    publicationDuration: '',
   } : {
     title: '',
     description: '',
@@ -70,6 +72,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     deliveryTime: '',
     deliveryPeriodStart: '',
     deliveryPeriodEnd: '',
+    publicationDuration: '',
   });
 
   const [images, setImages] = useState<File[]>([]);

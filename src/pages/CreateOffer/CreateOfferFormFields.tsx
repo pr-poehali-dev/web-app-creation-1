@@ -35,6 +35,7 @@ interface FormData {
   deliveryTime: string;
   deliveryPeriodStart: string;
   deliveryPeriodEnd: string;
+  publicationDuration: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -227,6 +228,32 @@ export default function CreateOfferFormFields({
                 </Button>
               )}
             </div>
+          </div>
+          <div>
+            <Label htmlFor="publicationDuration">Срок публикации *</Label>
+            <div className="flex gap-2 mt-2">
+              <Input
+                id="publicationDuration"
+                type="date"
+                value={formData.publicationDuration}
+                onChange={(e) => onInputChange('publicationDuration', e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+              {formData.publicationDuration && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onInputChange('publicationDuration', '')}
+                >
+                  <Icon name="X" className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Дата, до которой предложение будет активно
+            </p>
           </div>
         </CardContent>
       </Card>

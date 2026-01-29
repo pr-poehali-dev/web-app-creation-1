@@ -104,15 +104,10 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
 
           {isOwner && (
             <div className="space-y-1.5">
-              <div className="flex gap-1.5">
-                <Button onClick={handleEdit} variant="outline" className="flex-1 h-7 text-xs" size="sm">
-                  <Icon name="Pencil" className="mr-1 h-3 w-3" />
-                  Редактировать
-                </Button>
-                <Button onClick={handleDelete} variant="outline" className="h-7 text-xs px-2" size="sm">
-                  <Icon name="Trash2" className="h-3 w-3" />
-                </Button>
-              </div>
+              <Button onClick={handleEdit} variant="outline" className="w-full h-7 text-xs" size="sm">
+                <Icon name="Pencil" className="mr-1 h-3 w-3" />
+                Редактировать
+              </Button>
               {unreadMessages && unreadMessages > 0 && (
                 <Button onClick={handleMessages} variant="default" className="w-full h-7 text-xs" size="sm">
                   <Icon name="MessageSquare" className="mr-1 h-3 w-3" />
