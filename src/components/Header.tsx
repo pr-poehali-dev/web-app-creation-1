@@ -189,7 +189,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className={`flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
+            className={`h-9 flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 md:py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
               location.pathname === '/home' || location.pathname === '/' ? 'border-[3px] border-primary' : 'border-2 border-primary/20'
             }`}
           >
@@ -210,7 +210,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           {/* Mobile buttons */}
           <div className="md:hidden flex items-center gap-1 flex-1 justify-end">
             <button
-              className={`h-8 px-2 text-[10px] font-bold text-primary uppercase rounded-md hover:bg-primary/10 transition-all shrink-0 ${
+              className={`h-9 px-2 text-[10px] font-bold text-primary uppercase rounded-md hover:bg-primary/10 transition-all shrink-0 ${
                 mobileMenuOpen ? 'border-[3px] border-primary shadow-md' : 'border-[2.5px] border-primary/50'
               }`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -219,7 +219,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </button>
             {shouldShowDistricts() && (
               <button
-                className="h-8 flex flex-col items-start justify-center px-1.5 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0"
+                className="h-9 flex flex-col items-start justify-center px-1.5 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0"
                 onClick={() => setRegionModalOpen(true)}
               >
                 <span className="font-bold text-primary truncate text-[9px] leading-tight w-full">
