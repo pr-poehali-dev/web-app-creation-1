@@ -276,6 +276,8 @@ export default function OfferDetailContent({
         unit={offer.unit}
         pricePerUnit={offer.pricePerUnit}
         availableDeliveryTypes={offer.availableDeliveryTypes}
+        availableDistricts={offer.availableDistricts}
+        offerDistrict={offer.district}
       />
 
       {createdOrder && (

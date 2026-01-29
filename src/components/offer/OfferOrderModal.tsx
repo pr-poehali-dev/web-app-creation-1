@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -6,15 +6,17 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-// Updated: removed seller info from order form modal
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-
 import Icon from '@/components/ui/icon';
-
+import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
+import { reverseGeocode } from '@/utils/geocoding';
+import { getDistrictByCoordinates } from '@/data/districts';
+
+const MapModal = lazy(() => import('@/components/auction/MapModal'));
 
 interface OfferOrderModalProps {
   isOpen: boolean;
@@ -25,6 +27,8 @@ interface OfferOrderModalProps {
   unit: string;
   pricePerUnit: number;
   availableDeliveryTypes: ('pickup' | 'delivery')[];
+  availableDistricts?: string[];
+  offerDistrict?: string;
 }
 
 export default function OfferOrderModal({
@@ -36,8 +40,11 @@ export default function OfferOrderModal({
   unit,
   pricePerUnit,
   availableDeliveryTypes,
+  availableDistricts = [],
+  offerDistrict,
 }: OfferOrderModalProps) {
   const currentUser = getSession();
+  const { toast } = useToast();
   const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery'>(
     availableDeliveryTypes[0] || 'pickup'
   );
@@ -47,6 +54,9 @@ export default function OfferOrderModal({
   const [quantityError, setQuantityError] = useState<string>('');
   const [counterPrice, setCounterPrice] = useState<string>('');
   const [showCounterPrice, setShowCounterPrice] = useState<boolean>(false);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [addressError, setAddressError] = useState<string>('');
 
   useEffect(() => {
     if (currentUser?.legalAddress && selectedDeliveryType === 'delivery') {
@@ -96,7 +106,60 @@ export default function OfferOrderModal({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleMapSelect = async (lat: number, lng: number) => {
+    setSelectedLocation({ lat, lng });
+    
+    try {
+      const addressData = await reverseGeocode(lat, lng);
+      const fullAddress = addressData.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      setAddress(fullAddress);
+      
+      // Проверяем район доставки
+      const deliveryDistrict = getDistrictByCoordinates(lat, lng);
+      
+      if (availableDistricts.length > 0) {
+        const isDistrictAvailable = availableDistricts.includes(deliveryDistrict?.id || '');
+        
+        if (!isDistrictAvailable) {
+          setAddressError('Доставка в данный район не осуществляется');
+          toast({
+            title: 'Доставка недоступна',
+            description: 'Продавец не доставляет в выбранный район',
+            variant: 'destructive',
+          });
+        } else {
+          setAddressError('');
+        }
+      }
+      
+      setIsMapOpen(false);
+    } catch (error) {
+      console.error('Error getting address:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось получить адрес',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const validateAddress = async (addressText: string) => {
+    if (!addressText || selectedDeliveryType !== 'delivery') {
+      setAddressError('');
+      return true;
+    }
+
+    // Простая валидация наличия текста
+    if (addressText.trim().length < 5) {
+      setAddressError('Укажите полный адрес доставки');
+      return false;
+    }
+
+    setAddressError('');
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (minOrderQuantity && Number(quantity) < minOrderQuantity) {
@@ -107,6 +170,14 @@ export default function OfferOrderModal({
     if (Number(quantity) > remainingQuantity) {
       setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
       return;
+    }
+
+    // Проверяем адрес для доставки
+    if (selectedDeliveryType === 'delivery') {
+      const isAddressValid = await validateAddress(address);
+      if (!isAddressValid || addressError) {
+        return;
+      }
     }
     
     onSubmit({
@@ -227,16 +298,38 @@ export default function OfferOrderModal({
           {selectedDeliveryType === 'delivery' && (
             <div>
               <Label htmlFor="order-address">Адрес доставки</Label>
-              <Input
-                id="order-address"
-                name="order-address"
-                type="text"
-                placeholder="Укажите адрес доставки"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                required
-              />
-              {currentUser?.legalAddress && (
+              <div className="flex gap-2">
+                <Input
+                  id="order-address"
+                  name="order-address"
+                  type="text"
+                  placeholder="Укажите адрес доставки"
+                  value={address}
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setAddressError('');
+                  }}
+                  onBlur={() => validateAddress(address)}
+                  required
+                  className={addressError ? 'border-red-500' : ''}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setIsMapOpen(true)}
+                  className="flex-shrink-0"
+                >
+                  <Icon name="MapPin" size={18} />
+                </Button>
+              </div>
+              {addressError && (
+                <div className="flex items-center gap-1 mt-1">
+                  <Icon name="XCircle" size={12} className="text-red-500" />
+                  <p className="text-xs text-red-500 font-medium">{addressError}</p>
+                </div>
+              )}
+              {currentUser?.legalAddress && !addressError && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Адрес из профиля. Вы можете изменить его.
                 </p>
@@ -312,7 +405,7 @@ export default function OfferOrderModal({
             <Button 
               type="submit" 
               className="flex-1"
-              disabled={!!quantityError}
+              disabled={!!quantityError || !!addressError}
             >
               Отправить заказ
             </Button>
@@ -326,6 +419,17 @@ export default function OfferOrderModal({
           </div>
         </form>
       </DialogContent>
+
+      <Suspense fallback={null}>
+        {isMapOpen && (
+          <MapModal
+            isOpen={isMapOpen}
+            onClose={() => setIsMapOpen(false)}
+            onSelectLocation={handleMapSelect}
+            initialLocation={selectedLocation || undefined}
+          />
+        )}
+      </Suspense>
     </Dialog>
   );
 }
