@@ -11,11 +11,23 @@ PUT /?id=uuid - обновить статус заказа
 
 import json
 import os
+import sys
 from typing import Dict, Any
 from datetime import datetime
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+# Импортируем offers_cache для инвалидации кэша
+# Кэш находится в backend/offers/cache.py
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'offers'))
+try:
+    from cache import offers_cache
+except ImportError:
+    # Если импорт не удался, создаём заглушку
+    class DummyCache:
+        def clear(self): pass
+    offers_cache = DummyCache()
 
 
 def decimal_to_float(obj):
@@ -442,6 +454,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     """
     cur.execute(update_offer_sql)
     
+    # Инвалидируем кэш offers
+    offers_cache.clear()
+    
     conn.commit()
     cur.close()
     conn.close()
@@ -549,6 +564,9 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
             WHERE id = '{offer_id_escaped}'
         """)
+        
+        # Инвалидируем кэш offers
+        offers_cache.clear()
     
     # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
     if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
@@ -587,6 +605,9 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                     reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
                 WHERE id = '{offer_id_escaped}'
             """)
+            
+            # Инвалидируем кэш offers
+            offers_cache.clear()
         
         updates.append(f"status = 'accepted'")
     
@@ -621,6 +642,10 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
             WHERE id = '{offer_id_escaped}'
         """)
+        
+        # Инвалидируем кэш offers
+        offers_cache.clear()
+        
         print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
         
         # Если отменил продавец - снижаем его рейтинг на 5%
