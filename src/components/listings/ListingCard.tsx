@@ -58,7 +58,7 @@ export default function ListingCard({
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="p-0">
-        <div className="relative aspect-video bg-muted overflow-hidden">
+        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
           {item.type === 'offer' && item.images && item.images.length > 0 ? (
             <img
               src={item.images[0].url}
