@@ -22,6 +22,7 @@ import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { getExpirationStatus } from '@/utils/expirationFilter';
+import { NASLEGS } from '@/data/naslegs';
 
 interface OfferCardProps {
   offer: Offer;
@@ -44,31 +45,28 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const districtName = districts.find(d => d.id === offer.district)?.name;
   const expirationInfo = getExpirationStatus(offer);
   
-  const formatLocation = (location: string) => {
-    // Извлекаем город/населенный пункт
-    const cityMatch = location.match(/(г|с|пгт|рп)\.\s*([А-Яа-яЁё-]+)/);
-    
-    // Извлекаем адрес (всё что после города)
-    const addressPart = location
-      .replace(/(г|с|пгт|рп)\.\s*[А-Яа-яЁё-]+,?\s*/, '')
+  // Найти административный центр района (settlement)
+  const getDistrictCenter = (districtId: string) => {
+    const center = NASLEGS.find(n => n.districtId === districtId && n.type === 'settlement');
+    if (center) {
+      return `г. ${center.name}`;
+    }
+    return '';
+  };
+
+  // Извлечь только адрес из location (убрать "г. Город," если есть)
+  const getCleanAddress = (loc: string) => {
+    return loc
+      .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё\-]+,?\s*/, '')
       .replace(/улица/gi, 'ул.')
       .replace(/проспект/gi, 'пр.')
       .replace(/переулок/gi, 'пер.')
       .replace(/площадь/gi, 'пл.')
       .trim();
-    
-    if (cityMatch) {
-      const settlementType = cityMatch[1];
-      const cityName = cityMatch[2];
-      
-      if (addressPart) {
-        return `${settlementType}. ${cityName}, ${addressPart}`;
-      }
-      return `${settlementType}. ${cityName}`;
-    }
-    
-    return location;
   };
+
+  const cityName = getDistrictCenter(offer.district);
+  const streetAddress = offer.fullAddress || (offer.location ? getCleanAddress(offer.location) : '');
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -236,8 +234,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="font-medium text-foreground truncate">{districtName}</span>
-              {offer.location && offer.location.trim() !== '' && (
-                <span className="truncate">{formatLocation(offer.location)}</span>
+              {cityName && (
+                <span className="text-xs text-muted-foreground">{cityName}</span>
+              )}
+              {streetAddress && (
+                <span className="truncate">{streetAddress}</span>
               )}
             </div>
           </div>
