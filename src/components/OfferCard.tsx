@@ -234,7 +234,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="font-medium text-foreground truncate">{districtName}</span>
-              {offer.availableDeliveryTypes?.includes('pickup') && offer.location && (
+              {offer.location && offer.location.trim() !== '' && (
                 <span className="truncate">{formatLocation(offer.location)}</span>
               )}
             </div>
