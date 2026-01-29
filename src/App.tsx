@@ -24,31 +24,51 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
       try {
-        return await componentImport();
+        const component = await componentImport();
+        return component;
       } catch (error) {
-        // На последней попытке просто возвращаем компонент с ошибкой
+        console.warn(`Attempt ${i + 1}/${maxRetries} failed:`, error);
+        
+        // На последней попытке очищаем кэш и перезагружаем
         if (i === maxRetries - 1) {
           console.error('Failed to load module after retries:', error);
-          // Очищаем кэш и перезагружаем страницу
+          
+          // Очищаем все кэши
           if ('caches' in window) {
-            caches.keys().then(names => {
-              names.forEach(name => caches.delete(name));
-            });
+            try {
+              const names = await caches.keys();
+              await Promise.all(names.map(name => caches.delete(name)));
+            } catch (e) {
+              console.error('Failed to clear cache:', e);
+            }
           }
+          
+          // Автоматически перезагружаем страницу один раз
+          const hasReloaded = sessionStorage.getItem('chunk-reload');
+          if (!hasReloaded) {
+            sessionStorage.setItem('chunk-reload', 'true');
+            window.location.reload();
+            // Возвращаем пустой компонент пока перезагружается
+            return { 
+              default: () => <div className="flex items-center justify-center min-h-screen">Загрузка...</div>
+            };
+          }
+          
+          // Если уже перезагружали, показываем ошибку
           return { 
             default: () => (
               <div className="flex items-center justify-center min-h-screen p-4">
                 <div className="text-center max-w-md">
                   <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
-                  <p className="text-muted-foreground mb-4">Не удалось загрузить компонент. Попробуйте обновить страницу.</p>
+                  <p className="text-muted-foreground mb-4">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
                   <button 
                     onClick={() => {
-                      // Принудительная перезагрузка без кэша
+                      sessionStorage.removeItem('chunk-reload');
                       window.location.reload();
                     }} 
                     className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
                   >
-                    Обновить страницу
+                    Попробовать снова
                   </button>
                 </div>
               </div>
@@ -56,8 +76,8 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
           };
         }
         
-        // Ждём перед следующей попыткой (увеличиваем задержку с каждой попыткой)
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+        // Ждём перед следующей попыткой
+        await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, i)));
       }
     }
     throw new Error('Failed to load module after retries');
