@@ -207,6 +207,19 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
           {/* Mobile buttons */}
           <div className="md:hidden flex items-center gap-1 flex-1 justify-end">
+            <button
+              className="px-2 py-1.5 text-[10px] font-bold text-primary uppercase border-[3px] border-primary rounded-md hover:bg-primary/10 transition-colors shrink-0 relative"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {(unreadNotifications > 0 || ordersCount > 0) && (
+                <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 flex items-center justify-center border border-white">
+                  <span className="text-[9px] text-white font-bold">
+                    {unreadNotifications + ordersCount > 9 ? '9+' : unreadNotifications + ordersCount}
+                  </span>
+                </div>
+              )}
+              {mobileMenuOpen ? "Закрыть" : "Меню"}
+            </button>
             {shouldShowDistricts() && (
               <button
                 className="flex flex-col items-start px-1.5 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0"
@@ -235,12 +248,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 </span>
               </button>
             )}
-            <button
-              className="px-2 py-1.5 text-[10px] font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors shrink-0"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? "Закрыть" : "Меню"}
-            </button>
           </div>
 
           <nav className="hidden md:flex items-center space-x-0.5 lg:space-x-1 mr-1 lg:mr-2">
