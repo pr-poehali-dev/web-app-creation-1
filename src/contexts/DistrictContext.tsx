@@ -34,12 +34,27 @@ const ALL_REGIONS: District[] = [
 
 export function DistrictProvider({ children }: { children: ReactNode }) {
   const [selectedRegion, setSelectedRegionState] = useState<string>('all');
+  
+  const detectedDistrictIdStored = localStorage.getItem('detectedDistrictId');
+  
   const [selectedDistricts, setSelectedDistrictsState] = useState<string[]>(() => {
     const stored = localStorage.getItem('selectedDistricts');
-    return stored ? JSON.parse(stored) : [];
+    const parsed = stored ? JSON.parse(stored) : [];
+    
+    if (parsed.length === 0 && detectedDistrictIdStored) {
+      return [detectedDistrictIdStored];
+    }
+    
+    return parsed;
   });
-  const [detectedCity, setDetectedCity] = useState<string | null>(null);
-  const [detectedDistrictId, setDetectedDistrictId] = useState<string | null>(null);
+  
+  const [detectedCity, setDetectedCity] = useState<string | null>(() => {
+    const stored = localStorage.getItem('detectedCity');
+    return stored || null;
+  });
+  const [detectedDistrictId, setDetectedDistrictId] = useState<string | null>(() => {
+    return detectedDistrictIdStored || null;
+  });
   const [isDetecting, setIsDetecting] = useState(false);
   const [availableDistricts, setAvailableDistricts] = useState<DistrictType[]>([]);
 
@@ -58,7 +73,14 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         const district = findDistrictByName(storedLocation.district, regionId);
         if (district) {
           setDetectedDistrictId(district.id);
-          setSelectedDistrictsState([district.id]);
+          localStorage.setItem('detectedDistrictId', district.id);
+          localStorage.setItem('detectedCity', storedLocation.city);
+          
+          const storedDistricts = localStorage.getItem('selectedDistricts');
+          if (!storedDistricts || JSON.parse(storedDistricts).length === 0) {
+            setSelectedDistrictsState([district.id]);
+            localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
+          }
         }
         return;
       }
@@ -97,7 +119,10 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
             if (district) {
               console.log('✅ Найден район:', district.name);
               setDetectedDistrictId(district.id);
+              localStorage.setItem('detectedDistrictId', district.id);
+              localStorage.setItem('detectedCity', location.city);
               setSelectedDistrictsState([district.id]);
+              localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
             }
           }
           
@@ -229,6 +254,8 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         
         if (districtToSelect) {
           setDetectedDistrictId(districtToSelect.id);
+          localStorage.setItem('detectedDistrictId', districtToSelect.id);
+          localStorage.setItem('detectedCity', location.city);
           const districtIds = [districtToSelect.id];
           setSelectedDistrictsState(districtIds);
           localStorage.setItem('selectedDistricts', JSON.stringify(districtIds));
