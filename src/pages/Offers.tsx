@@ -16,6 +16,7 @@ import { offersAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync } from '@/utils/dataSync';
+import { filterActiveOffers } from '@/utils/expirationFilter';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -139,6 +140,9 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
+
+    // Скрываем истекшие предложения
+    result = filterActiveOffers(result);
 
     // Скрываем предложения с нулевым доступным количеством
     if (!showOnlyMy) {

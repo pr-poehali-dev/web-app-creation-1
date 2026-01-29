@@ -24,6 +24,7 @@ import { useDistrict } from '@/contexts/DistrictContext';
 import ListingCard from '@/components/listings/ListingCard';
 import ListingsStats from '@/components/listings/ListingsStats';
 import ListingsFilters from '@/components/listings/ListingsFilters';
+import { filterActiveOffers, filterActiveRequests } from '@/utils/expirationFilter';
 
 interface MyListingsProps {
   isAuthenticated: boolean;
@@ -118,7 +119,7 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
   };
 
   const myListings: ListingItem[] = [
-    ...allOffers
+    ...filterActiveOffers(allOffers)
       .filter(offer => offer.userId === currentUser?.id)
       .map(offer => {
         const relatedOrder = orders.find(order => order.offerId === offer.id);
@@ -145,7 +146,7 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
           createdAt: offer.createdAt,
         };
       }),
-    ...allRequests
+    ...filterActiveRequests(allRequests)
       .filter(request => request.userId === currentUser?.id)
       .map(request => {
         const relatedOrder = orders.find(order => order.offerId === request.id);

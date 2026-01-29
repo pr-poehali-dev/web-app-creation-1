@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync } from '@/utils/dataSync';
+import { filterActiveRequests } from '@/utils/expirationFilter';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -125,6 +126,9 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
   const filteredRequests = useMemo(() => {
     let result = [...requests];
+
+    // Скрываем истекшие запросы
+    result = filterActiveRequests(result);
 
     if (showOnlyMy && isAuthenticated && currentUser) {
       result = result.filter(offer => offer.userId === currentUser.id);
