@@ -42,9 +42,20 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
   
-  const extractCityName = (location: string) => {
-    const cityMatch = location.match(/г\.\s*[А-Яа-яЁё-]+/);
-    return cityMatch ? cityMatch[0] : location;
+  const formatLocation = (location: string) => {
+    const cityMatch = location.match(/г\.\s*([А-Яа-яЁё-]+)/);
+    const cityName = cityMatch ? cityMatch[1] : null;
+    
+    if (!cityName) return location;
+    
+    const addressPart = location.replace(/г\.\s*[А-Яа-яЁё-]+,?\s*/, '').trim();
+    const shortAddress = addressPart
+      .replace(/улица/g, 'ул.')
+      .replace(/проспект/g, 'пр.')
+      .replace(/переулок/g, 'пер.')
+      .replace(/площадь/g, 'пл.');
+    
+    return `${cityName}, ${shortAddress}`;
   };
 
   const handlePrevImage = (e: React.MouseEvent) => {
@@ -214,7 +225,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="font-medium text-foreground truncate">{districtName}</span>
               {offer.availableDeliveryTypes?.includes('pickup') && offer.location && (
-                <span className="truncate">{extractCityName(offer.location)}</span>
+                <span className="truncate">{formatLocation(offer.location)}</span>
               )}
             </div>
           </div>
