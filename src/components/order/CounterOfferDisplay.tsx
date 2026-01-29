@@ -156,7 +156,7 @@ export default function CounterOfferDisplay({
                   <span>Ожидание ответа</span>
                 </div>
                 <span className="text-sm font-semibold text-foreground">
-                  {order.buyerName}
+                  Покупатель: {order.buyerName}
                 </span>
               </div>
             )}
@@ -167,7 +167,7 @@ export default function CounterOfferDisplay({
                   <span>Ожидание ответа</span>
                 </div>
                 <span className="text-sm font-semibold text-foreground">
-                  {order.sellerName}
+                  Продавец: {order.sellerName}
                 </span>
               </div>
             )}
