@@ -36,12 +36,20 @@ interface FormData {
   middleName?: string;
   phone: string;
   userType?: string;
+  inn?: string;
+  ogrnip?: string;
+  companyName?: string;
+  ogrn?: string;
 }
 
 interface FormErrors {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  inn?: string;
+  ogrnip?: string;
+  companyName?: string;
+  ogrn?: string;
 }
 
 export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
@@ -65,6 +73,10 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
     middleName: currentUser?.middleName || '',
     phone: currentUser?.phone || '',
     userType: currentUser?.userType || 'individual',
+    inn: currentUser?.inn || '',
+    ogrnip: currentUser?.ogrnip || '',
+    companyName: currentUser?.companyName || '',
+    ogrn: currentUser?.ogrn || '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -146,6 +158,10 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         middleName: currentUser.middleName || '',
         phone: currentUser.phone || '',
         userType: currentUser.userType || 'individual',
+        inn: currentUser.inn || '',
+        ogrnip: currentUser.ogrnip || '',
+        companyName: currentUser.companyName || '',
+        ogrn: currentUser.ogrn || '',
       });
     }
   }, [currentUser]);
@@ -219,6 +235,36 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       newErrors.phone = 'Некорректный номер телефона';
     }
 
+    // Валидация для самозанятого
+    if (formData.userType === 'self-employed') {
+      if (!formData.inn || formData.inn.trim().length !== 12) {
+        newErrors.inn = 'ИНН должен содержать 12 цифр';
+      }
+    }
+
+    // Валидация для ИП
+    if (formData.userType === 'entrepreneur') {
+      if (!formData.inn || formData.inn.trim().length !== 12) {
+        newErrors.inn = 'ИНН должен содержать 12 цифр';
+      }
+      if (!formData.ogrnip || formData.ogrnip.trim().length !== 15) {
+        newErrors.ogrnip = 'ОГРНИП должен содержать 15 цифр';
+      }
+    }
+
+    // Валидация для юридического лица
+    if (formData.userType === 'legal-entity') {
+      if (!formData.companyName || !formData.companyName.trim()) {
+        newErrors.companyName = 'Обязательное поле';
+      }
+      if (!formData.inn || formData.inn.trim().length !== 10) {
+        newErrors.inn = 'ИНН организации должен содержать 10 цифр';
+      }
+      if (!formData.ogrn || formData.ogrn.trim().length !== 13) {
+        newErrors.ogrn = 'ОГРН должен содержать 13 цифр';
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -275,6 +321,10 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       middleName: currentUser?.middleName || '',
       phone: currentUser?.phone || '',
       userType: currentUser?.userType || 'individual',
+      inn: currentUser?.inn || '',
+      ogrnip: currentUser?.ogrnip || '',
+      companyName: currentUser?.companyName || '',
+      ogrn: currentUser?.ogrn || '',
     });
     setErrors({});
   };
@@ -291,14 +341,24 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         middleName: formData.middleName,
         phone: formData.phone,
         userType: formData.userType || currentUser.userType,
+        inn: formData.inn,
+        ogrnip: formData.ogrnip,
+        companyName: formData.companyName,
+        ogrn: formData.ogrn,
+        isVerified: false, // Сброс верификации при смене типа
       };
 
       updateUser(updatedUser);
       setCurrentUser(updatedUser);
       setIsEditing(false);
+      
+      const typeChanged = formData.userType !== currentUser.userType;
+      
       toast({
         title: 'Успешно',
-        description: 'Профиль обновлён',
+        description: typeChanged 
+          ? 'Профиль обновлён. Требуется повторная верификация для нового типа аккаунта.'
+          : 'Профиль обновлён',
       });
     } catch (error) {
       toast({

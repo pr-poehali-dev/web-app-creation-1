@@ -11,12 +11,20 @@ interface FormData {
   middleName?: string;
   phone: string;
   userType?: string;
+  inn?: string;
+  ogrnip?: string;
+  companyName?: string;
+  ogrn?: string;
 }
 
 interface FormErrors {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  inn?: string;
+  ogrnip?: string;
+  companyName?: string;
+  ogrn?: string;
 }
 
 interface ProfileEditFormProps {
@@ -131,6 +139,132 @@ export default function ProfileEditForm({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Поля для самозанятого */}
+        {(formData.userType === 'self-employed' || currentUserType === 'self-employed') && (
+          <div className="space-y-2">
+            <Label htmlFor="edit-inn">
+              ИНН <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="edit-inn"
+              value={formData.inn || ''}
+              onChange={(e) => onInputChange('inn', e.target.value)}
+              placeholder="Введите ИНН"
+              maxLength={12}
+              className={errors.inn ? 'border-destructive' : ''}
+            />
+            {errors.inn && (
+              <p className="text-sm text-destructive">{errors.inn}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              ИНН самозанятого (12 цифр)
+            </p>
+          </div>
+        )}
+
+        {/* Поля для ИП */}
+        {(formData.userType === 'entrepreneur' || currentUserType === 'entrepreneur') && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="edit-inn">
+                ИНН <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-inn"
+                value={formData.inn || ''}
+                onChange={(e) => onInputChange('inn', e.target.value)}
+                placeholder="Введите ИНН"
+                maxLength={12}
+                className={errors.inn ? 'border-destructive' : ''}
+              />
+              {errors.inn && (
+                <p className="text-sm text-destructive">{errors.inn}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-ogrnip">
+                ОГРНИП <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-ogrnip"
+                value={formData.ogrnip || ''}
+                onChange={(e) => onInputChange('ogrnip', e.target.value)}
+                placeholder="Введите ОГРНИП"
+                maxLength={15}
+                className={errors.ogrnip ? 'border-destructive' : ''}
+              />
+              {errors.ogrnip && (
+                <p className="text-sm text-destructive">{errors.ogrnip}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                ОГРНИП (15 цифр)
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Поля для юридического лица */}
+        {(formData.userType === 'legal-entity' || currentUserType === 'legal-entity') && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="edit-companyName">
+                Название организации <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-companyName"
+                value={formData.companyName || ''}
+                onChange={(e) => onInputChange('companyName', e.target.value)}
+                placeholder="Введите полное название организации"
+                className={errors.companyName ? 'border-destructive' : ''}
+              />
+              {errors.companyName && (
+                <p className="text-sm text-destructive">{errors.companyName}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-inn">
+                ИНН <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-inn"
+                value={formData.inn || ''}
+                onChange={(e) => onInputChange('inn', e.target.value)}
+                placeholder="Введите ИНН организации"
+                maxLength={10}
+                className={errors.inn ? 'border-destructive' : ''}
+              />
+              {errors.inn && (
+                <p className="text-sm text-destructive">{errors.inn}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                ИНН организации (10 цифр)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-ogrn">
+                ОГРН <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-ogrn"
+                value={formData.ogrn || ''}
+                onChange={(e) => onInputChange('ogrn', e.target.value)}
+                placeholder="Введите ОГРН"
+                maxLength={13}
+                className={errors.ogrn ? 'border-destructive' : ''}
+              />
+              {errors.ogrn && (
+                <p className="text-sm text-destructive">{errors.ogrn}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                ОГРН организации (13 цифр)
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="flex flex-col gap-2 pt-2">
           <Button onClick={onChangePassword} variant="outline" disabled={isSaving} className="w-full">
