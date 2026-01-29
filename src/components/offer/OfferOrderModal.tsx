@@ -45,9 +45,7 @@ export default function OfferOrderModal({
 }: OfferOrderModalProps) {
   const currentUser = getSession();
   const { toast } = useToast();
-  const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery'>(
-    availableDeliveryTypes[0] || 'pickup'
-  );
+  const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery' | ''>('');
   const [quantity, setQuantity] = useState<string>(String(minOrderQuantity || 1));
   const [address, setAddress] = useState<string>('');
   const [comment, setComment] = useState<string>('');
@@ -268,6 +266,7 @@ export default function OfferOrderModal({
               onChange={(e) => setSelectedDeliveryType(e.target.value as 'pickup' | 'delivery')}
               required
             >
+              <option value="" disabled>Выбери способ получения</option>
               {availableDeliveryTypes.includes('pickup') && (
                 <option value="pickup">Самовывоз</option>
               )}
