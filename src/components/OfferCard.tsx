@@ -45,15 +45,10 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const expirationInfo = getExpirationStatus(offer);
   
   const formatLocation = (location: string) => {
-    let cityName = '';
-    let settlementType = '';
-    
+    // Извлекаем город/населенный пункт
     const cityMatch = location.match(/(г|с|пгт|рп)\.\s*([А-Яа-яЁё-]+)/);
-    if (cityMatch) {
-      settlementType = cityMatch[1];
-      cityName = cityMatch[2];
-    }
     
+    // Извлекаем адрес (всё что после города)
     const addressPart = location
       .replace(/(г|с|пгт|рп)\.\s*[А-Яа-яЁё-]+,?\s*/, '')
       .replace(/улица/gi, 'ул.')
@@ -62,12 +57,17 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
       .replace(/площадь/gi, 'пл.')
       .trim();
     
-    if (cityName && addressPart) {
-      return `${settlementType}. ${cityName}, ${addressPart}`;
-    } else if (cityName) {
+    if (cityMatch) {
+      const settlementType = cityMatch[1];
+      const cityName = cityMatch[2];
+      
+      if (addressPart) {
+        return `${settlementType}. ${cityName}, ${addressPart}`;
+      }
       return `${settlementType}. ${cityName}`;
     }
-    return addressPart || location;
+    
+    return location;
   };
 
   const handlePrevImage = (e: React.MouseEvent) => {

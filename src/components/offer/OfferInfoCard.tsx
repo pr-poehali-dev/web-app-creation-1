@@ -75,6 +75,30 @@ export default function OfferInfoCard({
     .map(id => districts.find(d => d.id === id)?.name || id)
     .filter(Boolean);
 
+  // Форматировать адрес с городом
+  const formatAddress = (address?: string) => {
+    if (!address) return location || '';
+    
+    // Проверяем, есть ли уже город в начале адреса
+    const hasCity = /^(г|с|пгт|рп)\.\s*[А-Яа-яЁё-]+/.test(address);
+    
+    if (hasCity) {
+      return address;
+    }
+    
+    // Если нет города, добавляем его из location
+    if (location) {
+      const cityMatch = location.match(/(г|с|пгт|рп)\.\s*([А-Яа-яЁё-]+)/);
+      if (cityMatch) {
+        return `${cityMatch[0]}, ${address}`;
+      }
+    }
+    
+    return address;
+  };
+
+  const displayAddress = formatAddress(fullAddress);
+
   return (
     <Card className="mb-3">
       <CardContent className="pt-3 pb-3 space-y-3">
@@ -162,10 +186,10 @@ export default function OfferInfoCard({
               <Separator />
 
               <div className="grid grid-cols-2 gap-2 text-xs">
-                {fullAddress && (
+                {displayAddress && (
                   <div>
                     <p className="text-muted-foreground mb-0.5">Адрес</p>
-                    <p className="font-medium">{fullAddress}</p>
+                    <p className="font-medium">{displayAddress}</p>
                   </div>
                 )}
                 <div>
@@ -265,6 +289,13 @@ export default function OfferInfoCard({
             </div>
 
             <Separator />
+
+            {displayAddress && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Адрес</p>
+                <p className="text-sm font-medium">{displayAddress}</p>
+              </div>
+            )}
 
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">Район</p>
