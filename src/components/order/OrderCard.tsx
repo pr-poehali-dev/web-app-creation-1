@@ -35,7 +35,10 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card 
+      className="hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onOpenChat(order)}
+    >
       <CardContent className="p-4 space-y-3">
         <div className="flex justify-between items-start gap-2 mb-1">
           <div className="flex-1 min-w-0">
@@ -126,7 +129,10 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           {order.status === 'accepted' && !isSeller && onCompleteOrder ? (
             <>
               <Button
-                onClick={() => onCompleteOrder(order.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCompleteOrder(order.id);
+                }}
                 className="flex-1"
                 size="sm"
               >
@@ -137,17 +143,23 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           ) : (
             <>
               <Button
-                onClick={() => onOpenChat(order)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenChat(order);
+                }}
                 variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
                 className="flex-1"
                 size="sm"
               >
-                <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-                {order.status === 'completed' || order.status === 'cancelled' ? 'История' : 'Чат'}
+                <Icon name="FileText" className="mr-1.5 h-4 w-4" />
+                Детали заказа
               </Button>
               {isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder && (
                 <Button
-                  onClick={() => onAcceptOrder(order.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAcceptOrder(order.id);
+                  }}
                   className="flex-1"
                   size="sm"
                 >
