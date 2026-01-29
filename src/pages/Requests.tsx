@@ -21,6 +21,7 @@ import { requestsAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
+import { dataSync } from '@/utils/dataSync';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -110,8 +111,15 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
     loadRequests();
     
+    // Подписываемся на обновления запросов
+    const unsubscribe = dataSync.subscribe('request_updated', () => {
+      console.log('Request updated, reloading...');
+      loadFreshRequests(false);
+    });
+    
     return () => {
       isLoading = false;
+      unsubscribe();
     };
   }, []);
 

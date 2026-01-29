@@ -11,6 +11,7 @@ import type { Offer, OfferImage } from '@/types/offer';
 import { offersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 interface OfferInfoTabProps {
   offer: Offer;
@@ -88,6 +89,9 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       
       // Очищаем кэш предложений
       localStorage.removeItem('cached_offers');
+      
+      // Уведомляем все открытые страницы об обновлении
+      notifyOfferUpdated(offer.id);
       
       // Отмечаем что были изменения
       if (onDataChanged) {

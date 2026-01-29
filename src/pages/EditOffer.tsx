@@ -13,6 +13,7 @@ import EditOfferHeader from '@/components/edit-offer/EditOfferHeader';
 import EditOfferTabs from '@/components/edit-offer/EditOfferTabs';
 import EditOfferDeleteDialog from '@/components/edit-offer/EditOfferDeleteDialog';
 import EditOfferOrderModal from '@/components/edit-offer/EditOfferOrderModal';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 interface ChatMessage {
   id: string;
@@ -176,6 +177,9 @@ export default function EditOffer() {
       
       localStorage.removeItem('cached_offers');
       localStorage.setItem('offers_updated', 'true');
+      
+      // Уведомляем все открытые страницы об удалении
+      notifyOfferUpdated(offer.id);
       
       setShowDeleteDialog(false);
       

@@ -6,6 +6,7 @@ import { offersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
+import { dataSync } from '@/utils/dataSync';
 
 export function useOfferDetail(id: string | undefined) {
   const navigate = useNavigate();
@@ -83,6 +84,16 @@ export function useOfferDetail(id: string | undefined) {
     };
 
     loadOffer();
+    
+    // Подписываемся на обновления конкретного предложения
+    const unsubscribe = dataSync.subscribe('offer_updated', () => {
+      console.log('Offer updated, reloading...');
+      loadOffer();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, [id]);
 
   const handlePrevImage = () => {

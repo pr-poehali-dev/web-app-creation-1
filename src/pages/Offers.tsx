@@ -15,6 +15,7 @@ import { getSession } from '@/utils/auth';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
+import { dataSync } from '@/utils/dataSync';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -121,9 +122,18 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     loadData(false);
     
+    // Подписываемся на обновления предложений
+    const unsubscribe = dataSync.subscribe('offer_updated', () => {
+      if (isMounted) {
+        console.log('Offer updated, reloading data...');
+        loadFreshData(false);
+      }
+    });
+    
     return () => {
       isMounted = false;
       isLoading = false;
+      unsubscribe();
     };
   }, []);
 
