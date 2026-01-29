@@ -204,15 +204,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </div>
 
         <div className="pt-2 border-t text-xs">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0" />
-            <span className="truncate">
-              {offer.availableDeliveryTypes?.includes('pickup') && offer.location ? (
-                <>{offer.location}, {districtName}</>
-              ) : (
-                districtName
+          <div className="flex items-start gap-1.5 text-muted-foreground">
+            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="font-medium text-foreground truncate">{districtName}</span>
+              {offer.availableDeliveryTypes?.includes('pickup') && offer.location && (
+                <span className="truncate">{offer.location}</span>
               )}
-            </span>
+            </div>
           </div>
         </div>
       </CardContent>
