@@ -46,20 +46,12 @@ export default function ProfileInfoCard({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>{isLegalEntity ? 'Должностное лицо и контакты' : 'Основная информация'}</CardTitle>
-            {!isLegalEntity && (
-              <CardDescription>
-                Личные данные вашего профиля
-              </CardDescription>
-            )}
-          </div>
-          {!isEditing && (
-            <Button variant="outline" onClick={onEdit}>
-              <Icon name="Pencil" className="mr-2 h-4 w-4" />
-              Редактировать
-            </Button>
+        <div>
+          <CardTitle>{isLegalEntity ? 'Должностное лицо и контакты' : 'Основная информация'}</CardTitle>
+          {!isLegalEntity && (
+            <CardDescription>
+              Личные данные вашего профиля
+            </CardDescription>
           )}
         </div>
       </CardHeader>

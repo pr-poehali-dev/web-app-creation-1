@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 
 interface FormData {
@@ -9,6 +10,7 @@ interface FormData {
   lastName: string;
   middleName?: string;
   phone: string;
+  userType?: string;
 }
 
 interface FormErrors {
@@ -26,6 +28,7 @@ interface ProfileEditFormProps {
   onSave: () => void;
   onCancel: () => void;
   onChangePassword: () => void;
+  currentUserType?: string;
 }
 
 export default function ProfileEditForm({
@@ -37,6 +40,7 @@ export default function ProfileEditForm({
   onSave,
   onCancel,
   onChangePassword,
+  currentUserType,
 }: ProfileEditFormProps) {
   if (!isEditing) return null;
 
@@ -106,6 +110,26 @@ export default function ProfileEditForm({
           {errors.phone && (
             <p className="text-sm text-destructive">{errors.phone}</p>
           )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="edit-userType">
+            Тип пользователя <span className="text-destructive">*</span>
+          </Label>
+          <Select
+            value={formData.userType || currentUserType}
+            onValueChange={(value) => onInputChange('userType', value)}
+          >
+            <SelectTrigger id="edit-userType">
+              <SelectValue placeholder="Выберите тип" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="individual">Физическое лицо</SelectItem>
+              <SelectItem value="self-employed">Самозанятый</SelectItem>
+              <SelectItem value="entrepreneur">Индивидуальный предприниматель</SelectItem>
+              <SelectItem value="legal-entity">Юридическое лицо</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex flex-col gap-2 pt-2">

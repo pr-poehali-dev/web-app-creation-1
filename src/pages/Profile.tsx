@@ -35,6 +35,7 @@ interface FormData {
   lastName: string;
   middleName?: string;
   phone: string;
+  userType?: string;
 }
 
 interface FormErrors {
@@ -63,6 +64,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
     lastName: currentUser?.lastName || '',
     middleName: currentUser?.middleName || '',
     phone: currentUser?.phone || '',
+    userType: currentUser?.userType || 'individual',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -143,6 +145,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         lastName: currentUser.lastName || '',
         middleName: currentUser.middleName || '',
         phone: currentUser.phone || '',
+        userType: currentUser.userType || 'individual',
       });
     }
   }, [currentUser]);
@@ -271,6 +274,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       lastName: currentUser?.lastName || '',
       middleName: currentUser?.middleName || '',
       phone: currentUser?.phone || '',
+      userType: currentUser?.userType || 'individual',
     });
     setErrors({});
   };
@@ -286,6 +290,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         lastName: formData.lastName,
         middleName: formData.middleName,
         phone: formData.phone,
+        userType: formData.userType || currentUser.userType,
       };
 
       updateUser(updatedUser);
@@ -382,6 +387,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             onSave={handleSave}
             onCancel={handleCancelEdit}
             onChangePassword={handleChangePassword}
+            currentUserType={currentUser.userType}
           />
 
           <ProfilePasswordForm
