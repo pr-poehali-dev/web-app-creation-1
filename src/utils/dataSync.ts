@@ -12,6 +12,7 @@ const SYNC_KEY = 'data_sync_events';
 class DataSyncManager {
   private listeners: Map<string, Set<() => void>> = new Map();
   private lastCheck: number = Date.now();
+  private intervalId: number | null = null;
 
   constructor() {
     // Слушаем изменения в других вкладках через storage event
@@ -19,6 +20,9 @@ class DataSyncManager {
     
     // Проверяем при взаимодействии пользователя
     this.attachUserInteractionListeners();
+    
+    // Проверяем каждые 30 секунд на случай бездействия
+    this.startBackgroundCheck();
   }
 
   private handleStorageChange = (e: StorageEvent) => {
@@ -79,6 +83,13 @@ class DataSyncManager {
     });
   }
 
+  private startBackgroundCheck() {
+    // Проверяем каждые 30 секунд (только localStorage, без запросов к серверу)
+    this.intervalId = window.setInterval(() => {
+      this.checkForUpdates();
+    }, 30000);
+  }
+
   private notifyListeners(type: string) {
     const callbacks = this.listeners.get(type);
     if (callbacks) {
@@ -134,6 +145,9 @@ class DataSyncManager {
 
   destroy() {
     window.removeEventListener('storage', this.handleStorageChange);
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+    }
     this.listeners.clear();
   }
 }
