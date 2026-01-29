@@ -280,19 +280,6 @@ export default function OfferDetailContent({
         offerDistrict={offer.district}
       />
 
-      {createdOrder && (
-        <OrderChatModal
-          isOpen={isChatOpen}
-          onClose={() => {
-            onChatChange(false);
-            navigate('/my-orders');
-          }}
-          order={createdOrder}
-          messages={chatMessages}
-          onSendMessage={onSendMessage}
-        />
-      )}
-
       <Dialog open={isGalleryOpen} onOpenChange={onGalleryChange}>
         <DialogContent className="max-w-7xl w-full h-[90vh] p-0">
           <div 
