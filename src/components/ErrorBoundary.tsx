@@ -96,13 +96,14 @@ class ErrorBoundary extends Component<Props, State> {
               </details>
             )}
 
-            <div className="flex flex-col gap-2">
-              <Button onClick={this.handleReset} className="w-full">
-                Вернуться на главную
-              </Button>
-              <Button onClick={this.handleReload} variant="outline" className="w-full">
-                Перезагрузить страницу
-              </Button>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={this.handleReset} className="w-full">
+                    Вернуться на главную
+                  </Button>
+                  <Button onClick={this.handleReload} variant="outline" className="w-full">
+                    Перезагрузить страницу
+                  </Button>
+                </div>
               </>
             )}
           </div>
