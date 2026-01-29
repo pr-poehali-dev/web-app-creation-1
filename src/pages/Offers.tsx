@@ -140,6 +140,13 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
+    
+    console.log('🔍 Фильтрация предложений:', {
+      selectedRegion,
+      selectedDistricts,
+      detectedDistrictId,
+      totalOffers: result.length
+    });
 
     // Скрываем истекшие предложения
     result = filterActiveOffers(result);
