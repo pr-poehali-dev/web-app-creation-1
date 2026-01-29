@@ -75,29 +75,24 @@ export default function OfferInfoCard({
     .map(id => districts.find(d => d.id === id)?.name || id)
     .filter(Boolean);
 
-  // Форматировать адрес с городом
-  const formatAddress = (address?: string) => {
-    if (!address) return location || '';
-    
-    // Проверяем, есть ли уже город в начале адреса
-    const hasCity = /^(г|с|пгт|рп)\.\s*[А-Яа-яЁё-]+/.test(address);
-    
-    if (hasCity) {
-      return address;
+  // Извлечь город из location
+  const getCityFromLocation = (loc: string) => {
+    const cityMatch = loc.match(/(г|с|пгт|рп)\.\s*([А-Яа-яЁё-]+)/);
+    if (cityMatch) {
+      return `${cityMatch[1]}. ${cityMatch[2]}`;
     }
-    
-    // Если нет города, добавляем его из location
-    if (location) {
-      const cityMatch = location.match(/(г|с|пгт|рп)\.\s*([А-Яа-яЁё-]+)/);
-      if (cityMatch) {
-        return `${cityMatch[0]}, ${address}`;
-      }
-    }
-    
-    return address;
+    return '';
   };
 
-  const displayAddress = formatAddress(fullAddress);
+  // Извлечь только адрес без города
+  const getAddressWithoutCity = (loc: string) => {
+    return loc
+      .replace(/(г|с|пгт|рп)\.\s*[А-Яа-яЁё-]+,?\s*/, '')
+      .trim();
+  };
+
+  const cityName = location ? getCityFromLocation(location) : '';
+  const streetAddress = fullAddress || (location ? getAddressWithoutCity(location) : '');
 
   return (
     <Card className="mb-3">
@@ -185,17 +180,12 @@ export default function OfferInfoCard({
 
               <Separator />
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {displayAddress && (
-                  <div>
-                    <p className="text-muted-foreground mb-0.5">Адрес</p>
-                    <p className="font-medium">{displayAddress}</p>
-                  </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Район</p>
+                <p className="text-sm font-medium">{districtName}</p>
+                {cityName && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{cityName}</p>
                 )}
-                <div>
-                  <p className="text-muted-foreground mb-0.5">Район</p>
-                  <p className="font-medium">{districtName}</p>
-                </div>
               </div>
 
               {availableDistrictNames.length > 0 && (
@@ -226,6 +216,16 @@ export default function OfferInfoCard({
                   )}
                 </div>
               </div>
+
+              {availableDeliveryTypes.includes('pickup') && streetAddress && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground" />
+                    <p className="text-sm font-medium">{streetAddress}</p>
+                  </div>
+                </div>
+              )}
 
               {deliveryTime && (
                 <div>
@@ -290,16 +290,12 @@ export default function OfferInfoCard({
 
             <Separator />
 
-            {displayAddress && (
-              <div>
-                <p className="text-xs text-muted-foreground mb-0.5">Адрес</p>
-                <p className="text-sm font-medium">{displayAddress}</p>
-              </div>
-            )}
-
             <div>
               <p className="text-xs text-muted-foreground mb-0.5">Район</p>
               <p className="text-sm font-medium">{districtName}</p>
+              {cityName && (
+                <p className="text-xs text-muted-foreground mt-0.5">{cityName}</p>
+              )}
             </div>
 
             {availableDistrictNames.length > 0 && (
@@ -331,12 +327,12 @@ export default function OfferInfoCard({
               </div>
             </div>
 
-            {availableDeliveryTypes.includes('pickup') && location && (
+            {availableDeliveryTypes.includes('pickup') && streetAddress && (
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
                 <div className="flex items-center gap-1.5">
                   <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground" />
-                  <p className="text-sm font-medium">{location}</p>
+                  <p className="text-sm font-medium">{streetAddress}</p>
                 </div>
               </div>
             )}
