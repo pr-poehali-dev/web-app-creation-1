@@ -42,20 +42,31 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
   
-  const formatLocation = (location: string) => {
+  const formatLocation = (location: string, districtName?: string) => {
+    let cityName = '';
+    
     const cityMatch = location.match(/г\.\s*([А-Яа-яЁё-]+)/);
-    const cityName = cityMatch ? cityMatch[1] : null;
+    if (cityMatch) {
+      cityName = cityMatch[1];
+    } else if (districtName && districtName.includes('улус')) {
+      const ulусMatch = districtName.match(/([А-Яа-яЁё]+)\s*улус/);
+      if (ulусMatch) {
+        cityName = ulусMatch[1];
+      }
+    }
     
-    if (!cityName) return location;
+    const addressPart = location
+      .replace(/г\.\s*[А-Яа-яЁё-]+,?\s*/, '')
+      .replace(/улица/gi, 'ул.')
+      .replace(/проспект/gi, 'пр.')
+      .replace(/переулок/gi, 'пер.')
+      .replace(/площадь/gi, 'пл.')
+      .trim();
     
-    const addressPart = location.replace(/г\.\s*[А-Яа-яЁё-]+,?\s*/, '').trim();
-    const shortAddress = addressPart
-      .replace(/улица/g, 'ул.')
-      .replace(/проспект/g, 'пр.')
-      .replace(/переулок/g, 'пер.')
-      .replace(/площадь/g, 'пл.');
-    
-    return `${cityName}, ${shortAddress}`;
+    if (cityName && addressPart) {
+      return `${cityName}, ${addressPart}`;
+    }
+    return addressPart || location;
   };
 
   const handlePrevImage = (e: React.MouseEvent) => {
@@ -225,7 +236,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="font-medium text-foreground truncate">{districtName}</span>
               {offer.availableDeliveryTypes?.includes('pickup') && offer.location && (
-                <span className="truncate">{formatLocation(offer.location)}</span>
+                <span className="truncate">{formatLocation(offer.location, districtName)}</span>
               )}
             </div>
           </div>
