@@ -173,7 +173,7 @@ export default function EditOffer() {
     if (!offer) return;
     
     try {
-      await offersAPI.updateOffer(offer.id, { status: 'deleted' });
+      await offersAPI.updateOffer(offer.id, { status: 'archived' });
       
       localStorage.removeItem('cached_offers');
       localStorage.setItem('offers_updated', 'true');
