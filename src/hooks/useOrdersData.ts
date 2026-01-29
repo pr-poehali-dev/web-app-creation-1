@@ -274,11 +274,12 @@ export function useOrdersData(
     }
   };
 
-  const handleCompleteOrder = async () => {
-    if (!selectedOrder) return;
+  const handleCompleteOrder = async (orderId?: string) => {
+    const orderToComplete = orderId || selectedOrder?.id;
+    if (!orderToComplete) return;
 
     try {
-      await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
+      await ordersAPI.updateOrder(orderToComplete, { status: 'completed' });
 
       toast({
         title: 'Заказ завершён',
