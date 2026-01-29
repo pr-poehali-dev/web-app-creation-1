@@ -189,11 +189,11 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className={`h-9 flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 md:py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
+            className={`flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
               location.pathname === '/home' || location.pathname === '/' ? 'border-[3px] border-primary' : 'border-2 border-primary/20'
             }`}
           >
-            <div className="h-8 w-8 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center">
+            <div className="h-8 w-8 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center shrink-0">
               <img 
                 src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                 alt="ЕРТТП" 
