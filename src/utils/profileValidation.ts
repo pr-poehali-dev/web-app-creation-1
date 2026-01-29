@@ -64,9 +64,6 @@ export const validateForm = (formData: FormData): { isValid: boolean; errors: Fo
     if (!formData.inn || formData.inn.trim().length !== 10) {
       newErrors.inn = 'ИНН организации должен содержать 10 цифр';
     }
-    if (!formData.ogrn || formData.ogrn.trim().length !== 13) {
-      newErrors.ogrn = 'ОГРН должен содержать 13 цифр';
-    }
   }
 
   return {

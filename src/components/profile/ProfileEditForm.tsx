@@ -141,7 +141,7 @@ export default function ProfileEditForm({
         </div>
 
         {/* Поля для самозанятого */}
-        {(formData.userType === 'self-employed' || currentUserType === 'self-employed') && (
+        {(formData.userType || currentUserType) === 'self-employed' && (
           <div className="space-y-2">
             <Label htmlFor="edit-inn">
               ИНН <span className="text-destructive">*</span>
@@ -164,7 +164,7 @@ export default function ProfileEditForm({
         )}
 
         {/* Поля для ИП */}
-        {(formData.userType === 'entrepreneur' || currentUserType === 'entrepreneur') && (
+        {(formData.userType || currentUserType) === 'entrepreneur' && (
           <>
             <div className="space-y-2">
               <Label htmlFor="edit-inn">
@@ -206,7 +206,7 @@ export default function ProfileEditForm({
         )}
 
         {/* Поля для юридического лица */}
-        {(formData.userType === 'legal-entity' || currentUserType === 'legal-entity') && (
+        {(formData.userType || currentUserType) === 'legal-entity' && (
           <>
             <div className="space-y-2">
               <Label htmlFor="edit-companyName">
@@ -225,11 +225,11 @@ export default function ProfileEditForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-inn">
-                ИНН <span className="text-destructive">*</span>
+              <Label htmlFor="edit-inn-legal">
+                ИНН организации <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="edit-inn"
+                id="edit-inn-legal"
                 value={formData.inn || ''}
                 onChange={(e) => onInputChange('inn', e.target.value)}
                 placeholder="Введите ИНН организации"
@@ -241,26 +241,6 @@ export default function ProfileEditForm({
               )}
               <p className="text-xs text-muted-foreground">
                 ИНН организации (10 цифр)
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-ogrn">
-                ОГРН <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="edit-ogrn"
-                value={formData.ogrn || ''}
-                onChange={(e) => onInputChange('ogrn', e.target.value)}
-                placeholder="Введите ОГРН"
-                maxLength={13}
-                className={errors.ogrn ? 'border-destructive' : ''}
-              />
-              {errors.ogrn && (
-                <p className="text-sm text-destructive">{errors.ogrn}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                ОГРН организации (13 цифр)
               </p>
             </div>
           </>
