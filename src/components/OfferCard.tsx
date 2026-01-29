@@ -41,6 +41,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const category = CATEGORIES.find(c => c.id === offer.category);
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
+  
+  const extractCityName = (location: string) => {
+    const cityMatch = location.match(/г\.\s*[А-Яа-яЁё-]+/);
+    return cityMatch ? cityMatch[0] : location;
+  };
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -209,7 +214,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="font-medium text-foreground truncate">{districtName}</span>
               {offer.availableDeliveryTypes?.includes('pickup') && offer.location && (
-                <span className="truncate">{offer.location}</span>
+                <span className="truncate">{extractCityName(offer.location)}</span>
               )}
             </div>
           </div>
