@@ -361,9 +361,15 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       <main className="container mx-auto px-4 py-8 flex-1">
         <div className="max-w-4xl mx-auto space-y-6">
           <ProfileHeader
-            user={currentUser}
-            isViewingOwnProfile={isViewingOwnProfile}
+            firstName={currentUser.firstName || ''}
+            lastName={currentUser.lastName || ''}
+            userType={currentUser.userType || ''}
+            isVerified={currentUser.isVerified || false}
+            companyName={currentUser.companyName}
+            directorName={`${currentUser.firstName || ''} ${currentUser.lastName || ''}`}
             getInitials={getInitials}
+            getUserTypeLabel={getUserTypeLabel}
+            isViewingOwnProfile={isViewingOwnProfile}
             onEdit={handleEdit}
           />
 

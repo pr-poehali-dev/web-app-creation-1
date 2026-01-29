@@ -1,4 +1,6 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
 
 interface ProfileHeaderProps {
   firstName: string;
@@ -9,6 +11,8 @@ interface ProfileHeaderProps {
   directorName?: string;
   getInitials: () => string;
   getUserTypeLabel: (type: string) => string;
+  isViewingOwnProfile: boolean;
+  onEdit?: () => void;
 }
 
 const shortenCompanyName = (fullName: string): string => {
@@ -41,39 +45,49 @@ export default function ProfileHeader({
   companyName,
   directorName,
   getInitials,
-  getUserTypeLabel 
+  getUserTypeLabel,
+  isViewingOwnProfile,
+  onEdit
 }: ProfileHeaderProps) {
   const isLegalEntity = userType === 'legal-entity';
   
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
-        {getInitials()}
-      </div>
-      <div>
-        {isLegalEntity && companyName ? (
-          <>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
+          {getInitials()}
+        </div>
+        <div>
+          {isLegalEntity && companyName ? (
+            <>
+              <h2 className="text-xl font-bold">
+                {shortenCompanyName(companyName)}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Руководитель: {directorName || 'Не указан'}
+              </p>
+            </>
+          ) : (
             <h2 className="text-xl font-bold">
-              {shortenCompanyName(companyName)}
+              {firstName} {lastName}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              Руководитель: {directorName || 'Не указан'}
-            </p>
-          </>
-        ) : (
-          <h2 className="text-xl font-bold">
-            {firstName} {lastName}
-          </h2>
-        )}
-        <div className="flex items-center gap-2 mt-1">
-          <Badge variant="secondary" className="text-xs">{getUserTypeLabel(userType)}</Badge>
-          {isVerified && (
-            <Badge variant="default" className="bg-green-500 text-xs">
-              Верифицирован
-            </Badge>
           )}
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant="secondary" className="text-xs">{getUserTypeLabel(userType)}</Badge>
+            {isVerified && (
+              <Badge variant="default" className="bg-green-500 text-xs">
+                Верифицирован
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
+      {isViewingOwnProfile && onEdit && (
+        <Button onClick={onEdit} variant="outline" size="sm">
+          <Icon name="Edit" className="mr-2 h-4 w-4" />
+          Редактировать
+        </Button>
+      )}
     </div>
   );
 }
