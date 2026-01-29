@@ -219,7 +219,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </button>
             {shouldShowDistricts() && (
               <button
-                className="flex flex-col items-start px-1.5 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0"
+                className="h-8 flex flex-col items-start justify-center px-1.5 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0"
                 onClick={() => setRegionModalOpen(true)}
               >
                 <span className="font-bold text-primary truncate text-[9px] leading-tight w-full">
