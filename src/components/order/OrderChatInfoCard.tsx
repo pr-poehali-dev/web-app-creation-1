@@ -47,40 +47,44 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson }: Ord
             <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
           </div>
           <div>
-            <p className="text-muted-foreground">Доставка</p>
+            <p className="text-muted-foreground">Способ получения</p>
             <p className="font-medium">
               {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
             </p>
           </div>
         </div>
 
-        <Separator />
+        {order.status === 'accepted' && (
+          <>
+            <Separator />
 
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Icon name="User" className="h-4 w-4 text-muted-foreground" />
-            <h3 className="font-semibold text-sm">
-              {isBuyer ? 'Продавец' : 'Покупатель'}
-            </h3>
-          </div>
-          <p className="text-sm font-medium">{contactPerson.name}</p>
-          <div className="space-y-1 mt-2">
-            <a
-              href={`tel:${contactPerson.phone}`}
-              className="text-sm hover:text-primary transition-colors flex items-center gap-1.5"
-            >
-              <Icon name="Phone" className="h-3.5 w-3.5" />
-              {contactPerson.phone}
-            </a>
-            <a
-              href={`mailto:${contactPerson.email}`}
-              className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
-            >
-              <Icon name="Mail" className="h-3.5 w-3.5" />
-              {contactPerson.email}
-            </a>
-          </div>
-        </div>
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Icon name="User" className="h-4 w-4 text-muted-foreground" />
+                <h3 className="font-semibold text-sm">
+                  {isBuyer ? 'Продавец' : 'Покупатель'}
+                </h3>
+              </div>
+              <p className="text-sm font-medium">{contactPerson.name}</p>
+              <div className="space-y-1 mt-2">
+                <a
+                  href={`tel:${contactPerson.phone}`}
+                  className="text-sm hover:text-primary transition-colors flex items-center gap-1.5"
+                >
+                  <Icon name="Phone" className="h-3.5 w-3.5" />
+                  {contactPerson.phone}
+                </a>
+                <a
+                  href={`mailto:${contactPerson.email}`}
+                  className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
+                >
+                  <Icon name="Mail" className="h-3.5 w-3.5" />
+                  {contactPerson.email}
+                </a>
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
