@@ -14,7 +14,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { reverseGeocode } from '@/utils/geocoding';
-import { getDistrictByCoordinates } from '@/data/districts';
+import { DISTRICTS } from '@/data/districts';
 
 const MapModal = lazy(() => import('@/components/auction/MapModal'));
 
@@ -113,25 +113,7 @@ export default function OfferOrderModal({
       const addressData = await reverseGeocode(lat, lng);
       const fullAddress = addressData.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
       setAddress(fullAddress);
-      
-      // Проверяем район доставки
-      const deliveryDistrict = getDistrictByCoordinates(lat, lng);
-      
-      if (availableDistricts.length > 0) {
-        const isDistrictAvailable = availableDistricts.includes(deliveryDistrict?.id || '');
-        
-        if (!isDistrictAvailable) {
-          setAddressError('Доставка в данный район не осуществляется');
-          toast({
-            title: 'Доставка недоступна',
-            description: 'Продавец не доставляет в выбранный район',
-            variant: 'destructive',
-          });
-        } else {
-          setAddressError('');
-        }
-      }
-      
+      setAddressError('');
       setIsMapOpen(false);
     } catch (error) {
       console.error('Error getting address:', error);
@@ -329,7 +311,23 @@ export default function OfferOrderModal({
                   <p className="text-xs text-red-500 font-medium">{addressError}</p>
                 </div>
               )}
-              {currentUser?.legalAddress && !addressError && (
+              {availableDistricts && availableDistricts.length > 0 && (
+                <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-md">
+                  <div className="flex items-start gap-1">
+                    <Icon name="Info" size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-blue-600">
+                      <p className="font-medium mb-1">Доступна доставка в районы:</p>
+                      <p className="text-blue-600/80">
+                        {availableDistricts.map(distId => {
+                          const district = DISTRICTS.find(d => d.id === distId);
+                          return district?.name || distId;
+                        }).join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {currentUser?.legalAddress && !addressError && !availableDistricts?.length && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Адрес из профиля. Вы можете изменить его.
                 </p>
