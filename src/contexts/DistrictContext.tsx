@@ -60,10 +60,14 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initLocation = async () => {
+      console.log('🌍 Инициализация местоположения...');
+      
       const storedLocation = getLocationFromStorage();
+      console.log('📦 Сохранённое местоположение:', storedLocation);
       
       if (storedLocation) {
         const regionId = findRegionByLocation(storedLocation.city, storedLocation.district);
+        console.log('📍 Найден регион:', regionId);
         setSelectedRegionState(regionId);
         setDetectedCity(storedLocation.city);
         
@@ -71,16 +75,22 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         setAvailableDistricts(districts);
         
         const district = findDistrictByName(storedLocation.district, regionId);
+        console.log('🎯 Найден район:', district);
+        
         if (district) {
           setDetectedDistrictId(district.id);
           localStorage.setItem('detectedDistrictId', district.id);
           localStorage.setItem('detectedCity', storedLocation.city);
+          console.log('✅ Установлен detectedDistrictId:', district.id);
           
           const storedDistricts = localStorage.getItem('selectedDistricts');
           if (!storedDistricts || JSON.parse(storedDistricts).length === 0) {
             setSelectedDistrictsState([district.id]);
             localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
+            console.log('✅ Установлены selectedDistricts:', [district.id]);
           }
+        } else {
+          console.log('⚠️ Район не найден для:', storedLocation.district);
         }
         return;
       }
