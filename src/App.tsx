@@ -152,6 +152,41 @@ const App = () => {
     const session = getSession();
     if (session) {
       setIsAuthenticated(true);
+      
+      // Синхронизируем профиль с сервером в фоне
+      if (session.id) {
+        setTimeout(async () => {
+          try {
+            const response = await fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${session.id}`, {
+              headers: {
+                'X-User-Id': String(session.id),
+              },
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              const updatedUser = {
+                ...session,
+                firstName: data.first_name,
+                lastName: data.last_name,
+                middleName: data.middle_name,
+                phone: data.phone,
+                companyName: data.company_name,
+                inn: data.inn,
+                ogrnip: data.ogrnip,
+                ogrn: data.ogrn,
+              };
+              
+              // Обновляем localStorage с актуальными данными
+              localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+              window.dispatchEvent(new Event('userSessionChanged'));
+            }
+          } catch (error) {
+            // Игнорируем ошибки синхронизации
+            console.log('Background profile sync failed:', error);
+          }
+        }, 1000);
+      }
     }
 
     // Регистрируем Service Worker в фоне
