@@ -83,6 +83,10 @@ export default function HeaderUserMenu({
             <DropdownMenuSeparator />
           </>
         )}
+        <DropdownMenuItem onClick={() => navigate('/my-orders')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+          Мои заказы
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/profile')} className="border-2 border-border rounded-md mb-1">
           <Icon name="User" className="mr-2 h-4 w-4" />
           Мои данные
@@ -102,10 +106,6 @@ export default function HeaderUserMenu({
         <DropdownMenuItem onClick={() => navigate('/my-reviews')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Star" className="mr-2 h-4 w-4" />
           Мои отзывы
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/my-orders')} className="border-2 border-border rounded-md mb-1">
-          <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-          Мои заказы
         </DropdownMenuItem>
         {currentUser?.role === 'admin' && (
           <>
