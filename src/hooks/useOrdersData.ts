@@ -68,8 +68,17 @@ export function useOrdersData(
       } else {
         setIsSyncing(true);
       }
+      
+      // Таймаут для предотвращения вечной загрузки
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Превышено время ожидания')), 15000)
+      );
+      
       // Загружаем ВСЕ заказы сразу для правильного подсчета
-      const response = await ordersAPI.getAll('all');
+      const response = await Promise.race([
+        ordersAPI.getAll('all'),
+        timeoutPromise
+      ]) as any;
       
       const mappedOrders = response.orders.map((order: any) => ({
         id: order.id,
@@ -116,13 +125,19 @@ export function useOrdersData(
       }
     } catch (error) {
       console.error('Error loading orders:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось загрузить заказы';
+      
       if (showLoader) {
         toast({
-          title: 'Ошибка',
-          description: 'Не удалось загрузить заказы',
+          title: 'Ошибка загрузки',
+          description: errorMessage,
           variant: 'destructive',
         });
       }
+      
+      // Устанавливаем пустой массив, чтобы не было белого экрана
+      setOrders([]);
     } finally {
       if (showLoader) {
         setIsLoading(false);

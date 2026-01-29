@@ -198,7 +198,14 @@ export function useOfferDetail(id: string | undefined) {
   };
 
   const handleOrderSubmit = async (orderFormData: any) => {
-    if (!offer) return;
+    if (!offer) {
+      toast({
+        title: 'Ошибка',
+        description: 'Предложение не найдено',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const currentUser = getSession();
     
@@ -206,6 +213,12 @@ export function useOfferDetail(id: string | undefined) {
       navigate('/login');
       return;
     }
+
+    // Показываем индикатор загрузки
+    toast({
+      title: 'Создаем заказ...',
+      description: 'Пожалуйста, подождите',
+    });
 
     try {
       const orderData = {
@@ -239,7 +252,8 @@ export function useOfferDetail(id: string | undefined) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create order');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Не удалось создать заказ');
       }
 
       const result = await response.json();
@@ -268,7 +282,48 @@ export function useOfferDetail(id: string | undefined) {
       }
 
       if (!fullOrderData) {
-        throw new Error('Failed to load order details');
+        console.error('Failed to load full order data after retries');
+        // Используем минимальные данные из первого ответа
+        const minimalOrder: Order = {
+          id: result.id,
+          orderNumber: result.order_number || `ORD-${result.id}`,
+          offerId: offer.id,
+          offerTitle: offer.title,
+          offerImage: offer.images[0]?.url,
+          buyerId: currentUser.id?.toString() || '',
+          buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
+          buyerEmail: currentUser.email,
+          buyerPhone: currentUser.phone || '',
+          sellerId: offer.userId,
+          sellerName: offer.seller?.name || 'Продавец',
+          sellerEmail: offer.seller?.email || '',
+          sellerPhone: offer.seller?.phone || '',
+          quantity: orderFormData.quantity,
+          unit: offer.unit,
+          pricePerUnit: offer.pricePerUnit,
+          totalAmount: offer.pricePerUnit * orderFormData.quantity,
+          counterPricePerUnit: orderFormData.counterPrice,
+          counterTotalAmount: orderFormData.counterPrice ? (orderFormData.counterPrice * orderFormData.quantity) : undefined,
+          counterOfferedBy: orderFormData.counterPrice ? 'buyer' : undefined,
+          deliveryType: orderFormData.deliveryType,
+          deliveryAddress: orderFormData.address || '',
+          comment: orderFormData.comment,
+          status: 'pending',
+          createdAt: new Date(),
+        };
+        
+        setIsOrderModalOpen(false);
+        setCreatedOrder(minimalOrder);
+        setIsChatOpen(true);
+        
+        toast({
+          title: 'Заказ создан!',
+          description: 'Данные продавца загружаются...',
+        });
+        
+        // Пытаемся загрузить полные данные в фоне
+        setTimeout(() => loadMessages(result.id), 500);
+        return;
       }
 
       const newOrder: Order = {
@@ -324,11 +379,16 @@ export function useOfferDetail(id: string | undefined) {
       }, 500);
     } catch (error) {
       console.error('Error creating order:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать заказ';
+      
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось создать заказ',
+        title: 'Ошибка создания заказа',
+        description: errorMessage + '. Попробуйте ещё раз.',
         variant: 'destructive',
       });
+      
+      // Не закрываем модальное окно, чтобы пользователь мог повторить попытку
     }
   };
 

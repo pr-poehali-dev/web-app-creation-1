@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SplashScreen from "./components/SplashScreen";
 import PullToRefresh from "./components/PullToRefresh";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
 
 // Ленивая загрузка второстепенных компонентов
@@ -201,6 +202,7 @@ const App = () => {
                   {isAuthenticated && <NotificationPermissionBanner />}
                   <InstallPrompt />
                   <BrowserRouter>
+                <ErrorBoundary>
                 <Suspense fallback={<LoadingScreen />}>
             <Routes>
             <Route path="/" element={<Navigate to="/predlozheniya" replace />} />
@@ -271,6 +273,7 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
                 </Suspense>
+                </ErrorBoundary>
         </BrowserRouter>
             </OffersProvider>
           </DistrictProvider>

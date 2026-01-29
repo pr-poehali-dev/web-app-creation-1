@@ -83,11 +83,19 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
       
       try {
-        const offersData = await offersAPI.getOffers({ 
-          status: 'active',
-          limit: 20,
-          offset: 0
-        });
+        // Таймаут для предотвращения вечной загрузки
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Превышено время ожидания загрузки')), 15000)
+        );
+        
+        const offersData = await Promise.race([
+          offersAPI.getOffers({ 
+            status: 'active',
+            limit: 20,
+            offset: 0
+          }),
+          timeoutPromise
+        ]) as any;
         
         if (!isMounted) return;
         
@@ -112,6 +120,21 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         }, 500);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
+        
+        // Устанавливаем пустой массив, чтобы не было белого экрана
+        if (isMounted) {
+          setOffers([]);
+        }
+        
+        const errorMessage = error instanceof Error ? error.message : 'Ошибка загрузки';
+        
+        if (showLoading && isMounted) {
+          toast({
+            title: 'Не удалось загрузить предложения',
+            description: errorMessage,
+            variant: 'destructive',
+          });
+        }
         
         if (showLoading) {
           setIsLoading(false);
