@@ -6,6 +6,7 @@ import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { formatDateWithTimezone } from '@/utils/dateUtils';
+import { NASLEGS } from '@/data/naslegs';
 
 interface OfferInfoCardProps {
   title: string;
@@ -75,26 +76,25 @@ export default function OfferInfoCard({
     .map(id => districts.find(d => d.id === id)?.name || id)
     .filter(Boolean);
 
-  // Извлечь город из location (ТОЛЬКО в начале строки)
-  const getCityFromLocation = (loc: string) => {
-    // Ищем ТОЛЬКО в начале строки: "г. Нюрба, ...", "с. Сунтар, ..." и т.д.
-    const cityMatch = loc.match(/^(г|с|пгт|рп)\.?\s+([А-Яа-яЁё\-]+)/);
-    if (cityMatch) {
-      return `${cityMatch[1]}. ${cityMatch[2]}`;
+  // Найти административный центр района (settlement)
+  const getDistrictCenter = (districtId: string) => {
+    const center = NASLEGS.find(n => n.districtId === districtId && n.type === 'settlement');
+    if (center) {
+      return `г. ${center.name}`;
     }
     return '';
   };
 
-  // Извлечь только адрес без города
-  const getAddressWithoutCity = (loc: string) => {
+  // Извлечь только адрес из location (убрать "г. Город," если есть)
+  const getCleanAddress = (loc: string) => {
     return loc
       .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё\-]+,?\s*/, '')
       .replace(/улица/gi, 'ул.')
       .trim();
   };
 
-  const cityName = location ? getCityFromLocation(location) : '';
-  const streetAddress = fullAddress || (location ? getAddressWithoutCity(location) : '');
+  const cityName = getDistrictCenter(district);
+  const streetAddress = fullAddress || (location ? getCleanAddress(location) : '');
 
   return (
     <Card className="mb-3">
