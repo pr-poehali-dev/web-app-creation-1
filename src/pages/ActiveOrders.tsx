@@ -251,6 +251,10 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     setStatusFilter(status);
   }, []);
 
+  if (!isAuthenticated || !currentUser) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -342,7 +346,7 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
           </div>
         )}
         
-        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setStatusFilter('all'); }} className="mb-6">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as typeof activeTab); setStatusFilter('all'); }} className="mb-6" defaultValue="all">
           <TabsList className="grid w-full max-w-md grid-cols-3">
             <TabsTrigger value="all">
               Все заказы

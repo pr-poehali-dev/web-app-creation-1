@@ -150,7 +150,9 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     }
   };
 
-
+  if (!isAuthenticated || !currentUser) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -176,7 +178,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" defaultValue="participating">
           <TabsList className="grid w-full grid-cols-4 mb-8 gap-2 p-2 bg-transparent h-auto">
             <TabsTrigger value="participating" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-2 px-1 whitespace-normal">
               <div className="flex flex-col items-center gap-0.5">

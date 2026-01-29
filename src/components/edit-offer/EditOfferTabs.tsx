@@ -45,7 +45,7 @@ export default function EditOfferTabs({
   const unreadCount = messages.filter(m => !m.isRead).length;
 
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange}>
+    <Tabs value={activeTab} onValueChange={onTabChange} defaultValue="info">
       <TabsList className="grid w-full grid-cols-3 mb-6">
         <TabsTrigger value="info">Информация</TabsTrigger>
         <TabsTrigger value="orders">

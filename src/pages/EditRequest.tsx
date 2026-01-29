@@ -242,7 +242,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" defaultValue="info">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="info">
               <Icon name="Info" className="w-4 h-4 mr-2" />

@@ -80,6 +80,10 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const sellerOrdersCount = orders.filter(order => order.type === 'sale' && order.status !== 'completed' && order.status !== 'cancelled').length;
   const archiveOrdersCount = orders.filter(order => order.status === 'completed' || order.status === 'cancelled').length;
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -93,7 +97,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6"  defaultValue="buyer">
           <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
             <TabsTrigger value="buyer" className="py-2.5">
               Я покупатель {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}

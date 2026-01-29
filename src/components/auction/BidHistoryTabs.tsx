@@ -64,7 +64,7 @@ export default function BidHistoryTabs({
   const uniqueParticipants = Array.from(new Set(bids.map(b => b.userId))).length;
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" defaultValue="history">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="history" className="text-xs md:text-sm">
           <Icon name="History" className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1 md:mr-2" />
