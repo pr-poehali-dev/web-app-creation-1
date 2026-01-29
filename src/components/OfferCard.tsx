@@ -42,21 +42,18 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
   
-  const formatLocation = (location: string, districtName?: string) => {
+  const formatLocation = (location: string) => {
     let cityName = '';
+    let settlementType = '';
     
-    const cityMatch = location.match(/г\.\s*([А-Яа-яЁё-]+)/);
+    const cityMatch = location.match(/(г|с|пгт|рп)\.\s*([А-Яа-яЁё-]+)/);
     if (cityMatch) {
-      cityName = cityMatch[1];
-    } else if (districtName && districtName.includes('улус')) {
-      const ulусMatch = districtName.match(/([А-Яа-яЁё]+)\s*улус/);
-      if (ulусMatch) {
-        cityName = ulусMatch[1];
-      }
+      settlementType = cityMatch[1];
+      cityName = cityMatch[2];
     }
     
     const addressPart = location
-      .replace(/г\.\s*[А-Яа-яЁё-]+,?\s*/, '')
+      .replace(/(г|с|пгт|рп)\.\s*[А-Яа-яЁё-]+,?\s*/, '')
       .replace(/улица/gi, 'ул.')
       .replace(/проспект/gi, 'пр.')
       .replace(/переулок/gi, 'пер.')
@@ -64,7 +61,9 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
       .trim();
     
     if (cityName && addressPart) {
-      return `${cityName}, ${addressPart}`;
+      return `${settlementType}. ${cityName}, ${addressPart}`;
+    } else if (cityName) {
+      return `${settlementType}. ${cityName}`;
     }
     return addressPart || location;
   };
@@ -236,7 +235,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <div className="flex flex-col gap-0.5 min-w-0">
               <span className="font-medium text-foreground truncate">{districtName}</span>
               {offer.availableDeliveryTypes?.includes('pickup') && offer.location && (
-                <span className="truncate">{formatLocation(offer.location, districtName)}</span>
+                <span className="truncate">{formatLocation(offer.location)}</span>
               )}
             </div>
           </div>
