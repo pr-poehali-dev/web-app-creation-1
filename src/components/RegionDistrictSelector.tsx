@@ -104,7 +104,18 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
   };
 
   const getSubtitleText = () => {
-    if (selectedRegion === 'all' || selectedDistricts.length === 0) {
+    if (selectedRegion === 'all') {
+      return null;
+    }
+    
+    if (detectedCity) {
+      if (selectedDistricts.length > 0) {
+        return `${detectedCity} +${selectedDistricts.length}`;
+      }
+      return detectedCity;
+    }
+    
+    if (selectedDistricts.length === 0) {
       return null;
     }
     
