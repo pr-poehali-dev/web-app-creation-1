@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader } from '@/components/ui/card';
-import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession, updateUser } from '@/utils/auth';
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -16,6 +13,10 @@ import ProfileVerificationCard from '@/components/profile/ProfileVerificationCar
 import NotificationSettings from '@/components/profile/NotificationSettings';
 import TelegramNotificationSettings from '@/components/profile/TelegramNotificationSettings';
 import EmailNotificationSettings from '@/components/profile/EmailNotificationSettings';
+import ProfileListingsSection from '@/components/profile/ProfileListingsSection';
+import ProfileQuickActions from '@/components/profile/ProfileQuickActions';
+import ProfileEditForm from '@/components/profile/ProfileEditForm';
+import ProfilePasswordForm from '@/components/profile/ProfilePasswordForm';
 
 interface ProfileProps {
   isAuthenticated: boolean;
@@ -79,11 +80,9 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       return;
     }
     
-    // Если просматриваем профиль другого пользователя
     if (viewingUserId && viewingUserId !== String(sessionUser?.id)) {
       fetchUserProfile(viewingUserId);
     } else {
-      // Показываем свой профиль
       setCurrentUser(sessionUser);
       setIsLoadingProfile(false);
     }
@@ -260,18 +259,26 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
     }
   };
 
+  const handleEdit = () => {
+    setIsEditing(true);
+    setIsChangingPassword(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setFormData({
+      firstName: currentUser?.firstName || '',
+      lastName: currentUser?.lastName || '',
+      middleName: currentUser?.middleName || '',
+      phone: currentUser?.phone || '',
+    });
+    setErrors({});
+  };
+
   const handleSave = async () => {
-    if (!validateForm()) {
-      toast({
-        variant: 'destructive',
-        title: 'Ошибка',
-        description: 'Заполните все обязательные поля корректно',
-      });
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSaving(true);
-
     try {
       const updatedUser = {
         ...currentUser,
@@ -281,90 +288,70 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
         phone: formData.phone,
       };
 
-      const result = await updateUser(updatedUser);
-
-      if (result.success && result.user) {
-        setCurrentUser(result.user);
-        setIsEditing(false);
-        toast({
-          title: 'Успешно',
-          description: 'Данные профиля обновлены',
-        });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Ошибка',
-          description: result.error || 'Не удалось обновить профиль',
-        });
-      }
+      updateUser(updatedUser);
+      setCurrentUser(updatedUser);
+      setIsEditing(false);
+      toast({
+        title: 'Успешно',
+        description: 'Профиль обновлён',
+      });
     } catch (error) {
       toast({
-        variant: 'destructive',
         title: 'Ошибка',
-        description: 'Произошла ошибка при обновлении профиля',
+        description: 'Не удалось обновить профиль',
+        variant: 'destructive',
       });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handlePasswordSave = () => {
-    if (!validatePasswordForm()) {
-      return;
-    }
-
-    setIsSaving(true);
-
-    setTimeout(() => {
-      const updatedUser = {
-        ...currentUser,
-        password: passwordData.newPassword,
-      };
-
-      const success = updateUser(updatedUser);
-
-      if (success) {
-        setCurrentUser(updatedUser);
-        setIsChangingPassword(false);
-        setPasswordData({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        });
-        toast({
-          title: 'Успешно',
-          description: 'Пароль успешно изменен',
-        });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Ошибка',
-          description: 'Не удалось изменить пароль',
-        });
-      }
-      setIsSaving(false);
-    }, 500);
-  };
-
-  const handleCancel = () => {
-    setFormData({
-      firstName: currentUser.firstName || '',
-      lastName: currentUser.lastName || '',
-      middleName: currentUser.middleName || '',
-      phone: currentUser.phone || '',
-    });
-    setErrors({});
+  const handleChangePassword = () => {
+    setIsChangingPassword(true);
     setIsEditing(false);
   };
 
-  const handleCancelPassword = () => {
+  const handleCancelChangePassword = () => {
+    setIsChangingPassword(false);
     setPasswordData({
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
     });
     setPasswordErrors({});
-    setIsChangingPassword(false);
+  };
+
+  const handleSavePassword = async () => {
+    if (!validatePasswordForm()) return;
+
+    setIsSaving(true);
+    try {
+      const updatedUser = {
+        ...currentUser,
+        password: passwordData.newPassword,
+      };
+
+      updateUser(updatedUser);
+      setCurrentUser(updatedUser);
+      setIsChangingPassword(false);
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      toast({
+        title: 'Успешно',
+        description: 'Пароль изменён',
+      });
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось изменить пароль',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -372,147 +359,63 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="mb-4">
-              <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-              Назад
-            </Button>
-            <h1 className="text-3xl font-bold text-foreground">
-              {isViewingOwnProfile ? 'Мой профиль' : 'Профиль пользователя'}
-            </h1>
-          </div>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <ProfileHeader
+            user={currentUser}
+            isViewingOwnProfile={isViewingOwnProfile}
+            getInitials={getInitials}
+            onEdit={handleEdit}
+          />
 
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <ProfileHeader
-                  firstName={currentUser.firstName}
-                  lastName={currentUser.lastName}
-                  userType={currentUser.userType}
-                  isVerified={currentUser.isVerified}
-                  companyName={currentUser.companyName}
-                  directorName={currentUser.directorName}
-                  getInitials={getInitials}
-                  getUserTypeLabel={getUserTypeLabel}
-                />
-              </CardHeader>
-            </Card>
+          <ProfileListingsSection isViewingOwnProfile={isViewingOwnProfile} />
 
-            {isViewingOwnProfile && <ProfileVerificationCard />}
+          <ProfileQuickActions
+            isViewingOwnProfile={isViewingOwnProfile}
+            isChangingPassword={isChangingPassword}
+            onChangePassword={handleChangePassword}
+            onCancelChangePassword={handleCancelChangePassword}
+          />
 
-            {isViewingOwnProfile && (
-              <Card>
-                <CardHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Мои объявления</h3>
-                      <p className="text-sm text-muted-foreground">Управляйте своими предложениями и запросами</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <Link to="/my-offers">
-                        <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                          <Icon name="Package" className="h-4 w-4" />
-                          Мои предложения
-                        </Button>
-                      </Link>
-                      <Link to="/my-requests">
-                        <Button variant="outline" className="w-full flex items-center justify-center gap-2">
-                          <Icon name="ShoppingBag" className="h-4 w-4" />
-                          Мои запросы
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            )}
+          <ProfileEditForm
+            isEditing={isEditing}
+            isSaving={isSaving}
+            formData={formData}
+            errors={errors}
+            onInputChange={handleInputChange}
+            onSave={handleSave}
+            onCancel={handleCancelEdit}
+          />
 
-            {isViewingOwnProfile && (
-              <Card>
-                <CardHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Быстрые действия</h3>
-                      <p className="text-sm text-muted-foreground">Создавайте предложения и запросы</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <Link to="/create-offer">
-                        <Button className="w-full flex items-center justify-center gap-2">
-                          <Icon name="Plus" className="h-4 w-4" />
-                          Создать предложение
-                        </Button>
-                      </Link>
-                      <Link to="/create-request">
-                        <Button className="w-full flex items-center justify-center gap-2">
-                          <Icon name="Plus" className="h-4 w-4" />
-                          Создать запрос
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            )}
+          <ProfilePasswordForm
+            isChangingPassword={isChangingPassword}
+            isSaving={isSaving}
+            passwordData={passwordData}
+            passwordErrors={passwordErrors}
+            onPasswordChange={handlePasswordChange}
+            onSave={handleSavePassword}
+            onCancel={handleCancelChangePassword}
+          />
 
-            <ProfileInfoCard
-              email={currentUser.email}
-              isEditing={isViewingOwnProfile && isEditing}
-              formData={formData}
-              errors={errors}
-              isSaving={isSaving}
-              userType={currentUser.userType}
-              onEdit={isViewingOwnProfile ? () => setIsEditing(true) : undefined}
-              onSave={handleSave}
-              onCancel={handleCancel}
-              onInputChange={handleInputChange}
-            />
+          <ProfileInfoCard
+            user={currentUser}
+            getUserTypeLabel={getUserTypeLabel}
+            formatDate={formatDate}
+            isViewingOwnProfile={isViewingOwnProfile}
+          />
 
-            {isViewingOwnProfile && (
-              <ProfileSecurityCard
-                isChangingPassword={isChangingPassword}
-                passwordData={passwordData}
-                passwordErrors={passwordErrors}
-                isSaving={isSaving}
-                lastLoginDate={currentUser.createdAt || ''}
-                formatDate={formatDate}
-                onChangePassword={() => setIsChangingPassword(true)}
-                onPasswordSave={handlePasswordSave}
-                onCancelPassword={handleCancelPassword}
-                onPasswordChange={handlePasswordChange}
-              />
-            )}
+          <ProfileSecurityCard user={currentUser} isViewingOwnProfile={isViewingOwnProfile} />
 
-            {isViewingOwnProfile && <NotificationSettings userId={String(currentUser.id)} />}
+          <ProfileStatsCard user={currentUser} />
 
-            {isViewingOwnProfile && <EmailNotificationSettings userId={String(currentUser.id)} userEmail={currentUser.email} />}
+          <ProfileVerificationCard user={currentUser} isViewingOwnProfile={isViewingOwnProfile} />
 
-            {isViewingOwnProfile && <TelegramNotificationSettings userId={String(currentUser.id)} />}
-
-            <ProfileStatsCard
-              registrationDate={currentUser.createdAt || ''}
-              formatDate={formatDate}
-            />
-
-            {isViewingOwnProfile && currentUser.email === 'doydum-invest@mail.ru' && (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">Администрирование</h3>
-                      <p className="text-sm text-muted-foreground">Доступ к панели управления системой</p>
-                    </div>
-                    <Link to="/admin">
-                      <Button variant="outline" className="flex items-center gap-2">
-                        <Icon name="Shield" className="h-4 w-4" />
-                        Админ-панель
-                      </Button>
-                    </Link>
-                  </div>
-                </CardHeader>
-              </Card>
-            )}
-          </div>
+          {isViewingOwnProfile && (
+            <>
+              <NotificationSettings />
+              <TelegramNotificationSettings />
+              <EmailNotificationSettings />
+            </>
+          )}
         </div>
       </main>
 
