@@ -94,6 +94,56 @@ export const useProfileForm = (
 
     setIsSaving(true);
     try {
+      const typeChanged = formData.userType !== currentUser?.userType;
+      const needsVerification = ['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || '');
+      
+      // Если изменился тип на тот, который требует верификации, проверяем ИНН
+      if (typeChanged && needsVerification && formData.inn) {
+        try {
+          const response = await fetch('https://functions.poehali.dev/966b73dd-99eb-4b00-aef4-ed100a06f958', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inn: formData.inn,
+              userType: formData.userType,
+              userId: currentUser?.id,
+              companyName: formData.companyName,
+              ogrnip: formData.ogrnip,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            toast({
+              title: 'Ошибка проверки ИНН',
+              description: result.error || 'Не удалось проверить ИНН через ФНС',
+              variant: 'destructive',
+            });
+            setIsSaving(false);
+            return;
+          }
+
+          // Автозаполнение данных из ФНС
+          if (result.verified) {
+            toast({
+              title: 'ИНН проверен',
+              description: `Организация: ${result.verified.name}`,
+            });
+          }
+        } catch (error) {
+          toast({
+            title: 'Ошибка',
+            description: 'Не удалось связаться с сервисом проверки ИНН',
+            variant: 'destructive',
+          });
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const updatedUser = {
         ...currentUser,
         firstName: formData.firstName,
@@ -105,19 +155,17 @@ export const useProfileForm = (
         ogrnip: formData.ogrnip,
         companyName: formData.companyName,
         ogrn: formData.ogrn,
-        isVerified: false,
+        isVerified: typeChanged ? false : currentUser?.isVerified,
       };
 
       updateUser(updatedUser);
       setCurrentUser(updatedUser);
       setIsEditing(false);
       
-      const typeChanged = formData.userType !== currentUser?.userType;
-      
       toast({
         title: 'Успешно',
-        description: typeChanged 
-          ? 'Профиль обновлён. Требуется повторная верификация для нового типа аккаунта.'
+        description: typeChanged && needsVerification
+          ? 'Профиль обновлён. Заявка на верификацию отправлена администратору.'
           : 'Профиль обновлён',
       });
     } catch (error) {

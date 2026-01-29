@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "name": "Test INN verification - valid legal entity",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "inn": "7707083893",
+        "userType": "legal-entity",
+        "userId": 1,
+        "companyName": "ПАО СБЕРБАНК"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "requestId": "number",
+        "verified": {
+          "name": "string",
+          "inn": "string",
+          "status": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test INN verification - missing INN",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "userType": "legal-entity",
+        "userId": 1
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
