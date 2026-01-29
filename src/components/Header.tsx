@@ -189,7 +189,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0"
+            className={`flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
+              location.pathname === '/home' || location.pathname === '/' ? 'border-[3px] border-primary' : 'border-2 border-primary/20'
+            }`}
           >
             <div className="h-8 w-8 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center">
               <img 
@@ -214,11 +216,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {(unreadNotifications > 0 || ordersCount > 0) && (
-                <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-red-500 flex items-center justify-center border border-white">
-                  <span className="text-[9px] text-white font-bold">
-                    {unreadNotifications + ordersCount > 9 ? '9+' : unreadNotifications + ordersCount}
-                  </span>
-                </div>
+                <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 border border-white" />
               )}
               {mobileMenuOpen ? "Закрыть" : "Меню"}
             </button>
