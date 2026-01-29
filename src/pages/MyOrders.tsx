@@ -6,7 +6,6 @@ import DataSyncIndicator from '@/components/DataSyncIndicator';
 import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrdersContent from '@/components/order/OrdersContent';
-import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData } from '@/hooks/useOrdersData';
 
@@ -81,15 +80,10 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const sellerOrdersCount = orders.filter(order => order.type === 'sale' && order.status !== 'completed' && order.status !== 'cancelled').length;
   const archiveOrdersCount = orders.filter(order => order.status === 'completed' || order.status === 'cancelled').length;
 
-  const handleRefresh = async () => {
-    await loadOrders(true);
-  };
-
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-        <DataSyncIndicator isVisible={isSyncing} />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
+      <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      <DataSyncIndicator isVisible={isSyncing} />
       
       <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
         <BackButton />
@@ -162,7 +156,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? handleCompleteOrder : undefined}
         />
       )}
-      </div>
-    </PullToRefresh>
+    </div>
   );
 }
