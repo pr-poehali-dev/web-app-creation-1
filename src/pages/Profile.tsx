@@ -417,11 +417,27 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             />
           )}
 
-          <ProfileSecurityCard user={currentUser} isViewingOwnProfile={isViewingOwnProfile} />
+          {isViewingOwnProfile && !isChangingPassword && (
+            <ProfileSecurityCard
+              isChangingPassword={false}
+              passwordData={passwordData}
+              passwordErrors={passwordErrors}
+              isSaving={isSaving}
+              lastLoginDate={currentUser.createdAt || ''}
+              formatDate={formatDate}
+              onChangePassword={handleChangePassword}
+              onPasswordSave={handleSavePassword}
+              onCancelPassword={handleCancelChangePassword}
+              onPasswordChange={handlePasswordChange}
+            />
+          )}
 
-          <ProfileStatsCard user={currentUser} />
+          <ProfileStatsCard
+            registrationDate={currentUser.createdAt || ''}
+            formatDate={formatDate}
+          />
 
-          <ProfileVerificationCard user={currentUser} isViewingOwnProfile={isViewingOwnProfile} />
+          {isViewingOwnProfile && <ProfileVerificationCard />}
 
           {isViewingOwnProfile && (
             <>
