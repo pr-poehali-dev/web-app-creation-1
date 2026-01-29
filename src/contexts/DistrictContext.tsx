@@ -130,7 +130,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   const setSelectedRegion = (region: string) => {
     setSelectedRegionState(region);
     if (region !== selectedRegion) {
-      setSelectedDistrictsState([]);
+      if (detectedDistrictId) {
+        setSelectedDistrictsState([detectedDistrictId]);
+      } else {
+        setSelectedDistrictsState([]);
+      }
     }
     
     // Сразу обновляем доступные районы
@@ -152,7 +156,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
 
   const toggleDistrict = (districtId: string) => {
     if (districtId === 'all') {
-      setSelectedDistrictsState([]);
+      if (detectedDistrictId) {
+        setSelectedDistrictsState([detectedDistrictId]);
+      } else {
+        setSelectedDistrictsState([]);
+      }
       return;
     }
 
@@ -160,7 +168,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       const isDetectedDistrict = districtId === detectedDistrictId;
       
       if (prev.includes(districtId)) {
-        if (isDetectedDistrict && prev.length === 1) {
+        if (isDetectedDistrict) {
           return prev;
         }
         return prev.filter(id => id !== districtId);
