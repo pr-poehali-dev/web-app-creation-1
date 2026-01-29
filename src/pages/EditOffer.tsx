@@ -306,7 +306,7 @@ export default function EditOffer() {
 
       <EditOfferDeleteDialog
         isOpen={showDeleteDialog}
-        orders={orders}
+        orders={orders.filter(o => o.status === 'new' || o.status === 'accepted')}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={confirmDelete}
         onDeleteOrder={handleDeleteOrder}
