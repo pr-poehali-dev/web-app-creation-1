@@ -6,12 +6,22 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +39,7 @@ import { useOffers } from '@/contexts/OffersContext';
 import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { getExpirationStatus } from '@/utils/expirationFilter';
 
 interface MyOffersProps {
   isAuthenticated: boolean;
@@ -68,6 +79,8 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const [filterStatus, setFilterStatus] = useState<'all' | OfferStatus>('all');
   const [offerToDelete, setOfferToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [extendDialogOffer, setExtendDialogOffer] = useState<MyOffer | null>(null);
+  const [newExpiryDate, setNewExpiryDate] = useState('');
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -114,6 +127,26 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       title: 'Успешно',
       description: 'Предложение опубликовано',
     });
+  };
+
+  const handleExtendExpiry = (offer: MyOffer) => {
+    setExtendDialogOffer(offer);
+    const currentExpiry = offer.expiryDate ? new Date(offer.expiryDate) : new Date();
+    const tomorrow = new Date(currentExpiry);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setNewExpiryDate(tomorrow.toISOString().split('T')[0]);
+  };
+
+  const confirmExtendExpiry = () => {
+    if (!extendDialogOffer || !newExpiryDate) return;
+    
+    toast({
+      title: 'Функция в разработке',
+      description: `Продление срока публикации будет доступно после подключения платёжной системы`,
+    });
+    
+    setExtendDialogOffer(null);
+    setNewExpiryDate('');
   };
 
   const getOfferStats = () => {
@@ -201,6 +234,27 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
               <p className="text-xs text-muted-foreground mt-1">{districtName}</p>
             </div>
           </div>
+          {(() => {
+            const expirationInfo = getExpirationStatus(offer);
+            return expirationInfo.expiryDate ? (
+              <div className="pt-2 border-t">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Icon name="Clock" className="h-4 w-4" />
+                    <span className={expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : ''}>
+                      {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
+                        ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
+                        : 'Истекает сегодня'
+                      }
+                    </span>
+                  </div>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => handleExtendExpiry(offer)}>
+                    Продлить
+                  </Button>
+                </div>
+              </div>
+            ) : null;
+          })()}
         </CardContent>
 
         <CardFooter className="pt-0 flex gap-2">
@@ -224,6 +278,10 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
               <DropdownMenuItem disabled>
                 <Icon name="Pencil" className="mr-2 h-4 w-4" />
                 Редактировать
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExtendExpiry(offer)}>
+                <Icon name="Clock" className="mr-2 h-4 w-4" />
+                Продлить публикацию
               </DropdownMenuItem>
               {offer.status === 'draft' && (
                 <DropdownMenuItem onClick={() => handleActivateOffer(offer.id)}>
@@ -371,6 +429,44 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!extendDialogOffer} onOpenChange={() => setExtendDialogOffer(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Продлить публикацию</DialogTitle>
+            <DialogDescription>
+              Выберите новую дату окончания публикации. После подключения платёжной системы продление будет платным.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="newExpiryDate">Новая дата окончания</Label>
+              <Input
+                id="newExpiryDate"
+                type="date"
+                value={newExpiryDate}
+                onChange={(e) => setNewExpiryDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className="mt-2"
+              />
+            </div>
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="font-medium mb-1">💡 Информация</p>
+              <p className="text-muted-foreground">
+                Продление публикации позволяет вашему предложению оставаться активным дольше. В будущем эта функция будет платной.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExtendDialogOffer(null)}>
+              Отмена
+            </Button>
+            <Button onClick={confirmExtendExpiry} disabled={!newExpiryDate}>
+              Продлить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

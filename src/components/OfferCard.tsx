@@ -21,6 +21,7 @@ import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
+import { getExpirationStatus } from '@/utils/expirationFilter';
 
 interface OfferCardProps {
   offer: Offer;
@@ -41,6 +42,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const category = CATEGORIES.find(c => c.id === offer.category);
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
+  const expirationInfo = getExpirationStatus(offer);
   
   const formatLocation = (location: string) => {
     let cityName = '';
@@ -229,7 +231,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           </div>
         </div>
 
-        <div className="pt-2 border-t text-xs">
+        <div className="pt-2 border-t text-xs space-y-1.5">
           <div className="flex items-start gap-1.5 text-muted-foreground">
             <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
             <div className="flex flex-col gap-0.5 min-w-0">
@@ -239,6 +241,17 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               )}
             </div>
           </div>
+          {expirationInfo.expiryDate && (
+            <div className="flex items-center gap-1.5">
+              <Icon name="Clock" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              <span className={`text-xs ${expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
+                  ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
+                  : 'Истекает сегодня'
+                }
+              </span>
+            </div>
+          )}
         </div>
       </CardContent>
 

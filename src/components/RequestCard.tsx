@@ -16,6 +16,7 @@ import Icon from '@/components/ui/icon';
 import type { Request } from '@/types/offer';
 import { getSession } from '@/utils/auth';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { getExpirationStatus } from '@/utils/expirationFilter';
 
 interface RequestCardProps {
   request: Request;
@@ -31,6 +32,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   
   const isOwner = currentUser && request.userId === currentUser.id;
   const districtName = districts.find(d => d.id === request.district)?.name;
+  const expirationInfo = getExpirationStatus(request);
 
   const handleCardClick = () => {
     // Если это свой запрос - открываем редактирование
@@ -86,6 +88,17 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               )}
             </div>
           </div>
+          {expirationInfo.expiryDate && (
+            <div className="flex items-center gap-1.5 text-xs">
+              <Icon name="Clock" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              <span className={expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+                {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
+                  ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
+                  : 'Истекает сегодня'
+                }
+              </span>
+            </div>
+          )}
           
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-bold text-primary">

@@ -406,6 +406,33 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
                 <CardHeader>
                   <div className="space-y-4">
                     <div>
+                      <h3 className="text-lg font-semibold mb-2">Мои объявления</h3>
+                      <p className="text-sm text-muted-foreground">Управляйте своими предложениями и запросами</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Link to="/my-offers">
+                        <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                          <Icon name="Package" className="h-4 w-4" />
+                          Мои предложения
+                        </Button>
+                      </Link>
+                      <Link to="/my-requests">
+                        <Button variant="outline" className="w-full flex items-center justify-center gap-2">
+                          <Icon name="ShoppingBag" className="h-4 w-4" />
+                          Мои запросы
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            )}
+
+            {isViewingOwnProfile && (
+              <Card>
+                <CardHeader>
+                  <div className="space-y-4">
+                    <div>
                       <h3 className="text-lg font-semibold mb-2">Быстрые действия</h3>
                       <p className="text-sm text-muted-foreground">Создавайте предложения и запросы</p>
                     </div>
