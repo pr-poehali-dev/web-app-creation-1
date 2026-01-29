@@ -9,9 +9,10 @@ interface OrderCardProps {
   isSeller: boolean;
   onOpenChat: (order: Order) => void;
   onAcceptOrder?: (orderId: string) => void;
+  onCompleteOrder?: (orderId: string) => void;
 }
 
-export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }: OrderCardProps) {
+export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder }: OrderCardProps) {
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -122,24 +123,39 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
         )}
 
         <div className="flex gap-2">
-          <Button
-            onClick={() => onOpenChat(order)}
-            variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
-            className="flex-1"
-            size="sm"
-          >
-            <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-            {order.status === 'completed' || order.status === 'cancelled' ? 'История' : 'Чат'}
-          </Button>
-          {isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder && (
-            <Button
-              onClick={() => onAcceptOrder(order.id)}
-              className="flex-1"
-              size="sm"
-            >
-              <Icon name="Check" className="mr-1.5 h-4 w-4" />
-              Принять заказ
-            </Button>
+          {order.status === 'accepted' && !isSeller && onCompleteOrder ? (
+            <>
+              <Button
+                onClick={() => onCompleteOrder(order.id)}
+                className="flex-1"
+                size="sm"
+              >
+                <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
+                Завершить заказ
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={() => onOpenChat(order)}
+                variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
+                className="flex-1"
+                size="sm"
+              >
+                <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+                {order.status === 'completed' || order.status === 'cancelled' ? 'История' : 'Чат'}
+              </Button>
+              {isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder && (
+                <Button
+                  onClick={() => onAcceptOrder(order.id)}
+                  className="flex-1"
+                  size="sm"
+                >
+                  <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                  Принять заказ
+                </Button>
+              )}
+            </>
           )}
         </div>
       </CardContent>

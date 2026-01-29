@@ -114,6 +114,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               isLoading={isLoading}
               onOpenChat={handleOpenChat}
               onAcceptOrder={handleAcceptOrder}
+              onCompleteOrder={handleCompleteOrder}
             />
           </TabsContent>
 

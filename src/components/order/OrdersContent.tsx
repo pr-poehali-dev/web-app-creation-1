@@ -12,6 +12,7 @@ interface OrdersContentProps {
   isLoading: boolean;
   onOpenChat: (order: Order) => void;
   onAcceptOrder: (orderId: string) => void;
+  onCompleteOrder?: (orderId: string) => void;
 }
 
 export default function OrdersContent({
@@ -21,6 +22,7 @@ export default function OrdersContent({
   isLoading,
   onOpenChat,
   onAcceptOrder,
+  onCompleteOrder,
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -94,6 +96,7 @@ export default function OrdersContent({
             isSeller={isSeller}
             onOpenChat={onOpenChat}
             onAcceptOrder={isSeller ? onAcceptOrder : undefined}
+            onCompleteOrder={!isSeller ? onCompleteOrder : undefined}
           />
         ))}
       </div>
