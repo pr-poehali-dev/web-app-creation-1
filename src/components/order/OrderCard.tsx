@@ -79,7 +79,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
             </div>
           )}
           <div>
-            <p className="text-muted-foreground">Доставка</p>
+            <p className="text-muted-foreground">Способ получения</p>
             <p className="font-medium">
               {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
             </p>
