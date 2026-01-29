@@ -539,12 +539,14 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"status = 'accepted'")
         counter_accepted = True
         
-        # Уменьшаем количество в предложении
+        # Переносим количество из reserved в sold
         offer_id_escaped = str(order['offer_id']).replace("'", "''")
         order_quantity = order['quantity']
         cur.execute(f"""
             UPDATE {schema}.offers 
-            SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
+            SET 
+                sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
+                reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
             WHERE id = '{offer_id_escaped}'
         """)
     
@@ -577,10 +579,12 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                     'isBase64Encoded': False
                 }
             
-            # Уменьшаем количество в предложении
+            # Переносим количество из reserved в sold
             cur.execute(f"""
                 UPDATE {schema}.offers 
-                SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
+                SET 
+                    sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
+                    reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
                 WHERE id = '{offer_id_escaped}'
             """)
         
@@ -609,6 +613,16 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         cancelled_by = 'seller' if is_seller else 'buyer'
         updates.append(f"cancelled_by = '{cancelled_by}'")
         
+        # Возвращаем зарезервированное количество в предложение
+        offer_id_escaped = str(order['offer_id']).replace("'", "''")
+        order_quantity = order['quantity']
+        cur.execute(f"""
+            UPDATE {schema}.offers 
+            SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
+            WHERE id = '{offer_id_escaped}'
+        """)
+        print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
+        
         # Если отменил продавец - снижаем его рейтинг на 5%
         if is_seller:
             seller_id = order['seller_id']
@@ -618,6 +632,21 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 WHERE id = {seller_id}
             """)
             print(f"[CANCEL_ORDER] Seller {seller_id} rating decreased by 5%")
+    
+    # Отклонение заказа - возвращаем зарезервированное количество
+    elif 'status' in body and body['status'] == 'rejected':
+        status_escaped = body['status'].replace("'", "''")
+        updates.append(f"status = '{status_escaped}'")
+        
+        # Возвращаем зарезервированное количество в предложение
+        offer_id_escaped = str(order['offer_id']).replace("'", "''")
+        order_quantity = order['quantity']
+        cur.execute(f"""
+            UPDATE {schema}.offers 
+            SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
+            WHERE id = '{offer_id_escaped}'
+        """)
+        print(f"[REJECT_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
     
     # Обычное обновление статуса
     elif 'status' in body and body['status'] != 'accepted':
