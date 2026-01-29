@@ -168,13 +168,10 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       const isDetectedDistrict = districtId === detectedDistrictId;
       
       if (prev.includes(districtId)) {
-        if (isDetectedDistrict) {
-          return prev;
-        }
         return prev.filter(id => id !== districtId);
       } else {
-        if (detectedDistrictId && !prev.includes(detectedDistrictId)) {
-          return [detectedDistrictId, districtId];
+        if (detectedDistrictId && !prev.includes(detectedDistrictId) && !isDetectedDistrict) {
+          return [detectedDistrictId, ...prev, districtId];
         }
         return [...prev, districtId];
       }
