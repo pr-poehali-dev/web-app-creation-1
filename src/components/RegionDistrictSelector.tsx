@@ -216,7 +216,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </Button>
                 </div>
               </div>
-              <div className="border-b shrink-0">
+              <div className="border-b shrink-0 relative">
                 <Command shouldFilter={false}>
                   <CommandInput 
                     placeholder="Поиск района..." 
@@ -224,6 +224,16 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                     onValueChange={setSearchQuery}
                   />
                 </Command>
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
+                  >
+                    <Icon name="X" className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
               <div className="overflow-y-auto flex-1 min-h-0">
                 <Command shouldFilter={false}>
