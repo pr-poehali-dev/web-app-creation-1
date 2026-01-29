@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { getSession } from '@/utils/auth';
+import { getSession, saveSession } from '@/utils/auth';
 
 export interface User {
   id?: number;
@@ -80,6 +80,11 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
       
       profileCache.set(userId, { data: userData, timestamp: Date.now() });
       setCurrentUser(userData);
+      
+      // Если это собственный профиль, обновляем localStorage
+      if (userId === String(sessionUser?.id)) {
+        saveSession(userData);
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
       toast({
@@ -99,8 +104,12 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
       return;
     }
     
+    // Всегда загружаем свежие данные с сервера
     if (viewingUserId && viewingUserId !== String(sessionUser?.id)) {
       fetchUserProfile(viewingUserId);
+    } else if (sessionUser?.id) {
+      // Даже для своего профиля загружаем данные с сервера
+      fetchUserProfile(String(sessionUser.id));
     } else {
       setCurrentUser(sessionUser);
       setIsLoadingProfile(false);
