@@ -100,15 +100,22 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
       return 'Все регионы';
     }
     
-    if (selectedDistricts.length > 1) {
-      return `+${selectedDistricts.length - 1}`;
-    }
-    
     return selectedRegionData?.name || 'Выбран регион';
   };
 
   const getSubtitleText = () => {
-    return null;
+    if (selectedRegion === 'all' || selectedDistricts.length === 0) {
+      return null;
+    }
+    
+    const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
+    if (!firstDistrict) return null;
+    
+    if (selectedDistricts.length === 1) {
+      return firstDistrict.name;
+    }
+    
+    return `${firstDistrict.name} +${selectedDistricts.length - 1}`;
   };
 
   return (
