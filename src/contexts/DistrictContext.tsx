@@ -74,7 +74,12 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         const districts = getDistrictsByRegion(regionId);
         setAvailableDistricts(districts);
         
-        const district = findDistrictByName(storedLocation.district, regionId);
+        let district = DISTRICTS.find(d => d.id === storedLocation.district);
+        
+        if (!district) {
+          district = findDistrictByName(storedLocation.district, regionId);
+        }
+        
         console.log('🎯 Найден район:', district);
         
         if (district) {
@@ -84,10 +89,15 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
           console.log('✅ Установлен detectedDistrictId:', district.id);
           
           const storedDistricts = localStorage.getItem('selectedDistricts');
-          if (!storedDistricts || JSON.parse(storedDistricts).length === 0) {
-            setSelectedDistrictsState([district.id]);
-            localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
-            console.log('✅ Установлены selectedDistricts:', [district.id]);
+          const parsedDistricts = storedDistricts ? JSON.parse(storedDistricts) : [];
+          
+          if (!parsedDistricts.includes(district.id)) {
+            const newDistricts = [district.id, ...parsedDistricts];
+            setSelectedDistrictsState(newDistricts);
+            localStorage.setItem('selectedDistricts', JSON.stringify(newDistricts));
+            console.log('✅ Добавлен район местоположения в selectedDistricts:', newDistricts);
+          } else {
+            console.log('✅ Район местоположения уже в selectedDistricts');
           }
         } else {
           console.log('⚠️ Район не найден для:', storedLocation.district);
