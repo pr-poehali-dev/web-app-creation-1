@@ -210,14 +210,11 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           {/* Mobile buttons */}
           <div className="md:hidden flex items-center gap-1 flex-1 justify-end">
             <button
-              className={`h-8 px-2 text-[10px] font-bold text-primary uppercase rounded-md hover:bg-primary/10 transition-all shrink-0 relative ${
-                mobileMenuOpen ? 'border-[3px] border-primary' : 'border-2 border-primary/20'
+              className={`h-8 px-2 text-[10px] font-bold text-primary uppercase rounded-md hover:bg-primary/10 transition-all shrink-0 ${
+                mobileMenuOpen ? 'border-[3px] border-primary shadow-md' : 'border-[2.5px] border-primary/50'
               }`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
-              {(unreadNotifications > 0 || ordersCount > 0) && (
-                <div className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 border border-white" />
-              )}
               {mobileMenuOpen ? "Закрыть" : "Меню"}
             </button>
             {shouldShowDistricts() && (
