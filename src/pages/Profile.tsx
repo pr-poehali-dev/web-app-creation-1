@@ -373,15 +373,6 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             onEdit={handleEdit}
           />
 
-          <ProfileListingsSection isViewingOwnProfile={isViewingOwnProfile} />
-
-          <ProfileQuickActions
-            isViewingOwnProfile={isViewingOwnProfile}
-            isChangingPassword={isChangingPassword}
-            onChangePassword={handleChangePassword}
-            onCancelChangePassword={handleCancelChangePassword}
-          />
-
           <ProfileEditForm
             isEditing={isEditing}
             isSaving={isSaving}
@@ -390,6 +381,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             onInputChange={handleInputChange}
             onSave={handleSave}
             onCancel={handleCancelEdit}
+            onChangePassword={handleChangePassword}
           />
 
           <ProfilePasswordForm

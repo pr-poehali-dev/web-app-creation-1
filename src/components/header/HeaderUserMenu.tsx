@@ -87,6 +87,14 @@ export default function HeaderUserMenu({
           <Icon name="User" className="mr-2 h-4 w-4" />
           Мои данные
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/predlozheniya?my=true')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="Package" className="mr-2 h-4 w-4" />
+          Мои предложения
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/zaprosy?my=true')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="FileText" className="mr-2 h-4 w-4" />
+          Мои запросы
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/my-auctions')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Gavel" className="mr-2 h-4 w-4" />
           Мои аукционы

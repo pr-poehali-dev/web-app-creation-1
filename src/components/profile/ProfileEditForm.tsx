@@ -25,6 +25,7 @@ interface ProfileEditFormProps {
   onInputChange: (field: keyof FormData, value: string) => void;
   onSave: () => void;
   onCancel: () => void;
+  onChangePassword: () => void;
 }
 
 export default function ProfileEditForm({
@@ -35,6 +36,7 @@ export default function ProfileEditForm({
   onInputChange,
   onSave,
   onCancel,
+  onChangePassword,
 }: ProfileEditFormProps) {
   if (!isEditing) return null;
 
@@ -106,23 +108,30 @@ export default function ProfileEditForm({
           )}
         </div>
 
-        <div className="flex gap-2 pt-2">
-          <Button onClick={onSave} disabled={isSaving} className="flex-1">
-            {isSaving ? (
-              <>
-                <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                Сохранение...
-              </>
-            ) : (
-              <>
-                <Icon name="Check" className="mr-2 h-4 w-4" />
-                Сохранить
-              </>
-            )}
+        <div className="flex flex-col gap-2 pt-2">
+          <Button onClick={onChangePassword} variant="outline" disabled={isSaving} className="w-full">
+            <Icon name="Lock" className="mr-2 h-4 w-4" />
+            Сменить пароль
           </Button>
-          <Button onClick={onCancel} variant="outline" disabled={isSaving}>
-            Отмена
-          </Button>
+          
+          <div className="flex gap-2">
+            <Button onClick={onSave} disabled={isSaving} className="flex-1">
+              {isSaving ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Сохранение...
+                </>
+              ) : (
+                <>
+                  <Icon name="Check" className="mr-2 h-4 w-4" />
+                  Сохранить
+                </>
+              )}
+            </Button>
+            <Button onClick={onCancel} variant="outline" disabled={isSaving}>
+              Отмена
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
