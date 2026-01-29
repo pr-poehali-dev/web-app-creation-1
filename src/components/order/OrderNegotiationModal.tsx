@@ -42,7 +42,12 @@ export default function OrderNegotiationModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b">
-          <DialogTitle>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</DialogTitle>
+          <DialogTitle className="space-y-1">
+            <div>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</div>
+            <div className="text-sm font-normal text-muted-foreground">
+              {isBuyer ? `Продавец: ${order.sellerName}` : `Покупатель: ${order.buyerName}`}
+            </div>
+          </DialogTitle>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
