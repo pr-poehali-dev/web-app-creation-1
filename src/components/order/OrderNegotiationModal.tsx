@@ -61,6 +61,7 @@ export default function OrderNegotiationModal({
               order={order}
               isBuyer={isBuyer}
               contactPerson={contactPerson}
+              onCancelOrder={onCancelOrder ? () => onCancelOrder() : undefined}
             />
           </div>
         </div>

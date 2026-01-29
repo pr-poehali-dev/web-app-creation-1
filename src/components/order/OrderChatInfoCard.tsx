@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
 
@@ -11,9 +12,10 @@ interface OrderChatInfoCardProps {
     phone: string;
     email: string;
   };
+  onCancelOrder?: (orderId: string) => void;
 }
 
-export default function OrderChatInfoCard({ order, isBuyer, contactPerson }: OrderChatInfoCardProps) {
+export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder }: OrderChatInfoCardProps) {
   return (
     <Card className="bg-muted/50">
       <CardContent className="pt-4 space-y-2">
@@ -83,6 +85,21 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson }: Ord
                 </a>
               </div>
             </div>
+          </>
+        )}
+
+        {onCancelOrder && order.status !== 'completed' && order.status !== 'cancelled' && (
+          <>
+            <Separator />
+            <Button
+              onClick={() => onCancelOrder(order.id)}
+              variant="destructive"
+              size="sm"
+              className="w-full"
+            >
+              <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+              Отменить заказ
+            </Button>
           </>
         )}
       </CardContent>
