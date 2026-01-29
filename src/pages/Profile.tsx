@@ -402,12 +402,20 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             onCancel={handleCancelChangePassword}
           />
 
-          <ProfileInfoCard
-            user={currentUser}
-            getUserTypeLabel={getUserTypeLabel}
-            formatDate={formatDate}
-            isViewingOwnProfile={isViewingOwnProfile}
-          />
+          {!isEditing && (
+            <ProfileInfoCard
+              email={currentUser.email || ''}
+              isEditing={false}
+              formData={formData}
+              errors={errors}
+              isSaving={isSaving}
+              userType={currentUser.userType}
+              onEdit={handleEdit}
+              onSave={handleSave}
+              onCancel={handleCancelEdit}
+              onInputChange={handleInputChange}
+            />
+          )}
 
           <ProfileSecurityCard user={currentUser} isViewingOwnProfile={isViewingOwnProfile} />
 
