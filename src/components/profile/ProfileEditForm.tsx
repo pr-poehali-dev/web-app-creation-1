@@ -253,11 +253,11 @@ export default function ProfileEditForm({
           </Button>
           
           <div className="flex gap-2">
-            <Button onClick={onSave} disabled={isSaving} className="flex-1">
+            <Button onClick={onSave} disabled={isSaving} className="flex-1 relative">
               {isSaving ? (
                 <>
                   <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                  Сохранение...
+                  <span className="opacity-75">Сохранение...</span>
                 </>
               ) : (
                 <>

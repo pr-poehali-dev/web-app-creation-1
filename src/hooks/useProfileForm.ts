@@ -92,6 +92,21 @@ export const useProfileForm = (
     
     if (!validation.isValid) return;
 
+    const updatedUser = {
+      ...currentUser,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      middleName: formData.middleName,
+      phone: formData.phone,
+      userType: formData.userType || currentUser?.userType,
+      inn: formData.inn,
+      ogrnip: formData.ogrnip,
+      companyName: formData.companyName,
+      ogrn: formData.ogrn,
+    };
+
+    setCurrentUser(updatedUser);
+    setIsEditing(false);
     setIsSaving(true);
     try {
       const typeChanged = formData.userType !== currentUser?.userType;
@@ -144,23 +159,13 @@ export const useProfileForm = (
         }
       }
 
-      const updatedUser = {
-        ...currentUser,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        middleName: formData.middleName,
-        phone: formData.phone,
-        userType: formData.userType || currentUser?.userType,
-        inn: formData.inn,
-        ogrnip: formData.ogrnip,
-        companyName: formData.companyName,
-        ogrn: formData.ogrn,
-        isVerified: typeChanged ? false : currentUser?.isVerified,
-      };
-
-      updateUser(updatedUser);
-      setCurrentUser(updatedUser);
-      setIsEditing(false);
+      if (typeChanged && needsVerification) {
+        const finalUser = { ...updatedUser, isVerified: false };
+        updateUser(finalUser);
+        setCurrentUser(finalUser);
+      } else {
+        updateUser(updatedUser);
+      }
       
       toast({
         title: 'Успешно',
@@ -169,6 +174,8 @@ export const useProfileForm = (
           : 'Профиль обновлён',
       });
     } catch (error) {
+      setIsEditing(true);
+      setCurrentUser(currentUser);
       toast({
         title: 'Ошибка',
         description: 'Не удалось обновить профиль',
