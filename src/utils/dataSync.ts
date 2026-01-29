@@ -84,10 +84,10 @@ class DataSyncManager {
   }
 
   private startBackgroundCheck() {
-    // Проверяем каждые 30 секунд (только localStorage, без запросов к серверу)
+    // Проверяем каждые 15 секунд (только localStorage, без запросов к серверу)
     this.intervalId = window.setInterval(() => {
       this.checkForUpdates();
-    }, 30000);
+    }, 15000);
   }
 
   private notifyListeners(type: string) {
