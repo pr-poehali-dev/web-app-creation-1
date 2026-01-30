@@ -159,7 +159,7 @@ export function useOfferDetail(id: string | undefined) {
     if (currentUser && offer && currentUser.id?.toString() === offer.userId) {
       toast({
         title: 'Невозможно создать заказ',
-        description: 'Нельзя купить собственное предложение',
+        description: 'Нельзя заказать собственное предложение',
         variant: 'destructive',
       });
       return;
