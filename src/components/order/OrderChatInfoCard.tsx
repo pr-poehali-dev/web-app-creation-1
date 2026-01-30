@@ -60,7 +60,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             <p className="text-muted-foreground">Конечная цена</p>
             <p className="font-medium text-primary">{order.pricePerUnit?.toLocaleString('ru-RU')} ₽/{order.unit}</p>
           </div>
-          {order.offerAvailableQuantity !== undefined && (
+          {order.status !== 'accepted' && order.status !== 'completed' && order.offerAvailableQuantity !== undefined && (
             <div>
               <p className="text-muted-foreground">Доступно</p>
               <p className="font-medium">{order.offerAvailableQuantity} {order.unit}</p>
