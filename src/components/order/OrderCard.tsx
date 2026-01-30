@@ -140,6 +140,19 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                 Завершить заказ
               </Button>
             </>
+          ) : isSeller && order.status === 'accepted' ? (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat(order);
+              }}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
+              Заказ в работе
+            </Button>
           ) : isSeller && (order.status === 'new' || order.status === 'pending') ? (
             <Button
               onClick={(e) => {
