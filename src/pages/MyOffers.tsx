@@ -65,11 +65,11 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
           limit: 100
         });
         
-        const loadedOffers: MyOffer[] = (response.offers || []).map((offer: Offer) => ({
+        const loadedOffers: MyOffer[] = (response.offers || []).map((offer: Offer & { favorites?: number }) => ({
           ...offer,
           status: (offer.status as OfferStatus) || 'active',
           views: offer.views || 0,
-          favorites: 0,
+          favorites: offer.favorites || 0,
         }));
         
         setMyOffers(loadedOffers);

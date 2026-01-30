@@ -79,6 +79,7 @@ export interface Offer {
   availableDeliveryTypes: DeliveryType[];
   viewsCount?: number;
   views?: number;
+  favorites?: number;
   orderedQuantity?: number;
   responses?: number;
   status?: 'active' | 'draft' | 'pending' | 'moderation' | 'archived';

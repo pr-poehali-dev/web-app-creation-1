@@ -213,6 +213,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         offers = cur.fetchall()
         
         images_map = {}
+        favorites_map = {}
         if len(offers) > 0:
             offer_ids = [str(offer['id']) for offer in offers]
             ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
@@ -224,6 +225,16 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             
             for img_row in images_results:
                 images_map[img_row['offer_id']] = [{'id': str(img_row['id']), 'url': img_row['url'], 'alt': ''}]
+            
+            # Загружаем количество избранного отдельным запросом
+            try:
+                favorites_sql = f"SELECT offer_id, COUNT(*) as count FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id IN ({ids_list}) GROUP BY offer_id"
+                cur.execute(favorites_sql)
+                favorites_results = cur.fetchall()
+                for fav_row in favorites_results:
+                    favorites_map[fav_row['offer_id']] = int(fav_row['count'])
+            except Exception as fav_error:
+                print(f'Warning: Could not load favorites: {str(fav_error)}')
         
         result = []
         for offer in offers:
@@ -252,6 +263,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'status': offer.get('status', 'active'),
                 'expiryDate': offer['expiry_date'].isoformat() if offer.get('expiry_date') else None,
                 'views': offer.get('views_count', 0) or 0,
+                'favorites': favorites_map.get(offer['id'], 0),
                 'images': images_map.get(offer['id'], []),
                 'seller': {
                     'rating': seller_rating
@@ -337,10 +349,9 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     cur.execute(sql)
     offer = cur.fetchone()
     
-    cur.close()
-    conn.close()
-    
     if not offer:
+        cur.close()
+        conn.close()
         return {
             'statusCode': 404,
             'headers': headers,
@@ -349,6 +360,18 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         }
     
     offer_dict = dict(offer)
+    
+    # Получаем количество избранного отдельным запросом
+    favorites_count = 0
+    try:
+        cur.execute(f"SELECT COUNT(*) as count FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id = '{offer_id_escaped}'")
+        fav_result = cur.fetchone()
+        favorites_count = int(fav_result['count']) if fav_result else 0
+    except Exception as fav_error:
+        print(f'Warning: Could not load favorites for offer {offer_id}: {str(fav_error)}')
+    
+    cur.close()
+    conn.close()
     
     # Конвертация дат
     created_at = offer_dict.pop('created_at', None)
@@ -409,6 +432,9 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         'reviewsCount': seller_reviews_count,
         'isVerified': seller_is_verified
     }
+    
+    # Добавляем favorites к ответу
+    offer_dict['favorites'] = favorites_count
     
     # ⚡ Кэшируем результат на 5 минут
     offers_cache.set(cache_key, offer_dict, ttl=300)
