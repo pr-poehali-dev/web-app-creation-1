@@ -99,17 +99,6 @@ export default function CounterOfferDisplay({
                       <Icon name="MessageSquare" className="mr-1 h-3.5 w-3.5" />
                       Встречное
                     </Button>
-                    {onCancelOrder && (
-                      <Button 
-                        onClick={onCancelOrder} 
-                        variant="destructive" 
-                        size="sm"
-                        className="text-[11px] px-2.5 py-1.5 h-auto"
-                      >
-                        <Icon name="X" className="mr-1 h-3.5 w-3.5" />
-                        Отменить
-                      </Button>
-                    )}
                   </div>
                 )}
                 
