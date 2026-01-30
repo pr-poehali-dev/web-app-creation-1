@@ -175,7 +175,8 @@ export default function OfferOrderModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <>
+    <Dialog open={isOpen && !isMapOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Оформление заказа</DialogTitle>
@@ -453,6 +454,6 @@ export default function OfferOrderModal({
           </div>
         )}
       </Suspense>
-    </Dialog>
+    </>
   );
 }
