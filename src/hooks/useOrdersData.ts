@@ -211,18 +211,6 @@ export function useOrdersData(
 
       console.log('[handleCounterOffer] API call successful');
 
-      // Мгновенно обновляем данные локально для быстрого отклика
-      setSelectedOrder({
-        ...selectedOrder,
-        status: 'negotiating',
-        quantity: finalQuantity,
-        counterPricePerUnit: price,
-        counterTotalAmount: price * finalQuantity,
-        counterOfferedBy: isSeller ? 'seller' : 'buyer',
-        counterOfferMessage: message,
-        counterOfferedAt: new Date(),
-      });
-
       toast({
         title: 'Встречное предложение отправлено',
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
@@ -231,13 +219,51 @@ export function useOrdersData(
       // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
       
-      // Дополнительно обновляем selectedOrder из свежих данных через 500мс
-      setTimeout(() => {
-        const updatedOrder = orders.find(o => o.id === selectedOrder.id);
-        if (updatedOrder) {
-          setSelectedOrder(updatedOrder);
-        }
-      }, 500);
+      // Получаем обновлённый заказ напрямую из API
+      const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+      
+      // Маппим данные с сервера в формат Order
+      const updatedOrder = {
+        id: updatedOrderData.id,
+        orderNumber: updatedOrderData.order_number || updatedOrderData.orderNumber,
+        offerId: updatedOrderData.offer_id,
+        offerTitle: updatedOrderData.offer_title || updatedOrderData.title,
+        offerImage: updatedOrderData.offer_image ? (typeof updatedOrderData.offer_image === 'string' ? JSON.parse(updatedOrderData.offer_image)[0]?.url : updatedOrderData.offer_image[0]?.url) : undefined,
+        quantity: updatedOrderData.quantity,
+        originalQuantity: updatedOrderData.original_quantity || updatedOrderData.originalQuantity,
+        unit: updatedOrderData.unit,
+        pricePerUnit: updatedOrderData.price_per_unit || updatedOrderData.pricePerUnit,
+        totalAmount: updatedOrderData.total_amount || updatedOrderData.totalAmount,
+        offerPricePerUnit: updatedOrderData.offerPricePerUnit,
+        offerAvailableQuantity: updatedOrderData.offerAvailableQuantity,
+        counterPricePerUnit: updatedOrderData.counter_price_per_unit || updatedOrderData.counterPricePerUnit,
+        counterTotalAmount: updatedOrderData.counter_total_amount || updatedOrderData.counterTotalAmount,
+        counterOfferMessage: updatedOrderData.counter_offer_message || updatedOrderData.counterOfferMessage,
+        counterOfferedAt: updatedOrderData.counter_offered_at || updatedOrderData.counterOfferedAt ? new Date(updatedOrderData.counter_offered_at || updatedOrderData.counterOfferedAt) : undefined,
+        counterOfferedBy: updatedOrderData.counter_offered_by || updatedOrderData.counterOfferedBy,
+        buyerAcceptedCounter: updatedOrderData.buyer_accepted_counter || updatedOrderData.buyerAcceptedCounter,
+        buyerId: updatedOrderData.buyer_id?.toString() || updatedOrderData.buyerId,
+        buyerName: updatedOrderData.buyer_name || updatedOrderData.buyerName || updatedOrderData.buyer_full_name,
+        buyerPhone: updatedOrderData.buyer_phone || updatedOrderData.buyerPhone,
+        buyerEmail: updatedOrderData.buyer_email || updatedOrderData.buyerEmail,
+        sellerId: updatedOrderData.seller_id?.toString() || updatedOrderData.sellerId,
+        sellerName: updatedOrderData.seller_name || updatedOrderData.sellerName || updatedOrderData.seller_full_name,
+        sellerPhone: updatedOrderData.seller_phone || updatedOrderData.sellerPhone,
+        sellerEmail: updatedOrderData.seller_email || updatedOrderData.sellerEmail,
+        status: updatedOrderData.status,
+        deliveryType: updatedOrderData.delivery_type || updatedOrderData.deliveryType || 'delivery',
+        comment: updatedOrderData.comment,
+        type: updatedOrderData.type,
+        createdAt: new Date(updatedOrderData.createdAt || updatedOrderData.created_at),
+        acceptedAt: updatedOrderData.acceptedAt || updatedOrderData.accepted_at ? new Date(updatedOrderData.acceptedAt || updatedOrderData.accepted_at) : undefined,
+        completedDate: updatedOrderData.completedDate || updatedOrderData.completed_date ? new Date(updatedOrderData.completedDate || updatedOrderData.completed_date) : undefined,
+        cancelledBy: updatedOrderData.cancelled_by || updatedOrderData.cancelledBy,
+        cancellationReason: updatedOrderData.cancellation_reason || updatedOrderData.cancellationReason,
+        buyerCompany: updatedOrderData.buyer_company || updatedOrderData.buyerCompany,
+        buyerInn: updatedOrderData.buyer_inn || updatedOrderData.buyerInn,
+      };
+      
+      setSelectedOrder(updatedOrder);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
