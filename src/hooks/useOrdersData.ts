@@ -91,6 +91,8 @@ export function useOrdersData(
         unit: order.unit,
         pricePerUnit: order.price_per_unit || order.pricePerUnit,
         totalAmount: order.total_amount || order.totalAmount,
+        offerPricePerUnit: order.offerPricePerUnit,
+        offerAvailableQuantity: order.offerAvailableQuantity,
         counterPricePerUnit: order.counter_price_per_unit || order.counterPricePerUnit,
         counterTotalAmount: order.counter_total_amount || order.counterTotalAmount,
         counterOfferMessage: order.counter_offer_message || order.counterOfferMessage,
