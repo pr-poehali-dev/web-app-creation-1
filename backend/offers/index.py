@@ -774,8 +774,11 @@ def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         # Удаляем связи с изображениями
         cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
         
-        # Удаляем связи с видео
-        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_video_relations WHERE offer_id = '{offer_id_esc}'")
+        # Удаляем видео
+        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_videos WHERE offer_id = '{offer_id_esc}'")
+        
+        # Удаляем из избранного
+        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id = '{offer_id_esc}'")
         
         # Удаляем само предложение
         cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offers WHERE id = '{offer_id_esc}'")
