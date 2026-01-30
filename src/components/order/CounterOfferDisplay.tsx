@@ -43,7 +43,7 @@ export default function CounterOfferDisplay({
                         : isSeller && order.counterOfferedBy === 'seller'
                           ? 'Ваше встречное предложение продажи:'
                           : order.counterOfferedBy === 'buyer' 
-                            ? 'Встречное предложение покупателя:' 
+                            ? `Встречное предложение покупателя: ${order.buyerName}` 
                             : `Встречное предложение продавца: ${order.sellerName}`}
                     </span>
                   </span>
@@ -126,25 +126,15 @@ export default function CounterOfferDisplay({
             )}
             
             {isSeller && order.counterOfferedBy === 'seller' && (
-              <div className="flex items-center justify-between gap-2 mt-3">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                  <Icon name="Clock" className="h-3.5 w-3.5" />
-                  <span>Ожидание ответа</span>
-                </div>
-                <span className="text-sm font-semibold text-foreground">
-                  Покупатель: {order.buyerName}
-                </span>
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mt-3">
+                <Icon name="Clock" className="h-3.5 w-3.5" />
+                <span>Ожидание ответа покупателя</span>
               </div>
             )}
             {isBuyer && order.counterOfferedBy === 'buyer' && (
-              <div className="flex items-center justify-between gap-2 mt-3">
-                <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                  <Icon name="Clock" className="h-3.5 w-3.5" />
-                  <span>Ожидание ответа</span>
-                </div>
-                <span className="text-sm font-semibold text-foreground">
-                  Продавец: {order.sellerName}
-                </span>
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mt-3">
+                <Icon name="Clock" className="h-3.5 w-3.5" />
+                <span>Ожидание ответа продавца</span>
               </div>
             )}
           </div>
