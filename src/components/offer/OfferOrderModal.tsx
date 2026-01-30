@@ -439,18 +439,19 @@ export default function OfferOrderModal({
           </div>
         </form>
       </DialogContent>
+    </Dialog>
 
-      {isMapOpen && (
-        <div className="fixed inset-0 z-[100] bg-background">
-          <MapModal
-            isOpen={isMapOpen}
-            onClose={() => setIsMapOpen(false)}
-            coordinates={gpsCoordinates}
-            onCoordinatesChange={handleCoordinatesChange}
-            onAddressChange={handleAddressChange}
-          />
-        </div>
-      )}
+    {isMapOpen && (
+      <div className="fixed inset-0 z-[100] bg-background">
+        <MapModal
+          isOpen={isMapOpen}
+          onClose={() => setIsMapOpen(false)}
+          coordinates={gpsCoordinates}
+          onCoordinatesChange={handleCoordinatesChange}
+          onAddressChange={handleAddressChange}
+        />
+      </div>
+    )}
     </>
   );
 }
