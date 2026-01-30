@@ -35,7 +35,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts, detectedDistrictId } = useDistrict();
-  const { deleteRequest } = useOffers();
+  const { deleteRequest, setRequests: setGlobalRequests } = useOffers();
   const currentUser = getSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -94,11 +94,13 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
           ordersAPI.getAll('all')
         ]);
         
-        setRequests(requestsData.requests || []);
+        const loadedRequests = requestsData.requests || [];
+        setRequests(loadedRequests);
+        setGlobalRequests(loadedRequests);
         setOrders(ordersResponse.orders || []);
         
         // Сохраняем в умный кэш
-        SmartCache.set('requests_list', requestsData.requests || []);
+        SmartCache.set('requests_list', loadedRequests);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
       } finally {

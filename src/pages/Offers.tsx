@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync } from '@/utils/dataSync';
 import { filterActiveOffers } from '@/utils/expirationFilter';
+import { useOffers } from '@/contexts/OffersContext';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -31,6 +32,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const { selectedRegion, selectedDistricts, districts, detectedDistrictId } = useDistrict();
   const currentUser = getSession();
   const { toast } = useToast();
+  const { setOffers: setGlobalOffers } = useOffers();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -99,11 +101,13 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         
         if (!isMounted) return;
         
-        setOffers(offersData.offers || []);
+        const loadedOffers = offersData.offers || [];
+        setOffers(loadedOffers);
+        setGlobalOffers(loadedOffers);
         setTotalOffersCount(offersData.total || 0);
         setHasMoreOnServer(offersData.hasMore || false);
         
-        SmartCache.set('offers_list', offersData.offers || []);
+        SmartCache.set('offers_list', loadedOffers);
         
         if (showLoading) {
           setIsLoading(false);

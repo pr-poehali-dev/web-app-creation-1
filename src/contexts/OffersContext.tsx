@@ -12,6 +12,7 @@ interface OffersContextType {
   deleteRequest: (id: string) => void;
   refreshOffers: () => void;
   setOffers: (offers: Offer[]) => void;
+  setRequests: (requests: Request[]) => void;
 }
 
 const OffersContext = createContext<OffersContextType | undefined>(undefined);
@@ -108,6 +109,7 @@ export function OffersProvider({ children }: { children: ReactNode }) {
         deleteRequest,
         refreshOffers,
         setOffers,
+        setRequests,
       }}
     >
       {children}
