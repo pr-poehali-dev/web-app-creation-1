@@ -47,6 +47,7 @@ export default function EditOffer() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
 
   useOrdersPolling({
     enabled: isAuthenticated && !!id,
@@ -158,8 +159,14 @@ export default function EditOffer() {
 
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
+    const edit = params.get('edit');
+    
     if (tab) {
       setActiveTab(tab);
+    }
+    
+    if (edit === 'true') {
+      setIsEditingInfo(true);
     }
 
     loadData();
@@ -299,6 +306,7 @@ export default function EditOffer() {
           messages={messages}
           activeTab={activeTab}
           hasChanges={hasChanges}
+          initialEditMode={isEditingInfo}
           onTabChange={setActiveTab}
           onOpenChat={handleOpenChat}
           onAcceptOrder={handleAcceptOrder}

@@ -21,6 +21,7 @@ interface EditOfferTabsProps {
   messages: ChatMessage[];
   activeTab: string;
   hasChanges: boolean;
+  initialEditMode?: boolean;
   onTabChange: (tab: string) => void;
   onOpenChat: (order: Order) => void;
   onAcceptOrder: (orderId: string) => void;
@@ -35,6 +36,7 @@ export default function EditOfferTabs({
   messages,
   activeTab,
   hasChanges,
+  initialEditMode = false,
   onTabChange,
   onOpenChat,
   onAcceptOrder,
@@ -65,6 +67,7 @@ export default function EditOfferTabs({
         <OfferInfoTab 
           offer={offer} 
           hasChanges={hasChanges}
+          initialEditMode={initialEditMode}
           onDelete={onDelete || (() => {})}
           onUpdate={onUpdate || (() => {})}
         />

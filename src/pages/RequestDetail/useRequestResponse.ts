@@ -14,6 +14,15 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
       navigate('/login');
       return;
     }
+    
+    const currentUser = getSession();
+    const isOwner = currentUser && request && currentUser.id?.toString() === request.author.id?.toString();
+    
+    if (isOwner) {
+      navigate(`/edit-request/${request?.id}?edit=true`);
+      return;
+    }
+    
     setIsResponseModalOpen(true);
   };
 

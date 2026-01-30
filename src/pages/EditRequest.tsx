@@ -55,12 +55,20 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState('info');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
   const { deleteRequest } = useOffers();
 
   useEffect(() => {
     if (!currentUser || !isAuthenticated) {
       navigate('/login');
       return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const edit = params.get('edit');
+    
+    if (edit === 'true') {
+      setIsEditingInfo(true);
     }
 
     const loadData = async () => {

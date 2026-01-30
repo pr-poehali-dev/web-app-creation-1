@@ -21,14 +21,15 @@ interface OfferInfoTabProps {
   onUpdate: () => void;
   onDataChanged?: () => void;
   hasChanges?: boolean;
+  initialEditMode?: boolean;
 }
 
-export default function OfferInfoTab({ offer, districtName: propDistrictName, onEdit, onDelete, onUpdate, onDataChanged }: OfferInfoTabProps) {
+export default function OfferInfoTab({ offer, districtName: propDistrictName, onEdit, onDelete, onUpdate, onDataChanged, initialEditMode = false }: OfferInfoTabProps) {
   const { districts } = useDistrict();
   const districtName = propDistrictName || districts.find(d => d.id === offer.district)?.name || offer.district;
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialEditMode);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState({
     pricePerUnit: offer.pricePerUnit.toString(),
