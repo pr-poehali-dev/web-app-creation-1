@@ -36,7 +36,7 @@ export function useOrdersData(
     loadOrders(true);
 
     return () => {};
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, currentUser?.id]);
 
   // Отмечаем заказы как просмотренные при открытии вкладки продавца
   useEffect(() => {
