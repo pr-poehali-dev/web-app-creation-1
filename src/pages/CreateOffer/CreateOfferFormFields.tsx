@@ -36,6 +36,7 @@ interface FormData {
   deliveryPeriodStart: string;
   deliveryPeriodEnd: string;
   publicationDuration: string;
+  publicationStartDate: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -229,31 +230,63 @@ export default function CreateOfferFormFields({
               )}
             </div>
           </div>
-          <div>
-            <Label htmlFor="publicationDuration">Срок публикации *</Label>
-            <div className="flex gap-2 mt-2">
-              <Input
-                id="publicationDuration"
-                type="date"
-                value={formData.publicationDuration}
-                onChange={(e) => onInputChange('publicationDuration', e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                required
-              />
-              {formData.publicationDuration && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onInputChange('publicationDuration', '')}
-                >
-                  <Icon name="X" className="h-4 w-4" />
-                </Button>
-              )}
+          <div className="space-y-4">
+            <div>
+              <Label>Период публикации *</Label>
+              <p className="text-xs text-muted-foreground mt-1 mb-3">
+                Укажите период, в течение которого предложение будет активно
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Дата, до которой предложение будет активно
-            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="publicationStartDate">Дата начала</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="publicationStartDate"
+                    type="date"
+                    value={formData.publicationStartDate}
+                    onChange={(e) => onInputChange('publicationStartDate', e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                  {formData.publicationStartDate && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onInputChange('publicationStartDate', '')}
+                    >
+                      <Icon name="X" className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="publicationDuration">Дата окончания</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    id="publicationDuration"
+                    type="date"
+                    value={formData.publicationDuration}
+                    onChange={(e) => onInputChange('publicationDuration', e.target.value)}
+                    min={formData.publicationStartDate || new Date().toISOString().split('T')[0]}
+                    required
+                  />
+                  {formData.publicationDuration && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onInputChange('publicationDuration', '')}
+                    >
+                      <Icon name="X" className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

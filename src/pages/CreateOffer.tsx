@@ -114,6 +114,21 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       }
     }
     
+    // Валидация периода публикации
+    if (formData.publicationStartDate && formData.publicationDuration) {
+      const startDate = new Date(formData.publicationStartDate);
+      const endDate = new Date(formData.publicationDuration);
+      
+      if (endDate <= startDate) {
+        toast({
+          title: "Ошибка валидации",
+          description: "Дата окончания публикации должна быть позже даты начала",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     const submitData = {
       title: formData.title,
       description: formData.description,
