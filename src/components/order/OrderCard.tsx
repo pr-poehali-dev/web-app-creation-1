@@ -93,6 +93,26 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               {isSeller ? order.buyerName : (order.sellerName || 'Продавец')}
             </p>
           </div>
+          {isSeller && order.status === 'accepted' && (
+            <>
+              {order.buyerPhone && (
+                <div>
+                  <p className="text-muted-foreground">Телефон</p>
+                  <a href={`tel:${order.buyerPhone}`} className="font-medium text-primary hover:underline">
+                    {order.buyerPhone}
+                  </a>
+                </div>
+              )}
+              {order.buyerEmail && (
+                <div>
+                  <p className="text-muted-foreground">Email</p>
+                  <a href={`mailto:${order.buyerEmail}`} className="font-medium text-primary hover:underline text-sm">
+                    {order.buyerEmail}
+                  </a>
+                </div>
+              )}
+            </>
+          )}
           {order.status === 'completed' && order.completedDate && (
             <div className="col-span-2">
               <p className="text-muted-foreground">Дата завершения</p>
