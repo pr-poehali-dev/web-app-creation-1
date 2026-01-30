@@ -33,6 +33,12 @@ export function useOrdersData(
       navigate('/login');
       return;
     }
+    
+    // Сбрасываем данные при смене пользователя
+    setOrders([]);
+    setSelectedOrder(null);
+    setIsChatOpen(false);
+    
     loadOrders(true);
 
     return () => {};
