@@ -176,7 +176,6 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
-      setIsChatOpen(false);
       await loadOrders(false);
     } catch (error: any) {
       console.error('Error accepting order:', error);
