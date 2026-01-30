@@ -3,311 +3,191 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
-from datetime import datetime
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    '''
-    Бизнес: Управление отзывами и рейтингами пользователей
-    Args: event - dict с httpMethod, body, queryStringParameters
-          context - объект с атрибутами request_id, function_name
-    Returns: HTTP response dict
-    '''
-    method: str = event.get('httpMethod', 'GET')
+    '''API для работы с отзывами о продавцах после завершения заказов'''
+    method = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, X-Auth-Token',
-                'Access-Control-Max-Age': '86400'
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id'
             },
             'body': '',
             'isBase64Encoded': False
         }
     
-    database_url = os.environ.get('DATABASE_URL')
-    if not database_url:
-        return {
-            'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'DATABASE_URL not configured'}),
-            'isBase64Encoded': False
-        }
+    headers = event.get('headers', {})
+    user_id = headers.get('X-User-Id') or headers.get('x-user-id')
+    path_params = event.get('queryStringParameters') or {}
+    
+    dsn = os.environ.get('DATABASE_URL')
+    if not dsn:
+        return error_response('DATABASE_URL not configured', 500)
     
     conn = None
     try:
-        conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-        cur = conn.cursor()
+        conn = psycopg2.connect(dsn)
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SET search_path TO t_p42562714_web_app_creation_1, public")
         
         if method == 'GET':
-            query_params = event.get('queryStringParameters', {}) or {}
-            action = query_params.get('action', '')
+            seller_id = path_params.get('seller_id')
+            order_id = path_params.get('order_id')
             
-            if action == 'stats':
-                user_id = query_params.get('userId')
-                if not user_id:
-                    return {
-                        'statusCode': 400,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'userId required'}),
-                        'isBase64Encoded': False
-                    }
+            if order_id:
+                cur.execute('''
+                    SELECT r.*, 
+                           u1.full_name as reviewer_name,
+                           u2.full_name as seller_name
+                    FROM reviews r
+                    LEFT JOIN users u1 ON r.reviewer_id = u1.id
+                    LEFT JOIN users u2 ON r.reviewed_user_id = u2.id
+                    WHERE r.order_id::text = %s
+                ''', (order_id,))
+                review = cur.fetchone()
                 
-                cur.execute("""
-                    SELECT 
-                        COUNT(*) as total_reviews,
-                        COALESCE(AVG(rating), 0) as average_rating,
-                        COALESCE(AVG(quality_rating), 0) as quality_average,
-                        COALESCE(AVG(delivery_rating), 0) as delivery_average,
-                        COALESCE(AVG(communication_rating), 0) as communication_average,
-                        SUM(CASE WHEN rating = 1 THEN 1 ELSE 0 END) as rating_1,
-                        SUM(CASE WHEN rating = 2 THEN 1 ELSE 0 END) as rating_2,
-                        SUM(CASE WHEN rating = 3 THEN 1 ELSE 0 END) as rating_3,
-                        SUM(CASE WHEN rating = 4 THEN 1 ELSE 0 END) as rating_4,
-                        SUM(CASE WHEN rating = 5 THEN 1 ELSE 0 END) as rating_5
-                    FROM reviews
-                    WHERE reviewed_user_id = CAST(%s AS INTEGER)
-                """, (user_id,))
-                
-                stats_row = cur.fetchone()
-                
-                avg_rating = float(stats_row['average_rating']) if stats_row['average_rating'] else 0.0
-                quality_avg = float(stats_row['quality_average']) if stats_row['quality_average'] and float(stats_row['quality_average']) > 0 else None
-                delivery_avg = float(stats_row['delivery_average']) if stats_row['delivery_average'] and float(stats_row['delivery_average']) > 0 else None
-                comm_avg = float(stats_row['communication_average']) if stats_row['communication_average'] and float(stats_row['communication_average']) > 0 else None
-                
-                stats = {
-                    'averageRating': avg_rating,
-                    'totalReviews': int(stats_row['total_reviews']),
-                    'ratingDistribution': {
-                        '1': int(stats_row['rating_1'] or 0),
-                        '2': int(stats_row['rating_2'] or 0),
-                        '3': int(stats_row['rating_3'] or 0),
-                        '4': int(stats_row['rating_4'] or 0),
-                        '5': int(stats_row['rating_5'] or 0),
-                    },
-                    'qualityAverage': quality_avg,
-                    'deliveryAverage': delivery_avg,
-                    'communicationAverage': comm_avg,
-                }
-                
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True, 'stats': stats}),
-                    'isBase64Encoded': False
-                }
+                return success_response({'review': dict(review) if review else None})
             
-            elif action == 'can-review':
-                contract_id = query_params.get('contractId')
-                if not contract_id:
-                    return {
-                        'statusCode': 400,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'contractId required'}),
-                        'isBase64Encoded': False
-                    }
-                
-                cur.execute("SELECT id FROM reviews WHERE contract_id = CAST(%s AS INTEGER)", (contract_id,))
-                existing_review = cur.fetchone()
-                
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'canReview': existing_review is None}),
-                    'isBase64Encoded': False
-                }
-            
-            else:
-                user_id = query_params.get('userId')
-                if not user_id:
-                    return {
-                        'statusCode': 400,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'userId required'}),
-                        'isBase64Encoded': False
-                    }
-                
-                cur.execute("""
-                    SELECT 
-                        r.id,
-                        r.contract_id,
-                        r.reviewer_id,
-                        r.reviewed_user_id,
-                        r.rating,
-                        r.title,
-                        r.comment,
-                        r.quality_rating,
-                        r.delivery_rating,
-                        r.communication_rating,
-                        r.is_verified_purchase,
-                        r.created_at,
-                        r.updated_at,
-                        u.first_name || ' ' || u.last_name as reviewer_name,
-                        u.user_type as reviewer_type,
-                        '' as offer_title
+            elif seller_id:
+                cur.execute('''
+                    SELECT r.*, 
+                           u.full_name as reviewer_name
                     FROM reviews r
                     LEFT JOIN users u ON r.reviewer_id = u.id
-                    WHERE r.reviewed_user_id = CAST(%s AS INTEGER)
+                    WHERE r.reviewed_user_id = %s
                     ORDER BY r.created_at DESC
-                    LIMIT 100
-                """, (user_id,))
+                ''', (seller_id,))
+                reviews = cur.fetchall()
                 
-                reviews_data = cur.fetchall()
+                cur.execute('''
+                    SELECT 
+                        COUNT(*) as total_reviews,
+                        COALESCE(AVG(rating), 0) as average_rating
+                    FROM reviews
+                    WHERE reviewed_user_id = %s
+                ''', (seller_id,))
+                stats = cur.fetchone()
                 
-                reviews = []
-                for review in reviews_data:
-                    reviews.append({
-                        'id': str(review['id']),
-                        'contractId': str(review['contract_id']),
-                        'reviewerId': str(review['reviewer_id']),
-                        'reviewedUserId': str(review['reviewed_user_id']),
-                        'rating': review['rating'],
-                        'title': review['title'],
-                        'comment': review['comment'],
-                        'qualityRating': review['quality_rating'],
-                        'deliveryRating': review['delivery_rating'],
-                        'communicationRating': review['communication_rating'],
-                        'isVerifiedPurchase': review['is_verified_purchase'],
-                        'createdAt': review['created_at'].isoformat() if review['created_at'] else None,
-                        'updatedAt': review['updated_at'].isoformat() if review['updated_at'] else None,
-                        'reviewerName': review['reviewer_name'],
-                        'reviewerType': review['reviewer_type'],
-                        'offerTitle': review['offer_title'],
-                    })
-                
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True, 'reviews': reviews}),
-                    'isBase64Encoded': False
-                }
+                return success_response({
+                    'reviews': [dict(r) for r in reviews],
+                    'stats': dict(stats) if stats else {'total_reviews': 0, 'average_rating': 0}
+                })
+            
+            else:
+                return error_response('seller_id or order_id required', 400)
         
         elif method == 'POST':
-            body_data = json.loads(event.get('body', '{}'))
+            if not user_id:
+                return error_response('Unauthorized', 401)
             
-            contract_id = body_data.get('contractId')
-            reviewer_id = body_data.get('reviewerId')
-            reviewed_user_id = body_data.get('reviewedUserId')
-            rating = body_data.get('rating')
-            title = body_data.get('title')
-            comment = body_data.get('comment')
+            body = json.loads(event.get('body', '{}'))
+            order_id = body.get('order_id')
+            seller_id = body.get('seller_id')
+            rating = body.get('rating')
+            comment = body.get('comment', '')
             
-            if not all([contract_id, reviewer_id, reviewed_user_id, rating, title, comment]):
-                return {
-                    'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Missing required fields'}),
-                    'isBase64Encoded': False
-                }
+            if not all([order_id, seller_id, rating]):
+                return error_response('order_id, seller_id and rating are required', 400)
             
-            cur.execute("SELECT id FROM reviews WHERE contract_id = %s", (contract_id,))
-            existing_review = cur.fetchone()
+            if not (1 <= rating <= 5):
+                return error_response('rating must be between 1 and 5', 400)
             
-            if existing_review:
-                return {
-                    'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Review already exists for this contract'}),
-                    'isBase64Encoded': False
-                }
+            cur.execute('''
+                SELECT id FROM reviews 
+                WHERE order_id::text = %s
+            ''', (order_id,))
             
-            cur.execute("""
-                SELECT c.id, c.status, c.buyer_id, o.user_id as seller_id
-                FROM contracts c
-                LEFT JOIN offers o ON c.offer_id = o.id
-                WHERE c.id = %s
-            """, (contract_id,))
+            if cur.fetchone():
+                return error_response('Review already exists for this order', 400)
             
-            contract = cur.fetchone()
-            
-            if not contract:
-                return {
-                    'statusCode': 404,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Contract not found'}),
-                    'isBase64Encoded': False
-                }
-            
-            if contract['status'] != 'completed':
-                return {
-                    'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Can only review completed contracts'}),
-                    'isBase64Encoded': False
-                }
-            
-            is_verified_purchase = (str(contract['buyer_id']) == str(reviewer_id))
-            
-            cur.execute("""
-                INSERT INTO reviews (
-                    contract_id,
-                    reviewer_id,
-                    reviewed_user_id,
-                    rating,
-                    title,
-                    comment,
-                    quality_rating,
-                    delivery_rating,
-                    communication_rating,
-                    is_verified_purchase,
-                    created_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            cur.execute('''
+                INSERT INTO reviews 
+                (order_id, reviewer_id, reviewed_user_id, rating, comment, created_at, updated_at)
+                VALUES (%s::uuid, %s, %s, %s, %s, NOW(), NOW())
                 RETURNING id, created_at
-            """, (
-                contract_id,
-                reviewer_id,
-                reviewed_user_id,
-                rating,
-                title,
-                comment,
-                body_data.get('qualityRating'),
-                body_data.get('deliveryRating'),
-                body_data.get('communicationRating'),
-                is_verified_purchase
-            ))
+            ''', (order_id, user_id, seller_id, rating, comment))
             
-            new_review = cur.fetchone()
+            result = cur.fetchone()
             conn.commit()
             
-            review = {
-                'id': str(new_review['id']),
-                'contractId': str(contract_id),
-                'reviewerId': str(reviewer_id),
-                'reviewedUserId': str(reviewed_user_id),
-                'rating': rating,
-                'title': title,
-                'comment': comment,
-                'qualityRating': body_data.get('qualityRating'),
-                'deliveryRating': body_data.get('deliveryRating'),
-                'communicationRating': body_data.get('communicationRating'),
-                'isVerifiedPurchase': is_verified_purchase,
-                'createdAt': new_review['created_at'].isoformat(),
-            }
-            
-            return {
-                'statusCode': 201,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'review': review}),
-                'isBase64Encoded': False
-            }
+            return success_response({
+                'id': result['id'],
+                'created_at': result['created_at'].isoformat() if result['created_at'] else None
+            })
         
-        return {
-            'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Method not allowed'}),
-            'isBase64Encoded': False
-        }
+        elif method == 'PUT':
+            if not user_id:
+                return error_response('Unauthorized', 401)
+            
+            body = json.loads(event.get('body', '{}'))
+            review_id = body.get('review_id')
+            seller_response = body.get('seller_response')
+            
+            if not review_id or not seller_response:
+                return error_response('review_id and seller_response are required', 400)
+            
+            cur.execute('''
+                SELECT reviewed_user_id FROM reviews 
+                WHERE id = %s
+            ''', (review_id,))
+            
+            review = cur.fetchone()
+            if not review:
+                return error_response('Review not found', 404)
+            
+            if str(review['reviewed_user_id']) != str(user_id):
+                return error_response('You can only respond to your own reviews', 403)
+            
+            cur.execute('''
+                UPDATE reviews 
+                SET seller_response = %s, seller_response_date = NOW(), updated_at = NOW()
+                WHERE id = %s
+                RETURNING seller_response_date
+            ''', (seller_response, review_id))
+            
+            result = cur.fetchone()
+            conn.commit()
+            
+            return success_response({
+                'seller_response_date': result['seller_response_date'].isoformat() if result['seller_response_date'] else None
+            })
+        
+        else:
+            return error_response('Method not allowed', 405)
     
     except Exception as e:
-        return {
-            'statusCode': 500,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': str(e)}),
-            'isBase64Encoded': False
-        }
+        if conn:
+            conn.rollback()
+        return error_response(str(e), 500)
+    
     finally:
         if conn:
             conn.close()
+
+
+def success_response(data: dict) -> dict:
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps(data, default=str),
+        'isBase64Encoded': False
+    }
+
+
+def error_response(message: str, status_code: int) -> dict:
+    return {
+        'statusCode': status_code,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
+        'body': json.dumps({'error': message}),
+        'isBase64Encoded': False
+    }

@@ -1,25 +1,25 @@
 {
   "tests": [
     {
-      "name": "Get reviews for user",
+      "name": "Get reviews for seller",
       "method": "GET",
-      "path": "/?userId=123",
+      "path": "/?seller_id=1",
       "expectedStatus": 200,
       "expectedBody": {
-        "success": true
+        "reviews": [],
+        "stats": {
+          "total_reviews": 0
+        }
       },
       "bodyMatcher": "partial"
     },
     {
-      "name": "Get review stats for user",
+      "name": "Check if review exists for order",
       "method": "GET",
-      "path": "/?action=stats&userId=123",
+      "path": "/?order_id=test-order-id",
       "expectedStatus": 200,
       "expectedBody": {
-        "success": true,
-        "stats": {
-          "totalReviews": 0
-        }
+        "review": null
       },
       "bodyMatcher": "partial"
     }
