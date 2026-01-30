@@ -280,10 +280,8 @@ export function useOrdersData(
     try {
       await ordersAPI.updateOrder(orderToComplete, { status: 'completed' });
 
-      toast({
-        title: 'Заказ завершён',
-        description: 'Заказ успешно завершён. Спасибо за работу!',
-      });
+      const order = orders.find(o => o.id === orderToComplete);
+      const isBuyer = currentUser?.id?.toString() === order?.buyerId?.toString();
 
       setIsChatOpen(false);
       
@@ -293,6 +291,20 @@ export function useOrdersData(
       }
       
       await loadOrders(false);
+
+      toast({
+        title: 'Заказ завершён',
+        description: isBuyer 
+          ? 'Заказ успешно завершён. Вы можете оставить отзыв о продавце.' 
+          : 'Заказ успешно завершён. Спасибо за работу!',
+        action: isBuyer ? {
+          label: 'Оставить отзыв',
+          onClick: () => {
+            // TODO: Открыть форму отзыва
+            console.log('Open review form for order:', orderToComplete);
+          }
+        } : undefined,
+      });
     } catch (error) {
       console.error('Error completing order:', error);
       toast({

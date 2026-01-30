@@ -176,10 +176,10 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               <>
                 {isBuyer ? (
                   <div className="space-y-3">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
-                      <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <p className="text-sm text-green-800 font-medium">
-                        Заказ принят продавцом и находится в работе
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+                      <Icon name="Info" className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <p className="text-sm text-blue-800 font-medium">
+                        Можете завершить заказ и оставить отзыв
                       </p>
                     </div>
                     {onCompleteOrder && (
