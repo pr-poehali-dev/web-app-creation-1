@@ -56,6 +56,7 @@ export default function OfferOrderModal({
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [addressError, setAddressError] = useState<string>('');
+  const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
 
   // Автоматически выбрать способ получения, если доступен только один
   useEffect(() => {
@@ -112,23 +113,18 @@ export default function OfferOrderModal({
     }
   };
 
-  const handleMapSelect = async (lat: number, lng: number) => {
-    setSelectedLocation({ lat, lng });
-    
-    try {
-      const addressData = await reverseGeocode(lat, lng);
-      const fullAddress = addressData.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-      setAddress(fullAddress);
-      setAddressError('');
-      setIsMapOpen(false);
-    } catch (error) {
-      console.error('Error getting address:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось получить адрес',
-        variant: 'destructive',
-      });
+  const handleCoordinatesChange = (coords: string) => {
+    setGpsCoordinates(coords);
+    const [lat, lng] = coords.split(',').map(c => parseFloat(c.trim()));
+    if (!isNaN(lat) && !isNaN(lng)) {
+      setSelectedLocation({ lat, lng });
     }
+  };
+
+  const handleAddressChange = (fullAddress: string, district: string) => {
+    console.log('📍 Address changed in modal:', fullAddress);
+    setAddress(fullAddress);
+    setAddressError('');
   };
 
   const validateAddress = async (addressText: string) => {
@@ -446,12 +442,15 @@ export default function OfferOrderModal({
 
       <Suspense fallback={null}>
         {isMapOpen && (
-          <MapModal
-            isOpen={isMapOpen}
-            onClose={() => setIsMapOpen(false)}
-            onSelectLocation={handleMapSelect}
-            initialLocation={selectedLocation || undefined}
-          />
+          <div className="fixed inset-0 z-[100] bg-background">
+            <MapModal
+              isOpen={isMapOpen}
+              onClose={() => setIsMapOpen(false)}
+              coordinates={gpsCoordinates}
+              onCoordinatesChange={handleCoordinatesChange}
+              onAddressChange={handleAddressChange}
+            />
+          </div>
         )}
       </Suspense>
     </Dialog>
