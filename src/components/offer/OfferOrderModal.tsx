@@ -268,22 +268,27 @@ export default function OfferOrderModal({
           {availableDeliveryTypes.length > 1 && (
             <div>
               <Label htmlFor="order-delivery">Способ получения</Label>
-              <select
-                id="order-delivery"
-                name="order-delivery"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                value={selectedDeliveryType}
-                onChange={(e) => setSelectedDeliveryType(e.target.value as 'pickup' | 'delivery')}
-                required
-              >
-                <option value="" disabled>Выбери способ получения</option>
-                {availableDeliveryTypes.includes('pickup') && (
-                  <option value="pickup">Самовывоз</option>
-                )}
-                {availableDeliveryTypes.includes('delivery') && (
-                  <option value="delivery">Доставка</option>
-                )}
-              </select>
+              <div className="relative">
+                <select
+                  id="order-delivery"
+                  name="order-delivery"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring appearance-none"
+                  value={selectedDeliveryType}
+                  onChange={(e) => setSelectedDeliveryType(e.target.value as 'pickup' | 'delivery')}
+                  required
+                >
+                  <option value="" disabled>Выбери способ получения</option>
+                  {availableDeliveryTypes.includes('pickup') && (
+                    <option value="pickup">Самовывоз</option>
+                  )}
+                  {availableDeliveryTypes.includes('delivery') && (
+                    <option value="delivery">Доставка</option>
+                  )}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Icon name="ChevronDown" className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
             </div>
           )}
 
