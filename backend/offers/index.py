@@ -152,6 +152,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     try:
         query_params = event.get('queryStringParameters', {}) or {}
         status_filter = query_params.get('status', 'active')
+        user_id_filter = query_params.get('userId')
         
         # ⚡ ПАГИНАЦИЯ: Добавляем limit и offset параметры
         try:
@@ -167,7 +168,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             offset = 0
         
         # ⚡ КЭШИРОВАНИЕ: Проверяем кэш для списка предложений
-        cache_key = f"offers_list:{status_filter}:{limit}:{offset}"
+        cache_key = f"offers_list:{status_filter}:{user_id_filter}:{limit}:{offset}"
         cached_result = offers_cache.get(cache_key)
         if cached_result is not None:
             return {
@@ -180,8 +181,17 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
+        # Строим WHERE условия
+        where_conditions = []
+        if status_filter and status_filter != 'all':
+            where_conditions.append(f"o.status = '{status_filter}'")
+        if user_id_filter:
+            where_conditions.append(f"o.user_id = {user_id_filter}")
+        
+        where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+        
         # Получаем общее количество записей (для hasMore на фронте)
-        count_sql = f"SELECT COUNT(*) as total FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}'"
+        count_sql = f"SELECT COUNT(*) as total FROM t_p42562714_web_app_creation_1.offers o {where_clause}"
         cur.execute(count_sql)
         total_count = cur.fetchone()['total']
         
@@ -190,11 +200,11 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             SELECT 
                 o.id, o.user_id, o.seller_id, o.title, o.description, o.category, o.district, o.location,
                 o.price_per_unit, o.quantity, o.unit, o.sold_quantity, o.reserved_quantity, o.created_at,
-                o.available_delivery_types,
+                o.available_delivery_types, o.status, o.expiry_date, o.views_count,
                 COALESCE(u.rating, 100.0) as seller_rating
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
-            WHERE o.status = '{status_filter}' 
+            {where_clause}
             ORDER BY o.created_at DESC 
             LIMIT {limit} OFFSET {offset}
         """
@@ -239,6 +249,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'unit': offer.get('unit'),
                 'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
+                'status': offer.get('status', 'active'),
+                'expiryDate': offer['expiry_date'].isoformat() if offer.get('expiry_date') else None,
+                'views': offer.get('views_count', 0) or 0,
                 'images': images_map.get(offer['id'], []),
                 'seller': {
                     'rating': seller_rating

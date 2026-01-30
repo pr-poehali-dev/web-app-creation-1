@@ -40,6 +40,7 @@ import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getExpirationStatus } from '@/utils/expirationFilter';
+import { offersAPI } from '@/services/api';
 
 interface MyOffersProps {
   isAuthenticated: boolean;
@@ -73,7 +74,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { districts } = useDistrict();
-  const { offers: allOffers, deleteOffer } = useOffers();
+  const { deleteOffer } = useOffers();
   const currentUser = getSession();
   
   const [filterStatus, setFilterStatus] = useState<'all' | OfferStatus>('all');
@@ -81,6 +82,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [extendDialogOffer, setExtendDialogOffer] = useState<MyOffer | null>(null);
   const [newExpiryDate, setNewExpiryDate] = useState('');
+  const [myOffers, setMyOffers] = useState<MyOffer[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -88,19 +90,37 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       return;
     }
 
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-  }, [isAuthenticated, currentUser, navigate]);
+    const loadMyOffers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await offersAPI.getOffers({ 
+          status: 'all',
+          userId: currentUser.id,
+          limit: 100
+        });
+        
+        const loadedOffers: MyOffer[] = (response.offers || []).map((offer: Offer) => ({
+          ...offer,
+          status: (offer.status as OfferStatus) || 'active',
+          views: offer.views || 0,
+          favorites: 0,
+        }));
+        
+        setMyOffers(loadedOffers);
+      } catch (error) {
+        console.error('Ошибка загрузки предложений:', error);
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить ваши предложения',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const myOffers: MyOffer[] = allOffers
-    .filter(offer => String(offer.userId) === String(currentUser?.id))
-    .map(offer => ({
-      ...offer,
-      status: (offer.status as OfferStatus) || 'active',
-      views: offer.views || 0,
-      favorites: 0,
-    }));
+    loadMyOffers();
+  }, [isAuthenticated, currentUser, navigate, toast]);
 
   const filteredOffers = filterStatus === 'all' 
     ? myOffers 

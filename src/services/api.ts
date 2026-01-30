@@ -212,6 +212,7 @@ export const offersAPI = {
     status?: string;
     limit?: number;
     offset?: number;
+    userId?: number | string;
   }): Promise<OffersListResponse> {
     const queryParams = new URLSearchParams();
     if (params) {
