@@ -44,7 +44,7 @@ export default function CounterOfferDisplay({
                           ? 'Ваше встречное предложение продажи:'
                           : order.counterOfferedBy === 'buyer' 
                             ? 'Встречное предложение покупателя:' 
-                            : `Встречное предложение продавца (${order.sellerName}):`}
+                            : `Встречное предложение продавца: ${order.sellerName}`}
                     </span>
                   </span>
                 </div>
