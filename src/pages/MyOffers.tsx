@@ -239,7 +239,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
                     <Icon name="Info" className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm text-amber-900 dark:text-amber-100">
-                        <strong>Важно:</strong> Архивные предложения автоматически удаляются безвозвратно через 3 месяца для оптимизации работы системы.
+                        <strong>Важно:</strong> Архивные предложения автоматически удаляются безвозвратно через 1 месяц для оптимизации работы системы.
                       </p>
                     </div>
                   </div>

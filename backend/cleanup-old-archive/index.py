@@ -17,11 +17,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     API для очистки старых архивных данных (автоматизация для масштабирования)
     
     Удаляет:
-    - Архивные предложения старше 3 месяцев
-    - Завершенные/отмененные заказы старше 3 месяцев  
-    - Архивные запросы старше 3 месяцев
+    - Архивные предложения старше 1 месяца
+    - Завершенные/отмененные заказы старше 1 месяца  
+    - Архивные запросы старше 1 месяца
     
-    Защищает от переполнения БД при масштабировании до 50,000+ пользователей
+    Защищает от переполнения БД при масштабировании до 100,000+ пользователей
     """
     method = event.get('httpMethod', 'POST')
     
@@ -60,8 +60,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # Дата отсечения - 3 месяца назад (90 дней)
-        cutoff_date = (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d')
+        # Дата отсечения - 1 месяц назад (30 дней)
+        cutoff_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
         
         stats = {
             'offers_deleted': 0,
@@ -106,7 +106,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({
                 'message': f'Successfully cleaned up {total_deleted} old records',
                 'stats': stats,
-                'note': 'Архивные данные старше 3 месяцев удалены безвозвратно. Запускайте ежемесячно для оптимизации БД.'
+                'note': 'Архивные данные старше 1 месяца удалены безвозвратно. Запускайте ежемесячно для оптимизации БД.'
             }),
             'isBase64Encoded': False
         }
