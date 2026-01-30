@@ -13,9 +13,10 @@ interface OrderChatInfoCardProps {
     email: string;
   };
   onCancelOrder?: (orderId: string) => void;
+  onCompleteOrder?: (orderId: string) => void;
 }
 
-export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder }: OrderChatInfoCardProps) {
+export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder }: OrderChatInfoCardProps) {
   return (
     <Card className="bg-muted/50">
       <CardContent className="pt-4 space-y-2">
@@ -119,30 +120,35 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 >
                   <Icon name="Send" className="h-4 w-4" />
                 </a>
-                <a
-                  href={`mailto:${contactPerson.email}`}
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-500 hover:bg-gray-600 text-white transition-colors"
-                  title="Email"
-                >
-                  <Icon name="Mail" className="h-4 w-4" />
-                </a>
               </div>
             </div>
           </>
         )}
 
-        {onCancelOrder && order.status !== 'completed' && order.status !== 'cancelled' && (
+        {order.status !== 'completed' && order.status !== 'cancelled' && (
           <>
             <Separator />
-            <Button
-              onClick={() => onCancelOrder(order.id)}
-              variant="destructive"
-              size="sm"
-              className="w-full"
-            >
-              <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-              Отменить заказ
-            </Button>
+            {order.status === 'accepted' && onCompleteOrder ? (
+              <Button
+                onClick={() => onCompleteOrder(order.id)}
+                variant="default"
+                size="sm"
+                className="w-full bg-green-600 hover:bg-green-700"
+              >
+                <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                Завершить заказ
+              </Button>
+            ) : onCancelOrder ? (
+              <Button
+                onClick={() => onCancelOrder(order.id)}
+                variant="destructive"
+                size="sm"
+                className="w-full"
+              >
+                <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                Отменить заказ
+              </Button>
+            ) : null}
           </>
         )}
       </CardContent>
