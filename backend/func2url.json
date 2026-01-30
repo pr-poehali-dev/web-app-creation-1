@@ -1,4 +1,5 @@
 {
+  "cleanup-old-archive": "https://functions.poehali.dev/1d2856b2-1cc1-49ce-87b4-2e8cadcc3425",
   "verify-inn": "https://functions.poehali.dev/966b73dd-99eb-4b00-aef4-ed100a06f958",
   "email-notify": "https://functions.poehali.dev/a2f5cfb9-ceec-46de-b675-2174dc5241a7",
   "telegram-setup-webhook": "https://functions.poehali.dev/50d426b2-7c22-44d0-8474-b4b2f19b9a09",
