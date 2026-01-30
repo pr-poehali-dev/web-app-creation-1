@@ -217,15 +217,15 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     """
     
     if order_type == 'purchase':
-        sql += f" AND buyer_id = {user_id_int}"
+        sql += f" AND o.buyer_id = {user_id_int}"
     elif order_type == 'sale':
-        sql += f" AND seller_id = {user_id_int}"
+        sql += f" AND o.seller_id = {user_id_int}"
     else:
-        sql += f" AND (buyer_id = {user_id_int} OR seller_id = {user_id_int})"
+        sql += f" AND (o.buyer_id = {user_id_int} OR o.seller_id = {user_id_int})"
     
     if status != 'all':
         status_escaped = status.replace("'", "''")
-        sql += f" AND status = '{status_escaped}'"
+        sql += f" AND o.status = '{status_escaped}'"
     
     sql += f" ORDER BY order_date DESC LIMIT {limit} OFFSET {offset}"
     
