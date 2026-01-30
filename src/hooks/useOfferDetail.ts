@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Offer } from '@/types/offer';
 import type { Order, ChatMessage } from '@/types/order';
-import { offersAPI } from '@/services/api';
+import { offersAPI, reviewsAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
@@ -71,6 +71,34 @@ export function useOfferDetail(id: string | undefined) {
         
         console.log('Mapped offer:', { minOrderQuantity: mappedOffer.minOrderQuantity, unit: mappedOffer.unit });
         setOffer(mappedOffer);
+        
+        // Загружаем отзывы о продавце
+        if (mappedOffer.seller?.id) {
+          try {
+            const reviewsData = await reviewsAPI.getReviewsBySeller(Number(mappedOffer.seller.id));
+            setOffer(prev => prev ? {
+              ...prev,
+              seller: {
+                ...prev.seller!,
+                reviews: reviewsData.reviews.map((r: any) => ({
+                  id: String(r.id),
+                  reviewerId: String(r.reviewer_id),
+                  reviewerName: r.reviewer_name || 'Аноним',
+                  reviewedUserId: String(r.reviewed_user_id),
+                  rating: r.rating,
+                  comment: r.comment || '',
+                  createdAt: r.created_at,
+                  sellerResponse: r.seller_response,
+                  sellerResponseDate: r.seller_response_date,
+                })),
+                rating: reviewsData.stats.average_rating,
+                reviewsCount: reviewsData.stats.total_reviews,
+              }
+            } : prev);
+          } catch (error) {
+            console.error('Error loading reviews:', error);
+          }
+        }
         
         if (mappedOffer?.video) {
           setShowVideo(true);

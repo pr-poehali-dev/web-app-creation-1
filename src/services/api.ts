@@ -12,6 +12,7 @@ const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
 const CONTENT_MANAGEMENT_API = func2url['content-management'];
+const REVIEWS_API = func2url.reviews;
 
 // Продвинутое кэширование с разными TTL для разных типов данных
 interface CacheEntry {
@@ -1037,5 +1038,69 @@ export const contentAPI = {
     if (!response.ok) {
       throw new Error('Failed to delete banner');
     }
+  },
+};
+
+export const reviewsAPI = {
+  async getReviewsBySeller(sellerId: number): Promise<{ reviews: any[]; stats: { total_reviews: number; average_rating: number } }> {
+    const response = await fetchWithRetry(`${REVIEWS_API}?seller_id=${sellerId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch reviews');
+    }
+    return response.json();
+  },
+
+  async getReviewByOrder(orderId: string): Promise<{ review: any | null }> {
+    const response = await fetchWithRetry(`${REVIEWS_API}?order_id=${orderId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch review');
+    }
+    return response.json();
+  },
+
+  async createReview(data: { order_id: string; seller_id: number; rating: number; comment?: string }): Promise<{ id: number; created_at: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(REVIEWS_API, {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create review');
+    }
+    
+    return response.json();
+  },
+
+  async addSellerResponse(reviewId: number, sellerResponse: string): Promise<{ seller_response_date: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(REVIEWS_API, {
+      method: 'PUT',
+      headers: {
+        'X-User-Id': userId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ review_id: reviewId, seller_response: sellerResponse }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add response');
+    }
+    
+    return response.json();
   },
 };

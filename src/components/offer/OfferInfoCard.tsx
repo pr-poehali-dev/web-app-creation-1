@@ -109,11 +109,19 @@ export default function OfferInfoCard({
             )}
           </div>
           {sellerRating !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm">
-              <Icon name="Star" className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-semibold">{sellerRating.toFixed(1)}</span>
-              <span className="text-muted-foreground">— рейтинг продавца</span>
-            </div>
+            <button
+              onClick={() => {
+                const reviewsSection = document.getElementById('seller-reviews');
+                if (reviewsSection) {
+                  reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className="flex items-center gap-1.5 text-sm hover:opacity-80 transition-opacity cursor-pointer group"
+            >
+              <Icon name="Star" className="h-4 w-4 fill-yellow-400 text-yellow-400 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold group-hover:underline">{sellerRating.toFixed(1)}</span>
+              <span className="text-muted-foreground group-hover:underline">— рейтинг продавца</span>
+            </button>
           )}
         </div>
 
