@@ -128,6 +128,14 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
         {order.status !== 'completed' && order.status !== 'cancelled' && (
           <>
             <Separator />
+            {order.status === 'pending' && isBuyer && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-blue-800">
+                  Заказ ожидает подтверждения продавца. После принятия статус изменится на "Принят"
+                </p>
+              </div>
+            )}
             {order.status === 'accepted' && onCompleteOrder ? (
               <Button
                 onClick={() => onCompleteOrder(order.id)}
