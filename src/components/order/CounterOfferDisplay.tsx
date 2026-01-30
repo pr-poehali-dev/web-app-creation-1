@@ -38,13 +38,13 @@ export default function CounterOfferDisplay({
                       className={`h-4 w-4 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} 
                     />
                     <span className="font-semibold text-foreground">
-                      {isBuyer && order.counterOfferedBy === 'buyer'
-                        ? 'Ваше встречное предложение покупки:'
-                        : isSeller && order.counterOfferedBy === 'seller'
-                          ? 'Ваше встречное предложение продажи:'
-                          : order.counterOfferedBy === 'buyer' 
-                            ? `Встречное предложение покупателя: ${order.buyerName}` 
-                            : `Встречное предложение продавца: ${order.sellerName}`}
+                      {order.counterOfferedBy === 'buyer' 
+                        ? (isBuyer 
+                          ? 'Ваше встречное предложение покупки:' 
+                          : `Встречное предложение покупателя: ${order.buyerName}`)
+                        : (isSeller 
+                          ? 'Ваше встречное предложение продажи:' 
+                          : `Встречное предложение продавца: ${order.sellerName}`)}
                     </span>
                   </span>
                 </div>
