@@ -26,21 +26,32 @@ export default function OrdersContent({
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const displayOrders = orders.filter(order => {
-    if (activeTab === 'archive') {
-      const isArchived = order.status === 'completed' || order.status === 'cancelled';
-      if (!isArchived) return false;
+  const displayOrders = orders
+    .filter(order => {
+      if (activeTab === 'archive') {
+        const isArchived = order.status === 'completed' || order.status === 'cancelled';
+        if (!isArchived) return false;
 
-      // Фильтр по названию
-      if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false;
+        // Фильтр по названию
+        if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return false;
+        }
+
+        return true;
       }
-
-      return true;
-    }
-    const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-    return typeMatch && order.status !== 'completed' && order.status !== 'cancelled';
-  });
+      const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
+      return typeMatch && order.status !== 'completed' && order.status !== 'cancelled';
+    })
+    .sort((a, b) => {
+      // Для архива сортируем по дате завершения/отмены (последние сверху)
+      if (activeTab === 'archive') {
+        const dateA = a.completedDate || a.createdAt;
+        const dateB = b.completedDate || b.createdAt;
+        return dateB.getTime() - dateA.getTime();
+      }
+      // Для активных заказов сортируем по дате создания (новые сверху)
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
 
   const isSeller = activeTab === 'seller';
 
