@@ -140,34 +140,32 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                 Завершить заказ
               </Button>
             </>
+          ) : isSeller && (order.status === 'new' || order.status === 'pending') ? (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat(order);
+              }}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              <Icon name="Clock" className="mr-1.5 h-4 w-4" />
+              Ожидает подтверждения
+            </Button>
           ) : (
-            <>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenChat(order);
-                }}
-                variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
-                className="flex-1"
-                size="sm"
-              >
-                <Icon name="FileText" className="mr-1.5 h-4 w-4" />
-                Детали заказа
-              </Button>
-              {isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAcceptOrder(order.id);
-                  }}
-                  className="flex-1"
-                  size="sm"
-                >
-                  <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                  Принять заказ
-                </Button>
-              )}
-            </>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat(order);
+              }}
+              variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
+              className="flex-1"
+              size="sm"
+            >
+              <Icon name="FileText" className="mr-1.5 h-4 w-4" />
+              Детали заказа
+            </Button>
           )}
         </div>
       </CardContent>
