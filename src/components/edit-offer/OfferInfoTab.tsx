@@ -416,7 +416,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
                   </div>
                   <div>
                     <span className="text-muted-foreground">Просмотры:</span>
-                    <p className="font-semibold">{offer.views || 0}</p>
+                    <p className="font-semibold">{offer.views_count || 0}</p>
                   </div>
                 </div>
               )}
