@@ -325,11 +325,19 @@ export function useOrdersData(
     setSelectedOrder(null);
   };
 
-  const handleCancelOrder = async () => {
-    if (!selectedOrder) return;
+  const handleCancelOrder = async (orderId?: string, reason?: string) => {
+    const orderToCancel = orderId || selectedOrder?.id;
+    if (!orderToCancel) return;
 
     try {
-      await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
+      const order = orders.find(o => o.id === orderToCancel);
+      const cancelledBy = currentUser?.id?.toString() === order?.buyerId?.toString() ? 'buyer' : 'seller';
+      
+      await ordersAPI.updateOrder(orderToCancel, { 
+        status: 'cancelled',
+        cancelledBy,
+        cancellationReason: reason || undefined
+      });
 
       toast({
         title: 'Заказ отменён',
@@ -337,6 +345,12 @@ export function useOrdersData(
       });
 
       setIsChatOpen(false);
+      
+      // Переключаем на вкладку "Архив" после отмены
+      if (onTabChange) {
+        onTabChange('archive');
+      }
+      
       await loadOrders(false);
     } catch (error) {
       console.error('Error cancelling order:', error);

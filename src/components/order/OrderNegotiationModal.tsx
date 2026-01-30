@@ -16,7 +16,7 @@ interface OrderNegotiationModalProps {
   onAcceptOrder?: () => void;
   onCounterOffer?: (price: number, message: string) => void;
   onAcceptCounter?: () => void;
-  onCancelOrder?: () => void;
+  onCancelOrder?: (orderId?: string, reason?: string) => void;
   onCompleteOrder?: () => void;
 }
 
@@ -63,7 +63,7 @@ export default function OrderNegotiationModal({
               order={order}
               isBuyer={isBuyer}
               contactPerson={contactPerson}
-              onCancelOrder={onCancelOrder ? () => onCancelOrder() : undefined}
+              onCancelOrder={onCancelOrder ? (orderId, reason) => onCancelOrder(orderId, reason) : undefined}
               onCompleteOrder={onCompleteOrder ? () => onCompleteOrder() : undefined}
               onAcceptOrder={onAcceptOrder ? () => onAcceptOrder() : undefined}
             />

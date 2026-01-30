@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
 
@@ -12,12 +16,26 @@ interface OrderChatInfoCardProps {
     phone: string;
     email: string;
   };
-  onCancelOrder?: (orderId: string) => void;
+  onCancelOrder?: (orderId: string, reason?: string) => void;
   onCompleteOrder?: (orderId: string) => void;
   onAcceptOrder?: (orderId: string) => void;
 }
 
 export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder, onAcceptOrder }: OrderChatInfoCardProps) {
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+
+  const handleCancelClick = () => {
+    setShowCancelDialog(true);
+  };
+
+  const handleConfirmCancel = () => {
+    if (onCancelOrder) {
+      onCancelOrder(order.id, cancelReason.trim());
+    }
+    setShowCancelDialog(false);
+    setCancelReason('');
+  };
   return (
     <Card className="bg-muted/50">
       <CardContent className="pt-4 space-y-2">
@@ -205,7 +223,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               </>
             ) : onCancelOrder ? (
               <Button
-                onClick={() => onCancelOrder(order.id)}
+                onClick={handleCancelClick}
                 variant="destructive"
                 size="sm"
                 className="w-full"
@@ -217,6 +235,47 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           </>
         )}
       </CardContent>
+
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Подтверждение отмены заказа</DialogTitle>
+            <DialogDescription>
+              Вы уверены, что хотите отменить этот заказ? Укажите причину отмены (необязательно).
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-2 py-4">
+            <Label htmlFor="cancel-reason">Причина отмены</Label>
+            <Textarea
+              id="cancel-reason"
+              placeholder="Укажите причину отмены заказа..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              rows={4}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelDialog(false);
+                setCancelReason('');
+              }}
+            >
+              Назад
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmCancel}
+            >
+              <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+              Отменить заказ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
