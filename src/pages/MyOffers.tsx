@@ -275,7 +275,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => navigate(`/edit-offer/${offer.id}`)}>
                 <Icon name="Pencil" className="mr-2 h-4 w-4" />
                 Редактировать
               </DropdownMenuItem>

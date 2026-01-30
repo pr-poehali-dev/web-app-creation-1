@@ -238,7 +238,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={() => navigate(`/edit-request/${request.id}`)}>
                 <Icon name="Pencil" className="mr-2 h-4 w-4" />
                 Редактировать
               </DropdownMenuItem>
