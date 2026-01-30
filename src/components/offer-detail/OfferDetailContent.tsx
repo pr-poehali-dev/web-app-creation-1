@@ -186,7 +186,13 @@ export default function OfferDetailContent({
               <CardContent className="pt-6 space-y-3">
                 {(() => {
                   const currentUser = getSession();
-                  const isOwner = currentUser && currentUser.id?.toString() === offer.userId;
+                  const isOwner = currentUser && currentUser.id?.toString() === offer.userId?.toString();
+                  
+                  console.log('🔍 Проверка владельца:', {
+                    currentUserId: currentUser?.id,
+                    offerUserId: offer.userId,
+                    isOwner
+                  });
                   
                   return isOwner ? (
                     <Button
