@@ -4,7 +4,7 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
@@ -232,6 +232,21 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
           </div>
         ) : (
           <>
+            {filterStatus === 'archived' && stats.archived > 0 && (
+              <Card className="mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start gap-3">
+                    <Icon name="Info" className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-amber-900 dark:text-amber-100">
+                        <strong>Важно:</strong> Архивные предложения автоматически удаляются безвозвратно через 3 месяца для оптимизации работы системы.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Показано: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
