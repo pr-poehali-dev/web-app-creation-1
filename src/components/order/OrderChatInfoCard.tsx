@@ -54,6 +54,10 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               <p className="font-medium">{order.offerPricePerUnit?.toLocaleString('ru-RU')} ₽/{order.unit}</p>
             </div>
           )}
+          <div>
+            <p className="text-muted-foreground">Конечная цена</p>
+            <p className="font-medium text-primary">{order.pricePerUnit?.toLocaleString('ru-RU')} ₽/{order.unit}</p>
+          </div>
           {order.offerAvailableQuantity !== undefined && (
             <div>
               <p className="text-muted-foreground">Доступно</p>
@@ -94,6 +98,33 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 >
                   <Icon name="Mail" className="h-3.5 w-3.5" />
                   {contactPerson.email}
+                </a>
+              </div>
+              <div className="flex items-center gap-2 mt-3">
+                <a
+                  href={`https://wa.me/${contactPerson.phone.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500 hover:bg-green-600 text-white transition-colors"
+                  title="WhatsApp"
+                >
+                  <Icon name="MessageCircle" className="h-4 w-4" />
+                </a>
+                <a
+                  href={`https://t.me/${contactPerson.phone.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+                  title="Telegram"
+                >
+                  <Icon name="Send" className="h-4 w-4" />
+                </a>
+                <a
+                  href={`mailto:${contactPerson.email}`}
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-500 hover:bg-gray-600 text-white transition-colors"
+                  title="Email"
+                >
+                  <Icon name="Mail" className="h-4 w-4" />
                 </a>
               </div>
             </div>
