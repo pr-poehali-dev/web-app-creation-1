@@ -106,6 +106,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
 
   const handleDeleteOffer = (offerId: string) => {
     deleteOffer(offerId);
+    setMyOffers(prev => prev.filter(o => o.id !== offerId));
     setOfferToDelete(null);
     toast({
       title: 'Успешно',
