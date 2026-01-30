@@ -248,6 +248,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
         order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
         
+        # Преобразуем поля встречного предложения в camelCase
+        if 'counter_offer_message' in order_dict:
+            order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
+        
         order_dict = decimal_to_float(order_dict)
         result.append(order_dict)
     
@@ -305,6 +309,11 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
     order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
     order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
+    
+    # Преобразуем поля встречного предложения в camelCase
+    if 'counter_offer_message' in order_dict:
+        order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
+    
     order_dict = decimal_to_float(order_dict)
     
     return {
