@@ -163,18 +163,28 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 )}
               </>
             )}
-            {order.status === 'accepted' && onCompleteOrder ? (
-              <Button
-                onClick={() => onCompleteOrder(order.id)}
-                variant="default"
-                size="sm"
-                className="w-full bg-green-600 hover:bg-green-700"
-              >
-                <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                Заказ в работе
-              </Button>
-            ) : null}
-            {onCancelOrder && (
+            {order.status === 'accepted' ? (
+              <>
+                {isBuyer && onCompleteOrder ? (
+                  <Button
+                    onClick={() => onCompleteOrder(order.id)}
+                    variant="default"
+                    size="sm"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                    Завершить заказ
+                  </Button>
+                ) : (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                    <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <p className="text-sm text-green-800 font-medium">
+                      Заказ в работе
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : onCancelOrder ? (
               <Button
                 onClick={() => onCancelOrder(order.id)}
                 variant="destructive"
@@ -184,7 +194,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
                 Отменить заказ
               </Button>
-            )}
+            ) : null}
           </>
         )}
       </CardContent>
