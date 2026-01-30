@@ -48,6 +48,18 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             <p className="text-muted-foreground">Сумма</p>
             <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
           </div>
+          {order.offerPricePerUnit && (
+            <div>
+              <p className="text-muted-foreground">Начальная цена</p>
+              <p className="font-medium">{order.offerPricePerUnit?.toLocaleString('ru-RU')} ₽/{order.unit}</p>
+            </div>
+          )}
+          {order.offerAvailableQuantity !== undefined && (
+            <div>
+              <p className="text-muted-foreground">Доступно</p>
+              <p className="font-medium">{order.offerAvailableQuantity} {order.unit}</p>
+            </div>
+          )}
           <div>
             <p className="text-muted-foreground">Способ получения</p>
             <p className="font-medium">

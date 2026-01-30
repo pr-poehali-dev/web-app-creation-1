@@ -205,8 +205,16 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     cur.execute(count_sql)
     total_count = cur.fetchone()['total']
     
-    # Запрос БЕЗ JOIN - используем только данные из таблицы orders
-    sql = f"SELECT * FROM {schema}.orders WHERE 1=1"
+    # Запрос с JOIN к таблице offers для получения цены и доступного количества
+    sql = f"""
+        SELECT 
+            o.*,
+            of.price_per_unit as offer_price_per_unit,
+            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity
+        FROM {schema}.orders o
+        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
+        WHERE 1=1
+    """
     
     if order_type == 'purchase':
         sql += f" AND buyer_id = {user_id_int}"
@@ -231,6 +239,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     result = []
     for order in orders:
         order_dict = dict(order)
+        
+        # Добавляем поля из offers
+        order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
+        order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
         
         # Определяем тип заказа (покупка или продажа)
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id_int else 'sale'
@@ -279,8 +291,16 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     order_id_escaped = order_id.replace("'", "''")
     schema = get_schema()
     
-    # Простой запрос без JOIN
-    sql = f"SELECT * FROM {schema}.orders WHERE id = '{order_id_escaped}'"
+    # Запрос с JOIN к таблице offers
+    sql = f"""
+        SELECT 
+            o.*,
+            of.price_per_unit as offer_price_per_unit,
+            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity
+        FROM {schema}.orders o
+        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
+        WHERE o.id = '{order_id_escaped}'
+    """
     
     cur.execute(sql)
     order = cur.fetchone()
@@ -297,6 +317,10 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         }
     
     order_dict = dict(order)
+    
+    # Добавляем поля из offers
+    order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
+    order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
     
     # Добавляем поля из самого заказа
     order_dict['offer_title'] = order_dict.get('title', '')

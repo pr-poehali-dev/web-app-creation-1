@@ -17,6 +17,8 @@ export interface Order {
   unit: string;
   pricePerUnit: number;
   totalAmount: number;
+  offerAvailableQuantity?: number;
+  offerPricePerUnit?: number;
   counterPricePerUnit?: number;
   counterTotalAmount?: number;
   counterOfferMessage?: string;
