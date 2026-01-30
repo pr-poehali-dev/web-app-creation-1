@@ -159,12 +159,25 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             {order.status === 'pending' && (
               <>
                 {isBuyer ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
-                    <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-blue-800">
-                      <p className="font-medium mb-1">Продавец: {contactPerson.name}</p>
-                      <p>Заказ ожидает подтверждения продавца. После принятия статус изменится на "Принят"</p>
+                  <div className="space-y-3">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                      <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-blue-800">
+                        <p className="font-medium mb-1">Продавец: {contactPerson.name}</p>
+                        <p>Заказ ожидает подтверждения продавца. После принятия статус изменится на "Принят"</p>
+                      </div>
                     </div>
+                    {onCancelOrder && (
+                      <Button
+                        onClick={handleCancelClick}
+                        variant="destructive"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                        Отменить заказ
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -186,11 +199,22 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                         Принять заказ
                       </Button>
                     )}
+                    {onCancelOrder && (
+                      <Button
+                        onClick={handleCancelClick}
+                        variant="destructive"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                        Отменить заказ
+                      </Button>
+                    )}
                   </div>
                 )}
               </>
             )}
-            {order.status === 'accepted' ? (
+            {order.status === 'accepted' && (
               <>
                 {isBuyer ? (
                   <div className="space-y-3">
@@ -221,17 +245,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                   </div>
                 )}
               </>
-            ) : onCancelOrder ? (
-              <Button
-                onClick={handleCancelClick}
-                variant="destructive"
-                size="sm"
-                className="w-full"
-              >
-                <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-                Отменить заказ
-              </Button>
-            ) : null}
+            )}
           </>
         )}
       </CardContent>
