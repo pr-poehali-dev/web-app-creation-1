@@ -83,6 +83,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const [extendDialogOffer, setExtendDialogOffer] = useState<MyOffer | null>(null);
   const [newExpiryDate, setNewExpiryDate] = useState('');
   const [myOffers, setMyOffers] = useState<MyOffer[]>([]);
+  const [showClearArchiveDialog, setShowClearArchiveDialog] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -167,6 +168,22 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     
     setExtendDialogOffer(null);
     setNewExpiryDate('');
+  };
+
+  const handleClearArchive = async () => {
+    const archivedOffers = myOffers.filter(o => o.status === 'archived');
+    
+    for (const offer of archivedOffers) {
+      deleteOffer(offer.id);
+    }
+    
+    setMyOffers(prev => prev.filter(o => o.status !== 'archived'));
+    setShowClearArchiveDialog(false);
+    
+    toast({
+      title: 'Успешно',
+      description: `Удалено ${archivedOffers.length} ${archivedOffers.length === 1 ? 'предложение' : archivedOffers.length < 5 ? 'предложения' : 'предложений'} из архива`,
+    });
   };
 
   const getOfferStats = () => {
@@ -419,6 +436,16 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
                 Показано: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
                 {filterStatus !== 'all' && `из ${stats.total}`}
               </p>
+              {filterStatus === 'archived' && stats.archived > 0 && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => setShowClearArchiveDialog(true)}
+                >
+                  <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                  Очистить архив
+                </Button>
+              )}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -487,6 +514,23 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showClearArchiveDialog} onOpenChange={setShowClearArchiveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Очистить архив?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Все предложения из архива ({stats.archived} шт.) будут безвозвратно удалены. Это действие нельзя отменить.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearArchive} className="bg-destructive hover:bg-destructive/90">
+              Удалить всё
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>
