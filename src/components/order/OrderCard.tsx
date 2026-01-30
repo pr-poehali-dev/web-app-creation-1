@@ -93,25 +93,42 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               {isSeller ? order.buyerName : (order.sellerName || 'Продавец')}
             </p>
           </div>
-          {isSeller && order.status === 'accepted' && (
-            <>
-              {order.buyerPhone && (
-                <div>
-                  <p className="text-muted-foreground">Телефон</p>
-                  <a href={`tel:${order.buyerPhone}`} className="font-medium text-primary hover:underline">
-                    {order.buyerPhone}
-                  </a>
-                </div>
-              )}
-              {order.buyerEmail && (
-                <div>
-                  <p className="text-muted-foreground">Email</p>
-                  <a href={`mailto:${order.buyerEmail}`} className="font-medium text-primary hover:underline text-sm">
-                    {order.buyerEmail}
-                  </a>
-                </div>
-              )}
-            </>
+          {isSeller && order.status === 'accepted' && order.buyerPhone && (
+            <div className="col-span-2">
+              <p className="text-muted-foreground mb-2">Связаться с покупателем</p>
+              <div className="flex gap-2">
+                <a
+                  href={`https://wa.me/${order.buyerPhone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md text-sm font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Icon name="MessageCircle" className="h-4 w-4" />
+                  WhatsApp
+                </a>
+                <a
+                  href={`https://t.me/${order.buyerPhone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Icon name="Send" className="h-4 w-4" />
+                  Telegram
+                </a>
+                <a
+                  href={`https://maks.ru/chat/${order.buyerPhone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md text-sm font-medium transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Icon name="MessagesSquare" className="h-4 w-4" />
+                  Макс
+                </a>
+              </div>
+            </div>
           )}
           {order.status === 'completed' && order.completedDate && (
             <div className="col-span-2">
@@ -161,18 +178,10 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               </Button>
             </>
           ) : isSeller && order.status === 'accepted' ? (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenChat(order);
-              }}
-              variant="outline"
-              className="flex-1"
-              size="sm"
-            >
-              <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
-              Заказ в работе
-            </Button>
+            <div className="flex-1 bg-green-50 border border-green-200 rounded-md px-3 py-2 flex items-center justify-center gap-2">
+              <Icon name="CheckCircle" className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium text-green-700">Заказ в работе</span>
+            </div>
           ) : isSeller && (order.status === 'new' || order.status === 'pending') ? (
             <Button
               onClick={(e) => {
