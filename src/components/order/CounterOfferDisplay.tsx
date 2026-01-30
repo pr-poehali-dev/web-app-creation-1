@@ -134,7 +134,7 @@ export default function CounterOfferDisplay({
             {isBuyer && order.counterOfferedBy === 'buyer' && (
               <div className="flex items-center gap-2 text-muted-foreground text-xs mt-3">
                 <Icon name="Clock" className="h-3.5 w-3.5" />
-                <span>Ожидание ответа продавца</span>
+                <span>Ожидание ответа продавца: <span className="font-semibold text-foreground">{order.sellerName}</span></span>
               </div>
             )}
           </div>
