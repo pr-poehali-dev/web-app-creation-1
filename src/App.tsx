@@ -99,6 +99,8 @@ const Profile = lazyWithRetry(() => import("./pages/Profile"));
 const SearchResults = lazyWithRetry(() => import("./pages/SearchResults"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
 const MyListings = lazyWithRetry(() => import("./pages/MyListings"));
+const MyOffers = lazyWithRetry(() => import("./pages/MyOffers"));
+const MyRequests = lazyWithRetry(() => import("./pages/MyRequests"));
 const CreateOffer = lazyWithRetry(() => import("./pages/CreateOffer"));
 const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
@@ -304,8 +306,8 @@ const App = () => {
             <Route path="/response-detail/:id" element={<ResponseDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
 
             <Route path="/my-listings" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-offers" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-requests" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

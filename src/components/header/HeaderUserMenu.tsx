@@ -91,11 +91,11 @@ export default function HeaderUserMenu({
           <Icon name="User" className="mr-2 h-4 w-4" />
           Мои данные
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/predlozheniya?my=true')} className="border-2 border-border rounded-md mb-1">
+        <DropdownMenuItem onClick={() => navigate('/my-offers')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Package" className="mr-2 h-4 w-4" />
           Мои предложения
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/zaprosy?my=true')} className="border-2 border-border rounded-md mb-1">
+        <DropdownMenuItem onClick={() => navigate('/my-requests')} className="border-2 border-border rounded-md mb-1">
           <Icon name="FileText" className="mr-2 h-4 w-4" />
           Мои запросы
         </DropdownMenuItem>
