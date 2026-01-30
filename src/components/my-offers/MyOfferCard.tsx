@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -53,8 +54,21 @@ export default function MyOfferCard({
 }: MyOfferCardProps) {
   const navigate = useNavigate();
   const { districts } = useDistrict();
-  const category = CATEGORIES.find(c => c.id === offer.category);
-  const districtName = districts.find(d => d.id === offer.district)?.name;
+  
+  const category = useMemo(() => 
+    CATEGORIES.find(c => c.id === offer.category), 
+    [offer.category]
+  );
+  
+  const districtName = useMemo(() => 
+    districts.find(d => d.id === offer.district)?.name,
+    [districts, offer.district]
+  );
+  
+  const expirationInfo = useMemo(() => 
+    getExpirationStatus(offer),
+    [offer]
+  );
 
   return (
     <Card className="hover:shadow-lg transition-shadow">
@@ -125,27 +139,24 @@ export default function MyOfferCard({
             <p className="text-xs text-muted-foreground mt-1">{districtName}</p>
           </div>
         </div>
-        {(() => {
-          const expirationInfo = getExpirationStatus(offer);
-          return expirationInfo.expiryDate ? (
-            <div className="pt-2 border-t">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Icon name="Clock" className="h-4 w-4" />
-                  <span className={expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : ''}>
-                    {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
-                      ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
-                      : 'Истекает сегодня'
-                    }
-                  </span>
-                </div>
-                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onExtendExpiry(offer)}>
-                  Продлить
-                </Button>
+        {expirationInfo.expiryDate && (
+          <div className="pt-2 border-t">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Icon name="Clock" className="h-4 w-4" />
+                <span className={expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : ''}>
+                  {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
+                    ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
+                    : 'Истекает сегодня'
+                  }
+                </span>
               </div>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onExtendExpiry(offer)}>
+                Продлить
+              </Button>
             </div>
-          ) : null;
-        })()}
+          </div>
+        )}
       </CardContent>
 
       <CardFooter className="pt-0 flex gap-2">
