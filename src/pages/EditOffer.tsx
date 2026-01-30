@@ -156,6 +156,12 @@ export default function EditOffer() {
       return;
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);

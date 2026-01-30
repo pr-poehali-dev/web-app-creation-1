@@ -196,7 +196,7 @@ export default function OfferDetailContent({
                   
                   return isOwner ? (
                     <Button
-                      onClick={() => navigate(`/edit-offer/${offer.id}`)}
+                      onClick={() => navigate(`/edit-offer/${offer.id}?tab=info`)}
                       size="lg"
                       className="w-full gap-2"
                     >
