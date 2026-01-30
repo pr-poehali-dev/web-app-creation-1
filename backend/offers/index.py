@@ -304,16 +304,8 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
 
 def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
-    # ⚡ Кэширование деталей предложения на 5 минут
+    # ⚠️ НЕ используем кэш для детальной страницы, т.к. нужно увеличивать views_count
     cache_key = f"offer_detail:{offer_id}"
-    cached_result = offers_cache.get(cache_key)
-    if cached_result is not None:
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps(cached_result, default=decimal_default),
-            'isBase64Encoded': False
-        }
     
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -360,6 +352,14 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         }
     
     offer_dict = dict(offer)
+    
+    # Увеличиваем счетчик просмотров
+    try:
+        cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET views_count = COALESCE(views_count, 0) + 1 WHERE id = '{offer_id_escaped}'")
+        conn.commit()
+    except Exception as view_error:
+        print(f'Warning: Could not increment views for offer {offer_id}: {str(view_error)}')
+        conn.rollback()
     
     # Получаем количество избранного отдельным запросом
     favorites_count = 0
@@ -436,8 +436,7 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     # Добавляем favorites к ответу
     offer_dict['favorites'] = favorites_count
     
-    # ⚡ Кэшируем результат на 5 минут
-    offers_cache.set(cache_key, offer_dict, ttl=300)
+    # ⚠️ НЕ кэшируем, чтобы views_count всегда был актуальным
     
     return {
         'statusCode': 200,
