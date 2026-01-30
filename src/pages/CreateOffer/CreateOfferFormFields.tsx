@@ -238,16 +238,21 @@ export default function CreateOfferFormFields({
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="publicationStartDate">Дата начала</Label>
-                <div className="flex gap-2 mt-2">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Label htmlFor="publicationStartDate" className="text-xs">Дата начала</Label>
+                <Label htmlFor="publicationDuration" className="text-xs">Дата окончания</Label>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex gap-1">
                   <Input
                     id="publicationStartDate"
                     type="date"
                     value={formData.publicationStartDate}
                     onChange={(e) => onInputChange('publicationStartDate', e.target.value)}
                     min={new Date().toISOString().split('T')[0]}
+                    className="text-sm"
                     required
                   />
                   {formData.publicationStartDate && (
@@ -255,23 +260,22 @@ export default function CreateOfferFormFields({
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="h-9 w-9 shrink-0"
                       onClick={() => onInputChange('publicationStartDate', '')}
                     >
-                      <Icon name="X" className="h-4 w-4" />
+                      <Icon name="X" className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="publicationDuration">Дата окончания</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-1">
                   <Input
                     id="publicationDuration"
                     type="date"
                     value={formData.publicationDuration}
                     onChange={(e) => onInputChange('publicationDuration', e.target.value)}
                     min={formData.publicationStartDate || new Date().toISOString().split('T')[0]}
+                    className="text-sm"
                     required
                   />
                   {formData.publicationDuration && (
@@ -279,9 +283,10 @@ export default function CreateOfferFormFields({
                       type="button"
                       variant="ghost"
                       size="icon"
+                      className="h-9 w-9 shrink-0"
                       onClick={() => onInputChange('publicationDuration', '')}
                     >
-                      <Icon name="X" className="h-4 w-4" />
+                      <Icon name="X" className="h-3 w-3" />
                     </Button>
                   )}
                 </div>
