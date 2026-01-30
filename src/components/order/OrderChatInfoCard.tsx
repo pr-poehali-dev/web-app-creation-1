@@ -103,7 +103,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               </div>
               <div className="flex items-center gap-2 mt-3">
                 <a
-                  href={`https://wa.me/${contactPerson.phone.replace(/[^0-9]/g, '')}`}
+                  href={`https://api.whatsapp.com/send?phone=${contactPerson.phone.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500 hover:bg-green-600 text-white transition-colors"
@@ -112,7 +112,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                   <Icon name="MessageCircle" className="h-4 w-4" />
                 </a>
                 <a
-                  href={`https://t.me/${contactPerson.phone.replace(/[^0-9]/g, '')}`}
+                  href={`tg://resolve?phone=${contactPerson.phone.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors"
