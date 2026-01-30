@@ -14,9 +14,10 @@ interface OrderChatInfoCardProps {
   };
   onCancelOrder?: (orderId: string) => void;
   onCompleteOrder?: (orderId: string) => void;
+  onAcceptOrder?: (orderId: string) => void;
 }
 
-export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder }: OrderChatInfoCardProps) {
+export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder, onAcceptOrder }: OrderChatInfoCardProps) {
   return (
     <Card className="bg-muted/50">
       <CardContent className="pt-4 space-y-2">
@@ -128,14 +129,39 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
         {order.status !== 'completed' && order.status !== 'cancelled' && (
           <>
             <Separator />
-            {order.status === 'pending' && isBuyer && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
-                <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Продавец: {contactPerson.name}</p>
-                  <p>Заказ ожидает подтверждения продавца. После принятия статус изменится на "Принят"</p>
-                </div>
-              </div>
+            {order.status === 'pending' && (
+              <>
+                {isBuyer ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
+                    <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-800">
+                      <p className="font-medium mb-1">Продавец: {contactPerson.name}</p>
+                      <p>Заказ ожидает подтверждения продавца. После принятия статус изменится на "Принят"</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
+                      <Icon name="UserCheck" className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-orange-800">
+                        <p className="font-medium mb-1">Покупатель: {contactPerson.name}</p>
+                        <p>Новый заказ ожидает вашего подтверждения</p>
+                      </div>
+                    </div>
+                    {onAcceptOrder && (
+                      <Button
+                        onClick={() => onAcceptOrder(order.id)}
+                        variant="default"
+                        size="sm"
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                        Принять заказ
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </>
             )}
             {order.status === 'accepted' && onCompleteOrder ? (
               <Button
@@ -147,7 +173,8 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 <Icon name="Check" className="mr-1.5 h-4 w-4" />
                 Заказ в работе
               </Button>
-            ) : onCancelOrder ? (
+            ) : null}
+            {onCancelOrder && (
               <Button
                 onClick={() => onCancelOrder(order.id)}
                 variant="destructive"
@@ -157,7 +184,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
                 Отменить заказ
               </Button>
-            ) : null}
+            )}
           </>
         )}
       </CardContent>
