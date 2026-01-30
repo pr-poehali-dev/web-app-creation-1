@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
@@ -11,12 +11,19 @@ interface SearchResult {
 
 interface MapSearchBarProps {
   onSelectLocation: (lat: number, lng: number, displayName: string) => void;
+  initialValue?: string;
 }
 
-export default function MapSearchBar({ onSelectLocation }: MapSearchBarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export default function MapSearchBar({ onSelectLocation, initialValue = '' }: MapSearchBarProps) {
+  const [searchQuery, setSearchQuery] = useState(initialValue);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (initialValue) {
+      setSearchQuery(initialValue);
+    }
+  }, [initialValue]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);

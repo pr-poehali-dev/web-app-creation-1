@@ -21,6 +21,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   const markerRef = useRef<L.Marker | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([41.2995, 69.2401]);
+  const [currentAddress, setCurrentAddress] = useState<string>('');
 
   useEffect(() => {
     if (coordinates) {
@@ -218,6 +219,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             try {
               const result = await geocodeCoordinates(lat, lng, '📍 Geolocation:');
               console.log('🎉 Геокодирование завершено, вызываем onAddressChange:', result);
+              setCurrentAddress(result.fullAddress);
               onAddressChange(result.fullAddress, result.district);
               console.log('✅ onAddressChange вызван успешно');
             } catch (error) {
@@ -267,7 +269,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         </div>
         
         <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-          <MapSearchBar onSelectLocation={handleSearchSelect} />
+          <MapSearchBar onSelectLocation={handleSearchSelect} initialValue={currentAddress} />
 
           <div>
             <Label htmlFor="coordinates">GPS координаты (широта, долгота)</Label>
