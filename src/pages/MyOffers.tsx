@@ -104,14 +104,24 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     [myOffers, filterStatus]
   );
 
-  const handleDeleteOffer = (offerId: string) => {
-    deleteOffer(offerId);
-    setMyOffers(prev => prev.filter(o => o.id !== offerId));
-    setOfferToDelete(null);
-    toast({
-      title: 'Успешно',
-      description: 'Предложение удалено',
-    });
+  const handleDeleteOffer = async (offerId: string) => {
+    try {
+      await offersAPI.deleteOffer(offerId);
+      deleteOffer(offerId);
+      setMyOffers(prev => prev.filter(o => o.id !== offerId));
+      setOfferToDelete(null);
+      toast({
+        title: 'Успешно',
+        description: 'Предложение удалено',
+      });
+    } catch (error) {
+      console.error('Error deleting offer:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить предложение',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleArchiveOffer = (offerId: string) => {
@@ -151,17 +161,27 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const handleClearArchive = async () => {
     const archivedOffers = myOffers.filter(o => o.status === 'archived');
     
-    for (const offer of archivedOffers) {
-      deleteOffer(offer.id);
+    try {
+      for (const offer of archivedOffers) {
+        await offersAPI.deleteOffer(offer.id);
+        deleteOffer(offer.id);
+      }
+      
+      setMyOffers(prev => prev.filter(o => o.status !== 'archived'));
+      setShowClearArchiveDialog(false);
+      
+      toast({
+        title: 'Успешно',
+        description: `Удалено ${archivedOffers.length} ${archivedOffers.length === 1 ? 'предложение' : archivedOffers.length < 5 ? 'предложения' : 'предложений'} из архива`,
+      });
+    } catch (error) {
+      console.error('Error clearing archive:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось очистить архив',
+        variant: 'destructive',
+      });
     }
-    
-    setMyOffers(prev => prev.filter(o => o.status !== 'archived'));
-    setShowClearArchiveDialog(false);
-    
-    toast({
-      title: 'Успешно',
-      description: `Удалено ${archivedOffers.length} ${archivedOffers.length === 1 ? 'предложение' : archivedOffers.length < 5 ? 'предложения' : 'предложений'} из архива`,
-    });
   };
 
   return (

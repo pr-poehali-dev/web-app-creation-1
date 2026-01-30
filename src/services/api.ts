@@ -309,18 +309,16 @@ export const offersAPI = {
   },
 
   async deleteOffer(id: string): Promise<{ message: string }> {
-    const userId = getUserId();
-
-    const response = await fetchWithRetry(ADMIN_OFFERS_API, {
+    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'X-User-Id': userId || 'anonymous',
       },
-      body: JSON.stringify({ offerId: id }),
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Delete offer error:', response.status, errorText);
       throw new Error('Failed to delete offer');
     }
     

@@ -127,6 +127,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             return update_offer(offer_id, event, headers)
         
+        elif method == 'DELETE':
+            query_params = event.get('queryStringParameters', {}) or {}
+            offer_id = query_params.get('id')
+            if not offer_id:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'Offer ID required in query params'}),
+                    'isBase64Encoded': False
+                }
+            return delete_offer(offer_id, headers)
+        
         else:
             return {
                 'statusCode': 405,
@@ -748,6 +760,48 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'statusCode': 500,
             'headers': headers,
             'body': json.dumps({'error': str(e), 'trace': error_trace}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+
+def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Удалить предложение и все связанные данные"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        offer_id_esc = offer_id.replace("'", "''")
+        
+        # Удаляем связи с изображениями
+        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
+        
+        # Удаляем связи с видео
+        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_video_relations WHERE offer_id = '{offer_id_esc}'")
+        
+        # Удаляем само предложение
+        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offers WHERE id = '{offer_id_esc}'")
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # Инвалидируем кэш
+        offers_cache.invalidate('offers_list')
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'Offer deleted successfully'}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f'ERROR in delete_offer: {str(e)}')
+        print(f'Traceback: {error_trace}')
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e)}, default=decimal_default),
             'isBase64Encoded': False
         }
 
