@@ -239,7 +239,7 @@ export function useOfferDetail(id: string | undefined) {
         hasVAT: offer.hasVAT || false,
         vatRate: offer.vatRate || 0,
         counterPrice: orderFormData.counterPrice || undefined,
-        counterMessage: orderFormData.counterPrice ? `Встречное предложение: ${orderFormData.counterPrice} ₽/${offer.unit}` : undefined,
+        counterMessage: orderFormData.counterComment || undefined,
       };
 
       const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {

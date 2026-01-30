@@ -51,6 +51,7 @@ export default function OfferOrderModal({
   const [comment, setComment] = useState<string>('');
   const [quantityError, setQuantityError] = useState<string>('');
   const [counterPrice, setCounterPrice] = useState<string>('');
+  const [counterComment, setCounterComment] = useState<string>('');
   const [showCounterPrice, setShowCounterPrice] = useState<boolean>(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -173,6 +174,7 @@ export default function OfferOrderModal({
       address: selectedDeliveryType === 'delivery' ? address : undefined,
       comment,
       counterPrice: showCounterPrice && counterPrice ? parseFloat(counterPrice) : undefined,
+      counterComment: showCounterPrice && counterComment ? counterComment : undefined,
     });
   };
 
@@ -398,6 +400,17 @@ export default function OfferOrderModal({
                       </div>
                     </div>
                   )}
+                  <div className="mt-2">
+                    <Label htmlFor="counter-comment" className="text-sm">Комментарий (необязательно)</Label>
+                    <Textarea
+                      id="counter-comment"
+                      placeholder="Опишите причину вашего встречного предложения..."
+                      value={counterComment}
+                      onChange={(e) => setCounterComment(e.target.value)}
+                      rows={2}
+                      className="text-sm resize-none"
+                    />
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   <Icon name="Info" size={12} className="inline mr-1" />
