@@ -121,6 +121,15 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 >
                   <Icon name="Send" className="h-4 w-4" />
                 </a>
+                <a
+                  href={`https://maks.ru/chat/${contactPerson.phone.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 hover:bg-purple-600 text-white transition-colors"
+                  title="Макс"
+                >
+                  <Icon name="MessagesSquare" className="h-4 w-4" />
+                </a>
               </div>
             </div>
           </>
@@ -165,16 +174,26 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             )}
             {order.status === 'accepted' ? (
               <>
-                {isBuyer && onCompleteOrder ? (
-                  <Button
-                    onClick={() => onCompleteOrder(order.id)}
-                    variant="default"
-                    size="sm"
-                    className="w-full bg-green-600 hover:bg-green-700"
-                  >
-                    <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                    Завершить заказ
-                  </Button>
+                {isBuyer ? (
+                  <div className="space-y-3">
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                      <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <p className="text-sm text-green-800 font-medium">
+                        Заказ принят продавцом и находится в работе
+                      </p>
+                    </div>
+                    {onCompleteOrder && (
+                      <Button
+                        onClick={() => onCompleteOrder(order.id)}
+                        variant="default"
+                        size="sm"
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                        Завершить заказ
+                      </Button>
+                    )}
+                  </div>
                 ) : (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
                     <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
