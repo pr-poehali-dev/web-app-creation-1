@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -88,9 +88,20 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     loadMyOffers();
   }, [isAuthenticated, currentUser, navigate, toast]);
 
-  const filteredOffers = filterStatus === 'all' 
-    ? myOffers 
-    : myOffers.filter(offer => offer.status === filterStatus);
+  const stats = useMemo(() => ({
+    total: myOffers.length,
+    active: myOffers.filter(o => o.status === 'active').length,
+    draft: myOffers.filter(o => o.status === 'draft').length,
+    moderation: myOffers.filter(o => o.status === 'moderation').length,
+    archived: myOffers.filter(o => o.status === 'archived').length,
+  }), [myOffers]);
+
+  const filteredOffers = useMemo(() => 
+    filterStatus === 'all' 
+      ? myOffers 
+      : myOffers.filter(offer => offer.status === filterStatus),
+    [myOffers, filterStatus]
+  );
 
   const handleDeleteOffer = (offerId: string) => {
     deleteOffer(offerId);
@@ -150,18 +161,6 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       description: `Удалено ${archivedOffers.length} ${archivedOffers.length === 1 ? 'предложение' : archivedOffers.length < 5 ? 'предложения' : 'предложений'} из архива`,
     });
   };
-
-  const getOfferStats = () => {
-    return {
-      total: myOffers.length,
-      active: myOffers.filter(o => o.status === 'active').length,
-      draft: myOffers.filter(o => o.status === 'draft').length,
-      moderation: myOffers.filter(o => o.status === 'moderation').length,
-      archived: myOffers.filter(o => o.status === 'archived').length,
-    };
-  };
-
-  const stats = getOfferStats();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
