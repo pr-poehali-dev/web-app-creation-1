@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,8 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { reverseGeocode } from '@/utils/geocoding';
 import { DISTRICTS } from '@/data/districts';
-
-const MapModal = lazy(() => import('@/components/auction/MapModal'));
+import MapModal from '@/components/auction/MapModal';
 
 interface OfferOrderModalProps {
   isOpen: boolean;
@@ -441,19 +440,17 @@ export default function OfferOrderModal({
         </form>
       </DialogContent>
 
-      <Suspense fallback={null}>
-        {isMapOpen && (
-          <div className="fixed inset-0 z-[100] bg-background">
-            <MapModal
-              isOpen={isMapOpen}
-              onClose={() => setIsMapOpen(false)}
-              coordinates={gpsCoordinates}
-              onCoordinatesChange={handleCoordinatesChange}
-              onAddressChange={handleAddressChange}
-            />
-          </div>
-        )}
-      </Suspense>
+      {isMapOpen && (
+        <div className="fixed inset-0 z-[100] bg-background">
+          <MapModal
+            isOpen={isMapOpen}
+            onClose={() => setIsMapOpen(false)}
+            coordinates={gpsCoordinates}
+            onCoordinatesChange={handleCoordinatesChange}
+            onAddressChange={handleAddressChange}
+          />
+        </div>
+      )}
     </>
   );
 }
