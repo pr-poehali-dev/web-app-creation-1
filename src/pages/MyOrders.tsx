@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import DataSyncIndicator from '@/components/DataSyncIndicator';
 import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
+import OrderReviewModal from '@/components/reviews/OrderReviewModal';
 import OrdersContent from '@/components/order/OrdersContent';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData } from '@/hooks/useOrdersData';
@@ -39,6 +40,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     isLoading,
     isSyncing,
     currentUser,
+    reviewModalOpen,
+    pendingReviewOrder,
     handleAcceptOrder,
     handleCounterOffer,
     handleAcceptCounter,
@@ -46,6 +49,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleCompleteOrder,
     handleOpenChat,
     handleCloseChat,
+    handleSubmitReview,
+    handleCloseReviewModal,
     loadOrders,
   } = useOrdersData(isAuthenticated, activeTab, setActiveTab);
 
@@ -164,6 +169,16 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onAcceptCounter={handleAcceptCounter}
           onCancelOrder={handleCancelOrder}
           onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? handleCompleteOrder : undefined}
+        />
+      )}
+
+      {pendingReviewOrder && (
+        <OrderReviewModal
+          isOpen={reviewModalOpen}
+          onClose={handleCloseReviewModal}
+          onSubmit={handleSubmitReview}
+          offerTitle={pendingReviewOrder.offerTitle}
+          sellerName={pendingReviewOrder.sellerName}
         />
       )}
     </div>

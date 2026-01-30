@@ -83,7 +83,7 @@ export function useOfferDetail(id: string | undefined) {
                 reviews: reviewsData.reviews.map((r: any) => ({
                   id: String(r.id),
                   reviewerId: String(r.reviewer_id),
-                  reviewerName: r.reviewer_name || 'Аноним',
+                  reviewerName: 'Покупатель',
                   reviewedUserId: String(r.reviewed_user_id),
                   rating: r.rating,
                   comment: r.comment || '',

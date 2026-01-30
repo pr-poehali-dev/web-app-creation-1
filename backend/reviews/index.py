@@ -46,12 +46,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f"[GET] seller_id={seller_id}, order_id={order_id}")
             
             if order_id:
-                return success_response({'review': None})
+                cur.execute(f'''
+                    SELECT * FROM {schema}.reviews 
+                    WHERE order_id::text = %s
+                ''', (order_id,))
+                review = cur.fetchone()
+                return success_response({'review': dict(review) if review else None})
             
             elif seller_id:
+                cur.execute(f'''
+                    SELECT 
+                        id,
+                        order_id,
+                        reviewer_id,
+                        reviewed_user_id,
+                        rating,
+                        comment,
+                        seller_response,
+                        seller_response_date,
+                        created_at,
+                        updated_at
+                    FROM {schema}.reviews
+                    WHERE reviewed_user_id = %s AND order_id IS NOT NULL
+                    ORDER BY created_at DESC
+                ''', (seller_id,))
+                
+                reviews = cur.fetchall()
+                
+                if reviews:
+                    avg_rating = sum(r['rating'] for r in reviews) / len(reviews)
+                else:
+                    avg_rating = 0
+                
                 return success_response({
-                    'reviews': [],
-                    'stats': {'total_reviews': 0, 'average_rating': 0}
+                    'reviews': [dict(r) for r in reviews],
+                    'stats': {
+                        'total_reviews': len(reviews),
+                        'average_rating': round(avg_rating, 1)
+                    }
                 })
             
             else:
