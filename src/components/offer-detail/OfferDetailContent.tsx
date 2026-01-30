@@ -14,7 +14,7 @@ import OfferReviews from '@/components/offer/OfferReviews';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 import { getSession } from '@/utils/auth';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 interface OfferDetailContentProps {
   isAuthenticated: boolean;
@@ -188,29 +188,24 @@ export default function OfferDetailContent({
                   const currentUser = getSession();
                   const isOwner = currentUser && currentUser.id?.toString() === offer.userId;
                   
-                  return (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="w-full">
-                            <Button
-                              onClick={onOrderClick}
-                              size="lg"
-                              className="w-full gap-2"
-                              disabled={isOwner}
-                            >
-                              <Icon name="ShoppingCart" className="h-5 w-5" />
-                              Заказать
-                            </Button>
-                          </div>
-                        </TooltipTrigger>
-                        {isOwner && (
-                          <TooltipContent>
-                            <p>Это ваше предложение</p>
-                          </TooltipContent>
-                        )}
-                      </Tooltip>
-                    </TooltipProvider>
+                  return isOwner ? (
+                    <Button
+                      onClick={() => navigate(`/edit-offer/${offer.id}`)}
+                      size="lg"
+                      className="w-full gap-2"
+                    >
+                      <Icon name="Edit" className="h-5 w-5" />
+                      Редактировать предложение
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={onOrderClick}
+                      size="lg"
+                      className="w-full gap-2"
+                    >
+                      <Icon name="ShoppingCart" className="h-5 w-5" />
+                      Заказать
+                    </Button>
                   );
                 })()}
                 <Button
