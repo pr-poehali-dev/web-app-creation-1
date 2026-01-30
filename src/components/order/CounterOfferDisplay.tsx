@@ -103,23 +103,28 @@ export default function CounterOfferDisplay({
                 )}
                 
                 {isBuyer && (!order.counterOfferedBy || order.counterOfferedBy === 'seller') && (
-                  <div className="flex gap-1 mt-3">
-                    <Button 
-                      onClick={onAcceptCounter} 
-                      size="sm" 
-                      className="bg-green-600 hover:bg-green-700 text-[11px] px-2 py-1.5 h-auto flex-1"
-                    >
-                      <Icon name="Check" className="mr-0.5 h-3 w-3" />
-                      Принять
-                    </Button>
-                    <Button 
-                      onClick={onShowCounterForm} 
-                      size="sm"
-                      className={`text-[11px] px-2 py-1.5 h-auto flex-1 bg-white hover:bg-gray-50 text-black border border-black`}
-                    >
-                      <Icon name="MessageSquare" className="mr-0.5 h-3 w-3" />
-                      Встречное
-                    </Button>
+                  <div className="space-y-1.5 mt-3">
+                    <div className="flex gap-1">
+                      <Button 
+                        onClick={onAcceptCounter} 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700 text-[11px] px-2 py-1.5 h-auto flex-1"
+                      >
+                        <Icon name="Check" className="mr-0.5 h-3 w-3" />
+                        Принять
+                      </Button>
+                      <Button 
+                        onClick={onShowCounterForm} 
+                        size="sm"
+                        className={`text-[11px] px-2 py-1.5 h-auto flex-1 bg-white hover:bg-gray-50 text-black border border-black`}
+                      >
+                        <Icon name="MessageSquare" className="mr-0.5 h-3 w-3" />
+                        Встречное
+                      </Button>
+                    </div>
+                    <div className="text-xs text-muted-foreground text-right">
+                      Продавец: <span className="font-semibold text-foreground">{order.sellerName}</span>
+                    </div>
                   </div>
                 )}
               </>

@@ -61,6 +61,47 @@ export function useOrdersData(
     }
   }, [activeTab, orders.length]);
 
+  // Вспомогательная функция для маппинга заказа
+  const mapOrderData = (orderData: any): Order => ({
+    id: orderData.id,
+    orderNumber: orderData.order_number || orderData.orderNumber,
+    offerId: orderData.offer_id,
+    offerTitle: orderData.offer_title || orderData.title,
+    offerImage: orderData.offer_image ? (typeof orderData.offer_image === 'string' ? JSON.parse(orderData.offer_image)[0]?.url : orderData.offer_image[0]?.url) : undefined,
+    quantity: orderData.quantity,
+    originalQuantity: orderData.original_quantity || orderData.originalQuantity,
+    unit: orderData.unit,
+    pricePerUnit: orderData.price_per_unit || orderData.pricePerUnit,
+    totalAmount: orderData.total_amount || orderData.totalAmount,
+    offerPricePerUnit: orderData.offerPricePerUnit,
+    offerAvailableQuantity: orderData.offerAvailableQuantity,
+    counterPricePerUnit: orderData.counter_price_per_unit || orderData.counterPricePerUnit,
+    counterTotalAmount: orderData.counter_total_amount || orderData.counterTotalAmount,
+    counterOfferMessage: orderData.counter_offer_message || orderData.counterOfferMessage,
+    counterOfferedAt: orderData.counter_offered_at || orderData.counterOfferedAt ? new Date(orderData.counter_offered_at || orderData.counterOfferedAt) : undefined,
+    counterOfferedBy: orderData.counter_offered_by || orderData.counterOfferedBy,
+    buyerAcceptedCounter: orderData.buyer_accepted_counter || orderData.buyerAcceptedCounter,
+    buyerId: orderData.buyer_id?.toString() || orderData.buyerId,
+    buyerName: orderData.buyer_name || orderData.buyerName || orderData.buyer_full_name,
+    buyerPhone: orderData.buyer_phone || orderData.buyerPhone,
+    buyerEmail: orderData.buyer_email || orderData.buyerEmail,
+    sellerId: orderData.seller_id?.toString() || orderData.sellerId,
+    sellerName: orderData.seller_name || orderData.sellerName || orderData.seller_full_name,
+    sellerPhone: orderData.seller_phone || orderData.sellerPhone,
+    sellerEmail: orderData.seller_email || orderData.sellerEmail,
+    status: orderData.status,
+    deliveryType: orderData.delivery_type || orderData.deliveryType || 'delivery',
+    comment: orderData.comment,
+    type: orderData.type,
+    createdAt: new Date(orderData.createdAt || orderData.created_at),
+    acceptedAt: orderData.acceptedAt || orderData.accepted_at ? new Date(orderData.acceptedAt || orderData.accepted_at) : undefined,
+    completedDate: orderData.completedDate || orderData.completed_date ? new Date(orderData.completedDate || orderData.completed_date) : undefined,
+    cancelledBy: orderData.cancelled_by || orderData.cancelledBy,
+    cancellationReason: orderData.cancellation_reason || orderData.cancellationReason,
+    buyerCompany: orderData.buyer_company || orderData.buyerCompany,
+    buyerInn: orderData.buyer_inn || orderData.buyerInn,
+  });
+
   const loadOrders = async (showLoader = false) => {
     try {
       if (showLoader) {
@@ -80,45 +121,7 @@ export function useOrdersData(
         timeoutPromise
       ]) as any;
       
-      const mappedOrders = response.orders.map((order: any) => ({
-        id: order.id,
-        orderNumber: order.order_number || order.orderNumber,
-        offerId: order.offer_id,
-        offerTitle: order.offer_title || order.title,
-        offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,
-        quantity: order.quantity,
-        originalQuantity: order.original_quantity || order.originalQuantity,
-        unit: order.unit,
-        pricePerUnit: order.price_per_unit || order.pricePerUnit,
-        totalAmount: order.total_amount || order.totalAmount,
-        offerPricePerUnit: order.offerPricePerUnit,
-        offerAvailableQuantity: order.offerAvailableQuantity,
-        counterPricePerUnit: order.counter_price_per_unit || order.counterPricePerUnit,
-        counterTotalAmount: order.counter_total_amount || order.counterTotalAmount,
-        counterOfferMessage: order.counter_offer_message || order.counterOfferMessage,
-        counterOfferedAt: order.counter_offered_at || order.counterOfferedAt ? new Date(order.counter_offered_at || order.counterOfferedAt) : undefined,
-        counterOfferedBy: order.counter_offered_by || order.counterOfferedBy,
-        buyerAcceptedCounter: order.buyer_accepted_counter || order.buyerAcceptedCounter,
-        buyerId: order.buyer_id?.toString() || order.buyerId,
-        buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
-        buyerPhone: order.buyer_phone || order.buyerPhone,
-        buyerEmail: order.buyer_email || order.buyerEmail,
-        sellerId: order.seller_id?.toString() || order.sellerId,
-        sellerName: order.seller_name || order.sellerName || order.seller_full_name,
-        sellerPhone: order.seller_phone || order.sellerPhone,
-        sellerEmail: order.seller_email || order.sellerEmail,
-        status: order.status,
-        deliveryType: order.delivery_type || order.deliveryType || 'delivery',
-        comment: order.comment,
-        type: order.type,
-        createdAt: new Date(order.createdAt || order.created_at),
-        acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
-        completedDate: order.completedDate || order.completed_date ? new Date(order.completedDate || order.completed_date) : undefined,
-        cancelledBy: order.cancelled_by || order.cancelledBy,
-        cancellationReason: order.cancellation_reason || order.cancellationReason,
-        buyerCompany: order.buyer_company || order.buyerCompany,
-        buyerInn: order.buyer_inn || order.buyerInn,
-      }));
+      const mappedOrders = response.orders.map(mapOrderData);
       
       setOrders(mappedOrders);
       
@@ -219,51 +222,9 @@ export function useOrdersData(
       // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
       
-      // Получаем обновлённый заказ напрямую из API
+      // Получаем обновлённый заказ напрямую из API и маппим его
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-      
-      // Маппим данные с сервера в формат Order
-      const updatedOrder = {
-        id: updatedOrderData.id,
-        orderNumber: updatedOrderData.order_number || updatedOrderData.orderNumber,
-        offerId: updatedOrderData.offer_id,
-        offerTitle: updatedOrderData.offer_title || updatedOrderData.title,
-        offerImage: updatedOrderData.offer_image ? (typeof updatedOrderData.offer_image === 'string' ? JSON.parse(updatedOrderData.offer_image)[0]?.url : updatedOrderData.offer_image[0]?.url) : undefined,
-        quantity: updatedOrderData.quantity,
-        originalQuantity: updatedOrderData.original_quantity || updatedOrderData.originalQuantity,
-        unit: updatedOrderData.unit,
-        pricePerUnit: updatedOrderData.price_per_unit || updatedOrderData.pricePerUnit,
-        totalAmount: updatedOrderData.total_amount || updatedOrderData.totalAmount,
-        offerPricePerUnit: updatedOrderData.offerPricePerUnit,
-        offerAvailableQuantity: updatedOrderData.offerAvailableQuantity,
-        counterPricePerUnit: updatedOrderData.counter_price_per_unit || updatedOrderData.counterPricePerUnit,
-        counterTotalAmount: updatedOrderData.counter_total_amount || updatedOrderData.counterTotalAmount,
-        counterOfferMessage: updatedOrderData.counter_offer_message || updatedOrderData.counterOfferMessage,
-        counterOfferedAt: updatedOrderData.counter_offered_at || updatedOrderData.counterOfferedAt ? new Date(updatedOrderData.counter_offered_at || updatedOrderData.counterOfferedAt) : undefined,
-        counterOfferedBy: updatedOrderData.counter_offered_by || updatedOrderData.counterOfferedBy,
-        buyerAcceptedCounter: updatedOrderData.buyer_accepted_counter || updatedOrderData.buyerAcceptedCounter,
-        buyerId: updatedOrderData.buyer_id?.toString() || updatedOrderData.buyerId,
-        buyerName: updatedOrderData.buyer_name || updatedOrderData.buyerName || updatedOrderData.buyer_full_name,
-        buyerPhone: updatedOrderData.buyer_phone || updatedOrderData.buyerPhone,
-        buyerEmail: updatedOrderData.buyer_email || updatedOrderData.buyerEmail,
-        sellerId: updatedOrderData.seller_id?.toString() || updatedOrderData.sellerId,
-        sellerName: updatedOrderData.seller_name || updatedOrderData.sellerName || updatedOrderData.seller_full_name,
-        sellerPhone: updatedOrderData.seller_phone || updatedOrderData.sellerPhone,
-        sellerEmail: updatedOrderData.seller_email || updatedOrderData.sellerEmail,
-        status: updatedOrderData.status,
-        deliveryType: updatedOrderData.delivery_type || updatedOrderData.deliveryType || 'delivery',
-        comment: updatedOrderData.comment,
-        type: updatedOrderData.type,
-        createdAt: new Date(updatedOrderData.createdAt || updatedOrderData.created_at),
-        acceptedAt: updatedOrderData.acceptedAt || updatedOrderData.accepted_at ? new Date(updatedOrderData.acceptedAt || updatedOrderData.accepted_at) : undefined,
-        completedDate: updatedOrderData.completedDate || updatedOrderData.completed_date ? new Date(updatedOrderData.completedDate || updatedOrderData.completed_date) : undefined,
-        cancelledBy: updatedOrderData.cancelled_by || updatedOrderData.cancelledBy,
-        cancellationReason: updatedOrderData.cancellation_reason || updatedOrderData.cancellationReason,
-        buyerCompany: updatedOrderData.buyer_company || updatedOrderData.buyerCompany,
-        buyerInn: updatedOrderData.buyer_inn || updatedOrderData.buyerInn,
-      };
-      
-      setSelectedOrder(updatedOrder);
+      setSelectedOrder(mapOrderData(updatedOrderData));
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
@@ -292,21 +253,17 @@ export function useOrdersData(
         totalAmount: selectedOrder.counterTotalAmount || selectedOrder.totalAmount,
       });
 
-      // Обновляем список заказов для синхронизации с сервером
-      await loadOrders(false);
-
       toast({
         title: 'Встречное предложение принято',
         description: 'Заказ переведён в статус "Принято"',
       });
+
+      // Обновляем список заказов для синхронизации с сервером
+      await loadOrders(false);
       
-      // Дополнительно обновляем selectedOrder из свежих данных через 500мс
-      setTimeout(() => {
-        const updatedOrder = orders.find(o => o.id === selectedOrder.id);
-        if (updatedOrder) {
-          setSelectedOrder(updatedOrder);
-        }
-      }, 500);
+      // Получаем обновлённый заказ напрямую из API и маппим его
+      const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+      setSelectedOrder(mapOrderData(updatedOrderData));
     } catch (error) {
       console.error('Error accepting counter offer:', error);
       toast({
