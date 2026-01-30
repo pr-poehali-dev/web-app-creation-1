@@ -764,24 +764,39 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         }
 
 def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
-    """Удалить предложение и все связанные данные"""
+    """Удалить предложение безвозвратно из базы данных"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         
         offer_id_esc = offer_id.replace("'", "''")
         
-        # Удаляем связи с изображениями
-        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
+        # Удаляем связи с изображениями (каскадное удаление)
+        try:
+            cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
+        except Exception as e:
+            print(f"Warning: Could not delete image relations: {str(e)}")
         
-        # Удаляем видео
-        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_videos WHERE offer_id = '{offer_id_esc}'")
+        # Удаляем из избранного (если есть)
+        try:
+            cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id = '{offer_id_esc}'")
+        except Exception as e:
+            print(f"Warning: Could not delete favorites: {str(e)}")
         
-        # Удаляем из избранного
-        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id = '{offer_id_esc}'")
-        
-        # Удаляем само предложение
+        # Удаляем само предложение (главная операция)
         cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offers WHERE id = '{offer_id_esc}'")
+        deleted_rows = cur.rowcount
+        
+        if deleted_rows == 0:
+            conn.rollback()
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({'error': 'Offer not found'}, default=decimal_default),
+                'isBase64Encoded': False
+            }
         
         conn.commit()
         cur.close()
@@ -789,6 +804,8 @@ def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         
         # Инвалидируем кэш
         offers_cache.invalidate('offers_list')
+        
+        print(f"Successfully deleted offer {offer_id}")
         
         return {
             'statusCode': 200,
