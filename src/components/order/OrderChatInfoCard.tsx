@@ -136,7 +136,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 className="w-full bg-green-600 hover:bg-green-700"
               >
                 <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                Завершить заказ
+                Заказ в работе
               </Button>
             ) : onCancelOrder ? (
               <Button
