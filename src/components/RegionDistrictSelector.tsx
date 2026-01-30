@@ -108,9 +108,13 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
       return null;
     }
     
+    // Проверка размера экрана (компьютер vs мобильный)
+    const isMobile = window.innerWidth < 768;
+    
     if (detectedCity) {
       if (selectedDistricts.length > 0) {
-        return `${detectedCity} +${selectedDistricts.length}`;
+        // На компьютере показываем только город, на мобильном с индикатором
+        return isMobile ? `${detectedCity} +${selectedDistricts.length}` : detectedCity;
       }
       return detectedCity;
     }
@@ -126,7 +130,8 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
       return firstDistrict.name;
     }
     
-    return `${firstDistrict.name} +${selectedDistricts.length - 1}`;
+    // На компьютере показываем только первый район, на мобильном с индикатором
+    return isMobile ? `${firstDistrict.name} +${selectedDistricts.length - 1}` : firstDistrict.name;
   };
 
   return (
