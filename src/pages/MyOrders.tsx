@@ -97,18 +97,23 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6"  defaultValue="buyer">
-          <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
-            <TabsTrigger value="buyer" className="py-2.5">
-              Я покупатель {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}
-            </TabsTrigger>
-            <TabsTrigger value="seller" className="py-2.5">
-              Я продавец {sellerOrdersCount > 0 && `(${sellerOrdersCount})`}
-            </TabsTrigger>
-            <TabsTrigger value="archive" className="py-2.5">
-              Архив {archiveOrdersCount > 0 && `(${archiveOrdersCount})`}
-            </TabsTrigger>
-          </TabsList>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6"  defaultValue="buyer">
+            <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
+              <TabsTrigger value="buyer" className="py-2.5">
+                Я покупатель {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}
+              </TabsTrigger>
+              <TabsTrigger value="seller" className="py-2.5">
+                Я продавец {sellerOrdersCount > 0 && `(${sellerOrdersCount})`}
+              </TabsTrigger>
+              <TabsTrigger value="archive" className="py-2.5">
+                Архив {archiveOrdersCount > 0 && `(${archiveOrdersCount})`}
+              </TabsTrigger>
+            </TabsList>
 
           <TabsContent value="buyer">
             <OrdersContent
@@ -144,6 +149,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
             />
           </TabsContent>
         </Tabs>
+        )}
       </main>
 
       <Footer />
