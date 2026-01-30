@@ -45,7 +45,7 @@ export default function MapSearchBar({ onSelectLocation }: MapSearchBarProps) {
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
     onSelectLocation(lat, lng, result.display_name);
-    setSearchQuery('');
+    setSearchQuery(result.display_name);
     setSearchResults([]);
   };
 
