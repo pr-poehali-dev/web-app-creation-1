@@ -86,7 +86,8 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     };
 
     loadMyOffers();
-  }, [isAuthenticated, currentUser, navigate, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, currentUser?.id, navigate]);
 
   const stats = useMemo(() => ({
     total: myOffers.length,
