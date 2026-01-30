@@ -4,12 +4,12 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent } from '@/components/ui/card';
+import MyReviewsLoadingSkeleton from '@/components/reviews/MyReviewsLoadingSkeleton';
+import MyReviewsStatsCard from '@/components/reviews/MyReviewsStatsCard';
+import MyReviewsEmptyState from '@/components/reviews/MyReviewsEmptyState';
+import MyReviewsListItem from '@/components/reviews/MyReviewsListItem';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import Icon from '@/components/ui/icon';
+import { Card, CardContent } from '@/components/ui/card';
 import { getSession } from '@/utils/auth';
 import { reviewsAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
@@ -109,6 +109,15 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
     }
   };
 
+  const handleStartResponse = (reviewId: string) => {
+    setRespondingTo(reviewId);
+  };
+
+  const handleCancelResponse = () => {
+    setRespondingTo(null);
+    setResponseText('');
+  };
+
   if (!currentUser) {
     return null;
   }
@@ -128,72 +137,18 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
         </div>
 
         {isLoading ? (
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              <Card>
-                <CardContent className="pt-6 space-y-4">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-40 w-full" />
-                </CardContent>
-              </Card>
-            </div>
-            <div className="lg:col-span-2 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i}>
-                  <CardContent className="pt-6 space-y-3">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-20 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <MyReviewsLoadingSkeleton />
         ) : (
           <div className="grid gap-6 lg:grid-cols-3">
             {stats && stats.total_reviews > 0 && (
               <div className="lg:col-span-1">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-center mb-6">
-                      <div className="text-5xl font-bold text-primary mb-2">
-                        {stats.average_rating.toFixed(1)}
-                      </div>
-                      <div className="flex justify-center mb-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Icon
-                            key={star}
-                            name="Star"
-                            className={`h-5 w-5 ${
-                              star <= Math.round(stats.average_rating)
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        На основе {stats.total_reviews} {stats.total_reviews === 1 ? 'отзыва' : 'отзывов'}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <MyReviewsStatsCard stats={stats} />
               </div>
             )}
 
             <div className={stats && stats.total_reviews > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
               {reviews.length === 0 ? (
-                <Card>
-                  <CardContent className="pt-6 text-center py-12">
-                    <Icon
-                      name="MessageSquare"
-                      className="h-16 w-16 text-muted-foreground mx-auto mb-4"
-                    />
-                    <h3 className="text-xl font-semibold mb-2">Пока нет отзывов</h3>
-                    <p className="text-muted-foreground">
-                      Здесь появятся отзывы от ваших клиентов после завершения заказов
-                    </p>
-                  </CardContent>
-                </Card>
+                <MyReviewsEmptyState />
               ) : (
                 <Tabs defaultValue="all" className="w-full">
                   <TabsList className="mb-6">
@@ -210,97 +165,17 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
 
                   <TabsContent value="all" className="space-y-4">
                     {reviews.map((review) => (
-                      <Card key={review.id}>
-                        <CardContent className="pt-6">
-                          <div className="flex items-start gap-4 mb-4">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <div className="flex">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Icon
-                                      key={star}
-                                      name="Star"
-                                      className={`h-4 w-4 ${
-                                        star <= review.rating
-                                          ? 'fill-yellow-400 text-yellow-400'
-                                          : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className="text-sm text-muted-foreground">
-                                  {review.reviewerName}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  · {new Date(review.createdAt).toLocaleDateString('ru-RU')}
-                                </span>
-                              </div>
-                              <p className="text-foreground">{review.comment}</p>
-                            </div>
-                          </div>
-
-                          {review.sellerResponse ? (
-                            <div className="mt-4 ml-4 pl-4 border-l-2 border-primary/20 bg-primary/5 rounded-r-lg p-3">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Icon name="MessageCircle" className="h-4 w-4 text-primary" />
-                                <p className="text-xs font-semibold text-primary">Ваш ответ</p>
-                                <span className="text-xs text-muted-foreground">
-                                  · {new Date(review.sellerResponseDate!).toLocaleDateString('ru-RU')}
-                                </span>
-                              </div>
-                              <p className="text-sm">{review.sellerResponse}</p>
-                            </div>
-                          ) : respondingTo === review.id ? (
-                            <div className="mt-4 space-y-3">
-                              <Textarea
-                                value={responseText}
-                                onChange={(e) => setResponseText(e.target.value)}
-                                placeholder="Напишите ваш ответ на отзыв..."
-                                rows={3}
-                                maxLength={500}
-                              />
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleSubmitResponse(review.id as string)}
-                                  disabled={isSubmitting}
-                                >
-                                  {isSubmitting ? (
-                                    <>
-                                      <Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
-                                      Отправка...
-                                    </>
-                                  ) : (
-                                    'Опубликовать ответ'
-                                  )}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setRespondingTo(null);
-                                    setResponseText('');
-                                  }}
-                                  disabled={isSubmitting}
-                                >
-                                  Отмена
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="mt-4">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setRespondingTo(review.id as string)}
-                              >
-                                <Icon name="MessageCircle" className="h-4 w-4 mr-2" />
-                                Ответить на отзыв
-                              </Button>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                      <MyReviewsListItem
+                        key={review.id}
+                        review={review}
+                        respondingTo={respondingTo}
+                        responseText={responseText}
+                        isSubmitting={isSubmitting}
+                        onStartResponse={handleStartResponse}
+                        onCancelResponse={handleCancelResponse}
+                        onResponseTextChange={setResponseText}
+                        onSubmitResponse={handleSubmitResponse}
+                      />
                     ))}
                   </TabsContent>
 
@@ -308,97 +183,17 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
                     {reviews
                       .filter((r) => r.rating >= 4)
                       .map((review) => (
-                        <Card key={review.id}>
-                          <CardContent className="pt-6">
-                            <div className="flex items-start gap-4 mb-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <div className="flex">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <Icon
-                                        key={star}
-                                        name="Star"
-                                        className={`h-4 w-4 ${
-                                          star <= review.rating
-                                            ? 'fill-yellow-400 text-yellow-400'
-                                            : 'text-gray-300'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">
-                                    {review.reviewerName}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground">
-                                    · {new Date(review.createdAt).toLocaleDateString('ru-RU')}
-                                  </span>
-                                </div>
-                                <p className="text-foreground">{review.comment}</p>
-                              </div>
-                            </div>
-
-                            {review.sellerResponse ? (
-                              <div className="mt-4 ml-4 pl-4 border-l-2 border-primary/20 bg-primary/5 rounded-r-lg p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Icon name="MessageCircle" className="h-4 w-4 text-primary" />
-                                  <p className="text-xs font-semibold text-primary">Ваш ответ</p>
-                                  <span className="text-xs text-muted-foreground">
-                                    · {new Date(review.sellerResponseDate!).toLocaleDateString('ru-RU')}
-                                  </span>
-                                </div>
-                                <p className="text-sm">{review.sellerResponse}</p>
-                              </div>
-                            ) : respondingTo === review.id ? (
-                              <div className="mt-4 space-y-3">
-                                <Textarea
-                                  value={responseText}
-                                  onChange={(e) => setResponseText(e.target.value)}
-                                  placeholder="Напишите ваш ответ на отзыв..."
-                                  rows={3}
-                                  maxLength={500}
-                                />
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleSubmitResponse(review.id as string)}
-                                    disabled={isSubmitting}
-                                  >
-                                    {isSubmitting ? (
-                                      <>
-                                        <Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
-                                        Отправка...
-                                      </>
-                                    ) : (
-                                      'Опубликовать ответ'
-                                    )}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setRespondingTo(null);
-                                      setResponseText('');
-                                    }}
-                                    disabled={isSubmitting}
-                                  >
-                                    Отмена
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="mt-4">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setRespondingTo(review.id as string)}
-                                >
-                                  <Icon name="MessageCircle" className="h-4 w-4 mr-2" />
-                                  Ответить на отзыв
-                                </Button>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
+                        <MyReviewsListItem
+                          key={review.id}
+                          review={review}
+                          respondingTo={respondingTo}
+                          responseText={responseText}
+                          isSubmitting={isSubmitting}
+                          onStartResponse={handleStartResponse}
+                          onCancelResponse={handleCancelResponse}
+                          onResponseTextChange={setResponseText}
+                          onSubmitResponse={handleSubmitResponse}
+                        />
                       ))}
                     {reviews.filter((r) => r.rating >= 4).length === 0 && (
                       <Card>
@@ -415,97 +210,17 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
                     {reviews
                       .filter((r) => r.rating <= 2)
                       .map((review) => (
-                        <Card key={review.id}>
-                          <CardContent className="pt-6">
-                            <div className="flex items-start gap-4 mb-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <div className="flex">
-                                    {[1, 2, 3, 4, 5].map((star) => (
-                                      <Icon
-                                        key={star}
-                                        name="Star"
-                                        className={`h-4 w-4 ${
-                                          star <= review.rating
-                                            ? 'fill-yellow-400 text-yellow-400'
-                                            : 'text-gray-300'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                  <span className="text-sm text-muted-foreground">
-                                    {review.reviewerName}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground">
-                                    · {new Date(review.createdAt).toLocaleDateString('ru-RU')}
-                                  </span>
-                                </div>
-                                <p className="text-foreground">{review.comment}</p>
-                              </div>
-                            </div>
-
-                            {review.sellerResponse ? (
-                              <div className="mt-4 ml-4 pl-4 border-l-2 border-primary/20 bg-primary/5 rounded-r-lg p-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Icon name="MessageCircle" className="h-4 w-4 text-primary" />
-                                  <p className="text-xs font-semibold text-primary">Ваш ответ</p>
-                                  <span className="text-xs text-muted-foreground">
-                                    · {new Date(review.sellerResponseDate!).toLocaleDateString('ru-RU')}
-                                  </span>
-                                </div>
-                                <p className="text-sm">{review.sellerResponse}</p>
-                              </div>
-                            ) : respondingTo === review.id ? (
-                              <div className="mt-4 space-y-3">
-                                <Textarea
-                                  value={responseText}
-                                  onChange={(e) => setResponseText(e.target.value)}
-                                  placeholder="Напишите ваш ответ на отзыв..."
-                                  rows={3}
-                                  maxLength={500}
-                                />
-                                <div className="flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleSubmitResponse(review.id as string)}
-                                    disabled={isSubmitting}
-                                  >
-                                    {isSubmitting ? (
-                                      <>
-                                        <Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
-                                        Отправка...
-                                      </>
-                                    ) : (
-                                      'Опубликовать ответ'
-                                    )}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setRespondingTo(null);
-                                      setResponseText('');
-                                    }}
-                                    disabled={isSubmitting}
-                                  >
-                                    Отмена
-                                  </Button>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="mt-4">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => setRespondingTo(review.id as string)}
-                                >
-                                  <Icon name="MessageCircle" className="h-4 w-4 mr-2" />
-                                  Ответить на отзыв
-                                </Button>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
+                        <MyReviewsListItem
+                          key={review.id}
+                          review={review}
+                          respondingTo={respondingTo}
+                          responseText={responseText}
+                          isSubmitting={isSubmitting}
+                          onStartResponse={handleStartResponse}
+                          onCancelResponse={handleCancelResponse}
+                          onResponseTextChange={setResponseText}
+                          onSubmitResponse={handleSubmitResponse}
+                        />
                       ))}
                     {reviews.filter((r) => r.rating <= 2).length === 0 && (
                       <Card>
