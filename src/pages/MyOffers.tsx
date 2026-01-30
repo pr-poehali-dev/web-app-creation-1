@@ -94,28 +94,13 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   }, [isAuthenticated, currentUser, navigate]);
 
   const myOffers: MyOffer[] = allOffers
-    .filter(offer => {
-      console.log('🔍 Фильтр предложения:', {
-        offerId: offer.id,
-        offerUserId: offer.userId,
-        currentUserId: currentUser?.id,
-        match: offer.userId === currentUser?.id
-      });
-      return offer.userId === currentUser?.id;
-    })
+    .filter(offer => String(offer.userId) === String(currentUser?.id))
     .map(offer => ({
       ...offer,
       status: (offer.status as OfferStatus) || 'active',
       views: offer.views || 0,
       favorites: 0,
     }));
-
-  console.log('📊 MyOffers данные:', {
-    allOffersCount: allOffers.length,
-    myOffersCount: myOffers.length,
-    currentUserId: currentUser?.id,
-    allOffers: allOffers.map(o => ({ id: o.id, userId: o.userId, title: o.title }))
-  });
 
   const filteredOffers = filterStatus === 'all' 
     ? myOffers 

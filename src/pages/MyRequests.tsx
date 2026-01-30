@@ -92,7 +92,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
   }, [isAuthenticated, currentUser, navigate]);
 
   const myRequests: Request[] = allRequests
-    .filter(request => request.userId === currentUser?.id)
+    .filter(request => String(request.userId) === String(currentUser?.id))
     .map(request => ({
       id: request.id,
       title: request.title,
