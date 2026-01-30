@@ -89,14 +89,14 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               <div className="space-y-1 mt-2">
                 <a
                   href={`tel:${contactPerson.phone}`}
-                  className="text-sm hover:text-primary transition-colors flex items-center gap-1.5"
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center gap-1.5"
                 >
                   <Icon name="Phone" className="h-3.5 w-3.5" />
                   {contactPerson.phone}
                 </a>
                 <a
                   href={`mailto:${contactPerson.email}`}
-                  className="text-xs hover:text-primary transition-colors flex items-center gap-1.5 text-muted-foreground"
+                  className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center gap-1.5"
                 >
                   <Icon name="Mail" className="h-3.5 w-3.5" />
                   {contactPerson.email}
