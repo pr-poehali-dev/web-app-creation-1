@@ -87,10 +87,6 @@ export default function HeaderUserMenu({
           <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
           Мои заказы
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/profile')} className="border-2 border-border rounded-md mb-1">
-          <Icon name="User" className="mr-2 h-4 w-4" />
-          Мои данные
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/my-offers')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Package" className="mr-2 h-4 w-4" />
           Мои предложения
@@ -152,6 +148,10 @@ export default function HeaderUserMenu({
           </>
         )}
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate('/profile')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="User" className="mr-2 h-4 w-4" />
+          Мои данные
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="text-destructive border-2 border-border rounded-md">
           <Icon name="LogOut" className="mr-2 h-4 w-4" />
           Выйти
