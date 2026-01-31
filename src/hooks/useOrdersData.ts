@@ -7,6 +7,7 @@ import type { Order } from '@/types/order';
 import { ordersAPI, reviewsAPI } from '@/services/api';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
+import * as BrowserNotify from '@/utils/browserNotifications';
 
 export function useOrdersData(
   isAuthenticated: boolean, 
@@ -138,6 +139,15 @@ export function useOrdersData(
     // Подписываемся на обновления заказов
     const unsubscribe = dataSync.subscribe('order_updated', () => {
       console.log('[useOrdersData] Получено событие order_updated, обновляем заказы');
+      
+      // Показываем браузерное уведомление при обновлении заказов
+      if (BrowserNotify.getNotificationPermission() === 'granted') {
+        BrowserNotify.showBrowserNotification({
+          title: 'Обновление заказа',
+          body: 'Статус одного из ваших заказов изменился',
+        });
+      }
+      
       loadOrders(false);
     });
 
