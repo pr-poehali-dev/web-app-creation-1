@@ -235,6 +235,8 @@ const App = () => {
   const handleLogout = () => {
     clearSession();
     setIsAuthenticated(false);
+    // Отправляем событие для сброса состояния во всех компонентах
+    window.dispatchEvent(new Event('userLoggedOut'));
   };
 
   const handleGlobalRefresh = async () => {

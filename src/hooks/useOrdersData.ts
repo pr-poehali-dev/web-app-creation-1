@@ -55,6 +55,36 @@ export function useOrdersData(
     };
   }, [isAuthenticated, navigate, currentUser?.id]);
 
+  // Закрываем модальное окно, если открытый заказ не принадлежит текущему пользователю
+  useEffect(() => {
+    if (selectedOrder && currentUser && isChatOpen) {
+      const isUserInvolved = 
+        String(selectedOrder.buyerId) === String(currentUser.id) ||
+        String(selectedOrder.sellerId) === String(currentUser.id);
+      
+      if (!isUserInvolved) {
+        console.log('[useOrdersData] Закрываем чужой заказ при смене пользователя');
+        setSelectedOrder(null);
+        setIsChatOpen(false);
+      }
+    }
+  }, [currentUser?.id, selectedOrder, isChatOpen]);
+
+  // Сбрасываем состояние при выходе из системы
+  useEffect(() => {
+    const handleLogout = () => {
+      console.log('[useOrdersData] Пользователь вышел, сбрасываем состояние');
+      setSelectedOrder(null);
+      setIsChatOpen(false);
+      setOrders([]);
+      setPendingReviewOrder(null);
+      setReviewModalOpen(false);
+    };
+
+    window.addEventListener('userLoggedOut', handleLogout);
+    return () => window.removeEventListener('userLoggedOut', handleLogout);
+  }, []);
+
   // Отмечаем заказы как просмотренные при открытии вкладки продавца
   useEffect(() => {
     if (activeTab === 'seller' && currentUser && orders.length > 0) {
