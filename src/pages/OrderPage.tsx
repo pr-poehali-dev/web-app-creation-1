@@ -258,6 +258,9 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         description: 'Продавец свяжется с вами в ближайшее время',
       });
 
+      // Даем серверу время на сохранение заказа перед переходом
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       navigate('/my-orders', { state: { refresh: true, newOrderId: result.id } });
     } catch (error) {
       toast({

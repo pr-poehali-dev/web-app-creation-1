@@ -92,10 +92,11 @@ export function clearCache(): void {
 async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2): Promise<Response> {
   const method = options?.method || 'GET';
   
-  // ⚡ НЕ кэшируем запросы сообщений чата (они должны обновляться в реальном времени)
+  // ⚡ НЕ кэшируем запросы сообщений чата и заказов (они должны обновляться в реальном времени)
   const isMessageRequest = url.includes('messages=true');
+  const isOrdersRequest = url.includes('orders');
   
-  if (method === 'GET' && !isMessageRequest) {
+  if (method === 'GET' && !isMessageRequest && !isOrdersRequest) {
     const cacheKey = getCacheKey(url, options);
     const cached = getFromCache(cacheKey);
     if (cached) {
@@ -646,6 +647,9 @@ export const ordersAPI = {
       throw new Error(error.error || 'Failed to create order');
     }
     
+    // Инвалидируем кэш заказов после создания нового
+    invalidateCache('orders');
+    
     return response.json();
   },
 
@@ -678,6 +682,10 @@ export const ordersAPI = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to update order');
     }
+    
+    // Инвалидируем кэш заказов после обновления
+    invalidateCache('orders');
+    invalidateCache(`id=${id}`);
     
     return response.json();
   },

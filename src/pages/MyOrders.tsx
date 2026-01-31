@@ -57,19 +57,45 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
 
   // Обновляем заказы при переходе после создания нового заказа
   useEffect(() => {
-    if (location.state?.refresh) {
-      console.log('[MyOrders] Обнаружен флаг refresh, обновляем заказы');
+    if (location.state?.refresh && location.state?.newOrderId) {
+      console.log('[MyOrders] Обнаружен флаг refresh с новым заказом:', location.state.newOrderId);
       
-      // Сначала обновляем заказы, ПОТОМ очищаем state
       const updateOrders = async () => {
-        await loadOrders(false);
-        // Очищаем state после завершения загрузки
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        // Пытаемся загрузить заказы несколько раз, пока не найдем новый заказ
+        while (attempts < maxAttempts) {
+          console.log(`[MyOrders] Попытка ${attempts + 1} загрузки заказов`);
+          await loadOrders(attempts === 0); // Показываем лоадер только при первой попытке
+          
+          // Небольшая задержка перед проверкой
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Проверяем, появился ли новый заказ
+          const orderExists = orders.some(o => o.id === location.state.newOrderId);
+          
+          if (orderExists) {
+            console.log('[MyOrders] Новый заказ найден, обновление завершено');
+            break;
+          }
+          
+          attempts++;
+          
+          // Задержка перед следующей попыткой (кроме последней)
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+        
+        // Очищаем state после завершения
         navigate(location.pathname, { replace: true, state: {} });
       };
       
       updateOrders();
     }
-  }, [location.state, loadOrders, navigate, location.pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.refresh, location.state?.newOrderId]);
 
   useEffect(() => {
     const handleOpenOrderChat = async (event: CustomEvent) => {
