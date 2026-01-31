@@ -278,8 +278,8 @@ export default function OfferOrderModal({
               </div>
             )}
             
-            {/* Блок с ценами */}
-            {!quantityError && Number(quantity) > 0 && (
+            {/* Блок с ценами - скрывается при showCounterPrice */}
+            {!quantityError && Number(quantity) > 0 && !showCounterPrice && (
               <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-muted-foreground">Цена за {unit}:</span>
@@ -378,17 +378,20 @@ export default function OfferOrderModal({
             </div>
           )}
 
-          <div>
-            <Label htmlFor="order-comment">Комментарий</Label>
-            <Textarea
-              id="order-comment"
-              name="order-comment"
-              placeholder="Дополнительная информация к заказу"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-            />
-          </div>
+          {/* Комментарий - скрывается при showCounterPrice */}
+          {!showCounterPrice && (
+            <div>
+              <Label htmlFor="order-comment">Комментарий</Label>
+              <Textarea
+                id="order-comment"
+                name="order-comment"
+                placeholder="Дополнительная информация к заказу"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                rows={3}
+              />
+            </div>
+          )}
 
           <div className="border-t pt-4">
             <button
