@@ -226,6 +226,20 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 )}
               </div>
             )}
+
+            {/* Универсальная кнопка "Отменить заказ" для статусов new и negotiating */}
+            {(order.status === 'new' || order.status === 'negotiating') && onCancelOrder && (
+              <Button
+                onClick={handleCancelClick}
+                variant="destructive"
+                size="sm"
+                className="w-full mt-3"
+              >
+                <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                Отменить заказ
+              </Button>
+            )}
+
             {order.status === 'accepted' && (
               <>
                 {isBuyer ? (
