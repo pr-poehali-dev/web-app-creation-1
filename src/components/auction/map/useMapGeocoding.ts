@@ -4,11 +4,13 @@ export interface GeocodingResult {
 }
 
 function shortenAddress(address: any): string {
-  // Сокращаем регион/область
+  // Сокращаем регион/область максимально
   const region = address.state || '';
   const shortRegion = region
-    .replace('Республика Саха (Якутия)', 'Респ.Саха(Я)')
-    .replace('Республика', 'Респ.')
+    .replace('Республика Саха (Якутия)', 'РС(Я)')
+    .replace('Московская область', 'МО')
+    .replace('Ленинградская область', 'ЛО')
+    .replace('Республика', 'Р.')
     .replace('область', 'обл.')
     .replace('край', 'кр.');
   
@@ -23,7 +25,7 @@ function shortenAddress(address: any): string {
   // Номер дома
   const houseNumber = address.house_number || '';
   
-  // Собираем адрес: Респ.Саха(Я), г.Нюрба, Степана Васильева, 15
+  // Собираем адрес: РС(Я) г.Нюрба, Степана Васильева, 15
   const parts = [shortRegion, shortCity, shortStreet, houseNumber].filter(Boolean);
   return parts.join(', ');
 }
