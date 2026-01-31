@@ -218,13 +218,38 @@ export function useOrdersData(
         );
       }
 
+      // Мгновенно обновляем статус локально для быстрого отклика UI
+      if (selectedOrder && selectedOrder.id === orderToAccept) {
+        const updatedOrder = {
+          ...selectedOrder,
+          status: 'accepted' as const,
+          acceptedAt: new Date(),
+        };
+        setSelectedOrder(updatedOrder);
+        
+        // Обновляем заказ в списке
+        setOrders(prevOrders => 
+          prevOrders.map(o => o.id === orderToAccept ? updatedOrder : o)
+        );
+      }
+
       toast({
         title: 'Заказ принят',
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
       notifyOrderUpdated(orderToAccept);
-      await loadOrders(false);
+      
+      // Получаем обновлённый заказ с сервера в фоне
+      setTimeout(async () => {
+        await loadOrders(false);
+        const updatedOrderData = await ordersAPI.getOrderById(orderToAccept);
+        const mappedOrder = mapOrderData(updatedOrderData);
+        setSelectedOrder(mappedOrder);
+        setOrders(prevOrders => 
+          prevOrders.map(o => o.id === orderToAccept ? mappedOrder : o)
+        );
+      }, 100);
     } catch (error: any) {
       console.error('Error accepting order:', error);
       toast({
@@ -292,14 +317,21 @@ export function useOrdersData(
         status: 'accepted'
       });
 
-      // Мгновенно обновляем статус локально для быстрого отклика
-      setSelectedOrder({
+      // Мгновенно обновляем статус локально для быстрого отклика UI
+      const updatedOrder = {
         ...selectedOrder,
-        status: 'accepted',
+        status: 'accepted' as const,
         buyerAcceptedCounter: true,
         pricePerUnit: selectedOrder.counterPricePerUnit || selectedOrder.pricePerUnit,
         totalAmount: selectedOrder.counterTotalAmount || selectedOrder.totalAmount,
-      });
+        acceptedAt: new Date(),
+      };
+      setSelectedOrder(updatedOrder);
+      
+      // Обновляем заказ в списке
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === selectedOrder.id ? updatedOrder : o)
+      );
 
       toast({
         title: 'Встречное предложение принято',
@@ -307,12 +339,17 @@ export function useOrdersData(
       });
 
       notifyOrderUpdated(selectedOrder.id);
-      // Обновляем список заказов для синхронизации с сервером
-      await loadOrders(false);
       
-      // Получаем обновлённый заказ напрямую из API и маппим его
-      const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-      setSelectedOrder(mapOrderData(updatedOrderData));
+      // Получаем обновлённый заказ с сервера в фоне
+      setTimeout(async () => {
+        await loadOrders(false);
+        const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+        const mappedOrder = mapOrderData(updatedOrderData);
+        setSelectedOrder(mappedOrder);
+        setOrders(prevOrders => 
+          prevOrders.map(o => o.id === selectedOrder.id ? mappedOrder : o)
+        );
+      }, 100);
     } catch (error) {
       console.error('Error accepting counter offer:', error);
       toast({
