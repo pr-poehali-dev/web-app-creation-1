@@ -70,6 +70,20 @@ export function useOrdersData(
     }
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
+  // Синхронизируем selectedOrder с актуальными данными из orders
+  useEffect(() => {
+    if (selectedOrder && isChatOpen) {
+      const actualOrder = orders.find(o => o.id === selectedOrder.id);
+      if (actualOrder) {
+        // Проверяем, изменился ли статус или другие поля
+        if (JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
+          console.log('[useOrdersData] Обновляем selectedOrder с актуальными данными');
+          setSelectedOrder(actualOrder);
+        }
+      }
+    }
+  }, [orders, selectedOrder?.id, isChatOpen]);
+
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
     const handleLogout = () => {
@@ -239,18 +253,8 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
+      // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderToAccept);
-      
-      // Получаем обновлённый заказ с сервера в фоне для синхронизации
-      setTimeout(async () => {
-        await loadOrders(false);
-        const updatedOrderData = await ordersAPI.getOrderById(orderToAccept);
-        const mappedOrder = mapOrderData(updatedOrderData);
-        setSelectedOrder(mappedOrder);
-        setOrders(prevOrders => 
-          prevOrders.map(o => o.id === orderToAccept ? mappedOrder : o)
-        );
-      }, 500);
     } catch (error: any) {
       console.error('Error accepting order:', error);
       
@@ -352,18 +356,8 @@ export function useOrdersData(
         description: 'Заказ переведён в статус "Принято"',
       });
 
+      // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderId);
-      
-      // Получаем обновлённый заказ с сервера в фоне для синхронизации
-      setTimeout(async () => {
-        await loadOrders(false);
-        const updatedOrderData = await ordersAPI.getOrderById(orderId);
-        const mappedOrder = mapOrderData(updatedOrderData);
-        setSelectedOrder(mappedOrder);
-        setOrders(prevOrders => 
-          prevOrders.map(o => o.id === selectedOrder.id ? mappedOrder : o)
-        );
-      }, 500);
     } catch (error) {
       console.error('Error accepting counter offer:', error);
       
@@ -415,10 +409,8 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
+      // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderToComplete);
-      
-      // Обновляем с сервера в фоне для синхронизации
-      setTimeout(() => loadOrders(false), 500);
 
       if (isBuyer) {
         setPendingReviewOrder(order);
@@ -450,7 +442,9 @@ export function useOrdersData(
   };
 
   const handleOpenChat = (order: Order) => {
-    setSelectedOrder(order);
+    // Ищем самую актуальную версию заказа из списка orders
+    const actualOrder = orders.find(o => o.id === order.id) || order;
+    setSelectedOrder(actualOrder);
     setIsChatOpen(true);
   };
 
@@ -508,8 +502,7 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
-      // Обновляем с сервера в фоне для синхронизации
-      setTimeout(() => loadOrders(false), 500);
+      // notifyOrderUpdated уже триггерит обновление через событие order_updated (вызвано выше)
     } catch (error) {
       console.error('Error cancelling order:', error);
       
