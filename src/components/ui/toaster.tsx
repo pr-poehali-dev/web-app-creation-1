@@ -1,3 +1,4 @@
+import { useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -8,8 +9,27 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 
+// Определяем мобильное устройство
+const isMobile = () => {
+  if (typeof window === 'undefined') return false;
+  return window.innerWidth < 768;
+}
+
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts, dismiss } = useToast()
+
+  // Автоматически закрываем toast через 2 секунды на мобильных
+  useEffect(() => {
+    if (!isMobile()) return;
+
+    toasts.forEach((toast) => {
+      const timer = setTimeout(() => {
+        dismiss(toast.id);
+      }, 2000); // 2 секунды
+
+      return () => clearTimeout(timer);
+    });
+  }, [toasts, dismiss]);
 
   return (
     <ToastProvider>
