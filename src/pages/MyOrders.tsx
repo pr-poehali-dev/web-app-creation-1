@@ -7,7 +7,6 @@ import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrderReviewModal from '@/components/reviews/OrderReviewModal';
 import OrdersContent from '@/components/order/OrdersContent';
-import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData } from '@/hooks/useOrdersData';
 
@@ -90,15 +89,10 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return null;
   }
 
-  const handleRefresh = async () => {
-    await loadOrders(true);
-  };
-
   return (
-    <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-        <DataSyncIndicator isVisible={isSyncing} />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
+      <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      <DataSyncIndicator isVisible={isSyncing} />
         
         <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
         <BackButton />
@@ -187,7 +181,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           sellerName={pendingReviewOrder.sellerName}
         />
       )}
-      </div>
-    </PullToRefresh>
+    </div>
   );
 }
