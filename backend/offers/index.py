@@ -649,6 +649,40 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
+        # Валидация изменения количества
+        if 'quantity' in body:
+            offer_id_esc = offer_id.replace("'", "''")
+            cur.execute(f"""
+                SELECT 
+                    COALESCE(sold_quantity, 0) as sold, 
+                    COALESCE(reserved_quantity, 0) as reserved
+                FROM t_p42562714_web_app_creation_1.offers 
+                WHERE id = '{offer_id_esc}'
+            """)
+            current_state = cur.fetchone()
+            
+            if current_state:
+                new_quantity = float(body['quantity'])
+                sold = float(current_state['sold'])
+                reserved = float(current_state['reserved'])
+                min_allowed = sold + reserved
+                
+                if new_quantity < min_allowed:
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 400,
+                        'headers': headers,
+                        'body': json.dumps({
+                            'error': 'Недостаточное количество',
+                            'message': f'Нельзя установить количество меньше {min_allowed:.2f} (продано: {sold:.2f}, зарезервировано: {reserved:.2f})',
+                            'minAllowed': min_allowed,
+                            'sold': sold,
+                            'reserved': reserved
+                        }, default=decimal_default),
+                        'isBase64Encoded': False
+                    }
+        
         updates = []
         
         if 'title' in body:

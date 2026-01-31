@@ -164,6 +164,8 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         id: result.id,
         userId: currentUser?.id || '',
         ...offerData,
+        soldQuantity: 0,
+        reservedQuantity: 0,
         seller: {
           id: currentUser?.id || '',
           name: `${currentUser?.firstName} ${currentUser?.lastName}`,
@@ -212,7 +214,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
           navigate('/predlozheniya', { replace: true });
         }
       }, 500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка создания предложения:', error);
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
       
@@ -221,9 +223,19 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         console.error('Error message:', error.message);
       }
       
+      // Проверяем, есть ли информация о валидации количества
+      let errorMessage = error instanceof Error ? error.message : 'Не удалось создать предложение';
+      
+      if (error?.error === 'Недостаточное количество' || error?.message?.includes('Недостаточное количество')) {
+        const minAllowed = error?.minAllowed || 0;
+        const sold = error?.sold || 0;
+        const reserved = error?.reserved || 0;
+        errorMessage = `Нельзя установить количество меньше ${minAllowed} (уже продано: ${sold}, зарезервировано: ${reserved})`;
+      }
+      
       toast({
         title: 'Ошибка',
-        description: error instanceof Error ? error.message : 'Не удалось создать предложение',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
