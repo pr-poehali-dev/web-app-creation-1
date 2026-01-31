@@ -14,6 +14,23 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { reverseGeocode } from '@/utils/geocoding';
+
+function shortenAddress(fullAddress: string): string {
+  // Сокращаем адрес по тем же правилам что и в geocoding
+  return fullAddress
+    .replace('Республика Саха (Якутия)', 'РС(Я)')
+    .replace('Респ Саха (Якутия)', 'РС(Я)')
+    .replace('Республика Саха', 'РС(Я)')
+    .replace('Московская область', 'МО')
+    .replace('Ленинградская область', 'ЛО')
+    .replace('Республика', 'Р.')
+    .replace('область', 'обл.')
+    .replace('край', 'кр.')
+    .replace('улица', '')
+    .replace(/,\s+,/g, ',') // Убираем двойные запятые
+    .replace(/\s+/g, ' ') // Убираем лишние пробелы
+    .trim();
+}
 import { DISTRICTS } from '@/data/districts';
 import MapModal from '@/components/auction/MapModal';
 
@@ -66,7 +83,8 @@ export default function OfferOrderModal({
 
   useEffect(() => {
     if (currentUser?.legalAddress && selectedDeliveryType === 'delivery') {
-      setAddress(currentUser.legalAddress);
+      const shortened = shortenAddress(currentUser.legalAddress);
+      setAddress(shortened);
     }
   }, [currentUser, selectedDeliveryType]);
 
