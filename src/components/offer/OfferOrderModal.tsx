@@ -95,6 +95,10 @@ export default function OfferOrderModal({
     }
   }, [minOrderQuantity]);
 
+  useEffect(() => {
+    console.log('📍 Address state changed to:', address);
+  }, [address]);
+
   const handleQuantityChange = (value: string) => {
     const numValue = Number(value);
     
@@ -139,16 +143,20 @@ export default function OfferOrderModal({
   };
 
   const handleAddressChange = (fullAddress: string, district: string, coords?: string) => {
-    console.log('📍 Address changed in modal:', fullAddress, coords);
+    console.log('📍 OfferOrderModal handleAddressChange called:', { fullAddress, district, coords });
+    console.log('📍 Setting address to:', fullAddress);
     setAddress(fullAddress);
     setAddressError('');
     if (coords) {
+      console.log('📍 Setting GPS coordinates to:', coords);
       setGpsCoordinates(coords);
       const [lat, lng] = coords.split(',').map(c => parseFloat(c.trim()));
       if (!isNaN(lat) && !isNaN(lng)) {
         setSelectedLocation({ lat, lng });
+        console.log('📍 Updated location:', { lat, lng });
       }
     }
+    console.log('📍 handleAddressChange complete');
   };
 
   const validateAddress = async (addressText: string) => {

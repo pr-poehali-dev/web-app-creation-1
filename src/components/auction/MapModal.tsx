@@ -83,11 +83,14 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             onCoordinatesChange(dragCoords);
             
             if (onAddressChange) {
+              console.log('🔄 Drag callback: fetching address for', dragCoords);
               try {
                 const result = await geocodeCoordinates(dragLat, dragLng, '🔄 Drag:');
+                console.log('🔄 Drag: Calling onAddressChange with:', result);
                 onAddressChange(result.fullAddress, result.district, dragCoords);
+                setCurrentAddress(result.fullAddress);
               } catch (error) {
-                console.error('Ошибка получения адреса:', error);
+                console.error('Ошибка получения адреса при перетаскивании:', error);
               }
             }
           });
@@ -104,11 +107,14 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               onCoordinatesChange(dragCoords);
               
               if (onAddressChange) {
+                console.log('🔄 Initial marker drag: fetching address for', dragCoords);
                 try {
                   const result = await geocodeCoordinates(dragLat, dragLng);
+                  console.log('🔄 Initial marker drag: Calling onAddressChange with:', result);
                   onAddressChange(result.fullAddress, result.district, dragCoords);
+                  setCurrentAddress(result.fullAddress);
                 } catch (error) {
-                  console.error('Ошибка получения адреса:', error);
+                  console.error('Ошибка получения адреса при перетаскивании:', error);
                 }
               }
             });
@@ -156,11 +162,14 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           onCoordinatesChange(dragCoords);
           
           if (onAddressChange) {
+            console.log('🔄 Search result marker drag: fetching address for', dragCoords);
             try {
               const result = await geocodeCoordinates(dragLat, dragLng);
+              console.log('🔄 Search result marker drag: Calling onAddressChange with:', result);
               onAddressChange(result.fullAddress, result.district, dragCoords);
+              setCurrentAddress(result.fullAddress);
             } catch (error) {
-              console.error('Ошибка получения адреса:', error);
+              console.error('Ошибка получения адреса при перетаскивании:', error);
             }
           }
         });
@@ -202,11 +211,14 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                 onCoordinatesChange(dragCoords);
                 
                 if (onAddressChange) {
+                  console.log('🔄 Geolocation marker drag: fetching address for', dragCoords);
                   try {
                     const result = await geocodeCoordinates(dragLat, dragLng);
+                    console.log('🔄 Geolocation marker drag: Calling onAddressChange with:', result);
                     onAddressChange(result.fullAddress, result.district, dragCoords);
+                    setCurrentAddress(result.fullAddress);
                   } catch (error) {
-                    console.error('Ошибка получения адреса:', error);
+                    console.error('Ошибка получения адреса при перетаскивании:', error);
                   }
                 }
               });
