@@ -370,6 +370,19 @@ export function useOrdersData(
       const order = orders.find(o => o.id === orderToComplete);
       const isBuyer = currentUser?.id?.toString() === order?.buyerId?.toString();
 
+      // Мгновенно обновляем статус локально
+      if (order) {
+        const updatedOrder = {
+          ...order,
+          status: 'completed' as const,
+          completedDate: new Date(),
+        };
+        
+        setOrders(prevOrders => 
+          prevOrders.map(o => o.id === orderToComplete ? updatedOrder : o)
+        );
+      }
+
       setIsChatOpen(false);
       
       if (onTabChange) {
@@ -377,7 +390,9 @@ export function useOrdersData(
       }
       
       notifyOrderUpdated(orderToComplete);
-      await loadOrders(false);
+      
+      // Обновляем с сервера в фоне
+      setTimeout(() => loadOrders(false), 100);
 
       if (isBuyer && order) {
         setPendingReviewOrder(order);
@@ -422,6 +437,20 @@ export function useOrdersData(
         cancellationReason: reason || undefined
       });
 
+      // Мгновенно обновляем статус локально
+      if (order) {
+        const updatedOrder = {
+          ...order,
+          status: 'cancelled' as const,
+          cancelledBy,
+          cancellationReason: reason || undefined,
+        };
+        
+        setOrders(prevOrders => 
+          prevOrders.map(o => o.id === orderToCancel ? updatedOrder : o)
+        );
+      }
+
       notifyOrderUpdated(orderToCancel);
       
       toast({
@@ -436,7 +465,8 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
-      await loadOrders(false);
+      // Обновляем с сервера в фоне
+      setTimeout(() => loadOrders(false), 100);
     } catch (error) {
       console.error('Error cancelling order:', error);
       toast({
@@ -464,6 +494,9 @@ export function useOrdersData(
       });
 
       setPendingReviewOrder(null);
+      
+      // Обновляем список заказов после публикации отзыва
+      await loadOrders(false);
     } catch (error: any) {
       console.error('Error submitting review:', error);
       toast({
@@ -475,9 +508,12 @@ export function useOrdersData(
     }
   };
 
-  const handleCloseReviewModal = () => {
+  const handleCloseReviewModal = async () => {
     setReviewModalOpen(false);
     setPendingReviewOrder(null);
+    
+    // Обновляем список заказов при закрытии модального окна (кнопка "Пропустить")
+    await loadOrders(false);
   };
 
   return {
