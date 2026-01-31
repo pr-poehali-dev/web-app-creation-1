@@ -235,6 +235,7 @@ export default function AuctionLocationSection({
             value={formData.fullAddress}
             onChange={(e) => onInputChange('fullAddress', e.target.value)}
             placeholder="Улица, дом"
+            className="text-xs"
           />
         </div>
 

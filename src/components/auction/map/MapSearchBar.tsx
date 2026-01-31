@@ -68,7 +68,7 @@ export default function MapSearchBar({ onSelectLocation, initialValue = '' }: Ma
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Введите адрес для поиска..."
-          className="pr-10"
+          className="pr-10 text-xs"
         />
         {isSearching ? (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">

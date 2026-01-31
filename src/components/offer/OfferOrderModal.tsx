@@ -304,7 +304,7 @@ export default function OfferOrderModal({
                   }}
                   onBlur={() => validateAddress(address)}
                   required
-                  className={addressError ? 'border-red-500' : ''}
+                  className={`text-xs ${addressError ? 'border-red-500' : ''}`}
                 />
                 <Button
                   type="button"
