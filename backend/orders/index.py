@@ -17,8 +17,7 @@ from datetime import datetime
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import urllib.request
-import urllib.parse
+import http.client
 
 # Импортируем offers_cache для инвалидации кэша
 # Кэш находится в backend/offers/cache.py
@@ -58,41 +57,38 @@ def generate_order_number():
 
 def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
     """Отправка push и email уведомлений"""
-    try:
-        # Push-уведомление
-        push_data = json.dumps({
-            'userId': user_id,
-            'title': title,
-            'message': message,
-            'url': url
-        }).encode('utf-8')
-        
-        push_req = urllib.request.Request(
-            'https://functions.poehali.dev/c16d67d9-8c85-481e-ae48-92e2b0d9cc64',
-            data=push_data,
-            headers={'Content-Type': 'application/json'}
-        )
-        urllib.request.urlopen(push_req, timeout=3)
-    except Exception as e:
-        print(f'Push notification error: {e}')
+    notification_data = json.dumps({
+        'userId': user_id,
+        'title': title,
+        'message': message,
+        'url': url
+    })
     
+    # Push-уведомление
     try:
-        # Email-уведомление
-        email_data = json.dumps({
-            'userId': user_id,
-            'title': title,
-            'message': message,
-            'url': url
-        }).encode('utf-8')
-        
-        email_req = urllib.request.Request(
-            'https://functions.poehali.dev/3c4b3e64-cb71-4b82-abd5-e67393be3d43',
-            data=email_data,
-            headers={'Content-Type': 'application/json'}
-        )
-        urllib.request.urlopen(email_req, timeout=3)
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
+        conn.request('POST', '/c16d67d9-8c85-481e-ae48-92e2b0d9cc64', 
+                    notification_data, 
+                    {'Content-Type': 'application/json'})
+        response = conn.getresponse()
+        response.read()  # Обязательно читаем ответ
+        conn.close()
+        print(f'[NOTIFICATION] Push sent to user {user_id}: {title}')
     except Exception as e:
-        print(f'Email notification error: {e}')
+        print(f'[NOTIFICATION] Push error: {e}')
+    
+    # Email-уведомление
+    try:
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
+        conn.request('POST', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43', 
+                    notification_data, 
+                    {'Content-Type': 'application/json'})
+        response = conn.getresponse()
+        response.read()  # Обязательно читаем ответ
+        conn.close()
+        print(f'[NOTIFICATION] Email sent to user {user_id}: {title}')
+    except Exception as e:
+        print(f'[NOTIFICATION] Email error: {e}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
