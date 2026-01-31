@@ -22,6 +22,8 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([41.2995, 69.2401]);
   const [currentAddress, setCurrentAddress] = useState<string>('');
+  const [currentDistrict, setCurrentDistrict] = useState<string>('');
+  const [currentCoords, setCurrentCoords] = useState<string>('');
 
   useEffect(() => {
     if (coordinates) {
@@ -69,6 +71,9 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           console.log('🔄 Fetching address from Nominatim...');
           try {
             const result = await geocodeCoordinates(lat, lng, '📍');
+            setCurrentAddress(result.fullAddress);
+            setCurrentDistrict(result.district);
+            setCurrentCoords(coords);
             onAddressChange(result.fullAddress, result.district, coords);
           } catch (error) {
             console.error('Ошибка получения адреса:', error);
@@ -87,8 +92,10 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               try {
                 const result = await geocodeCoordinates(dragLat, dragLng, '🔄 Drag:');
                 console.log('🔄 Drag: Calling onAddressChange with:', result);
-                onAddressChange(result.fullAddress, result.district, dragCoords);
                 setCurrentAddress(result.fullAddress);
+                setCurrentDistrict(result.district);
+                setCurrentCoords(dragCoords);
+                onAddressChange(result.fullAddress, result.district, dragCoords);
               } catch (error) {
                 console.error('Ошибка получения адреса при перетаскивании:', error);
               }
@@ -111,8 +118,10 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                 try {
                   const result = await geocodeCoordinates(dragLat, dragLng);
                   console.log('🔄 Initial marker drag: Calling onAddressChange with:', result);
-                  onAddressChange(result.fullAddress, result.district, dragCoords);
                   setCurrentAddress(result.fullAddress);
+                  setCurrentDistrict(result.district);
+                  setCurrentCoords(dragCoords);
+                  onAddressChange(result.fullAddress, result.district, dragCoords);
                 } catch (error) {
                   console.error('Ошибка получения адреса при перетаскивании:', error);
                 }
@@ -137,6 +146,9 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       if (onAddressChange) {
         try {
           const result = await geocodeCoordinates(lat, lng);
+          setCurrentAddress(result.fullAddress);
+          setCurrentDistrict(result.district);
+          setCurrentCoords(value);
           onAddressChange(result.fullAddress, result.district, value);
         } catch (error) {
           console.error('Ошибка получения адреса:', error);
@@ -166,8 +178,10 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             try {
               const result = await geocodeCoordinates(dragLat, dragLng);
               console.log('🔄 Search result marker drag: Calling onAddressChange with:', result);
-              onAddressChange(result.fullAddress, result.district, dragCoords);
               setCurrentAddress(result.fullAddress);
+              setCurrentDistrict(result.district);
+              setCurrentCoords(dragCoords);
+              onAddressChange(result.fullAddress, result.district, dragCoords);
             } catch (error) {
               console.error('Ошибка получения адреса при перетаскивании:', error);
             }
@@ -179,11 +193,22 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     if (onAddressChange) {
       try {
         const result = await geocodeCoordinates(lat, lng, '🔍 Search:');
+        setCurrentAddress(result.fullAddress);
+        setCurrentDistrict(result.district);
+        setCurrentCoords(coords);
         onAddressChange(result.fullAddress, result.district, coords);
       } catch (error) {
         console.error('Ошибка получения адреса:', error);
       }
     }
+  };
+
+  const handleApply = () => {
+    console.log('✅ Применить нажата. Передаём финальные данные:', { currentAddress, currentDistrict, currentCoords });
+    if (onAddressChange && currentAddress) {
+      onAddressChange(currentAddress, currentDistrict, currentCoords || coordinates);
+    }
+    onClose();
   };
 
   const handleGetCurrentLocation = () => {
@@ -215,8 +240,10 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                   try {
                     const result = await geocodeCoordinates(dragLat, dragLng);
                     console.log('🔄 Geolocation marker drag: Calling onAddressChange with:', result);
-                    onAddressChange(result.fullAddress, result.district, dragCoords);
                     setCurrentAddress(result.fullAddress);
+                    setCurrentDistrict(result.district);
+                    setCurrentCoords(dragCoords);
+                    onAddressChange(result.fullAddress, result.district, dragCoords);
                   } catch (error) {
                     console.error('Ошибка получения адреса при перетаскивании:', error);
                   }
@@ -232,6 +259,8 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               const result = await geocodeCoordinates(lat, lng, '📍 Geolocation:');
               console.log('🎉 Геокодирование завершено, вызываем onAddressChange:', result);
               setCurrentAddress(result.fullAddress);
+              setCurrentDistrict(result.district);
+              setCurrentCoords(coords);
               onAddressChange(result.fullAddress, result.district, coords);
               console.log('✅ onAddressChange вызван успешно');
             } catch (error) {
@@ -324,7 +353,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           </button>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleApply}
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
           >
             Применить
