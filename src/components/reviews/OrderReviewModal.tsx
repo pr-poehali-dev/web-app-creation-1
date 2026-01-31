@@ -28,22 +28,6 @@ export default function OrderReviewModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const newErrors: Record<string, string> = {};
-
-    if (rating === 0) {
-      newErrors.rating = 'Поставьте оценку';
-    }
-
-    if (!comment.trim()) {
-      newErrors.comment = 'Напишите комментарий';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -89,47 +73,39 @@ export default function OrderReviewModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Оставить отзыв о продавце</DialogTitle>
+          <DialogTitle>Оставить отзыв о продавце (необязательно)</DialogTitle>
           <DialogDescription>
             Заказ: <span className="font-semibold">{offerTitle}</span>
             <br />
             Продавец: <span className="font-semibold">{sellerName}</span>
+            <br />
+            <span className="text-muted-foreground mt-2 block">Вы можете пропустить этот шаг или оставить отзыв</span>
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div>
             <Label className="text-base font-semibold mb-3 block">
-              Оценка продавца <span className="text-red-500">*</span>
+              Оценка продавца
             </Label>
             {renderStars()}
-            {errors.rating && (
-              <p className="text-sm text-red-500 mt-1">{errors.rating}</p>
-            )}
           </div>
 
           <div>
             <Label htmlFor="review-comment" className="text-base font-medium">
-              Ваш отзыв <span className="text-red-500">*</span>
+              Ваш отзыв
             </Label>
             <Textarea
               id="review-comment"
               value={comment}
-              onChange={(e) => {
-                setComment(e.target.value);
-                if (errors.comment) setErrors({ ...errors, comment: '' });
-              }}
+              onChange={(e) => setComment(e.target.value)}
               placeholder="Расскажите о вашем опыте работы с продавцом..."
               rows={5}
               maxLength={1000}
-              className={errors.comment ? 'border-red-500' : ''}
             />
             <p className="text-xs text-muted-foreground mt-1">
               {comment.length} / 1000 символов
             </p>
-            {errors.comment && (
-              <p className="text-sm text-red-500 mt-1">{errors.comment}</p>
-            )}
           </div>
 
           <div className="flex gap-3 justify-end pt-4 border-t">
@@ -139,7 +115,7 @@ export default function OrderReviewModal({
               onClick={onClose}
               disabled={isSubmitting}
             >
-              Отмена
+              Пропустить
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
