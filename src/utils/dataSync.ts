@@ -77,6 +77,19 @@ class DataSyncManager {
       this.checkForUpdates();
     }, { passive: true });
 
+    // Проверяем при свайпе/касании (мобильные устройства)
+    document.addEventListener('touchstart', () => {
+      this.checkForUpdates();
+    }, { passive: true });
+
+    document.addEventListener('touchmove', () => {
+      this.checkForUpdates();
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+      this.checkForUpdates();
+    }, { passive: true });
+
     // Проверяем при навигации (popstate = кнопка "Назад")
     window.addEventListener('popstate', () => {
       this.checkForUpdates();
@@ -84,10 +97,10 @@ class DataSyncManager {
   }
 
   private startBackgroundCheck() {
-    // Проверяем каждые 15 секунд (только localStorage, без запросов к серверу)
+    // Проверяем каждые 5 секунд (только localStorage, без запросов к серверу)
     this.intervalId = window.setInterval(() => {
       this.checkForUpdates();
-    }, 15000);
+    }, 5000);
   }
 
   private notifyListeners(type: string) {
