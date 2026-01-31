@@ -249,6 +249,10 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
       // Помечаем что заказы обновились
       markDataAsUpdated('orders');
       
+      // Уведомляем dataSync о новом заказе
+      const { notifyOrderUpdated } = await import('@/utils/dataSync');
+      notifyOrderUpdated(result.id);
+      
       toast({
         title: 'Заказ оформлен!',
         description: 'Продавец свяжется с вами в ближайшее время',

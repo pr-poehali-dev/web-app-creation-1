@@ -96,6 +96,10 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
         console.error('Ошибка отправки Telegram уведомления:', error);
       }
 
+      // Уведомляем dataSync о новом заказе
+      const { notifyOrderUpdated } = await import('@/utils/dataSync');
+      notifyOrderUpdated(result.id);
+      
       setIsResponseModalOpen(false);
       toast.success('Отклик успешно отправлен!', {
         description: 'Автор запроса свяжется с вами в ближайшее время'

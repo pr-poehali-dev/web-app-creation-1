@@ -6,6 +6,7 @@ import { notifyOrderAccepted } from '@/utils/notifications';
 import type { Order } from '@/types/order';
 import { ordersAPI, reviewsAPI } from '@/services/api';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
+import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
 
 export function useOrdersData(
   isAuthenticated: boolean, 
@@ -43,7 +44,15 @@ export function useOrdersData(
     
     loadOrders(true);
 
-    return () => {};
+    // Подписываемся на обновления заказов
+    const unsubscribe = dataSync.subscribe('order_updated', () => {
+      console.log('[useOrdersData] Получено событие order_updated, обновляем заказы');
+      loadOrders(false);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, [isAuthenticated, navigate, currentUser?.id]);
 
   // Отмечаем заказы как просмотренные при открытии вкладки продавца
@@ -184,6 +193,7 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
+      notifyOrderUpdated(orderToAccept);
       await loadOrders(false);
     } catch (error: any) {
       console.error('Error accepting order:', error);
@@ -226,6 +236,7 @@ export function useOrdersData(
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
       });
 
+      notifyOrderUpdated(selectedOrder.id);
       // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
       
@@ -265,6 +276,7 @@ export function useOrdersData(
         description: 'Заказ переведён в статус "Принято"',
       });
 
+      notifyOrderUpdated(selectedOrder.id);
       // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
       
@@ -297,6 +309,7 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
+      notifyOrderUpdated(orderToComplete);
       await loadOrders(false);
 
       if (isBuyer && order) {
@@ -342,6 +355,8 @@ export function useOrdersData(
         cancellationReason: reason || undefined
       });
 
+      notifyOrderUpdated(orderToCancel);
+      
       toast({
         title: 'Заказ отменён',
         description: 'Заказ успешно отменён',
