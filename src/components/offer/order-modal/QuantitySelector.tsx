@@ -47,8 +47,6 @@ export default function QuantitySelector({
           type="number"
           inputMode="numeric"
           pattern="[0-9]*"
-          min={minOrderQuantity || 1}
-          max={remainingQuantity}
           step="1"
           value={quantity}
           onChange={(e) => {
