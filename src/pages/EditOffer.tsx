@@ -8,12 +8,11 @@ import type { Order } from '@/types/order';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { getSession, clearSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useOrdersPolling } from '@/hooks/useOrdersPolling';
 import EditOfferHeader from '@/components/edit-offer/EditOfferHeader';
 import EditOfferTabs from '@/components/edit-offer/EditOfferTabs';
 import EditOfferDeleteDialog from '@/components/edit-offer/EditOfferDeleteDialog';
 import EditOfferOrderModal from '@/components/edit-offer/EditOfferOrderModal';
-import { notifyOfferUpdated } from '@/utils/dataSync';
+import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
 
 interface ChatMessage {
   id: string;
@@ -49,19 +48,25 @@ export default function EditOffer() {
   const [hasChanges, setHasChanges] = useState(false);
   const [isEditingInfo, setIsEditingInfo] = useState(false);
 
-  useOrdersPolling({
-    enabled: isAuthenticated && !!id,
-    interval: 15000,
-    onNewOrder: (order: any) => {
-      if ((order.offer_id || order.offerId) === id) {
-        toast({
-          title: '🎉 Новый заказ!',
-          description: `Заказ от ${order.buyer_name || 'покупателя'} на сумму ${order.total_amount?.toLocaleString('ru-RU') || 0} ₽`,
-        });
-        loadData();
-      }
-    },
-  });
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+    
+    // Подписываемся на обновления заказов и предложений
+    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
+      console.log('Order updated, reloading EditOffer data...');
+      loadData();
+    });
+    
+    const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
+      console.log('Offer updated, reloading EditOffer data...');
+      loadData();
+    });
+    
+    return () => {
+      unsubscribeOrders();
+      unsubscribeOffers();
+    };
+  }, [isAuthenticated, id]);
 
   const loadData = async () => {
     if (!id) return;

@@ -6,7 +6,7 @@ import { offersAPI, reviewsAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
-import { dataSync } from '@/utils/dataSync';
+import { dataSync, notifyOfferUpdated, notifyOrderUpdated } from '@/utils/dataSync';
 
 export function useOfferDetail(id: string | undefined) {
   const navigate = useNavigate();
@@ -343,6 +343,10 @@ export function useOfferDetail(id: string | undefined) {
         setIsOrderModalOpen(false);
         setCreatedOrder(minimalOrder);
         
+        // Уведомляем всех пользователей об обновлении предложения и заказа
+        notifyOfferUpdated(offer.id);
+        notifyOrderUpdated(result.id);
+        
         // Показываем уведомление с автоматическим скрытием через 2 секунды
         toast({
           title: '🎉 Ваш заказ оформлен!',
@@ -400,6 +404,10 @@ export function useOfferDetail(id: string | undefined) {
         newOrder.unit,
         newOrder.id
       );
+      
+      // Уведомляем всех пользователей об обновлении предложения и заказа
+      notifyOfferUpdated(offer.id);
+      notifyOrderUpdated(result.id);
       
       // Показываем уведомление с автоматическим скрытием через 2 секунды
       toast({

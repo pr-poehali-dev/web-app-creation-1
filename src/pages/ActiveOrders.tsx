@@ -15,6 +15,7 @@ import { ordersAPI, type Order } from '@/services/api';
 import { reviewsAPI } from '@/services/reviews';
 import { useToast } from '@/hooks/use-toast';
 import type { CreateReviewData } from '@/types/review';
+import { dataSync } from '@/utils/dataSync';
 
 interface ActiveOrdersProps {
   isAuthenticated: boolean;
@@ -178,6 +179,14 @@ export default function ActiveOrders({ isAuthenticated, onLogout }: ActiveOrders
     if (!hasLoaded) {
       loadOrders();
     }
+    
+    // Подписываемся на обновления заказов
+    const unsubscribe = dataSync.subscribe('order_updated', () => {
+      console.log('Order updated, reloading orders...');
+      loadOrders();
+    });
+    
+    return () => unsubscribe();
   }, [isAuthenticated]);
 
   const loadOrders = async () => {

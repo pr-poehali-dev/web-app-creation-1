@@ -2,6 +2,7 @@ import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import { ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import type { Order } from '@/types/order';
+import { notifyOrderUpdated } from '@/utils/dataSync';
 
 interface EditOfferOrderModalProps {
   selectedOrder: Order | null;
@@ -31,6 +32,7 @@ export default function EditOfferOrderModal({
             counterPrice: price,
             counterMessage: message 
           });
+          notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Встречное предложение отправлено',
             description: 'Покупатель получит уведомление',
@@ -50,6 +52,7 @@ export default function EditOfferOrderModal({
             acceptCounter: true,
             status: 'accepted'
           });
+          notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Встречное предложение принято',
             description: 'Заказ переведён в статус "Принято"',
@@ -66,6 +69,7 @@ export default function EditOfferOrderModal({
       onCancelOrder={async () => {
         try {
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
+          notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Заказ отменён',
             description: 'Заказ успешно отменён',
@@ -83,6 +87,7 @@ export default function EditOfferOrderModal({
       onCompleteOrder={async () => {
         try {
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
+          notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Заказ завершён',
             description: 'Заказ успешно завершён',

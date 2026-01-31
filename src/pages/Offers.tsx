@@ -150,10 +150,17 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     loadData(false);
     
-    // Подписываемся на обновления предложений
-    const unsubscribe = dataSync.subscribe('offer_updated', () => {
+    // Подписываемся на обновления предложений и заказов
+    const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
       if (isMounted) {
         console.log('Offer updated, reloading data...');
+        loadFreshData(false);
+      }
+    });
+    
+    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
+      if (isMounted) {
+        console.log('Order updated, reloading data...');
         loadFreshData(false);
       }
     });
@@ -161,7 +168,8 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     return () => {
       isMounted = false;
       isLoading = false;
-      unsubscribe();
+      unsubscribeOffers();
+      unsubscribeOrders();
     };
   }, []);
 

@@ -25,6 +25,7 @@ import ListingCard from '@/components/listings/ListingCard';
 import ListingsStats from '@/components/listings/ListingsStats';
 import ListingsFilters from '@/components/listings/ListingsFilters';
 import { filterActiveOffers, filterActiveRequests } from '@/utils/expirationFilter';
+import { dataSync } from '@/utils/dataSync';
 
 interface MyListingsProps {
   isAuthenticated: boolean;
@@ -104,6 +105,14 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
     };
 
     loadOrders();
+    
+    // Подписываемся на обновления заказов
+    const unsubscribe = dataSync.subscribe('order_updated', () => {
+      console.log('Order updated, reloading orders in MyListings...');
+      loadOrders();
+    });
+    
+    return () => unsubscribe();
   }, [isAuthenticated, currentUser, navigate]);
 
   const getListingStatus = (itemId: string, originalStatus: string): ListingStatus => {

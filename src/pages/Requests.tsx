@@ -114,15 +114,21 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
     loadRequests();
     
-    // Подписываемся на обновления запросов
-    const unsubscribe = dataSync.subscribe('request_updated', () => {
+    // Подписываемся на обновления запросов и заказов
+    const unsubscribeRequests = dataSync.subscribe('request_updated', () => {
       console.log('Request updated, reloading...');
+      loadFreshRequests(false);
+    });
+    
+    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
+      console.log('Order updated, reloading...');
       loadFreshRequests(false);
     });
     
     return () => {
       isLoading = false;
-      unsubscribe();
+      unsubscribeRequests();
+      unsubscribeOrders();
     };
   }, []);
 
