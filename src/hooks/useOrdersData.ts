@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { getSession } from '@/utils/auth';
@@ -53,7 +53,7 @@ export function useOrdersData(
     return () => {
       unsubscribe();
     };
-  }, [isAuthenticated, navigate, currentUser?.id]);
+  }, [isAuthenticated, navigate, currentUser?.id, loadOrders]);
 
   // Закрываем модальное окно, если открытый заказ не принадлежит текущему пользователю
   useEffect(() => {
@@ -83,6 +83,31 @@ export function useOrdersData(
       }
     }
   }, [orders, selectedOrder?.id, isChatOpen]);
+
+  // Автообновление при возвращении на страницу
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && isAuthenticated) {
+        console.log('[useOrdersData] Страница стала видимой, обновляем заказы');
+        loadOrders(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isAuthenticated, loadOrders]);
+
+  // Периодическое автообновление каждые 30 секунд
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const intervalId = setInterval(() => {
+      console.log('[useOrdersData] Периодическое обновление заказов');
+      loadOrders(false);
+    }, 30000); // 30 секунд
+
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, loadOrders]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
@@ -163,7 +188,7 @@ export function useOrdersData(
     buyerInn: orderData.buyer_inn || orderData.buyerInn,
   });
 
-  const loadOrders = async (showLoader = false) => {
+  const loadOrders = useCallback(async (showLoader = false) => {
     try {
       if (showLoader) {
         setIsLoading(true);
@@ -211,7 +236,7 @@ export function useOrdersData(
         setIsSyncing(false);
       }
     }
-  };
+  }, [isInitialLoad, toast]);
 
 
 

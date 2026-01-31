@@ -7,6 +7,7 @@ import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrderReviewModal from '@/components/reviews/OrderReviewModal';
 import OrdersContent from '@/components/order/OrdersContent';
+import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData } from '@/hooks/useOrdersData';
 
@@ -132,24 +133,29 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return null;
   }
 
+  const handleRefresh = async () => {
+    await loadOrders(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-background via-muted/20 to-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       <DataSyncIndicator isVisible={isSyncing} />
-        
+      
+      <PullToRefresh onRefresh={handleRefresh}>
         <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
-        <BackButton />
-        
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Мои заказы</h1>
-          <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <BackButton />
+          
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Мои заказы</h1>
+            <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
           </div>
-        ) : (
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6"  defaultValue="buyer">
             <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
               <TabsTrigger value="buyer" className="py-2.5">
@@ -198,7 +204,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           </TabsContent>
         </Tabs>
         )}
-      </main>
+        </main>
+      </PullToRefresh>
 
       <Footer />
 
