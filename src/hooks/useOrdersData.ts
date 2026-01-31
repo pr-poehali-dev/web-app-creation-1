@@ -205,33 +205,34 @@ export function useOrdersData(
     const orderToAccept = orderId || selectedOrder?.id;
     if (!orderToAccept) return;
 
+    const order = orders.find(o => o.id === orderToAccept);
+    if (!order) return;
+
     try {
-      await ordersAPI.updateOrder(orderToAccept, { status: 'accepted' });
+      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
+      const updatedOrder = {
+        ...order,
+        status: 'accepted' as const,
+        acceptedAt: new Date(),
+      };
       
-      const order = orders.find(o => o.id === orderToAccept);
-      if (order) {
-        notifyOrderAccepted(
-          order.buyerId,
-          order.sellerName,
-          order.offerTitle,
-          order.id
-        );
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderToAccept ? updatedOrder : o)
+      );
+      
+      if (selectedOrder && selectedOrder.id === orderToAccept) {
+        setSelectedOrder(updatedOrder);
       }
 
-      // Мгновенно обновляем статус локально для быстрого отклика UI
-      if (selectedOrder && selectedOrder.id === orderToAccept) {
-        const updatedOrder = {
-          ...selectedOrder,
-          status: 'accepted' as const,
-          acceptedAt: new Date(),
-        };
-        setSelectedOrder(updatedOrder);
-        
-        // Обновляем заказ в списке
-        setOrders(prevOrders => 
-          prevOrders.map(o => o.id === orderToAccept ? updatedOrder : o)
-        );
-      }
+      // Отправляем на сервер в фоне
+      await ordersAPI.updateOrder(orderToAccept, { status: 'accepted' });
+      
+      notifyOrderAccepted(
+        order.buyerId,
+        order.sellerName,
+        order.offerTitle,
+        order.id
+      );
 
       toast({
         title: 'Заказ принят',
@@ -240,7 +241,7 @@ export function useOrdersData(
 
       notifyOrderUpdated(orderToAccept);
       
-      // Получаем обновлённый заказ с сервера в фоне
+      // Получаем обновлённый заказ с сервера в фоне для синхронизации
       setTimeout(async () => {
         await loadOrders(false);
         const updatedOrderData = await ordersAPI.getOrderById(orderToAccept);
@@ -249,9 +250,19 @@ export function useOrdersData(
         setOrders(prevOrders => 
           prevOrders.map(o => o.id === orderToAccept ? mappedOrder : o)
         );
-      }, 100);
+      }, 500);
     } catch (error: any) {
       console.error('Error accepting order:', error);
+      
+      // В случае ошибки откатываем изменения
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderToAccept ? order : o)
+      );
+      
+      if (selectedOrder?.id === orderToAccept) {
+        setSelectedOrder(order);
+      }
+      
       toast({
         title: 'Ошибка',
         description: error.message || 'Не удалось принять заказ',
@@ -311,13 +322,10 @@ export function useOrdersData(
   const handleAcceptCounter = async () => {
     if (!selectedOrder) return;
 
-    try {
-      await ordersAPI.updateOrder(selectedOrder.id, { 
-        acceptCounter: true,
-        status: 'accepted'
-      });
+    const orderId = selectedOrder.id;
 
-      // Мгновенно обновляем статус локально для быстрого отклика UI
+    try {
+      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
       const updatedOrder = {
         ...selectedOrder,
         status: 'accepted' as const,
@@ -326,32 +334,45 @@ export function useOrdersData(
         totalAmount: selectedOrder.counterTotalAmount || selectedOrder.totalAmount,
         acceptedAt: new Date(),
       };
-      setSelectedOrder(updatedOrder);
       
-      // Обновляем заказ в списке
       setOrders(prevOrders => 
-        prevOrders.map(o => o.id === selectedOrder.id ? updatedOrder : o)
+        prevOrders.map(o => o.id === orderId ? updatedOrder : o)
       );
+      
+      setSelectedOrder(updatedOrder);
+
+      // Отправляем на сервер в фоне
+      await ordersAPI.updateOrder(orderId, { 
+        acceptCounter: true,
+        status: 'accepted'
+      });
 
       toast({
         title: 'Встречное предложение принято',
         description: 'Заказ переведён в статус "Принято"',
       });
 
-      notifyOrderUpdated(selectedOrder.id);
+      notifyOrderUpdated(orderId);
       
-      // Получаем обновлённый заказ с сервера в фоне
+      // Получаем обновлённый заказ с сервера в фоне для синхронизации
       setTimeout(async () => {
         await loadOrders(false);
-        const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+        const updatedOrderData = await ordersAPI.getOrderById(orderId);
         const mappedOrder = mapOrderData(updatedOrderData);
         setSelectedOrder(mappedOrder);
         setOrders(prevOrders => 
           prevOrders.map(o => o.id === selectedOrder.id ? mappedOrder : o)
         );
-      }, 100);
+      }, 500);
     } catch (error) {
       console.error('Error accepting counter offer:', error);
+      
+      // В случае ошибки откатываем изменения
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderId ? selectedOrder : o)
+      );
+      setSelectedOrder(selectedOrder);
+      
       toast({
         title: 'Ошибка',
         description: 'Не удалось принять встречное предложение',
@@ -364,24 +385,29 @@ export function useOrdersData(
     const orderToComplete = orderId || selectedOrder?.id;
     if (!orderToComplete) return;
 
+    const order = orders.find(o => o.id === orderToComplete);
+    if (!order) return;
+    
+    const isBuyer = currentUser?.id?.toString() === order?.buyerId?.toString();
+
     try {
-      await ordersAPI.updateOrder(orderToComplete, { status: 'completed' });
-
-      const order = orders.find(o => o.id === orderToComplete);
-      const isBuyer = currentUser?.id?.toString() === order?.buyerId?.toString();
-
-      // Мгновенно обновляем статус локально
-      if (order) {
-        const updatedOrder = {
-          ...order,
-          status: 'completed' as const,
-          completedDate: new Date(),
-        };
-        
-        setOrders(prevOrders => 
-          prevOrders.map(o => o.id === orderToComplete ? updatedOrder : o)
-        );
+      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
+      const updatedOrder = {
+        ...order,
+        status: 'completed' as const,
+        completedDate: new Date(),
+      };
+      
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderToComplete ? updatedOrder : o)
+      );
+      
+      if (selectedOrder?.id === orderToComplete) {
+        setSelectedOrder(updatedOrder);
       }
+
+      // Отправляем на сервер в фоне
+      await ordersAPI.updateOrder(orderToComplete, { status: 'completed' });
 
       setIsChatOpen(false);
       
@@ -391,10 +417,10 @@ export function useOrdersData(
       
       notifyOrderUpdated(orderToComplete);
       
-      // Обновляем с сервера в фоне
-      setTimeout(() => loadOrders(false), 100);
+      // Обновляем с сервера в фоне для синхронизации
+      setTimeout(() => loadOrders(false), 500);
 
-      if (isBuyer && order) {
+      if (isBuyer) {
         setPendingReviewOrder(order);
         setReviewModalOpen(true);
       } else {
@@ -405,6 +431,16 @@ export function useOrdersData(
       }
     } catch (error) {
       console.error('Error completing order:', error);
+      
+      // В случае ошибки откатываем изменения
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderToComplete ? order : o)
+      );
+      
+      if (selectedOrder?.id === orderToComplete) {
+        setSelectedOrder(order);
+      }
+      
       toast({
         title: 'Ошибка',
         description: 'Не удалось завершить заказ',
@@ -427,29 +463,35 @@ export function useOrdersData(
     const orderToCancel = orderId || selectedOrder?.id;
     if (!orderToCancel) return;
 
+    const order = orders.find(o => o.id === orderToCancel);
+    if (!order) return;
+    
+    const cancelledBy = currentUser?.id?.toString() === order?.buyerId?.toString() ? 'buyer' : 'seller';
+
     try {
-      const order = orders.find(o => o.id === orderToCancel);
-      const cancelledBy = currentUser?.id?.toString() === order?.buyerId?.toString() ? 'buyer' : 'seller';
+      // СРАЗУ обновляем локальный статус ДО отправки на сервер (optimistic update)
+      const updatedOrder = {
+        ...order,
+        status: 'cancelled' as const,
+        cancelledBy,
+        cancellationReason: reason || undefined,
+      };
       
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderToCancel ? updatedOrder : o)
+      );
+      
+      // Обновляем selectedOrder для корректного отображения в модалке
+      if (selectedOrder?.id === orderToCancel) {
+        setSelectedOrder(updatedOrder);
+      }
+      
+      // Отправляем на сервер в фоне
       await ordersAPI.updateOrder(orderToCancel, { 
         status: 'cancelled',
         cancelledBy,
         cancellationReason: reason || undefined
       });
-
-      // Мгновенно обновляем статус локально
-      if (order) {
-        const updatedOrder = {
-          ...order,
-          status: 'cancelled' as const,
-          cancelledBy,
-          cancellationReason: reason || undefined,
-        };
-        
-        setOrders(prevOrders => 
-          prevOrders.map(o => o.id === orderToCancel ? updatedOrder : o)
-        );
-      }
 
       notifyOrderUpdated(orderToCancel);
       
@@ -458,6 +500,7 @@ export function useOrdersData(
         description: 'Заказ успешно отменён',
       });
 
+      // Закрываем модалку
       setIsChatOpen(false);
       
       // Переключаем на вкладку "Архив" после отмены
@@ -465,10 +508,20 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
-      // Обновляем с сервера в фоне
-      setTimeout(() => loadOrders(false), 100);
+      // Обновляем с сервера в фоне для синхронизации
+      setTimeout(() => loadOrders(false), 500);
     } catch (error) {
       console.error('Error cancelling order:', error);
+      
+      // В случае ошибки откатываем изменения
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === orderToCancel ? order : o)
+      );
+      
+      if (selectedOrder?.id === orderToCancel) {
+        setSelectedOrder(order);
+      }
+      
       toast({
         title: 'Ошибка',
         description: 'Не удалось отменить заказ',
