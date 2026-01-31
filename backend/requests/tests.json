@@ -5,6 +5,16 @@
       "method": "GET",
       "path": "/",
       "expectedStatus": 200
+    },
+    {
+      "name": "Publish request - missing ID",
+      "method": "PUT",
+      "path": "/?action=publish",
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "Request ID required"
+      },
+      "bodyMatcher": "partial"
     }
   ]
 }

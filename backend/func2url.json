@@ -20,8 +20,6 @@
   "get-documents": "https://functions.poehali.dev/7a553048-1de4-438d-9830-675770bf025b",
   "send-verification-email": "https://functions.poehali.dev/42f9ef7b-b116-430a-ac8a-681742e10551",
   "verification-resubmit": "https://functions.poehali.dev/d3ac1521-9001-4630-9c2b-8c829187016e",
-  "requests": "https://functions.poehali.dev/a2ecd27a-6043-42df-9941-766c886acdb0",
-  "offers": "https://functions.poehali.dev/2c8bcee0-2dd9-48ab-8d0e-e8ad34c623aa",
   "set-admin-password": "https://functions.poehali.dev/610b38a1-b500-46fd-bf38-44134ee09404",
   "admin-offers": "https://functions.poehali.dev/989d9b69-4c39-49f3-abad-1249c04ddc21",
   "admin-users": "https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f",
