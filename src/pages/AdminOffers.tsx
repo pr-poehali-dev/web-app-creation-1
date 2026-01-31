@@ -33,6 +33,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
 import type { Offer as OfferType } from '@/types/offer';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 interface AdminOffersProps {
   isAuthenticated: boolean;
@@ -146,6 +147,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const handleApproveOffer = async (offer: AdminOffer) => {
     try {
       await offersAPI.updateOffer(offer.id, { status: 'active' });
+      notifyOfferUpdated(offer.id);
       toast({
         title: 'Успешно',
         description: `Предложение "${offer.title}" одобрено`,
@@ -163,6 +165,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const handleRejectOffer = async (offer: AdminOffer) => {
     try {
       await offersAPI.updateOffer(offer.id, { status: 'rejected' });
+      notifyOfferUpdated(offer.id);
       toast({
         title: 'Успешно',
         description: `Предложение "${offer.title}" отклонено`,
@@ -181,6 +184,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
     if (selectedOffer) {
       try {
         await offersAPI.deleteOffer(selectedOffer.id);
+        notifyOfferUpdated(selectedOffer.id);
         toast({
           title: 'Успешно',
           description: `Предложение "${selectedOffer.title}" удалено`,
@@ -209,6 +213,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
       for (const offerId of testOfferIds) {
         try {
           await offersAPI.updateOffer(offerId, { status: 'archived' });
+          notifyOfferUpdated(offerId);
           deletedCount++;
         } catch (err) {
           console.error(`Failed to delete offer ${offerId}:`, err);

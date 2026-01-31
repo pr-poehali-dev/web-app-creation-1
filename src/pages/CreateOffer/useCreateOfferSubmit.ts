@@ -6,6 +6,7 @@ import type { Offer } from '@/types/offer';
 import { getSession } from '@/utils/auth';
 import { offersAPI } from '@/services/api';
 import { markDataAsUpdated } from '@/utils/smartCache';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 interface SubmitData {
   title: string;
@@ -185,6 +186,9 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       
       // Помечаем что предложения обновились
       markDataAsUpdated('offers');
+      
+      // Уведомляем всех пользователей об изменении предложений
+      notifyOfferUpdated(result.id);
       
       if (isEditMode) {
         toast({

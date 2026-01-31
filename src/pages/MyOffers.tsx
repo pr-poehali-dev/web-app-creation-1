@@ -14,6 +14,7 @@ import { offersAPI } from '@/services/api';
 import MyOfferCard from '@/components/my-offers/MyOfferCard';
 import MyOffersStats from '@/components/my-offers/MyOffersStats';
 import MyOffersDialogs from '@/components/my-offers/MyOffersDialogs';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 interface MyOffersProps {
   isAuthenticated: boolean;
@@ -110,6 +111,10 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       deleteOffer(offerId);
       setMyOffers(prev => prev.filter(o => o.id !== offerId));
       setOfferToDelete(null);
+      
+      // Уведомляем всех пользователей об удалении предложения
+      notifyOfferUpdated(offerId);
+      
       toast({
         title: 'Успешно',
         description: 'Предложение удалено',
@@ -165,6 +170,8 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       for (const offer of archivedOffers) {
         await offersAPI.deleteOffer(offer.id);
         deleteOffer(offer.id);
+        // Уведомляем о каждом удалении
+        notifyOfferUpdated(offer.id);
       }
       
       setMyOffers(prev => prev.filter(o => o.status !== 'archived'));
