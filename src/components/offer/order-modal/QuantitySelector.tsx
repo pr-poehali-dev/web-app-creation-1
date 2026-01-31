@@ -64,16 +64,8 @@ export default function QuantitySelector({
           <Icon name="Plus" size={16} />
         </Button>
       </div>
-      {quantityError && (
-        <p className="text-xs text-red-500 mt-1">{quantityError}</p>
-      )}
-      {minOrderQuantity && !quantityError && (
-        <p className="text-xs text-muted-foreground mt-1">
-          Минимум для заказа: {minOrderQuantity} {unit}
-        </p>
-      )}
-      {minOrderQuantity && quantityError && (
-        <p className="text-xs text-red-500 mt-1 font-semibold">
+      {minOrderQuantity && (
+        <p className={`text-xs mt-1 ${quantityError ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
           Минимум для заказа: {minOrderQuantity} {unit}
         </p>
       )}
