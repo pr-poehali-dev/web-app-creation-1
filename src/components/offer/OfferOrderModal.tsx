@@ -70,6 +70,7 @@ export default function OfferOrderModal({
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [addressError, setAddressError] = useState<string>('');
   const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
+  const [addressSetFromMap, setAddressSetFromMap] = useState<boolean>(false);
 
   useEffect(() => {
     if (availableDeliveryTypes.length === 1) {
@@ -78,11 +79,11 @@ export default function OfferOrderModal({
   }, [availableDeliveryTypes]);
 
   useEffect(() => {
-    if (currentUser?.legalAddress && selectedDeliveryType === 'delivery') {
+    if (currentUser?.legalAddress && selectedDeliveryType === 'delivery' && !addressSetFromMap) {
       const shortened = shortenAddress(currentUser.legalAddress);
       setAddress(shortened);
     }
-  }, [currentUser, selectedDeliveryType]);
+  }, [currentUser, selectedDeliveryType, addressSetFromMap]);
 
   useEffect(() => {
     const numQuantity = Number(quantity);
@@ -142,6 +143,7 @@ export default function OfferOrderModal({
     console.log('📍 OfferOrderModal handleAddressChange called:', { fullAddress, district, coords });
     console.log('📍 Setting address to:', fullAddress);
     setAddress(fullAddress);
+    setAddressSetFromMap(true);
     setAddressError('');
     if (coords) {
       console.log('📍 Setting GPS coordinates to:', coords);
