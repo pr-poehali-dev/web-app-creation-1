@@ -59,9 +59,15 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   useEffect(() => {
     if (location.state?.refresh) {
       console.log('[MyOrders] Обнаружен флаг refresh, обновляем заказы');
-      loadOrders(false);
-      // Очищаем state чтобы избежать повторных обновлений
-      navigate(location.pathname, { replace: true, state: {} });
+      
+      // Сначала обновляем заказы, ПОТОМ очищаем state
+      const updateOrders = async () => {
+        await loadOrders(false);
+        // Очищаем state после завершения загрузки
+        navigate(location.pathname, { replace: true, state: {} });
+      };
+      
+      updateOrders();
     }
   }, [location.state, loadOrders, navigate, location.pathname]);
 
