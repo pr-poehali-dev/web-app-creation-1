@@ -106,21 +106,6 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           </div>
         </div>
 
-        {order.status !== 'accepted' && order.status !== 'completed' && order.status !== 'cancelled' && onCancelOrder && (
-          <>
-            <Separator />
-            <Button
-              onClick={handleCancelClick}
-              variant="destructive"
-              size="sm"
-              className="w-full"
-            >
-              <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-              Отменить заказ
-            </Button>
-          </>
-        )}
-
         {order.status === 'accepted' && (
           <>
             <Separator />
