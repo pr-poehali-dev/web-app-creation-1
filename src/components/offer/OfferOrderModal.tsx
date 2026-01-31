@@ -6,17 +6,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
-import { reverseGeocode } from '@/utils/geocoding';
+import MapModal from '@/components/auction/MapModal';
+import QuantitySelector from './order-modal/QuantitySelector';
+import PriceDisplay from './order-modal/PriceDisplay';
+import DeliverySection from './order-modal/DeliverySection';
+import CounterPriceSection from './order-modal/CounterPriceSection';
 
 function shortenAddress(fullAddress: string): string {
-  // Сокращаем адрес по тем же правилам что и в geocoding
   return fullAddress
     .replace('Республика Саха (Якутия)', 'РС(Я)')
     .replace('Респ Саха (Якутия)', 'РС(Я)')
@@ -27,12 +26,10 @@ function shortenAddress(fullAddress: string): string {
     .replace('область', 'обл.')
     .replace('край', 'кр.')
     .replace('улица', '')
-    .replace(/,\s+,/g, ',') // Убираем двойные запятые
-    .replace(/\s+/g, ' ') // Убираем лишние пробелы
+    .replace(/,\s+,/g, ',')
+    .replace(/\s+/g, ' ')
     .trim();
 }
-import { DISTRICTS } from '@/data/districts';
-import MapModal from '@/components/auction/MapModal';
 
 interface OfferOrderModalProps {
   isOpen: boolean;
@@ -74,7 +71,6 @@ export default function OfferOrderModal({
   const [addressError, setAddressError] = useState<string>('');
   const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
 
-  // Автоматически выбрать способ получения, если доступен только один
   useEffect(() => {
     if (availableDeliveryTypes.length === 1) {
       setSelectedDeliveryType(availableDeliveryTypes[0]);
@@ -165,7 +161,6 @@ export default function OfferOrderModal({
       return true;
     }
 
-    // Простая валидация наличия текста
     if (addressText.trim().length < 5) {
       setAddressError('Укажите полный адрес доставки');
       return false;
@@ -188,7 +183,6 @@ export default function OfferOrderModal({
       return;
     }
 
-    // Проверяем адрес для доставки
     if (selectedDeliveryType === 'delivery') {
       const isAddressValid = await validateAddress(address);
       if (!isAddressValid || addressError) {
@@ -217,259 +211,52 @@ export default function OfferOrderModal({
           </DialogDescription>
         </DialogHeader>
 
-
-
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="order-quantity">Количество ({unit})</Label>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={decrementQuantity}
-                disabled={Number(quantity) <= (minOrderQuantity || 1)}
-                className="flex-shrink-0 h-10 w-10"
-              >
-                <Icon name="Minus" size={16} />
-              </Button>
-              
-              <Input
-                id="order-quantity"
-                name="order-quantity"
-                type="number"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                min={minOrderQuantity || 1}
-                max={remainingQuantity}
-                step="1"
-                value={quantity}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === '') {
-                    setQuantity('');
-                    const min = minOrderQuantity || 1;
-                    setQuantityError(`Минимальное количество: ${min} ${unit}`);
-                    return;
-                  }
-                  const numVal = Number(val);
-                  if (!isNaN(numVal) && numVal >= 0) {
-                    handleQuantityChange(val);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === '-' || e.key === '.' || e.key === ',') {
-                    e.preventDefault();
-                  }
-                }}
-                required
-                className={`text-center ${quantityError ? 'border-red-500 text-red-600 focus-visible:ring-red-500' : ''}`}
-              />
-              
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={incrementQuantity}
-                disabled={Number(quantity) >= remainingQuantity}
-                className="flex-shrink-0 h-10 w-10"
-              >
-                <Icon name="Plus" size={16} />
-              </Button>
-            </div>
-            
-            {minOrderQuantity && minOrderQuantity > 1 && !quantityError && (
-              <div className="flex items-center gap-1 mt-1">
-                <Icon name="Info" size={12} className="text-blue-600" />
-                <p className="text-xs text-blue-600 font-medium">
-                  Минимум для заказа: {minOrderQuantity} {unit}
-                </p>
-              </div>
-            )}
-            {quantityError && (
-              <div className="flex items-center gap-1 mt-1">
-                <Icon name="XCircle" size={12} className="text-red-500" />
-                <p className="text-xs text-red-500 font-medium">{quantityError}</p>
-              </div>
-            )}
-            
-            {/* Блок с ценами - скрывается при showCounterPrice */}
-            {!quantityError && Number(quantity) > 0 && !showCounterPrice && (
-              <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-muted-foreground">Цена за {unit}:</span>
-                  <span className="text-sm font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-blue-200 dark:border-blue-800">
-                  <span className="text-sm font-medium">Итого:</span>
-                  <span className="text-lg font-bold text-primary">{(pricePerUnit * Number(quantity)).toLocaleString('ru-RU')} ₽</span>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {availableDeliveryTypes.length > 1 && (
-            <div>
-              <Label htmlFor="order-delivery">Способ получения</Label>
-              <div className="relative">
-                <select
-                  id="order-delivery"
-                  name="order-delivery"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring appearance-none"
-                  value={selectedDeliveryType}
-                  onChange={(e) => setSelectedDeliveryType(e.target.value as 'pickup' | 'delivery')}
-                  required
-                >
-                  <option value="" disabled>Выбери способ получения</option>
-                  {availableDeliveryTypes.includes('pickup') && (
-                    <option value="pickup">Самовывоз</option>
-                  )}
-                  {availableDeliveryTypes.includes('delivery') && (
-                    <option value="delivery">Доставка</option>
-                  )}
-                </select>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <Icon name="ChevronDown" className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-            </div>
-          )}
+          <QuantitySelector
+            quantity={quantity}
+            unit={unit}
+            minOrderQuantity={minOrderQuantity}
+            remainingQuantity={remainingQuantity}
+            quantityError={quantityError}
+            onQuantityChange={handleQuantityChange}
+            onIncrement={incrementQuantity}
+            onDecrement={decrementQuantity}
+            onErrorClear={() => setQuantityError('')}
+          />
 
-          {selectedDeliveryType === 'delivery' && (
-            <div>
-              <Label htmlFor="order-address">Адрес доставки</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="order-address"
-                  name="order-address"
-                  type="text"
-                  placeholder="Укажите адрес доставки"
-                  value={address}
-                  onChange={(e) => {
-                    setAddress(e.target.value);
-                    setAddressError('');
-                  }}
-                  onBlur={() => validateAddress(address)}
-                  required
-                  className={`text-xs ${addressError ? 'border-red-500' : ''}`}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setIsMapOpen(true)}
-                  className="flex-shrink-0"
-                >
-                  <Icon name="MapPin" size={18} />
-                </Button>
-              </div>
-              {addressError && (
-                <div className="flex items-center gap-1 mt-1">
-                  <Icon name="XCircle" size={12} className="text-red-500" />
-                  <p className="text-xs text-red-500 font-medium">{addressError}</p>
-                </div>
-              )}
-              {availableDistricts && availableDistricts.length > 0 && (
-                <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-md">
-                  <div className="flex items-start gap-1">
-                    <Icon name="Info" size={14} className="text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-xs text-blue-600">
-                      <p className="font-medium mb-1">Доступна доставка в районы:</p>
-                      <p className="text-blue-600/80">
-                        {availableDistricts.map(distId => {
-                          const district = DISTRICTS.find(d => d.id === distId);
-                          return district?.name || distId;
-                        }).join(', ')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {currentUser?.legalAddress && !addressError && !availableDistricts?.length && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Адрес из профиля. Вы можете изменить его.
-                </p>
-              )}
-            </div>
-          )}
+          <PriceDisplay
+            pricePerUnit={pricePerUnit}
+            quantity={quantity}
+            unit={unit}
+            quantityError={quantityError}
+          />
 
-          {/* Комментарий - скрывается при showCounterPrice */}
-          {!showCounterPrice && (
-            <div>
-              <Label htmlFor="order-comment">Комментарий</Label>
-              <Textarea
-                id="order-comment"
-                name="order-comment"
-                placeholder="Дополнительная информация к заказу"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={3}
-              />
-            </div>
-          )}
+          <DeliverySection
+            availableDeliveryTypes={availableDeliveryTypes}
+            selectedDeliveryType={selectedDeliveryType}
+            address={address}
+            comment={comment}
+            addressError={addressError}
+            availableDistricts={availableDistricts}
+            showCounterPrice={showCounterPrice}
+            onDeliveryTypeChange={setSelectedDeliveryType}
+            onAddressChange={setAddress}
+            onCommentChange={setComment}
+            onAddressBlur={() => validateAddress(address)}
+            onMapOpen={() => setIsMapOpen(true)}
+            onAddressErrorClear={() => setAddressError('')}
+          />
 
-          <div className="border-t pt-4">
-            <button
-              type="button"
-              onClick={() => setShowCounterPrice(!showCounterPrice)}
-              className="flex items-center gap-2 text-sm font-medium text-primary hover:bg-primary/5 mb-2 border border-primary rounded-md px-3 py-2 transition-colors"
-            >
-              <Icon name="DollarSign" size={16} />
-              {showCounterPrice ? 'Скрыть предложение цены' : 'Предложить свою цену'}
-            </button>
-            
-            {showCounterPrice && (
-              <div className="space-y-2">
-                <div className="bg-muted/50 p-3 rounded-md">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Цена продавца:</span>
-                    <span className="font-medium">{pricePerUnit.toLocaleString('ru-RU')} ₽/{unit}</span>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="counter-price" className="text-sm">Ваша цена за {unit}</Label>
-                  <div className="flex gap-2 items-center">
-                    <Input
-                      id="counter-price"
-                      type="number"
-                      min="1"
-                      step="0.01"
-                      placeholder={`Например: ${(pricePerUnit * 0.9).toFixed(2)}`}
-                      value={counterPrice}
-                      onChange={(e) => setCounterPrice(e.target.value)}
-                      className="flex-1"
-                    />
-                    <span className="text-sm text-muted-foreground">₽</span>
-                  </div>
-                  {counterPrice && parseFloat(counterPrice) > 0 && (
-                    <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded text-sm">
-                      <div className="flex justify-between">
-                        <span>Сумма заказа:</span>
-                        <span className="font-semibold">
-                          {(parseFloat(counterPrice) * quantity).toLocaleString('ru-RU')} ₽
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  <div className="mt-2">
-                    <Label htmlFor="counter-comment" className="text-sm">Комментарий (необязательно)</Label>
-                    <Textarea
-                      id="counter-comment"
-                      placeholder="Опишите причину вашего встречного предложения..."
-                      value={counterComment}
-                      onChange={(e) => setCounterComment(e.target.value)}
-                      rows={2}
-                      className="text-sm resize-none"
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  <Icon name="Info" size={12} className="inline mr-1" />
-                  Продавец получит уведомление о вашем предложении
-                </p>
-              </div>
-            )}
-          </div>
+          <CounterPriceSection
+            showCounterPrice={showCounterPrice}
+            pricePerUnit={pricePerUnit}
+            counterPrice={counterPrice}
+            counterComment={counterComment}
+            quantity={quantity}
+            onToggle={() => setShowCounterPrice(!showCounterPrice)}
+            onCounterPriceChange={setCounterPrice}
+            onCounterCommentChange={setCounterComment}
+          />
 
           <div className="flex gap-3 pt-4">
             <Button 
