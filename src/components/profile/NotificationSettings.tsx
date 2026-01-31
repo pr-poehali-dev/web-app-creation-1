@@ -61,9 +61,25 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
         const success = await setupPushNotifications(userId);
         if (success) {
           setIsEnabled(true);
+          
+          // Автоматически включаем email-уведомления при согласии на push
+          try {
+            const authUrl = 'https://functions.poehali.dev/e95db6c2-d56f-42e2-b3e6-25fbf5e7bc98';
+            await fetch(authUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: parseInt(userId),
+                emailNotifications: true
+              })
+            });
+          } catch (e) {
+            console.error('Не удалось включить email-уведомления:', e);
+          }
+          
           toast({
             title: 'Уведомления включены',
-            description: 'Вы будете получать важные обновления',
+            description: 'Вы будете получать важные обновления по push и email',
           });
         } else {
           toast({
@@ -148,7 +164,19 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
                 <ul className="text-sm text-muted-foreground space-y-1 ml-6">
                   <li className="flex items-center gap-2">
                     <Icon name="Dot" className="h-4 w-4" />
-                    Откликах на ваши запросы и предложения
+                    Новых откликах на ваши запросы и предложения
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Icon name="Dot" className="h-4 w-4" />
+                    Встречных предложениях цены
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Icon name="Dot" className="h-4 w-4" />
+                    Принятии и отклонении заказов
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Icon name="Dot" className="h-4 w-4" />
+                    Новых сообщениях по заказам
                   </li>
                 </ul>
               </div>

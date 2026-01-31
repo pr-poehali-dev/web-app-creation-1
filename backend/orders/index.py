@@ -17,6 +17,8 @@ from datetime import datetime
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import urllib.request
+import urllib.parse
 
 # Импортируем offers_cache для инвалидации кэша
 # Кэш находится в backend/offers/cache.py
@@ -53,6 +55,44 @@ def generate_order_number():
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     random_part = random.randint(1000, 9999)
     return f'ORD-{timestamp}-{random_part}'
+
+def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
+    """Отправка push и email уведомлений"""
+    try:
+        # Push-уведомление
+        push_data = json.dumps({
+            'userId': user_id,
+            'title': title,
+            'message': message,
+            'url': url
+        }).encode('utf-8')
+        
+        push_req = urllib.request.Request(
+            'https://functions.poehali.dev/c16d67d9-8c85-481e-ae48-92e2b0d9cc64',
+            data=push_data,
+            headers={'Content-Type': 'application/json'}
+        )
+        urllib.request.urlopen(push_req, timeout=3)
+    except Exception as e:
+        print(f'Push notification error: {e}')
+    
+    try:
+        # Email-уведомление
+        email_data = json.dumps({
+            'userId': user_id,
+            'title': title,
+            'message': message,
+            'url': url
+        }).encode('utf-8')
+        
+        email_req = urllib.request.Request(
+            'https://functions.poehali.dev/3c4b3e64-cb71-4b82-abd5-e67393be3d43',
+            data=email_data,
+            headers={'Content-Type': 'application/json'}
+        )
+        urllib.request.urlopen(email_req, timeout=3)
+    except Exception as e:
+        print(f'Email notification error: {e}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -494,6 +534,19 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     cur.close()
     conn.close()
     
+    # Отправляем уведомление продавцу о новом заказе
+    try:
+        if initial_status == 'negotiating':
+            notification_title = 'Новое встречное предложение по заказу'
+            notification_message = f'Покупатель предложил {counter_price} ₽ за единицу товара "{body["title"]}"'
+        else:
+            notification_title = 'Новый заказ на ваше предложение'
+            notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽'
+        
+        send_notification(seller_id, notification_title, notification_message, f'/my-orders?id={result["id"]}')
+    except Exception as e:
+        print(f'Notification error: {e}')
+    
     return {
         'statusCode': 201,
         'headers': headers,
@@ -743,6 +796,78 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     cur.execute(sql)
     conn.commit()
+    
+    # Отправляем уведомления после успешного обновления
+    try:
+        new_status = body.get('status')
+        
+        # Встречное предложение от покупателя
+        if 'counterPrice' in body and is_buyer:
+            send_notification(
+                order['seller_id'],
+                'Встречное предложение по заказу',
+                f'Покупатель предложил {body["counterPrice"]} ₽ за единицу товара',
+                f'/my-orders?id={order_id}'
+            )
+        
+        # Встречное предложение от продавца
+        elif 'counterPrice' in body and is_seller:
+            send_notification(
+                order['buyer_id'],
+                'Встречное предложение от продавца',
+                f'Продавец предложил {body["counterPrice"]} ₽ за единицу товара',
+                f'/my-orders?id={order_id}'
+            )
+        
+        # Продавец принял встречное предложение покупателя
+        elif counter_accepted:
+            send_notification(
+                order['buyer_id'],
+                'Встречное предложение принято',
+                f'Продавец согласился на вашу цену. Заказ принят!',
+                f'/my-orders?id={order_id}'
+            )
+        
+        # Продавец принял заказ
+        elif new_status == 'accepted':
+            send_notification(
+                order['buyer_id'],
+                'Заказ принят',
+                f'Ваш заказ №{order.get("order_number", order_id[:8])} принят в работу',
+                f'/my-orders?id={order_id}'
+            )
+        
+        # Заказ отклонен
+        elif new_status == 'rejected':
+            send_notification(
+                order['buyer_id'],
+                'Заказ отклонен',
+                f'К сожалению, ваш заказ №{order.get("order_number", order_id[:8])} был отклонен',
+                f'/my-orders?id={order_id}'
+            )
+        
+        # Заказ отменён
+        elif new_status == 'cancelled':
+            notify_user = order['buyer_id'] if is_seller else order['seller_id']
+            who_cancelled = 'Продавец' if is_seller else 'Покупатель'
+            send_notification(
+                notify_user,
+                'Заказ отменён',
+                f'{who_cancelled} отменил заказ №{order.get("order_number", order_id[:8])}',
+                f'/my-orders?id={order_id}'
+            )
+        
+        # Заказ завершён
+        elif new_status == 'completed':
+            send_notification(
+                order['seller_id'],
+                'Заказ завершён',
+                f'Покупатель подтвердил получение заказа №{order.get("order_number", order_id[:8])}',
+                f'/my-orders?id={order_id}'
+            )
+    except Exception as e:
+        print(f'Notification error: {e}')
+    
     cur.close()
     conn.close()
     
@@ -888,6 +1013,10 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     message_escaped = body['message'].replace("'", "''")
     sender_name_escaped = sender_name.replace("'", "''")
     
+    # Получаем информацию о заказе для определения получателя уведомления
+    cur.execute(f"SELECT buyer_id, seller_id, order_number FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    order = cur.fetchone()
+    
     sql = f"""
         INSERT INTO {schema}.order_messages (order_id, sender_id, sender_name, sender_type, message)
         VALUES ('{order_id_escaped}', {sender_id}, '{sender_name_escaped}', '{sender_type_escaped}', '{message_escaped}')
@@ -899,6 +1028,19 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     conn.commit()
     cur.close()
     conn.close()
+    
+    # Отправляем уведомление получателю сообщения
+    if order:
+        try:
+            recipient_id = order['seller_id'] if int(sender_id) == order['buyer_id'] else order['buyer_id']
+            send_notification(
+                recipient_id,
+                'Новое сообщение по заказу',
+                f'{sender_name}: {body["message"][:50]}...' if len(body["message"]) > 50 else f'{sender_name}: {body["message"]}',
+                f'/my-orders?id={body["orderId"]}'
+            )
+        except Exception as e:
+            print(f'Message notification error: {e}')
     
     return {
         'statusCode': 201,
