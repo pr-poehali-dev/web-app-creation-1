@@ -30,6 +30,97 @@ export function useOrdersData(
     audio.volume = 0.3;
     audio.play().catch(() => {});
   };
+
+  // Вспомогательная функция для маппинга заказа
+  const mapOrderData = (orderData: any): Order => ({
+    id: orderData.id,
+    orderNumber: orderData.order_number || orderData.orderNumber,
+    offerId: orderData.offer_id,
+    offerTitle: orderData.offer_title || orderData.title,
+    offerImage: orderData.offer_image ? (typeof orderData.offer_image === 'string' ? JSON.parse(orderData.offer_image)[0]?.url : orderData.offer_image[0]?.url) : undefined,
+    quantity: orderData.quantity,
+    originalQuantity: orderData.original_quantity || orderData.originalQuantity,
+    unit: orderData.unit,
+    pricePerUnit: orderData.price_per_unit || orderData.pricePerUnit,
+    totalAmount: orderData.total_amount || orderData.totalAmount,
+    offerPricePerUnit: orderData.offerPricePerUnit,
+    offerAvailableQuantity: orderData.offerAvailableQuantity,
+    counterPricePerUnit: orderData.counter_price_per_unit || orderData.counterPricePerUnit,
+    counterTotalAmount: orderData.counter_total_amount || orderData.counterTotalAmount,
+    counterOfferMessage: orderData.counter_offer_message || orderData.counterOfferMessage,
+    counterOfferedAt: orderData.counter_offered_at || orderData.counterOfferedAt ? new Date(orderData.counter_offered_at || orderData.counterOfferedAt) : undefined,
+    counterOfferedBy: orderData.counter_offered_by || orderData.counterOfferedBy,
+    buyerAcceptedCounter: orderData.buyer_accepted_counter || orderData.buyerAcceptedCounter,
+    buyerId: orderData.buyer_id?.toString() || orderData.buyerId,
+    buyerName: orderData.buyer_name || orderData.buyerName || orderData.buyer_full_name,
+    buyerPhone: orderData.buyer_phone || orderData.buyerPhone,
+    buyerEmail: orderData.buyer_email || orderData.buyerEmail,
+    sellerId: orderData.seller_id?.toString() || orderData.sellerId,
+    sellerName: orderData.seller_name || orderData.sellerName || orderData.seller_full_name,
+    sellerPhone: orderData.seller_phone || orderData.sellerPhone,
+    sellerEmail: orderData.seller_email || orderData.sellerEmail,
+    status: orderData.status,
+    deliveryType: orderData.delivery_type || orderData.deliveryType || 'delivery',
+    comment: orderData.comment,
+    type: orderData.type,
+    createdAt: new Date(orderData.createdAt || orderData.created_at),
+    acceptedAt: orderData.acceptedAt || orderData.accepted_at ? new Date(orderData.acceptedAt || orderData.accepted_at) : undefined,
+    completedDate: orderData.completedDate || orderData.completed_date ? new Date(orderData.completedDate || orderData.completed_date) : undefined,
+    cancelledBy: orderData.cancelled_by || orderData.cancelledBy,
+    cancellationReason: orderData.cancellation_reason || orderData.cancellationReason,
+    buyerCompany: orderData.buyer_company || orderData.buyerCompany,
+    buyerInn: orderData.buyer_inn || orderData.buyerInn,
+  });
+
+  const loadOrders = useCallback(async (showLoader = false) => {
+    try {
+      if (showLoader) {
+        setIsLoading(true);
+      } else {
+        setIsSyncing(true);
+      }
+      
+      // Таймаут для предотвращения вечной загрузки
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Превышено время ожидания')), 15000)
+      );
+      
+      // Загружаем ВСЕ заказы сразу для правильного подсчета
+      const response = await Promise.race([
+        ordersAPI.getAll('all'),
+        timeoutPromise
+      ]) as any;
+      
+      const mappedOrders = response.orders.map(mapOrderData);
+      
+      setOrders(mappedOrders);
+      
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      
+      const errorMessage = error instanceof Error ? error.message : 'Не удалось загрузить заказы';
+      
+      if (showLoader) {
+        toast({
+          title: 'Ошибка загрузки',
+          description: errorMessage,
+          variant: 'destructive',
+        });
+      }
+      
+      // Устанавливаем пустой массив, чтобы не было белого экрана
+      setOrders([]);
+    } finally {
+      if (showLoader) {
+        setIsLoading(false);
+      } else {
+        setIsSyncing(false);
+      }
+    }
+  }, [isInitialLoad, toast]);
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -145,98 +236,7 @@ export function useOrdersData(
         setTimeout(() => loadOrders(false), 500);
       }
     }
-  }, [activeTab, orders.length]);
-
-  // Вспомогательная функция для маппинга заказа
-  const mapOrderData = (orderData: any): Order => ({
-    id: orderData.id,
-    orderNumber: orderData.order_number || orderData.orderNumber,
-    offerId: orderData.offer_id,
-    offerTitle: orderData.offer_title || orderData.title,
-    offerImage: orderData.offer_image ? (typeof orderData.offer_image === 'string' ? JSON.parse(orderData.offer_image)[0]?.url : orderData.offer_image[0]?.url) : undefined,
-    quantity: orderData.quantity,
-    originalQuantity: orderData.original_quantity || orderData.originalQuantity,
-    unit: orderData.unit,
-    pricePerUnit: orderData.price_per_unit || orderData.pricePerUnit,
-    totalAmount: orderData.total_amount || orderData.totalAmount,
-    offerPricePerUnit: orderData.offerPricePerUnit,
-    offerAvailableQuantity: orderData.offerAvailableQuantity,
-    counterPricePerUnit: orderData.counter_price_per_unit || orderData.counterPricePerUnit,
-    counterTotalAmount: orderData.counter_total_amount || orderData.counterTotalAmount,
-    counterOfferMessage: orderData.counter_offer_message || orderData.counterOfferMessage,
-    counterOfferedAt: orderData.counter_offered_at || orderData.counterOfferedAt ? new Date(orderData.counter_offered_at || orderData.counterOfferedAt) : undefined,
-    counterOfferedBy: orderData.counter_offered_by || orderData.counterOfferedBy,
-    buyerAcceptedCounter: orderData.buyer_accepted_counter || orderData.buyerAcceptedCounter,
-    buyerId: orderData.buyer_id?.toString() || orderData.buyerId,
-    buyerName: orderData.buyer_name || orderData.buyerName || orderData.buyer_full_name,
-    buyerPhone: orderData.buyer_phone || orderData.buyerPhone,
-    buyerEmail: orderData.buyer_email || orderData.buyerEmail,
-    sellerId: orderData.seller_id?.toString() || orderData.sellerId,
-    sellerName: orderData.seller_name || orderData.sellerName || orderData.seller_full_name,
-    sellerPhone: orderData.seller_phone || orderData.sellerPhone,
-    sellerEmail: orderData.seller_email || orderData.sellerEmail,
-    status: orderData.status,
-    deliveryType: orderData.delivery_type || orderData.deliveryType || 'delivery',
-    comment: orderData.comment,
-    type: orderData.type,
-    createdAt: new Date(orderData.createdAt || orderData.created_at),
-    acceptedAt: orderData.acceptedAt || orderData.accepted_at ? new Date(orderData.acceptedAt || orderData.accepted_at) : undefined,
-    completedDate: orderData.completedDate || orderData.completed_date ? new Date(orderData.completedDate || orderData.completed_date) : undefined,
-    cancelledBy: orderData.cancelled_by || orderData.cancelledBy,
-    cancellationReason: orderData.cancellation_reason || orderData.cancellationReason,
-    buyerCompany: orderData.buyer_company || orderData.buyerCompany,
-    buyerInn: orderData.buyer_inn || orderData.buyerInn,
-  });
-
-  const loadOrders = useCallback(async (showLoader = false) => {
-    try {
-      if (showLoader) {
-        setIsLoading(true);
-      } else {
-        setIsSyncing(true);
-      }
-      
-      // Таймаут для предотвращения вечной загрузки
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Превышено время ожидания')), 15000)
-      );
-      
-      // Загружаем ВСЕ заказы сразу для правильного подсчета
-      const response = await Promise.race([
-        ordersAPI.getAll('all'),
-        timeoutPromise
-      ]) as any;
-      
-      const mappedOrders = response.orders.map(mapOrderData);
-      
-      setOrders(mappedOrders);
-      
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-      }
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось загрузить заказы';
-      
-      if (showLoader) {
-        toast({
-          title: 'Ошибка загрузки',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      }
-      
-      // Устанавливаем пустой массив, чтобы не было белого экрана
-      setOrders([]);
-    } finally {
-      if (showLoader) {
-        setIsLoading(false);
-      } else {
-        setIsSyncing(false);
-      }
-    }
-  }, [isInitialLoad, toast]);
+  }, [activeTab, orders.length, loadOrders]);
 
 
 
