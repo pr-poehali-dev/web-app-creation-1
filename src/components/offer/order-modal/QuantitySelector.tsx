@@ -44,20 +44,10 @@ export default function QuantitySelector({
         <Input
           id="order-quantity"
           name="order-quantity"
-          type="text"
+          type="number"
           inputMode="numeric"
           value={quantity}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === '' || /^\d+$/.test(val)) {
-              onQuantityChange(val);
-            }
-          }}
-          onBlur={() => {
-            if (quantity === '') {
-              onQuantityChange((minOrderQuantity || 1).toString());
-            }
-          }}
+          onChange={(e) => onQuantityChange(e.target.value)}
           required
           className={`text-center ${quantityError ? 'border-red-500 text-red-500' : ''}`}
         />
