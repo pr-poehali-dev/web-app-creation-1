@@ -202,7 +202,12 @@ export default function OfferOrderModal({
     <Dialog open={isOpen && !isMapOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Оформление заказа</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>Оформление заказа</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              Доступно: {remainingQuantity} {unit}
+            </span>
+          </DialogTitle>
           <DialogDescription>
             Заполните форму, и мы свяжемся с вами для подтверждения заказа
           </DialogDescription>
