@@ -69,6 +69,7 @@ export default function OrderNegotiationSection({
         showCounterForm={showCounterForm}
         onShowCounterForm={() => setShowCounterForm(true)}
         onCounterOffer={onCounterOffer}
+        onCancelOrder={onCancelOrder}
       />
 
       <CounterOfferDisplay

@@ -243,37 +243,13 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                         Завершить заказ
                       </Button>
                     )}
-                    {onCancelOrder && (
-                      <Button
-                        onClick={handleCancelClick}
-                        variant="outline"
-                        size="sm"
-                        className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                      >
-                        <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-                        Отменить заказ
-                      </Button>
-                    )}
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
-                      <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
-                      <p className="text-sm text-green-800 font-medium">
-                        Заказ в работе
-                      </p>
-                    </div>
-                    {onCancelOrder && (
-                      <Button
-                        onClick={handleCancelClick}
-                        variant="outline"
-                        size="sm"
-                        className="w-full border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                      >
-                        <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-                        Отменить заказ
-                      </Button>
-                    )}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                    <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <p className="text-sm text-green-800 font-medium">
+                      Заказ в работе
+                    </p>
                   </div>
                 )}
               </>
