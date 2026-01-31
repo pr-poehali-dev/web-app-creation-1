@@ -66,7 +66,11 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           </div>
           <div>
             <p className="text-muted-foreground">Сумма</p>
-            <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
+            <p className="font-bold text-primary">
+              {(order.counterTotalAmount !== undefined && order.counterTotalAmount !== null 
+                ? order.counterTotalAmount 
+                : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽
+            </p>
           </div>
           {order.status === 'negotiating' && order.counterPricePerUnit && (
             <div className="col-span-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded p-2">
