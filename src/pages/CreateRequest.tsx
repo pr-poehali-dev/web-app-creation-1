@@ -61,7 +61,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     unit: 'шт',
     pricePerUnit: '',
     hasVAT: false,
-    vatRate: '20',
+    vatRate: '22',
     district: '',
     deliveryAddress: '',
     gpsCoordinates: '',

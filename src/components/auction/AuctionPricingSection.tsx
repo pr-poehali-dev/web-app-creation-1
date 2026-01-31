@@ -19,7 +19,7 @@ interface AuctionPricingSectionProps {
 export default function AuctionPricingSection({ formData, onInputChange }: AuctionPricingSectionProps) {
   const [isVatRateOpen, setIsVatRateOpen] = useState(false);
   const vatOptions = [
-    { value: '20', label: '20%' },
+    { value: '22', label: '22%' },
     { value: '10', label: '10%' },
     { value: '0', label: '0%' }
   ];

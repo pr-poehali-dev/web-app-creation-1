@@ -90,7 +90,7 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
     minBidStep: '',
     buyNowPrice: '',
     hasVAT: false,
-    vatRate: '20',
+    vatRate: '22',
     district: '',
     fullAddress: '',
     gpsCoordinates: '',

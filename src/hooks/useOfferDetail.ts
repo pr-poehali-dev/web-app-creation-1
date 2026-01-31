@@ -354,9 +354,14 @@ export function useOfferDetail(id: string | undefined) {
           duration: 2000,
         });
         
-        // Перенаправляем на страницу "Мои заказы"
+        // Перенаправляем на страницу "Мои заказы" с флагом refresh и ID нового заказа
         setTimeout(() => {
-          navigate('/my-orders');
+          navigate('/my-orders', { 
+            state: { 
+              refresh: true, 
+              newOrderId: result.id 
+            } 
+          });
         }, 300);
         
         return;
@@ -416,9 +421,14 @@ export function useOfferDetail(id: string | undefined) {
         duration: 2000,
       });
 
-      // Перенаправляем на страницу "Мои заказы"
+      // Перенаправляем на страницу "Мои заказы" с флагом refresh и ID нового заказа
       setTimeout(() => {
-        navigate('/my-orders');
+        navigate('/my-orders', { 
+          state: { 
+            refresh: true, 
+            newOrderId: result.id 
+          } 
+        });
       }, 300);
     } catch (error) {
       console.error('Error creating order:', error);
