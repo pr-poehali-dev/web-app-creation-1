@@ -44,25 +44,22 @@ export default function QuantitySelector({
         <Input
           id="order-quantity"
           name="order-quantity"
-          type="number"
+          type="text"
           inputMode="numeric"
-          pattern="[0-9]*"
-          step="1"
           value={quantity}
           onChange={(e) => {
             const val = e.target.value;
-            if (val === '') {
-              onQuantityChange('');
-              return;
-            }
-            const numVal = Number(val);
-            if (!isNaN(numVal) && numVal >= 0) {
+            if (val === '' || /^\d+$/.test(val)) {
               onQuantityChange(val);
             }
           }}
-          onFocus={onErrorClear}
+          onBlur={() => {
+            if (quantity === '') {
+              onQuantityChange((minOrderQuantity || 1).toString());
+            }
+          }}
           required
-          className={`text-center ${quantityError ? 'border-red-500' : ''}`}
+          className={`text-center ${quantityError ? 'border-red-500 text-red-500' : ''}`}
         />
         
         <Button
