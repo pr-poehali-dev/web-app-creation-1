@@ -67,8 +67,13 @@ export default function QuantitySelector({
       {quantityError && (
         <p className="text-xs text-red-500 mt-1">{quantityError}</p>
       )}
-      {minOrderQuantity && (
+      {minOrderQuantity && !quantityError && (
         <p className="text-xs text-muted-foreground mt-1">
+          Минимум для заказа: {minOrderQuantity} {unit}
+        </p>
+      )}
+      {minOrderQuantity && quantityError && (
+        <p className="text-xs text-red-500 mt-1 font-semibold">
           Минимум для заказа: {minOrderQuantity} {unit}
         </p>
       )}

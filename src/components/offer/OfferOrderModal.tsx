@@ -97,17 +97,12 @@ export default function OfferOrderModal({
   }, [address]);
 
   const handleQuantityChange = (value: string) => {
-    const numValue = Number(value);
-    
-    if (isNaN(numValue) || numValue < 1) {
-      return;
-    }
-    
     setQuantity(value);
     
+    const numValue = Number(value);
     const minValue = minOrderQuantity || 1;
     
-    if (numValue < minValue) {
+    if (value === '' || isNaN(numValue) || numValue < minValue) {
       setQuantityError(`Минимальное количество для заказа: ${minValue} ${unit}`);
     } else if (numValue > remainingQuantity) {
       setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
