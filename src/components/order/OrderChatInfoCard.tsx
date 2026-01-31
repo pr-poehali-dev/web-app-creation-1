@@ -50,6 +50,12 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           <div className="flex-1 min-w-0">
             <p className="text-muted-foreground text-xs">Товар</p>
             <p className="font-medium">{order.offerTitle}</p>
+            {isBuyer && order.status === 'new' && (
+              <div className="flex items-center gap-1.5 mt-1.5 text-amber-600">
+                <Icon name="Clock" className="h-3.5 w-3.5" />
+                <p className="text-xs font-medium">Ожидается отклик продавца</p>
+              </div>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm">
