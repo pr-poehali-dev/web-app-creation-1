@@ -99,7 +99,7 @@ export default function CounterOfferDisplay({
                       <Icon name="MessageSquare" className="mr-1 h-3.5 w-3.5" />
                       Встречное
                     </Button>
-                    {onCancelOrder && order.status === 'pending' && (
+                    {onCancelOrder && (order.status === 'pending' || order.status === 'negotiating') && (
                       <Button 
                         onClick={onCancelOrder} 
                         variant="destructive" 
@@ -133,7 +133,7 @@ export default function CounterOfferDisplay({
                         Встречное
                       </Button>
                     </div>
-                    {onCancelOrder && order.status === 'pending' && (
+                    {onCancelOrder && (order.status === 'pending' || order.status === 'negotiating') && (
                       <Button 
                         onClick={onCancelOrder} 
                         variant="destructive" 

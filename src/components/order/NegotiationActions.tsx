@@ -32,7 +32,7 @@ export default function NegotiationActions({
           <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
           Предложить свою цену
         </Button>
-        {onCancelOrder && order.status === 'pending' && (
+        {onCancelOrder && (order.status === 'pending' || order.status === 'new' || order.status === 'negotiating') && (
           <Button 
             onClick={onCancelOrder} 
             variant="destructive" 
