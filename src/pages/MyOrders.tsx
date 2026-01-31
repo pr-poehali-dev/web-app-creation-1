@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import DataSyncIndicator from '@/components/DataSyncIndicator';
@@ -17,6 +17,7 @@ interface MyOrdersProps {
 
 export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as 'buyer' | 'seller' | 'archive' | null;
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'archive'>(tabParam || 'buyer');
@@ -53,6 +54,16 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleCloseReviewModal,
     loadOrders,
   } = useOrdersData(isAuthenticated, activeTab, setActiveTab);
+
+  // Обновляем заказы при переходе после создания нового заказа
+  useEffect(() => {
+    if (location.state?.refresh) {
+      console.log('[MyOrders] Обнаружен флаг refresh, обновляем заказы');
+      loadOrders(false);
+      // Очищаем state чтобы избежать повторных обновлений
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, loadOrders, navigate, location.pathname]);
 
   useEffect(() => {
     const handleOpenOrderChat = async (event: CustomEvent) => {

@@ -258,7 +258,7 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         description: 'Продавец свяжется с вами в ближайшее время',
       });
 
-      navigate('/my-orders');
+      navigate('/my-orders', { state: { refresh: true, newOrderId: result.id } });
     } catch (error) {
       toast({
         title: 'Ошибка',
