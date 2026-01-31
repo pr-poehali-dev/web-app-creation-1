@@ -650,6 +650,49 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         # Инвалидируем кэш offers
         offers_cache.clear()
     
+    # Покупатель принимает встречное предложение продавца
+    if 'acceptCounter' in body and body['acceptCounter'] and is_buyer:
+        if order.get('counter_price_per_unit') is None or order.get('counter_total_amount') is None:
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'No counter offer to accept'}),
+                'isBase64Encoded': False
+            }
+        
+        # Проверяем что встречное предложение было от продавца
+        if order.get('counter_offered_by') != 'seller':
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'No seller counter offer to accept'}),
+                'isBase64Encoded': False
+            }
+        
+        updates.append(f"buyer_accepted_counter = TRUE")
+        updates.append(f"price_per_unit = {float(order['counter_price_per_unit'])}")
+        updates.append(f"total_amount = {float(order['counter_total_amount'])}")
+        updates.append(f"status = 'accepted'")
+        counter_accepted = True
+        
+        # Переносим количество из reserved в sold
+        offer_id_escaped = str(order['offer_id']).replace("'", "''")
+        order_quantity = order['quantity']
+        cur.execute(f"""
+            UPDATE {schema}.offers 
+            SET 
+                sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
+                reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
+            WHERE id = '{offer_id_escaped}'
+        """)
+        
+        # Инвалидируем кэш offers
+        offers_cache.clear()
+    
     # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
     if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
         # Проверяем доступное количество в предложении
@@ -815,14 +858,24 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 f'/my-orders?id={order_id}'
             )
         
-        # Продавец принял встречное предложение покупателя
+        # Встречное предложение принято (продавцом или покупателем)
         elif counter_accepted:
-            send_notification(
-                order['buyer_id'],
-                'Встречное предложение принято',
-                f'Продавец согласился на вашу цену. Заказ принят!',
-                f'/my-orders?id={order_id}'
-            )
+            if is_seller:
+                # Продавец принял встречное предложение покупателя
+                send_notification(
+                    order['buyer_id'],
+                    'Встречное предложение принято',
+                    f'Продавец согласился на вашу цену. Заказ принят!',
+                    f'/my-orders?id={order_id}'
+                )
+            elif is_buyer:
+                # Покупатель принял встречное предложение продавца
+                send_notification(
+                    order['seller_id'],
+                    'Встречное предложение принято',
+                    f'Покупатель согласился на вашу цену. Заказ принят!',
+                    f'/my-orders?id={order_id}'
+                )
         
         # Продавец принял заказ
         elif new_status == 'accepted':
