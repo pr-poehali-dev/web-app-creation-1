@@ -218,12 +218,16 @@ export default function RequestDeliverySection({
             onClose={() => setShowMapModal(false)}
             coordinates={formData.gpsCoordinates || ''}
             onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
-            onAddressChange={(address, districtName) => {
-              console.log('📬 onAddressChange вызван:', { address, districtName });
+            onAddressChange={(address, districtName, coords) => {
+              console.log('📬 onAddressChange вызван:', { address, districtName, coords });
               
               if (address) {
                 setAddressInput(address);
                 onInputChange('deliveryAddress', address);
+              }
+              
+              if (coords) {
+                onInputChange('gpsCoordinates', coords);
               }
               
               if (districtName) {

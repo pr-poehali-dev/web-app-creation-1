@@ -13,7 +13,7 @@ interface MapModalProps {
   onClose: () => void;
   coordinates: string;
   onCoordinatesChange: (coords: string) => void;
-  onAddressChange?: (address: string, district: string) => void;
+  onAddressChange?: (address: string, district: string, coords?: string) => void;
 }
 
 export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesChange, onAddressChange }: MapModalProps) {
@@ -69,7 +69,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           console.log('🔄 Fetching address from Nominatim...');
           try {
             const result = await geocodeCoordinates(lat, lng, '📍');
-            onAddressChange(result.fullAddress, result.district);
+            onAddressChange(result.fullAddress, result.district, coords);
           } catch (error) {
             console.error('Ошибка получения адреса:', error);
           }
@@ -85,7 +85,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
             if (onAddressChange) {
               try {
                 const result = await geocodeCoordinates(dragLat, dragLng, '🔄 Drag:');
-                onAddressChange(result.fullAddress, result.district);
+                onAddressChange(result.fullAddress, result.district, dragCoords);
               } catch (error) {
                 console.error('Ошибка получения адреса:', error);
               }
@@ -106,7 +106,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               if (onAddressChange) {
                 try {
                   const result = await geocodeCoordinates(dragLat, dragLng);
-                  onAddressChange(result.fullAddress, result.district);
+                  onAddressChange(result.fullAddress, result.district, dragCoords);
                 } catch (error) {
                   console.error('Ошибка получения адреса:', error);
                 }
@@ -131,7 +131,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       if (onAddressChange) {
         try {
           const result = await geocodeCoordinates(lat, lng);
-          onAddressChange(result.fullAddress, result.district);
+          onAddressChange(result.fullAddress, result.district, value);
         } catch (error) {
           console.error('Ошибка получения адреса:', error);
         }
@@ -158,7 +158,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
           if (onAddressChange) {
             try {
               const result = await geocodeCoordinates(dragLat, dragLng);
-              onAddressChange(result.fullAddress, result.district);
+              onAddressChange(result.fullAddress, result.district, dragCoords);
             } catch (error) {
               console.error('Ошибка получения адреса:', error);
             }
@@ -170,7 +170,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     if (onAddressChange) {
       try {
         const result = await geocodeCoordinates(lat, lng, '🔍 Search:');
-        onAddressChange(result.fullAddress, result.district);
+        onAddressChange(result.fullAddress, result.district, coords);
       } catch (error) {
         console.error('Ошибка получения адреса:', error);
       }
@@ -204,7 +204,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
                 if (onAddressChange) {
                   try {
                     const result = await geocodeCoordinates(dragLat, dragLng);
-                    onAddressChange(result.fullAddress, result.district);
+                    onAddressChange(result.fullAddress, result.district, dragCoords);
                   } catch (error) {
                     console.error('Ошибка получения адреса:', error);
                   }
@@ -220,7 +220,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
               const result = await geocodeCoordinates(lat, lng, '📍 Geolocation:');
               console.log('🎉 Геокодирование завершено, вызываем onAddressChange:', result);
               setCurrentAddress(result.fullAddress);
-              onAddressChange(result.fullAddress, result.district);
+              onAddressChange(result.fullAddress, result.district, coords);
               console.log('✅ onAddressChange вызван успешно');
             } catch (error) {
               console.error('❌ Ошибка получения адреса:', error);

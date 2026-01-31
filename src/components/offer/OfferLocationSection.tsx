@@ -255,13 +255,17 @@ export default function OfferLocationSection({
             onClose={() => setShowMapModal(false)}
             coordinates={formData.gpsCoordinates || ''}
             onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
-            onAddressChange={(address, districtName) => {
+            onAddressChange={(address, districtName, coords) => {
               console.log('🔔 OfferLocationSection: onAddressChange ВЫЗВАН!');
-              console.log('📬 onAddressChange вызван:', { address, districtName });
+              console.log('📬 onAddressChange вызван:', { address, districtName, coords });
               
               if (address) {
                 setAddressInput(address);
                 onInputChange('fullAddress', address);
+              }
+              
+              if (coords) {
+                onInputChange('gpsCoordinates', coords);
               }
               
               if (districtName) {

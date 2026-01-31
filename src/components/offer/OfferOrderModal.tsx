@@ -138,10 +138,17 @@ export default function OfferOrderModal({
     }
   };
 
-  const handleAddressChange = (fullAddress: string, district: string) => {
-    console.log('📍 Address changed in modal:', fullAddress);
+  const handleAddressChange = (fullAddress: string, district: string, coords?: string) => {
+    console.log('📍 Address changed in modal:', fullAddress, coords);
     setAddress(fullAddress);
     setAddressError('');
+    if (coords) {
+      setGpsCoordinates(coords);
+      const [lat, lng] = coords.split(',').map(c => parseFloat(c.trim()));
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setSelectedLocation({ lat, lng });
+      }
+    }
   };
 
   const validateAddress = async (addressText: string) => {

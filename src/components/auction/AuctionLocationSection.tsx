@@ -55,11 +55,15 @@ export default function AuctionLocationSection({
     setDistrictSearch('');
   };
 
-  const handleMapAddressChange = (address: string, districtName: string) => {
-    console.log('🗺️ MapModal callback:', { address, districtName });
+  const handleMapAddressChange = (address: string, districtName: string, coords?: string) => {
+    console.log('🗺️ MapModal callback:', { address, districtName, coords });
     
     if (address) {
       onInputChange('fullAddress', address);
+    }
+    
+    if (coords) {
+      onInputChange('gpsCoordinates', coords);
     }
     
     if (districtName) {
