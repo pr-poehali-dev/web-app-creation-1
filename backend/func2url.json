@@ -6,8 +6,6 @@
   "telegram-bot": "https://functions.poehali.dev/a0fb050f-4c4d-4081-887c-ebc6eb867030",
   "telegram-connect": "https://functions.poehali.dev/e57f42ad-e2c3-420c-a418-16a98422a47d",
   "telegram-notify": "https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f",
-  "push-send": "https://functions.poehali.dev/d84dd37e-ac91-473e-a3a8-5cf34f66c9b5",
-  "push-subscribe": "https://functions.poehali.dev/4ff79524-ce04-4dc8-aeb9-d4030c140d66",
   "content-management": "https://functions.poehali.dev/c034aa7b-b222-4174-a498-ac62ab8ba0f0",
   "upload-video": "https://functions.poehali.dev/9999daf2-27bb-4ac4-a09e-001928741e24",
   "admin-stats": "https://functions.poehali.dev/a764d5ef-b512-4cbd-b25b-36a52baa08b7",

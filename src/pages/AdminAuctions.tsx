@@ -33,6 +33,7 @@ import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import { auctionsAPI } from '@/services/api';
 import type { Auction } from '@/types/auction';
+import { dataSync } from '@/utils/dataSync';
 
 interface AdminAuctionsProps {
   isAuthenticated: boolean;
@@ -63,6 +64,15 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
 
   useEffect(() => {
     loadAuctions();
+    
+    const unsubscribe = dataSync.subscribe('auction_updated', () => {
+      console.log('Auction updated, reloading admin auctions...');
+      loadAuctions();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const loadAuctions = async () => {

@@ -2,7 +2,7 @@
 // Обновление происходит при взаимодействии пользователя с интерфейсом
 
 interface SyncEvent {
-  type: 'offer_updated' | 'request_updated' | 'auction_updated' | 'order_updated';
+  type: 'offer_updated' | 'request_updated' | 'auction_updated' | 'order_updated' | 'contract_updated';
   timestamp: number;
   id?: string;
 }
@@ -170,4 +170,8 @@ export const notifyAuctionUpdated = (id?: string) => {
 
 export const notifyOrderUpdated = (id?: string) => {
   dataSync.publish({ type: 'order_updated', timestamp: Date.now(), id });
+};
+
+export const notifyContractUpdated = (id?: string) => {
+  dataSync.publish({ type: 'contract_updated', timestamp: Date.now(), id });
 };
