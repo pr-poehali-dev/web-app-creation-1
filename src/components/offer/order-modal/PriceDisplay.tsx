@@ -3,6 +3,7 @@ interface PriceDisplayProps {
   quantity: string;
   unit: string;
   quantityError: string;
+  showCounterPrice: boolean;
 }
 
 export default function PriceDisplay({
@@ -10,8 +11,9 @@ export default function PriceDisplay({
   quantity,
   unit,
   quantityError,
+  showCounterPrice,
 }: PriceDisplayProps) {
-  if (quantityError || Number(quantity) <= 0) {
+  if (quantityError || Number(quantity) <= 0 || showCounterPrice) {
     return null;
   }
 

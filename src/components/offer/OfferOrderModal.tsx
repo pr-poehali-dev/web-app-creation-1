@@ -229,6 +229,7 @@ export default function OfferOrderModal({
             quantity={quantity}
             unit={unit}
             quantityError={quantityError}
+            showCounterPrice={showCounterPrice}
           />
 
           <DeliverySection
