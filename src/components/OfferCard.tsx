@@ -220,7 +220,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <span className="text-muted-foreground text-xs">Цена за единицу:</span>
             <div className="flex flex-col items-end gap-0.5">
               <span className="font-bold text-primary text-base">
-                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+                {((offer as any).price || offer.pricePerUnit || 0).toLocaleString('ru-RU')} ₽
               </span>
               {offer.noNegotiation && (
                 <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
