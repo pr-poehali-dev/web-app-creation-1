@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -39,6 +40,7 @@ export default function ProfileSecurityCard({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <Card>
@@ -61,6 +63,27 @@ export default function ProfileSecurityCard({
               </div>
               <Button variant="outline" size="sm" onClick={onChangePassword}>
                 Изменить
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
+                  <Icon name="MessageCircle" className="h-5 w-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="font-medium">Подтверждение через Telegram</p>
+                  <p className="text-sm text-muted-foreground">
+                    Получайте коды и уведомления мгновенно
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/telegram-settings')}
+              >
+                Настроить
               </Button>
             </div>
 

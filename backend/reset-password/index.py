@@ -13,6 +13,7 @@ import bcrypt
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from telegram_helper import send_reset_password_link_telegram
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -131,6 +132,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     frontend_url = os.environ.get('FRONTEND_URL', 'https://rynok.poehali.app')
                     reset_link = f"{frontend_url}/new-password?token={reset_token}"
                     send_reset_email(email, reset_link)
+                except Exception as e:
+                    pass
+                
+                # Попытка отправить через Telegram, если привязан
+                try:
+                    cur.execute(
+                        "SELECT telegram_chat_id FROM users WHERE id = %s AND telegram_verified = TRUE",
+                        (user['id'],)
+                    )
+                    telegram_result = cur.fetchone()
+                    if telegram_result and telegram_result['telegram_chat_id']:
+                        send_reset_password_link_telegram(
+                            telegram_result['telegram_chat_id'],
+                            reset_link
+                        )
                 except Exception as e:
                     pass
             
