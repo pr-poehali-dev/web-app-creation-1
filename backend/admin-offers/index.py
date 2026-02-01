@@ -3,7 +3,6 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
-from datetime import datetime, timedelta
 from decimal import Decimal
 
 
@@ -17,52 +16,9 @@ def decimal_to_float(obj):
         return [decimal_to_float(item) for item in obj]
     return obj
 
-def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 30, window_minutes: int = 1) -> bool:
-    with conn.cursor() as cur:
-        window_start = datetime.now() - timedelta(minutes=window_minutes)
-        
-        cur.execute(
-            """SELECT request_count, window_start 
-               FROM rate_limits 
-               WHERE identifier = %s AND endpoint = %s""",
-            (identifier, endpoint)
-        )
-        result = cur.fetchone()
-        
-        if result:
-            if result['window_start'] > window_start:
-                if result['request_count'] >= max_requests:
-                    return False
-                cur.execute(
-                    """UPDATE rate_limits 
-                       SET request_count = request_count + 1 
-                       WHERE identifier = %s AND endpoint = %s""",
-                    (identifier, endpoint)
-                )
-            else:
-                cur.execute(
-                    """UPDATE rate_limits 
-                       SET request_count = 1, window_start = CURRENT_TIMESTAMP 
-                       WHERE identifier = %s AND endpoint = %s""",
-                    (identifier, endpoint)
-                )
-        else:
-            cur.execute(
-                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
-                   VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
-                (identifier, endpoint)
-            )
-        
-        conn.commit()
-        return True
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    '''
-    Бэкенд для управления предложениями в админ-панели
-    Args: event - dict с httpMethod, body, queryStringParameters
-          context - объект с атрибутами request_id, function_name
-    Returns: HTTP response dict с данными предложений
-    '''
+    '''Бэкенд для управления предложениями в админ-панели'''
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
@@ -90,26 +46,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = None
     try:
         conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
-        
-        headers = event.get('headers', {})
-        user_id = headers.get('X-User-Id') or headers.get('x-user-id', 'anonymous')
-        
-        if not check_rate_limit(conn, user_id, 'admin_offers', max_requests=30, window_minutes=1):
-            return {
-                'statusCode': 429,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Слишком много запросов. Попробуйте через минуту.'}),
-                'isBase64Encoded': False
-            }
-        
         cur = conn.cursor()
         
         if method == 'GET':
             query_params = event.get('queryStringParameters') or {}
             search = query_params.get('search', '') if query_params else ''
             status_filter = query_params.get('status', 'all') if query_params else 'all'
-            
-            print(f"GET: query_params={query_params}, search={search}, status_filter={status_filter}")
             
             where_clauses = []
             params = []
@@ -137,6 +79,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     o.created_at,
                     o.user_id as seller_id,
                     o.district,
+                    o.video_id,
                     CASE 
                         WHEN u.company_name IS NOT NULL AND u.company_name != '' THEN u.company_name
                         WHEN u.first_name IS NOT NULL OR u.last_name IS NOT NULL THEN 
@@ -150,10 +93,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 LIMIT 100
             """
             
-            print(f"GET: Executing query with where_sql='{where_sql}', params={params}")
             cur.execute(query, tuple(params))
             offers = cur.fetchall()
-            print(f"GET: Found {len(offers)} offers")
             
             offers_list = []
             for offer in offers:
@@ -175,13 +116,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 images_data = cur.fetchall()
                 images = [{'url': img['url'], 'alt': img['alt']} for img in images_data]
                 
-                cur.execute("""
-                    SELECT url, thumbnail
-                    FROM t_p42562714_web_app_creation_1.offer_videos
-                    WHERE id = %s
-                """, (offer_dict.get('video_id'),))
-                video_data = cur.fetchone()
-                videos = [{'url': video_data['url'], 'thumbnail': video_data['thumbnail']}] if video_data else []
+                videos = []
+                if offer_dict.get('video_id'):
+                    cur.execute("""
+                        SELECT url, thumbnail
+                        FROM t_p42562714_web_app_creation_1.offer_videos
+                        WHERE id = %s
+                    """, (offer_dict.get('video_id'),))
+                    video_data = cur.fetchone()
+                    if video_data:
+                        videos = [{'url': video_data['url'], 'thumbnail': video_data['thumbnail']}]
                 
                 offers_list.append({
                     'id': offer_id,
@@ -197,7 +141,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'images': images,
                     'videos': videos,
                     'district': offer_dict.get('district'),
-                    'pricePerUnit': offer_dict['price_per_unit'] if offer_dict['price_per_unit'] else 0
                 })
             
             return {
@@ -210,82 +153,75 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'PUT':
             body_data = json.loads(event.get('body', '{}'))
             offer_id = body_data.get('offerId')
-            action = body_data.get('action')
+            new_status = body_data.get('status')
             
-            if not offer_id or not action:
+            if not offer_id or not new_status:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'offerId and action required'}),
+                    'body': json.dumps({'error': 'offerId and status are required'}),
                     'isBase64Encoded': False
                 }
             
-            if action == 'approve':
-                cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET status = 'active' WHERE id = %s", (offer_id,))
-                conn.commit()
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True, 'message': 'Offer approved'}),
-                    'isBase64Encoded': False
-                }
+            cur.execute(
+                """UPDATE t_p42562714_web_app_creation_1.offers 
+                   SET status = %s 
+                   WHERE id = %s""",
+                (new_status, offer_id)
+            )
+            conn.commit()
             
-            elif action == 'reject':
-                cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET status = 'rejected' WHERE id = %s", (offer_id,))
-                conn.commit()
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True, 'message': 'Offer rejected'}),
-                    'isBase64Encoded': False
-                }
+            return {
+                'statusCode': 200,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'success': True, 'offerId': offer_id, 'status': new_status}),
+                'isBase64Encoded': False
+            }
         
         elif method == 'DELETE':
-            body_data = json.loads(event.get('body', '{}'))
-            offer_id = body_data.get('offerId')
+            query_params = event.get('queryStringParameters') or {}
+            offer_id = query_params.get('offerId')
             
             if not offer_id:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'offerId required'}),
+                    'body': json.dumps({'error': 'offerId is required'}),
                     'isBase64Encoded': False
                 }
             
-            print(f"DELETE: Attempting to delete offer with ID: {offer_id}")
-            cur.execute("DELETE FROM t_p42562714_web_app_creation_1.offers WHERE id = %s::uuid", (offer_id,))
-            deleted_count = cur.rowcount
+            cur.execute(
+                """UPDATE t_p42562714_web_app_creation_1.offers 
+                   SET status = 'archived' 
+                   WHERE id = %s""",
+                (offer_id,)
+            )
             conn.commit()
-            print(f"DELETE: Deleted {deleted_count} rows")
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'Offer deleted', 'deleted_count': deleted_count}),
+                'body': json.dumps({'success': True, 'offerId': offer_id}),
                 'isBase64Encoded': False
             }
         
-        return {
-            'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Method not allowed'}),
-            'isBase64Encoded': False
-        }
+        else:
+            return {
+                'statusCode': 405,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Method not allowed'}),
+                'isBase64Encoded': False
+            }
     
     except Exception as e:
         import traceback
-        error_details = {
-            'error': str(e),
-            'type': type(e).__name__,
-            'traceback': traceback.format_exc()
-        }
-        print(f"ERROR: {error_details}")
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': str(e), 'details': error_details}),
+            'body': json.dumps({'error': str(e), 'traceback': traceback.format_exc()}),
             'isBase64Encoded': False
         }
+    
     finally:
         if conn:
             conn.close()
