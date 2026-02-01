@@ -70,12 +70,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev === 0 ? offer.images.length - 1 : prev - 1));
+    const imagesLength = offer.images?.length || 0;
+    setCurrentImageIndex((prev) => (prev === 0 ? imagesLength - 1 : prev - 1));
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev === offer.images.length - 1 ? 0 : prev + 1));
+    const imagesLength = offer.images?.length || 0;
+    setCurrentImageIndex((prev) => (prev === imagesLength - 1 ? 0 : prev + 1));
   };
 
   const handleCardClick = () => {
@@ -131,7 +133,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
       <CardHeader className="p-0">
         <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-          {offer.images.length > 0 ? (
+          {offer.images?.length > 0 ? (
             <>
               <img
                 src={offer.images[currentImageIndex].url}
@@ -140,7 +142,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                 loading="lazy"
                 decoding="async"
               />
-              {offer.images.length > 1 && (
+              {offer.images?.length > 1 && (
                 <>
                   <button
                     onClick={handlePrevImage}
