@@ -532,10 +532,12 @@ export function useOrdersData(
       // Закрываем модалку
       setIsChatOpen(false);
       
-      // Переключаем на вкладку "Архив" после отмены
-      if (onTabChange) {
-        onTabChange('archive');
-      }
+      // Даём время на обновление локального состояния перед переключением вкладки
+      setTimeout(() => {
+        if (onTabChange) {
+          onTabChange('archive');
+        }
+      }, 100);
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated (вызвано выше)
     } catch (error) {
