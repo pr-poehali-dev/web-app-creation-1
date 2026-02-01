@@ -1,12 +1,12 @@
 {
   "tests": [
     {
-      "name": "Get requests list",
+      "name": "Get public offers",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
       "expectedBody": {
-        "requests": "array",
+        "offers": "array",
         "total": "number"
       },
       "bodyMatcher": "partial"

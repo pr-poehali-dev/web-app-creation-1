@@ -1,3 +1,5 @@
+'''API для работы с запросами (requests) - v2.1'''
+
 import json
 import os
 from typing import Dict, Any, List

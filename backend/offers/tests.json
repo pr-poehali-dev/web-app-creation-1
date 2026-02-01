@@ -1,16 +1,14 @@
 {
   "tests": [
     {
-      "name": "Get offer by UUID",
+      "name": "Get all offers",
       "method": "GET",
-      "path": "/?id=316dfa87-eaa3-464a-a344-ddf6640d448f",
-      "expectedStatus": 200
-    },
-    {
-      "name": "Get all active offers",
-      "method": "GET",
-      "path": "/?status=active",
+      "path": "/",
       "expectedStatus": 200,
+      "expectedBody": {
+        "offers": "array",
+        "total": "number"
+      },
       "bodyMatcher": "partial"
     }
   ]

@@ -136,6 +136,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     r.status,
                     r.created_at,
                     r.user_id as buyer_id,
+                    r.district,
                     CASE 
                         WHEN u.company_name IS NOT NULL AND u.company_name != '' THEN u.company_name
                         WHEN u.first_name IS NOT NULL OR u.last_name IS NOT NULL THEN 
@@ -144,7 +145,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     END as buyer_name
                 FROM t_p42562714_web_app_creation_1.requests r
                 LEFT JOIN t_p42562714_web_app_creation_1.users u ON r.user_id = u.id
-                WHERE {where_sql}
+                WHERE {where_sql} AND r.status NOT IN ('archived', 'draft')
                 ORDER BY r.created_at DESC
                 LIMIT 100
             """
@@ -162,8 +163,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 buyer_id = req_dict.get('buyer_id')
                 buyer_name = req_dict.get('buyer_name') or f'ID: {buyer_id}' if buyer_id else 'Неизвестный пользователь'
                 
+                request_id = str(req_dict['id'])
+                
+                cur.execute("""
+                    SELECT oi.url, oi.alt
+                    FROM t_p42562714_web_app_creation_1.request_image_relations rir
+                    JOIN t_p42562714_web_app_creation_1.offer_images oi ON rir.image_id = oi.id
+                    WHERE rir.request_id = %s
+                    ORDER BY rir.sort_order
+                """, (request_id,))
+                images_data = cur.fetchall()
+                images = [{'url': img['url'], 'alt': img['alt']} for img in images_data]
+                
                 requests_list.append({
-                    'id': str(req_dict['id']),
+                    'id': request_id,
                     'title': req_dict['title'],
                     'buyer': buyer_name,
                     'buyerId': str(buyer_id) if buyer_id else None,
@@ -172,7 +185,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'quantity': req_dict['quantity'] if req_dict['quantity'] else 0,
                     'unit': req_dict['unit'],
                     'status': req_dict['status'] or 'open',
-                    'createdAt': req_dict['created_at'].isoformat() if req_dict['created_at'] else None
+                    'createdAt': req_dict['created_at'].isoformat() if req_dict['created_at'] else None,
+                    'images': images,
+                    'district': req_dict.get('district')
                 })
             
             return {

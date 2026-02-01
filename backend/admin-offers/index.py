@@ -136,6 +136,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     o.status,
                     o.created_at,
                     o.user_id as seller_id,
+                    o.district,
                     CASE 
                         WHEN u.company_name IS NOT NULL AND u.company_name != '' THEN u.company_name
                         WHEN u.first_name IS NOT NULL OR u.last_name IS NOT NULL THEN 
@@ -144,7 +145,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     END as seller_name
                 FROM t_p42562714_web_app_creation_1.offers o
                 LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
-                WHERE {where_sql}
+                WHERE {where_sql} AND o.status NOT IN ('archived', 'draft')
                 ORDER BY o.created_at DESC
                 LIMIT 100
             """
@@ -162,8 +163,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 seller_id = offer_dict.get('seller_id')
                 seller_name = offer_dict.get('seller_name') or f'ID: {seller_id}' if seller_id else 'Неизвестный пользователь'
                 
+                offer_id = str(offer_dict['id'])
+                
+                cur.execute("""
+                    SELECT oi.url, oi.alt
+                    FROM t_p42562714_web_app_creation_1.offer_image_relations oir
+                    JOIN t_p42562714_web_app_creation_1.offer_images oi ON oir.image_id = oi.id
+                    WHERE oir.offer_id = %s
+                    ORDER BY oir.sort_order
+                """, (offer_id,))
+                images_data = cur.fetchall()
+                images = [{'url': img['url'], 'alt': img['alt']} for img in images_data]
+                
+                cur.execute("""
+                    SELECT url, thumbnail
+                    FROM t_p42562714_web_app_creation_1.offer_videos
+                    WHERE id = %s
+                """, (offer_dict.get('video_id'),))
+                video_data = cur.fetchone()
+                videos = [{'url': video_data['url'], 'thumbnail': video_data['thumbnail']}] if video_data else []
+                
                 offers_list.append({
-                    'id': str(offer_dict['id']),
+                    'id': offer_id,
                     'title': offer_dict['title'] or offer_dict['product_name'],
                     'seller': seller_name,
                     'sellerId': str(seller_id) if seller_id else None,
@@ -172,7 +193,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'quantity': offer_dict['quantity'] if offer_dict['quantity'] else 0,
                     'unit': offer_dict['unit'],
                     'status': offer_dict['status'] or 'open',
-                    'createdAt': offer_dict['created_at'].isoformat() if offer_dict['created_at'] else None
+                    'createdAt': offer_dict['created_at'].isoformat() if offer_dict['created_at'] else None,
+                    'images': images,
+                    'videos': videos,
+                    'district': offer_dict.get('district'),
+                    'pricePerUnit': offer_dict['price_per_unit'] if offer_dict['price_per_unit'] else 0
                 })
             
             return {

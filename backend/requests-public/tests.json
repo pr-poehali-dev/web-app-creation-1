@@ -1,7 +1,7 @@
 {
   "tests": [
     {
-      "name": "Get requests list",
+      "name": "Get public requests",
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
