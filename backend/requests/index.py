@@ -60,10 +60,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return create_request(event, headers)
         
         elif method == 'PUT':
-            query_params = event.get('queryStringParameters', {}) or {}
             path_params = event.get('pathParams', {})
-            request_id = path_params.get('id') or query_params.get('id')
-            action = query_params.get('action')
+            request_id = path_params.get('id')
             if not request_id:
                 return {
                     'statusCode': 400,
@@ -71,11 +69,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Request ID required'}),
                     'isBase64Encoded': False
                 }
-            
-            # Специальный action для публикации
-            if action == 'publish':
-                return publish_request(request_id, headers)
-            
             return update_request(request_id, event, headers)
         
         elif method == 'DELETE':
@@ -348,73 +341,6 @@ def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, st
         'body': json.dumps({'message': 'Request updated successfully'}),
         'isBase64Encoded': False
     }
-
-def publish_request(request_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
-    """Опубликовать черновик запроса"""
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        
-        request_id_esc = request_id.replace("'", "''")
-        
-        # Проверяем, что запрос существует и в статусе draft
-        cur.execute(f"""
-            SELECT id, status, user_id 
-            FROM t_p42562714_web_app_creation_1.requests 
-            WHERE id = '{request_id_esc}'
-        """)
-        request = cur.fetchone()
-        
-        if not request:
-            cur.close()
-            conn.close()
-            return {
-                'statusCode': 404,
-                'headers': headers,
-                'body': json.dumps({'error': 'Request not found'}),
-                'isBase64Encoded': False
-            }
-        
-        if request['status'] != 'draft':
-            cur.close()
-            conn.close()
-            return {
-                'statusCode': 400,
-                'headers': headers,
-                'body': json.dumps({'error': 'Only drafts can be published', 'currentStatus': request['status']}),
-                'isBase64Encoded': False
-            }
-        
-        # Обновляем статус на 'active' и устанавливаем текущее время как created_at
-        cur.execute(f"""
-            UPDATE t_p42562714_web_app_creation_1.requests 
-            SET status = 'active', created_at = NOW()
-            WHERE id = '{request_id_esc}'
-        """)
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        
-        print(f"Successfully published request {request_id}")
-        
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps({'message': 'Request published successfully', 'status': 'active'}),
-            'isBase64Encoded': False
-        }
-    except Exception as e:
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f'ERROR in publish_request: {str(e)}')
-        print(f'Traceback: {error_trace}')
-        return {
-            'statusCode': 500,
-            'headers': headers,
-            'body': json.dumps({'error': str(e)}),
-            'isBase64Encoded': False
-        }
 
 def delete_request(request_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Мягкое удаление запроса (меняем статус на deleted)"""

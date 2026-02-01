@@ -12,16 +12,6 @@
       "path": "/?status=active",
       "expectedStatus": 200,
       "bodyMatcher": "partial"
-    },
-    {
-      "name": "Publish offer - missing ID",
-      "method": "PUT",
-      "path": "/?action=publish",
-      "expectedStatus": 400,
-      "expectedBody": {
-        "error": "Offer ID required in query params"
-      },
-      "bodyMatcher": "partial"
     }
   ]
 }

@@ -1,8 +1,5 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getSession } from '@/utils/auth';
-import { requestsAPI } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
-import { dataSync } from '@/utils/dataSync';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -28,8 +25,6 @@ interface RequestDetailProps {
 export default function RequestDetail({ isAuthenticated, onLogout }: RequestDetailProps) {
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   
   const { request, isLoading, showVideo } = useRequestData(id);
   
@@ -272,57 +267,15 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                   const currentUser = getSession();
                   const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
                   
-                  const handlePublish = async () => {
-                    if (!request) return;
-                    
-                    try {
-                      await requestsAPI.publishRequest(request.id);
-                      
-                      toast({
-                        title: '✅ Запрос опубликован!',
-                        description: 'Ваш запрос теперь виден всем пользователям',
-                        duration: 3000,
-                      });
-
-                      // Уведомляем все страницы об обновлении
-                      dataSync.notifyUpdate('requests', request.id);
-                      
-                      // Перенаправляем на страницу запросов
-                      setTimeout(() => {
-                        navigate('/requests');
-                      }, 1000);
-                    } catch (error) {
-                      console.error('Error publishing request:', error);
-                      toast({
-                        title: 'Ошибка публикации',
-                        description: error instanceof Error ? error.message : 'Не удалось опубликовать запрос',
-                        variant: 'destructive',
-                      });
-                    }
-                  };
-                  
                   return isOwner ? (
-                    <>
-                      {request.status === 'draft' && (
-                        <Button 
-                          className="w-full" 
-                          size="lg"
-                          onClick={handlePublish}
-                        >
-                          <Icon name="Send" className="mr-2 h-4 w-4" />
-                          Опубликовать
-                        </Button>
-                      )}
-                      <Button 
-                        className="w-full" 
-                        size="lg"
-                        variant={request.status === 'draft' ? 'outline' : 'default'}
-                        onClick={handleResponseClick}
-                      >
-                        <Icon name="Edit" className="mr-2 h-4 w-4" />
-                        Редактировать запрос
-                      </Button>
-                    </>
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={handleResponseClick}
+                    >
+                      <Icon name="Edit" className="mr-2 h-4 w-4" />
+                      Редактировать запрос
+                    </Button>
                   ) : (
                     <Button 
                       className="w-full" 

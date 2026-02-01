@@ -39,7 +39,6 @@ interface OfferDetailContentProps {
   onOrderClick: () => void;
   onOrderSubmit: (data: any) => void;
   onOpenGallery: (index: number) => void;
-  onPublishClick: () => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 
@@ -66,7 +65,6 @@ export default function OfferDetailContent({
   onOrderClick,
   onOrderSubmit,
   onOpenGallery,
-  onPublishClick,
   navigate,
 }: OfferDetailContentProps) {
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
@@ -197,27 +195,14 @@ export default function OfferDetailContent({
                   });
                   
                   return isOwner ? (
-                    <>
-                      {offer.status === 'draft' && (
-                        <Button
-                          onClick={onPublishClick}
-                          size="lg"
-                          className="w-full gap-2"
-                        >
-                          <Icon name="Send" className="h-5 w-5" />
-                          Опубликовать
-                        </Button>
-                      )}
-                      <Button
-                        onClick={() => navigate(`/edit-offer/${offer.id}?tab=info&edit=true`)}
-                        size="lg"
-                        variant={offer.status === 'draft' ? 'outline' : 'default'}
-                        className="w-full gap-2"
-                      >
-                        <Icon name="Edit" className="h-5 w-5" />
-                        Редактировать предложение
-                      </Button>
-                    </>
+                    <Button
+                      onClick={() => navigate(`/edit-offer/${offer.id}?tab=info&edit=true`)}
+                      size="lg"
+                      className="w-full gap-2"
+                    >
+                      <Icon name="Edit" className="h-5 w-5" />
+                      Редактировать предложение
+                    </Button>
                   ) : (
                     <Button
                       onClick={onOrderClick}

@@ -214,13 +214,12 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       result = result.filter((offer) => offer.subcategory === filters.subcategory);
     }
 
-    // Фильтрация по районам только если у офферов есть это поле
-    if (selectedRegion !== 'all' && result.some(o => o.district || o.availableDistricts)) {
+    if (selectedRegion !== 'all') {
       const districtsInRegion = districts.map(d => d.id);
       
       if (selectedDistricts.length > 0) {
         result = result.filter((offer) => 
-          (offer.district && selectedDistricts.includes(offer.district)) || 
+          selectedDistricts.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
       } else if (detectedDistrictId) {
@@ -230,7 +229,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         );
       } else {
         result = result.filter((offer) => 
-          (offer.district && districtsInRegion.includes(offer.district)) || 
+          districtsInRegion.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => districtsInRegion.includes(d))
         );
       }

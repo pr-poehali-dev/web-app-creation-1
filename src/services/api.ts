@@ -2,9 +2,9 @@ import type { Offer, Request as OfferRequest } from '@/types/offer';
 import type { Auction } from '@/types/auction';
 import func2url from '../../backend/func2url.json';
 
-const OFFERS_API = func2url['admin-offers'];
+const OFFERS_API = func2url.offers;
 const ADMIN_OFFERS_API = func2url['admin-offers'];
-const REQUESTS_API = func2url['admin-requests'];
+const REQUESTS_API = func2url.requests;
 const ADMIN_REQUESTS_API = func2url['admin-requests'];
 const ORDERS_API = func2url.orders;
 const AUCTIONS_LIST_API = func2url['auctions-list'];
@@ -330,34 +330,6 @@ export const offersAPI = {
     return response.json();
   },
 
-  async publishOffer(id: string): Promise<{ message: string; status: string }> {
-    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}&action=publish`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Publish offer error:', response.status, errorText);
-      let errorMessage = 'Failed to publish offer';
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.error || errorMessage;
-      } catch {
-        errorMessage = errorText.substring(0, 200);
-      }
-      throw new Error(errorMessage);
-    }
-    
-    // Инвалидируем кэш этого предложения и списков
-    invalidateCache(`id=${id}`);
-    invalidateCache('offers');
-    
-    return response.json();
-  },
-
   async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
     console.log('uploadVideo: Starting upload, data size:', videoBase64.length);
     const response = await fetchWithRetry(UPLOAD_VIDEO_API, {
@@ -512,34 +484,6 @@ export const requestsAPI = {
     if (!response.ok) {
       throw new Error('Failed to delete request');
     }
-    
-    return response.json();
-  },
-
-  async publishRequest(id: string): Promise<{ message: string; status: string }> {
-    const response = await fetchWithRetry(`${REQUESTS_API}?id=${id}&action=publish`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Publish request error:', response.status, errorText);
-      let errorMessage = 'Failed to publish request';
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.error || errorMessage;
-      } catch {
-        errorMessage = errorText.substring(0, 200);
-      }
-      throw new Error(errorMessage);
-    }
-    
-    // Инвалидируем кэш этого запроса и списков
-    invalidateCache(`id=${id}`);
-    invalidateCache('requests');
     
     return response.json();
   },
