@@ -202,12 +202,10 @@ export default function OfferOrderModal({
     <Dialog open={isOpen && !isMapOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-start justify-between gap-4 pr-8">
-            <div className="flex-1">
-              <DialogTitle>Оформление заказа</DialogTitle>
-              <div className="text-sm font-bold text-black mt-1">
-                Доступно: {remainingQuantity} {unit}
-              </div>
+          <div className="flex items-start justify-between gap-4 pr-10">
+            <DialogTitle>Оформление заказа</DialogTitle>
+            <div className="text-sm font-bold text-black whitespace-nowrap">
+              Доступно: {remainingQuantity} {unit}
             </div>
           </div>
           <DialogDescription>
