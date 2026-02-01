@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "name": "Request reset - missing email",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "request"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "Email обязателен"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Reset password - missing token",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "reset",
+        "password": "newpass123"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "Токен и новый пароль обязательны"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

@@ -37,13 +37,13 @@ export default function ResetPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(funcUrl.auth, {
+      const response = await fetch(funcUrl['reset-password'], {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'forgot_password',
+          action: 'request',
           email: email,
         }),
       });

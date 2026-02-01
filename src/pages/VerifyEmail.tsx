@@ -19,10 +19,10 @@ export default function VerifyEmail() {
 
     const verifyEmail = async () => {
       try {
-        const response = await fetch(funcUrl.auth, {
+        const response = await fetch(funcUrl['verify-email'], {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'verify_email', token })
+          body: JSON.stringify({ token })
         });
 
         const data = await response.json();

@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Missing token",
+      "method": "POST",
+      "path": "/",
+      "body": {},
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "Токен обязателен"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Invalid token",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "token": "invalid-token-12345"
+      },
+      "expectedStatus": 404,
+      "expectedBody": {
+        "error": "Неверный токен верификации"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
