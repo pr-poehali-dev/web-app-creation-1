@@ -2,9 +2,9 @@ import type { Offer, Request as OfferRequest } from '@/types/offer';
 import type { Auction } from '@/types/auction';
 import func2url from '../../backend/func2url.json';
 
-const OFFERS_API = func2url.offers || func2url['admin-offers'];
+const OFFERS_API = func2url['admin-offers'];
 const ADMIN_OFFERS_API = func2url['admin-offers'];
-const REQUESTS_API = func2url.requests || func2url['admin-requests'];
+const REQUESTS_API = func2url['admin-requests'];
 const ADMIN_REQUESTS_API = func2url['admin-requests'];
 const ORDERS_API = func2url.orders;
 const AUCTIONS_LIST_API = func2url['auctions-list'];
