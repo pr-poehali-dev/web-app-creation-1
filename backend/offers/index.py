@@ -1,7 +1,7 @@
-'''Управление предложениями товаров и услуг - v2'''
+'''Управление предложениями товаров и услуг'''
 
 import json
-import os 
+import os
 import base64
 import time
 from typing import Dict, Any, Optional, List
@@ -12,8 +12,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import boto3
 from PIL import Image
-from cache import offers_cache
-from rate_limiter import rate_limiter
 
 
 def decimal_default(obj):
@@ -36,38 +34,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     PUT /{id} - обновить предложение
     """
     method: str = event.get('httpMethod', 'GET')
-    
-    # ⚡ RATE LIMITING: Проверка лимита запросов (только для изменяющих методов)
-    if method in ['POST', 'PUT', 'DELETE']:
-        try:
-            request_context = event.get('requestContext', {})
-            source_ip = request_context.get('identity', {}).get('sourceIp', 'unknown')
-            max_requests = 30  # 30 запросов в минуту
-            
-            allowed, remaining = rate_limiter.check_rate_limit(source_ip, max_requests=max_requests, window_seconds=60)
-            
-            if not allowed:
-                retry_after = rate_limiter.get_retry_after(source_ip, window_seconds=60)
-                return {
-                    'statusCode': 429,
-                    'headers': {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*',
-                        'Retry-After': str(retry_after),
-                        'X-RateLimit-Limit': str(max_requests),
-                        'X-RateLimit-Remaining': '0',
-                        'X-RateLimit-Reset': str(int(time.time()) + retry_after)
-                    },
-                    'body': json.dumps({
-                        'error': 'Too many requests',
-                        'message': f'Rate limit exceeded. Try again in {retry_after} seconds.',
-                        'retry_after': retry_after
-                    }),
-                    'isBase64Encoded': False
-                }
-        except Exception as e:
-            # Если rate limiter не работает - продолжаем без него
-            print(f'Rate limiter warning: {str(e)}')
     
     if method == 'OPTIONS':
         return {
@@ -185,17 +151,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         except:
             offset = 0
         
-        # ⚡ КЭШИРОВАНИЕ: Проверяем кэш для списка предложений
-        cache_key = f"offers_list:{status_filter}:{user_id_filter}:{limit}:{offset}"
-        cached_result = offers_cache.get(cache_key)
-        if cached_result is not None:
-            return {
-                'statusCode': 200,
-                'headers': headers,
-                'body': json.dumps(cached_result),
-                'isBase64Encoded': False
-            }
-        
+
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
@@ -299,9 +255,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             'hasMore': offset + len(result) < total_count
         }
         
-        # ⚡ Кэшируем результат на 2 минуты
-        offers_cache.set(cache_key, response_data, ttl=120)
-        
+
         return {
             'statusCode': 200,
             'headers': headers,
@@ -322,9 +276,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
 
 def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
-    # ⚠️ НЕ используем кэш для детальной страницы, т.к. нужно увеличивать views_count
-    cache_key = f"offer_detail:{offer_id}"
-    
+
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
@@ -454,8 +406,7 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     # Добавляем favorites к ответу
     offer_dict['favorites'] = favorites_count
     
-    # ⚠️ НЕ кэшируем, чтобы views_count всегда был актуальным
-    
+
     return {
         'statusCode': 200,
         'headers': headers,

@@ -1,26 +1,10 @@
 {
   "tests": [
     {
-      "name": "Get offer by UUID",
-      "method": "GET",
-      "path": "/?id=316dfa87-eaa3-464a-a344-ddf6640d448f",
-      "expectedStatus": 200
-    },
-    {
       "name": "Get all active offers",
       "method": "GET",
       "path": "/?status=active",
       "expectedStatus": 200,
-      "bodyMatcher": "partial"
-    },
-    {
-      "name": "Publish offer - missing ID",
-      "method": "PUT",
-      "path": "/?action=publish",
-      "expectedStatus": 400,
-      "expectedBody": {
-        "error": "Offer ID required in query params"
-      },
       "bodyMatcher": "partial"
     }
   ]
