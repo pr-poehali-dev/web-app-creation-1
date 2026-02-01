@@ -70,7 +70,8 @@ export default function OfferDetailContent({
   navigate,
 }: OfferDetailContentProps) {
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
-  const totalPrice = offer.pricePerUnit * remainingQuantity;
+  const pricePerUnit = (offer as any).price || offer.pricePerUnit || 0;
+  const totalPrice = pricePerUnit * remainingQuantity;
   const similarOffers: Offer[] = [];
   
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -113,13 +114,13 @@ export default function OfferDetailContent({
   };
 
   const handleGalleryPrev = () => {
-    const totalItems = offer.images.length + (offer.video ? 1 : 0);
+    const totalItems = (offer.images?.length || 0) + (offer.video ? 1 : 0);
     const newIndex = galleryIndex === 0 ? totalItems - 1 : galleryIndex - 1;
     onImageIndexChange(newIndex);
   };
 
   const handleGalleryNext = () => {
-    const totalItems = offer.images.length + (offer.video ? 1 : 0);
+    const totalItems = (offer.images?.length || 0) + (offer.video ? 1 : 0);
     const newIndex = galleryIndex === totalItems - 1 ? 0 : galleryIndex + 1;
     onImageIndexChange(newIndex);
   };
