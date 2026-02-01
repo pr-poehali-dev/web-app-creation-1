@@ -83,7 +83,7 @@ export default function NewPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213', {
+      const response = await fetch(funcUrl.auth, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

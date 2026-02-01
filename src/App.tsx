@@ -105,6 +105,7 @@ const CreateOffer = lazyWithRetry(() => import("./pages/CreateOffer"));
 const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
+const VerifyEmail = lazyWithRetry(() => import("./pages/VerifyEmail"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
 const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
@@ -323,6 +324,7 @@ const App = () => {
             <Route path="/register" element={<Register onRegister={handleLogin} />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/new-password" element={<NewPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/terms" element={<TermsOfService isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/privacy" element={<PrivacyPolicy isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer-agreement" element={<OfferAgreement isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
