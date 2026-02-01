@@ -222,7 +222,7 @@ export default function Register({ onRegister }: RegisterProps) {
       });
 
       if (result.success && result.user) {
-        saveSession(result.user);
+        saveSession(result.user, result.token);
         onRegister();
         toast({
           title: 'Успешно',

@@ -195,6 +195,19 @@ function getUserId(): string | null {
   }
 }
 
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {};
+  const token = localStorage.getItem('jwt_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const userId = getUserId();
+  if (userId) {
+    headers['X-User-Id'] = userId;
+  }
+  return headers;
+}
+
 export const offersAPI = {
   async getAll(): Promise<OffersListResponse> {
     const response = await fetchWithRetry(OFFERS_API);
@@ -264,7 +277,7 @@ export const offersAPI = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-User-Id': userId,
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(data),
     });

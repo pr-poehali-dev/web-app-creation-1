@@ -16,11 +16,25 @@ import bcrypt
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import jwt
+from jwt_middleware import get_user_from_request
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
+JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'fallback-dev-secret-DO-NOT-USE-IN-PRODUCTION')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_HOURS = 24 * 7
 
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+
+def generate_jwt_token(user_id: int, email: str) -> str:
+    payload = {
+        'user_id': user_id,
+        'email': email,
+        'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
+        'iat': datetime.utcnow()
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 10, window_minutes: int = 1) -> bool:
     with conn.cursor() as cur:
@@ -227,12 +241,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     user = cur.fetchone()
                     conn.commit()
                 
+                token = generate_jwt_token(user['id'], user['email'])
+                
                 return {
                     'statusCode': 201,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({
                         'success': True,
-                        'user': dict(user)
+                        'user': dict(user),
+                        'token': token
                     }, default=str),
                     'isBase64Encoded': False
                 }
@@ -268,28 +285,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
             
             elif action == 'update_profile':
-                email = body_data.get('email', '').strip()
+                auth_user = get_user_from_request(event)
+                if not auth_user:
+                    return {
+                        'statusCode': 401,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Требуется авторизация'}),
+                        'isBase64Encoded': False
+                    }
+                
+                user_id_to_update = body_data.get('user_id')
+                if not user_id_to_update or str(auth_user['user_id']) != str(user_id_to_update):
+                    return {
+                        'statusCode': 403,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Доступ запрещён'}),
+                        'isBase64Encoded': False
+                    }
+                
                 first_name = body_data.get('firstName', '').strip()
                 last_name = body_data.get('lastName', '').strip()
                 middle_name = body_data.get('middleName', '').strip()
                 phone = body_data.get('phone', '').strip()
                 
-                if not email:
-                    return {
-                        'statusCode': 400,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'Email обязателен'}),
-                        'isBase64Encoded': False
-                    }
-                
                 with conn.cursor() as cur:
                     cur.execute(
                         """UPDATE users 
                            SET first_name = %s, last_name = %s, middle_name = %s, phone = %s 
-                           WHERE email = %s
+                           WHERE id = %s
                            RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
                                      company_name, inn, ogrnip, ogrn, position, director_name, legal_address, created_at""",
-                        (first_name, last_name, middle_name or None, phone, email)
+                        (first_name, last_name, middle_name or None, phone, auth_user['user_id'])
                     )
                     user = cur.fetchone()
                     
@@ -377,12 +403,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 user_data = dict(user)
                 user_data.pop('password_hash')
                 
+                token = generate_jwt_token(user['id'], user['email'])
+                
                 return {
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({
                         'success': True,
-                        'user': user_data
+                        'user': user_data,
+                        'token': token
                     }, default=str),
                     'isBase64Encoded': False
                 }
