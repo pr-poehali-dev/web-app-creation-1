@@ -18,10 +18,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import jwt
 from jwt_middleware import get_user_from_request
-from telegram_helper import (
-    send_verification_email_link_telegram, 
-    send_reset_password_link_telegram
-)
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'fallback-dev-secret-DO-NOT-USE-IN-PRODUCTION')
@@ -314,21 +310,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     try:
                         verification_link = f"https://rynok.poehali.app/verify-email?token={email_verification_token}"
                         send_verification_email(email, verification_link)
-                    except Exception as e:
-                        pass
-                    
-                    # Попытка отправить через Telegram, если привязан
-                    try:
-                        cur.execute(
-                            "SELECT telegram_chat_id FROM users WHERE id = %s AND telegram_verified = TRUE",
-                            (user['id'],)
-                        )
-                        telegram_result = cur.fetchone()
-                        if telegram_result and telegram_result['telegram_chat_id']:
-                            send_verification_email_link_telegram(
-                                telegram_result['telegram_chat_id'],
-                                verification_link
-                            )
                     except Exception as e:
                         pass
                 
