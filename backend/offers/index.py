@@ -1,7 +1,7 @@
-'''Управление предложениями товаров и услуг'''
+'''Управление предложениями товаров и услуг - v2'''
 
 import json
-import os
+import os 
 import base64
 import time
 from typing import Dict, Any, Optional, List
@@ -12,6 +12,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import boto3
 from PIL import Image
+from cache import offers_cache
+from rate_limiter import rate_limiter
 
 
 def decimal_default(obj):
@@ -34,6 +36,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     PUT /{id} - обновить предложение
     """
     method: str = event.get('httpMethod', 'GET')
+    
+    # ⚡ RATE LIMITING: Проверка лимита запросов (только для изменяющих методов)
+    if method in ['POST', 'PUT', 'DELETE']:
+        try:
+            request_context = event.get('requestContext', {})
+            source_ip = request_context.get('identity', {}).get('sourceIp', 'unknown')
+            max_requests = 30  # 30 запросов в минуту
+            
+            allowed, remaining = rate_limiter.check_rate_limit(source_ip, max_requests=max_requests, window_seconds=60)
+            
+            if not allowed:
+                retry_after = rate_limiter.get_retry_after(source_ip, window_seconds=60)
+                return {
+                    'statusCode': 429,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*',
+                        'Retry-After': str(retry_after),
+                        'X-RateLimit-Limit': str(max_requests),
+                        'X-RateLimit-Remaining': '0',
+                        'X-RateLimit-Reset': str(int(time.time()) + retry_after)
+                    },
+                    'body': json.dumps({
+                        'error': 'Too many requests',
+                        'message': f'Rate limit exceeded. Try again in {retry_after} seconds.',
+                        'retry_after': retry_after
+                    }),
+                    'isBase64Encoded': False
+                }
+        except Exception as e:
+            # Если rate limiter не работает - продолжаем без него
+            print(f'Rate limiter warning: {str(e)}')
     
     if method == 'OPTIONS':
         return {
@@ -84,7 +118,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'PUT':
             query_params = event.get('queryStringParameters', {}) or {}
             offer_id = query_params.get('id')
-            action = query_params.get('action')
             if not offer_id:
                 return {
                     'statusCode': 400,
@@ -92,11 +125,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Offer ID required in query params'}),
                     'isBase64Encoded': False
                 }
-            
-            # Специальный action для публикации
-            if action == 'publish':
-                return publish_offer(offer_id, headers)
-            
             return update_offer(offer_id, event, headers)
         
         elif method == 'DELETE':
@@ -151,7 +179,17 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         except:
             offset = 0
         
-
+        # ⚡ КЭШИРОВАНИЕ: Проверяем кэш для списка предложений
+        cache_key = f"offers_list:{status_filter}:{user_id_filter}:{limit}:{offset}"
+        cached_result = offers_cache.get(cache_key)
+        if cached_result is not None:
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps(cached_result),
+                'isBase64Encoded': False
+            }
+        
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
@@ -255,7 +293,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             'hasMore': offset + len(result) < total_count
         }
         
-
+        # ⚡ Кэшируем результат на 2 минуты
+        offers_cache.set(cache_key, response_data, ttl=120)
+        
         return {
             'statusCode': 200,
             'headers': headers,
@@ -276,7 +316,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
 
 def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
-
+    # ⚠️ НЕ используем кэш для детальной страницы, т.к. нужно увеличивать views_count
+    cache_key = f"offer_detail:{offer_id}"
+    
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
@@ -406,7 +448,8 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     # Добавляем favorites к ответу
     offer_dict['favorites'] = favorites_count
     
-
+    # ⚠️ НЕ кэшируем, чтобы views_count всегда был актуальным
+    
     return {
         'statusCode': 200,
         'headers': headers,
@@ -751,76 +794,6 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'statusCode': 500,
             'headers': headers,
             'body': json.dumps({'error': str(e), 'trace': error_trace}, default=decimal_default),
-            'isBase64Encoded': False
-        }
-
-def publish_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
-    """Опубликовать черновик предложения"""
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        
-        offer_id_esc = offer_id.replace("'", "''")
-        
-        # Проверяем, что предложение существует и в статусе draft
-        cur.execute(f"""
-            SELECT id, status, user_id 
-            FROM t_p42562714_web_app_creation_1.offers 
-            WHERE id = '{offer_id_esc}'
-        """)
-        offer = cur.fetchone()
-        
-        if not offer:
-            cur.close()
-            conn.close()
-            return {
-                'statusCode': 404,
-                'headers': headers,
-                'body': json.dumps({'error': 'Offer not found'}, default=decimal_default),
-                'isBase64Encoded': False
-            }
-        
-        if offer['status'] != 'draft':
-            cur.close()
-            conn.close()
-            return {
-                'statusCode': 400,
-                'headers': headers,
-                'body': json.dumps({'error': 'Only drafts can be published', 'currentStatus': offer['status']}, default=decimal_default),
-                'isBase64Encoded': False
-            }
-        
-        # Обновляем статус на 'active' и устанавливаем текущее время как created_at
-        cur.execute(f"""
-            UPDATE t_p42562714_web_app_creation_1.offers 
-            SET status = 'active', created_at = NOW()
-            WHERE id = '{offer_id_esc}'
-        """)
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        
-        # Инвалидируем кэш
-        offers_cache.invalidate('offers_list')
-        
-        print(f"Successfully published offer {offer_id}")
-        
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps({'message': 'Offer published successfully', 'status': 'active'}, default=decimal_default),
-            'isBase64Encoded': False
-        }
-    except Exception as e:
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f'ERROR in publish_offer: {str(e)}')
-        print(f'Traceback: {error_trace}')
-        return {
-            'statusCode': 500,
-            'headers': headers,
-            'body': json.dumps({'error': str(e)}, default=decimal_default),
             'isBase64Encoded': False
         }
 
