@@ -330,6 +330,32 @@ export const offersAPI = {
     return response.json();
   },
 
+  async publishOffer(id: string): Promise<{ message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}&action=publish`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Publish offer error:', response.status, errorText);
+      throw new Error('Failed to publish offer');
+    }
+    
+    invalidateCache(`id=${id}`);
+    invalidateCache('offers');
+    
+    return response.json();
+  },
+
   async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
     console.log('uploadVideo: Starting upload, data size:', videoBase64.length);
     const response = await fetchWithRetry(UPLOAD_VIDEO_API, {
@@ -483,6 +509,29 @@ export const requestsAPI = {
     
     if (!response.ok) {
       throw new Error('Failed to delete request');
+    }
+    
+    return response.json();
+  },
+
+  async publishRequest(id: string): Promise<{ message: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(`${REQUESTS_API}?id=${id}&action=publish`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Publish request error:', response.status, errorText);
+      throw new Error('Failed to publish request');
     }
     
     return response.json();

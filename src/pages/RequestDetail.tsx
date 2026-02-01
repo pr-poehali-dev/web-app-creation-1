@@ -300,14 +300,16 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                     </Button>
                   );
                 })()}
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleShare}
-                >
-                  <Icon name="Share2" className="mr-2 h-4 w-4" />
-                  Поделиться
-                </Button>
+                {request.status !== 'draft' && (
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleShare}
+                  >
+                    <Icon name="Share2" className="mr-2 h-4 w-4" />
+                    Поделиться
+                  </Button>
+                )}
               </CardContent>
             </Card>
 

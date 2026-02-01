@@ -217,6 +217,17 @@ export default function OfferDetailContent({
                         <Icon name="Edit" className="h-5 w-5" />
                         Редактировать предложение
                       </Button>
+                      {offer.status !== 'draft' && (
+                        <Button
+                          onClick={onShare}
+                          variant="outline"
+                          size="lg"
+                          className="w-full gap-2"
+                        >
+                          <Icon name="Share2" className="h-5 w-5" />
+                          Поделиться
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <Button
@@ -229,15 +240,17 @@ export default function OfferDetailContent({
                     </Button>
                   );
                 })()}
-                <Button
-                  onClick={onShare}
-                  variant="outline"
-                  size="lg"
-                  className="w-full gap-2"
-                >
-                  <Icon name="Share2" className="h-5 w-5" />
-                  Поделиться
-                </Button>
+                {offer.status !== 'draft' && (
+                  <Button
+                    onClick={onShare}
+                    variant="outline"
+                    size="lg"
+                    className="w-full gap-2"
+                  >
+                    <Icon name="Share2" className="h-5 w-5" />
+                    Поделиться
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
