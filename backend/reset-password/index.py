@@ -131,8 +131,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     frontend_url = os.environ.get('FRONTEND_URL', 'https://rynok.poehali.app')
                     reset_link = f"{frontend_url}/new-password?token={reset_token}"
                     send_reset_email(email, reset_link)
+                    print(f"Reset password email sent to {email}")
                 except Exception as e:
-                    pass
+                    print(f"Failed to send reset password email to {email}: {str(e)}")
             
             return {
                 'statusCode': 200,

@@ -310,8 +310,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     try:
                         verification_link = f"https://rynok.poehali.app/verify-email?token={email_verification_token}"
                         send_verification_email(email, verification_link)
+                        print(f"Verification email sent to {email}")
                     except Exception as e:
-                        pass
+                        print(f"Failed to send verification email to {email}: {str(e)}")
                 
                 token = generate_jwt_token(user['id'], user['email'])
                 
@@ -573,8 +574,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         
                         try:
                             send_reset_email(email, reset_link)
+                            print(f"Reset password email sent to {email}")
                         except Exception as e:
-                            print(f"Email send error: {e}")
+                            print(f"Failed to send reset password email to {email}: {str(e)}")
                 
                 return {
                     'statusCode': 200,
