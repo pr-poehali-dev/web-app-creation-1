@@ -131,7 +131,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
       <CardHeader className="p-0">
         <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-          {offer.images.length > 0 ? (
+          {offer.images && offer.images.length > 0 ? (
             <>
               <img
                 src={offer.images[currentImageIndex].url}
