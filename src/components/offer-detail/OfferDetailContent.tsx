@@ -195,14 +195,27 @@ export default function OfferDetailContent({
                   });
                   
                   return isOwner ? (
-                    <Button
-                      onClick={() => navigate(`/edit-offer/${offer.id}?tab=info&edit=true`)}
-                      size="lg"
-                      className="w-full gap-2"
-                    >
-                      <Icon name="Edit" className="h-5 w-5" />
-                      Редактировать предложение
-                    </Button>
+                    <>
+                      {offer.status === 'draft' && (
+                        <Button
+                          onClick={() => navigate(`/publish-offer/${offer.id}`)}
+                          size="lg"
+                          className="w-full gap-2"
+                        >
+                          <Icon name="Send" className="h-5 w-5" />
+                          Опубликовать
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => navigate(`/edit-offer/${offer.id}?tab=info&edit=true`)}
+                        size="lg"
+                        variant={offer.status === 'draft' ? 'outline' : 'default'}
+                        className="w-full gap-2"
+                      >
+                        <Icon name="Edit" className="h-5 w-5" />
+                        Редактировать предложение
+                      </Button>
+                    </>
                   ) : (
                     <Button
                       onClick={onOrderClick}
