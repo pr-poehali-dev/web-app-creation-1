@@ -26,7 +26,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
   
-  const { request, isLoading, showVideo } = useRequestData(id);
+  const { request, isLoading, showVideo, handlePublish } = useRequestData(id);
   
   const {
     currentImageIndex,
@@ -268,14 +268,27 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                   const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
                   
                   return isOwner ? (
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={handleResponseClick}
-                    >
-                      <Icon name="Edit" className="mr-2 h-4 w-4" />
-                      Редактировать запрос
-                    </Button>
+                    <>
+                      {request.status === 'draft' && (
+                        <Button 
+                          className="w-full" 
+                          size="lg"
+                          onClick={handlePublish}
+                        >
+                          <Icon name="Send" className="mr-2 h-4 w-4" />
+                          Опубликовать
+                        </Button>
+                      )}
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        variant={request.status === 'draft' ? 'outline' : 'default'}
+                        onClick={handleResponseClick}
+                      >
+                        <Icon name="Edit" className="mr-2 h-4 w-4" />
+                        Редактировать запрос
+                      </Button>
+                    </>
                   ) : (
                     <Button 
                       className="w-full" 

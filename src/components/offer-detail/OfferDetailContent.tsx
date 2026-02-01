@@ -39,6 +39,7 @@ interface OfferDetailContentProps {
   onOrderClick: () => void;
   onOrderSubmit: (data: any) => void;
   onOpenGallery: (index: number) => void;
+  onPublishClick?: () => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 
@@ -65,6 +66,7 @@ export default function OfferDetailContent({
   onOrderClick,
   onOrderSubmit,
   onOpenGallery,
+  onPublishClick,
   navigate,
 }: OfferDetailContentProps) {
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
@@ -196,9 +198,9 @@ export default function OfferDetailContent({
                   
                   return isOwner ? (
                     <>
-                      {offer.status === 'draft' && (
+                      {offer.status === 'draft' && onPublishClick && (
                         <Button
-                          onClick={() => navigate(`/publish-offer/${offer.id}`)}
+                          onClick={onPublishClick}
                           size="lg"
                           className="w-full gap-2"
                         >

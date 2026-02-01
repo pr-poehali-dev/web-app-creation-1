@@ -266,6 +266,39 @@ export function useAuctionData(id: string | undefined) {
     } : null);
   };
 
+  const handlePublish = async () => {
+    if (!id) return;
+    
+    try {
+      const userId = localStorage.getItem('userId');
+      const response = await fetch(`https://functions.poehali.dev/cb45d4d8-14b8-47c5-b800-5809a2cc784b?id=${id}&action=publish`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId || '',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Не удалось опубликовать аукцион');
+      }
+
+      toast({
+        title: 'Успешно!',
+        description: 'Аукцион опубликован',
+      });
+
+      navigate('/auction');
+    } catch (error: any) {
+      console.error('Error publishing auction:', error);
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось опубликовать аукцион',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return {
     auction,
     isLoading,
@@ -274,6 +307,7 @@ export function useAuctionData(id: string | undefined) {
     timeRemaining,
     timeUntilStart,
     bidsRef,
-    updateBids
+    updateBids,
+    handlePublish,
   };
 }

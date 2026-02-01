@@ -450,6 +450,28 @@ export function useOfferDetail(id: string | undefined) {
     setIsGalleryOpen(true);
   };
 
+  const handlePublishClick = async () => {
+    if (!id || !offer) return;
+    
+    try {
+      await offersAPI.publishOffer(id);
+      
+      toast({
+        title: 'Успешно!',
+        description: 'Предложение опубликовано',
+      });
+      
+      navigate('/predlozheniya');
+    } catch (error: any) {
+      console.error('Error publishing offer:', error);
+      toast({
+        title: 'Ошибка',
+        description: error.message || 'Не удалось опубликовать предложение',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSendMessage = async (message: string) => {
     if (!createdOrder) return;
     
@@ -531,6 +553,7 @@ export function useOfferDetail(id: string | undefined) {
     handleOrderSubmit,
     openGallery,
     handleSendMessage,
+    handlePublishClick,
     navigate,
   };
 }

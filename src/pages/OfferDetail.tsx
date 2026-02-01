@@ -44,6 +44,7 @@ export default function OfferDetail() {
     handleOrderSubmit,
     openGallery,
     handleSendMessage,
+    handlePublishClick,
   } = useOfferDetail(id);
 
   if (isLoading) {
@@ -82,6 +83,7 @@ export default function OfferDetail() {
       onOrderSubmit={handleOrderSubmit}
       onOpenGallery={openGallery}
       onSendMessage={handleSendMessage}
+      onPublishClick={handlePublishClick}
       navigate={navigate}
     />
   );

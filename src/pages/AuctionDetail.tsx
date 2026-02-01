@@ -3,6 +3,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -33,7 +35,8 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
     timeRemaining,
     timeUntilStart,
     bidsRef,
-    updateBids
+    updateBids,
+    handlePublish,
   } = useAuctionData(id);
 
   if (isLoading) {
@@ -57,6 +60,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
 
   const category = CATEGORIES.find(c => c.id === auction.category);
   const districtName = districts.find(d => d.id === auction.district)?.name;
+  const isOwner = currentUser && currentUser.userId?.toString() === auction.userId?.toString();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -94,6 +98,21 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
         </Card>
 
         <div className="space-y-2 md:space-y-3" ref={bidsRef}>
+          {isOwner && auction.status === 'draft' && (
+            <Card>
+              <CardContent className="py-3 md:py-4 flex gap-2">
+                <Button 
+                  size="sm"
+                  className="flex-1"
+                  onClick={handlePublish}
+                >
+                  <Icon name="Send" className="h-3.5 w-3.5 mr-1.5" />
+                  Опубликовать
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {auction.status === 'ended' && bids.length > 0 && currentUser && (
             <AuctionCompletionForm
               auctionId={auction.id}
