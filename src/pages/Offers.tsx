@@ -105,7 +105,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         setOffers(loadedOffers);
         setGlobalOffers(loadedOffers);
         setTotalOffersCount(offersData.total || 0);
-        setHasMoreOnServer(offersData.hasMore || false);
+        setHasMoreOnServer(offersData.hasMore !== undefined ? offersData.hasMore : (loadedOffers.length >= 20));
         
         SmartCache.set('offers_list', loadedOffers);
         
