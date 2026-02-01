@@ -18,7 +18,7 @@ def decimal_to_float(obj):
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    '''Бэкенд для управления предложениями в админ-панели'''
+    '''Бэкенд для управления предложениями в админ-панели v4'''
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
