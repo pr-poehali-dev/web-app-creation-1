@@ -70,14 +70,12 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const imagesLength = offer.images?.length || 0;
-    setCurrentImageIndex((prev) => (prev === 0 ? imagesLength - 1 : prev - 1));
+    setCurrentImageIndex((prev) => (prev === 0 ? offer.images.length - 1 : prev - 1));
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const imagesLength = offer.images?.length || 0;
-    setCurrentImageIndex((prev) => (prev === imagesLength - 1 ? 0 : prev + 1));
+    setCurrentImageIndex((prev) => (prev === offer.images.length - 1 ? 0 : prev + 1));
   };
 
   const handleCardClick = () => {
@@ -133,7 +131,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
       <CardHeader className="p-0">
         <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-          {offer.images?.length > 0 ? (
+          {offer.images.length > 0 ? (
             <>
               <img
                 src={offer.images[currentImageIndex].url}
@@ -142,7 +140,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                 loading="lazy"
                 decoding="async"
               />
-              {offer.images?.length > 1 && (
+              {offer.images.length > 1 && (
                 <>
                   <button
                     onClick={handlePrevImage}
@@ -220,7 +218,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             <span className="text-muted-foreground text-xs">Цена за единицу:</span>
             <div className="flex flex-col items-end gap-0.5">
               <span className="font-bold text-primary text-base">
-                {((offer as any).price || offer.pricePerUnit || 0).toLocaleString('ru-RU')} ₽
+                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
               </span>
               {offer.noNegotiation && (
                 <Badge variant="secondary" className="text-[10px] h-4 px-1.5">

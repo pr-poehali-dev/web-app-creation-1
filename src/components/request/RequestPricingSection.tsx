@@ -41,7 +41,7 @@ export default function RequestPricingSection({
   const vatOptions = [
     { value: '0', label: '0%' },
     { value: '10', label: '10%' },
-    { value: '22', label: '22%' }
+    { value: '20', label: '20%' }
   ];
 
   const selectedUnit = unitOptions.find(opt => opt.value === formData.unit);

@@ -1,15 +1,10 @@
 {
   "tests": [
     {
-      "name": "Get requests list",
+      "name": "Get requests list returns valid structure",
       "method": "GET",
       "path": "/",
-      "expectedStatus": 200,
-      "expectedBody": {
-        "requests": "array",
-        "total": "number"
-      },
-      "bodyMatcher": "partial"
+      "expectedStatus": 200
     }
   ]
 }

@@ -7,7 +7,6 @@ POST / - создать новый заказ
 POST /?message=true - отправить сообщение по заказу
 PUT /?id=uuid - обновить статус заказа
 Использует DB_SCHEMA для доступа к схеме БД.
-v2: округление встречных цен до 2 знаков (fix 249.98 → 250.00)
 '''
 
 import json
@@ -49,7 +48,7 @@ def get_schema():
     return os.environ.get('DB_SCHEMA', 'public')
 
 def generate_order_number():
-    """Генерация уникального номера заказа (v2)"""
+    """Генерация уникального номера заказа"""
     from datetime import datetime
     import random
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
@@ -481,9 +480,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     if counter_price is not None and float(counter_price) > 0:
         initial_status = 'negotiating'
-        counter_price_decimal = Decimal(str(counter_price)).quantize(Decimal('0.01'))
-        counter_total = (counter_price_decimal * body['quantity']).quantize(Decimal('0.01'))
-        counter_price_sql = str(counter_price_decimal)
+        counter_price_float = float(counter_price)
+        counter_total = counter_price_float * body['quantity']
+        counter_price_sql = str(counter_price_float)
         counter_total_sql = str(counter_total)
         counter_message = body.get('counterMessage', '').replace("'", "''")
         counter_message_sql = f"'{counter_message}'" if counter_message else 'NULL'
@@ -588,9 +587,9 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     # Предложение цены от покупателя
     if 'counterPrice' in body and is_buyer:
-        counter_price = Decimal(str(body['counterPrice'])).quantize(Decimal('0.01'))
+        counter_price = float(body['counterPrice'])
         quantity = int(body.get('counterQuantity', order['quantity']))
-        counter_total = (counter_price * quantity).quantize(Decimal('0.01'))
+        counter_total = counter_price * quantity
         counter_message = body.get('counterMessage', '').replace("'", "''")
         
         updates.append(f"counter_price_per_unit = {counter_price}")
@@ -604,9 +603,9 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     # Встречное предложение от продавца (после предложения покупателя)
     if 'counterPrice' in body and is_seller:
-        counter_price = Decimal(str(body['counterPrice'])).quantize(Decimal('0.01'))
+        counter_price = float(body['counterPrice'])
         quantity = int(body.get('counterQuantity', order['quantity']))
-        counter_total = (counter_price * quantity).quantize(Decimal('0.01'))
+        counter_total = counter_price * quantity
         counter_message = body.get('counterMessage', '').replace("'", "''")
         
         updates.append(f"counter_price_per_unit = {counter_price}")

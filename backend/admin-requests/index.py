@@ -3,6 +3,7 @@ import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 
@@ -16,9 +17,52 @@ def decimal_to_float(obj):
         return [decimal_to_float(item) for item in obj]
     return obj
 
+def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 30, window_minutes: int = 1) -> bool:
+    with conn.cursor() as cur:
+        window_start = datetime.now() - timedelta(minutes=window_minutes)
+        
+        cur.execute(
+            """SELECT request_count, window_start 
+               FROM rate_limits 
+               WHERE identifier = %s AND endpoint = %s""",
+            (identifier, endpoint)
+        )
+        result = cur.fetchone()
+        
+        if result:
+            if result['window_start'] > window_start:
+                if result['request_count'] >= max_requests:
+                    return False
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = request_count + 1 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+            else:
+                cur.execute(
+                    """UPDATE rate_limits 
+                       SET request_count = 1, window_start = CURRENT_TIMESTAMP 
+                       WHERE identifier = %s AND endpoint = %s""",
+                    (identifier, endpoint)
+                )
+        else:
+            cur.execute(
+                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
+                   VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
+                (identifier, endpoint)
+            )
+        
+        conn.commit()
+        return True
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    '''Бэкенд для управления запросами в админ-панели'''
+    '''
+    Бэкенд для управления запросами в админ-панели
+    Args: event - dict с httpMethod, body, queryStringParameters
+          context - объект с атрибутами request_id, function_name
+    Returns: HTTP response dict с данными запросов
+    '''
     method: str = event.get('httpMethod', 'GET')
     
     if method == 'OPTIONS':
@@ -46,12 +90,26 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = None
     try:
         conn = psycopg2.connect(database_url, cursor_factory=RealDictCursor)
+        
+        headers = event.get('headers', {})
+        user_id = headers.get('X-User-Id') or headers.get('x-user-id', 'anonymous')
+        
+        if not check_rate_limit(conn, user_id, 'admin_requests', max_requests=30, window_minutes=1):
+            return {
+                'statusCode': 429,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'Слишком много запросов. Попробуйте через минуту.'}),
+                'isBase64Encoded': False
+            }
+        
         cur = conn.cursor()
         
         if method == 'GET':
             query_params = event.get('queryStringParameters') or {}
             search = query_params.get('search', '') if query_params else ''
             status_filter = query_params.get('status', 'all') if query_params else 'all'
+            
+            print(f"GET: query_params={query_params}, search={search}, status_filter={status_filter}")
             
             where_clauses = []
             params = []
@@ -78,7 +136,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     r.status,
                     r.created_at,
                     r.user_id as buyer_id,
-                    r.district,
                     CASE 
                         WHEN u.company_name IS NOT NULL AND u.company_name != '' THEN u.company_name
                         WHEN u.first_name IS NOT NULL OR u.last_name IS NOT NULL THEN 
@@ -87,13 +144,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     END as buyer_name
                 FROM t_p42562714_web_app_creation_1.requests r
                 LEFT JOIN t_p42562714_web_app_creation_1.users u ON r.user_id = u.id
-                WHERE {where_sql} AND r.status NOT IN ('archived', 'draft')
+                WHERE {where_sql}
                 ORDER BY r.created_at DESC
                 LIMIT 100
             """
             
+            print(f"GET: Executing query with where_sql='{where_sql}', params={params}")
             cur.execute(query, tuple(params))
             requests_data = cur.fetchall()
+            print(f"GET: Found {len(requests_data)} requests")
             
             requests_list = []
             for req in requests_data:
@@ -103,20 +162,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 buyer_id = req_dict.get('buyer_id')
                 buyer_name = req_dict.get('buyer_name') or f'ID: {buyer_id}' if buyer_id else 'Неизвестный пользователь'
                 
-                request_id = str(req_dict['id'])
-                
-                cur.execute("""
-                    SELECT oi.url, oi.alt
-                    FROM t_p42562714_web_app_creation_1.request_image_relations rir
-                    JOIN t_p42562714_web_app_creation_1.offer_images oi ON rir.image_id = oi.id
-                    WHERE rir.request_id = %s
-                    ORDER BY rir.sort_order
-                """, (request_id,))
-                images_data = cur.fetchall()
-                images = [{'url': img['url'], 'alt': img['alt']} for img in images_data]
-                
                 requests_list.append({
-                    'id': request_id,
+                    'id': str(req_dict['id']),
                     'title': req_dict['title'],
                     'buyer': buyer_name,
                     'buyerId': str(buyer_id) if buyer_id else None,
@@ -125,9 +172,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'quantity': req_dict['quantity'] if req_dict['quantity'] else 0,
                     'unit': req_dict['unit'],
                     'status': req_dict['status'] or 'open',
-                    'createdAt': req_dict['created_at'].isoformat() if req_dict['created_at'] else None,
-                    'images': images,
-                    'district': req_dict.get('district')
+                    'createdAt': req_dict['created_at'].isoformat() if req_dict['created_at'] else None
                 })
             
             return {
@@ -140,75 +185,82 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'PUT':
             body_data = json.loads(event.get('body', '{}'))
             request_id = body_data.get('requestId')
-            new_status = body_data.get('status')
+            action = body_data.get('action')
             
-            if not request_id or not new_status:
+            if not request_id or not action:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'requestId and status are required'}),
+                    'body': json.dumps({'error': 'requestId and action required'}),
                     'isBase64Encoded': False
                 }
             
-            cur.execute(
-                """UPDATE t_p42562714_web_app_creation_1.requests 
-                   SET status = %s 
-                   WHERE id = %s""",
-                (new_status, request_id)
-            )
-            conn.commit()
+            if action == 'approve':
+                cur.execute(f"UPDATE t_p42562714_web_app_creation_1.requests SET status = 'active' WHERE id = %s", (request_id,))
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Request approved'}),
+                    'isBase64Encoded': False
+                }
             
-            return {
-                'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'requestId': request_id, 'status': new_status}),
-                'isBase64Encoded': False
-            }
+            elif action == 'reject':
+                cur.execute(f"UPDATE t_p42562714_web_app_creation_1.requests SET status = 'rejected' WHERE id = %s", (request_id,))
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Request rejected'}),
+                    'isBase64Encoded': False
+                }
         
         elif method == 'DELETE':
-            query_params = event.get('queryStringParameters') or {}
-            request_id = query_params.get('requestId')
+            body_data = json.loads(event.get('body', '{}'))
+            request_id = body_data.get('requestId')
             
             if not request_id:
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'requestId is required'}),
+                    'body': json.dumps({'error': 'requestId required'}),
                     'isBase64Encoded': False
                 }
             
-            cur.execute(
-                """UPDATE t_p42562714_web_app_creation_1.requests 
-                   SET status = 'archived' 
-                   WHERE id = %s""",
-                (request_id,)
-            )
+            print(f"DELETE: Attempting to delete request with ID: {request_id}")
+            cur.execute("DELETE FROM t_p42562714_web_app_creation_1.requests WHERE id = %s::uuid", (request_id,))
+            deleted_count = cur.rowcount
             conn.commit()
+            print(f"DELETE: Deleted {deleted_count} rows")
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'requestId': request_id}),
+                'body': json.dumps({'success': True, 'message': 'Request deleted', 'deleted_count': deleted_count}),
                 'isBase64Encoded': False
             }
         
-        else:
-            return {
-                'statusCode': 405,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Method not allowed'}),
-                'isBase64Encoded': False
-            }
-    
-    except Exception as e:
-        import traceback
         return {
-            'statusCode': 500,
+            'statusCode': 405,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': str(e), 'traceback': traceback.format_exc()}),
+            'body': json.dumps({'error': 'Method not allowed'}),
             'isBase64Encoded': False
         }
     
+    except Exception as e:
+        import traceback
+        error_details = {
+            'error': str(e),
+            'type': type(e).__name__,
+            'traceback': traceback.format_exc()
+        }
+        print(f"ERROR: {error_details}")
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e), 'details': error_details}),
+            'isBase64Encoded': False
+        }
     finally:
         if conn:
             conn.close()
