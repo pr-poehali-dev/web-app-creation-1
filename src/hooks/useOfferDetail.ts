@@ -451,22 +451,32 @@ export function useOfferDetail(id: string | undefined) {
   };
 
   const handlePublishClick = async () => {
-    if (!id || !offer) return;
-    
+    if (!offer) return;
+
     try {
-      await offersAPI.publishOffer(id);
+      await offersAPI.publishOffer(offer.id);
       
       toast({
-        title: 'Успешно!',
-        description: 'Предложение опубликовано',
+        title: '✅ Предложение опубликовано!',
+        description: 'Ваше предложение теперь видно всем пользователям',
+        duration: 3000,
       });
+
+      // Обновляем статус предложения локально
+      setOffer({ ...offer, status: 'active' });
       
-      navigate('/predlozheniya');
-    } catch (error: any) {
+      // Уведомляем все страницы об обновлении
+      notifyOfferUpdated(offer.id);
+      
+      // Перенаправляем на страницу предложений
+      setTimeout(() => {
+        navigate('/offers');
+      }, 1000);
+    } catch (error) {
       console.error('Error publishing offer:', error);
       toast({
-        title: 'Ошибка',
-        description: error.message || 'Не удалось опубликовать предложение',
+        title: 'Ошибка публикации',
+        description: error instanceof Error ? error.message : 'Не удалось опубликовать предложение',
         variant: 'destructive',
       });
     }
@@ -551,9 +561,9 @@ export function useOfferDetail(id: string | undefined) {
     handleShare,
     handleOrderClick,
     handleOrderSubmit,
+    handlePublishClick,
     openGallery,
     handleSendMessage,
-    handlePublishClick,
     navigate,
   };
 }

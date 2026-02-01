@@ -42,9 +42,9 @@ export default function OfferDetail() {
     handleShare,
     handleOrderClick,
     handleOrderSubmit,
+    handlePublishClick,
     openGallery,
     handleSendMessage,
-    handlePublishClick,
   } = useOfferDetail(id);
 
   if (isLoading) {
@@ -81,9 +81,9 @@ export default function OfferDetail() {
       onShare={handleShare}
       onOrderClick={() => handleOrderClick(isAuthenticated)}
       onOrderSubmit={handleOrderSubmit}
+      onPublishClick={handlePublishClick}
       onOpenGallery={openGallery}
       onSendMessage={handleSendMessage}
-      onPublishClick={handlePublishClick}
       navigate={navigate}
     />
   );

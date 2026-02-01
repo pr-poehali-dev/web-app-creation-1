@@ -39,7 +39,7 @@ interface OfferDetailContentProps {
   onOrderClick: () => void;
   onOrderSubmit: (data: any) => void;
   onOpenGallery: (index: number) => void;
-  onPublishClick?: () => void;
+  onPublishClick: () => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 
@@ -198,7 +198,7 @@ export default function OfferDetailContent({
                   
                   return isOwner ? (
                     <>
-                      {offer.status === 'draft' && onPublishClick && (
+                      {offer.status === 'draft' && (
                         <Button
                           onClick={onPublishClick}
                           size="lg"
@@ -217,17 +217,6 @@ export default function OfferDetailContent({
                         <Icon name="Edit" className="h-5 w-5" />
                         Редактировать предложение
                       </Button>
-                      {offer.status !== 'draft' && (
-                        <Button
-                          onClick={onShare}
-                          variant="outline"
-                          size="lg"
-                          className="w-full gap-2"
-                        >
-                          <Icon name="Share2" className="h-5 w-5" />
-                          Поделиться
-                        </Button>
-                      )}
                     </>
                   ) : (
                     <Button
@@ -240,17 +229,15 @@ export default function OfferDetailContent({
                     </Button>
                   );
                 })()}
-                {offer.status !== 'draft' && (
-                  <Button
-                    onClick={onShare}
-                    variant="outline"
-                    size="lg"
-                    className="w-full gap-2"
-                  >
-                    <Icon name="Share2" className="h-5 w-5" />
-                    Поделиться
-                  </Button>
-                )}
+                <Button
+                  onClick={onShare}
+                  variant="outline"
+                  size="lg"
+                  className="w-full gap-2"
+                >
+                  <Icon name="Share2" className="h-5 w-5" />
+                  Поделиться
+                </Button>
               </CardContent>
             </Card>
 

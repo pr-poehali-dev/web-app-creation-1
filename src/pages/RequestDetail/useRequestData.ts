@@ -56,7 +56,6 @@ export interface Request {
   images: RequestImage[];
   video?: RequestVideo;
   isPremium: boolean;
-  status?: string;
   author: Author;
   createdAt: Date;
   updatedAt: Date;
@@ -95,7 +94,6 @@ export function useRequestData(id: string | undefined) {
           images: data.images || [],
           video: data.video,
           isPremium: data.isPremium,
-          status: data.status,
           author: {
             id: data.userId,
             name: 'Пользователь',
@@ -144,20 +142,5 @@ export function useRequestData(id: string | undefined) {
     };
   }, [id, navigate]);
 
-  const handlePublish = async () => {
-    if (!id) return;
-    
-    try {
-      await requestsAPI.publishRequest(id);
-      
-      toast.success('Запрос опубликован');
-      
-      navigate('/zaprosy');
-    } catch (error: any) {
-      console.error('Error publishing request:', error);
-      toast.error(error.message || 'Не удалось опубликовать запрос');
-    }
-  };
-
-  return { request, isLoading, showVideo, handlePublish };
+  return { request, isLoading, showVideo };
 }
