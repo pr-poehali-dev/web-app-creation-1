@@ -102,7 +102,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
           
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-bold text-primary">
-              {(((request as any).price || request.pricePerUnit) || 0).toLocaleString()} ₽
+              {request.pricePerUnit ? request.pricePerUnit.toLocaleString() : '0'} ₽
             </span>
             {!isOwner && (
               <Button 
