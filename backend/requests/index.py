@@ -1,3 +1,4 @@
+'''API для работы с запросами - обновлено для JWT'''
 import json
 import os
 from typing import Dict, Any, List

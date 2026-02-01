@@ -1,3 +1,4 @@
+'''Админка для управления запросами - обновлено'''
 import json
 import os
 import psycopg2
