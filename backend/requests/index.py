@@ -60,8 +60,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return create_request(event, headers)
         
         elif method == 'PUT':
-            path_params = event.get('pathParams', {})
-            request_id = path_params.get('id')
+            query_params = event.get('queryStringParameters', {}) or {}
+            request_id = query_params.get('id')
+            action = query_params.get('action')
             if not request_id:
                 return {
                     'statusCode': 400,
@@ -69,6 +70,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Request ID required'}),
                     'isBase64Encoded': False
                 }
+            
+            if action == 'publish':
+                return publish_request(request_id, event, headers)
+            
             return update_request(request_id, event, headers)
         
         elif method == 'DELETE':
@@ -382,5 +387,62 @@ def delete_request(request_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
             'statusCode': 500,
             'headers': headers,
             'body': json.dumps({'error': f'Failed to delete request: {str(e)}'}),
+            'isBase64Encoded': False
+        }
+
+def publish_request(request_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    """Публикация запроса (изменить статус с draft на active)"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Проверяем, что запрос существует и является черновиком
+        cur.execute("SELECT status FROM t_p42562714_web_app_creation_1.requests WHERE id = %s", (request_id,))
+        result = cur.fetchone()
+        
+        if not result:
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({'error': 'Request not found'}),
+                'isBase64Encoded': False
+            }
+        
+        if result[0] != 'draft':
+            conn.close()
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'Request is not a draft'}),
+                'isBase64Encoded': False
+            }
+        
+        # Обновляем статус на active и устанавливаем created_at на текущее время
+        sql = """
+            UPDATE t_p42562714_web_app_creation_1.requests 
+            SET status = 'active', created_at = CURRENT_TIMESTAMP 
+            WHERE id = %s
+        """
+        cur.execute(sql, (request_id,))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        print(f"Successfully published request {request_id}")
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'Request published successfully'}),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        print(f"Error publishing request: {str(e)}")
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': f'Failed to publish request: {str(e)}'}),
             'isBase64Encoded': False
         }

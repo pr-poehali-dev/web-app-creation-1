@@ -1,4 +1,4 @@
-'''Управление предложениями товаров и услуг - v2'''
+'''Управление предложениями товаров и услуг - v3'''
 
 import json
 import os 
@@ -118,6 +118,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'PUT':
             query_params = event.get('queryStringParameters', {}) or {}
             offer_id = query_params.get('id')
+            action = query_params.get('action')
             if not offer_id:
                 return {
                     'statusCode': 400,
@@ -125,6 +126,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'error': 'Offer ID required in query params'}),
                     'isBase64Encoded': False
                 }
+            
+            if action == 'publish':
+                return publish_offer(offer_id, event, headers)
+            
             return update_offer(offer_id, event, headers)
         
         elif method == 'DELETE':
@@ -851,6 +856,67 @@ def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         import traceback
         error_trace = traceback.format_exc()
         print(f'ERROR in delete_offer: {str(e)}')
+        print(f'Traceback: {error_trace}')
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e)}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+
+def publish_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    """Публикация предложения (изменить статус с draft на active)"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        offer_id_esc = offer_id.replace("'", "''")
+        
+        # Проверяем, что предложение существует и является черновиком
+        cur.execute(f"SELECT status FROM t_p42562714_web_app_creation_1.offers WHERE id = '{offer_id_esc}'")
+        result = cur.fetchone()
+        
+        if not result:
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({'error': 'Offer not found'}, default=decimal_default),
+                'isBase64Encoded': False
+            }
+        
+        if result[0] != 'draft':
+            conn.close()
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'Offer is not a draft'}, default=decimal_default),
+                'isBase64Encoded': False
+            }
+        
+        # Обновляем статус на active и устанавливаем created_at на текущее время
+        cur.execute(f"""
+            UPDATE t_p42562714_web_app_creation_1.offers 
+            SET status = 'active', created_at = CURRENT_TIMESTAMP 
+            WHERE id = '{offer_id_esc}'
+        """)
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        print(f"Successfully published offer {offer_id}")
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'Offer published successfully'}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f'ERROR in publish_offer: {str(e)}')
         print(f'Traceback: {error_trace}')
         return {
             'statusCode': 500,
