@@ -1,0 +1,11 @@
+{
+  "tests": [
+    {
+      "name": "Get admin users list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 403,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

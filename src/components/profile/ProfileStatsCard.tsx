@@ -11,7 +11,7 @@ interface ProfileStatsCardProps {
 export default function ProfileStatsCard({ registrationDate, formatDate }: ProfileStatsCardProps) {
   const navigate = useNavigate();
   const userRole = localStorage.getItem('userRole');
-  const isAdmin = userRole === 'admin';
+  const isAdmin = userRole === 'admin' || userRole === 'moderator' || userRole === 'superadmin';
 
   return (
     <Card>
@@ -86,7 +86,10 @@ export default function ProfileStatsCard({ registrationDate, formatDate }: Profi
           </Button>
           {isAdmin && (
             <Button onClick={() => navigate('/admin')} variant="default" size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-              <Icon name="Shield" className="mr-2 h-4 w-4" />
+              <Icon 
+                name={userRole === 'superadmin' ? 'Crown' : userRole === 'admin' ? 'ShieldCheck' : 'Eye'} 
+                className="mr-2 h-4 w-4" 
+              />
               Админ-панель
             </Button>
           )}
