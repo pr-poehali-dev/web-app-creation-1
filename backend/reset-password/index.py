@@ -106,11 +106,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 if not user:
                     return {
-                        'statusCode': 200,
+                        'statusCode': 404,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                         'body': json.dumps({
-                            'success': True,
-                            'message': 'Если пользователь существует, письмо будет отправлено'
+                            'error': 'Пользователь с таким email не найден',
+                            'suggestion': 'Проверьте правильность введённых данных или зарегистрируйтесь'
                         }),
                         'isBase64Encoded': False
                     }

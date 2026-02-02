@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import SupportContact from '@/components/auth/SupportContact';
 import funcUrl from '../../backend/func2url.json';
 
 export default function ResetPassword() {
@@ -53,13 +54,22 @@ export default function ResetPassword() {
       if (response.ok) {
         toast({
           title: 'Успешно',
-          description: 'Если пользователь с таким email существует, на него отправлена ссылка для восстановления пароля',
+          description: 'На указанную почту отправлена ссылка для восстановления пароля',
         });
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
-        setEmailError('Произошла ошибка при отправке письма');
+        if (response.status === 404) {
+          toast({
+            variant: 'destructive',
+            title: 'Пользователь не найден',
+            description: data.suggestion || 'Проверьте правильность введённых данных или зарегистрируйтесь',
+            duration: 5000,
+          });
+        } else {
+          setEmailError(data.error || 'Произошла ошибка при отправке письма');
+        }
       }
     } catch (error) {
       toast({
@@ -128,16 +138,21 @@ export default function ResetPassword() {
               )}
             </Button>
 
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => navigate('/')}
-                disabled={isSubmitting}
-              >
-                <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-                Вернуться на главную
-              </Button>
+            <div className="space-y-3">
+              <div className="text-center text-sm">
+                <span className="text-muted-foreground">Вспомнили пароль? </span>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="px-1"
+                  onClick={() => navigate('/login')}
+                  disabled={isSubmitting}
+                >
+                  Войти
+                </Button>
+              </div>
+
+              <SupportContact className="pt-2 border-t" />
             </div>
           </form>
         </CardContent>

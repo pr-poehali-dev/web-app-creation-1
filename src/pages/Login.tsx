@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
+import SupportContact from '@/components/auth/SupportContact';
 import { authenticateUser, saveRememberMe, getRememberMe, clearRememberMe } from '@/utils/auth';
 
 interface LoginProps {
@@ -210,16 +211,20 @@ export default function Login({ onLogin }: LoginProps) {
               )}
             </Button>
 
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">Нет аккаунта? </span>
-              <Button
-                type="button"
-                variant="link"
-                className="px-1"
-                onClick={() => navigate('/register')}
-              >
-                Зарегистрироваться
-              </Button>
+            <div className="space-y-3">
+              <div className="text-center text-sm">
+                <span className="text-muted-foreground">Нет аккаунта? </span>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="px-1"
+                  onClick={() => navigate('/register')}
+                >
+                  Зарегистрироваться
+                </Button>
+              </div>
+
+              <SupportContact className="pt-2 border-t" />
             </div>
           </form>
         </CardContent>

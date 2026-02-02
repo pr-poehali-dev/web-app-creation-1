@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -8,9 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getUserFromStorage } from '@/utils/auth';
+import funcUrl from '../../backend/func2url.json';
 
 interface AdminSettingsProps {
   isAuthenticated: boolean;
@@ -22,6 +25,86 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [autoModeration, setAutoModeration] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  
+  const [supportContact, setSupportContact] = useState('');
+  const [supportType, setSupportType] = useState<'email' | 'phone' | 'telegram' | 'whatsapp' | 'url'>('email');
+  const [isLoadingSupport, setIsLoadingSupport] = useState(false);
+  const [isSavingSupport, setIsSavingSupport] = useState(false);
+
+  useEffect(() => {
+    loadSupportSettings();
+  }, []);
+
+  const loadSupportSettings = async () => {
+    setIsLoadingSupport(true);
+    try {
+      const [contactRes, typeRes] = await Promise.all([
+        fetch(`${funcUrl['site-settings']}?key=support_contact`),
+        fetch(`${funcUrl['site-settings']}?key=support_type`)
+      ]);
+
+      if (contactRes.ok) {
+        const data = await contactRes.json();
+        setSupportContact(data.setting_value || '');
+      }
+
+      if (typeRes.ok) {
+        const data = await typeRes.json();
+        setSupportType(data.setting_value || 'email');
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки настроек:', error);
+    } finally {
+      setIsLoadingSupport(false);
+    }
+  };
+
+  const handleSaveSupportSettings = async () => {
+    const user = getUserFromStorage();
+    if (!user?.token) {
+      toast.error('Требуется авторизация');
+      return;
+    }
+
+    setIsSavingSupport(true);
+    try {
+      const results = await Promise.all([
+        fetch(funcUrl['site-settings'], {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({
+            setting_key: 'support_contact',
+            setting_value: supportContact
+          })
+        }),
+        fetch(funcUrl['site-settings'], {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({
+            setting_key: 'support_type',
+            setting_value: supportType
+          })
+        })
+      ]);
+
+      if (results.every(r => r.ok)) {
+        toast.success('Настройки техподдержки сохранены');
+      } else {
+        toast.error('Ошибка при сохранении настроек');
+      }
+    } catch (error) {
+      console.error('Ошибка сохранения:', error);
+      toast.error('Не удалось сохранить настройки');
+    } finally {
+      setIsSavingSupport(false);
+    }
+  };
 
   const handleSaveSettings = () => {
     toast.success('Настройки сохранены');
@@ -45,6 +128,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
           <Tabs defaultValue="general" className="space-y-6">
             <TabsList>
               <TabsTrigger value="general">Общие</TabsTrigger>
+              <TabsTrigger value="support">Техподдержка</TabsTrigger>
               <TabsTrigger value="moderation">Модерация</TabsTrigger>
               <TabsTrigger value="notifications">Уведомления</TabsTrigger>
               <TabsTrigger value="telegram">Telegram</TabsTrigger>
@@ -84,6 +168,137 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
                     />
                   </div>
                   <Button onClick={handleSaveSettings}>Сохранить изменения</Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="support" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Настройки техподдержки</CardTitle>
+                  <CardDescription>
+                    Укажите контакт для связи, который будет отображаться в формах входа и регистрации
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {isLoadingSupport ? (
+                    <div className="flex justify-center py-8">
+                      <Icon name="Loader2" className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="support-type">Тип контакта</Label>
+                        <Select value={supportType} onValueChange={(v) => setSupportType(v as typeof supportType)}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="email">
+                              <div className="flex items-center gap-2">
+                                <Icon name="Mail" className="h-4 w-4" />
+                                Email
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="phone">
+                              <div className="flex items-center gap-2">
+                                <Icon name="Phone" className="h-4 w-4" />
+                                Телефон
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="telegram">
+                              <div className="flex items-center gap-2">
+                                <Icon name="MessageCircle" className="h-4 w-4" />
+                                Telegram
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="whatsapp">
+                              <div className="flex items-center gap-2">
+                                <Icon name="MessageSquare" className="h-4 w-4" />
+                                WhatsApp
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="url">
+                              <div className="flex items-center gap-2">
+                                <Icon name="ExternalLink" className="h-4 w-4" />
+                                Ссылка (URL)
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-sm text-muted-foreground">
+                          Выберите, каким способом пользователи смогут связаться с вами
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="support-contact">Контакт</Label>
+                        <Input
+                          id="support-contact"
+                          value={supportContact}
+                          onChange={(e) => setSupportContact(e.target.value)}
+                          placeholder={
+                            supportType === 'email' ? 'support@example.com' :
+                            supportType === 'phone' ? '+7 (800) 555-35-35' :
+                            supportType === 'telegram' ? '@username или https://t.me/username' :
+                            supportType === 'whatsapp' ? '+79991234567 или ссылка' :
+                            'https://example.com/support'
+                          }
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          {supportType === 'email' && 'Введите email для связи'}
+                          {supportType === 'phone' && 'Введите номер телефона'}
+                          {supportType === 'telegram' && 'Введите username (@username) или прямую ссылку'}
+                          {supportType === 'whatsapp' && 'Введите номер телефона или ссылку на чат'}
+                          {supportType === 'url' && 'Введите URL страницы поддержки или формы обратной связи'}
+                        </p>
+                      </div>
+
+                      <div className="p-4 bg-primary/5 rounded-lg">
+                        <h4 className="font-medium mb-2 flex items-center gap-2">
+                          <Icon name="Info" className="h-4 w-4" />
+                          Предпросмотр
+                        </h4>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          Так будет выглядеть ссылка в формах:
+                        </p>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-muted-foreground">Нужна помощь?</span>
+                          <span className="text-primary font-medium flex items-center gap-1.5">
+                            <Icon
+                              name={
+                                supportType === 'email' ? 'Mail' :
+                                supportType === 'phone' ? 'Phone' :
+                                supportType === 'telegram' ? 'MessageCircle' :
+                                supportType === 'whatsapp' ? 'MessageSquare' :
+                                'ExternalLink'
+                              }
+                              className="h-4 w-4"
+                            />
+                            {supportType === 'email' && 'Написать в техподдержку'}
+                            {supportType === 'phone' && 'Позвонить в техподдержку'}
+                            {supportType === 'telegram' && 'Написать в Telegram'}
+                            {supportType === 'whatsapp' && 'Написать в WhatsApp'}
+                            {supportType === 'url' && 'Связаться с техподдержкой'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={handleSaveSupportSettings}
+                        disabled={isSavingSupport || !supportContact}
+                      >
+                        {isSavingSupport ? (
+                          <>
+                            <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                            Сохранение...
+                          </>
+                        ) : (
+                          'Сохранить настройки'
+                        )}
+                      </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

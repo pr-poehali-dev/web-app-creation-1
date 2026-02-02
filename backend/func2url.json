@@ -1,4 +1,5 @@
 {
+  "site-settings": "https://functions.poehali.dev/6c65e3c6-d621-44fc-99da-cd570027fae7",
   "verify-email": "https://functions.poehali.dev/89067558-83f6-4d9e-b40a-051841b8c42d",
   "reset-password": "https://functions.poehali.dev/a5204fac-6e56-4f50-b27e-2fd1595c6b2a",
   "requests-public": "https://functions.poehali.dev/45ce03d3-1625-4349-a14b-6c0e036e2878",
