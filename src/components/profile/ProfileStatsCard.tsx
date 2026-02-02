@@ -87,8 +87,17 @@ export default function ProfileStatsCard({ registrationDate, formatDate }: Profi
           {isAdmin && (
             <Button 
               onClick={() => {
-                const adminSession = localStorage.getItem('adminSession');
-                navigate(adminSession ? '/admin/panel' : '/admin');
+                // Создаём adminSession автоматически для назначенных администраторов
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                  const user = JSON.parse(currentUser);
+                  const adminSession = {
+                    login: user.email,
+                    timestamp: Date.now()
+                  };
+                  localStorage.setItem('adminSession', JSON.stringify(adminSession));
+                }
+                navigate('/admin/panel');
               }} 
               variant="default" 
               size="sm" 

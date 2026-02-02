@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,9 @@ interface AdminRolesManagementProps {
   setNewAdminRole: (value: 'moderator' | 'admin' | 'superadmin') => void;
   isSettingRole: boolean;
   handleSetRole: () => void;
+  foundUser: any;
+  isSearchingUser: boolean;
+  handleSearchUser: (email: string) => void;
 }
 
 export default function AdminRolesManagement({
@@ -24,9 +28,22 @@ export default function AdminRolesManagement({
   newAdminRole,
   setNewAdminRole,
   isSettingRole,
-  handleSetRole
+  handleSetRole,
+  foundUser,
+  isSearchingUser,
+  handleSearchUser
 }: AdminRolesManagementProps) {
   const isRootAdmin = localStorage.getItem('isRootAdmin') === 'true';
+
+  // Автоматический поиск пользователя с debounce
+  useEffect(() => {
+    if (newAdminEmail.includes('@') && newAdminEmail.length > 5) {
+      const debounceTimer = setTimeout(() => {
+        handleSearchUser(newAdminEmail);
+      }, 800);
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [newAdminEmail]);
 
   return (
     <Card>
@@ -77,17 +94,48 @@ export default function AdminRolesManagement({
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="admin-email">Email пользователя</Label>
-            <Input
-              id="admin-email"
-              type="email"
-              placeholder="user@example.com"
-              value={newAdminEmail}
-              onChange={(e) => setNewAdminEmail(e.target.value)}
-            />
-            <p className="text-sm text-muted-foreground">
-              Введите email зарегистрированного пользователя
-            </p>
-          </div>
+              <div className="relative">
+                <Input
+                  id="admin-email"
+                  type="email"
+                  placeholder="user@example.com"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                />
+                {isSearchingUser && (
+                  <Icon name="Loader2" className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+              {foundUser && (
+                <div className="p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon name="CheckCircle2" className="h-4 w-4 text-green-600" />
+                    <span className="font-medium text-green-900 dark:text-green-200">Пользователь найден</span>
+                  </div>
+                  <p className="text-sm text-green-800 dark:text-green-300">
+                    {foundUser.first_name} {foundUser.last_name} {foundUser.middle_name || ''}
+                  </p>
+                  <p className="text-xs text-green-700 dark:text-green-400 mt-1">
+                    Текущая роль: {
+                      foundUser.role === 'superadmin' ? 'Суперадминистратор' :
+                      foundUser.role === 'admin' ? 'Администратор' :
+                      foundUser.role === 'moderator' ? 'Модератор' :
+                      'Пользователь'
+                    }
+                  </p>
+                </div>
+              )}
+              {!foundUser && !isSearchingUser && newAdminEmail.includes('@') && (
+                <p className="text-sm text-muted-foreground">
+                  Введите полный email адрес для поиска пользователя
+                </p>
+              )}
+              {!foundUser && !isSearchingUser && !newAdminEmail.includes('@') && (
+                <p className="text-sm text-muted-foreground">
+                  Введите email зарегистрированного пользователя
+                </p>
+              )}
+            </div>
 
           <div className="space-y-2">
             <Label htmlFor="admin-role">Роль</Label>

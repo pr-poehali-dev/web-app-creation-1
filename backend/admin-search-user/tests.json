@@ -1,0 +1,11 @@
+{
+  "tests": [
+    {
+      "name": "Search user without auth",
+      "method": "GET",
+      "path": "/?email=test@example.com",
+      "expectedStatus": 403,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

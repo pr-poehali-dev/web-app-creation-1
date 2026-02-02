@@ -35,6 +35,8 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<'moderator' | 'admin' | 'superadmin'>('moderator');
   const [isSettingRole, setIsSettingRole] = useState(false);
+  const [foundUser, setFoundUser] = useState<any>(null);
+  const [isSearchingUser, setIsSearchingUser] = useState(false);
 
   useEffect(() => {
     loadSupportSettings();
@@ -136,6 +138,42 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
     }
   };
 
+  const handleSearchUser = async (email: string) => {
+    if (!email.trim()) {
+      setFoundUser(null);
+      return;
+    }
+
+    setIsSearchingUser(true);
+    try {
+      const token = getJwtToken();
+      const response = await fetch(`${funcUrl['admin-search-user']}?email=${encodeURIComponent(email)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFoundUser(data.user);
+      } else {
+        const data = await response.json();
+        if (response.status === 404) {
+          toast.error('Пользователь с таким email не найден');
+        } else {
+          toast.error(data.error || 'Ошибка поиска пользователя');
+        }
+        setFoundUser(null);
+      }
+    } catch (error) {
+      console.error('Ошибка поиска:', error);
+      toast.error('Не удалось найти пользователя');
+      setFoundUser(null);
+    } finally {
+      setIsSearchingUser(false);
+    }
+  };
+
   const handleSetRole = async () => {
     if (!newAdminEmail.trim()) {
       toast.error('Введите email пользователя');
@@ -163,6 +201,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
       if (response.ok) {
         toast.success(data.message || 'Роль успешно изменена');
         setNewAdminEmail('');
+        setFoundUser(null);
         loadAdminsList();
       } else {
         toast.error(data.error || 'Ошибка изменения роли');
@@ -223,6 +262,9 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
                 setNewAdminRole={setNewAdminRole}
                 isSettingRole={isSettingRole}
                 handleSetRole={handleSetRole}
+                foundUser={foundUser}
+                isSearchingUser={isSearchingUser}
+                handleSearchUser={handleSearchUser}
               />
             </TabsContent>
 
