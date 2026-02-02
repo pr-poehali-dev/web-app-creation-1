@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
+import SupportCard from '@/components/SupportCard';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
@@ -414,6 +415,12 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               </Button>
             </div>
           </form>
+
+          <SupportCard 
+            variant="compact"
+            title="Возникли вопросы?"
+            className="mt-6"
+          />
         </div>
       </main>
 
