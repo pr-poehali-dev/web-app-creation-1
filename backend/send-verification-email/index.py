@@ -1,5 +1,5 @@
 '''
-Отправляет email с документами верификации администратору
+Отправляет email с документами верификации администратору через Mail.ru
 Args: event - dict с httpMethod, body с данными верификации
       context - объект с атрибутом request_id
 Returns: HTTP response dict
