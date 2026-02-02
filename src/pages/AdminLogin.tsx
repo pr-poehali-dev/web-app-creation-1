@@ -47,10 +47,12 @@ export default function AdminLogin() {
       if (response.ok && data.success) {
         const userId = data.user?.id;
         const userRole = data.user?.role;
+        const isRootAdmin = data.user?.is_root_admin;
         
-        if (userId && userRole === 'admin') {
+        if (userId && (userRole === 'admin' || userRole === 'superadmin' || userRole === 'moderator')) {
           localStorage.setItem('userId', userId.toString());
           localStorage.setItem('userRole', userRole);
+          localStorage.setItem('isRootAdmin', isRootAdmin ? 'true' : 'false');
           localStorage.setItem('adminSession', JSON.stringify({ login, timestamp: Date.now() }));
           navigate('/admin/panel');
           toast({
