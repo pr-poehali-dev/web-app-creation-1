@@ -89,6 +89,10 @@ const convertUserFromBackend = (backendUser: any): User => {
     localStorage.setItem('userRole', backendUser.role);
   }
   
+  if (backendUser.is_root_admin !== undefined) {
+    localStorage.setItem('isRootAdmin', backendUser.is_root_admin ? 'true' : 'false');
+  }
+  
   return user;
 };
 
@@ -242,6 +246,7 @@ export const clearSession = (): void => {
     localStorage.removeItem(SESSION_STORAGE_KEY);
     localStorage.removeItem('userRole');
     localStorage.removeItem('userId');
+    localStorage.removeItem('isRootAdmin');
     localStorage.removeItem(JWT_TOKEN_KEY);
   } catch (error) {
     console.error('Error clearing session:', error);

@@ -440,7 +440,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     cur.execute(
                         """SELECT id, email, password_hash, first_name, last_name, middle_name, 
                            user_type, phone, is_active, company_name, inn, ogrnip, ogrn, 
-                           position, director_name, legal_address, created_at, role 
+                           position, director_name, legal_address, created_at, role, is_root_admin 
                            FROM users WHERE email = %s AND removed_at IS NULL""",
                         (email,)
                     )

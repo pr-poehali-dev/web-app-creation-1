@@ -26,6 +26,8 @@ export default function AdminRolesManagement({
   isSettingRole,
   handleSetRole
 }: AdminRolesManagementProps) {
+  const isRootAdmin = localStorage.getItem('isRootAdmin') === 'true';
+
   return (
     <Card>
       <CardHeader>
@@ -35,9 +37,46 @@ export default function AdminRolesManagement({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="admin-email">Email пользователя</Label>
+        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 p-4 rounded-lg border-2 border-yellow-400">
+          <div className="flex items-start gap-3">
+            <div className="relative mt-1">
+              <Icon name="Crown" className="h-6 w-6 text-yellow-600" />
+              <Icon name="Shield" className="h-3 w-3 text-yellow-600 absolute -bottom-1 -right-1" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-1 flex items-center gap-2">
+                Главный Суперадминистратор
+                <span className="text-xs bg-yellow-500 text-white px-2 py-0.5 rounded-full">ЗАЩИЩЁН</span>
+              </h4>
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                Только главный суперадминистратор может назначать и снимать роли других администраторов.
+                Роль главного суперадминистратора не может быть изменена никем, включая самого владельца.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {!isRootAdmin && (
+          <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border-2 border-red-400">
+            <div className="flex items-start gap-3">
+              <Icon name="ShieldAlert" className="h-5 w-5 text-red-600 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-red-900 dark:text-red-200 mb-1">
+                  Доступ ограничен
+                </h4>
+                <p className="text-sm text-red-800 dark:text-red-300">
+                  Только главный суперадминистратор может назначать и изменять роли администраторов.
+                  Вы можете просматривать список администраторов, но не можете вносить изменения.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isRootAdmin && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="admin-email">Email пользователя</Label>
             <Input
               id="admin-email"
               type="email"
@@ -115,6 +154,7 @@ export default function AdminRolesManagement({
             )}
           </Button>
         </div>
+        )}
 
         <div className="border-t pt-6">
           <h3 className="text-lg font-semibold mb-4">Текущие администраторы</h3>
@@ -129,34 +169,52 @@ export default function AdminRolesManagement({
               {adminsList.map((admin) => (
                 <div
                   key={admin.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                  className={`flex items-center justify-between p-4 border rounded-lg transition-colors ${
+                    admin.is_root_admin 
+                      ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/20 dark:to-amber-950/20 border-yellow-400' 
+                      : 'hover:bg-accent/50'
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    {admin.role === 'superadmin' && (
+                    {admin.is_root_admin ? (
+                      <div className="relative">
+                        <Icon name="Crown" className="h-6 w-6 text-yellow-600 animate-pulse" />
+                        <Icon name="Shield" className="h-3 w-3 text-yellow-600 absolute -bottom-1 -right-1" />
+                      </div>
+                    ) : admin.role === 'superadmin' ? (
                       <Icon name="Crown" className="h-5 w-5 text-yellow-500" />
-                    )}
-                    {admin.role === 'admin' && (
+                    ) : admin.role === 'admin' ? (
                       <Icon name="ShieldCheck" className="h-5 w-5 text-purple-500" />
-                    )}
-                    {admin.role === 'moderator' && (
+                    ) : (
                       <Icon name="Eye" className="h-5 w-5 text-blue-500" />
                     )}
                     <div>
-                      <p className="font-medium">
+                      <p className="font-medium flex items-center gap-2">
                         {admin.first_name} {admin.last_name}
+                        {admin.is_root_admin && (
+                          <span className="text-xs bg-yellow-500 text-white px-2 py-0.5 rounded-full font-semibold">
+                            ГЛАВНЫЙ
+                          </span>
+                        )}
                       </p>
                       <p className="text-sm text-muted-foreground">{admin.email}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium">
-                      {admin.role === 'superadmin' && 'Суперадминистратор'}
+                      {admin.is_root_admin && 'Главный Суперадминистратор'}
+                      {!admin.is_root_admin && admin.role === 'superadmin' && 'Суперадминистратор'}
                       {admin.role === 'admin' && 'Администратор'}
                       {admin.role === 'moderator' && 'Модератор'}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {new Date(admin.created_at).toLocaleDateString('ru-RU')}
                     </p>
+                    {admin.is_root_admin && (
+                      <p className="text-xs text-yellow-600 font-medium mt-1">
+                        Не может быть изменён
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

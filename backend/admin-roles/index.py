@@ -29,7 +29,7 @@ def verify_superadmin(token: str) -> dict:
         conn = get_db_connection()
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, email, role FROM users WHERE id = %s AND removed_at IS NULL",
+                "SELECT id, email, role, is_root_admin FROM users WHERE id = %s AND removed_at IS NULL",
                 (user_id,)
             )
             user = cur.fetchone()
@@ -74,14 +74,15 @@ def handler(event: dict, context) -> dict:
         if method == 'GET':
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT id, email, first_name, last_name, role, created_at 
+                    """SELECT id, email, first_name, last_name, role, created_at, is_root_admin 
                        FROM users 
                        WHERE role IN ('moderator', 'admin', 'superadmin') AND removed_at IS NULL
                        ORDER BY 
-                           CASE role 
-                               WHEN 'superadmin' THEN 1
-                               WHEN 'admin' THEN 2
-                               WHEN 'moderator' THEN 3
+                           CASE 
+                               WHEN is_root_admin = TRUE THEN 0
+                               WHEN role = 'superadmin' THEN 1
+                               WHEN role = 'admin' THEN 2
+                               WHEN role = 'moderator' THEN 3
                            END,
                            created_at DESC"""
                 )
@@ -121,7 +122,7 @@ def handler(event: dict, context) -> dict:
                 
                 with conn.cursor() as cur:
                     cur.execute(
-                        "SELECT id, email, role FROM users WHERE email = %s AND removed_at IS NULL",
+                        "SELECT id, email, role, is_root_admin FROM users WHERE email = %s AND removed_at IS NULL",
                         (user_email,)
                     )
                     target_user = cur.fetchone()
@@ -131,6 +132,24 @@ def handler(event: dict, context) -> dict:
                             'statusCode': 404,
                             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                             'body': json.dumps({'error': 'Пользователь не найден'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    # Проверка: нельзя изменить главного суперадмина
+                    if target_user.get('is_root_admin') == True:
+                        return {
+                            'statusCode': 403,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Нельзя изменить роль главного суперадминистратора'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    # Проверка: только главный суперадмин может изменять роли
+                    if not admin_user.get('is_root_admin'):
+                        return {
+                            'statusCode': 403,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Только главный суперадминистратор может управлять ролями'}),
                             'isBase64Encoded': False
                         }
                     
