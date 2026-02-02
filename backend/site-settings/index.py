@@ -2,11 +2,23 @@ import json
 import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import jwt
+
+JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'fallback-dev-secret-DO-NOT-USE-IN-PRODUCTION')
+JWT_ALGORITHM = 'HS256'
 
 def get_db_connection():
     '''Создание подключения к базе данных'''
     dsn = os.environ.get('DATABASE_URL')
     return psycopg2.connect(dsn, cursor_factory=RealDictCursor)
+
+def verify_jwt_token(token: str) -> dict | None:
+    '''Проверка JWT токена'''
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
 
 def handler(event: dict, context) -> dict:
     '''API для управления настройками сайта (техподдержка и другие параметры)'''
@@ -63,7 +75,8 @@ def handler(event: dict, context) -> dict:
         # PUT/POST - обновить настройку (только для админов)
         if method in ['PUT', 'POST']:
             # Проверка авторизации администратора
-            auth_header = event.get('headers', {}).get('X-Authorization', '')
+            headers = event.get('headers', {})
+            auth_header = headers.get('X-Authorization') or headers.get('Authorization') or ''
             if not auth_header:
                 return {
                     'statusCode': 401,
@@ -72,18 +85,27 @@ def handler(event: dict, context) -> dict:
                     'isBase64Encoded': False
                 }
             
-            # Простая проверка токена (можно улучшить через JWT)
             token = auth_header.replace('Bearer ', '').strip()
+            jwt_payload = verify_jwt_token(token)
+            
+            if not jwt_payload:
+                return {
+                    'statusCode': 401,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Невалидный токен'}),
+                    'isBase64Encoded': False
+                }
+            
+            user_id = jwt_payload.get('user_id')
             
             with conn.cursor() as cur:
-                # Проверяем, что пользователь - администратор
                 cur.execute(
-                    "SELECT role FROM users WHERE id = (SELECT user_id FROM user_sessions WHERE token = %s LIMIT 1)",
-                    (token,)
+                    "SELECT role, is_root_admin FROM users WHERE id = %s",
+                    (user_id,)
                 )
                 user = cur.fetchone()
                 
-                if not user or user.get('role') != 'admin':
+                if not user or (user.get('role') not in ['admin', 'superadmin'] and not user.get('is_root_admin')):
                     return {
                         'statusCode': 403,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
