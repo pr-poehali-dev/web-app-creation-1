@@ -8,7 +8,6 @@ import ProfileSecurityCard from '@/components/profile/ProfileSecurityCard';
 import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
 import NotificationSettings from '@/components/profile/NotificationSettings';
-import TelegramNotificationSettings from '@/components/profile/TelegramNotificationSettings';
 import EmailNotificationSettings from '@/components/profile/EmailNotificationSettings';
 import ProfileEditForm from '@/components/profile/ProfileEditForm';
 import ProfilePasswordForm from '@/components/profile/ProfilePasswordForm';
@@ -185,7 +184,6 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
           {isViewingOwnProfile && (
             <>
               <NotificationSettings />
-              <TelegramNotificationSettings />
               <EmailNotificationSettings />
             </>
           )}
