@@ -24,10 +24,10 @@ def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def send_reset_email(email: str, reset_link: str):
-    smtp_user = os.environ.get('SMTP_USER')
-    smtp_pass = os.environ.get('SMTP_PASS')
-    smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
-    smtp_port = int(os.environ.get('SMTP_PORT', '587'))
+    smtp_user = os.environ.get('MAIL_USER')
+    smtp_pass = os.environ.get('MAIL_PASSWORD')
+    smtp_host = os.environ.get('MAIL_HOST', 'smtp.gmail.com')
+    smtp_port = int(os.environ.get('MAIL_PORT', '587'))
     
     if not smtp_user or not smtp_pass:
         raise ValueError("SMTP credentials not configured")
