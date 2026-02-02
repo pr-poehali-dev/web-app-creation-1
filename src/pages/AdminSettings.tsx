@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getUserFromStorage } from '@/utils/auth';
+import { getJwtToken } from '@/utils/auth';
 import funcUrl from '../../backend/func2url.json';
 
 interface AdminSettingsProps {
@@ -60,8 +60,8 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   };
 
   const handleSaveSupportSettings = async () => {
-    const user = getUserFromStorage();
-    if (!user?.token) {
+    const token = getJwtToken();
+    if (!token) {
       toast.error('Требуется авторизация');
       return;
     }
@@ -73,7 +73,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             setting_key: 'support_contact',
@@ -84,7 +84,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${user.token}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             setting_key: 'support_type',
