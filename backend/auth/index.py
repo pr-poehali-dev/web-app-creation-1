@@ -248,7 +248,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 user_type = body_data.get('user_type', '')
                 phone = body_data.get('phone', '').strip()
                 
-                if not all([email, password, first_name, last_name, user_type, phone]):
+                if not all([password, first_name, last_name, user_type, phone]):
                     return {
                         'statusCode': 400,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -257,14 +257,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 with conn.cursor() as cur:
-                    cur.execute("SELECT id FROM users WHERE email = %s AND removed_at IS NULL", (email,))
-                    if cur.fetchone():
-                        return {
-                            'statusCode': 409,
-                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                            'body': json.dumps({'error': 'Пользователь с таким email уже существует'}),
-                            'isBase64Encoded': False
-                        }
+                    if email:
+                        cur.execute("SELECT id FROM users WHERE email = %s AND removed_at IS NULL", (email,))
+                        if cur.fetchone():
+                            return {
+                                'statusCode': 409,
+                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                'body': json.dumps({'error': 'Пользователь с таким email уже существует'}),
+                                'isBase64Encoded': False
+                            }
                     
                     cur.execute("SELECT id FROM users WHERE phone = %s AND removed_at IS NULL", (phone,))
                     if cur.fetchone():
@@ -289,30 +290,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     password_hash = hash_password(password)
                     role = body_data.get('role', 'user')
                     
-                    email_verification_token = secrets.token_urlsafe(32)
-                    email_verification_expires = datetime.now() + timedelta(hours=24)
+                    email_verification_token = secrets.token_urlsafe(32) if email else None
+                    email_verification_expires = datetime.now() + timedelta(hours=24) if email else None
+                    phone_verification_token = secrets.token_urlsafe(32)
+                    phone_verification_expires = datetime.now() + timedelta(hours=24)
                     
                     cur.execute(
                         """INSERT INTO users (email, password_hash, first_name, last_name, middle_name, 
                            user_type, phone, company_name, inn, ogrnip, ogrn, position, director_name, legal_address, role,
-                           email_verified, email_verification_token, email_verification_expires)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                           email_verified, email_verification_token, email_verification_expires,
+                           phone_verified, phone_verification_token, phone_verification_expires)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                            RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
                                      company_name, inn, ogrnip, ogrn, position, director_name, legal_address, role, created_at""",
-                        (email, password_hash, first_name, last_name, middle_name or None, user_type, phone,
+                        (email or None, password_hash, first_name, last_name, middle_name or None, user_type, phone,
                          body_data.get('company_name'), body_data.get('inn'), body_data.get('ogrnip'),
                          body_data.get('ogrn'), body_data.get('position'), body_data.get('director_name'),
-                         body_data.get('legal_address'), role, False, email_verification_token, email_verification_expires)
+                         body_data.get('legal_address'), role, False, email_verification_token, email_verification_expires,
+                         False, phone_verification_token, phone_verification_expires)
                     )
                     user = cur.fetchone()
                     conn.commit()
                     
-                    try:
-                        verification_link = f"https://rynok.poehali.app/verify-email?token={email_verification_token}"
-                        send_verification_email(email, verification_link)
-                        print(f"Verification email sent to {email}")
-                    except Exception as e:
-                        print(f"Failed to send verification email to {email}: {str(e)}")
+                    if email:
+                        try:
+                            verification_link = f"https://erttp.ru/verify-email?token={email_verification_token}"
+                            send_verification_email(email, verification_link)
+                            print(f"Verification email sent to {email}")
+                        except Exception as e:
+                            print(f"Failed to send verification email to {email}: {str(e)}")
                 
                 token = generate_jwt_token(user['id'], user['email'])
                 
@@ -413,44 +419,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             elif action == 'login':
-                email = body_data.get('email', '').strip()
+                login_id = body_data.get('login', '').strip()
                 password = body_data.get('password', '')
                 
-                if not email or not password:
+                if not login_id or not password:
                     return {
                         'statusCode': 400,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'Email и пароль обязательны'}),
-                        'isBase64Encoded': False
-                    }
-                
-                locked_until = check_account_locked(conn, email)
-                if locked_until:
-                    return {
-                        'statusCode': 423,
-                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({
-                            'error': 'Аккаунт временно заблокирован из-за множественных неудачных попыток входа',
-                            'locked_until': locked_until
-                        }),
+                        'body': json.dumps({'error': 'Логин (телефон или email) и пароль обязательны'}),
                         'isBase64Encoded': False
                     }
                 
                 with conn.cursor() as cur:
                     cur.execute(
-                        """SELECT id, email, password_hash, first_name, last_name, middle_name, 
-                           user_type, phone, is_active, company_name, inn, ogrnip, ogrn, 
-                           position, director_name, legal_address, created_at, role, is_root_admin 
-                           FROM users WHERE email = %s AND removed_at IS NULL""",
-                        (email,)
+                        """SELECT id, email, phone, password_hash, first_name, last_name, middle_name, 
+                           user_type, is_active, company_name, inn, ogrnip, ogrn, 
+                           position, director_name, legal_address, created_at, role, is_root_admin, locked_until 
+                           FROM users WHERE (email = %s OR phone = %s) AND removed_at IS NULL""",
+                        (login_id, login_id)
                     )
                     user = cur.fetchone()
+                
+                if user and user['locked_until']:
+                    if datetime.now() < user['locked_until']:
+                        return {
+                            'statusCode': 423,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({
+                                'error': 'Аккаунт временно заблокирован из-за множественных неудачных попыток входа',
+                                'locked_until': user['locked_until'].isoformat()
+                            }),
+                            'isBase64Encoded': False
+                        }
                 
                 if not user:
                     return {
                         'statusCode': 401,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'Неверный email или пароль'}),
+                        'body': json.dumps({'error': 'Неверный логин или пароль'}),
                         'isBase64Encoded': False
                     }
                 
@@ -463,15 +469,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 if not verify_password(password, user['password_hash']):
-                    increment_failed_attempts(conn, email)
+                    increment_failed_attempts(conn, user['email'] or user['phone'])
                     return {
                         'statusCode': 401,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'Неверный email или пароль'}),
+                        'body': json.dumps({'error': 'Неверный логин или пароль'}),
                         'isBase64Encoded': False
                     }
                 
-                reset_failed_attempts(conn, email)
+                reset_failed_attempts(conn, user['email'] or user['phone'])
                 
                 user_data = dict(user)
                 user_data.pop('password_hash')
@@ -486,6 +492,59 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'user': user_data,
                         'token': token
                     }, default=str),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'verify_phone':
+                token = body_data.get('token', '').strip()
+                
+                if not token:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Токен обязателен'}),
+                        'isBase64Encoded': False
+                    }
+                
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """SELECT id, phone_verification_expires 
+                           FROM users 
+                           WHERE phone_verification_token = %s AND phone_verified = FALSE""",
+                        (token,)
+                    )
+                    user = cur.fetchone()
+                    
+                    if not user:
+                        return {
+                            'statusCode': 400,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Неверный или истёкший токен'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    if datetime.now() > user['phone_verification_expires']:
+                        return {
+                            'statusCode': 400,
+                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                            'body': json.dumps({'error': 'Срок действия токена истек'}),
+                            'isBase64Encoded': False
+                        }
+                    
+                    cur.execute(
+                        """UPDATE users 
+                           SET phone_verified = TRUE, 
+                               phone_verification_token = NULL, 
+                               phone_verification_expires = NULL 
+                           WHERE id = %s""",
+                        (user['id'],)
+                    )
+                    conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Телефон успешно подтверждён'}),
                     'isBase64Encoded': False
                 }
             

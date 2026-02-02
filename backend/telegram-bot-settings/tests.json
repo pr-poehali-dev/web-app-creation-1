@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "name": "Get telegram bot settings",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "bot_token_exists": "boolean",
+        "is_active": "boolean"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

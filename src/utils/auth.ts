@@ -163,7 +163,7 @@ export const registerUser = async (userData: {
 };
 
 export const authenticateUser = async (
-  email: string,
+  login: string,
   password: string
 ): Promise<AuthResponse> => {
   try {
@@ -174,7 +174,7 @@ export const authenticateUser = async (
       },
       body: JSON.stringify({
         action: 'login',
-        email,
+        login,
         password,
       }),
     });

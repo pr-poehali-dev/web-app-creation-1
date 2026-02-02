@@ -15,9 +15,9 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [email, setEmail] = useState('');
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -27,28 +27,29 @@ export default function Login({ onLogin }: LoginProps) {
   useEffect(() => {
     const savedCredentials = getRememberMe();
     if (savedCredentials) {
-      setEmail(savedCredentials.email);
+      setLogin(savedCredentials.email);
       setRememberMe(true);
     }
   }, []);
 
 
 
-  const validateEmail = (email: string) => {
+  const validateLogin = (login: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return emailRegex.test(login) || phoneRegex.test(login);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email) {
-      setEmailError('Введите email');
+    if (!login) {
+      setLoginError('Введите телефон или email');
       return;
     }
 
-    if (!validateEmail(email)) {
-      setEmailError('Некорректный формат email');
+    if (!validateLogin(login)) {
+      setLoginError('Некорректный формат телефона или email');
       return;
     }
 
@@ -69,11 +70,11 @@ export default function Login({ onLogin }: LoginProps) {
     });
 
     try {
-      const result = await authenticateUser(email, password);
+      const result = await authenticateUser(login, password);
       
       if (result.success && result.user) {
         if (rememberMe) {
-          saveRememberMe(email, password);
+          saveRememberMe(login, password);
         } else {
           clearRememberMe();
         }
@@ -108,9 +109,9 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    setEmailError('');
+  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLogin(e.target.value);
+    setLoginError('');
   };
 
   return (
@@ -138,18 +139,18 @@ export default function Login({ onLogin }: LoginProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="login">Телефон или Email</Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="example@company.com"
-                value={email}
-                onChange={handleEmailChange}
-                autoComplete="email"
-                className={emailError ? 'border-destructive' : ''}
+                id="login"
+                name="login"
+                type="text"
+                placeholder="+79991234567 или example@company.com"
+                value={login}
+                onChange={handleLoginChange}
+                autoComplete="username"
+                className={loginError ? 'border-destructive' : ''}
               />
-              {emailError && <p className="text-sm text-destructive">{emailError}</p>}
+              {loginError && <p className="text-sm text-destructive">{loginError}</p>}
             </div>
 
             <div className="space-y-2">
