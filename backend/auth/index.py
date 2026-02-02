@@ -27,6 +27,18 @@ JWT_EXPIRATION_HOURS = 24 * 7
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
+def normalize_phone(phone: str) -> str:
+    """Нормализует номер телефона, убирая все спецсимволы и приводя к формату 79XXXXXXXXX"""
+    import re
+    digits_only = re.sub(r'\D', '', phone)
+    if digits_only.startswith('8') and len(digits_only) == 11:
+        return '7' + digits_only[1:]
+    elif digits_only.startswith('7') and len(digits_only) == 11:
+        return digits_only
+    elif len(digits_only) == 10:
+        return '7' + digits_only
+    return digits_only
+
 def generate_jwt_token(user_id: int, email: str) -> str:
     payload = {
         'user_id': user_id,
@@ -430,13 +442,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
+                normalized_phone = normalize_phone(login_id)
+                
                 with conn.cursor() as cur:
                     cur.execute(
                         """SELECT id, email, phone, password_hash, first_name, last_name, middle_name, 
                            user_type, is_active, company_name, inn, ogrnip, ogrn, 
                            position, director_name, legal_address, created_at, role, is_root_admin, locked_until 
-                           FROM users WHERE (email = %s OR phone = %s) AND removed_at IS NULL""",
-                        (login_id, login_id)
+                           FROM users WHERE (email = %s OR REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = %s) AND removed_at IS NULL""",
+                        (login_id, normalized_phone)
                     )
                     user = cur.fetchone()
                 
