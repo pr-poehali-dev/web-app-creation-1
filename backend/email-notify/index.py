@@ -36,6 +36,8 @@ def handler(event: dict, context) -> dict:
         message = body.get('message')
         url = body.get('url', '')
         
+        print(f'[EMAIL_NOTIFY] Received request: userId={user_id}, title={title}')
+        
         if not user_id or not title or not message:
             return {
                 'statusCode': 400,
@@ -135,7 +137,7 @@ def handler(event: dict, context) -> dict:
                                     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
                                         <tr>
                                             <td align="center">
-                                                <a href="https://your-domain.com{url}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); transition: all 0.3s;">
+                                                <a href="https://erttp.ru{url}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); transition: all 0.3s;">
                                                     📦 Перейти к заказу
                                                 </a>
                                             </td>
@@ -163,7 +165,7 @@ def handler(event: dict, context) -> dict:
                                         Это автоматическое уведомление от платформы ЕРТТП
                                     </p>
                                     <p style="margin: 0 0 16px 0; color: #9ca3af; font-size: 12px;">
-                                        Вы можете отключить email-уведомления в <a href="https://your-domain.com/profile" style="color: #2563eb; text-decoration: none;">настройках профиля</a>
+                                        Вы можете отключить email-уведомления в <a href="https://erttp.ru/profile" style="color: #2563eb; text-decoration: none;">настройках профиля</a>
                                     </p>
                                     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                                         <p style="margin: 0; color: #9ca3af; font-size: 11px;">
@@ -215,11 +217,15 @@ def handler(event: dict, context) -> dict:
             smtp_server = 'smtp.gmail.com'
             smtp_port = 587
         
+        print(f'[EMAIL_NOTIFY] Sending to {user_email} via {smtp_server}')
+        
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()
         server.login(smtp_user, smtp_pass)
         server.send_message(msg)
         server.quit()
+        
+        print(f'[EMAIL_NOTIFY] Successfully sent email to {user_email}')
         
         return {
             'statusCode': 200,
@@ -232,6 +238,9 @@ def handler(event: dict, context) -> dict:
         }
         
     except Exception as e:
+        print(f'[EMAIL_NOTIFY] Error: {str(e)}')
+        import traceback
+        print(f'[EMAIL_NOTIFY] Traceback: {traceback.format_exc()}')
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
