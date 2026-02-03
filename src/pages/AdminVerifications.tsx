@@ -75,7 +75,9 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
     try {
       setLoading(true);
       
-      const response = await fetch(`https://functions.poehali.dev/bdff7262-3acc-4253-afcc-26ef5ef8b778?status=${status}`);
+      const response = await fetch(`https://functions.poehali.dev/bdff7262-3acc-4253-afcc-26ef5ef8b778?status=${status}`, {
+        credentials: 'omit'
+      });
 
       if (!response.ok) {
         const data = await response.json();
