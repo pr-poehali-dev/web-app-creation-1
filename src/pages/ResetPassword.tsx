@@ -20,8 +20,6 @@ export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -232,48 +230,28 @@ export default function ResetPassword() {
             <form onSubmit={handlePasswordReset} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Новый пароль</Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    type={showNewPassword ? 'text' : 'password'}
-                    placeholder="Минимум 6 символов"
-                    value={newPassword}
-                    onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
-                    className={passwordError ? 'border-destructive pr-10' : 'pr-10'}
-                    disabled={isSubmitting}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    disabled={isSubmitting}
-                  >
-                    <Icon name={showNewPassword ? 'EyeOff' : 'Eye'} className="h-4 w-4" />
-                  </button>
-                </div>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Минимум 6 символов"
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
+                  className={passwordError ? 'border-destructive' : ''}
+                  disabled={isSubmitting}
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Подтвердите пароль</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Повторите пароль"
-                    value={confirmPassword}
-                    onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
-                    className={passwordError ? 'border-destructive pr-10' : 'pr-10'}
-                    disabled={isSubmitting}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    disabled={isSubmitting}
-                  >
-                    <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} className="h-4 w-4" />
-                  </button>
-                </div>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Повторите пароль"
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
+                  className={passwordError ? 'border-destructive' : ''}
+                  disabled={isSubmitting}
+                />
                 {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
               </div>
 

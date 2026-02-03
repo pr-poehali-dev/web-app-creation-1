@@ -92,11 +92,10 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
       toast.success('Отклик успешно отправлен!', {
         description: 'Автор запроса свяжется с вами в ближайшее время'
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Ошибка отправки отклика:', error);
-      const errorMessage = error?.message || error?.toString() || 'Неизвестная ошибка';
       toast.error('Не удалось отправить отклик', {
-        description: errorMessage
+        description: 'Попробуйте позже'
       });
     }
   };
