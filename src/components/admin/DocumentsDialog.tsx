@@ -158,9 +158,12 @@ export default function DocumentsDialog({
     
     setLoadingDocuments(true);
     try {
+      const jwtToken = localStorage.getItem('jwtToken');
       const response = await fetch('https://functions.poehali.dev/7a553048-1de4-438d-9830-675770bf025b', {
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': String(selectedVerification.userId),
+          ...(jwtToken && { 'Authorization': `Bearer ${jwtToken}` }),
         },
       });
       
