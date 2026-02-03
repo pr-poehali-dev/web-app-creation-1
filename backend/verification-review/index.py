@@ -44,7 +44,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     headers = event.get('headers', {})
+    print(f"DEBUG: All headers: {headers}")
     admin_session = headers.get('x-admin-session') or headers.get('X-Admin-Session')
+    print(f"DEBUG: admin_session value: '{admin_session}'")
     
     if not admin_session or admin_session != 'true':
         return {
@@ -53,7 +55,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': 'Access denied. Admin session required.'}),
+            'body': json.dumps({
+                'error': 'Access denied. Admin session required.',
+                'debug': f'admin_session={admin_session}'
+            }),
             'isBase64Encoded': False
         }
     
