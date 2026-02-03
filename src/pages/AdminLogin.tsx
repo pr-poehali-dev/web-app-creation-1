@@ -54,7 +54,7 @@ export default function AdminLogin() {
           localStorage.setItem('userId', userId.toString());
           localStorage.setItem('userRole', userRole);
           localStorage.setItem('isRootAdmin', isRootAdmin ? 'true' : 'false');
-          localStorage.setItem('adminSession', JSON.stringify({ login, timestamp: Date.now() }));
+          localStorage.setItem('adminSession', 'true');
           navigate('/admin/panel');
           toast({
             title: 'Успешно',
