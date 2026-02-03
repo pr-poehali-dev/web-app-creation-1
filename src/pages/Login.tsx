@@ -154,8 +154,7 @@ export default function Login({ onLogin }: LoginProps) {
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    const emailPattern = /@/;
-    if (emailPattern.test(value)) {
+    if (value.includes('@') || /[a-zA-Z]/.test(value)) {
       setLogin(value);
     } else {
       const formatted = formatPhoneNumber(value);
