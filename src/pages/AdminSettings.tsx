@@ -25,8 +25,9 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   const [autoModeration, setAutoModeration] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   
-  const [supportContact, setSupportContact] = useState('');
-  const [supportType, setSupportType] = useState<'email' | 'phone' | 'telegram' | 'whatsapp' | 'url'>('email');
+  const [supportEmail, setSupportEmail] = useState('');
+  const [supportPhone, setSupportPhone] = useState('');
+  const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'telegram' | 'call'>('call');
   const [isLoadingSupport, setIsLoadingSupport] = useState(false);
   const [isSavingSupport, setIsSavingSupport] = useState(false);
   
@@ -46,19 +47,25 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   const loadSupportSettings = async () => {
     setIsLoadingSupport(true);
     try {
-      const [contactRes, typeRes] = await Promise.all([
-        fetch(`${funcUrl['site-settings']}?key=support_contact`),
-        fetch(`${funcUrl['site-settings']}?key=support_type`)
+      const [emailRes, phoneRes, methodRes] = await Promise.all([
+        fetch(`${funcUrl['site-settings']}?key=support_email`),
+        fetch(`${funcUrl['site-settings']}?key=support_phone`),
+        fetch(`${funcUrl['site-settings']}?key=phone_contact_method`)
       ]);
 
-      if (contactRes.ok) {
-        const data = await contactRes.json();
-        setSupportContact(data.setting_value || '');
+      if (emailRes.ok) {
+        const data = await emailRes.json();
+        setSupportEmail(data.setting_value || '');
       }
 
-      if (typeRes.ok) {
-        const data = await typeRes.json();
-        setSupportType(data.setting_value || 'email');
+      if (phoneRes.ok) {
+        const data = await phoneRes.json();
+        setSupportPhone(data.setting_value || '');
+      }
+
+      if (methodRes.ok) {
+        const data = await methodRes.json();
+        setPhoneContactMethod(data.setting_value || 'call');
       }
     } catch (error) {
       console.error('Ошибка загрузки настроек:', error);
@@ -84,8 +91,8 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            setting_key: 'support_contact',
-            setting_value: supportContact
+            setting_key: 'support_email',
+            setting_value: supportEmail
           })
         }),
         fetch(funcUrl['site-settings'], {
@@ -95,8 +102,19 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            setting_key: 'support_type',
-            setting_value: supportType
+            setting_key: 'support_phone',
+            setting_value: supportPhone
+          })
+        }),
+        fetch(funcUrl['site-settings'], {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            setting_key: 'phone_contact_method',
+            setting_value: phoneContactMethod
           })
         })
       ]);
@@ -271,10 +289,12 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
             <TabsContent value="support" className="space-y-6">
               <AdminSupportSettings
                 isLoadingSupport={isLoadingSupport}
-                supportType={supportType}
-                setSupportType={setSupportType}
-                supportContact={supportContact}
-                setSupportContact={setSupportContact}
+                supportEmail={supportEmail}
+                setSupportEmail={setSupportEmail}
+                supportPhone={supportPhone}
+                setSupportPhone={setSupportPhone}
+                phoneContactMethod={phoneContactMethod}
+                setPhoneContactMethod={setPhoneContactMethod}
                 isSavingSupport={isSavingSupport}
                 handleSaveSupportSettings={handleSaveSupportSettings}
               />

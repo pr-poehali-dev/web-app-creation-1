@@ -7,20 +7,24 @@ import Icon from '@/components/ui/icon';
 
 interface AdminSupportSettingsProps {
   isLoadingSupport: boolean;
-  supportType: 'email' | 'phone' | 'telegram' | 'whatsapp' | 'url';
-  setSupportType: (value: 'email' | 'phone' | 'telegram' | 'whatsapp' | 'url') => void;
-  supportContact: string;
-  setSupportContact: (value: string) => void;
+  supportEmail: string;
+  setSupportEmail: (value: string) => void;
+  supportPhone: string;
+  setSupportPhone: (value: string) => void;
+  phoneContactMethod: 'whatsapp' | 'telegram' | 'call';
+  setPhoneContactMethod: (value: 'whatsapp' | 'telegram' | 'call') => void;
   isSavingSupport: boolean;
   handleSaveSupportSettings: () => void;
 }
 
 export default function AdminSupportSettings({
   isLoadingSupport,
-  supportType,
-  setSupportType,
-  supportContact,
-  setSupportContact,
+  supportEmail,
+  setSupportEmail,
+  supportPhone,
+  setSupportPhone,
+  phoneContactMethod,
+  setPhoneContactMethod,
   isSavingSupport,
   handleSaveSupportSettings
 }: AdminSupportSettingsProps) {
@@ -29,7 +33,7 @@ export default function AdminSupportSettings({
       <CardHeader>
         <CardTitle>Настройки техподдержки</CardTitle>
         <CardDescription>
-          Укажите контакт для связи, который будет отображаться в формах входа и регистрации
+          Укажите контакты для связи, которые будут отображаться на странице поддержки и в формах
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -40,28 +44,43 @@ export default function AdminSupportSettings({
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor="support-type">Тип контакта</Label>
-              <Select value={supportType} onValueChange={(v) => setSupportType(v as typeof supportType)}>
+              <Label htmlFor="support-email">Email для связи</Label>
+              <Input
+                id="support-email"
+                type="email"
+                value={supportEmail}
+                onChange={(e) => setSupportEmail(e.target.value)}
+                placeholder="support@example.com"
+              />
+              <p className="text-sm text-muted-foreground">
+                Email для обращений пользователей
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="support-phone">Телефон горячей линии</Label>
+              <Input
+                id="support-phone"
+                value={supportPhone}
+                onChange={(e) => setSupportPhone(e.target.value)}
+                placeholder="+7 (800) 555-35-35"
+              />
+              <p className="text-sm text-muted-foreground">
+                Номер телефона для связи с поддержкой
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone-method">Способ связи по телефону</Label>
+              <Select value={phoneContactMethod} onValueChange={(v) => setPhoneContactMethod(v as typeof phoneContactMethod)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="email">
-                    <div className="flex items-center gap-2">
-                      <Icon name="Mail" className="h-4 w-4" />
-                      Email
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="phone">
+                  <SelectItem value="call">
                     <div className="flex items-center gap-2">
                       <Icon name="Phone" className="h-4 w-4" />
-                      Телефон
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="telegram">
-                    <div className="flex items-center gap-2">
-                      <Icon name="MessageCircle" className="h-4 w-4" />
-                      Telegram
+                      Звонок
                     </div>
                   </SelectItem>
                   <SelectItem value="whatsapp">
@@ -70,39 +89,16 @@ export default function AdminSupportSettings({
                       WhatsApp
                     </div>
                   </SelectItem>
-                  <SelectItem value="url">
+                  <SelectItem value="telegram">
                     <div className="flex items-center gap-2">
-                      <Icon name="ExternalLink" className="h-4 w-4" />
-                      Ссылка (URL)
+                      <Icon name="MessageCircle" className="h-4 w-4" />
+                      Telegram
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                Выберите, каким способом пользователи смогут связаться с вами
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="support-contact">Контакт</Label>
-              <Input
-                id="support-contact"
-                value={supportContact}
-                onChange={(e) => setSupportContact(e.target.value)}
-                placeholder={
-                  supportType === 'email' ? 'support@example.com' :
-                  supportType === 'phone' ? '+7 (800) 555-35-35' :
-                  supportType === 'telegram' ? '@username или https://t.me/username' :
-                  supportType === 'whatsapp' ? '+79991234567 или ссылка' :
-                  'https://example.com/support'
-                }
-              />
-              <p className="text-sm text-muted-foreground">
-                {supportType === 'email' && 'Введите email для связи'}
-                {supportType === 'phone' && 'Введите номер телефона'}
-                {supportType === 'telegram' && 'Введите username (@username) или прямую ссылку'}
-                {supportType === 'whatsapp' && 'Введите номер телефона или ссылку на чат'}
-                {supportType === 'url' && 'Введите URL страницы поддержки или формы обратной связи'}
+                Основной способ связи, который будет выбран по умолчанию
               </p>
             </div>
 
@@ -111,30 +107,31 @@ export default function AdminSupportSettings({
                 <Icon name="Info" className="h-4 w-4" />
                 Предпросмотр
               </h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Так будет выглядеть ссылка в формах:
-              </p>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Нужна помощь?</span>
-                <span className="text-primary font-medium flex items-center gap-1.5">
-                  <Icon
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2">
+                  <Icon name="Mail" className="h-4 w-4 text-primary" />
+                  <span className="text-primary font-medium">{supportEmail || 'Email не указан'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Icon 
                     name={
-                      supportType === 'email' ? 'Mail' :
-                      supportType === 'phone' ? 'Phone' :
-                      supportType === 'telegram' ? 'MessageCircle' :
-                      supportType === 'whatsapp' ? 'MessageSquare' :
-                      'ExternalLink'
+                      phoneContactMethod === 'whatsapp' ? 'MessageSquare' :
+                      phoneContactMethod === 'telegram' ? 'MessageCircle' :
+                      'Phone'
                     }
-                    className="h-3.5 w-3.5"
+                    className="h-4 w-4 text-primary" 
                   />
-                  {supportContact || 'Контакт не указан'}
-                </span>
+                  <span className="text-primary font-medium">{supportPhone || 'Телефон не указан'}</span>
+                  <span className="text-muted-foreground">
+                    ({phoneContactMethod === 'call' ? 'Звонок' : phoneContactMethod === 'whatsapp' ? 'WhatsApp' : 'Telegram'})
+                  </span>
+                </div>
               </div>
             </div>
 
             <Button 
               onClick={handleSaveSupportSettings} 
-              disabled={isSavingSupport || !supportContact.trim()}
+              disabled={isSavingSupport || !supportEmail.trim() || !supportPhone.trim()}
               className="w-full"
             >
               {isSavingSupport ? (
