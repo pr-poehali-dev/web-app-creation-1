@@ -185,7 +185,8 @@ def handler(event: dict, context) -> dict:
                 )
                 conn.commit()
                 
-                reset_link = f"https://erttp.ru/reset-password?token={token}"
+                frontend_url = os.environ.get('FRONTEND_URL', 'https://preview--web-app-creation-1.poehali.dev')
+                reset_link = f"{frontend_url}/reset-password?token={token}"
                 
                 message = f"""
 🔑 <b>Восстановление пароля</b>

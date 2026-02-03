@@ -1,19 +1,26 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import SupportContact from '@/components/auth/SupportContact';
 import funcUrl from '../../backend/func2url.json';
 
 export default function ResetPassword() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  
   const [contact, setContact] = useState('');
   const [contactError, setContactError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resetMethod, setResetMethod] = useState<'email' | 'telegram'>('email');
+  
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -24,6 +31,64 @@ export default function ResetPassword() {
     } else {
       const phoneRegex = /^\+?[0-9]{10,15}$/;
       return phoneRegex.test(contact);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+
+    if (!newPassword || !confirmPassword) {
+      setPasswordError('Заполните все поля');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('Пароль должен содержать минимум 6 символов');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Пароли не совпадают');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(funcUrl['reset-password'], {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'reset',
+          token: token,
+          newPassword: newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Успешно',
+          description: 'Пароль успешно изменён',
+        });
+        setTimeout(() => {
+          navigate('/login');
+        }, 1500);
+      } else {
+        setPasswordError(data.error || 'Не удалось изменить пароль');
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Произошла ошибка при смене пароля',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -136,6 +201,77 @@ export default function ResetPassword() {
     setContactError('');
   };
 
+  if (token) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex items-center gap-2 mb-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/login')}
+                disabled={isSubmitting}
+              >
+                <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
+                Вернуться к входу
+              </Button>
+            </div>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <Icon name="KeyRound" className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Новый пароль</CardTitle>
+            <CardDescription>
+              Введите новый пароль для вашего аккаунта
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Новый пароль</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Минимум 6 символов"
+                  value={newPassword}
+                  onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
+                  className={passwordError ? 'border-destructive' : ''}
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Подтвердите пароль</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Повторите пароль"
+                  value={confirmPassword}
+                  onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
+                  className={passwordError ? 'border-destructive' : ''}
+                  disabled={isSubmitting}
+                />
+                {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                    Изменение...
+                  </>
+                ) : (
+                  'Изменить пароль'
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
@@ -229,7 +365,6 @@ export default function ResetPassword() {
                 </Button>
               </div>
 
-              <SupportContact className="pt-2 border-t" />
             </div>
           </form>
         </CardContent>

@@ -99,7 +99,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id FROM users WHERE email = %s AND removed_at IS NULL",
+                    "SELECT id FROM t_p42562714_web_app_creation_1.users WHERE email = %s AND removed_at IS NULL",
                     (email,)
                 )
                 user = cur.fetchone()
@@ -119,7 +119,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 reset_expires = datetime.now() + timedelta(hours=1)
                 
                 cur.execute(
-                    """UPDATE users 
+                    """UPDATE t_p42562714_web_app_creation_1.users 
                        SET password_reset_token = %s, 
                            password_reset_expires = %s 
                        WHERE id = %s""",
@@ -128,8 +128,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 conn.commit()
                 
                 try:
-                    frontend_url = os.environ.get('FRONTEND_URL', 'https://rynok.poehali.app')
-                    reset_link = f"{frontend_url}/new-password?token={reset_token}"
+                    frontend_url = os.environ.get('FRONTEND_URL', 'https://preview--web-app-creation-1.poehali.dev')
+                    reset_link = f"{frontend_url}/reset-password?token={reset_token}"
                     send_reset_email(email, reset_link)
                     print(f"Reset password email sent to {email}")
                 except Exception as e:
@@ -147,7 +147,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         elif action == 'reset':
             token = body_data.get('token', '').strip()
-            new_password = body_data.get('password', '')
+            new_password = body_data.get('newPassword') or body_data.get('password', '')
             
             if not token or not new_password:
                 return {
@@ -160,7 +160,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             with conn.cursor() as cur:
                 cur.execute(
                     """SELECT id, password_reset_expires 
-                       FROM users 
+                       FROM t_p42562714_web_app_creation_1.users 
                        WHERE password_reset_token = %s AND removed_at IS NULL""",
                     (token,)
                 )
@@ -185,7 +185,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 password_hash = hash_password(new_password)
                 
                 cur.execute(
-                    """UPDATE users 
+                    """UPDATE t_p42562714_web_app_creation_1.users 
                        SET password_hash = %s, 
                            password_reset_token = NULL, 
                            password_reset_expires = NULL,
