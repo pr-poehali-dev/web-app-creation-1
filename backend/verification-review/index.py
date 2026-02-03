@@ -44,9 +44,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     headers = event.get('headers', {})
-    admin_session = headers.get('X-Admin-Session') or headers.get('x-admin-session')
+    admin_session = headers.get('x-admin-session') or headers.get('X-Admin-Session')
     
-    if admin_session != 'true':
+    if not admin_session or admin_session != 'true':
         return {
             'statusCode': 403,
             'headers': {
