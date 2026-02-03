@@ -25,7 +25,8 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     district,
     availableDistricts,
     createdAt,
-    expiryDate
+    expiryDate,
+    responsesCount
   } = request;
   
   const totalAmount = pricePerUnit * quantity;
