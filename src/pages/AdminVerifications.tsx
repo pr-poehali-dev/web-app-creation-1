@@ -55,21 +55,8 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
   const [activeTab, setActiveTab] = useState('pending');
 
   useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (!adminSession || userRole !== 'admin') {
-      toast({
-        title: 'Доступ запрещен',
-        description: 'Требуется авторизация администратора',
-        variant: 'destructive',
-      });
-      navigate('/admin');
-      return;
-    }
-    
     loadVerifications('pending');
-  }, [navigate, toast]);
+  }, []);
 
   const loadVerifications = async (status: string) => {
     try {
