@@ -159,15 +159,12 @@ export default function DocumentsDialog({
     
     setLoadingDocuments(true);
     try {
-      const jwtToken = localStorage.getItem('jwtToken');
       const response = await fetch(funcUrl['get-documents'], {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': String(selectedVerification.userId),
-          ...(jwtToken && { 'Authorization': `Bearer ${jwtToken}` }),
         },
-        credentials: 'omit'
       });
       
       if (response.ok) {

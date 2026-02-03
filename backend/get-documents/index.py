@@ -1,6 +1,6 @@
 '''
 Business: Get list of uploaded verification documents for a user
-Args: event - dict with httpMethod, headers with X-User-Id and Authorization
+Args: event - dict with httpMethod, headers with X-User-Id
       context - object with request_id attribute
 Returns: HTTP response dict with list of documents
 '''
@@ -10,9 +10,6 @@ import os
 from typing import Dict, Any
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'auth'))
-from jwt_middleware import get_user_from_request
 
 def get_db_connection():
     dsn = os.environ.get('DATABASE_URL')
@@ -29,7 +26,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id, Authorization, X-Authorization',
+                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
@@ -44,19 +41,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Access-Control-Allow-Origin': '*'
             },
             'body': json.dumps({'error': 'Method not allowed'}),
-            'isBase64Encoded': False
-        }
-    
-    auth_user = get_user_from_request(event)
-    if not auth_user:
-        return {
-            'statusCode': 401,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-                'WWW-Authenticate': 'Bearer'
-            },
-            'body': json.dumps({'error': 'Требуется авторизация'}),
             'isBase64Encoded': False
         }
     
