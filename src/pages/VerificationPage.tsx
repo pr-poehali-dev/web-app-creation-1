@@ -15,7 +15,7 @@ import LegalEntityForm from '@/components/verification/LegalEntityForm';
 import EntrepreneurForm from '@/components/verification/EntrepreneurForm';
 import IndividualForm from '@/components/verification/IndividualForm';
 import RejectedVerificationAlert from '@/components/verification/RejectedVerificationAlert';
-import SupportCard from '@/components/SupportCard';
+
 import { useToast } from '@/hooks/use-toast';
 
 export default function VerificationPage() {
@@ -392,11 +392,7 @@ export default function VerificationPage() {
         </CardContent>
       </Card>
 
-      <SupportCard 
-        variant="compact"
-        title="Нужна помощь с верификацией?"
-        className="mt-4"
-      />
+
 
       <AgreementDialog
         open={showAgreement}

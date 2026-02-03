@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { useTimezone } from '@/contexts/TimezoneContext';
-import SupportCard from '@/components/SupportCard';
+
 
 const TIMEZONE_NAMES: Record<string, string> = {
   'Asia/Yakutsk': 'UTC+9 (Якутск)',
@@ -126,10 +126,6 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t space-y-6">
-          <SupportCard 
-            title="Нужна помощь с платформой?"
-            description="Наша техподдержка готова помочь вам с любыми вопросами по работе площадки"
-          />
           <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4 md:p-6">
             <div className="space-y-3">
               <div className="flex items-start gap-3">

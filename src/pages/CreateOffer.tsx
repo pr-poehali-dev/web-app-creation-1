@@ -9,7 +9,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { DISTRICTS } from '@/data/districts';
-import SupportCard from '@/components/SupportCard';
+
 import type { Offer } from '@/types/offer';
 import { canCreateListing } from '@/utils/permissions';
 import { useCreateOfferForm } from './CreateOffer/useCreateOfferForm';
@@ -251,11 +251,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
             </div>
           </form>
 
-          <SupportCard 
-            variant="compact"
-            title="Возникли вопросы?"
-            className="mt-6"
-          />
+
         </div>
       </main>
 

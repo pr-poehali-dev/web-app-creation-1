@@ -3,7 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/icon';
 import BackButton from '@/components/BackButton';
-import SupportCard from '@/components/SupportCard';
+
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import funcUrl from '../../backend/func2url.json';
 
@@ -56,7 +56,7 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
             Поддержка
           </h1>
 
-          <SupportCard className="mb-6" />
+
 
           <div className="space-y-4 md:space-y-5">
             <div className="bg-card border rounded-lg p-4 md:p-5">
