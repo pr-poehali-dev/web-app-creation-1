@@ -16,14 +16,9 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
-def get_bot_token(conn):
-    '''Получить токен Telegram бота из настроек'''
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT bot_token FROM t_p42562714_web_app_creation_1.telegram_bot_settings WHERE is_active = TRUE LIMIT 1"
-        )
-        result = cur.fetchone()
-        return result['bot_token'] if result else None
+def get_bot_token():
+    '''Получить токен Telegram бота из переменных окружения'''
+    return os.environ.get('TELEGRAM_BOT_TOKEN')
 
 def send_telegram_message(bot_token: str, chat_id: str, text: str, parse_mode: str = 'HTML') -> bool:
     '''Отправить сообщение через Telegram Bot API'''
@@ -92,17 +87,16 @@ def handler(event: dict, context) -> dict:
                 'isBase64Encoded': False
             }
         
-        conn = get_db_connection()
-        
-        bot_token = get_bot_token(conn)
+        bot_token = get_bot_token()
         if not bot_token:
-            conn.close()
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({'error': 'Telegram bot not configured'}),
                 'isBase64Encoded': False
             }
+        
+        conn = get_db_connection()
         
         with conn.cursor() as cur:
             cur.execute(
