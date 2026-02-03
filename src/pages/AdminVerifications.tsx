@@ -74,13 +74,8 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
   const loadVerifications = async (status: string) => {
     try {
       setLoading(true);
-      const userId = localStorage.getItem('userId');
       
-      const response = await fetch(`https://functions.poehali.dev/bdff7262-3acc-4253-afcc-26ef5ef8b778?status=${status}`, {
-        headers: {
-          'X-User-Id': userId || '',
-        },
-      });
+      const response = await fetch(`https://functions.poehali.dev/bdff7262-3acc-4253-afcc-26ef5ef8b778?status=${status}`);
 
       if (!response.ok) {
         const data = await response.json();
