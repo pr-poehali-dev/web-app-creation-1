@@ -31,8 +31,8 @@ export default function ResetPassword() {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return emailRegex.test(contact);
     } else {
-      const phoneRegex = /^\+?[0-9]{10,15}$/;
-      return phoneRegex.test(contact);
+      const digitsOnly = contact.replace(/\D/g, '');
+      return digitsOnly.length >= 10 && digitsOnly.length <= 15;
     }
   };
 

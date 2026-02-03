@@ -21,8 +21,8 @@ export interface FormErrors {
 }
 
 export const validatePhone = (phone: string): boolean => {
-  const phoneRegex = /^\+?[0-9\s\-\(\)]{10,}$/;
-  return phoneRegex.test(phone);
+  const digitsOnly = phone.replace(/\D/g, '');
+  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
 };
 
 export const validateForm = (formData: FormData): { isValid: boolean; errors: FormErrors } => {
