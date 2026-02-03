@@ -205,10 +205,10 @@ export default function ResetPassword() {
 
   if (token) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="flex min-h-screen items-start justify-center bg-background px-4 pt-8">
         <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex items-center gap-2 mb-2">
+          <CardHeader className="space-y-1 text-center pb-3">
+            <div className="flex items-center gap-2 mb-1">
               <Button
                 type="button"
                 variant="ghost"
@@ -220,18 +220,18 @@ export default function ResetPassword() {
                 Вернуться к входу
               </Button>
             </div>
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Icon name="KeyRound" className="h-6 w-6 text-primary" />
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Icon name="KeyRound" className="h-5 w-5 text-primary" />
             </div>
-            <CardTitle className="text-2xl font-bold">Новый пароль</CardTitle>
-            <CardDescription>
-              Введите новый пароль для вашего аккаунта
+            <CardTitle className="text-xl font-bold">Новый пароль</CardTitle>
+            <CardDescription className="text-sm">
+              Минимум 6 символов
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handlePasswordReset} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">Новый пароль</Label>
+            <form onSubmit={handlePasswordReset} className="space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="newPassword" className="text-sm">Новый пароль</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
@@ -239,7 +239,7 @@ export default function ResetPassword() {
                     placeholder="Минимум 6 символов"
                     value={newPassword}
                     onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
-                    className={passwordError ? 'border-destructive pr-10' : 'pr-10'}
+                    className={passwordError ? 'border-destructive pr-10 h-10' : 'pr-10 h-10'}
                     disabled={isSubmitting}
                   />
                   <button
@@ -253,8 +253,8 @@ export default function ResetPassword() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Подтвердите пароль</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="confirmPassword" className="text-sm">Подтвердите пароль</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
@@ -262,7 +262,7 @@ export default function ResetPassword() {
                     placeholder="Повторите пароль"
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
-                    className={passwordError ? 'border-destructive pr-10' : 'pr-10'}
+                    className={passwordError ? 'border-destructive pr-10 h-10' : 'pr-10 h-10'}
                     disabled={isSubmitting}
                   />
                   <button
@@ -274,10 +274,10 @@ export default function ResetPassword() {
                     <Icon name={showConfirmPassword ? 'EyeOff' : 'Eye'} className="h-4 w-4" />
                   </button>
                 </div>
-                {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
+                {passwordError && <p className="text-xs text-destructive mt-1">{passwordError}</p>}
               </div>
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full h-10 mt-4" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
