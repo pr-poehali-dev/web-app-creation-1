@@ -229,18 +229,20 @@ export default function ResetPassword() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handlePasswordReset} className="space-y-3">
+            <form onSubmit={handlePasswordReset} className="space-y-3" autoComplete="off">
               <div className="space-y-1.5">
                 <Label htmlFor="newPassword" className="text-sm">Новый пароль</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
+                    name="new-password"
                     type={showNewPassword ? 'text' : 'password'}
                     placeholder="Минимум 6 символов"
                     value={newPassword}
                     onChange={(e) => { setNewPassword(e.target.value); setPasswordError(''); }}
                     className={passwordError ? 'border-destructive pr-10 h-10' : 'pr-10 h-10'}
                     disabled={isSubmitting}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -258,12 +260,14 @@ export default function ResetPassword() {
                 <div className="relative">
                   <Input
                     id="confirmPassword"
+                    name="confirm-password"
                     type={showConfirmPassword ? 'text' : 'password'}
                     placeholder="Повторите пароль"
                     value={confirmPassword}
                     onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
                     className={passwordError ? 'border-destructive pr-10 h-10' : 'pr-10 h-10'}
                     disabled={isSubmitting}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
