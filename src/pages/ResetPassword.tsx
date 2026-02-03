@@ -13,7 +13,7 @@ export default function ResetPassword() {
   const [contact, setContact] = useState('');
   const [contactError, setContactError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resetMethod, setResetMethod] = useState<'email' | 'telegram'>('telegram');
+  const [resetMethod, setResetMethod] = useState<'email' | 'telegram'>('email');
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -166,17 +166,6 @@ export default function ResetPassword() {
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant={resetMethod === 'telegram' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => { setResetMethod('telegram'); setContact(''); setContactError(''); }}
-                  disabled={isSubmitting}
-                  className="flex-1"
-                >
-                  <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
-                  Telegram
-                </Button>
-                <Button
-                  type="button"
                   variant={resetMethod === 'email' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => { setResetMethod('email'); setContact(''); setContactError(''); }}
@@ -185,6 +174,17 @@ export default function ResetPassword() {
                 >
                   <Icon name="Mail" className="mr-2 h-4 w-4" />
                   Email
+                </Button>
+                <Button
+                  type="button"
+                  variant={resetMethod === 'telegram' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => { setResetMethod('telegram'); setContact(''); setContactError(''); }}
+                  disabled={isSubmitting}
+                  className="flex-1"
+                >
+                  <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
+                  Telegram
                 </Button>
               </div>
               <div className="space-y-2">
