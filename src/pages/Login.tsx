@@ -108,8 +108,59 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
+  const formatPhoneNumber = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    if (digitsOnly.length === 0) return '';
+    
+    if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
+      const normalized = '7' + digitsOnly.slice(1);
+      return formatWithMask(normalized);
+    }
+    
+    if (digitsOnly.startsWith('7')) {
+      return formatWithMask(digitsOnly);
+    }
+    
+    if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
+      return formatWithMask('7' + digitsOnly);
+    }
+    
+    return formatWithMask(digitsOnly);
+  };
+
+  const formatWithMask = (digits: string) => {
+    if (digits.length === 0) return '';
+    
+    let formatted = '+7';
+    
+    if (digits.length > 1) {
+      formatted += ' (' + digits.substring(1, Math.min(4, digits.length));
+    }
+    if (digits.length >= 4) {
+      formatted += ') ' + digits.substring(4, Math.min(7, digits.length));
+    }
+    if (digits.length >= 7) {
+      formatted += '-' + digits.substring(7, Math.min(9, digits.length));
+    }
+    if (digits.length >= 9) {
+      formatted += '-' + digits.substring(9, 11);
+    }
+    
+    return formatted;
+  };
+
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLogin(e.target.value);
+    const value = e.target.value;
+    
+    const emailPattern = /@/;
+    if (emailPattern.test(value)) {
+      setLogin(value);
+    } else {
+      const formatted = formatPhoneNumber(value);
+      setLogin(formatted);
+    }
+    
     setLoginError('');
   };
 
