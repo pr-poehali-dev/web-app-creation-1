@@ -6,8 +6,6 @@
   "site-settings": "https://functions.poehali.dev/6c65e3c6-d621-44fc-99da-cd570027fae7",
   "verify-email": "https://functions.poehali.dev/89067558-83f6-4d9e-b40a-051841b8c42d",
   "reset-password": "https://functions.poehali.dev/a5204fac-6e56-4f50-b27e-2fd1595c6b2a",
-  "requests-public": "https://functions.poehali.dev/45ce03d3-1625-4349-a14b-6c0e036e2878",
-  "offers-public": "https://functions.poehali.dev/5eb15af8-72eb-493f-aaab-27a7afd0ecf9",
   "cleanup-old-archive": "https://functions.poehali.dev/1d2856b2-1cc1-49ce-87b4-2e8cadcc3425",
   "verify-inn": "https://functions.poehali.dev/966b73dd-99eb-4b00-aef4-ed100a06f958",
   "telegram-setup-webhook": "https://functions.poehali.dev/50d426b2-7c22-44d0-8474-b4b2f19b9a09",
