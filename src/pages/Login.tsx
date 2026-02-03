@@ -35,8 +35,9 @@ export default function Login({ onLogin }: LoginProps) {
 
   const validateLogin = (login: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    return emailRegex.test(login) || phoneRegex.test(login);
+    const digitsOnly = login.replace(/\D/g, '');
+    const isPhone = digitsOnly.length >= 10 && digitsOnly.length <= 15;
+    return emailRegex.test(login) || isPhone;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
