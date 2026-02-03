@@ -11,7 +11,7 @@ import funcUrl from '../../backend/func2url.json';
 
 import AdminGeneralSettings from '@/components/admin/AdminGeneralSettings';
 import AdminRolesManagement from '@/components/admin/AdminRolesManagement';
-import AdminSupportSettings from '@/components/admin/AdminSupportSettings';
+
 import AdminOtherTabs from '@/components/admin/AdminOtherTabs';
 
 interface AdminSettingsProps {
@@ -25,11 +25,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   const [autoModeration, setAutoModeration] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   
-  const [supportEmail, setSupportEmail] = useState('');
-  const [supportPhone, setSupportPhone] = useState('');
-  const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'telegram' | 'call'>('call');
-  const [isLoadingSupport, setIsLoadingSupport] = useState(false);
-  const [isSavingSupport, setIsSavingSupport] = useState(false);
+
   
   const [adminsList, setAdminsList] = useState<any[]>([]);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
@@ -40,97 +36,10 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   const [isSearchingUser, setIsSearchingUser] = useState(false);
 
   useEffect(() => {
-    loadSupportSettings();
     loadAdminsList();
   }, []);
 
-  const loadSupportSettings = async () => {
-    setIsLoadingSupport(true);
-    try {
-      const [emailRes, phoneRes, methodRes] = await Promise.all([
-        fetch(`${funcUrl['site-settings']}?key=support_email`),
-        fetch(`${funcUrl['site-settings']}?key=support_phone`),
-        fetch(`${funcUrl['site-settings']}?key=phone_contact_method`)
-      ]);
 
-      if (emailRes.ok) {
-        const data = await emailRes.json();
-        setSupportEmail(data.setting_value || '');
-      }
-
-      if (phoneRes.ok) {
-        const data = await phoneRes.json();
-        setSupportPhone(data.setting_value || '');
-      }
-
-      if (methodRes.ok) {
-        const data = await methodRes.json();
-        setPhoneContactMethod(data.setting_value || 'call');
-      }
-    } catch (error) {
-      console.error('Ошибка загрузки настроек:', error);
-    } finally {
-      setIsLoadingSupport(false);
-    }
-  };
-
-  const handleSaveSupportSettings = async () => {
-    const token = getJwtToken();
-    if (!token) {
-      toast.error('Требуется авторизация');
-      return;
-    }
-
-    setIsSavingSupport(true);
-    try {
-      const results = await Promise.all([
-        fetch(funcUrl['site-settings'], {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            setting_key: 'support_email',
-            setting_value: supportEmail
-          })
-        }),
-        fetch(funcUrl['site-settings'], {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            setting_key: 'support_phone',
-            setting_value: supportPhone
-          })
-        }),
-        fetch(funcUrl['site-settings'], {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            setting_key: 'phone_contact_method',
-            setting_value: phoneContactMethod
-          })
-        })
-      ]);
-
-      if (results.every(r => r.ok)) {
-        toast.success('Настройки техподдержки сохранены');
-      } else {
-        toast.error('Ошибка при сохранении настроек');
-      }
-    } catch (error) {
-      console.error('Ошибка сохранения:', error);
-      toast.error('Не удалось сохранить настройки');
-    } finally {
-      setIsSavingSupport(false);
-    }
-  };
 
   const loadAdminsList = async () => {
     setIsLoadingAdmins(true);
@@ -255,7 +164,6 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
             <TabsList>
               <TabsTrigger value="general">Общие</TabsTrigger>
               <TabsTrigger value="admins">Администраторы</TabsTrigger>
-              <TabsTrigger value="support">Техподдержка</TabsTrigger>
               <TabsTrigger value="moderation">Модерация</TabsTrigger>
               <TabsTrigger value="notifications">Уведомления</TabsTrigger>
               <TabsTrigger value="telegram">Telegram</TabsTrigger>
@@ -286,19 +194,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
               />
             </TabsContent>
 
-            <TabsContent value="support" className="space-y-6">
-              <AdminSupportSettings
-                isLoadingSupport={isLoadingSupport}
-                supportEmail={supportEmail}
-                setSupportEmail={setSupportEmail}
-                supportPhone={supportPhone}
-                setSupportPhone={setSupportPhone}
-                phoneContactMethod={phoneContactMethod}
-                setPhoneContactMethod={setPhoneContactMethod}
-                isSavingSupport={isSavingSupport}
-                handleSaveSupportSettings={handleSaveSupportSettings}
-              />
-            </TabsContent>
+
 
             <TabsContent value="moderation" className="space-y-6">
               <AdminOtherTabs

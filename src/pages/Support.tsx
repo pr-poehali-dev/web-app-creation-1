@@ -1,11 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Icon from '@/components/ui/icon';
 import BackButton from '@/components/BackButton';
-
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-import funcUrl from '../../backend/func2url.json';
 
 interface SupportProps {
   isAuthenticated: boolean;
@@ -14,46 +12,9 @@ interface SupportProps {
 
 export default function Support({ isAuthenticated, onLogout }: SupportProps) {
   useScrollToTop();
-  const [supportEmail, setSupportEmail] = useState('support@erttp.ru');
-  const [supportPhone, setSupportPhone] = useState('+7 (984) 101-73-55');
+  const supportEmail = 'doydum-invest@mail.ru';
+  const supportPhone = '+7 (984) 101-73-55';
   const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'telegram' | 'call'>('call');
-
-  useEffect(() => {
-    const fetchSupportSettings = async () => {
-      try {
-        const [emailRes, phoneRes, methodRes] = await Promise.all([
-          fetch(`${funcUrl['site-settings']}?key=support_email`),
-          fetch(`${funcUrl['site-settings']}?key=support_phone`),
-          fetch(`${funcUrl['site-settings']}?key=phone_contact_method`)
-        ]);
-
-        if (emailRes.ok) {
-          const data = await emailRes.json();
-          if (data.setting_value) {
-            setSupportEmail(data.setting_value);
-          }
-        }
-
-        if (phoneRes.ok) {
-          const data = await phoneRes.json();
-          if (data.setting_value) {
-            setSupportPhone(data.setting_value);
-          }
-        }
-
-        if (methodRes.ok) {
-          const data = await methodRes.json();
-          if (data.setting_value) {
-            setPhoneContactMethod(data.setting_value as typeof phoneContactMethod);
-          }
-        }
-      } catch (error) {
-        console.error('Ошибка загрузки настроек техподдержки:', error);
-      }
-    };
-
-    fetchSupportSettings();
-  }, []);
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
