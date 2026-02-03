@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Unauthorized access",
+      "method": "POST",
+      "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "Unauthorized"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

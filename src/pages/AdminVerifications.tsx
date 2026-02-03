@@ -53,6 +53,7 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
   const [rejectionReason, setRejectionReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('pending');
+  const [isCleaning, setIsCleaning] = useState(false);
 
   useEffect(() => {
     loadVerifications('pending');
@@ -175,6 +176,49 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
     });
   };
 
+  const handleCleanTestData = async () => {
+    if (!confirm('Вы уверены? Это удалит ВСЕ тестовые данные из системы (пользователей, заявки, объявления и т.д.). Действие необратимо!')) {
+      return;
+    }
+
+    setIsCleaning(true);
+
+    try {
+      const userId = localStorage.getItem('userId');
+      const funcUrl = 'https://functions.poehali.dev/7cf249f6-be5e-4a6a-b6bf-e6b0b3d8e45c';
+      
+      const response = await fetch(funcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': userId || '',
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Ошибка при очистке данных');
+      }
+
+      const result = await response.json();
+
+      toast({
+        title: 'Данные очищены',
+        description: `Удалено: ${result.deleted.users} пользователей, ${result.deleted.verifications} заявок, ${result.deleted.offers} предложений`,
+      });
+
+      loadVerifications(activeTab);
+    } catch (error) {
+      toast({
+        title: 'Ошибка',
+        description: error instanceof Error ? error.message : 'Не удалось очистить данные',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCleaning(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -187,10 +231,20 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
                 <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
                 Назад
               </Button>
-              <Button variant="outline" onClick={() => navigate('/admin/change-password')}>
-                <Icon name="Key" className="mr-2 h-4 w-4" />
-                Сменить пароль
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="destructive" 
+                  onClick={handleCleanTestData}
+                  disabled={isCleaning}
+                >
+                  <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                  {isCleaning ? 'Очистка...' : 'Очистить тестовые данные'}
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/admin/change-password')}>
+                  <Icon name="Key" className="mr-2 h-4 w-4" />
+                  Сменить пароль
+                </Button>
+              </div>
             </div>
             <h1 className="text-3xl font-bold">Модерация верификации</h1>
             <p className="text-muted-foreground mt-2">
