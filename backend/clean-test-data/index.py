@@ -13,7 +13,7 @@ def handler(event: dict, context) -> dict:
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id'
+                'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Session'
             },
             'body': ''
         }
@@ -25,13 +25,13 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'Method not allowed'})
         }
     
-    # Проверка прав администратора
-    user_id = event.get('headers', {}).get('X-User-Id', '')
-    if not user_id:
+    # Проверка adminSession из localStorage
+    admin_session = event.get('headers', {}).get('X-Admin-Session', '')
+    if admin_session != 'true':
         return {
-            'statusCode': 401,
+            'statusCode': 403,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Unauthorized'})
+            'body': json.dumps({'error': 'Access denied. Admin session required.'})
         }
     
     dsn = os.environ.get('DATABASE_URL')
@@ -41,16 +41,6 @@ def handler(event: dict, context) -> dict:
     cursor = conn.cursor()
     
     try:
-        # Проверка роли пользователя
-        cursor.execute(f"SELECT role FROM {schema}.users WHERE id = %s", (user_id,))
-        result = cursor.fetchone()
-        
-        if not result or result[0] != 'admin':
-            return {
-                'statusCode': 403,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'error': 'Access denied. Admin role required.'})
-            }
         
         # Удаление всех данных (в правильном порядке из-за внешних ключей)
         cursor.execute(f"DELETE FROM {schema}.verification_documents")

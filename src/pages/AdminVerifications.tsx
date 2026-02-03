@@ -184,14 +184,14 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
     setIsCleaning(true);
 
     try {
-      const userId = localStorage.getItem('userId');
+      const adminSession = localStorage.getItem('adminSession');
       const funcUrl = 'https://functions.poehali.dev/7cf249f6-be5e-4a6a-b6bf-e6b0b3d8e45c';
       
       const response = await fetch(funcUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': userId || '',
+          'X-Admin-Session': adminSession || '',
         },
       });
 

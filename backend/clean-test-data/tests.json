@@ -4,9 +4,9 @@
       "name": "Unauthorized access",
       "method": "POST",
       "path": "/",
-      "expectedStatus": 401,
+      "expectedStatus": 403,
       "expectedBody": {
-        "error": "Unauthorized"
+        "error": "Access denied. Admin session required."
       },
       "bodyMatcher": "partial"
     }
