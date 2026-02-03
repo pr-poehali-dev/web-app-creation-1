@@ -442,13 +442,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
+                normalized_input = normalize_phone(login_id)
+                
                 with conn.cursor() as cur:
                     cur.execute(
                         """SELECT id, email, phone, password_hash, first_name, last_name, middle_name, 
                            user_type, is_active, company_name, inn, ogrnip, ogrn, 
                            position, director_name, legal_address, created_at, role, is_root_admin, locked_until 
-                           FROM users WHERE (email = %s OR phone = %s) AND removed_at IS NULL""",
-                        (login_id, login_id)
+                           FROM users 
+                           WHERE email = %s 
+                              OR REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = %s 
+                              OR (
+                                  CASE 
+                                      WHEN REGEXP_REPLACE(phone, '[^0-9]', '', 'g') ~ '^8[0-9]{10}$' 
+                                      THEN '7' || SUBSTRING(REGEXP_REPLACE(phone, '[^0-9]', '', 'g') FROM 2)
+                                      ELSE REGEXP_REPLACE(phone, '[^0-9]', '', 'g')
+                                  END
+                              ) = %s
+                           AND removed_at IS NULL""",
+                        (login_id, login_id, normalized_input)
                     )
                     user = cur.fetchone()
                 
