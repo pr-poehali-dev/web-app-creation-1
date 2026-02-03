@@ -117,13 +117,13 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
     setIsSubmitting(true);
 
     try {
-      const userId = localStorage.getItem('userId');
+      const adminSession = localStorage.getItem('adminSession');
       
       const response = await fetch('https://functions.poehali.dev/6054aed7-d9a1-4b6c-a98d-5a54e058be0b', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': userId || '',
+          'X-Admin-Session': adminSession || '',
         },
         body: JSON.stringify({
           verificationId: selectedVerification.id,
