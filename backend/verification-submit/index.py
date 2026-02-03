@@ -236,16 +236,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 email_payload['utilityBillUrl'] = body_data.get('utilityBillUrl', '')
                 email_payload['inn'] = body_data.get('inn', '')
             
-            try:
-                email_data = json.dumps(email_payload).encode('utf-8')
-                email_req = urllib.request.Request(
-                    'https://functions.poehali.dev/42f9ef7b-b116-430a-ac8a-681742e10551',
-                    data=email_data,
-                    headers={'Content-Type': 'application/json'}
-                )
-                urllib.request.urlopen(email_req, timeout=5)
-            except (urllib.error.URLError, Exception):
-                pass
+            # NOTE: Email-уведомления отключены (функция send-verification-email удалена)
+            # Если нужны уведомления - используйте Telegram или пуш-уведомления
+            # try:
+            #     email_data = json.dumps(email_payload).encode('utf-8')
+            #     email_req = urllib.request.Request(
+            #         'https://functions.poehali.dev/42f9ef7b-b116-430a-ac8a-681742e10551',
+            #         data=email_data,
+            #         headers={'Content-Type': 'application/json'}
+            #     )
+            #     urllib.request.urlopen(email_req, timeout=5)
+            # except (urllib.error.URLError, Exception):
+            #     pass
         
         return {
             'statusCode': 200,

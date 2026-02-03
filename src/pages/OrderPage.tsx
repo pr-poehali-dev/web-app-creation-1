@@ -220,19 +220,6 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         url: `/my-orders?id=${result.id}`
       };
 
-      // Отправляем Email уведомление продавцу
-      try {
-        await fetch('https://functions.poehali.dev/a2f5cfb9-ceec-46de-b675-2174dc5241a7', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(notificationData)
-        });
-      } catch (error) {
-        console.error('Ошибка отправки Email уведомления:', error);
-      }
-
       // Отправляем Telegram уведомление продавцу
       try {
         await fetch('https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f', {
