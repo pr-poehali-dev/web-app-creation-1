@@ -198,17 +198,34 @@ export function useOrdersData(
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isAuthenticated, loadOrders]);
 
-  // Периодическое автообновление каждые 30 секунд
+  // Периодическое автообновление каждые 3 секунды для очень быстрой синхронизации встречных предложений
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const intervalId = setInterval(() => {
       console.log('[useOrdersData] Периодическое обновление заказов');
       loadOrders(false);
-    }, 30000); // 30 секунд
+    }, 3000); // 3 секунды - очень быстрое обновление для встречных предложений
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
+
+  // Дополнительное быстрое обновление при открытом чате (каждую секунду)
+  useEffect(() => {
+    if (!isAuthenticated || !isChatOpen || !selectedOrder) return;
+
+    const fastIntervalId = setInterval(async () => {
+      console.log('[useOrdersData] Быстрое обновление открытого заказа');
+      try {
+        const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+        setSelectedOrder(mapOrderData(updatedOrderData));
+      } catch (error) {
+        console.error('[useOrdersData] Ошибка быстрого обновления:', error);
+      }
+    }, 1000); // 1 секунда - мгновенное обновление для активного заказа
+
+    return () => clearInterval(fastIntervalId);
+  }, [isAuthenticated, isChatOpen, selectedOrder?.id, mapOrderData]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
@@ -341,13 +358,15 @@ export function useOrdersData(
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
       });
 
+      // НЕМЕДЛЕННО обновляем данные после отправки встречного предложения
       notifyOrderUpdated(selectedOrder.id);
-      // Обновляем список заказов для синхронизации с сервером
-      await loadOrders(false);
       
       // Получаем обновлённый заказ напрямую из API и маппим его
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
       setSelectedOrder(mapOrderData(updatedOrderData));
+      
+      // Обновляем список заказов для синхронизации с сервером
+      await loadOrders(false);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
