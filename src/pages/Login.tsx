@@ -165,24 +165,8 @@ export default function Login({ onLogin }: LoginProps) {
     // Форматируем телефон
     const formatted = formatPhoneNumber(value);
     
-    // Если форматирование вернуло только "+7" - очищаем поле
-    if (formatted === '+7') {
-      setLogin('');
-      setLoginError('');
-      return;
-    }
-    
     setLogin(formatted);
     setLoginError('');
-  };
-
-  const handleLoginKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // При Backspace, если в поле только "+7" или меньше - очищаем полностью
-    if (e.key === 'Backspace' && login.length <= 2) {
-      e.preventDefault();
-      setLogin('');
-      setLoginError('');
-    }
   };
 
   return (
@@ -219,7 +203,6 @@ export default function Login({ onLogin }: LoginProps) {
                   placeholder="+79991234567 или example@company.com"
                   value={login}
                   onChange={handleLoginChange}
-                  onKeyDown={handleLoginKeyDown}
                   autoComplete="username"
                   className={loginError ? 'border-destructive pr-10' : 'pr-10'}
                 />
