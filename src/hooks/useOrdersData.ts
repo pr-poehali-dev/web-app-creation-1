@@ -161,46 +161,14 @@ export function useOrdersData(
     }
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
-  // Храним предыдущие значения для сравнения
-  const prevSelectedOrderRef = useRef<{
-    status?: string;
-    counterPricePerUnit?: number;
-    buyerAcceptedCounter?: boolean;
-    counterOfferMessage?: string;
-  }>({});
-
   // Синхронизируем selectedOrder с актуальными данными из orders
+  // НО: Когда модальное окно открыто, быстрое обновление управляет данными
   useEffect(() => {
-    if (selectedOrder && isChatOpen) {
+    if (selectedOrder && !isChatOpen) {
       const actualOrder = orders.find(o => o.id === selectedOrder.id);
-      if (actualOrder) {
-        const prev = prevSelectedOrderRef.current;
-        const normalizeEmpty = (val: any) => val || '';
-        
-        // Проверяем только критичные изменения
-        const hasStatusChange = prev.status !== undefined && actualOrder.status !== prev.status;
-        const hasCounterChange = prev.counterPricePerUnit !== undefined && actualOrder.counterPricePerUnit !== prev.counterPricePerUnit;
-        const hasBuyerAcceptChange = prev.buyerAcceptedCounter !== undefined && actualOrder.buyerAcceptedCounter !== prev.buyerAcceptedCounter;
-        const hasCounterMessage = prev.counterOfferMessage !== undefined && normalizeEmpty(actualOrder.counterOfferMessage) !== normalizeEmpty(prev.counterOfferMessage);
-        
-        // Обновляем ТОЛЬКО если есть важные изменения
-        if (hasStatusChange || hasCounterChange || hasBuyerAcceptChange || hasCounterMessage) {
-          console.log('[useOrdersData] Обновляем selectedOrder (важные изменения):', {
-            hasStatusChange,
-            hasCounterChange,
-            hasBuyerAcceptChange,
-            hasCounterMessage
-          });
-          setSelectedOrder(actualOrder);
-        }
-        
-        // Сохраняем текущие значения для следующего сравнения
-        prevSelectedOrderRef.current = {
-          status: actualOrder.status,
-          counterPricePerUnit: actualOrder.counterPricePerUnit,
-          buyerAcceptedCounter: actualOrder.buyerAcceptedCounter,
-          counterOfferMessage: actualOrder.counterOfferMessage,
-        };
+      if (actualOrder && JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
+        console.log('[useOrdersData] Синхронизируем selectedOrder с orders (окно закрыто)');
+        setSelectedOrder(actualOrder);
       }
     }
   }, [orders, selectedOrder?.id, isChatOpen]);
@@ -240,16 +208,9 @@ export function useOrdersData(
         const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
         const mappedOrder = mapOrderData(updatedOrderData);
         
-        // Проверяем критичные изменения перед обновлением
-        const normalizeEmpty = (val: any) => val || '';
-        const hasStatusChange = mappedOrder.status !== selectedOrder.status;
-        const hasCounterChange = mappedOrder.counterPricePerUnit !== selectedOrder.counterPricePerUnit;
-        const hasBuyerAcceptChange = mappedOrder.buyerAcceptedCounter !== selectedOrder.buyerAcceptedCounter;
-        const hasCounterMessage = normalizeEmpty(mappedOrder.counterOfferMessage) !== normalizeEmpty(selectedOrder.counterOfferMessage);
-        
-        // Обновляем только при реальных изменениях
-        if (hasStatusChange || hasCounterChange || hasBuyerAcceptChange || hasCounterMessage) {
-          console.log('[useOrdersData] Быстрое обновление: найдены изменения, обновляем selectedOrder');
+        // Обновляем только если данные действительно изменились
+        if (JSON.stringify(mappedOrder) !== JSON.stringify(selectedOrder)) {
+          console.log('[useOrdersData] Быстрое обновление: данные изменились');
           setSelectedOrder(mappedOrder);
         }
       } catch (error) {
@@ -258,7 +219,7 @@ export function useOrdersData(
     }, 1000); // 1 секунда - мгновенное обновление для активного заказа
 
     return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrder]);
+  }, [isAuthenticated, isChatOpen, selectedOrder?.id]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
