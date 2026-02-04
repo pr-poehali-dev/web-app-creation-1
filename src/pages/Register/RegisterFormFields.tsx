@@ -17,6 +17,43 @@ interface RegisterFormFieldsProps {
   isFetchingCompany?: boolean;
 }
 
+const formatPhoneNumber = (value: string) => {
+  const digitsOnly = value.replace(/\D/g, '');
+  
+  if (digitsOnly.length === 0) return '';
+  
+  let normalizedDigits = digitsOnly;
+  if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
+    normalizedDigits = '7' + digitsOnly.slice(1);
+  } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
+    normalizedDigits = '7' + digitsOnly;
+  }
+  
+  return formatWithMask(normalizedDigits);
+};
+
+const formatWithMask = (digits: string) => {
+  if (digits.length === 0) return '';
+  if (digits.length === 1 && digits === '7') return '';
+  
+  let formatted = '+7';
+  
+  if (digits.length > 1) {
+    formatted += ' (' + digits.substring(1, Math.min(4, digits.length));
+  }
+  if (digits.length >= 4) {
+    formatted += ') ' + digits.substring(4, Math.min(7, digits.length));
+  }
+  if (digits.length >= 7) {
+    formatted += '-' + digits.substring(7, Math.min(9, digits.length));
+  }
+  if (digits.length >= 9) {
+    formatted += '-' + digits.substring(9, 11);
+  }
+  
+  return formatted;
+};
+
 export default function RegisterFormFields({
   formData,
   errors,
@@ -36,7 +73,7 @@ export default function RegisterFormFields({
       {formData.userType === 'legal-entity' ? (
         <>
           <div className="space-y-2">
-            <Label htmlFor="companyName">Полное наименование организации</Label>
+            <Label htmlFor="companyName">Полное наименование организации <span className="text-destructive">*</span></Label>
             <Input
               id="companyName"
               value={formData.companyName}
@@ -48,7 +85,7 @@ export default function RegisterFormFields({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="inn">ИНН (10 цифр)</Label>
+            <Label htmlFor="inn">ИНН (10 цифр) <span className="text-destructive">*</span></Label>
             <div className="flex gap-2">
               <Input
                 id="inn"
@@ -87,7 +124,7 @@ export default function RegisterFormFields({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ogrnLegal">ОГРН (13 цифр)</Label>
+            <Label htmlFor="ogrnLegal">ОГРН (13 цифр) <span className="text-destructive">*</span></Label>
             <Input
               id="ogrnLegal"
               value={formData.ogrnLegal}
@@ -100,7 +137,7 @@ export default function RegisterFormFields({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="directorName">ФИО руководителя</Label>
+            <Label htmlFor="directorName">ФИО руководителя <span className="text-destructive">*</span></Label>
             <Input
               id="directorName"
               value={formData.directorName}
@@ -112,7 +149,7 @@ export default function RegisterFormFields({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="legalAddress">Юридический адрес</Label>
+            <Label htmlFor="legalAddress">Юридический адрес <span className="text-destructive">*</span></Label>
             <Input
               id="legalAddress"
               value={formData.legalAddress}
@@ -127,7 +164,7 @@ export default function RegisterFormFields({
             <h3 className="text-sm font-medium mb-4">Контактное лицо</h3>
             
             <div className="space-y-2">
-              <Label htmlFor="lastName">Фамилия</Label>
+              <Label htmlFor="lastName">Фамилия <span className="text-destructive">*</span></Label>
               <Input
                 id="lastName"
                 value={formData.lastName}
@@ -140,7 +177,7 @@ export default function RegisterFormFields({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="firstName">Имя</Label>
+              <Label htmlFor="firstName">Имя <span className="text-destructive">*</span></Label>
               <Input
                 id="firstName"
                 value={formData.firstName}
@@ -182,7 +219,7 @@ export default function RegisterFormFields({
       ) : (
         <>
           <div className="space-y-2">
-            <Label htmlFor="lastName">Фамилия</Label>
+            <Label htmlFor="lastName">Фамилия <span className="text-destructive">*</span></Label>
             <Input
               id="lastName"
               value={formData.lastName}
@@ -194,7 +231,7 @@ export default function RegisterFormFields({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="firstName">Имя</Label>
+            <Label htmlFor="firstName">Имя <span className="text-destructive">*</span></Label>
             <Input
               id="firstName"
               value={formData.firstName}
@@ -219,7 +256,7 @@ export default function RegisterFormFields({
 
           {(formData.userType === 'self-employed' || formData.userType === 'entrepreneur') && (
             <div className="space-y-2">
-              <Label htmlFor="inn">ИНН (12 цифр)</Label>
+              <Label htmlFor="inn">ИНН (12 цифр) <span className="text-destructive">*</span></Label>
               <Input
                 id="inn"
                 value={formData.inn}
@@ -234,7 +271,7 @@ export default function RegisterFormFields({
 
           {formData.userType === 'entrepreneur' && (
             <div className="space-y-2">
-              <Label htmlFor="ogrnip">ОГРНИП (15 цифр)</Label>
+              <Label htmlFor="ogrnip">ОГРНИП (15 цифр) <span className="text-destructive">*</span></Label>
               <Input
                 id="ogrnip"
                 value={formData.ogrnip}
@@ -250,13 +287,16 @@ export default function RegisterFormFields({
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Телефон</Label>
+        <Label htmlFor="phone">Телефон <span className="text-destructive">*</span></Label>
         <Input
           id="phone"
           type="tel"
           placeholder="+7 (___) ___-__-__"
           value={formData.phone}
-          onChange={(e) => onInputChange('phone', e.target.value)}
+          onChange={(e) => {
+            const formatted = formatPhoneNumber(e.target.value);
+            onInputChange('phone', formatted);
+          }}
           className={errors.phone ? 'border-destructive' : ''}
           disabled={isSubmitting}
         />
@@ -264,7 +304,9 @@ export default function RegisterFormFields({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">
+          Email {formData.userType !== 'individual' && <span className="text-destructive">*</span>}
+        </Label>
         <Input
           id="email"
           type="email"
@@ -277,7 +319,7 @@ export default function RegisterFormFields({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">Пароль</Label>
+        <Label htmlFor="password">Пароль <span className="text-destructive">*</span></Label>
         <div className="relative">
           <Input
             id="password"
@@ -303,7 +345,7 @@ export default function RegisterFormFields({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Подтвердите пароль</Label>
+        <Label htmlFor="confirmPassword">Подтвердите пароль <span className="text-destructive">*</span></Label>
         <div className="relative">
           <Input
             id="confirmPassword"

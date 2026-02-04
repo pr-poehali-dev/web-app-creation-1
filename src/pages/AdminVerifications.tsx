@@ -55,31 +55,15 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
   const [activeTab, setActiveTab] = useState('pending');
 
   useEffect(() => {
-    const adminSession = localStorage.getItem('adminSession');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (!adminSession || userRole !== 'admin') {
-      toast({
-        title: 'Доступ запрещен',
-        description: 'Требуется авторизация администратора',
-        variant: 'destructive',
-      });
-      navigate('/admin');
-      return;
-    }
-    
     loadVerifications('pending');
-  }, [navigate, toast]);
+  }, []);
 
   const loadVerifications = async (status: string) => {
     try {
       setLoading(true);
-      const userId = localStorage.getItem('userId');
       
       const response = await fetch(`https://functions.poehali.dev/bdff7262-3acc-4253-afcc-26ef5ef8b778?status=${status}`, {
-        headers: {
-          'X-User-Id': userId || '',
-        },
+        credentials: 'omit'
       });
 
       if (!response.ok) {
@@ -132,13 +116,13 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
     setIsSubmitting(true);
 
     try {
-      const userId = localStorage.getItem('userId');
+      const adminSession = localStorage.getItem('adminSession');
       
       const response = await fetch('https://functions.poehali.dev/6054aed7-d9a1-4b6c-a98d-5a54e058be0b', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': userId || '',
+          'X-Admin-Session': adminSession || '',
         },
         body: JSON.stringify({
           verificationId: selectedVerification.id,
@@ -190,6 +174,8 @@ export default function AdminVerifications({ isAuthenticated, onLogout }: AdminV
       minute: '2-digit',
     });
   };
+
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

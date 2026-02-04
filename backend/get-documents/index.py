@@ -49,12 +49,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     if not user_id:
         return {
-            'statusCode': 401,
+            'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': 'Unauthorized'}),
+            'body': json.dumps({'documents': []}),
             'isBase64Encoded': False
         }
     

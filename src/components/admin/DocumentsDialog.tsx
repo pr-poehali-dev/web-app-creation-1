@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import JSZip from 'jszip';
+import funcUrl from '../../../backend/func2url.json';
 
 interface Verification {
   id: number;
@@ -158,8 +159,10 @@ export default function DocumentsDialog({
     
     setLoadingDocuments(true);
     try {
-      const response = await fetch('https://functions.poehali.dev/7a553048-1de4-438d-9830-675770bf025b', {
+      const response = await fetch(funcUrl['get-documents'], {
+        method: 'GET',
         headers: {
+          'Content-Type': 'application/json',
           'X-User-Id': String(selectedVerification.userId),
         },
       });
