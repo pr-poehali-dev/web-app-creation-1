@@ -114,24 +114,19 @@ export default function Login({ onLogin }: LoginProps) {
     
     if (digitsOnly.length === 0) return '';
     
+    let normalizedDigits = digitsOnly;
     if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
-      const normalized = '7' + digitsOnly.slice(1);
-      return formatWithMask(normalized);
+      normalizedDigits = '7' + digitsOnly.slice(1);
+    } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
+      normalizedDigits = '7' + digitsOnly;
     }
     
-    if (digitsOnly.startsWith('7')) {
-      return formatWithMask(digitsOnly);
-    }
-    
-    if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
-      return formatWithMask('7' + digitsOnly);
-    }
-    
-    return formatWithMask(digitsOnly);
+    return formatWithMask(normalizedDigits);
   };
 
   const formatWithMask = (digits: string) => {
     if (digits.length === 0) return '';
+    if (digits.length === 1 && digits === '7') return '';
     
     let formatted = '+7';
     
