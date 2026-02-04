@@ -238,37 +238,14 @@ export function useOrdersData(
       console.log('[useOrdersData] Быстрое обновление открытого заказа');
       try {
         const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-        const mappedOrder = mapOrderData(updatedOrderData);
-        
-        // Применяем ту же логику проверки изменений
-        const prev = prevSelectedOrderRef.current;
-        const normalizeEmpty = (val: any) => val || '';
-        
-        const hasStatusChange = prev.status !== undefined && mappedOrder.status !== prev.status;
-        const hasCounterChange = prev.counterPricePerUnit !== undefined && mappedOrder.counterPricePerUnit !== prev.counterPricePerUnit;
-        const hasBuyerAcceptChange = prev.buyerAcceptedCounter !== undefined && mappedOrder.buyerAcceptedCounter !== prev.buyerAcceptedCounter;
-        const hasCounterMessage = prev.counterOfferMessage !== undefined && normalizeEmpty(mappedOrder.counterOfferMessage) !== normalizeEmpty(prev.counterOfferMessage);
-        
-        // Обновляем ТОЛЬКО если есть важные изменения
-        if (hasStatusChange || hasCounterChange || hasBuyerAcceptChange || hasCounterMessage) {
-          console.log('[useOrdersData] Быстрое обновление: найдены важные изменения');
-          setSelectedOrder(mappedOrder);
-          
-          // Обновляем ref
-          prevSelectedOrderRef.current = {
-            status: mappedOrder.status,
-            counterPricePerUnit: mappedOrder.counterPricePerUnit,
-            buyerAcceptedCounter: mappedOrder.buyerAcceptedCounter,
-            counterOfferMessage: mappedOrder.counterOfferMessage,
-          };
-        }
+        setSelectedOrder(mapOrderData(updatedOrderData));
       } catch (error) {
         console.error('[useOrdersData] Ошибка быстрого обновления:', error);
       }
     }, 1000); // 1 секунда - мгновенное обновление для активного заказа
 
     return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrder?.id]);
+  }, [isAuthenticated, isChatOpen, selectedOrder?.id, mapOrderData]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
