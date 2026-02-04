@@ -122,6 +122,20 @@ export function useOrdersData(
       
       const mappedOrders = response.orders.map(mapOrderData);
       
+      // Логируем встречные цены для отладки
+      const ordersWithCounter = mappedOrders.filter((o: Order) => o.counterPricePerUnit);
+      if (ordersWithCounter.length > 0) {
+        console.log('[loadOrders] Заказы со встречными ценами:', ordersWithCounter.map((o: Order) => ({
+          id: o.id,
+          title: o.offerTitle,
+          counterPrice: o.counterPricePerUnit,
+          counterTotal: o.counterTotalAmount,
+          counterBy: o.counterOfferedBy,
+          counterAt: o.counterOfferedAt,
+          hasUnread: o.hasUnreadCounterOffer
+        })));
+      }
+      
       setOrders(mappedOrders);
       
       if (isInitialLoad) {
@@ -239,15 +253,22 @@ export function useOrdersData(
         
         // Обновляем только если данные действительно изменились
         if (JSON.stringify(mappedOrder) !== JSON.stringify(selectedOrder)) {
-          console.log('[useOrdersData] Быстрое обновление: данные изменились');
+          console.log('[useOrdersData] Быстрое обновление: данные изменились', {
+            counterPrice: mappedOrder.counterPricePerUnit,
+            counterTotal: mappedOrder.counterTotalAmount,
+            prevCounterPrice: selectedOrder.counterPricePerUnit,
+            prevCounterTotal: selectedOrder.counterTotalAmount
+          });
           
           // Обновляем selectedOrder
           setSelectedOrder(mappedOrder);
           
           // Также обновляем этот заказ в массиве orders для обновления карточки
-          setOrders(prevOrders => 
-            prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o)
-          );
+          setOrders(prevOrders => {
+            const updated = prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o);
+            console.log('[useOrdersData] Обновлён заказ в массиве orders');
+            return updated;
+          });
         }
       } catch (error) {
         console.error('[useOrdersData] Ошибка быстрого обновления:', error);
