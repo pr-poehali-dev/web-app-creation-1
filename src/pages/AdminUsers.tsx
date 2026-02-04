@@ -37,6 +37,12 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
   const [blockDuration, setBlockDuration] = useState<number>(0);
 
   useEffect(() => {
+    // Проверяем флаг успешного удаления
+    const deleteSuccess = sessionStorage.getItem('userDeleteSuccess');
+    if (deleteSuccess) {
+      toast.success('Пользователь удален');
+      sessionStorage.removeItem('userDeleteSuccess');
+    }
     fetchUsers();
   }, [searchQuery, filterStatus, filterType]);
 
@@ -122,7 +128,8 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       const data = await response.json();
       
       if (response.ok && data.success) {
-        toast.success('Пользователь успешно удален');
+        // Сохраняем флаг успешного удаления перед перезагрузкой
+        sessionStorage.setItem('userDeleteSuccess', 'true');
         // Принудительно перезагружаем страницу
         window.location.reload();
       } else {
