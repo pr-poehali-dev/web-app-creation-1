@@ -28,16 +28,29 @@ export default function EditOfferOrderModal({
       order={selectedOrder}
       onCounterOffer={async (price, message) => {
         try {
+          // Блокируем мигание модального окна на 1 секунду
+          const now = Date.now();
+          const lastUpdate = (window as any).__lastOrderUpdate || 0;
+          (window as any).__lastOrderUpdate = now;
+
           await ordersAPI.updateOrder(selectedOrder.id, { 
             counterPrice: price,
             counterMessage: message 
           });
+          
+          // Ждём 100мс чтобы backend обновил данные
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Триггерим обновление через dataSync (это вызовет loadData через подписку)
           notifyOrderUpdated(selectedOrder.id);
+          
           toast({
             title: 'Встречное предложение отправлено',
             description: 'Покупатель получит уведомление',
           });
-          onDataReload();
+          
+          // НЕ вызываем onDataReload() - это вызовет двойное обновление!
+          // Обновление произойдёт автоматически через подписку dataSync.subscribe('order_updated')
         } catch (error) {
           toast({
             title: 'Ошибка',
@@ -48,16 +61,22 @@ export default function EditOfferOrderModal({
       }}
       onAcceptCounter={async () => {
         try {
+          (window as any).__lastOrderUpdate = Date.now();
+          
           await ordersAPI.updateOrder(selectedOrder.id, { 
             acceptCounter: true,
             status: 'accepted'
           });
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
           notifyOrderUpdated(selectedOrder.id);
+          
           toast({
             title: 'Встречное предложение принято',
             description: 'Заказ переведён в статус "Принято"',
           });
-          onDataReload();
+          
+          // НЕ вызываем onDataReload() - обновление через dataSync
         } catch (error) {
           toast({
             title: 'Ошибка',
@@ -68,14 +87,20 @@ export default function EditOfferOrderModal({
       }}
       onCancelOrder={async () => {
         try {
+          (window as any).__lastOrderUpdate = Date.now();
+          
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
           notifyOrderUpdated(selectedOrder.id);
+          
           toast({
             title: 'Заказ отменён',
             description: 'Заказ успешно отменён',
           });
+          
           onClose();
-          onDataReload();
+          // НЕ вызываем onDataReload()
         } catch (error) {
           toast({
             title: 'Ошибка',
@@ -86,14 +111,20 @@ export default function EditOfferOrderModal({
       }}
       onCompleteOrder={async () => {
         try {
+          (window as any).__lastOrderUpdate = Date.now();
+          
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
           notifyOrderUpdated(selectedOrder.id);
+          
           toast({
             title: 'Заказ завершён',
             description: 'Заказ успешно завершён',
           });
+          
           onClose();
-          onDataReload();
+          // НЕ вызываем onDataReload()
         } catch (error) {
           toast({
             title: 'Ошибка',

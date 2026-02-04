@@ -190,6 +190,42 @@ export function notifyOrderAccepted(
   }
 }
 
+export function notifyCounterOffer(
+  recipientId: string,
+  counterPrice: number,
+  offerTitle: string,
+  orderId: string
+): void {
+  addNotification(
+    recipientId,
+    'order',
+    '💰 Встречное предложение',
+    `Получено встречное предложение по "${offerTitle}": ${counterPrice.toLocaleString('ru-RU')} ₽ за единицу`,
+    `/my-orders?id=${orderId}`
+  );
+
+  if ('Notification' in window && Notification.permission === 'granted') {
+    // Проверяем, что текущий пользователь - это получатель
+    const currentUserStr = localStorage.getItem('marketplace_session');
+    if (currentUserStr) {
+      try {
+        const currentUser = JSON.parse(currentUserStr);
+        if (currentUser.id?.toString() === recipientId) {
+          new Notification('Встречное предложение', {
+            body: `${counterPrice.toLocaleString('ru-RU')} ₽ за единицу по "${offerTitle}"`,
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+            tag: `counter-${orderId}`,
+            requireInteraction: true,
+          });
+        }
+      } catch (e) {
+        console.error('Error checking user for notification:', e);
+      }
+    }
+  }
+}
+
 export function notifyNewMessage(
   recipientId: string,
   senderName: string,

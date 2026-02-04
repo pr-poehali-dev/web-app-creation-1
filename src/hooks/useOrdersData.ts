@@ -138,15 +138,20 @@ export function useOrdersData(
     loadOrders(true);
 
     // Подписываемся на обновления заказов
-    const unsubscribe = dataSync.subscribe('order_updated', () => {
+    const unsubscribe = dataSync.subscribe('order_updated', (orderId?: string) => {
       console.log('[useOrdersData] Получено событие order_updated, обновляем заказы');
       
-      // Показываем браузерное уведомление при обновлении заказов
-      if (BrowserNotify.getNotificationPermission() === 'granted') {
-        BrowserNotify.showBrowserNotification({
-          title: 'Обновление заказа',
-          body: 'Статус одного из ваших заказов изменился',
-        });
+      // Показываем браузерное уведомление если разрешено
+      if ('Notification' in window && Notification.permission === 'granted') {
+        // Проверяем что страница не в фокусе (чтобы не мешать работе)
+        if (document.hidden) {
+          new Notification('Обновление заказа', {
+            body: 'Получено обновление по одному из ваших заказов',
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
+            tag: 'order-update',
+          });
+        }
       }
       
       loadOrders(false);

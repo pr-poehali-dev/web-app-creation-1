@@ -68,6 +68,39 @@ export default function EditOffer() {
     };
   }, [isAuthenticated, id]);
 
+  // Обновляем selectedOrder когда orders меняются (защита от мигания)
+  useEffect(() => {
+    if (!selectedOrder) return;
+    
+    // Проверяем защиту от мигания
+    const lastUpdate = (window as any).__lastOrderUpdate || 0;
+    const now = Date.now();
+    const timeSinceUpdate = now - lastUpdate;
+    
+    // Если обновление было меньше 1 секунды назад - пропускаем
+    if (timeSinceUpdate < 1000) {
+      console.log(`[EditOffer] Пропускаем обновление selectedOrder (прошло ${timeSinceUpdate}мс)`);
+      return;
+    }
+    
+    // Ищем обновленную версию выбранного заказа
+    const updatedOrder = orders.find(o => o.id === selectedOrder.id);
+    if (!updatedOrder) return;
+    
+    // Проверяем изменились ли важные поля
+    const hasChanges = (
+      updatedOrder.counterPricePerUnit !== selectedOrder.counterPricePerUnit ||
+      updatedOrder.counterOfferedBy !== selectedOrder.counterOfferedBy ||
+      updatedOrder.status !== selectedOrder.status ||
+      updatedOrder.quantity !== selectedOrder.quantity
+    );
+    
+    if (hasChanges) {
+      console.log('[EditOffer] Обновляем selectedOrder с новыми данными');
+      setSelectedOrder(updatedOrder);
+    }
+  }, [orders, selectedOrder]);
+
   const loadData = async () => {
     if (!id) return;
     
