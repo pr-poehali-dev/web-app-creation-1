@@ -118,13 +118,19 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       
       const data = await response.json();
       
-      setShowDeleteDialog(false);
-      setSelectedUser(null);
-      
       if (response.ok && data.success) {
+        // Закрываем диалог
+        setShowDeleteDialog(false);
+        setSelectedUser(null);
+        
+        // Показываем сообщение
         toast.success('Пользователь успешно удален');
-        await fetchUsers();
+        
+        // Обновляем список пользователей
+        fetchUsers();
       } else {
+        setShowDeleteDialog(false);
+        setSelectedUser(null);
         toast.error(data?.error || 'Ошибка при удалении пользователя');
       }
     } catch (error) {
