@@ -149,8 +149,11 @@ export default function Login({ onLogin }: LoginProps) {
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
+    console.log('🔍 Login input changed:', { value, length: value.length });
+    
     // Если поле полностью пустое
     if (value === '') {
+      console.log('✅ Empty value - clearing field');
       setLogin('');
       setLoginError('');
       return;
@@ -158,6 +161,7 @@ export default function Login({ onLogin }: LoginProps) {
     
     // Если это email или содержит буквы - не форматируем
     if (value.includes('@') || /[a-zA-Z]/.test(value)) {
+      console.log('📧 Email or text detected');
       setLogin(value);
       setLoginError('');
       return;
@@ -165,9 +169,11 @@ export default function Login({ onLogin }: LoginProps) {
     
     // Форматируем телефон
     const formatted = formatPhoneNumber(value);
+    console.log('📱 Formatted phone:', { input: value, output: formatted });
     
     // Если после форматирования получилась пустая строка - очищаем поле
     if (formatted === '') {
+      console.log('✅ Formatted result empty - clearing field');
       setLogin('');
     } else {
       setLogin(formatted);
