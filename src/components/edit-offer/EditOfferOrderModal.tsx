@@ -28,20 +28,15 @@ export default function EditOfferOrderModal({
       order={selectedOrder}
       onCounterOffer={async (price, message) => {
         try {
-          // Блокируем мигание модального окна на 1 секунду
-          const now = Date.now();
-          const lastUpdate = (window as any).__lastOrderUpdate || 0;
-          (window as any).__lastOrderUpdate = now;
-
           await ordersAPI.updateOrder(selectedOrder.id, { 
             counterPrice: price,
             counterMessage: message 
           });
           
-          // Ждём 100мс чтобы backend обновил данные
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Ждём 300мс чтобы backend точно обновил данные
+          await new Promise(resolve => setTimeout(resolve, 300));
           
-          // Триггерим обновление через dataSync (это вызовет loadData через подписку)
+          // Триггерим обновление через dataSync
           notifyOrderUpdated(selectedOrder.id);
           
           toast({
@@ -61,8 +56,6 @@ export default function EditOfferOrderModal({
       }}
       onAcceptCounter={async () => {
         try {
-          (window as any).__lastOrderUpdate = Date.now();
-          
           await ordersAPI.updateOrder(selectedOrder.id, { 
             acceptCounter: true,
             status: 'accepted'
@@ -87,8 +80,6 @@ export default function EditOfferOrderModal({
       }}
       onCancelOrder={async () => {
         try {
-          (window as any).__lastOrderUpdate = Date.now();
-          
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
           
           await new Promise(resolve => setTimeout(resolve, 100));
@@ -111,8 +102,6 @@ export default function EditOfferOrderModal({
       }}
       onCompleteOrder={async () => {
         try {
-          (window as any).__lastOrderUpdate = Date.now();
-          
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
           
           await new Promise(resolve => setTimeout(resolve, 100));

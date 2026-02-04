@@ -51,10 +51,50 @@ export default function EditOffer() {
   useEffect(() => {
     if (!isAuthenticated || !id) return;
     
-    // Подписываемся на обновления заказов и предложений
-    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
-      console.log('Order updated, reloading EditOffer data...');
-      loadData();
+    // Подписываемся на обновления заказов
+    const unsubscribeOrders = dataSync.subscribe('order_updated', async () => {
+      console.log('Order updated, обновляем только заказы...');
+      
+      try {
+        const ordersResponse = await ordersAPI.getAll('sale');
+        const ordersData = ordersResponse.orders || [];
+        const relatedOrders = ordersData
+          .filter((o: any) => (o.offer_id || o.offerId) === id)
+          .map((order: any) => ({
+            id: order.id,
+            offerId: order.offer_id || order.offerId,
+            offerTitle: order.offer_title || order.title,
+            offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,
+            quantity: order.quantity,
+            unit: order.unit,
+            pricePerUnit: order.price_per_unit || order.pricePerUnit,
+            totalAmount: order.total_amount || order.totalAmount,
+            counterPricePerUnit: order.counter_price_per_unit || order.counterPricePerUnit,
+            counterTotalAmount: order.counter_total_amount || order.counterTotalAmount,
+            counterOfferMessage: order.counter_offer_message || order.counterOfferMessage,
+            counterOfferedAt: order.counter_offered_at || order.counterOfferedAt ? new Date(order.counter_offered_at || order.counterOfferedAt) : undefined,
+            counterOfferedBy: order.counter_offered_by || order.counterOfferedBy,
+            buyerAcceptedCounter: order.buyer_accepted_counter || order.buyerAcceptedCounter,
+            buyerId: order.buyer_id?.toString() || order.buyerId,
+            buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
+            buyerPhone: order.buyer_phone || order.buyerPhone,
+            buyerEmail: order.buyer_email || order.buyerEmail,
+            buyerCompany: order.buyer_company || order.buyerCompany,
+            buyerInn: order.buyer_inn || order.buyerInn,
+            sellerId: order.seller_id?.toString() || order.sellerId,
+            sellerName: order.seller_name || order.sellerName || order.seller_full_name,
+            sellerPhone: order.seller_phone || order.sellerPhone,
+            sellerEmail: order.seller_email || order.sellerEmail,
+            status: order.status,
+            deliveryType: order.delivery_type || order.deliveryType || 'delivery',
+            comment: order.comment,
+            createdAt: new Date(order.createdAt || order.created_at),
+            acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
+          }));
+        setOrders(relatedOrders);
+      } catch (error) {
+        console.error('Error updating orders:', error);
+      }
     });
     
     const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
@@ -68,38 +108,29 @@ export default function EditOffer() {
     };
   }, [isAuthenticated, id]);
 
-  // Обновляем selectedOrder когда orders меняются (защита от мигания)
+  // Обновляем selectedOrder когда orders меняются
   useEffect(() => {
-    if (!selectedOrder) return;
-    
-    // Проверяем защиту от мигания
-    const lastUpdate = (window as any).__lastOrderUpdate || 0;
-    const now = Date.now();
-    const timeSinceUpdate = now - lastUpdate;
-    
-    // Если обновление было меньше 1 секунды назад - пропускаем
-    if (timeSinceUpdate < 1000) {
-      console.log(`[EditOffer] Пропускаем обновление selectedOrder (прошло ${timeSinceUpdate}мс)`);
-      return;
-    }
+    if (!selectedOrder || !isChatOpen) return;
     
     // Ищем обновленную версию выбранного заказа
     const updatedOrder = orders.find(o => o.id === selectedOrder.id);
     if (!updatedOrder) return;
     
-    // Проверяем изменились ли важные поля
+    // Всегда обновляем selectedOrder если есть изменения (без задержек)
+    // Защита от мигания теперь на уровне компонента EditOfferOrderModal
     const hasChanges = (
       updatedOrder.counterPricePerUnit !== selectedOrder.counterPricePerUnit ||
       updatedOrder.counterOfferedBy !== selectedOrder.counterOfferedBy ||
       updatedOrder.status !== selectedOrder.status ||
-      updatedOrder.quantity !== selectedOrder.quantity
+      updatedOrder.quantity !== selectedOrder.quantity ||
+      updatedOrder.buyerAcceptedCounter !== selectedOrder.buyerAcceptedCounter
     );
     
     if (hasChanges) {
       console.log('[EditOffer] Обновляем selectedOrder с новыми данными');
       setSelectedOrder(updatedOrder);
     }
-  }, [orders, selectedOrder]);
+  }, [orders, selectedOrder, isChatOpen]);
 
   const loadData = async () => {
     if (!id) return;
