@@ -116,41 +116,18 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
         body: JSON.stringify({ userId: selectedUser.id })
       });
       
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        toast.error('Ошибка обработки ответа сервера');
-        return;
-      }
+      const data = await response.json();
       
-      // Закрываем диалог независимо от результата
       setShowDeleteDialog(false);
       setSelectedUser(null);
       
-      if (!response.ok) {
-        // Если пользователь уже удален, просто обновляем список
-        if (data?.error?.includes('already deleted')) {
-          toast.success('Пользователь успешно удален');
-          await fetchUsers();
-        } else {
-          toast.error(data?.error || 'Ошибка при удалении пользователя');
-        }
-        return;
-      }
-      
-      if (data && data.success) {
-        // Показываем успешное сообщение
+      if (response.ok && data.success) {
         toast.success('Пользователь успешно удален');
-        
-        // Обновляем список пользователей
         await fetchUsers();
       } else {
-        toast.error(data?.error || 'Не удалось удалить пользователя');
+        toast.error(data?.error || 'Ошибка при удалении пользователя');
       }
     } catch (error) {
-      console.error('Delete user error:', error);
       setShowDeleteDialog(false);
       setSelectedUser(null);
       toast.error('Произошла ошибка при удалении пользователя');

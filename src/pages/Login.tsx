@@ -154,6 +154,13 @@ export default function Login({ onLogin }: LoginProps) {
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
+    // Если пользователь стирает всё - очищаем поле
+    if (value === '' || value === '+' || value === '+7') {
+      setLogin('');
+      setLoginError('');
+      return;
+    }
+    
     if (value.includes('@') || /[a-zA-Z]/.test(value)) {
       setLogin(value);
     } else {

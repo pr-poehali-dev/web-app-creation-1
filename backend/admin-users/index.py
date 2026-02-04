@@ -94,7 +94,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cur = conn.cursor()
         
         if method == 'GET':
-            query_params = event.get('queryStringParameters', {})
+            query_params = event.get('queryStringParameters') or {}
             user_id_param = query_params.get('id')
             
             if user_id_param:
@@ -414,32 +414,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            # Проверяем, существует ли пользователь и не удален ли он уже
-            cur.execute("""
-                SELECT id, removed_at 
-                FROM t_p42562714_web_app_creation_1.users 
-                WHERE id = %s
-            """, (user_id,))
-            user = cur.fetchone()
-            
-            if not user:
-                return {
-                    'statusCode': 404,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'User not found'}),
-                    'isBase64Encoded': False
-                }
-            
-            if user['removed_at'] is not None:
-                return {
-                    'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'User already deleted'}),
-                    'isBase64Encoded': False
-                }
-            
             # Soft delete: помечаем пользователя как удаленного
-            # Заказы, предложения, запросы, аукционы остаются в истории
             cur.execute("""
                 UPDATE t_p42562714_web_app_creation_1.users 
                 SET removed_at = CURRENT_TIMESTAMP, 
