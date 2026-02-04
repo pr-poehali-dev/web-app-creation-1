@@ -268,8 +268,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
+                # Для физических лиц без email генерируем технический email на основе телефона
+                if not email and user_type == 'individual':
+                    normalized_phone = normalize_phone(phone)
+                    email = f'{normalized_phone}@noemail.erttp.local'
+                
                 with conn.cursor() as cur:
-                    if email:
+                    if email and not email.endswith('@noemail.erttp.local'):
                         cur.execute("SELECT id FROM users WHERE email = %s AND removed_at IS NULL", (email,))
                         if cur.fetchone():
                             return {
@@ -324,13 +329,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     user = cur.fetchone()
                     conn.commit()
                     
-                    if email:
+                    # Отправляем письмо только если это реальный email
+                    if email and not email.endswith('@noemail.erttp.local'):
                         try:
                             verification_link = f"https://erttp.ru/verify-email?token={email_verification_token}"
                             send_verification_email(email, verification_link)
                             print(f"Verification email sent to {email}")
                         except Exception as e:
                             print(f"Failed to send verification email to {email}: {str(e)}")
+                
+                # Преобразуем пользователя в dict и скрываем технический email
+                user_data = dict(user)
+                if user_data['email'] and user_data['email'].endswith('@noemail.erttp.local'):
+                    user_data['email'] = ''
                 
                 token = generate_jwt_token(user['id'], user['email'], user['phone'])
                 
@@ -339,7 +350,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({
                         'success': True,
-                        'user': dict(user),
+                        'user': user_data,
                         'token': token
                     }, default=str),
                     'isBase64Encoded': False
@@ -505,6 +516,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 user_data = dict(user)
                 user_data.pop('password_hash')
+                # Скрываем технический email для физических лиц
+                if user_data.get('email') and user_data['email'].endswith('@noemail.erttp.local'):
+                    user_data['email'] = ''
                 
                 token = generate_jwt_token(user['id'], user['email'], user['phone'])
                 
