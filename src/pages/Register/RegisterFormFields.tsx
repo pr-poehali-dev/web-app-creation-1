@@ -34,15 +34,18 @@ const formatPhoneNumber = (value: string) => {
 
 const formatWithMask = (digits: string) => {
   if (digits.length === 0) return '';
-  if (digits.length === 1 && digits === '7') return '';
   
   let formatted = '+7';
   
   if (digits.length > 1) {
     formatted += ' (' + digits.substring(1, Math.min(4, digits.length));
+    // Закрываем скобку если есть 3 цифры после кода или больше
+    if (digits.length >= 4) {
+      formatted += ')';
+    }
   }
-  if (digits.length >= 4) {
-    formatted += ') ' + digits.substring(4, Math.min(7, digits.length));
+  if (digits.length >= 5) {
+    formatted += ' ' + digits.substring(4, Math.min(7, digits.length));
   }
   if (digits.length >= 7) {
     formatted += '-' + digits.substring(7, Math.min(9, digits.length));
