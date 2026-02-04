@@ -102,7 +102,7 @@ export default function OrdersContent({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {displayOrders.map(order => (
           <OrderCard 
-            key={order.id} 
+            key={`${order.id}-${order.counterPricePerUnit || 0}-${order.counterTotalAmount || 0}-${order.counterOfferedAt?.getTime() || 0}`}
             order={order} 
             isSeller={isSeller}
             onOpenChat={onOpenChat}
