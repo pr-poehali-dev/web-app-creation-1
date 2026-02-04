@@ -126,7 +126,6 @@ export default function Login({ onLogin }: LoginProps) {
 
   const formatWithMask = (digits: string) => {
     if (digits.length === 0) return '';
-    if (digits.length === 1 && digits === '7') return '';
     
     let formatted = '+7';
     
@@ -166,8 +165,8 @@ export default function Login({ onLogin }: LoginProps) {
     // Извлекаем только цифры
     const digitsOnly = value.replace(/\D/g, '');
     
-    // Если цифр нет - очищаем поле
-    if (digitsOnly.length === 0) {
+    // Если цифр нет или осталась только "7" - очищаем поле
+    if (digitsOnly.length === 0 || digitsOnly.length === 1) {
       setLogin('');
       setLoginError('');
       return;
