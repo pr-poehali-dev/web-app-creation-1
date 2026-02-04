@@ -20,25 +20,27 @@ export default function EntrepreneurForm({
 }: EntrepreneurFormProps) {
   return (
     <>
-      <div>
-        <Label htmlFor="inn">ИНН *</Label>
+      <div className="space-y-2">
+        <Label htmlFor="inn" className="text-sm font-medium">ИНН *</Label>
         <Input
           id="inn"
           value={formData.inn || ''}
           onChange={(e) => onInputChange('inn', e.target.value)}
           placeholder="123456789012"
           required
+          className="text-base"
         />
       </div>
 
-      <div>
-        <Label htmlFor="ogrnip">ОГРНИП *</Label>
+      <div className="space-y-2">
+        <Label htmlFor="ogrnip" className="text-sm font-medium">ОГРНИП *</Label>
         <Input
           id="ogrnip"
           value={formData.ogrnip || ''}
           onChange={(e) => onInputChange('ogrnip', e.target.value)}
           placeholder="123456789012345"
           required
+          className="text-base"
         />
       </div>
 
@@ -60,7 +62,7 @@ export default function EntrepreneurForm({
         onChange={(file) => onFileChange('passportRegistration', file)}
       />
 
-      <div className="flex items-center space-x-2">
+      <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
         <Checkbox
           id="addressesMatch"
           checked={formData.addressesMatch}
@@ -72,8 +74,9 @@ export default function EntrepreneurForm({
               utilityBill: checked ? null : prev.utilityBill
             }));
           }}
+          className="mt-0.5"
         />
-        <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
+        <Label htmlFor="addressesMatch" className="font-normal cursor-pointer text-sm leading-relaxed">
           Фактический адрес проживания совпадает с адресом прописки
         </Label>
       </div>
