@@ -165,8 +165,8 @@ export default function Login({ onLogin }: LoginProps) {
     // Извлекаем только цифры
     const digitsOnly = value.replace(/\D/g, '');
     
-    // Если цифр нет или осталась только "7" - очищаем поле
-    if (digitsOnly.length === 0 || digitsOnly.length === 1) {
+    // Если цифр нет - очищаем поле
+    if (digitsOnly.length === 0) {
       setLogin('');
       setLoginError('');
       return;
@@ -174,6 +174,14 @@ export default function Login({ onLogin }: LoginProps) {
     
     // Форматируем телефон
     const formatted = formatPhoneNumber(value);
+    
+    // Если после форматирования получилась пустая строка - очищаем
+    if (!formatted) {
+      setLogin('');
+      setLoginError('');
+      return;
+    }
+    
     setLogin(formatted);
     setLoginError('');
   };
