@@ -362,6 +362,7 @@ export default function VerificationPage() {
                 formData={formData}
                 onInputChange={handleInputChange}
                 onFileChange={handleFileChange}
+                onFormDataChange={setFormData}
               />
             ) : formData.verificationType === 'self_employed' ? (
               <EntrepreneurForm

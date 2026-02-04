@@ -1,9 +1,12 @@
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import FileUploadWithIndicator from '@/components/FileUploadWithIndicator';
 import type { VerificationFormData } from '@/types/verification';
+import { validateINN, formatINN } from '@/utils/innValidation';
+import Icon from '@/components/ui/icon';
 
 interface EntrepreneurFormProps {
   formData: VerificationFormData;
@@ -18,18 +21,87 @@ export default function EntrepreneurForm({
   onFileChange,
   onFormDataChange 
 }: EntrepreneurFormProps) {
+  const [innError, setInnError] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+  const [autoFilled, setAutoFilled] = useState(false);
+
+  const handleInnChange = (value: string) => {
+    const formatted = formatINN(value);
+    onInputChange('inn', formatted);
+    setAutoFilled(false);
+    
+    if (formatted.length === 0) {
+      setInnError('');
+      return;
+    }
+    
+    const validation = validateINN(formatted);
+    if (!validation.isValid && validation.error) {
+      setInnError(validation.error);
+    } else {
+      setInnError('');
+    }
+  };
+
+  const handleInnBlur = async () => {
+    if (formData.inn && formData.inn.length >= 10 && !innError && !autoFilled) {
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `https://functions.poehali.dev/de7c45a6-d320-45cc-8aca-719530cc640c?inn=${formData.inn}`
+        );
+        const result = await response.json();
+
+        if (result.success && result.data) {
+          const dadataData = result.data;
+          onFormDataChange(prev => ({
+            ...prev,
+            companyName: dadataData.company_name || prev.companyName,
+            ogrnip: dadataData.ogrnip || prev.ogrnip,
+          }));
+          setAutoFilled(true);
+        }
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleOgrnipChange = (value: string) => {
+    const formatted = value.replace(/\D/g, '').slice(0, 15);
+    onInputChange('ogrnip', formatted);
+  };
+
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="inn" className="text-sm font-medium">ИНН *</Label>
+        <Label htmlFor="inn" className="text-sm font-medium">
+          ИНН *
+          {loading && <Icon name="Loader2" className="inline-block ml-2 h-3 w-3 animate-spin" />}
+        </Label>
         <Input
           id="inn"
           value={formData.inn || ''}
-          onChange={(e) => onInputChange('inn', e.target.value)}
+          onChange={(e) => handleInnChange(e.target.value)}
+          onBlur={handleInnBlur}
           placeholder="123456789012"
           required
-          className="text-base"
+          maxLength={12}
+          pattern="[0-9]*"
+          inputMode="numeric"
+          className={`text-base ${innError ? 'border-red-500' : ''}`}
         />
+        {innError && (
+          <p className="text-xs text-red-600">{innError}</p>
+        )}
+        {formData.inn && !innError && formData.inn.length >= 10 && (
+          <p className="text-xs text-green-600">✓ ИНН корректен</p>
+        )}
+        {autoFilled && (
+          <p className="text-xs text-blue-600">✓ Данные загружены из ЕГРИП</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -37,11 +109,20 @@ export default function EntrepreneurForm({
         <Input
           id="ogrnip"
           value={formData.ogrnip || ''}
-          onChange={(e) => onInputChange('ogrnip', e.target.value)}
+          onChange={(e) => handleOgrnipChange(e.target.value)}
           placeholder="123456789012345"
           required
+          maxLength={15}
+          pattern="[0-9]*"
+          inputMode="numeric"
           className="text-base"
         />
+        {formData.ogrnip && formData.ogrnip.length !== 15 && (
+          <p className="text-xs text-muted-foreground">ОГРНИП должен содержать 15 цифр (введено {formData.ogrnip.length})</p>
+        )}
+        {formData.ogrnip && formData.ogrnip.length === 15 && (
+          <p className="text-xs text-green-600">✓ ОГРНИП корректен</p>
+        )}
       </div>
 
       <FileUploadWithIndicator

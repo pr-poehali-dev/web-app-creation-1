@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import FileUploadWithIndicator from '@/components/FileUploadWithIndicator';
 import type { VerificationFormData } from '@/types/verification';
+import { validateINN, formatINN } from '@/utils/innValidation';
 
 interface IndividualFormProps {
   formData: VerificationFormData;
@@ -18,6 +20,25 @@ export default function IndividualForm({
   onFileChange,
   onFormDataChange 
 }: IndividualFormProps) {
+  const [innError, setInnError] = useState<string>('');
+
+  const handleInnChange = (value: string) => {
+    const formatted = formatINN(value);
+    onInputChange('inn', formatted);
+    
+    if (formatted.length === 0) {
+      setInnError('');
+      return;
+    }
+    
+    const validation = validateINN(formatted);
+    if (!validation.isValid && validation.error) {
+      setInnError(validation.error);
+    } else {
+      setInnError('');
+    }
+  };
+
   return (
     <>
       <div className="space-y-2">
@@ -25,11 +46,20 @@ export default function IndividualForm({
         <Input
           id="inn"
           value={formData.inn || ''}
-          onChange={(e) => onInputChange('inn', e.target.value)}
+          onChange={(e) => handleInnChange(e.target.value)}
           placeholder="123456789012"
           required
-          className="text-base"
+          maxLength={12}
+          pattern="[0-9]*"
+          inputMode="numeric"
+          className={`text-base ${innError ? 'border-red-500' : ''}`}
         />
+        {innError && (
+          <p className="text-xs text-red-600">{innError}</p>
+        )}
+        {formData.inn && !innError && formData.inn.length >= 10 && (
+          <p className="text-xs text-green-600">✓ ИНН корректен</p>
+        )}
       </div>
 
       <FileUploadWithIndicator
