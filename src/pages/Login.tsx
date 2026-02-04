@@ -162,6 +162,26 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     
+    // Извлекаем только цифры из нового значения
+    const newDigits = value.replace(/\D/g, '');
+    
+    // Извлекаем цифры из текущего значения
+    const oldDigits = login.replace(/\D/g, '');
+    
+    // Если пользователь удалил все цифры - очищаем поле
+    if (newDigits.length === 0) {
+      setLogin('');
+      setLoginError('');
+      return;
+    }
+    
+    // Если осталась только "7" после удаления - очищаем поле
+    if (newDigits === '7' && oldDigits.length > 1) {
+      setLogin('');
+      setLoginError('');
+      return;
+    }
+    
     // Форматируем телефон
     const formatted = formatPhoneNumber(value);
     
