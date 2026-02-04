@@ -32,45 +32,74 @@ export function useOrdersData(
   };
 
   // Вспомогательная функция для маппинга заказа
-  const mapOrderData = (orderData: any): Order => ({
-    id: orderData.id,
-    orderNumber: orderData.order_number || orderData.orderNumber,
-    offerId: orderData.offer_id,
-    offerTitle: orderData.offer_title || orderData.title,
-    offerImage: orderData.offer_image ? (typeof orderData.offer_image === 'string' ? JSON.parse(orderData.offer_image)[0]?.url : orderData.offer_image[0]?.url) : undefined,
-    quantity: orderData.quantity,
-    originalQuantity: orderData.original_quantity || orderData.originalQuantity,
-    unit: orderData.unit,
-    pricePerUnit: orderData.price_per_unit || orderData.pricePerUnit,
-    totalAmount: orderData.total_amount || orderData.totalAmount,
-    offerPricePerUnit: orderData.offerPricePerUnit,
-    offerAvailableQuantity: orderData.offerAvailableQuantity,
-    counterPricePerUnit: orderData.counter_price_per_unit || orderData.counterPricePerUnit,
-    counterTotalAmount: orderData.counter_total_amount || orderData.counterTotalAmount,
-    counterOfferMessage: orderData.counter_offer_message || orderData.counterOfferMessage,
-    counterOfferedAt: orderData.counter_offered_at || orderData.counterOfferedAt ? new Date(orderData.counter_offered_at || orderData.counterOfferedAt) : undefined,
-    counterOfferedBy: orderData.counter_offered_by || orderData.counterOfferedBy,
-    buyerAcceptedCounter: orderData.buyer_accepted_counter || orderData.buyerAcceptedCounter,
-    buyerId: orderData.buyer_id?.toString() || orderData.buyerId,
-    buyerName: orderData.buyer_name || orderData.buyerName || orderData.buyer_full_name,
-    buyerPhone: orderData.buyer_phone || orderData.buyerPhone,
-    buyerEmail: orderData.buyer_email || orderData.buyerEmail,
-    sellerId: orderData.seller_id?.toString() || orderData.sellerId,
-    sellerName: orderData.seller_name || orderData.sellerName || orderData.seller_full_name,
-    sellerPhone: orderData.seller_phone || orderData.sellerPhone,
-    sellerEmail: orderData.seller_email || orderData.sellerEmail,
-    status: orderData.status,
-    deliveryType: orderData.delivery_type || orderData.deliveryType || 'delivery',
-    comment: orderData.comment,
-    type: orderData.type,
-    createdAt: new Date(orderData.createdAt || orderData.created_at),
-    acceptedAt: orderData.acceptedAt || orderData.accepted_at ? new Date(orderData.acceptedAt || orderData.accepted_at) : undefined,
-    completedDate: orderData.completedDate || orderData.completed_date ? new Date(orderData.completedDate || orderData.completed_date) : undefined,
-    cancelledBy: orderData.cancelled_by || orderData.cancelledBy,
-    cancellationReason: orderData.cancellation_reason || orderData.cancellationReason,
-    buyerCompany: orderData.buyer_company || orderData.buyerCompany,
-    buyerInn: orderData.buyer_inn || orderData.buyerInn,
-  });
+  const mapOrderData = (orderData: any): Order => {
+    const counterOfferedAt = orderData.counter_offered_at || orderData.counterOfferedAt 
+      ? new Date(orderData.counter_offered_at || orderData.counterOfferedAt) 
+      : undefined;
+    
+    const counterOfferedBy = orderData.counter_offered_by || orderData.counterOfferedBy;
+    
+    // Определяем, есть ли непрочитанная встречная цена
+    let hasUnreadCounterOffer = false;
+    if (counterOfferedAt && counterOfferedBy && currentUser) {
+      // Проверяем, что встречную цену предложил контрагент (не я)
+      const isCounterByOther = (
+        (counterOfferedBy === 'buyer' && currentUser.id !== orderData.buyer_id?.toString()) ||
+        (counterOfferedBy === 'seller' && currentUser.id !== orderData.seller_id?.toString())
+      );
+      
+      if (isCounterByOther) {
+        // Время последнего просмотра этого заказа
+        const lastViewedKey = `order_viewed_${orderData.id}`;
+        const lastViewedStr = localStorage.getItem(lastViewedKey);
+        const lastViewedAt = lastViewedStr ? new Date(lastViewedStr) : null;
+        
+        // Если встречная цена новее последнего просмотра — она непрочитана
+        hasUnreadCounterOffer = !lastViewedAt || counterOfferedAt > lastViewedAt;
+      }
+    }
+    
+    return {
+      id: orderData.id,
+      orderNumber: orderData.order_number || orderData.orderNumber,
+      offerId: orderData.offer_id,
+      offerTitle: orderData.offer_title || orderData.title,
+      offerImage: orderData.offer_image ? (typeof orderData.offer_image === 'string' ? JSON.parse(orderData.offer_image)[0]?.url : orderData.offer_image[0]?.url) : undefined,
+      quantity: orderData.quantity,
+      originalQuantity: orderData.original_quantity || orderData.originalQuantity,
+      unit: orderData.unit,
+      pricePerUnit: orderData.price_per_unit || orderData.pricePerUnit,
+      totalAmount: orderData.total_amount || orderData.totalAmount,
+      offerPricePerUnit: orderData.offerPricePerUnit,
+      offerAvailableQuantity: orderData.offerAvailableQuantity,
+      counterPricePerUnit: orderData.counter_price_per_unit || orderData.counterPricePerUnit,
+      counterTotalAmount: orderData.counter_total_amount || orderData.counterTotalAmount,
+      counterOfferMessage: orderData.counter_offer_message || orderData.counterOfferMessage,
+      counterOfferedAt,
+      counterOfferedBy,
+      buyerAcceptedCounter: orderData.buyer_accepted_counter || orderData.buyerAcceptedCounter,
+      buyerId: orderData.buyer_id?.toString() || orderData.buyerId,
+      buyerName: orderData.buyer_name || orderData.buyerName || orderData.buyer_full_name,
+      buyerPhone: orderData.buyer_phone || orderData.buyerPhone,
+      buyerEmail: orderData.buyer_email || orderData.buyerEmail,
+      sellerId: orderData.seller_id?.toString() || orderData.sellerId,
+      sellerName: orderData.seller_name || orderData.sellerName || orderData.seller_full_name,
+      sellerPhone: orderData.seller_phone || orderData.sellerPhone,
+      sellerEmail: orderData.seller_email || orderData.sellerEmail,
+      status: orderData.status,
+      deliveryType: orderData.delivery_type || orderData.deliveryType || 'delivery',
+      comment: orderData.comment,
+      type: orderData.type,
+      createdAt: new Date(orderData.createdAt || orderData.created_at),
+      acceptedAt: orderData.acceptedAt || orderData.accepted_at ? new Date(orderData.acceptedAt || orderData.accepted_at) : undefined,
+      completedDate: orderData.completedDate || orderData.completed_date ? new Date(orderData.completedDate || orderData.completed_date) : undefined,
+      cancelledBy: orderData.cancelled_by || orderData.cancelledBy,
+      cancellationReason: orderData.cancellation_reason || orderData.cancellationReason,
+      buyerCompany: orderData.buyer_company || orderData.buyerCompany,
+      buyerInn: orderData.buyer_inn || orderData.buyerInn,
+      hasUnreadCounterOffer,
+    };
+  };
 
   const loadOrders = useCallback(async (showLoader = false) => {
     try {
@@ -499,8 +528,21 @@ export function useOrdersData(
   const handleOpenChat = (order: Order) => {
     // Ищем самую актуальную версию заказа из списка orders
     const actualOrder = orders.find(o => o.id === order.id) || order;
-    setSelectedOrder(actualOrder);
+    
+    // Сохраняем время просмотра для отметки встречных цен как прочитанных
+    const lastViewedKey = `order_viewed_${actualOrder.id}`;
+    localStorage.setItem(lastViewedKey, new Date().toISOString());
+    
+    // Обновляем заказ, чтобы сбросить флаг непрочитанной встречной цены
+    const updatedOrder = { ...actualOrder, hasUnreadCounterOffer: false };
+    
+    setSelectedOrder(updatedOrder);
     setIsChatOpen(true);
+    
+    // Также обновляем в массиве orders
+    setOrders(prevOrders => 
+      prevOrders.map(o => o.id === actualOrder.id ? updatedOrder : o)
+    );
   };
 
   const handleCloseChat = () => {

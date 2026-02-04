@@ -37,6 +37,7 @@ export interface Order {
   type?: 'purchase' | 'sale';
   buyerCompany?: string;
   buyerInn?: string;
+  hasUnreadCounterOffer?: boolean; // Флаг непрочитанной встречной цены
 }
 
 export interface ChatMessage {
