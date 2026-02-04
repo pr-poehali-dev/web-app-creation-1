@@ -165,8 +165,8 @@ export default function Login({ onLogin }: LoginProps) {
     // Извлекаем только цифры
     const digitsOnly = value.replace(/\D/g, '');
     
-    // Если цифр нет - очищаем поле
-    if (digitsOnly.length === 0) {
+    // Если цифр нет или осталась только "7" - очищаем поле
+    if (digitsOnly.length === 0 || (digitsOnly.length === 1 && digitsOnly === '7')) {
       setLogin('');
       setLoginError('');
       return;
@@ -175,15 +175,17 @@ export default function Login({ onLogin }: LoginProps) {
     // Форматируем телефон
     const formatted = formatPhoneNumber(value);
     
-    // Если после форматирования получилась пустая строка - очищаем
-    if (!formatted) {
-      setLogin('');
-      setLoginError('');
-      return;
-    }
-    
     setLogin(formatted);
     setLoginError('');
+  };
+
+  const handleLoginKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // При Backspace, если в поле только "+7" или меньше - очищаем полностью
+    if (e.key === 'Backspace' && login.length <= 2) {
+      e.preventDefault();
+      setLogin('');
+      setLoginError('');
+    }
   };
 
   return (
@@ -219,6 +221,7 @@ export default function Login({ onLogin }: LoginProps) {
                 placeholder="+79991234567 или example@company.com"
                 value={login}
                 onChange={handleLoginChange}
+                onKeyDown={handleLoginKeyDown}
                 autoComplete="username"
                 className={loginError ? 'border-destructive' : ''}
               />
