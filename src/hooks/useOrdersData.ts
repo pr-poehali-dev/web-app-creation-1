@@ -238,14 +238,27 @@ export function useOrdersData(
       console.log('[useOrdersData] Быстрое обновление открытого заказа');
       try {
         const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-        setSelectedOrder(mapOrderData(updatedOrderData));
+        const mappedOrder = mapOrderData(updatedOrderData);
+        
+        // Проверяем критичные изменения перед обновлением
+        const normalizeEmpty = (val: any) => val || '';
+        const hasStatusChange = mappedOrder.status !== selectedOrder.status;
+        const hasCounterChange = mappedOrder.counterPricePerUnit !== selectedOrder.counterPricePerUnit;
+        const hasBuyerAcceptChange = mappedOrder.buyerAcceptedCounter !== selectedOrder.buyerAcceptedCounter;
+        const hasCounterMessage = normalizeEmpty(mappedOrder.counterOfferMessage) !== normalizeEmpty(selectedOrder.counterOfferMessage);
+        
+        // Обновляем только при реальных изменениях
+        if (hasStatusChange || hasCounterChange || hasBuyerAcceptChange || hasCounterMessage) {
+          console.log('[useOrdersData] Быстрое обновление: найдены изменения, обновляем selectedOrder');
+          setSelectedOrder(mappedOrder);
+        }
       } catch (error) {
         console.error('[useOrdersData] Ошибка быстрого обновления:', error);
       }
     }, 1000); // 1 секунда - мгновенное обновление для активного заказа
 
     return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrder?.id, mapOrderData]);
+  }, [isAuthenticated, isChatOpen, selectedOrder]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
