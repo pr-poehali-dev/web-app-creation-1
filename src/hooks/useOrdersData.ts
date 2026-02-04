@@ -7,7 +7,6 @@ import type { Order } from '@/types/order';
 import { ordersAPI, reviewsAPI } from '@/services/api';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
-import * as BrowserNotify from '@/utils/browserNotifications';
 
 export function useOrdersData(
   isAuthenticated: boolean, 
@@ -139,15 +138,6 @@ export function useOrdersData(
     // Подписываемся на обновления заказов
     const unsubscribe = dataSync.subscribe('order_updated', () => {
       console.log('[useOrdersData] Получено событие order_updated, обновляем заказы');
-      
-      // Показываем браузерное уведомление при обновлении заказов
-      if (BrowserNotify.getNotificationPermission() === 'granted') {
-        BrowserNotify.showBrowserNotification({
-          title: 'Обновление заказа',
-          body: 'Статус одного из ваших заказов изменился',
-        });
-      }
-      
       loadOrders(false);
     });
 
@@ -176,9 +166,20 @@ export function useOrdersData(
     if (selectedOrder && isChatOpen) {
       const actualOrder = orders.find(o => o.id === selectedOrder.id);
       if (actualOrder) {
-        // Проверяем, изменился ли статус или другие поля
-        if (JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
-          console.log('[useOrdersData] Обновляем selectedOrder с актуальными данными');
+        // Проверяем только критичные изменения (статус, встречное предложение)
+        const hasStatusChange = actualOrder.status !== selectedOrder.status;
+        const hasCounterChange = actualOrder.counterPricePerUnit !== selectedOrder.counterPricePerUnit;
+        const hasBuyerAcceptChange = actualOrder.buyerAcceptedCounter !== selectedOrder.buyerAcceptedCounter;
+        const hasCounterMessage = actualOrder.counterOfferMessage !== selectedOrder.counterOfferMessage;
+        
+        // Обновляем ТОЛЬКО если есть важные изменения
+        if (hasStatusChange || hasCounterChange || hasBuyerAcceptChange || hasCounterMessage) {
+          console.log('[useOrdersData] Обновляем selectedOrder (важные изменения):', {
+            hasStatusChange,
+            hasCounterChange,
+            hasBuyerAcceptChange,
+            hasCounterMessage
+          });
           setSelectedOrder(actualOrder);
         }
       }
