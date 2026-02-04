@@ -39,10 +39,10 @@ def normalize_phone(phone: str) -> str:
         return '7' + digits_only
     return digits_only
 
-def generate_jwt_token(user_id: int, email: str, phone: str = None) -> str:
+def generate_jwt_token(user_id: int, email: str) -> str:
     payload = {
         'user_id': user_id,
-        'email': email or phone,
+        'email': email,
         'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
         'iat': datetime.utcnow()
     }
@@ -332,7 +332,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         except Exception as e:
                             print(f"Failed to send verification email to {email}: {str(e)}")
                 
-                token = generate_jwt_token(user['id'], user['email'], user['phone'])
+                token = generate_jwt_token(user['id'], user['email'])
                 
                 return {
                     'statusCode': 201,
@@ -506,7 +506,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 user_data = dict(user)
                 user_data.pop('password_hash')
                 
-                token = generate_jwt_token(user['id'], user['email'], user['phone'])
+                token = generate_jwt_token(user['id'], user['email'])
                 
                 return {
                     'statusCode': 200,

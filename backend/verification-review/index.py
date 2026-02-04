@@ -25,7 +25,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Session',
+                'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
@@ -44,21 +44,37 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     headers = event.get('headers', {})
-    admin_session = headers.get('x-admin-session') or headers.get('X-Admin-Session')
+    moderator_id = headers.get('X-User-Id') or headers.get('x-user-id')
     
-    if not admin_session:
+    if not moderator_id:
+        return {
+            'statusCode': 401,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': 'Unauthorized'}),
+            'isBase64Encoded': False
+        }
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute(f'SELECT role FROM users WHERE id = {moderator_id}')
+    user_role = cursor.fetchone()
+    
+    if not user_role or user_role[0] not in ('moderator', 'admin'):
+        cursor.close()
+        conn.close()
         return {
             'statusCode': 403,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': 'Access denied. Admin session required.'}),
+            'body': json.dumps({'error': 'Access denied. Moderator or admin role required.'}),
             'isBase64Encoded': False
         }
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
     
     body_data = json.loads(event.get('body', '{}'))
     verification_id = body_data.get('verificationId')
@@ -108,6 +124,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         UPDATE user_verifications 
         SET status = '{new_status}', 
             rejection_reason = {'NULL' if not rejection_reason else f"'{escaped_reason}'"},
+            reviewed_by = {moderator_id},
             reviewed_at = CURRENT_TIMESTAMP,
             verified_at = {f'CURRENT_TIMESTAMP' if action == 'approve' else 'NULL'},
             is_resubmitted = FALSE

@@ -35,9 +35,8 @@ export default function Login({ onLogin }: LoginProps) {
 
   const validateLogin = (login: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const digitsOnly = login.replace(/\D/g, '');
-    const isPhone = digitsOnly.length >= 10 && digitsOnly.length <= 15;
-    return emailRegex.test(login) || isPhone;
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    return emailRegex.test(login) || phoneRegex.test(login);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,81 +108,8 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
-  const formatPhoneNumber = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, '');
-    
-    if (digitsOnly.length === 0) return '';
-    
-    let normalizedDigits = digitsOnly;
-    if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
-      normalizedDigits = '7' + digitsOnly.slice(1);
-    } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
-      normalizedDigits = '7' + digitsOnly;
-    }
-    
-    return formatWithMask(normalizedDigits);
-  };
-
-  const formatWithMask = (digits: string) => {
-    if (digits.length === 0) return '';
-    
-    let formatted = '+7';
-    
-    if (digits.length > 1) {
-      formatted += ' (' + digits.substring(1, Math.min(4, digits.length));
-    }
-    if (digits.length >= 4) {
-      formatted += ') ' + digits.substring(4, Math.min(7, digits.length));
-    }
-    if (digits.length >= 7) {
-      formatted += '-' + digits.substring(7, Math.min(9, digits.length));
-    }
-    if (digits.length >= 9) {
-      formatted += '-' + digits.substring(9, 11);
-    }
-    
-    return formatted;
-  };
-
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
-    // Если поле полностью пустое
-    if (value === '') {
-      setLogin('');
-      setLoginError('');
-      return;
-    }
-    
-    // Если это email или содержит буквы - не форматируем
-    if (value.includes('@') || /[a-zA-Z]/.test(value)) {
-      setLogin(value);
-      setLoginError('');
-      return;
-    }
-    
-    // Извлекаем только цифры из нового и старого значения
-    const newDigits = value.replace(/\D/g, '');
-    const oldDigits = login.replace(/\D/g, '');
-    
-    // Если цифр нет - очищаем поле
-    if (newDigits.length === 0) {
-      setLogin('');
-      setLoginError('');
-      return;
-    }
-    
-    // Если осталась только "7" и это результат удаления (было больше цифр) - очищаем
-    if (newDigits === '7' && oldDigits.length > newDigits.length) {
-      setLogin('');
-      setLoginError('');
-      return;
-    }
-    
-    // Форматируем телефон
-    const formatted = formatPhoneNumber(value);
-    
-    setLogin(formatted);
+    setLogin(e.target.value);
     setLoginError('');
   };
 
@@ -213,31 +139,16 @@ export default function Login({ onLogin }: LoginProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login">Телефон или Email</Label>
-              <div className="relative">
-                <Input
-                  id="login"
-                  name="login"
-                  type="text"
-                  placeholder="+79991234567 или example@company.com"
-                  value={login}
-                  onChange={handleLoginChange}
-                  autoComplete="username"
-                  className={loginError ? 'border-destructive pr-10' : 'pr-10'}
-                />
-                {login && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLogin('');
-                      setLoginError('');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    <Icon name="X" className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
+              <Input
+                id="login"
+                name="login"
+                type="text"
+                placeholder="+79991234567 или example@company.com"
+                value={login}
+                onChange={handleLoginChange}
+                autoComplete="username"
+                className={loginError ? 'border-destructive' : ''}
+              />
               {loginError && <p className="text-sm text-destructive">{loginError}</p>}
             </div>
 

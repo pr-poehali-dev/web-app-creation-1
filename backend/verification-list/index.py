@@ -44,12 +44,40 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'isBase64Encoded': False
             }
         
+        headers = event.get('headers', {})
+        user_id = headers.get('X-User-Id') or headers.get('x-user-id')
+        
+        if not user_id:
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({'error': 'Unauthorized'}),
+                'isBase64Encoded': False
+            }
+        
         conn = None
         cursor = None
         
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
+            
+            cursor.execute(f"SELECT role FROM users WHERE id = {user_id}")
+            user_role = cursor.fetchone()
+            
+            if not user_role or user_role[0] not in ('moderator', 'admin'):
+                return {
+                    'statusCode': 403,
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({'error': 'Access denied. Moderator or admin role required.'}),
+                    'isBase64Encoded': False
+                }
             
             query_params = event.get('queryStringParameters') or {}
             status_filter = query_params.get('status', 'pending')
