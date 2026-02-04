@@ -171,19 +171,22 @@ export function useOrdersData(
     }
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
-  // Синхронизируем selectedOrder с актуальными данными из orders
+  // Синхронизируем selectedOrder с актуальными данными из orders (только если данные НОВЕЕ)
   useEffect(() => {
     if (selectedOrder && isChatOpen) {
       const actualOrder = orders.find(o => o.id === selectedOrder.id);
       if (actualOrder) {
-        // Проверяем, изменился ли статус или другие поля
-        if (JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
-          console.log('[useOrdersData] Обновляем selectedOrder с актуальными данными');
+        // Обновляем только если данные из orders новее (по counterOfferedAt или updatedAt)
+        const selectedUpdated = selectedOrder.counterOfferedAt || selectedOrder.createdAt;
+        const actualUpdated = actualOrder.counterOfferedAt || actualOrder.createdAt;
+        
+        if (actualUpdated > selectedUpdated) {
+          console.log('[useOrdersData] Обновляем selectedOrder с НОВЫМИ данными из orders');
           setSelectedOrder(actualOrder);
         }
       }
     }
-  }, [orders, selectedOrder?.id, isChatOpen]);
+  }, [orders, selectedOrder, isChatOpen]);
 
   // Автообновление при возвращении на страницу
   useEffect(() => {
@@ -198,34 +201,17 @@ export function useOrdersData(
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isAuthenticated, loadOrders]);
 
-  // Периодическое автообновление каждые 3 секунды для очень быстрой синхронизации встречных предложений
+  // Периодическое автообновление каждые 5 секунд (оптимальный баланс скорости и нагрузки)
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const intervalId = setInterval(() => {
       console.log('[useOrdersData] Периодическое обновление заказов');
       loadOrders(false);
-    }, 3000); // 3 секунды - очень быстрое обновление для встречных предложений
+    }, 5000); // 5 секунд - баланс между скоростью обновления и нагрузкой на сервер
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
-
-  // Дополнительное быстрое обновление при открытом чате (каждую секунду)
-  useEffect(() => {
-    if (!isAuthenticated || !isChatOpen || !selectedOrder) return;
-
-    const fastIntervalId = setInterval(async () => {
-      console.log('[useOrdersData] Быстрое обновление открытого заказа');
-      try {
-        const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-        setSelectedOrder(mapOrderData(updatedOrderData));
-      } catch (error) {
-        console.error('[useOrdersData] Ошибка быстрого обновления:', error);
-      }
-    }, 1000); // 1 секунда - мгновенное обновление для активного заказа
-
-    return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrder?.id, mapOrderData]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
