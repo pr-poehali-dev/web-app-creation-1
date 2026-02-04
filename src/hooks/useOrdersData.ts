@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { getSession } from '@/utils/auth';
@@ -161,16 +161,27 @@ export function useOrdersData(
     }
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
+  // Храним предыдущие значения для сравнения
+  const prevSelectedOrderRef = useRef<{
+    status?: string;
+    counterPricePerUnit?: number;
+    buyerAcceptedCounter?: boolean;
+    counterOfferMessage?: string;
+  }>({});
+
   // Синхронизируем selectedOrder с актуальными данными из orders
   useEffect(() => {
     if (selectedOrder && isChatOpen) {
       const actualOrder = orders.find(o => o.id === selectedOrder.id);
       if (actualOrder) {
-        // Проверяем только критичные изменения (статус, встречное предложение)
-        const hasStatusChange = actualOrder.status !== selectedOrder.status;
-        const hasCounterChange = actualOrder.counterPricePerUnit !== selectedOrder.counterPricePerUnit;
-        const hasBuyerAcceptChange = actualOrder.buyerAcceptedCounter !== selectedOrder.buyerAcceptedCounter;
-        const hasCounterMessage = actualOrder.counterOfferMessage !== selectedOrder.counterOfferMessage;
+        const prev = prevSelectedOrderRef.current;
+        const normalizeEmpty = (val: any) => val || '';
+        
+        // Проверяем только критичные изменения
+        const hasStatusChange = prev.status !== undefined && actualOrder.status !== prev.status;
+        const hasCounterChange = prev.counterPricePerUnit !== undefined && actualOrder.counterPricePerUnit !== prev.counterPricePerUnit;
+        const hasBuyerAcceptChange = prev.buyerAcceptedCounter !== undefined && actualOrder.buyerAcceptedCounter !== prev.buyerAcceptedCounter;
+        const hasCounterMessage = prev.counterOfferMessage !== undefined && normalizeEmpty(actualOrder.counterOfferMessage) !== normalizeEmpty(prev.counterOfferMessage);
         
         // Обновляем ТОЛЬКО если есть важные изменения
         if (hasStatusChange || hasCounterChange || hasBuyerAcceptChange || hasCounterMessage) {
@@ -182,6 +193,14 @@ export function useOrdersData(
           });
           setSelectedOrder(actualOrder);
         }
+        
+        // Сохраняем текущие значения для следующего сравнения
+        prevSelectedOrderRef.current = {
+          status: actualOrder.status,
+          counterPricePerUnit: actualOrder.counterPricePerUnit,
+          buyerAcceptedCounter: actualOrder.buyerAcceptedCounter,
+          counterOfferMessage: actualOrder.counterOfferMessage,
+        };
       }
     }
   }, [orders, selectedOrder?.id, isChatOpen]);
