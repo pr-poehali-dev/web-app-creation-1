@@ -112,17 +112,20 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: selectedUser.id })
       });
-      if (response.ok) {
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
         toast.success(`Пользователь ${selectedUser.name} удален`);
-        fetchUsers();
+        setShowDeleteDialog(false);
+        setSelectedUser(null);
+        await fetchUsers();
       } else {
-        toast.error('Ошибка при удалении');
+        toast.error(data.error || 'Ошибка при удалении');
       }
     } catch (error) {
       toast.error('Ошибка при удалении');
     }
-    setShowDeleteDialog(false);
-    setSelectedUser(null);
   };
 
   const handleViewDetails = (user: User) => {
