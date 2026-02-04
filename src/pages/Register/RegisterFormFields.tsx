@@ -17,45 +17,7 @@ interface RegisterFormFieldsProps {
   isFetchingCompany?: boolean;
 }
 
-const formatPhoneNumber = (value: string) => {
-  const digitsOnly = value.replace(/\D/g, '');
-  
-  if (digitsOnly.length === 0) return '';
-  
-  let normalizedDigits = digitsOnly;
-  if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
-    normalizedDigits = '7' + digitsOnly.slice(1);
-  } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
-    normalizedDigits = '7' + digitsOnly;
-  }
-  
-  return formatWithMask(normalizedDigits);
-};
 
-const formatWithMask = (digits: string) => {
-  if (digits.length === 0) return '';
-  
-  let formatted = '+7';
-  
-  if (digits.length > 1) {
-    formatted += ' (' + digits.substring(1, Math.min(4, digits.length));
-    // Закрываем скобку если есть 3 цифры после кода или больше
-    if (digits.length >= 4) {
-      formatted += ')';
-    }
-  }
-  if (digits.length >= 5) {
-    formatted += ' ' + digits.substring(4, Math.min(7, digits.length));
-  }
-  if (digits.length >= 7) {
-    formatted += '-' + digits.substring(7, Math.min(9, digits.length));
-  }
-  if (digits.length >= 9) {
-    formatted += '-' + digits.substring(9, 11);
-  }
-  
-  return formatted;
-};
 
 export default function RegisterFormFields({
   formData,
@@ -294,12 +256,9 @@ export default function RegisterFormFields({
         <Input
           id="phone"
           type="tel"
-          placeholder="+7 (___) ___-__-__"
+          placeholder="+79001234567"
           value={formData.phone}
-          onChange={(e) => {
-            const formatted = formatPhoneNumber(e.target.value);
-            onInputChange('phone', formatted);
-          }}
+          onChange={(e) => onInputChange('phone', e.target.value)}
           className={errors.phone ? 'border-destructive' : ''}
           disabled={isSubmitting}
         />
