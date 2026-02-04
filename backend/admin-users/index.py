@@ -12,7 +12,7 @@ def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 3
         
         cur.execute(
             """SELECT request_count, window_start 
-               FROM rate_limits 
+               FROM t_p42562714_web_app_creation_1.rate_limits 
                WHERE identifier = %s AND endpoint = %s""",
             (identifier, endpoint)
         )
@@ -23,21 +23,21 @@ def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 3
                 if result['request_count'] >= max_requests:
                     return False
                 cur.execute(
-                    """UPDATE rate_limits 
+                    """UPDATE t_p42562714_web_app_creation_1.rate_limits 
                        SET request_count = request_count + 1 
                        WHERE identifier = %s AND endpoint = %s""",
                     (identifier, endpoint)
                 )
             else:
                 cur.execute(
-                    """UPDATE rate_limits 
+                    """UPDATE t_p42562714_web_app_creation_1.rate_limits 
                        SET request_count = 1, window_start = CURRENT_TIMESTAMP 
                        WHERE identifier = %s AND endpoint = %s""",
                     (identifier, endpoint)
                 )
         else:
             cur.execute(
-                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
+                """INSERT INTO t_p42562714_web_app_creation_1.rate_limits (identifier, endpoint, request_count, window_start) 
                    VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
                 (identifier, endpoint)
             )
@@ -187,10 +187,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.ogrnip,
                         u.ogrn,
                         u.removed_at,
-                        (SELECT COUNT(*) FROM orders WHERE buyer_id = u.id OR seller_id = u.id) as orders_count,
-                        (SELECT COUNT(*) FROM offers WHERE user_id = u.id) as offers_count,
-                        (SELECT COUNT(*) FROM requests WHERE user_id = u.id) as requests_count
-                    FROM users u
+                        (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders WHERE buyer_id = u.id OR seller_id = u.id) as orders_count,
+                        (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.offers WHERE user_id = u.id) as offers_count,
+                        (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.requests WHERE user_id = u.id) as requests_count
+                    FROM t_p42562714_web_app_creation_1.users u
                     WHERE {where_sql}
                     ORDER BY u.removed_at DESC
                     LIMIT 100
@@ -217,8 +217,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.locked_until,
                         u.created_at,
                         COALESCE(uv.status = 'approved', false) as verified
-                    FROM users u
-                    LEFT JOIN user_verifications uv ON u.id = uv.user_id
+                    FROM t_p42562714_web_app_creation_1.users u
+                    LEFT JOIN t_p42562714_web_app_creation_1.user_verifications uv ON u.id = uv.user_id
                     WHERE {where_sql}
                     ORDER BY u.created_at DESC
                     LIMIT 100
