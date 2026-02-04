@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -162,17 +163,27 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     
-    // Извлекаем только цифры
-    const digitsOnly = value.replace(/\D/g, '');
+    // Извлекаем только цифры из текущего и нового значения
+    const currentDigits = login.replace(/\D/g, '');
+    const newDigits = value.replace(/\D/g, '');
     
     // Если цифр нет - очищаем поле
-    if (digitsOnly.length === 0) {
+    if (newDigits.length === 0) {
       setLogin('');
       setLoginError('');
       return;
     }
     
-    // Форматируем телефон
+    // Если пользователь удаляет символы (цифр стало меньше)
+    if (newDigits.length < currentDigits.length) {
+      // Просто используем новые цифры без дополнительной логики
+      const formatted = formatPhoneNumber(newDigits);
+      setLogin(formatted);
+      setLoginError('');
+      return;
+    }
+    
+    // Форматируем телефон при добавлении символов
     const formatted = formatPhoneNumber(value);
     
     setLogin(formatted);
@@ -207,6 +218,7 @@ export default function Login({ onLogin }: LoginProps) {
               <Label htmlFor="login">Телефон или Email</Label>
               <div className="relative">
                 <Input
+                  ref={inputRef}
                   id="login"
                   name="login"
                   type="text"
