@@ -107,34 +107,50 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
-    const userName = selectedUser.name;
-    
     try {
+      console.log('Deleting user:', selectedUser.id);
+      
       const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ userId: selectedUser.id })
       });
       
-      if (!response.ok) {
-        const data = await response.json();
-        toast.error(data.error || 'Ошибка при удалении');
+      console.log('Response status:', response.status);
+      
+      let data;
+      try {
+        data = await response.json();
+        console.log('Response data:', data);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        toast.error('Ошибка обработки ответа сервера');
         return;
       }
       
-      const data = await response.json();
+      if (!response.ok) {
+        toast.error(data?.error || 'Ошибка при удалении пользователя');
+        return;
+      }
       
-      if (data.success) {
+      if (data && data.success) {
+        // Закрываем диалог и очищаем выбранного пользователя
         setShowDeleteDialog(false);
         setSelectedUser(null);
+        
+        // Показываем успешное сообщение
         toast.success('Пользователь успешно удален');
+        
+        // Обновляем список пользователей
         await fetchUsers();
       } else {
-        toast.error(data.error || 'Ошибка при удалении');
+        toast.error(data?.error || 'Не удалось удалить пользователя');
       }
     } catch (error) {
-      console.error('Delete error:', error);
-      toast.error(error instanceof Error ? error.message : 'Ошибка при удалении');
+      console.error('Delete user error:', error);
+      toast.error('Произошла ошибка при удалении пользователя');
     }
   };
 
