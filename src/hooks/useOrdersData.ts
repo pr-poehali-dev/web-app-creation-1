@@ -211,7 +211,14 @@ export function useOrdersData(
         // Обновляем только если данные действительно изменились
         if (JSON.stringify(mappedOrder) !== JSON.stringify(selectedOrder)) {
           console.log('[useOrdersData] Быстрое обновление: данные изменились');
+          
+          // Обновляем selectedOrder
           setSelectedOrder(mappedOrder);
+          
+          // Также обновляем этот заказ в массиве orders для обновления карточки
+          setOrders(prevOrders => 
+            prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o)
+          );
         }
       } catch (error) {
         console.error('[useOrdersData] Ошибка быстрого обновления:', error);
