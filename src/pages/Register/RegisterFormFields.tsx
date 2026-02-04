@@ -285,9 +285,11 @@ export default function RegisterFormFields({
         <div className="relative">
           <Input
             id="password"
+            name="new-password"
             type={showPassword ? 'text' : 'password'}
             value={formData.password}
             onChange={(e) => onInputChange('password', e.target.value)}
+            autoComplete="new-password"
             className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
             disabled={isSubmitting}
           />
@@ -311,8 +313,10 @@ export default function RegisterFormFields({
         <div className="relative">
           <Input
             id="confirmPassword"
+            name="confirm-password"
             type={showConfirmPassword ? 'text' : 'password'}
             value={formData.confirmPassword}
+            autoComplete="new-password"
             onChange={(e) => onInputChange('confirmPassword', e.target.value)}
             className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
             disabled={isSubmitting}
