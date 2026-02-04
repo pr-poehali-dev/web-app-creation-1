@@ -56,7 +56,7 @@ def generate_order_number():
     return f'ORD-{timestamp}-{random_part}'
 
 def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
-    """Отправка Telegram уведомления (email опционально если Telegram не работает)"""
+    """Отправка push и email уведомлений"""
     notification_data = json.dumps({
         'userId': user_id,
         'title': title,
@@ -64,40 +64,31 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
         'url': url
     })
     
-    telegram_success = False
-    
-    # Telegram-уведомление (приоритет)
+    # Telegram-уведомление (используем существующий endpoint)
     try:
         conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
         conn.request('POST', '/d49f8584-6ef9-47c0-9661-02560166e10f',  # telegram-notify
                     notification_data, 
                     {'Content-Type': 'application/json'})
         response = conn.getresponse()
-        status = response.status
         response.read()  # Обязательно читаем ответ
         conn.close()
-        
-        if status == 200:
-            telegram_success = True
-            print(f'[NOTIFICATION] Telegram notification sent to user {user_id}: {title}')
-        else:
-            print(f'[NOTIFICATION] Telegram returned status {status}')
+        print(f'[NOTIFICATION] Telegram notification sent to user {user_id}: {title}')
     except Exception as e:
         print(f'[NOTIFICATION] Telegram error: {e}')
     
-    # Email-уведомление только если Telegram не сработал
-    if not telegram_success:
-        try:
-            conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
-            conn.request('POST', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43', 
-                        notification_data, 
-                        {'Content-Type': 'application/json'})
-            response = conn.getresponse()
-            response.read()
-            conn.close()
-            print(f'[NOTIFICATION] Email sent to user {user_id} (Telegram fallback): {title}')
-        except Exception as e:
-            print(f'[NOTIFICATION] Email error: {e}')
+    # Email-уведомление
+    try:
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
+        conn.request('POST', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43', 
+                    notification_data, 
+                    {'Content-Type': 'application/json'})
+        response = conn.getresponse()
+        response.read()  # Обязательно читаем ответ
+        conn.close()
+        print(f'[NOTIFICATION] Email sent to user {user_id}: {title}')
+    except Exception as e:
+        print(f'[NOTIFICATION] Email error: {e}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')

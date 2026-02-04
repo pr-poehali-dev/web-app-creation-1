@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { getSession } from '@/utils/auth';
@@ -25,7 +25,6 @@ export function useOrdersData(
   const [isSyncing, setIsSyncing] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [pendingReviewOrder, setPendingReviewOrder] = useState<Order | null>(null);
-  const lastUpdateRef = useRef<{orderId: string, timestamp: number} | null>(null);
 
   const playNotificationSound = () => {
     const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjsj6sD5+GfJMKAAAAASUVORK5CYII=');
@@ -138,8 +137,17 @@ export function useOrdersData(
     loadOrders(true);
 
     // Подписываемся на обновления заказов
-    const unsubscribe = dataSync.subscribe('order_updated', (orderId?: string) => {
+    const unsubscribe = dataSync.subscribe('order_updated', () => {
       console.log('[useOrdersData] Получено событие order_updated, обновляем заказы');
+      
+      // Показываем браузерное уведомление при обновлении заказов
+      if (BrowserNotify.getNotificationPermission() === 'granted') {
+        BrowserNotify.showBrowserNotification({
+          title: 'Обновление заказа',
+          body: 'Статус одного из ваших заказов изменился',
+        });
+      }
+      
       loadOrders(false);
     });
 
@@ -163,34 +171,19 @@ export function useOrdersData(
     }
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
-  // Синхронизируем selectedOrder с актуальными данными из orders (только если данные изменились)
+  // Синхронизируем selectedOrder с актуальными данными из orders
   useEffect(() => {
     if (selectedOrder && isChatOpen) {
       const actualOrder = orders.find(o => o.id === selectedOrder.id);
       if (actualOrder) {
-        // Проверяем изменения по ключевым полям (цена, статус, количество)
-        const hasChanges = 
-          actualOrder.counterPricePerUnit !== selectedOrder.counterPricePerUnit ||
-          actualOrder.counterTotalAmount !== selectedOrder.counterTotalAmount ||
-          actualOrder.counterOfferedBy !== selectedOrder.counterOfferedBy ||
-          actualOrder.status !== selectedOrder.status ||
-          actualOrder.quantity !== selectedOrder.quantity;
-        
-        // Debounce: обновляем только если прошло минимум 500мс с последнего обновления
-        const now = Date.now();
-        const lastUpdate = lastUpdateRef.current;
-        const canUpdate = !lastUpdate || 
-                         lastUpdate.orderId !== selectedOrder.id || 
-                         now - lastUpdate.timestamp > 500;
-        
-        if (hasChanges && canUpdate) {
-          console.log('[useOrdersData] Обновляем selectedOrder - обнаружены изменения');
-          lastUpdateRef.current = { orderId: selectedOrder.id, timestamp: now };
+        // Проверяем, изменился ли статус или другие поля
+        if (JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
+          console.log('[useOrdersData] Обновляем selectedOrder с актуальными данными');
           setSelectedOrder(actualOrder);
         }
       }
     }
-  }, [orders, selectedOrder, isChatOpen]);
+  }, [orders, selectedOrder?.id, isChatOpen]);
 
   // Автообновление при возвращении на страницу
   useEffect(() => {
@@ -205,17 +198,34 @@ export function useOrdersData(
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isAuthenticated, loadOrders]);
 
-  // Периодическое автообновление каждые 3 секунды (быстрое обновление для переговоров)
+  // Периодическое автообновление каждые 3 секунды для очень быстрой синхронизации встречных предложений
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const intervalId = setInterval(() => {
       console.log('[useOrdersData] Периодическое обновление заказов');
       loadOrders(false);
-    }, 3000); // 3 секунды - быстрое обновление для оперативных переговоров по встречным предложениям
+    }, 3000); // 3 секунды - очень быстрое обновление для встречных предложений
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
+
+  // Дополнительное быстрое обновление при открытом чате (каждую секунду)
+  useEffect(() => {
+    if (!isAuthenticated || !isChatOpen || !selectedOrder) return;
+
+    const fastIntervalId = setInterval(async () => {
+      console.log('[useOrdersData] Быстрое обновление открытого заказа');
+      try {
+        const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+        setSelectedOrder(mapOrderData(updatedOrderData));
+      } catch (error) {
+        console.error('[useOrdersData] Ошибка быстрого обновления:', error);
+      }
+    }, 1000); // 1 секунда - мгновенное обновление для активного заказа
+
+    return () => clearInterval(fastIntervalId);
+  }, [isAuthenticated, isChatOpen, selectedOrder?.id, mapOrderData]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
@@ -349,8 +359,7 @@ export function useOrdersData(
       });
 
       // НЕМЕДЛЕННО обновляем данные после отправки встречного предложения
-      // Обновляем timestamp чтобы избежать мигания
-      lastUpdateRef.current = { orderId: selectedOrder.id, timestamp: Date.now() };
+      notifyOrderUpdated(selectedOrder.id);
       
       // Получаем обновлённый заказ напрямую из API и маппим его
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
@@ -358,9 +367,6 @@ export function useOrdersData(
       
       // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
-      
-      // Уведомляем другие вкладки об обновлении
-      notifyOrderUpdated(selectedOrder.id);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
