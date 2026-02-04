@@ -414,6 +414,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
+            # Проверяем, существует ли пользователь и не удален ли он уже
+            cur.execute("""
+                SELECT id, removed_at 
+                FROM t_p42562714_web_app_creation_1.users 
+                WHERE id = %s
+            """, (user_id,))
+            user = cur.fetchone()
+            
+            if not user:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'User not found'}),
+                    'isBase64Encoded': False
+                }
+            
+            if user['removed_at'] is not None:
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'User already deleted'}),
+                    'isBase64Encoded': False
+                }
+            
             # Soft delete: помечаем пользователя как удаленного
             # Заказы, предложения, запросы, аукционы остаются в истории
             cur.execute("""
@@ -421,18 +445,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 SET removed_at = CURRENT_TIMESTAMP, 
                     is_active = false,
                     email = 'removed_' || id || '@removed.local'
-                WHERE id = %s
+                WHERE id = %s AND removed_at IS NULL
             """, (user_id,))
             
             # Отменяем только активные ставки пользователя
-            cur.execute("UPDATE t_p42562714_web_app_creation_1.bids SET status = 'cancelled' WHERE user_id = %s AND status = 'active'", (user_id,))
+            cur.execute("""
+                UPDATE t_p42562714_web_app_creation_1.bids 
+                SET status = 'cancelled' 
+                WHERE user_id = %s AND status = 'active'
+            """, (user_id,))
             
             conn.commit()
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'User removed (soft delete), orders/offers/requests preserved in history'}),
+                'body': json.dumps({'success': True, 'message': 'User deleted successfully'}),
                 'isBase64Encoded': False
             }
         

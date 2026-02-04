@@ -108,8 +108,6 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
     if (!selectedUser) return;
     
     try {
-      console.log('Deleting user:', selectedUser.id);
-      
       const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
         method: 'DELETE',
         headers: { 
@@ -118,28 +116,31 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
         body: JSON.stringify({ userId: selectedUser.id })
       });
       
-      console.log('Response status:', response.status);
-      
       let data;
       try {
         data = await response.json();
-        console.log('Response data:', data);
       } catch (parseError) {
         console.error('JSON parse error:', parseError);
         toast.error('Ошибка обработки ответа сервера');
         return;
       }
       
+      // Закрываем диалог независимо от результата
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
+      
       if (!response.ok) {
-        toast.error(data?.error || 'Ошибка при удалении пользователя');
+        // Если пользователь уже удален, просто обновляем список
+        if (data?.error?.includes('already deleted')) {
+          toast.success('Пользователь успешно удален');
+          await fetchUsers();
+        } else {
+          toast.error(data?.error || 'Ошибка при удалении пользователя');
+        }
         return;
       }
       
       if (data && data.success) {
-        // Закрываем диалог и очищаем выбранного пользователя
-        setShowDeleteDialog(false);
-        setSelectedUser(null);
-        
         // Показываем успешное сообщение
         toast.success('Пользователь успешно удален');
         
@@ -150,6 +151,8 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       }
     } catch (error) {
       console.error('Delete user error:', error);
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
       toast.error('Произошла ошибка при удалении пользователя');
     }
   };
