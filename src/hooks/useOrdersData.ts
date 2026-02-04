@@ -136,7 +136,9 @@ export function useOrdersData(
         })));
       }
       
-      setOrders(mappedOrders);
+      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами
+      // чтобы React гарантированно обнаружил изменения
+      setOrders(mappedOrders.map(order => ({ ...order })));
       
       if (isInitialLoad) {
         setIsInitialLoad(false);
