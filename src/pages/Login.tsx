@@ -211,17 +211,32 @@ export default function Login({ onLogin }: LoginProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login">Телефон или Email</Label>
-              <Input
-                id="login"
-                name="login"
-                type="text"
-                placeholder="+79991234567 или example@company.com"
-                value={login}
-                onChange={handleLoginChange}
-                onKeyDown={handleLoginKeyDown}
-                autoComplete="username"
-                className={loginError ? 'border-destructive' : ''}
-              />
+              <div className="relative">
+                <Input
+                  id="login"
+                  name="login"
+                  type="text"
+                  placeholder="+79991234567 или example@company.com"
+                  value={login}
+                  onChange={handleLoginChange}
+                  onKeyDown={handleLoginKeyDown}
+                  autoComplete="username"
+                  className={loginError ? 'border-destructive pr-10' : 'pr-10'}
+                />
+                {login && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLogin('');
+                      setLoginError('');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    <Icon name="X" className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               {loginError && <p className="text-sm text-destructive">{loginError}</p>}
             </div>
 
