@@ -107,6 +107,9 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
     
+    setShowDeleteDialog(false);
+    setSelectedUser(null);
+    
     try {
       const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
         method: 'DELETE',
@@ -119,24 +122,16 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       const data = await response.json();
       
       if (response.ok && data.success) {
-        // Закрываем диалог
-        setShowDeleteDialog(false);
-        setSelectedUser(null);
-        
-        // Показываем сообщение
         toast.success('Пользователь успешно удален');
-        
-        // Обновляем список пользователей
-        fetchUsers();
+        // Принудительно перезагружаем страницу
+        window.location.reload();
       } else {
-        setShowDeleteDialog(false);
-        setSelectedUser(null);
         toast.error(data?.error || 'Ошибка при удалении пользователя');
+        await fetchUsers();
       }
     } catch (error) {
-      setShowDeleteDialog(false);
-      setSelectedUser(null);
       toast.error('Произошла ошибка при удалении пользователя');
+      await fetchUsers();
     }
   };
 
