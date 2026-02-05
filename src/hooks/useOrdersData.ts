@@ -564,7 +564,7 @@ export function useOrdersData(
     }
   };
 
-  const handleOpenChat = (order: Order) => {
+  const handleOpenChat = async (order: Order) => {
     // Ищем самую актуальную версию заказа из списка orders
     const actualOrder = orders.find(o => o.id === order.id) || order;
     
@@ -582,6 +582,28 @@ export function useOrdersData(
     setOrders(prevOrders => 
       prevOrders.map(o => o.id === actualOrder.id ? updatedOrder : o)
     );
+    
+    // КРИТИЧНО: Получаем свежие данные с сервера при открытии модалки
+    try {
+      const freshOrderData = await ordersAPI.getOrderById(actualOrder.id);
+      const freshOrder = mapOrderData(freshOrderData);
+      
+      console.log('[handleOpenChat] Получены свежие данные:', {
+        id: freshOrder.id,
+        counterPrice: freshOrder.counterPricePerUnit,
+        counterTotal: freshOrder.counterTotalAmount
+      });
+      
+      // Обновляем selectedOrder свежими данными
+      setSelectedOrder({ ...freshOrder, hasUnreadCounterOffer: false });
+      
+      // Обновляем карточку в списке заказов
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === freshOrder.id ? { ...freshOrder, hasUnreadCounterOffer: false } : o)
+      );
+    } catch (error) {
+      console.error('[handleOpenChat] Ошибка получения свежих данных:', error);
+    }
   };
 
   const handleCloseChat = () => {
