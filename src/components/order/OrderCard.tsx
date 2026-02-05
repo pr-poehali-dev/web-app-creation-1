@@ -13,9 +13,6 @@ interface OrderCardProps {
 }
 
 export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder }: OrderCardProps) {
-  // Логируем рендер для отладки обновлений
-  console.log(`[OrderCard] Рендер "${order.offerTitle?.substring(0, 15)}" | counterPrice: ${order.counterPricePerUnit} | counterTotal: ${order.counterTotalAmount}`);
-  
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':

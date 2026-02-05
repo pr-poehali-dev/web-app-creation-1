@@ -414,9 +414,25 @@ export function useOrdersData(
       // НЕМЕДЛЕННО обновляем данные после отправки встречного предложения
       notifyOrderUpdated(selectedOrder.id);
       
+      // Небольшая задержка чтобы дать серверу обновить БД
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       // Получаем обновлённый заказ напрямую из API и маппим его
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-      setSelectedOrder(mapOrderData(updatedOrderData));
+      const mappedOrder = mapOrderData(updatedOrderData);
+      
+      console.log('[handleCounterOffer] Обновлённый заказ с сервера:', {
+        id: mappedOrder.id,
+        counterPrice: mappedOrder.counterPricePerUnit,
+        counterTotal: mappedOrder.counterTotalAmount
+      });
+      
+      setSelectedOrder(mappedOrder);
+      
+      // Обновляем этот заказ в массиве orders НЕМЕДЛЕННО
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === mappedOrder.id ? { ...mappedOrder } : o)
+      );
       
       // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
