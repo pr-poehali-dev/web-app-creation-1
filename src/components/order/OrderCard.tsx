@@ -36,7 +36,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
 
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer relative"
+      className="hover:shadow-md transition-shadow cursor-pointer"
       onClick={() => onOpenChat(order)}
     >
       <CardContent className="p-4 space-y-3">
@@ -44,23 +44,15 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-lg line-clamp-1">{order.offerTitle}</h3>
-              {order.hasUnreadCounterOffer && (
-                <div className="relative flex items-center">
-                  <span className="flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                  </span>
-                </div>
-              )}
             </div>
             {order.orderNumber && (
               <p className="text-xs text-muted-foreground">Заказ #{order.orderNumber}</p>
             )}
           </div>
           {order.status === 'negotiating' ? (
-            <Badge variant="outline" className={`${order.hasUnreadCounterOffer ? 'bg-red-50 border-red-300 text-red-700 animate-pulse' : 'bg-orange-50 border-orange-200 text-orange-700'} font-semibold shrink-0`}>
+            <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700 font-semibold shrink-0">
               <Icon name="MessageSquare" className="mr-1 h-3 w-3" />
-              {order.hasUnreadCounterOffer ? 'Новая цена' : 'Торг'}
+              Торг
             </Badge>
           ) : (
             getStatusBadge(order.status)

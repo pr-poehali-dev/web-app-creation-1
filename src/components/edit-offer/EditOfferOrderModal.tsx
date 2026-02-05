@@ -32,10 +32,6 @@ export default function EditOfferOrderModal({
             counterPrice: price,
             counterMessage: message 
           });
-          
-          // Ждём 500мс чтобы backend точно обновил данные перед синхронизацией
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
           notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Встречное предложение отправлено',
@@ -56,9 +52,6 @@ export default function EditOfferOrderModal({
             acceptCounter: true,
             status: 'accepted'
           });
-          
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
           notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Встречное предложение принято',
@@ -76,9 +69,6 @@ export default function EditOfferOrderModal({
       onCancelOrder={async () => {
         try {
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
-          
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
           notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Заказ отменён',
@@ -97,9 +87,6 @@ export default function EditOfferOrderModal({
       onCompleteOrder={async () => {
         try {
           await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
-          
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
           notifyOrderUpdated(selectedOrder.id);
           toast({
             title: 'Заказ завершён',
