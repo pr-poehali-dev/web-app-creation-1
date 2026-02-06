@@ -63,6 +63,8 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     pricePerUnit: '',
     hasVAT: false,
     vatRate: '20',
+    negotiableQuantity: false,
+    negotiablePrice: false,
     district: '',
     deliveryAddress: '',
     gpsCoordinates: '',
