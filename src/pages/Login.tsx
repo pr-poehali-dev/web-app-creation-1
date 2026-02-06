@@ -122,24 +122,30 @@ export default function Login({ onLogin }: LoginProps) {
       return hasPlus ? '+' : ''; // Разрешаем ввод +
     }
     
-    // Ограничение: максимум 15 цифр (международный стандарт E.164)
-    const limitedDigits = digitsOnly.slice(0, 15);
-    
     // Если номер начинается с +, форматируем международный номер
     if (hasPlus) {
+      // Ограничение: максимум 15 цифр (международный стандарт E.164)
+      const limitedDigits = digitsOnly.slice(0, 15);
       return formatWithSpaces('+' + limitedDigits);
     }
     
+    // Для российских номеров без + в начале
+    let normalizedDigits = digitsOnly;
+    
     // Если начинается с 8, заменяем на 7 (российский формат)
-    let normalizedDigits = limitedDigits;
-    if (limitedDigits.startsWith('8') && limitedDigits.length >= 1) {
-      normalizedDigits = '7' + limitedDigits.slice(1);
-    } else if (!limitedDigits.startsWith('7') && !limitedDigits.startsWith('8')) {
-      // Автоматически добавляем код России, если не указан
-      normalizedDigits = '7' + limitedDigits;
+    if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
+      normalizedDigits = '7' + digitsOnly.slice(1);
+    } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
+      // Автоматически добавляем код России ТОЛЬКО если цифр <= 10
+      if (digitsOnly.length <= 10) {
+        normalizedDigits = '7' + digitsOnly;
+      }
     }
     
-    return formatWithSpaces('+' + normalizedDigits);
+    // Ограничение: максимум 11 цифр для российского номера
+    const limitedDigits = normalizedDigits.slice(0, 11);
+    
+    return formatWithSpaces('+' + limitedDigits);
   };
 
   const formatWithSpaces = (phone: string) => {
@@ -203,15 +209,14 @@ export default function Login({ onLogin }: LoginProps) {
     // Извлекаем только цифры из нового значения
     const newDigits = value.replace(/\D/g, '');
     
-    // КРИТИЧНО: Ограничение на общую длину с учётом + и пробелов
-    // Максимум 20 символов: + и 15 цифр + пробелы
-    if (value.length > 20) {
-      return; // Блокируем ввод
-    }
-    
-    // Ограничение: максимум 15 цифр
-    if (newDigits.length > 15) {
-      return; // Блокируем ввод
+    // КРИТИЧНО: Ограничение максимум 11 цифр для российских номеров
+    // или 15 цифр для международных (стандарт E.164)
+    if (newDigits.length > 11) {
+      // Разрешаем больше 11 цифр только если это международный номер (начинается с +)
+      const hasPlus = value.trim().startsWith('+');
+      if (!hasPlus || newDigits.length > 15) {
+        return; // Блокируем ввод
+      }
     }
     
     // Если цифр нет и нет + - очищаем поле
