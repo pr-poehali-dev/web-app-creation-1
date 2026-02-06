@@ -223,6 +223,19 @@ export default function Login({ onLogin }: LoginProps) {
                   placeholder="+79991234567 или example@company.com"
                   value={login}
                   onChange={handleLoginChange}
+                  onBlur={() => {
+                    // Проверка при потере фокуса
+                    if (login && !validateLogin(login)) {
+                      const digits = login.replace(/\D/g, '');
+                      if (digits.length > 0 && digits.length < 11) {
+                        setLoginError('Номер должен содержать 11 цифр');
+                      } else if (digits.length > 11) {
+                        setLoginError('Номер слишком длинный');
+                      } else if (!login.includes('@')) {
+                        setLoginError('Некорректный формат телефона или email');
+                      }
+                    }
+                  }}
                   autoComplete="username"
                   className={loginError ? 'border-destructive pr-10' : 'pr-10'}
                 />
