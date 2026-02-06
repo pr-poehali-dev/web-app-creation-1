@@ -125,9 +125,9 @@ export default function Login({ onLogin }: LoginProps) {
     // Ограничение: максимум 15 цифр (международный стандарт E.164)
     const limitedDigits = digitsOnly.slice(0, 15);
     
-    // Если номер начинается с +, оставляем как есть (международный)
+    // Если номер начинается с +, форматируем международный номер
     if (hasPlus) {
-      return '+' + limitedDigits;
+      return formatWithSpaces('+' + limitedDigits);
     }
     
     // Если начинается с 8, заменяем на 7 (российский формат)
@@ -139,7 +139,39 @@ export default function Login({ onLogin }: LoginProps) {
       normalizedDigits = '7' + limitedDigits;
     }
     
-    return '+' + normalizedDigits;
+    return formatWithSpaces('+' + normalizedDigits);
+  };
+
+  const formatWithSpaces = (phone: string) => {
+    // Убираем все кроме + и цифр
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    const digits = cleaned.replace(/\D/g, '');
+    
+    if (digits.length === 0) return cleaned;
+    
+    // Формат: +7 999 123 45 67 (пробелы вместо нулей)
+    let formatted = '+';
+    
+    if (digits.length >= 1) {
+      formatted += digits.substring(0, 1); // Код страны
+    }
+    if (digits.length >= 2) {
+      formatted += ' ' + digits.substring(1, Math.min(4, digits.length)); // 3 цифры
+    }
+    if (digits.length >= 5) {
+      formatted += ' ' + digits.substring(4, Math.min(7, digits.length)); // 3 цифры
+    }
+    if (digits.length >= 8) {
+      formatted += ' ' + digits.substring(7, Math.min(9, digits.length)); // 2 цифры
+    }
+    if (digits.length >= 10) {
+      formatted += ' ' + digits.substring(9, Math.min(11, digits.length)); // 2 цифры
+    }
+    if (digits.length >= 12) {
+      formatted += ' ' + digits.substring(11); // Остальные для международных
+    }
+    
+    return formatted;
   };
 
 
@@ -171,9 +203,9 @@ export default function Login({ onLogin }: LoginProps) {
     // Извлекаем только цифры из нового значения
     const newDigits = value.replace(/\D/g, '');
     
-    // КРИТИЧНО: Ограничение на общую длину с учётом +
-    // Максимум 16 символов: + и 15 цифр
-    if (value.length > 16) {
+    // КРИТИЧНО: Ограничение на общую длину с учётом + и пробелов
+    // Максимум 20 символов: + и 15 цифр + пробелы
+    if (value.length > 20) {
       return; // Блокируем ввод
     }
     
