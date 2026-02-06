@@ -356,14 +356,21 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                         </TableCell>
                         <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
                         <TableCell>
-                          <div className="text-sm">
-                            <span className="font-semibold text-green-600">
-                              {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
-                            </span> {offer.unit}
-                            {offer.soldQuantity > 0 && (
+                          <div className="text-sm space-y-1">
+                            <div>
+                              <span className="font-semibold text-green-600">
+                                {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
+                              </span> {offer.unit}
                               <span className="text-muted-foreground ml-1">
                                 (из {offer.quantity})
                               </span>
+                            </div>
+                            {(offer.soldQuantity > 0 || offer.reservedQuantity > 0) && (
+                              <div className="text-xs text-muted-foreground">
+                                {offer.soldQuantity > 0 && `Продано: ${offer.soldQuantity}`}
+                                {offer.soldQuantity > 0 && offer.reservedQuantity > 0 && ', '}
+                                {offer.reservedQuantity > 0 && `Резерв: ${offer.reservedQuantity}`}
+                              </div>
                             )}
                           </div>
                         </TableCell>
