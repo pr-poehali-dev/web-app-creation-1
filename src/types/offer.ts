@@ -98,6 +98,8 @@ export interface Request {
   pricePerUnit: number;
   hasVAT: boolean;
   vatRate?: number;
+  negotiableQuantity?: boolean;
+  negotiablePrice?: boolean;
   district: string;
   location?: string;
   deliveryAddress?: string;
