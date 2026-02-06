@@ -208,22 +208,33 @@ export default function Login({ onLogin }: LoginProps) {
     
     // Извлекаем только цифры из нового значения
     const newDigits = value.replace(/\D/g, '');
-    
-    // КРИТИЧНО: Ограничение максимум 11 цифр для российских номеров
-    // или 15 цифр для международных (стандарт E.164)
-    if (newDigits.length > 11) {
-      // Разрешаем больше 11 цифр только если это международный номер (начинается с +)
-      const hasPlus = value.trim().startsWith('+');
-      if (!hasPlus || newDigits.length > 15) {
-        return; // Блокируем ввод
-      }
-    }
+    const hasPlus = value.trim().startsWith('+');
     
     // Если цифр нет и нет + - очищаем поле
-    if (newDigits.length === 0 && !value.includes('+')) {
+    if (newDigits.length === 0 && !hasPlus) {
       setLogin('');
       setLoginError('');
       return;
+    }
+    
+    // КРИТИЧНО: Строгое ограничение по количеству цифр
+    if (hasPlus) {
+      // Международный номер: максимум 15 цифр
+      if (newDigits.length > 15) {
+        return; // Блокируем ввод
+      }
+    } else {
+      // Российский номер БЕЗ +: максимум 10 цифр (потом добавится 7 = 11)
+      // Российский номер С 7 или 8: максимум 11 цифр
+      if (newDigits.startsWith('7') || newDigits.startsWith('8')) {
+        if (newDigits.length > 11) {
+          return; // Блокируем ввод
+        }
+      } else {
+        if (newDigits.length > 10) {
+          return; // Блокируем ввод (потом добавится 7)
+        }
+      }
     }
     
     // Форматируем телефон
