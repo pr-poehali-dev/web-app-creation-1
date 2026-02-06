@@ -72,21 +72,16 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
 
   return (
     <>
-      <div className="border rounded-lg p-3 hover:shadow-lg transition-shadow">
+      <div className="border-2 border-primary/20 rounded-lg p-2.5 hover:border-primary/40 hover:shadow-md transition-all">
         <div onClick={handleCardClick} className="cursor-pointer mb-2">
           <h3 className="font-semibold text-sm mb-1 line-clamp-2">{request.title}</h3>
           <p className="text-xs text-muted-foreground line-clamp-2">{request.description}</p>
         </div>
         
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0" />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="font-medium text-foreground truncate">{districtName}</span>
-              {(request.deliveryAddress || request.location) && (request.deliveryAddress || request.location)?.trim() !== '' && (
-                <span className="truncate">{request.deliveryAddress || request.location}</span>
-              )}
-            </div>
+          <div className="flex items-center gap-1.5 text-xs">
+            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+            <span className="font-medium truncate">{districtName}</span>
           </div>
           {expirationInfo.expiryDate && (
             <div className="flex items-center gap-1.5 text-xs">
@@ -108,9 +103,10 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               <Button 
                 size="sm" 
                 onClick={handleResponse}
-                className="h-7 text-xs px-2"
+                variant="outline"
+                className="h-7 text-xs px-3"
               >
-                Отклик
+                Просмотр
               </Button>
             )}
           </div>
