@@ -112,18 +112,18 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
           </div>
 
           {isOwner && (
-            <div className="space-y-1.5">
-              <Button onClick={handleEdit} variant="outline" className="w-full h-7 text-xs" size="sm">
-                <Icon name="Pencil" className="mr-1 h-3 w-3" />
+            <div className="flex items-center gap-2">
+              <Button onClick={handleEdit} variant="outline" className="flex-1 h-7 text-xs px-3" size="sm">
                 Редактировать
               </Button>
               {unreadMessages && unreadMessages > 0 && (
-                <Button onClick={handleMessages} variant="default" className="w-full h-7 text-xs" size="sm">
-                  <Icon name="MessageSquare" className="mr-1 h-3 w-3" />
-                  Сообщения
-                  <Badge variant="destructive" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
-                    {unreadMessages}
-                  </Badge>
+                <Button onClick={handleMessages} variant="default" className="h-7 w-7 p-0" size="sm">
+                  <div className="relative">
+                    <Icon name="MessageSquare" className="h-3.5 w-3.5" />
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 h-4 min-w-4 px-1 text-[10px]">
+                      {unreadMessages}
+                    </Badge>
+                  </div>
                 </Button>
               )}
             </div>
