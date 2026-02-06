@@ -38,8 +38,8 @@ export default function Login({ onLogin }: LoginProps) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const digitsOnly = login.replace(/\D/g, '');
     
-    // Проверка телефона: от 10 до 15 цифр (поддержка международных номеров)
-    const isPhone = digitsOnly.length >= 10 && digitsOnly.length <= 15;
+    // Проверка телефона: ровно 11 цифр
+    const isPhone = digitsOnly.length === 11;
     
     return emailRegex.test(login) || isPhone;
   };
@@ -114,38 +114,32 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   const formatPhoneNumber = (value: string) => {
-    // Сохраняем символ + если он есть
     const hasPlus = value.trim().startsWith('+');
     const digitsOnly = value.replace(/\D/g, '');
     
     if (digitsOnly.length === 0) {
-      return hasPlus ? '+' : ''; // Разрешаем ввод +
+      return hasPlus ? '+' : '';
     }
     
-    // Если номер начинается с +, форматируем международный номер
+    // МАКСИМУМ 11 ЦИФР ВСЕГДА!
+    const limitedDigits = digitsOnly.slice(0, 11);
+    
+    // Если номер начинается с +, просто форматируем
     if (hasPlus) {
-      // Ограничение: максимум 15 цифр (международный стандарт E.164)
-      const limitedDigits = digitsOnly.slice(0, 15);
       return formatWithSpaces('+' + limitedDigits);
     }
     
-    // Для российских номеров без + в начале
-    let normalizedDigits = digitsOnly;
-    
-    // Если начинается с 8, заменяем на 7 (российский формат)
-    if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
-      normalizedDigits = '7' + digitsOnly.slice(1);
-    } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
-      // Автоматически добавляем код России ТОЛЬКО если цифр <= 10
-      if (digitsOnly.length <= 10) {
-        normalizedDigits = '7' + digitsOnly;
-      }
+    // Для номеров без +: преобразуем 8 в 7
+    let normalizedDigits = limitedDigits;
+    if (limitedDigits.startsWith('8')) {
+      normalizedDigits = '7' + limitedDigits.slice(1);
+    } else if (!limitedDigits.startsWith('7')) {
+      // Добавляем 7 если её нет
+      normalizedDigits = '7' + limitedDigits;
+      normalizedDigits = normalizedDigits.slice(0, 11); // Обрезаем до 11
     }
     
-    // Ограничение: максимум 11 цифр для российского номера
-    const limitedDigits = normalizedDigits.slice(0, 11);
-    
-    return formatWithSpaces('+' + limitedDigits);
+    return formatWithSpaces('+' + normalizedDigits);
   };
 
   const formatWithSpaces = (phone: string) => {
@@ -217,24 +211,9 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     
-    // КРИТИЧНО: Строгое ограничение по количеству цифр
-    if (hasPlus) {
-      // Международный номер: максимум 15 цифр
-      if (newDigits.length > 15) {
-        return; // Блокируем ввод
-      }
-    } else {
-      // Российский номер БЕЗ +: максимум 10 цифр (потом добавится 7 = 11)
-      // Российский номер С 7 или 8: максимум 11 цифр
-      if (newDigits.startsWith('7') || newDigits.startsWith('8')) {
-        if (newDigits.length > 11) {
-          return; // Блокируем ввод
-        }
-      } else {
-        if (newDigits.length > 10) {
-          return; // Блокируем ввод (потом добавится 7)
-        }
-      }
+    // СТРОГО: Максимум 11 цифр!
+    if (newDigits.length > 11) {
+      return; // Блокируем ввод
     }
     
     // Форматируем телефон
