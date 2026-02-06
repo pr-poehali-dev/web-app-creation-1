@@ -104,7 +104,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
                 size="sm" 
                 onClick={handleResponse}
                 variant="outline"
-                className="h-7 text-xs px-3"
+                className="h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
               >
                 Просмотр
               </Button>
@@ -113,7 +113,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
 
           {isOwner && (
             <div className="flex items-center gap-2">
-              <Button onClick={handleEdit} variant="outline" className="flex-1 h-7 text-xs px-3" size="sm">
+              <Button onClick={handleEdit} variant="outline" className="flex-1 h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground" size="sm">
                 Редактировать
               </Button>
               {unreadMessages && unreadMessages > 0 && (
