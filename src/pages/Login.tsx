@@ -37,7 +37,10 @@ export default function Login({ onLogin }: LoginProps) {
   const validateLogin = (login: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const digitsOnly = login.replace(/\D/g, '');
-    const isPhone = digitsOnly.length >= 10 && digitsOnly.length <= 15;
+    
+    // Проверка телефона: должно быть ровно 11 цифр (7 + 10 цифр номера)
+    const isPhone = digitsOnly.length === 11;
+    
     return emailRegex.test(login) || isPhone;
   };
 
@@ -173,7 +176,16 @@ export default function Login({ onLogin }: LoginProps) {
     const formatted = formatPhoneNumber(value);
     
     setLogin(formatted);
-    setLoginError('');
+    
+    // Валидация телефона в реальном времени
+    const digits = formatted.replace(/\D/g, '');
+    if (digits.length > 0 && digits.length < 11) {
+      setLoginError('Номер должен содержать 11 цифр');
+    } else if (digits.length > 11) {
+      setLoginError('Номер слишком длинный');
+    } else {
+      setLoginError('');
+    }
   };
 
   return (
