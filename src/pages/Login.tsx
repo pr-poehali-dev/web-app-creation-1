@@ -114,15 +114,19 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   const formatPhoneNumber = (value: string) => {
+    // Сохраняем символ + если он есть
+    const hasPlus = value.trim().startsWith('+');
     const digitsOnly = value.replace(/\D/g, '');
     
-    if (digitsOnly.length === 0) return '';
+    if (digitsOnly.length === 0) {
+      return hasPlus ? '+' : ''; // Разрешаем ввод +
+    }
     
     // Ограничение: максимум 15 цифр (международный стандарт E.164)
     const limitedDigits = digitsOnly.slice(0, 15);
     
     // Если номер начинается с +, оставляем как есть (международный)
-    if (value.trim().startsWith('+')) {
+    if (hasPlus) {
       return '+' + limitedDigits;
     }
     
@@ -135,15 +139,10 @@ export default function Login({ onLogin }: LoginProps) {
       normalizedDigits = '7' + limitedDigits;
     }
     
-    return formatWithMask(normalizedDigits);
+    return '+' + normalizedDigits;
   };
 
-  const formatWithMask = (digits: string) => {
-    if (digits.length === 0) return '';
-    
-    // Просто добавляем + к номеру без форматирования
-    return '+' + digits;
-  };
+
 
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -162,6 +161,13 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     
+    // Разрешаем ввод только + в начале
+    if (value === '+') {
+      setLogin('+');
+      setLoginError('');
+      return;
+    }
+    
     // Извлекаем только цифры из текущего и нового значения
     const currentDigits = login.replace(/\D/g, '');
     const newDigits = value.replace(/\D/g, '');
@@ -171,29 +177,26 @@ export default function Login({ onLogin }: LoginProps) {
       return; // Блокируем ввод
     }
     
-    // Если цифр нет - очищаем поле
-    if (newDigits.length === 0) {
+    // Если цифр нет и нет + - очищаем поле
+    if (newDigits.length === 0 && !value.includes('+')) {
       setLogin('');
       setLoginError('');
       return;
     }
     
-    // Если пользователь удаляет символы (цифр стало меньше)
-    if (newDigits.length < currentDigits.length) {
-      // Просто используем новые цифры без дополнительной логики
-      const formatted = formatPhoneNumber(newDigits);
-      setLogin(formatted);
-      setLoginError('');
-      return;
-    }
-    
-    // Форматируем телефон при добавлении символов
+    // Форматируем телефон
     const formatted = formatPhoneNumber(value);
     
     setLogin(formatted);
     
     // Валидация телефона в реальном времени
     const digits = formatted.replace(/\D/g, '');
+    
+    // Если есть только +, не показываем ошибку
+    if (digits.length === 0) {
+      setLoginError('');
+      return;
+    }
     
     // Для российских номеров (начинаются с 7) - строгая проверка
     if (digits.startsWith('7')) {
