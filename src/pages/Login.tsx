@@ -38,8 +38,8 @@ export default function Login({ onLogin }: LoginProps) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const digitsOnly = login.replace(/\D/g, '');
     
-    // Проверка телефона: должно быть ровно 11 цифр (7 + 10 цифр номера)
-    const isPhone = digitsOnly.length === 11;
+    // Проверка телефона: от 10 до 15 цифр (поддержка международных номеров)
+    const isPhone = digitsOnly.length >= 10 && digitsOnly.length <= 15;
     
     return emailRegex.test(login) || isPhone;
   };
@@ -118,11 +118,21 @@ export default function Login({ onLogin }: LoginProps) {
     
     if (digitsOnly.length === 0) return '';
     
-    let normalizedDigits = digitsOnly;
-    if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
-      normalizedDigits = '7' + digitsOnly.slice(1);
-    } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
-      normalizedDigits = '7' + digitsOnly;
+    // Ограничение: максимум 15 цифр (международный стандарт E.164)
+    const limitedDigits = digitsOnly.slice(0, 15);
+    
+    // Если номер начинается с +, оставляем как есть (международный)
+    if (value.trim().startsWith('+')) {
+      return '+' + limitedDigits;
+    }
+    
+    // Если начинается с 8, заменяем на 7 (российский формат)
+    let normalizedDigits = limitedDigits;
+    if (limitedDigits.startsWith('8') && limitedDigits.length >= 1) {
+      normalizedDigits = '7' + limitedDigits.slice(1);
+    } else if (!limitedDigits.startsWith('7') && !limitedDigits.startsWith('8')) {
+      // Автоматически добавляем код России, если не указан
+      normalizedDigits = '7' + limitedDigits;
     }
     
     return formatWithMask(normalizedDigits);
@@ -156,6 +166,11 @@ export default function Login({ onLogin }: LoginProps) {
     const currentDigits = login.replace(/\D/g, '');
     const newDigits = value.replace(/\D/g, '');
     
+    // Ограничение: максимум 15 цифр
+    if (newDigits.length > 15) {
+      return; // Блокируем ввод
+    }
+    
     // Если цифр нет - очищаем поле
     if (newDigits.length === 0) {
       setLogin('');
@@ -179,12 +194,21 @@ export default function Login({ onLogin }: LoginProps) {
     
     // Валидация телефона в реальном времени
     const digits = formatted.replace(/\D/g, '');
-    if (digits.length > 0 && digits.length < 11) {
-      setLoginError('Номер должен содержать 11 цифр');
-    } else if (digits.length > 11) {
-      setLoginError('Номер слишком длинный');
+    
+    // Для российских номеров (начинаются с 7) - строгая проверка
+    if (digits.startsWith('7')) {
+      if (digits.length < 11) {
+        setLoginError('Номер должен содержать 11 цифр');
+      } else {
+        setLoginError('');
+      }
     } else {
-      setLoginError('');
+      // Для международных номеров - проверка диапазона
+      if (digits.length < 10) {
+        setLoginError('Номер слишком короткий (минимум 10 цифр)');
+      } else {
+        setLoginError('');
+      }
     }
   };
 
@@ -220,7 +244,7 @@ export default function Login({ onLogin }: LoginProps) {
                   id="login"
                   name="login"
                   type="text"
-                  placeholder="+79991234567 или example@company.com"
+                  placeholder="+79991234567, +12025551234 или example@company.com"
                   value={login}
                   onChange={handleLoginChange}
                   onBlur={() => {
