@@ -168,9 +168,14 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     
-    // Извлекаем только цифры из текущего и нового значения
-    const currentDigits = login.replace(/\D/g, '');
+    // Извлекаем только цифры из нового значения
     const newDigits = value.replace(/\D/g, '');
+    
+    // КРИТИЧНО: Ограничение на общую длину с учётом +
+    // Максимум 16 символов: + и 15 цифр
+    if (value.length > 16) {
+      return; // Блокируем ввод
+    }
     
     // Ограничение: максимум 15 цифр
     if (newDigits.length > 15) {
