@@ -5,7 +5,11 @@
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "bodyMatcher": "skip"
+      "expectedBody": {
+        "offers": "array",
+        "total": "number"
+      },
+      "bodyMatcher": "partial"
     }
   ]
 }
