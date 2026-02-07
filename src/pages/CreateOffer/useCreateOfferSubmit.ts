@@ -17,8 +17,6 @@ interface SubmitData {
   minOrderQuantity?: number;
   unit: string;
   pricePerUnit: number;
-  hasVAT: boolean;
-  vatRate?: number;
   location?: string;
   district: string;
   fullAddress?: string;
@@ -143,7 +141,6 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         quantity: Number(formData.quantity),
         pricePerUnit: Number(formData.pricePerUnit),
         minOrderQuantity: formData.minOrderQuantity ? Number(formData.minOrderQuantity) : undefined,
-        vatRate: formData.vatRate ? Number(formData.vatRate) : undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,

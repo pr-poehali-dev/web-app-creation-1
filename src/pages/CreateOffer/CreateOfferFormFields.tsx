@@ -23,8 +23,6 @@ interface FormData {
   minOrderQuantity: string;
   unit: string;
   pricePerUnit: string;
-  hasVAT: boolean;
-  vatRate: string;
   district: string;
   fullAddress: string;
   gpsCoordinates: string;

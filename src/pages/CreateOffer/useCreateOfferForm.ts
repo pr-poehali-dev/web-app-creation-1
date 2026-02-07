@@ -11,8 +11,6 @@ interface FormData {
   minOrderQuantity: string;
   unit: string;
   pricePerUnit: string;
-  hasVAT: boolean;
-  vatRate: string;
   district: string;
   fullAddress: string;
   gpsCoordinates: string;
@@ -39,8 +37,6 @@ export function useCreateOfferForm(editOffer?: Offer) {
     minOrderQuantity: String(editOffer.minOrderQuantity || ''),
     unit: editOffer.unit || 'шт',
     pricePerUnit: String(editOffer.pricePerUnit || ''),
-    hasVAT: editOffer.hasVAT || false,
-    vatRate: String(editOffer.vatRate || '20'),
     district: editOffer.district || '',
     fullAddress: editOffer.fullAddress || '',
     gpsCoordinates: '',
@@ -62,8 +58,6 @@ export function useCreateOfferForm(editOffer?: Offer) {
     minOrderQuantity: '',
     unit: 'шт',
     pricePerUnit: '',
-    hasVAT: false,
-    vatRate: '20',
     district: '',
     fullAddress: '',
     gpsCoordinates: '',

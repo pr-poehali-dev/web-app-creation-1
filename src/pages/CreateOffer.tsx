@@ -139,8 +139,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       minOrderQuantity: formData.minOrderQuantity ? parseFloat(formData.minOrderQuantity) : undefined,
       unit: formData.unit,
       pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
-      hasVAT: formData.hasVAT,
-      vatRate: formData.hasVAT ? parseFloat(formData.vatRate) || 20 : undefined,
       location: formData.fullAddress,
       district: formData.district,
       fullAddress: formData.fullAddress,

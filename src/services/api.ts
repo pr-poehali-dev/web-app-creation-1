@@ -154,7 +154,7 @@ export interface CreateOfferData {
   quantity: number;
   unit: string;
   pricePerUnit: number;
-  hasVAT: boolean;
+  hasVAT?: boolean;
   vatRate?: number;
   location?: string;
   district: string;
