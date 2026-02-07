@@ -17,7 +17,7 @@ interface OfferInfoCardProps {
   unit: string;
   pricePerUnit: number;
   remainingQuantity: number;
-  hasVAT?: boolean;
+  hasVAT: boolean;
   vatRate?: number;
   totalAmount: number;
   description: string;

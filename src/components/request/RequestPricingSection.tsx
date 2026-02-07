@@ -171,7 +171,7 @@ export default function RequestPricingSection({
                 htmlFor="negotiablePrice"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Ваша цена (Торг)
+                Ваша цена
               </label>
             </div>
           </div>

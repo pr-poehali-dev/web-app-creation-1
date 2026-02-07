@@ -33,7 +33,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
 import type { Offer as OfferType } from '@/types/offer';
-import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 interface AdminOffersProps {
   isAuthenticated: boolean;
@@ -69,17 +69,6 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   useEffect(() => {
     fetchOffers();
   }, [searchQuery, filterStatus]);
-
-  useEffect(() => {
-    const unsubscribe = dataSync.subscribe('offer_updated', () => {
-      console.log('Offer updated, reloading admin offers...');
-      fetchOffers();
-    });
-    
-    return () => {
-      unsubscribe();
-    };
-  }, []);
 
   useEffect(() => {
     applyFilters();
@@ -367,21 +356,14 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                         </TableCell>
                         <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
                         <TableCell>
-                          <div className="text-sm space-y-1">
-                            <div>
-                              <span className="font-semibold text-green-600">
-                                {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
-                              </span> {offer.unit}
+                          <div className="text-sm">
+                            <span className="font-semibold text-green-600">
+                              {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
+                            </span> {offer.unit}
+                            {offer.soldQuantity > 0 && (
                               <span className="text-muted-foreground ml-1">
                                 (из {offer.quantity})
                               </span>
-                            </div>
-                            {(offer.soldQuantity > 0 || offer.reservedQuantity > 0) && (
-                              <div className="text-xs text-muted-foreground">
-                                {offer.soldQuantity > 0 && `Продано: ${offer.soldQuantity}`}
-                                {offer.soldQuantity > 0 && offer.reservedQuantity > 0 && ', '}
-                                {offer.reservedQuantity > 0 && `Резерв: ${offer.reservedQuantity}`}
-                              </div>
                             )}
                           </div>
                         </TableCell>

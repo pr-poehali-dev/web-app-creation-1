@@ -59,7 +59,7 @@ export interface Offer {
   minOrderQuantity?: number;
   unit: string;
   pricePerUnit: number;
-  hasVAT?: boolean;
+  hasVAT: boolean;
   vatRate?: number;
   noNegotiation?: boolean;
   deliveryTime?: string;
@@ -98,8 +98,6 @@ export interface Request {
   pricePerUnit: number;
   hasVAT: boolean;
   vatRate?: number;
-  negotiableQuantity?: boolean;
-  negotiablePrice?: boolean;
   district: string;
   location?: string;
   deliveryAddress?: string;

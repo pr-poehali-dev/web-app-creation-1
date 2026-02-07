@@ -133,8 +133,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     o.description as product_name,
                     o.price_per_unit,
                     o.quantity,
-                    o.sold_quantity,
-                    o.reserved_quantity,
                     o.unit,
                     o.status,
                     o.created_at,
@@ -173,8 +171,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'price': offer_dict['price_per_unit'] if offer_dict['price_per_unit'] else 0,
                     'totalPrice': total_price,
                     'quantity': offer_dict['quantity'] if offer_dict['quantity'] else 0,
-                    'sold_quantity': offer_dict.get('sold_quantity', 0) or 0,
-                    'reserved_quantity': offer_dict.get('reserved_quantity', 0) or 0,
                     'unit': offer_dict['unit'],
                     'status': offer_dict['status'] or 'open',
                     'createdAt': offer_dict['created_at'].isoformat() if offer_dict['created_at'] else None

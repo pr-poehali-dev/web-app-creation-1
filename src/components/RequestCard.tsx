@@ -75,13 +75,14 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
       <div className="border-2 border-primary/20 rounded-lg p-2.5 hover:border-primary/40 hover:shadow-md transition-all">
         <div onClick={handleCardClick} className="cursor-pointer mb-2">
           <h3 className="font-semibold text-sm mb-1 line-clamp-2">{request.title}</h3>
-          <div className="flex items-center gap-1.5 text-xs">
-            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-            <span className="text-muted-foreground truncate">{districtName}</span>
-          </div>
+          <p className="text-xs text-muted-foreground line-clamp-2">{request.description}</p>
         </div>
         
         <div className="space-y-2">
+          <div className="flex items-center gap-1.5 text-xs">
+            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+            <span className="font-medium truncate">{districtName}</span>
+          </div>
           {expirationInfo.expiryDate && (
             <div className="flex items-center gap-1.5 text-xs">
               <Icon name="Clock" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
@@ -96,12 +97,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
           
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm font-bold text-primary">
-              {request.negotiablePrice 
-                ? `${request.pricePerUnit ? (request.pricePerUnit * request.quantity).toLocaleString() : '0'} ₽ (Торг)`
-                : request.pricePerUnit 
-                ? `${request.pricePerUnit.toLocaleString()} ₽`
-                : 'Торг'
-              }
+              {request.pricePerUnit ? request.pricePerUnit.toLocaleString() : '0'} ₽
             </span>
             {!isOwner && (
               <Button 
