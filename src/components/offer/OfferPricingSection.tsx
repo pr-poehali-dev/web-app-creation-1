@@ -186,22 +186,6 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
         <div className="space-y-3">
           <div className="flex items-start space-x-2">
             <Checkbox
-              id="hasVAT"
-              checked={formData.hasVAT}
-              onCheckedChange={(checked) => onInputChange('hasVAT', checked as boolean)}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <label
-                htmlFor="hasVAT"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Цена включает НДС
-              </label>
-            </div>
-          </div>
-
-          <div className="flex items-start space-x-2">
-            <Checkbox
               id="noNegotiation"
               checked={formData.noNegotiation || false}
               onCheckedChange={(checked) => onInputChange('noNegotiation', checked as boolean)}
