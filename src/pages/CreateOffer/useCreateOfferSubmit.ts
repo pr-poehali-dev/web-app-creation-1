@@ -68,7 +68,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
             });
           }, 200);
           
-          const uploadResult = await offersAPI.uploadVideo(videoPreview);
+          const uploadResult = await offersAPI.uploadMedia(videoPreview);
           
           clearInterval(progressInterval);
           setVideoUploadProgress(100);
@@ -107,9 +107,23 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         for (let i = 0; i < imagePreviews.length; i++) {
           try {
             console.log(`Uploading image ${i + 1}/${imagePreviews.length}...`);
-            const uploadResult = await offersAPI.uploadVideo(imagePreviews[i]);
+            
+            // Обновляем прогресс
+            if (imagePreviews.length > 1) {
+              toast({
+                title: 'Загрузка фото...',
+                description: `Загружаем ${i + 1} из ${imagePreviews.length}`,
+              });
+            }
+            
+            const uploadResult = await offersAPI.uploadMedia(imagePreviews[i]);
             uploadedImageUrls.push(uploadResult.url);
             console.log(`Image ${i + 1}/${imagePreviews.length} uploaded:`, uploadResult.url);
+            
+            // Небольшая задержка между загрузками (кроме последнего)
+            if (i < imagePreviews.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 300));
+            }
           } catch (error) {
             console.error(`Failed to upload image ${i + 1}:`, error);
             const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';

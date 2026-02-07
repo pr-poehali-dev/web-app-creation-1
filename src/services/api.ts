@@ -343,27 +343,40 @@ export const offersAPI = {
     return response.json();
   },
 
-  async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
-    console.log('uploadVideo: Starting upload, data size:', videoBase64.length);
-    const response = await fetchWithRetry(UPLOAD_VIDEO_API, {
+  async uploadMedia(mediaBase64: string): Promise<{ url: string; message: string }> {
+    console.log('uploadMedia: Starting upload, data size:', mediaBase64.length);
+    
+    // Для загрузки медиа не используем fetchWithRetry, т.к. загрузка может быть долгой
+    const response = await fetch(UPLOAD_VIDEO_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ video: videoBase64 }),
+      body: JSON.stringify({ video: mediaBase64 }),
     });
     
-    console.log('uploadVideo: Response status:', response.status);
+    console.log('uploadMedia: Response status:', response.status);
     
     if (!response.ok) {
-      const error = await response.json();
-      console.error('uploadVideo: Error response:', error);
-      throw new Error(error.error || 'Failed to upload video');
+      let errorMessage = 'Failed to upload media';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || errorMessage;
+      } catch (e) {
+        console.error('uploadMedia: Failed to parse error response:', e);
+      }
+      console.error('uploadMedia: Error response:', errorMessage);
+      throw new Error(errorMessage);
     }
     
     const result = await response.json();
-    console.log('uploadVideo: Success, URL:', result.url);
+    console.log('uploadMedia: Success, URL:', result.url);
     return result;
+  },
+
+  // Алиас для обратной совместимости
+  async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
+    return this.uploadMedia(videoBase64);
   },
 
   async getAdminOffers(params?: {
