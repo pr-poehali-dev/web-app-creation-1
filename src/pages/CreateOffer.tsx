@@ -147,7 +147,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       deliveryTime: formData.deliveryTime || undefined,
       deliveryPeriodStart: formData.deliveryPeriodStart || undefined,
       deliveryPeriodEnd: formData.deliveryPeriodEnd || undefined,
-      images: [],
       isPremium: false,
       status: isDraft ? 'draft' : 'active',
       noNegotiation: formData.noNegotiation,
