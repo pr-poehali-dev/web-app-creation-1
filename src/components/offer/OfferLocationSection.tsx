@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 
 const MapModal = lazy(() => import('@/components/auction/MapModal'));
 import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
+import { DISTRICTS } from '@/data/districts';
 import type { DeliveryType } from '@/types/offer';
 
 interface District {
@@ -70,6 +71,18 @@ export default function OfferLocationSection({
       s.name.toLowerCase().includes(addressInput.toLowerCase())
     ).slice(0, 5);
   }, [addressInput]);
+
+  // Фильтруем районы для доставки: только из того же региона, исключая текущий и 'all'
+  const deliveryDistricts = useMemo(() => {
+    const currentDistrict = DISTRICTS.find(d => d.id === formData.district);
+    if (!currentDistrict) return [];
+    
+    return DISTRICTS.filter(d => 
+      d.regionId === currentDistrict.regionId && 
+      d.id !== 'all' && 
+      d.id !== formData.district
+    );
+  }, [formData.district]);
 
   return (
     <Card>
@@ -225,23 +238,31 @@ export default function OfferLocationSection({
               </div>
               
               {showDistrictDelivery && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {districts.map(district => (
-                    <div key={district.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`district-${district.id}`}
-                        checked={formData.availableDistricts.includes(district.id)}
-                        onCheckedChange={() => onDistrictToggle(district.id)}
-                      />
-                      <label
-                        htmlFor={`district-${district.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {district.name}
-                      </label>
+                <>
+                  {deliveryDistricts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Сначала выберите район местоположения, чтобы указать районы доставки
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {deliveryDistricts.map(district => (
+                        <div key={district.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`district-${district.id}`}
+                            checked={formData.availableDistricts.includes(district.id)}
+                            onCheckedChange={() => onDistrictToggle(district.id)}
+                          />
+                          <label
+                            htmlFor={`district-${district.id}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {district.name}
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
           </div>
