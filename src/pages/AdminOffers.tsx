@@ -33,7 +33,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
 import type { Offer as OfferType } from '@/types/offer';
-import { notifyOfferUpdated } from '@/utils/dataSync';
+import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
 
 interface AdminOffersProps {
   isAuthenticated: boolean;
@@ -69,6 +69,17 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   useEffect(() => {
     fetchOffers();
   }, [searchQuery, filterStatus]);
+
+  useEffect(() => {
+    const unsubscribe = dataSync.subscribe('offer_updated', () => {
+      console.log('Offer updated, reloading admin offers...');
+      fetchOffers();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     applyFilters();
