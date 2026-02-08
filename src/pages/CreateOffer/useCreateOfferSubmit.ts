@@ -245,6 +245,10 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       // Помечаем что предложения обновились
       markDataAsUpdated('offers');
       
+      // Очищаем SmartCache для немедленного обновления списка предложений
+      const { SmartCache } = await import('@/utils/smartCache');
+      SmartCache.invalidate('offers_list');
+      
       // Уведомляем всех пользователей об изменении предложений
       notifyOfferUpdated(result.id);
       
@@ -267,7 +271,8 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         if (isEditMode) {
           navigate('/my-orders', { replace: true });
         } else {
-          navigate('/predlozheniya', { replace: true });
+          // Добавляем timestamp для принудительной перезагрузки данных
+          navigate(`/predlozheniya?refresh=${Date.now()}`, { replace: true });
         }
       }, 500);
     } catch (error: unknown) {

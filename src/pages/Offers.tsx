@@ -55,11 +55,15 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     let isMounted = true;
     let isLoading = false;
 
+    // Проверяем параметр refresh в URL для принудительной перезагрузки
+    const refreshParam = searchParams.get('refresh');
+    const shouldForceRefreshFromUrl = !!refreshParam;
+
     const loadData = async (forceRefresh = false) => {
       if (isLoading) return;
       isLoading = true;
       const hasUpdates = checkForUpdates('offers');
-      const shouldForceRefresh = forceRefresh || hasUpdates;
+      const shouldForceRefresh = forceRefresh || hasUpdates || shouldForceRefreshFromUrl;
       
       if (!shouldForceRefresh) {
         const cached = SmartCache.get<Offer[]>('offers_list');
@@ -165,13 +169,19 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
     });
     
+    // Удаляем параметр refresh из URL после загрузки
+    if (shouldForceRefreshFromUrl && searchParams.has('refresh')) {
+      searchParams.delete('refresh');
+      setSearchParams(searchParams, { replace: true });
+    }
+
     return () => {
       isMounted = false;
       isLoading = false;
       unsubscribeOffers();
       unsubscribeOrders();
     };
-  }, []);
+  }, [searchParams, setSearchParams, toast, setGlobalOffers]);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
