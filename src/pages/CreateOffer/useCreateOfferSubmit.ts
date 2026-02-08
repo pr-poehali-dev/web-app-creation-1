@@ -160,15 +160,30 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       }
 
       const offerData = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.subcategory || undefined,
         quantity: Number(formData.quantity),
-        pricePerUnit: Number(formData.pricePerUnit),
         minOrderQuantity: formData.minOrderQuantity ? Number(formData.minOrderQuantity) : undefined,
-        images: uploadedImageUrls.map((url, index) => ({
+        unit: formData.unit,
+        pricePerUnit: Number(formData.pricePerUnit),
+        hasVAT: false,
+        vatRate: 0,
+        location: formData.fullAddress,
+        district: formData.district,
+        fullAddress: formData.fullAddress,
+        availableDistricts: formData.availableDistricts,
+        availableDeliveryTypes: formData.availableDeliveryTypes as string[],
+        deliveryTime: formData.deliveryTime || undefined,
+        deliveryPeriodStart: formData.deliveryPeriodStart || undefined,
+        deliveryPeriodEnd: formData.deliveryPeriodEnd || undefined,
+        noNegotiation: formData.noNegotiation || false,
+        images: uploadedImageUrls.length > 0 ? uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
-        })),
-        videoUrl: videoUrl,
+        })) : undefined,
+        videoUrl: videoUrl || undefined,
         isPremium: false,
         status: isDraft ? 'draft' : 'active',
       };

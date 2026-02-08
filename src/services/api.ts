@@ -152,6 +152,7 @@ export interface CreateOfferData {
   category: string;
   subcategory?: string;
   quantity: number;
+  minOrderQuantity?: number;
   unit: string;
   pricePerUnit: number;
   hasVAT?: boolean;
@@ -160,8 +161,13 @@ export interface CreateOfferData {
   district: string;
   fullAddress?: string;
   availableDistricts: string[];
-  images?: Array<{ url: string; alt?: string }>;
   availableDeliveryTypes?: string[];
+  deliveryTime?: string;
+  deliveryPeriodStart?: string;
+  deliveryPeriodEnd?: string;
+  noNegotiation?: boolean;
+  images?: Array<{ url: string; alt?: string }>;
+  videoUrl?: string;
   isPremium?: boolean;
   status?: string;
 }
