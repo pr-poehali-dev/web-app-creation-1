@@ -511,14 +511,32 @@ export function useOrdersData(
       setSelectedOrder(mappedOrder);
       
       // НЕМЕДЛЕННО обновляем этот заказ в массиве orders (карточка на странице)
-      // Добавляем _updateTimestamp для гарантированного ререндера React
       setOrders(prevOrders => {
-        const newOrders = prevOrders.map(o => 
-          o.id === mappedOrder.id 
-            ? { ...mappedOrder, _updateTimestamp: Date.now() } 
-            : o
-        );
-        console.log('[handleCounterOffer] Карточка отправителя обновлена локально');
+        console.log('[handleCounterOffer] Обновляем orders, текущий размер:', prevOrders.length);
+        console.log('[handleCounterOffer] Ищем заказ ID:', mappedOrder.id);
+        
+        const orderIndex = prevOrders.findIndex(o => o.id === mappedOrder.id);
+        console.log('[handleCounterOffer] Индекс заказа в массиве:', orderIndex);
+        
+        if (orderIndex === -1) {
+          console.warn('[handleCounterOffer] ⚠️ Заказ НЕ найден в массиве orders!');
+          return prevOrders;
+        }
+        
+        const newOrders = [...prevOrders];
+        newOrders[orderIndex] = { 
+          ...mappedOrder, 
+          _updateTimestamp: Date.now() 
+        };
+        
+        console.log('[handleCounterOffer] ✅ Заказ обновлен в orders[' + orderIndex + ']');
+        console.log('[handleCounterOffer] Новые данные:', {
+          id: newOrders[orderIndex].id,
+          counterPrice: newOrders[orderIndex].counterPricePerUnit,
+          counterTotal: newOrders[orderIndex].counterTotalAmount,
+          timestamp: newOrders[orderIndex]._updateTimestamp
+        });
+        
         return newOrders;
       });
       
@@ -534,12 +552,6 @@ export function useOrdersData(
       
       // Уведомляем систему об обновлении заказа (для dataSync)
       notifyOrderUpdated(selectedOrder.id);
-      
-      // КРИТИЧНО: Немедленная перезагрузка всех заказов для синхронизации
-      // Это гарантирует что контрагент получит обновление даже если polling не сработал
-      setTimeout(() => {
-        loadOrders(false);
-      }, 500);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
