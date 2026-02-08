@@ -283,7 +283,7 @@ export const offersAPI = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthHeaders(),
+        'X-User-Id': userId,
       },
       body: JSON.stringify(data),
     });
