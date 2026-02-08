@@ -159,51 +159,36 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         }
       }
 
-      // Формируем данные предложения
-      const offerData: Record<string, unknown> = {
+      const offerData = {
         title: formData.title,
         description: formData.description,
         category: formData.category,
+        subcategory: formData.subcategory,
         quantity: Number(formData.quantity),
+        minOrderQuantity: formData.minOrderQuantity ? Number(formData.minOrderQuantity) : undefined,
         unit: formData.unit,
         pricePerUnit: Number(formData.pricePerUnit),
-        hasVAT: false,
-        vatRate: 0,
+        location: formData.location,
         district: formData.district,
+        fullAddress: formData.fullAddress,
         availableDistricts: formData.availableDistricts,
         availableDeliveryTypes: formData.availableDeliveryTypes,
+        deliveryTime: formData.deliveryTime,
+        deliveryPeriodStart: formData.deliveryPeriodStart,
+        deliveryPeriodEnd: formData.deliveryPeriodEnd,
+        noNegotiation: formData.noNegotiation,
+        images: uploadedImageUrls.map((url, index) => ({
+          url,
+          alt: `${formData.title} - изображение ${index + 1}`,
+        })),
+        videoUrl: videoUrl,
         isPremium: false,
         status: isDraft ? 'draft' : 'active',
       };
-
-      // Добавляем опциональные поля только если они заполнены
-      if (formData.subcategory) offerData.subcategory = formData.subcategory;
-      if (formData.minOrderQuantity) offerData.minOrderQuantity = Number(formData.minOrderQuantity);
-      if (formData.fullAddress) {
-        offerData.location = formData.fullAddress;
-        offerData.fullAddress = formData.fullAddress;
-      }
-      if (formData.deliveryTime) offerData.deliveryTime = formData.deliveryTime;
-      if (formData.deliveryPeriodStart) offerData.deliveryPeriodStart = formData.deliveryPeriodStart;
-      if (formData.deliveryPeriodEnd) offerData.deliveryPeriodEnd = formData.deliveryPeriodEnd;
-      if (formData.noNegotiation) offerData.noNegotiation = formData.noNegotiation;
-      
-      // Добавляем изображения если есть
-      if (uploadedImageUrls.length > 0) {
-        offerData.images = uploadedImageUrls.map((url, index) => ({
-          url,
-          alt: `${formData.title} - изображение ${index + 1}`,
-        }));
-      }
-      
-      // Добавляем видео если есть
-      if (videoUrl) {
-        offerData.videoUrl = videoUrl;
-      }
       
       const dataSize = new Blob([JSON.stringify(offerData)]).size;
       console.log(`Offer data size: ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
-      console.log(`Images: ${uploadedImageUrls.length}, Video: ${videoUrl ? 'yes' : 'no'}`);
+      console.log(`Images uploaded: ${uploadedImageUrls.length}, Video: ${videoUrl ? 'yes' : 'no'}`);
 
       toast({
         title: 'Сохранение предложения...',
@@ -212,14 +197,10 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
 
       let result;
       if (isEditMode && editOffer) {
-        console.log('Updating offer data:', JSON.stringify(offerData, null, 2));
-        result = await offersAPI.updateOffer(editOffer.id, offerData as Partial<typeof offerData>);
+        result = await offersAPI.updateOffer(editOffer.id, offerData);
         result.id = editOffer.id;
-        console.log('Update offer result:', result);
       } else {
-        console.log('Sending offer data:', JSON.stringify(offerData, null, 2));
-        result = await offersAPI.createOffer(offerData as typeof offerData & { title: string });
-        console.log('Create offer result:', result);
+        result = await offersAPI.createOffer(offerData);
       }
       
       const newOffer: Offer = {

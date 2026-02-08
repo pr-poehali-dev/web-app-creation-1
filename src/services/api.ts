@@ -289,15 +289,8 @@ export const offersAPI = {
     });
     
     if (!response.ok) {
-      let errorMessage = 'Failed to create offer';
-      try {
-        const error = await response.json();
-        errorMessage = error.error || error.message || errorMessage;
-      } catch (e) {
-        // Если не удалось распарсить JSON, используем статус текст
-        errorMessage = `${response.status}: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create offer');
     }
     
     // Инвалидируем кэш списков предложений
