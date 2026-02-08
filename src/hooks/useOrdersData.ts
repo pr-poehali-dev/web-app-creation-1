@@ -186,8 +186,26 @@ export function useOrdersData(
       loadOrders(false);
     });
 
+    // Слушатель триггера принудительного обновления после действий с заказом
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      if ('key' in e && e.key === 'force_orders_reload') {
+        console.log('🔄 Force reload orders triggered by action');
+        loadOrders(false);
+      } else if (!('key' in e)) {
+        const forceReload = localStorage.getItem('force_orders_reload');
+        if (forceReload) {
+          console.log('🔄 Force reload orders triggered by action (manual)');
+          localStorage.removeItem('force_orders_reload');
+          loadOrders(false);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [isAuthenticated, navigate, currentUser?.id, loadOrders]);
 
@@ -358,6 +376,10 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
+      // Триггер для немедленного обновления страницы после действия
+      localStorage.setItem('force_orders_reload', Date.now().toString());
+      window.dispatchEvent(new Event('storage'));
+      
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderToAccept);
     } catch (error: any) {
@@ -410,6 +432,10 @@ export function useOrdersData(
         title: 'Встречное предложение отправлено',
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
       });
+
+      // Триггер для немедленного обновления страницы после действия
+      localStorage.setItem('force_orders_reload', Date.now().toString());
+      window.dispatchEvent(new Event('storage'));
 
       // НЕМЕДЛЕННО обновляем данные после отправки встречного предложения
       notifyOrderUpdated(selectedOrder.id);
@@ -479,6 +505,10 @@ export function useOrdersData(
         description: 'Заказ переведён в статус "Принято"',
       });
 
+      // Триггер для немедленного обновления страницы после действия
+      localStorage.setItem('force_orders_reload', Date.now().toString());
+      window.dispatchEvent(new Event('storage'));
+
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderId);
     } catch (error) {
@@ -531,6 +561,10 @@ export function useOrdersData(
       if (onTabChange) {
         onTabChange('archive');
       }
+      
+      // Триггер для немедленного обновления страницы после действия
+      localStorage.setItem('force_orders_reload', Date.now().toString());
+      window.dispatchEvent(new Event('storage'));
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderToComplete);
