@@ -116,7 +116,6 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
 
         <div className="grid gap-8 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-2">
-            {(request.images.length > 0 || (showVideo && request.video)) && (
             <div className="relative mb-4">
               {isVideoIndex && request.video ? (
                 <div className="aspect-video bg-black rounded-lg overflow-hidden relative group">
@@ -202,9 +201,8 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                 </>
               )}
             </div>
-            )}
 
-            {(request.images.length > 0 || (showVideo && request.video)) && totalItems > 1 && (
+            {(request.images.length > 0 || (showVideo && request.video)) && (
               <div className="grid grid-cols-4 gap-2 mb-6">
                 {showVideo && request.video && (
                   <button

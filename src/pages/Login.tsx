@@ -37,10 +37,7 @@ export default function Login({ onLogin }: LoginProps) {
   const validateLogin = (login: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const digitsOnly = login.replace(/\D/g, '');
-    
-    // Проверка телефона: ровно 11 цифр
-    const isPhone = digitsOnly.length === 11;
-    
+    const isPhone = digitsOnly.length >= 10 && digitsOnly.length <= 15;
     return emailRegex.test(login) || isPhone;
   };
 
@@ -114,67 +111,44 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   const formatPhoneNumber = (value: string) => {
-    const hasPlus = value.trim().startsWith('+');
     const digitsOnly = value.replace(/\D/g, '');
     
-    if (digitsOnly.length === 0) {
-      return hasPlus ? '+' : '';
+    if (digitsOnly.length === 0) return '';
+    
+    let normalizedDigits = digitsOnly;
+    if (digitsOnly.startsWith('8') && digitsOnly.length >= 1) {
+      normalizedDigits = '7' + digitsOnly.slice(1);
+    } else if (!digitsOnly.startsWith('7') && !digitsOnly.startsWith('8')) {
+      normalizedDigits = '7' + digitsOnly;
     }
     
-    // МАКСИМУМ 11 ЦИФР ВСЕГДА!
-    const limitedDigits = digitsOnly.slice(0, 11);
-    
-    // Если номер начинается с +, просто форматируем
-    if (hasPlus) {
-      return formatWithSpaces('+' + limitedDigits);
-    }
-    
-    // Для номеров без +: преобразуем 8 в 7
-    let normalizedDigits = limitedDigits;
-    if (limitedDigits.startsWith('8')) {
-      normalizedDigits = '7' + limitedDigits.slice(1);
-    } else if (!limitedDigits.startsWith('7')) {
-      // Добавляем 7 если её нет
-      normalizedDigits = '7' + limitedDigits;
-      normalizedDigits = normalizedDigits.slice(0, 11); // Обрезаем до 11
-    }
-    
-    return formatWithSpaces('+' + normalizedDigits);
+    return formatWithMask(normalizedDigits);
   };
 
-  const formatWithSpaces = (phone: string) => {
-    // Убираем все кроме + и цифр
-    const cleaned = phone.replace(/[^\d+]/g, '');
-    const digits = cleaned.replace(/\D/g, '');
+  const formatWithMask = (digits: string) => {
+    if (digits.length === 0) return '';
     
-    if (digits.length === 0) return cleaned;
+    let formatted = '+7';
     
-    // Формат: +7 999 123 45 67 (пробелы вместо нулей)
-    let formatted = '+';
-    
-    if (digits.length >= 1) {
-      formatted += digits.substring(0, 1); // Код страны
-    }
-    if (digits.length >= 2) {
-      formatted += ' ' + digits.substring(1, Math.min(4, digits.length)); // 3 цифры
+    if (digits.length > 1) {
+      formatted += ' (' + digits.substring(1, Math.min(4, digits.length));
+      // Закрываем скобку если есть 3 цифры после кода или больше
+      if (digits.length >= 4) {
+        formatted += ')';
+      }
     }
     if (digits.length >= 5) {
-      formatted += ' ' + digits.substring(4, Math.min(7, digits.length)); // 3 цифры
+      formatted += ' ' + digits.substring(4, Math.min(7, digits.length));
     }
-    if (digits.length >= 8) {
-      formatted += ' ' + digits.substring(7, Math.min(9, digits.length)); // 2 цифры
+    if (digits.length >= 7) {
+      formatted += '-' + digits.substring(7, Math.min(9, digits.length));
     }
-    if (digits.length >= 10) {
-      formatted += ' ' + digits.substring(9, Math.min(11, digits.length)); // 2 цифры
-    }
-    if (digits.length >= 12) {
-      formatted += ' ' + digits.substring(11); // Остальные для международных
+    if (digits.length >= 9) {
+      formatted += '-' + digits.substring(9, 11);
     }
     
     return formatted;
   };
-
-
 
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -193,58 +167,31 @@ export default function Login({ onLogin }: LoginProps) {
       return;
     }
     
-    // Разрешаем ввод только + в начале
-    if (value === '+') {
-      setLogin('+');
-      setLoginError('');
-      return;
-    }
-    
-    // Извлекаем только цифры из нового значения
+    // Извлекаем только цифры из текущего и нового значения
+    const currentDigits = login.replace(/\D/g, '');
     const newDigits = value.replace(/\D/g, '');
-    const hasPlus = value.trim().startsWith('+');
     
-    // Если цифр нет и нет + - очищаем поле
-    if (newDigits.length === 0 && !hasPlus) {
+    // Если цифр нет - очищаем поле
+    if (newDigits.length === 0) {
       setLogin('');
       setLoginError('');
       return;
     }
     
-    // СТРОГО: Максимум 11 цифр!
-    if (newDigits.length > 11) {
-      return; // Блокируем ввод
-    }
-    
-    // Форматируем телефон
-    const formatted = formatPhoneNumber(value);
-    
-    setLogin(formatted);
-    
-    // Валидация телефона в реальном времени
-    const digits = formatted.replace(/\D/g, '');
-    
-    // Если есть только +, не показываем ошибку
-    if (digits.length === 0) {
+    // Если пользователь удаляет символы (цифр стало меньше)
+    if (newDigits.length < currentDigits.length) {
+      // Просто используем новые цифры без дополнительной логики
+      const formatted = formatPhoneNumber(newDigits);
+      setLogin(formatted);
       setLoginError('');
       return;
     }
     
-    // Для российских номеров (начинаются с 7) - строгая проверка
-    if (digits.startsWith('7')) {
-      if (digits.length < 11) {
-        setLoginError('Номер должен содержать 11 цифр');
-      } else {
-        setLoginError('');
-      }
-    } else {
-      // Для международных номеров - проверка диапазона
-      if (digits.length < 10) {
-        setLoginError('Номер слишком короткий (минимум 10 цифр)');
-      } else {
-        setLoginError('');
-      }
-    }
+    // Форматируем телефон при добавлении символов
+    const formatted = formatPhoneNumber(value);
+    
+    setLogin(formatted);
+    setLoginError('');
   };
 
   return (
@@ -279,22 +226,9 @@ export default function Login({ onLogin }: LoginProps) {
                   id="login"
                   name="login"
                   type="text"
-                  placeholder="+79991234567, +12025551234 или example@company.com"
+                  placeholder="+79991234567 или example@company.com"
                   value={login}
                   onChange={handleLoginChange}
-                  onBlur={() => {
-                    // Проверка при потере фокуса
-                    if (login && !validateLogin(login)) {
-                      const digits = login.replace(/\D/g, '');
-                      if (digits.length > 0 && digits.length < 11) {
-                        setLoginError('Номер должен содержать 11 цифр');
-                      } else if (digits.length > 11) {
-                        setLoginError('Номер слишком длинный');
-                      } else if (!login.includes('@')) {
-                        setLoginError('Некорректный формат телефона или email');
-                      }
-                    }
-                  }}
                   autoComplete="username"
                   className={loginError ? 'border-destructive pr-10' : 'pr-10'}
                 />
