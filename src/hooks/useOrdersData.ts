@@ -136,9 +136,13 @@ export function useOrdersData(
         })));
       }
       
-      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами
-      // чтобы React гарантированно обнаружил изменения
-      setOrders(mappedOrders.map(order => ({ ...order })));
+      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами + timestamp
+      // чтобы React гарантированно обнаружил изменения и перерисовал карточки
+      const timestamp = Date.now();
+      setOrders(mappedOrders.map((order, index) => ({ 
+        ...order, 
+        _updateTimestamp: timestamp + index // Уникальный timestamp для каждого заказа
+      })));
       
       if (isInitialLoad) {
         setIsInitialLoad(false);
@@ -549,6 +553,11 @@ export function useOrdersData(
       });
       
       localStorage.setItem('force_orders_reload', triggerData);
+      
+      // CRITICAL: Принудительно вызываем storage event для обновления в другой вкладке контрагента
+      window.dispatchEvent(new Event('storage'));
+      
+      console.log('🔔 Отправлен триггер обновления для контрагента, orderId:', selectedOrder.id);
       
       // Уведомляем систему об обновлении заказа (для dataSync)
       notifyOrderUpdated(selectedOrder.id);
