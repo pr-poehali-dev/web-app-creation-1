@@ -299,23 +299,35 @@ export function useOrdersData(
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
 
+  // Ref для хранения актуального selectedOrder (избегаем stale closure)
+  const selectedOrderRef = useRef(selectedOrder);
+  useEffect(() => {
+    selectedOrderRef.current = selectedOrder;
+  }, [selectedOrder]);
+
   // Дополнительное быстрое обновление при открытом чате (каждую секунду)
   useEffect(() => {
-    if (!isAuthenticated || !isChatOpen || !selectedOrder) return;
+    if (!isAuthenticated || !isChatOpen || !selectedOrderRef.current) return;
 
+    const orderId = selectedOrderRef.current.id;
+    
     const fastIntervalId = setInterval(async () => {
-      console.log('[useOrdersData] Быстрое обновление открытого заказа');
+      const currentSelectedOrder = selectedOrderRef.current;
+      if (!currentSelectedOrder || currentSelectedOrder.id !== orderId) return;
+      
+      console.log('[useOrdersData] Быстрое обновление открытого заказа:', orderId);
       try {
-        const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+        const updatedOrderData = await ordersAPI.getOrderById(orderId);
         const mappedOrder = mapOrderData(updatedOrderData);
         
         // Обновляем только если данные действительно изменились
-        if (JSON.stringify(mappedOrder) !== JSON.stringify(selectedOrder)) {
+        const current = selectedOrderRef.current;
+        if (!current || JSON.stringify(mappedOrder) !== JSON.stringify(current)) {
           console.log('[useOrdersData] Быстрое обновление: данные изменились', {
             counterPrice: mappedOrder.counterPricePerUnit,
             counterTotal: mappedOrder.counterTotalAmount,
-            prevCounterPrice: selectedOrder.counterPricePerUnit,
-            prevCounterTotal: selectedOrder.counterTotalAmount
+            prevCounterPrice: current?.counterPricePerUnit,
+            prevCounterTotal: current?.counterTotalAmount
           });
           
           // Обновляем selectedOrder
@@ -334,7 +346,7 @@ export function useOrdersData(
     }, 1000); // 1 секунда - мгновенное обновление для активного заказа
 
     return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrder?.id]);
+  }, [isAuthenticated, isChatOpen, selectedOrderRef.current?.id]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
@@ -495,13 +507,15 @@ export function useOrdersData(
         prevOrders.map(o => o.id === mappedOrder.id ? { ...mappedOrder } : o)
       );
       
-      // Триггер для обновления у контрагента в других вкладках/устройствах
-      // Передаем ID заказа для точечного обновления
-      localStorage.setItem('force_orders_reload', JSON.stringify({
+      console.log('✅ Локальное обновление завершено (модальное окно + карточка отправителя)');
+      
+      // Триггер для обновления у контрагента (storage event + broadcast channel)
+      const triggerData = JSON.stringify({
         timestamp: Date.now(),
         orderId: selectedOrder.id
-      }));
-      window.dispatchEvent(new Event('storage'));
+      });
+      
+      localStorage.setItem('force_orders_reload', triggerData);
       
       // Уведомляем систему об обновлении заказа
       notifyOrderUpdated(selectedOrder.id);
