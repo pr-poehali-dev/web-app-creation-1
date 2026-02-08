@@ -125,10 +125,28 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
       loadFreshRequests(false);
     });
     
+    // Слушатель триггера принудительного обновления после публикации
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      if ('key' in e && e.key === 'force_requests_reload') {
+        console.log('🔄 Force reload requests triggered by publication');
+        loadFreshRequests(true);
+      } else if (!('key' in e)) {
+        const forceReload = localStorage.getItem('force_requests_reload');
+        if (forceReload) {
+          console.log('🔄 Force reload requests triggered by publication (manual)');
+          localStorage.removeItem('force_requests_reload');
+          loadFreshRequests(true);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
       isLoading = false;
       unsubscribeRequests();
       unsubscribeOrders();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 

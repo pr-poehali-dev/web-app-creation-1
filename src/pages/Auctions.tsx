@@ -156,9 +156,27 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       loadAuctions(true);
     });
 
+    // Слушатель триггера принудительного обновления после публикации
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      if ('key' in e && e.key === 'force_auctions_reload') {
+        console.log('🔄 Force reload auctions triggered by publication');
+        loadAuctions(false);
+      } else if (!('key' in e)) {
+        const forceReload = localStorage.getItem('force_auctions_reload');
+        if (forceReload) {
+          console.log('🔄 Force reload auctions triggered by publication (manual)');
+          localStorage.removeItem('force_auctions_reload');
+          loadAuctions(false);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
       clearInterval(refreshInterval);
       unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
 

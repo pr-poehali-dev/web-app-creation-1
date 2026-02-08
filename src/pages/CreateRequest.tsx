@@ -207,6 +207,10 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
       // Помечаем что запросы обновились
       markDataAsUpdated('requests');
       
+      // Триггер для немедленного обновления страницы после публикации
+      localStorage.setItem('force_requests_reload', Date.now().toString());
+      window.dispatchEvent(new Event('storage'));
+      
       toast({
         title: 'Успешно',
         description: isDraft 

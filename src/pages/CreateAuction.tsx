@@ -302,6 +302,10 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
         throw new Error(error.error || 'Ошибка создания аукциона');
       }
 
+      // Триггер для немедленного обновления страницы после публикации
+      localStorage.setItem('force_auctions_reload', Date.now().toString());
+      window.dispatchEvent(new Event('storage'));
+      
       toast({
         title: 'Успешно',
         description: 'Аукцион создан и будет опубликован в указанное время',
