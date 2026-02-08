@@ -285,24 +285,24 @@ export default function VerificationPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
+    <div className="container mx-auto px-4 py-4 sm:py-8 max-w-2xl min-h-screen-safe">
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2 mb-2">
+        <CardHeader className="space-y-3">
+          <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => navigate(-1)}
               disabled={loading}
-              className="text-primary font-bold"
+              className="text-primary font-bold -ml-2"
             >
               <Icon name="ArrowLeft" className="h-4 w-4 mr-1" />
               Назад
             </Button>
           </div>
-          <CardTitle>Верификация аккаунта</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Верификация аккаунта</CardTitle>
+          <CardDescription className="text-sm">
             Для полного доступа к функционалу платформы (создания запросов, предложений, аукциона, контракта) необходимо пройти верификацию аккаунта. Это займет всего несколько минут.
           </CardDescription>
         </CardHeader>
@@ -317,7 +317,7 @@ export default function VerificationPage() {
             />
           )}
           
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {error && (
               <Alert variant="destructive">
                 <Icon name="AlertCircle" className="h-4 w-4" />
@@ -341,8 +341,8 @@ export default function VerificationPage() {
               disabled={true}
             />
 
-            <div>
-              <Label htmlFor="phone">Номер телефона *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-sm font-medium">Номер телефона *</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -350,8 +350,9 @@ export default function VerificationPage() {
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="+7 (999) 123-45-67"
                 required
+                className="text-base"
               />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 На этот номер придет звонок для подтверждения
               </p>
             </div>
@@ -361,6 +362,7 @@ export default function VerificationPage() {
                 formData={formData}
                 onInputChange={handleInputChange}
                 onFileChange={handleFileChange}
+                onFormDataChange={setFormData}
               />
             ) : formData.verificationType === 'self_employed' ? (
               <EntrepreneurForm
@@ -378,16 +380,18 @@ export default function VerificationPage() {
               />
             )}
 
-            <Alert>
+            <Alert className="my-4">
               <Icon name="Info" className="h-4 w-4" />
-              <AlertDescription>
+              <AlertDescription className="text-sm">
                 Все документы проверяются в течение 1-3 рабочих дней. После успешной верификации вам будет доступен полный функционал платформы.
               </AlertDescription>
             </Alert>
 
-            <Button type="submit" disabled={loading} className="w-full">
-              {loading ? 'Отправка...' : agreementAccepted ? 'Отправить на верификацию' : 'Ознакомиться с соглашением'}
-            </Button>
+            <div className="sticky bottom-0 left-0 right-0 bg-card pt-4 pb-4 safe-bottom -mx-6 px-6 sm:mx-0 sm:px-0 sm:static border-t sm:border-t-0">
+              <Button type="submit" disabled={loading} className="w-full h-12 text-base font-medium touch-manipulation">
+                {loading ? 'Отправка...' : agreementAccepted ? 'Отправить на верификацию' : 'Ознакомиться с соглашением'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

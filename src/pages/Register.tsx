@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import SupportContact from '@/components/auth/SupportContact';
 import RegisterFormFields from './Register/RegisterFormFields';
 import { validateEmail, validatePhone, validateINN, validateOGRNIP, validateOGRN, validatePassword } from './Register/validators';
 import type { FormData, FormErrors, RegisterProps, UserType } from './Register/types';
@@ -165,10 +164,16 @@ export default function Register({ onRegister }: RegisterProps) {
       newErrors.phone = 'Некорректный номер телефона';
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Обязательное поле';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Некорректный email';
+    if (formData.userType !== 'individual') {
+      if (!formData.email.trim()) {
+        newErrors.email = 'Обязательное поле';
+      } else if (!validateEmail(formData.email)) {
+        newErrors.email = 'Некорректный email';
+      }
+    } else {
+      if (formData.email.trim() && !validateEmail(formData.email)) {
+        newErrors.email = 'Некорректный email';
+      }
     }
 
     if (!formData.password) {
@@ -294,7 +299,7 @@ export default function Register({ onRegister }: RegisterProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="userType">Тип пользователя</Label>
+              <Label htmlFor="userType">Тип пользователя <span className="text-destructive">*</span></Label>
               <Select value={formData.userType} onValueChange={handleUserTypeChange} disabled={isSubmitting}>
                 <SelectTrigger className={errors.userType ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Выберите тип пользователя" />
@@ -333,21 +338,17 @@ export default function Register({ onRegister }: RegisterProps) {
               )}
             </Button>
 
-            <div className="space-y-3">
-              <div className="text-center text-sm text-muted-foreground">
-                Я зарегистрирован.{' '}
-                <Button
-                  type="button"
-                  variant="link"
-                  className="p-0 h-auto font-normal"
-                  onClick={() => navigate('/login')}
-                  disabled={isSubmitting}
-                >
-                  Войти
-                </Button>
-              </div>
-
-              <SupportContact className="pt-2 border-t" />
+            <div className="text-center text-sm text-muted-foreground">
+              Я зарегистрирован.{' '}
+              <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto font-normal"
+                onClick={() => navigate('/login')}
+                disabled={isSubmitting}
+              >
+                Войти
+              </Button>
             </div>
           </form>
         </CardContent>

@@ -85,7 +85,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             </div>
           )}
           <div>
-            <p className="text-muted-foreground">Конечная цена</p>
+            <p className="text-muted-foreground">Конечная цена будет</p>
             <p className="font-medium text-primary">
               {(order.counterPricePerUnit !== undefined && order.counterPricePerUnit !== null 
                 ? order.counterPricePerUnit 

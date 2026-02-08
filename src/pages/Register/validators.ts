@@ -6,8 +6,8 @@ export const validateEmail = (email: string) => {
 };
 
 export const validatePhone = (phone: string) => {
-  const phoneRegex = /^(\+7|8)?[\s-]?\(?[0-9]{3}\)?[\s-]?[0-9]{3}[\s-]?[0-9]{2}[\s-]?[0-9]{2}$/;
-  return phoneRegex.test(phone);
+  const digitsOnly = phone.replace(/\D/g, '');
+  return digitsOnly.length >= 10 && digitsOnly.length <= 15;
 };
 
 export const validateINN = (inn: string, userType: UserType) => {

@@ -39,10 +39,10 @@ def normalize_phone(phone: str) -> str:
         return '7' + digits_only
     return digits_only
 
-def generate_jwt_token(user_id: int, email: str) -> str:
+def generate_jwt_token(user_id: int, email: str, phone: str = None) -> str:
     payload = {
         'user_id': user_id,
-        'email': email,
+        'email': email or phone,
         'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
         'iat': datetime.utcnow()
     }
@@ -268,8 +268,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
+                # Для физических лиц без email генерируем технический email на основе телефона
+                if not email and user_type == 'individual':
+                    normalized_phone = normalize_phone(phone)
+                    email = f'{normalized_phone}@noemail.erttp.local'
+                
                 with conn.cursor() as cur:
-                    if email:
+                    if email and not email.endswith('@noemail.erttp.local'):
                         cur.execute("SELECT id FROM users WHERE email = %s AND removed_at IS NULL", (email,))
                         if cur.fetchone():
                             return {
@@ -324,7 +329,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     user = cur.fetchone()
                     conn.commit()
                     
-                    if email:
+                    # Отправляем письмо только если это реальный email
+                    if email and not email.endswith('@noemail.erttp.local'):
                         try:
                             verification_link = f"https://erttp.ru/verify-email?token={email_verification_token}"
                             send_verification_email(email, verification_link)
@@ -332,14 +338,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         except Exception as e:
                             print(f"Failed to send verification email to {email}: {str(e)}")
                 
-                token = generate_jwt_token(user['id'], user['email'])
+                # Преобразуем пользователя в dict и скрываем технический email
+                user_data = dict(user)
+                if user_data['email'] and user_data['email'].endswith('@noemail.erttp.local'):
+                    user_data['email'] = ''
+                
+                token = generate_jwt_token(user['id'], user['email'], user['phone'])
                 
                 return {
                     'statusCode': 201,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({
                         'success': True,
-                        'user': dict(user),
+                        'user': user_data,
                         'token': token
                     }, default=str),
                     'isBase64Encoded': False
@@ -442,15 +453,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
-                normalized_phone = normalize_phone(login_id)
+                normalized_input = normalize_phone(login_id)
                 
                 with conn.cursor() as cur:
                     cur.execute(
                         """SELECT id, email, phone, password_hash, first_name, last_name, middle_name, 
                            user_type, is_active, company_name, inn, ogrnip, ogrn, 
                            position, director_name, legal_address, created_at, role, is_root_admin, locked_until 
-                           FROM users WHERE (email = %s OR REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = %s) AND removed_at IS NULL""",
-                        (login_id, normalized_phone)
+                           FROM users 
+                           WHERE email = %s 
+                              OR REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = %s 
+                              OR (
+                                  CASE 
+                                      WHEN REGEXP_REPLACE(phone, '[^0-9]', '', 'g') ~ '^8[0-9]{10}$' 
+                                      THEN '7' || SUBSTRING(REGEXP_REPLACE(phone, '[^0-9]', '', 'g') FROM 2)
+                                      ELSE REGEXP_REPLACE(phone, '[^0-9]', '', 'g')
+                                  END
+                              ) = %s
+                           AND removed_at IS NULL""",
+                        (login_id, login_id, normalized_input)
                     )
                     user = cur.fetchone()
                 
@@ -495,8 +516,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 user_data = dict(user)
                 user_data.pop('password_hash')
+                # Скрываем технический email для физических лиц
+                if user_data.get('email') and user_data['email'].endswith('@noemail.erttp.local'):
+                    user_data['email'] = ''
                 
-                token = generate_jwt_token(user['id'], user['email'])
+                token = generate_jwt_token(user['id'], user['email'], user['phone'])
                 
                 return {
                     'statusCode': 200,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import SupportContact from '@/components/auth/SupportContact';
 import { authenticateUser, saveRememberMe, getRememberMe, clearRememberMe } from '@/utils/auth';
 
 interface LoginProps {
@@ -21,6 +20,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -36,8 +36,12 @@ export default function Login({ onLogin }: LoginProps) {
 
   const validateLogin = (login: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
-    return emailRegex.test(login) || phoneRegex.test(login);
+    const digitsOnly = login.replace(/\D/g, '');
+    
+    // Проверка телефона: ровно 11 цифр
+    const isPhone = digitsOnly.length === 11;
+    
+    return emailRegex.test(login) || isPhone;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,9 +113,138 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
+  const formatPhoneNumber = (value: string) => {
+    const hasPlus = value.trim().startsWith('+');
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    if (digitsOnly.length === 0) {
+      return hasPlus ? '+' : '';
+    }
+    
+    // МАКСИМУМ 11 ЦИФР ВСЕГДА!
+    const limitedDigits = digitsOnly.slice(0, 11);
+    
+    // Если номер начинается с +, просто форматируем
+    if (hasPlus) {
+      return formatWithSpaces('+' + limitedDigits);
+    }
+    
+    // Для номеров без +: преобразуем 8 в 7
+    let normalizedDigits = limitedDigits;
+    if (limitedDigits.startsWith('8')) {
+      normalizedDigits = '7' + limitedDigits.slice(1);
+    } else if (!limitedDigits.startsWith('7')) {
+      // Добавляем 7 если её нет
+      normalizedDigits = '7' + limitedDigits;
+      normalizedDigits = normalizedDigits.slice(0, 11); // Обрезаем до 11
+    }
+    
+    return formatWithSpaces('+' + normalizedDigits);
+  };
+
+  const formatWithSpaces = (phone: string) => {
+    // Убираем все кроме + и цифр
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    const digits = cleaned.replace(/\D/g, '');
+    
+    if (digits.length === 0) return cleaned;
+    
+    // Формат: +7 999 123 45 67 (пробелы вместо нулей)
+    let formatted = '+';
+    
+    if (digits.length >= 1) {
+      formatted += digits.substring(0, 1); // Код страны
+    }
+    if (digits.length >= 2) {
+      formatted += ' ' + digits.substring(1, Math.min(4, digits.length)); // 3 цифры
+    }
+    if (digits.length >= 5) {
+      formatted += ' ' + digits.substring(4, Math.min(7, digits.length)); // 3 цифры
+    }
+    if (digits.length >= 8) {
+      formatted += ' ' + digits.substring(7, Math.min(9, digits.length)); // 2 цифры
+    }
+    if (digits.length >= 10) {
+      formatted += ' ' + digits.substring(9, Math.min(11, digits.length)); // 2 цифры
+    }
+    if (digits.length >= 12) {
+      formatted += ' ' + digits.substring(11); // Остальные для международных
+    }
+    
+    return formatted;
+  };
+
+
+
   const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLogin(e.target.value);
-    setLoginError('');
+    const value = e.target.value;
+    
+    // Если поле полностью пустое
+    if (value === '') {
+      setLogin('');
+      setLoginError('');
+      return;
+    }
+    
+    // Если это email или содержит буквы - не форматируем
+    if (value.includes('@') || /[a-zA-Z]/.test(value)) {
+      setLogin(value);
+      setLoginError('');
+      return;
+    }
+    
+    // Разрешаем ввод только + в начале
+    if (value === '+') {
+      setLogin('+');
+      setLoginError('');
+      return;
+    }
+    
+    // Извлекаем только цифры из нового значения
+    const newDigits = value.replace(/\D/g, '');
+    const hasPlus = value.trim().startsWith('+');
+    
+    // Если цифр нет и нет + - очищаем поле
+    if (newDigits.length === 0 && !hasPlus) {
+      setLogin('');
+      setLoginError('');
+      return;
+    }
+    
+    // СТРОГО: Максимум 11 цифр!
+    if (newDigits.length > 11) {
+      return; // Блокируем ввод
+    }
+    
+    // Форматируем телефон
+    const formatted = formatPhoneNumber(value);
+    
+    setLogin(formatted);
+    
+    // Валидация телефона в реальном времени
+    const digits = formatted.replace(/\D/g, '');
+    
+    // Если есть только +, не показываем ошибку
+    if (digits.length === 0) {
+      setLoginError('');
+      return;
+    }
+    
+    // Для российских номеров (начинаются с 7) - строгая проверка
+    if (digits.startsWith('7')) {
+      if (digits.length < 11) {
+        setLoginError('Номер должен содержать 11 цифр');
+      } else {
+        setLoginError('');
+      }
+    } else {
+      // Для международных номеров - проверка диапазона
+      if (digits.length < 10) {
+        setLoginError('Номер слишком короткий (минимум 10 цифр)');
+      } else {
+        setLoginError('');
+      }
+    }
   };
 
   return (
@@ -140,16 +273,45 @@ export default function Login({ onLogin }: LoginProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="login">Телефон или Email</Label>
-              <Input
-                id="login"
-                name="login"
-                type="text"
-                placeholder="+79991234567 или example@company.com"
-                value={login}
-                onChange={handleLoginChange}
-                autoComplete="username"
-                className={loginError ? 'border-destructive' : ''}
-              />
+              <div className="relative">
+                <Input
+                  ref={inputRef}
+                  id="login"
+                  name="login"
+                  type="text"
+                  placeholder="+79991234567, +12025551234 или example@company.com"
+                  value={login}
+                  onChange={handleLoginChange}
+                  onBlur={() => {
+                    // Проверка при потере фокуса
+                    if (login && !validateLogin(login)) {
+                      const digits = login.replace(/\D/g, '');
+                      if (digits.length > 0 && digits.length < 11) {
+                        setLoginError('Номер должен содержать 11 цифр');
+                      } else if (digits.length > 11) {
+                        setLoginError('Номер слишком длинный');
+                      } else if (!login.includes('@')) {
+                        setLoginError('Некорректный формат телефона или email');
+                      }
+                    }
+                  }}
+                  autoComplete="username"
+                  className={loginError ? 'border-destructive pr-10' : 'pr-10'}
+                />
+                {login && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLogin('');
+                      setLoginError('');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    <Icon name="X" className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               {loginError && <p className="text-sm text-destructive">{loginError}</p>}
             </div>
 
@@ -212,20 +374,16 @@ export default function Login({ onLogin }: LoginProps) {
               )}
             </Button>
 
-            <div className="space-y-3">
-              <div className="text-center text-sm">
-                <span className="text-muted-foreground">Нет аккаунта? </span>
-                <Button
-                  type="button"
-                  variant="link"
-                  className="px-1"
-                  onClick={() => navigate('/register')}
-                >
-                  Зарегистрироваться
-                </Button>
-              </div>
-
-              <SupportContact className="pt-2 border-t" />
+            <div className="text-center text-sm">
+              <span className="text-muted-foreground">Нет аккаунта? </span>
+              <Button
+                type="button"
+                variant="link"
+                className="px-1"
+                onClick={() => navigate('/register')}
+              >
+                Зарегистрироваться
+              </Button>
             </div>
           </form>
         </CardContent>

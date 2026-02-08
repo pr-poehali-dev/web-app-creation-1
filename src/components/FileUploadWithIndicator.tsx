@@ -77,7 +77,7 @@ export default function FileUploadWithIndicator({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id} className="flex items-center gap-2">
+      <Label htmlFor={id} className="flex items-center gap-2 text-sm font-medium">
         {label} {required && '*'}
         {uploadSuccess && (
           <span className="inline-flex items-center gap-1 text-green-600 text-xs font-normal">
@@ -94,7 +94,7 @@ export default function FileUploadWithIndicator({
           onChange={handleFileChange}
           required={required}
           disabled={disabled}
-          className={uploadSuccess ? 'border-green-500 bg-green-50' : ''}
+          className={`${uploadSuccess ? 'border-green-500 bg-green-50' : ''} cursor-pointer`}
         />
         {selectedFile && (
           <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -117,18 +117,18 @@ export default function FileUploadWithIndicator({
           </p>
           {preview && (
             <>
-              <div className="relative rounded-lg border border-green-200 overflow-hidden bg-white group cursor-pointer">
+              <div className="relative rounded-lg border border-green-200 overflow-hidden bg-white group cursor-pointer touch-manipulation">
                 <img 
                   src={preview} 
                   alt="Предпросмотр" 
-                  className="w-full h-auto max-h-64 object-contain"
+                  className="w-full h-auto max-h-48 sm:max-h-64 object-contain"
                   onClick={() => setShowFullPreview(true)}
                 />
                 <div 
-                  className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center"
+                  className="absolute inset-0 bg-black/0 sm:group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center"
                   onClick={() => setShowFullPreview(true)}
                 >
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-3">
+                  <div className="opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-3">
                     <Icon name="ZoomIn" className="h-6 w-6 text-gray-900" />
                   </div>
                 </div>
@@ -142,9 +142,9 @@ export default function FileUploadWithIndicator({
                     const input = document.getElementById(id) as HTMLInputElement;
                     if (input) input.value = '';
                   }}
-                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-lg z-10"
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-full p-2 sm:p-1.5 transition-colors shadow-lg z-10 touch-manipulation"
                 >
-                  <Icon name="X" className="h-4 w-4" />
+                  <Icon name="X" className="h-5 w-5 sm:h-4 sm:w-4" />
                 </button>
               </div>
 
