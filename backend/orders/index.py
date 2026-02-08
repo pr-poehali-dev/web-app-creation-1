@@ -64,18 +64,18 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
         'url': url
     })
     
-    # Telegram-уведомление (используем существующий endpoint)
+    # Push-уведомление
     try:
         conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
-        conn.request('POST', '/d49f8584-6ef9-47c0-9661-02560166e10f',  # telegram-notify
+        conn.request('POST', '/c16d67d9-8c85-481e-ae48-92e2b0d9cc64', 
                     notification_data, 
                     {'Content-Type': 'application/json'})
         response = conn.getresponse()
         response.read()  # Обязательно читаем ответ
         conn.close()
-        print(f'[NOTIFICATION] Telegram notification sent to user {user_id}: {title}')
+        print(f'[NOTIFICATION] Push sent to user {user_id}: {title}')
     except Exception as e:
-        print(f'[NOTIFICATION] Telegram error: {e}')
+        print(f'[NOTIFICATION] Push error: {e}')
     
     # Email-уведомление
     try:

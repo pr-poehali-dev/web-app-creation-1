@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import funcUrl from '../../backend/func2url.json';
 
 export default function AdminLogin() {
   const [login, setLogin] = useState('');
@@ -31,14 +30,14 @@ export default function AdminLogin() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(funcUrl['auth'], {
+      const response = await fetch('https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           action: 'login',
-          login: login,
+          email: login,
           password,
         }),
       });
@@ -54,7 +53,7 @@ export default function AdminLogin() {
           localStorage.setItem('userId', userId.toString());
           localStorage.setItem('userRole', userRole);
           localStorage.setItem('isRootAdmin', isRootAdmin ? 'true' : 'false');
-          localStorage.setItem('adminSession', 'true');
+          localStorage.setItem('adminSession', JSON.stringify({ login, timestamp: Date.now() }));
           navigate('/admin/panel');
           toast({
             title: 'Успешно',

@@ -40,18 +40,6 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
     fetchUsers();
   }, [searchQuery, filterStatus, filterType]);
 
-  useEffect(() => {
-    // Проверяем флаг успешного удаления при монтировании
-    const deleteSuccess = sessionStorage.getItem('userDeleteSuccess');
-    if (deleteSuccess) {
-      sessionStorage.removeItem('userDeleteSuccess');
-      // Показываем уведомление с небольшой задержкой после загрузки
-      setTimeout(() => {
-        toast.success('Пользователь удален');
-      }, 300);
-    }
-  }, []);
-
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
@@ -118,34 +106,23 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
 
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
-    
-    setShowDeleteDialog(false);
-    setSelectedUser(null);
-    
     try {
       const response = await fetch('https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f', {
         method: 'DELETE',
-        headers: { 
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: selectedUser.id })
       });
-      
-      const data = await response.json();
-      
-      if (response.ok && data.success) {
-        // Сохраняем флаг успешного удаления перед перезагрузкой
-        sessionStorage.setItem('userDeleteSuccess', 'true');
-        // Принудительно перезагружаем страницу
-        window.location.reload();
+      if (response.ok) {
+        toast.success(`Пользователь ${selectedUser.name} удален`);
+        fetchUsers();
       } else {
-        toast.error(data?.error || 'Ошибка при удалении пользователя');
-        await fetchUsers();
+        toast.error('Ошибка при удалении');
       }
     } catch (error) {
-      toast.error('Произошла ошибка при удалении пользователя');
-      await fetchUsers();
+      toast.error('Ошибка при удалении');
     }
+    setShowDeleteDialog(false);
+    setSelectedUser(null);
   };
 
   const handleViewDetails = (user: User) => {
