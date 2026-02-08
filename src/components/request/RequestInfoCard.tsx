@@ -2,45 +2,34 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import Icon from '@/components/ui/icon';
 import { safeToLocaleDateString } from '@/utils/dateUtils';
+import type { Request } from '@/types/offer';
 
 interface RequestInfoCardProps {
-  title: string;
-  category: string;
-  subcategory: string;
-  quantity: number;
-  unit: string;
-  pricePerUnit: number;
-  hasVAT: boolean;
-  vatRate?: number;
-  responsesCount?: number;
-  description: string;
-  deliveryAddress: string;
-  district: string;
-  availableDistricts: string[];
-  createdAt: Date;
-  expiryDate?: Date;
-  totalAmount: number;
+  request: Request;
 }
 
-export default function RequestInfoCard({
-  title,
-  category,
-  subcategory,
-  quantity,
-  unit,
-  pricePerUnit,
-  hasVAT,
-  vatRate,
-  responsesCount,
-  description,
-  deliveryAddress,
-  district,
-  availableDistricts,
-  createdAt,
-  expiryDate,
-  totalAmount
-}: RequestInfoCardProps) {
+export default function RequestInfoCard({ request }: RequestInfoCardProps) {
+  const {
+    title,
+    category,
+    subcategory,
+    quantity,
+    unit,
+    pricePerUnit,
+    hasVAT,
+    vatRate,
+    description,
+    deliveryAddress,
+    district,
+    availableDistricts,
+    createdAt,
+    expiryDate,
+    responsesCount
+  } = request;
+  
+  const totalAmount = pricePerUnit * quantity;
   return (
     <Card className="mb-3">
       <CardContent className="pt-3 pb-3 space-y-3">
@@ -99,10 +88,15 @@ export default function RequestInfoCard({
               <Separator />
 
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <p className="text-muted-foreground mb-0.5">Адрес доставки</p>
-                  <p className="font-medium">{deliveryAddress}</p>
-                </div>
+                {deliveryAddress && (
+                  <div>
+                    <p className="text-muted-foreground mb-0.5">Место предоставления услуги</p>
+                    <div className="flex items-center gap-1">
+                      <Icon name="MapPin" className="h-3 w-3 text-muted-foreground" />
+                      <p className="font-medium">{deliveryAddress}</p>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <p className="text-muted-foreground mb-0.5">Район</p>
                   <p className="font-medium">{district}</p>

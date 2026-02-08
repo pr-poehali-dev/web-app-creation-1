@@ -12,6 +12,8 @@ interface RequestPricingSectionProps {
     pricePerUnit: string;
     hasVAT: boolean;
     vatRate: string;
+    negotiableQuantity: boolean;
+    negotiablePrice: boolean;
   };
   onInputChange: (field: string, value: string | boolean) => void;
 }
@@ -75,10 +77,27 @@ export default function RequestPricingSection({
               value={formData.quantity}
               onChange={(e) => onInputChange('quantity', e.target.value)}
               placeholder="0"
-              required
+              required={!formData.negotiableQuantity}
               min="0.01"
               step="0.01"
+              disabled={formData.negotiableQuantity}
             />
+            <div className="flex items-center space-x-2 mt-2">
+              <Checkbox
+                id="negotiableQuantity"
+                checked={formData.negotiableQuantity}
+                onCheckedChange={(checked) => {
+                  onInputChange('negotiableQuantity', checked as boolean);
+                  if (checked) onInputChange('quantity', '');
+                }}
+              />
+              <label
+                htmlFor="negotiableQuantity"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Ваши предложения
+              </label>
+            </div>
           </div>
 
           <div className="relative">
@@ -134,28 +153,31 @@ export default function RequestPricingSection({
               value={formData.pricePerUnit}
               onChange={(e) => onInputChange('pricePerUnit', e.target.value)}
               placeholder="0"
-              required
+              required={!formData.negotiablePrice}
               min="0"
               step="0.01"
+              disabled={formData.negotiablePrice}
             />
+            <div className="flex items-center space-x-2 mt-2">
+              <Checkbox
+                id="negotiablePrice"
+                checked={formData.negotiablePrice}
+                onCheckedChange={(checked) => {
+                  onInputChange('negotiablePrice', checked as boolean);
+                  if (checked) onInputChange('pricePerUnit', '');
+                }}
+              />
+              <label
+                htmlFor="negotiablePrice"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Ваша цена (Торг)
+              </label>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-start space-x-2">
-          <Checkbox
-            id="hasVAT"
-            checked={formData.hasVAT}
-            onCheckedChange={(checked) => onInputChange('hasVAT', checked as boolean)}
-          />
-          <div className="grid gap-1.5 leading-none">
-            <label
-              htmlFor="hasVAT"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Цена должна включать НДС
-            </label>
-          </div>
-        </div>
+
 
         {formData.hasVAT && (
           <div className="w-40 relative">

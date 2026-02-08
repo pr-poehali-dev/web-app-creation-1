@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { offersAPI } from '@/services/api';
 import Icon from '@/components/ui/icon';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 export default function DeleteTestData() {
   const [status, setStatus] = useState<'idle' | 'deleting' | 'success' | 'error'>('idle');
@@ -30,6 +31,7 @@ export default function DeleteTestData() {
         try {
           console.log(`Удаляем предложение: ${offerId}`);
           await offersAPI.updateOffer(offerId, { status: 'archived' });
+          notifyOfferUpdated(offerId);
           deletedCount++;
           results.push(`✅ Удалено: ${offerId}`);
           console.log(`✅ Успешно удалено: ${offerId}`);

@@ -9,9 +9,10 @@ interface OrderCardProps {
   isSeller: boolean;
   onOpenChat: (order: Order) => void;
   onAcceptOrder?: (orderId: string) => void;
+  onCompleteOrder?: (orderId: string) => void;
 }
 
-export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }: OrderCardProps) {
+export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder }: OrderCardProps) {
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -34,21 +35,32 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card 
+      className="hover:shadow-md transition-shadow cursor-pointer relative"
+      onClick={() => onOpenChat(order)}
+    >
       <CardContent className="p-4 space-y-3">
         <div className="flex justify-between items-start gap-2 mb-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-lg line-clamp-1">{order.offerTitle}</h3>
+              {order.hasUnreadCounterOffer && (
+                <div className="relative flex items-center">
+                  <span className="flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                  </span>
+                </div>
+              )}
             </div>
             {order.orderNumber && (
               <p className="text-xs text-muted-foreground">Заказ #{order.orderNumber}</p>
             )}
           </div>
           {order.status === 'negotiating' ? (
-            <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700 font-semibold shrink-0">
+            <Badge variant="outline" className={`${order.hasUnreadCounterOffer ? 'bg-red-50 border-red-300 text-red-700 animate-pulse' : 'bg-orange-50 border-orange-200 text-orange-700'} font-semibold shrink-0`}>
               <Icon name="MessageSquare" className="mr-1 h-3 w-3" />
-              Торг
+              {order.hasUnreadCounterOffer ? 'Новая цена' : 'Торг'}
             </Badge>
           ) : (
             getStatusBadge(order.status)
@@ -62,7 +74,11 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
           </div>
           <div>
             <p className="text-muted-foreground">Сумма</p>
-            <p className="font-bold text-primary">{order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽</p>
+            <p className="font-bold text-primary">
+              {(order.counterTotalAmount !== undefined && order.counterTotalAmount !== null 
+                ? order.counterTotalAmount 
+                : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽
+            </p>
           </div>
           {order.status === 'negotiating' && order.counterPricePerUnit && (
             <div className="col-span-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded p-2">
@@ -78,7 +94,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
             </div>
           )}
           <div>
-            <p className="text-muted-foreground">Доставка</p>
+            <p className="text-muted-foreground">Способ получения</p>
             <p className="font-medium">
               {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
             </p>
@@ -89,6 +105,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
               {isSeller ? order.buyerName : (order.sellerName || 'Продавец')}
             </p>
           </div>
+
           {order.status === 'completed' && order.completedDate && (
             <div className="col-span-2">
               <p className="text-muted-foreground">Дата завершения</p>
@@ -122,23 +139,44 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder }
         )}
 
         <div className="flex gap-2">
-          <Button
-            onClick={() => onOpenChat(order)}
-            variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
-            className="flex-1"
-            size="sm"
-          >
-            <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-            {order.status === 'completed' || order.status === 'cancelled' ? 'История' : 'Чат'}
-          </Button>
-          {isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder && (
+          {order.status === 'accepted' ? (
             <Button
-              onClick={() => onAcceptOrder(order.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat(order);
+              }}
+              variant="outline"
               className="flex-1"
               size="sm"
             >
-              <Icon name="Check" className="mr-1.5 h-4 w-4" />
-              Принять заказ
+              <Icon name="FileText" className="mr-1.5 h-4 w-4" />
+              {isSeller ? 'Детали заказа в работе' : 'Детали заказа'}
+            </Button>
+          ) : isSeller && (order.status === 'new' || order.status === 'pending') ? (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat(order);
+              }}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              <Icon name="Clock" className="mr-1.5 h-4 w-4" />
+              Ожидает подтверждения
+            </Button>
+          ) : (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat(order);
+              }}
+              variant={order.status === 'completed' || order.status === 'cancelled' ? 'secondary' : 'outline'}
+              className="flex-1"
+              size="sm"
+            >
+              <Icon name="FileText" className="mr-1.5 h-4 w-4" />
+              Детали заказа
             </Button>
           )}
         </div>

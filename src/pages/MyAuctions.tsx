@@ -14,6 +14,7 @@ import { auctionsAPI } from '@/services/api';
 import MyAuctionCard from '@/components/myauctions/MyAuctionCard';
 import MyAuctionsDialogs from '@/components/myauctions/MyAuctionsDialogs';
 import { getTimeRemaining, getStatusBadge, canEdit, canReducePrice, canStop } from '@/components/myauctions/MyAuctionsHelpers';
+import { dataSync } from '@/utils/dataSync';
 
 interface MyAuctionsProps {
   isAuthenticated: boolean;
@@ -62,6 +63,15 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     }
 
     loadMyAuctions();
+    
+    const unsubscribe = dataSync.subscribe('auction_updated', () => {
+      console.log('Auction updated, reloading my auctions...');
+      loadMyAuctions();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const activeAuctions = myAuctions.filter(a => 
@@ -75,6 +85,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
       await auctionsAPI.deleteAuction(auctionId);
       setMyAuctions(myAuctions.filter(auction => auction.id !== auctionId));
       setAuctionToDelete(null);
+      dataSync.notifyAuctionUpdated(auctionId);
       toast({
         title: 'Успешно',
         description: 'Аукцион удален',
@@ -93,6 +104,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
       await auctionsAPI.updateAuction({ auctionId, action: 'stop' });
       await loadMyAuctions();
       setAuctionToStop(null);
+      dataSync.notifyAuctionUpdated(auctionId);
       toast({
         title: 'Успешно',
         description: 'Аукцион остановлен',
@@ -137,6 +149,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
       await loadMyAuctions();
       setPriceReduceAuction(null);
       setNewPrice('');
+      dataSync.notifyAuctionUpdated(priceReduceAuction.id);
       toast({
         title: 'Успешно',
         description: 'Цена снижена',
@@ -150,7 +163,9 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     }
   };
 
-
+  if (!isAuthenticated || !currentUser) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -176,7 +191,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" defaultValue="participating">
           <TabsList className="grid w-full grid-cols-4 mb-8 gap-2 p-2 bg-transparent h-auto">
             <TabsTrigger value="participating" className="border-2 data-[state=active]:border-primary data-[state=active]:bg-primary/10 flex-col h-auto py-2 px-1 whitespace-normal">
               <div className="flex flex-col items-center gap-0.5">

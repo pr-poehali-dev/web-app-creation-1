@@ -37,10 +37,10 @@ export default function EditOfferDeleteDialog({
             {orders.length > 0 ? (
               <div className="space-y-4">
                 <p className="text-destructive font-medium">
-                  ⚠️ У этого объявления есть активные заказы ({orders.length})
+                  ⚠️ Нельзя удалить при имеющихся активных заказах
                 </p>
                 <p>
-                  Сначала удалите все заказы, чтобы иметь возможность удалить объявление:
+                  У этого предложения есть {orders.length} {orders.length === 1 ? 'активный заказ' : 'активных заказа(ов)'}. Сначала удалите все заказы:
                 </p>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {orders.map((order) => (

@@ -164,10 +164,16 @@ export default function Register({ onRegister }: RegisterProps) {
       newErrors.phone = 'Некорректный номер телефона';
     }
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'Обязательное поле';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Некорректный email';
+    if (formData.userType !== 'individual') {
+      if (!formData.email.trim()) {
+        newErrors.email = 'Обязательное поле';
+      } else if (!validateEmail(formData.email)) {
+        newErrors.email = 'Некорректный email';
+      }
+    } else {
+      if (formData.email.trim() && !validateEmail(formData.email)) {
+        newErrors.email = 'Некорректный email';
+      }
     }
 
     if (!formData.password) {
@@ -222,7 +228,7 @@ export default function Register({ onRegister }: RegisterProps) {
       });
 
       if (result.success && result.user) {
-        saveSession(result.user);
+        saveSession(result.user, result.token);
         onRegister();
         toast({
           title: 'Успешно',
@@ -293,7 +299,7 @@ export default function Register({ onRegister }: RegisterProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="userType">Тип пользователя</Label>
+              <Label htmlFor="userType">Тип пользователя <span className="text-destructive">*</span></Label>
               <Select value={formData.userType} onValueChange={handleUserTypeChange} disabled={isSubmitting}>
                 <SelectTrigger className={errors.userType ? 'border-destructive' : ''}>
                   <SelectValue placeholder="Выберите тип пользователя" />

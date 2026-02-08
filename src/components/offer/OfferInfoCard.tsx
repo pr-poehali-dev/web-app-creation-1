@@ -6,6 +6,7 @@ import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { formatDateWithTimezone } from '@/utils/dateUtils';
+import { NASLEGS } from '@/data/naslegs';
 
 interface OfferInfoCardProps {
   title: string;
@@ -16,7 +17,7 @@ interface OfferInfoCardProps {
   unit: string;
   pricePerUnit: number;
   remainingQuantity: number;
-  hasVAT: boolean;
+  hasVAT?: boolean;
   vatRate?: number;
   totalAmount: number;
   description: string;
@@ -75,6 +76,26 @@ export default function OfferInfoCard({
     .map(id => districts.find(d => d.id === id)?.name || id)
     .filter(Boolean);
 
+  // Найти административный центр района (settlement)
+  const getDistrictCenter = (districtId: string) => {
+    const center = NASLEGS.find(n => n.districtId === districtId && n.type === 'settlement');
+    if (center) {
+      return `г. ${center.name}`;
+    }
+    return '';
+  };
+
+  // Извлечь только адрес из location (убрать "г. Город," если есть)
+  const getCleanAddress = (loc: string) => {
+    return loc
+      .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё\-]+,?\s*/, '')
+      .replace(/улица/gi, 'ул.')
+      .trim();
+  };
+
+  const cityName = getDistrictCenter(district);
+  const streetAddress = fullAddress || (location ? getCleanAddress(location) : '');
+
   return (
     <Card className="mb-3">
       <CardContent className="pt-3 pb-3 space-y-3">
@@ -88,11 +109,19 @@ export default function OfferInfoCard({
             )}
           </div>
           {sellerRating !== undefined && (
-            <div className="flex items-center gap-1.5 text-sm">
-              <Icon name="Star" className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-semibold">{sellerRating.toFixed(1)}</span>
-              <span className="text-muted-foreground">— рейтинг продавца</span>
-            </div>
+            <button
+              onClick={() => {
+                const reviewsSection = document.getElementById('seller-reviews');
+                if (reviewsSection) {
+                  reviewsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className="flex items-center gap-1.5 text-sm hover:opacity-80 transition-opacity cursor-pointer group"
+            >
+              <Icon name="Star" className="h-4 w-4 fill-yellow-400 text-yellow-400 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold group-hover:underline">{sellerRating.toFixed(1)}</span>
+              <span className="text-muted-foreground group-hover:underline">— рейтинг продавца</span>
+            </button>
           )}
         </div>
 
@@ -161,17 +190,12 @@ export default function OfferInfoCard({
 
               <Separator />
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {fullAddress && (
-                  <div>
-                    <p className="text-muted-foreground mb-0.5">Адрес</p>
-                    <p className="font-medium">{fullAddress}</p>
-                  </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Район</p>
+                <p className="text-sm font-medium">{districtName}</p>
+                {cityName && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{cityName}</p>
                 )}
-                <div>
-                  <p className="text-muted-foreground mb-0.5">Район</p>
-                  <p className="font-medium">{districtName}</p>
-                </div>
               </div>
 
               {availableDistrictNames.length > 0 && (
@@ -202,6 +226,16 @@ export default function OfferInfoCard({
                   )}
                 </div>
               </div>
+
+              {availableDeliveryTypes.includes('pickup') && streetAddress && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
+                  <div className="flex items-center gap-1.5">
+                    <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground" />
+                    <p className="text-sm font-medium">{streetAddress}</p>
+                  </div>
+                </div>
+              )}
 
               {deliveryTime && (
                 <div>
@@ -266,17 +300,12 @@ export default function OfferInfoCard({
 
             <Separator />
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {fullAddress && (
-                <div>
-                  <p className="text-muted-foreground mb-0.5">Адрес</p>
-                  <p className="font-medium">{fullAddress}</p>
-                </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-0.5">Район</p>
+              <p className="text-sm font-medium">{districtName}</p>
+              {cityName && (
+                <p className="text-xs text-muted-foreground mt-0.5">{cityName}</p>
               )}
-              <div>
-                <p className="text-muted-foreground mb-0.5">Район</p>
-                <p className="font-medium">{districtName}</p>
-              </div>
             </div>
 
             {availableDistrictNames.length > 0 && (
@@ -307,6 +336,16 @@ export default function OfferInfoCard({
                 )}
               </div>
             </div>
+
+            {availableDeliveryTypes.includes('pickup') && streetAddress && (
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
+                <div className="flex items-center gap-1.5">
+                  <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground" />
+                  <p className="text-sm font-medium">{streetAddress}</p>
+                </div>
+              </div>
+            )}
 
             {deliveryTime && (
               <div>

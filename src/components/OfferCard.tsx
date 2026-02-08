@@ -21,6 +21,8 @@ import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
+import { getExpirationStatus } from '@/utils/expirationFilter';
+import { NASLEGS } from '@/data/naslegs';
 
 interface OfferCardProps {
   offer: Offer;
@@ -35,17 +37,36 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const { toast } = useToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isEditingPrice, setIsEditingPrice] = useState(false);
-  const [isEditingQuantity, setIsEditingQuantity] = useState(false);
-  const [editPrice, setEditPrice] = useState(offer.pricePerUnit.toString());
-  const [editQuantity, setEditQuantity] = useState(offer.quantity.toString());
-  const [isSaving, setIsSaving] = useState(false);
   
   const isOwner = currentUser && String(offer.userId) === String(currentUser.id);
 
   const category = CATEGORIES.find(c => c.id === offer.category);
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
+  const expirationInfo = getExpirationStatus(offer);
+  
+  // Найти административный центр района (settlement)
+  const getDistrictCenter = (districtId: string) => {
+    const center = NASLEGS.find(n => n.districtId === districtId && n.type === 'settlement');
+    if (center) {
+      return `г. ${center.name}`;
+    }
+    return '';
+  };
+
+  // Извлечь только адрес из location (убрать "г. Город," если есть)
+  const getCleanAddress = (loc: string) => {
+    return loc
+      .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё\-]+,?\s*/, '')
+      .replace(/улица/gi, 'ул.')
+      .replace(/проспект/gi, 'пр.')
+      .replace(/переулок/gi, 'пер.')
+      .replace(/площадь/gi, 'пл.')
+      .trim();
+  };
+
+  const cityName = getDistrictCenter(offer.district);
+  const streetAddress = offer.fullAddress || (offer.location ? getCleanAddress(offer.location) : '');
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,71 +109,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
     setShowDeleteDialog(false);
   };
 
-  const handleSavePrice = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newPrice = parseFloat(editPrice);
-    if (isNaN(newPrice) || newPrice <= 0) {
-      toast({
-        title: 'Ошибка',
-        description: 'Укажите корректную цену',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      await offersAPI.updateOffer(offer.id, { pricePerUnit: newPrice });
-      offer.pricePerUnit = newPrice;
-      setIsEditingPrice(false);
-      toast({
-        title: 'Успешно',
-        description: 'Цена обновлена',
-      });
-    } catch (error) {
-      console.error('Error updating price:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить цену',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
-  const handleSaveQuantity = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newQuantity = parseInt(editQuantity);
-    if (isNaN(newQuantity) || newQuantity <= 0) {
-      toast({
-        title: 'Ошибка',
-        description: 'Укажите корректное количество',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSaving(true);
-    try {
-      await offersAPI.updateOffer(offer.id, { quantity: newQuantity });
-      offer.quantity = newQuantity;
-      setIsEditingQuantity(false);
-      toast({
-        title: 'Успешно',
-        description: 'Количество обновлено',
-      });
-    } catch (error) {
-      console.error('Error updating quantity:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить количество',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleMessages = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -173,7 +130,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
       )}
 
       <CardHeader className="p-0">
-        <div className="relative aspect-video bg-muted overflow-hidden">
+        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
           {offer.images.length > 0 ? (
             <>
               <img
@@ -242,33 +199,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           )}
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-muted-foreground text-xs">Доступно:</span>
-            {isOwner && isEditingQuantity ? (
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  type="number"
-                  value={editQuantity}
-                  onChange={(e) => setEditQuantity(e.target.value)}
-                  className="h-6 w-20 text-xs px-2"
-                  disabled={isSaving}
-                />
-                <Button onClick={handleSaveQuantity} size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="Check" className="h-3 w-3" />
-                </Button>
-                <Button onClick={(e) => { e.stopPropagation(); setIsEditingQuantity(false); setEditQuantity(offer.quantity.toString()); }} variant="ghost" size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="X" className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <span className="font-medium text-xs" onClick={(e) => { if (isOwner) { e.stopPropagation(); setIsEditingQuantity(true); } }}>
-                {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
-                {(offer.soldQuantity || 0) > 0 && (
-                  <span className="text-muted-foreground ml-1">
-                    (из {offer.quantity})
-                  </span>
-                )}
-                {isOwner && <Icon name="Pencil" className="h-3 w-3 inline ml-1 text-muted-foreground" />}
-              </span>
-            )}
+            <span className="font-medium text-xs">
+              {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
+              {(offer.soldQuantity || 0) > 0 && (
+                <span className="text-muted-foreground ml-1">
+                  (из {offer.quantity})
+                </span>
+              )}
+            </span>
           </div>
           {offer.minOrderQuantity && (
             <div className="flex items-baseline justify-between">
@@ -278,48 +216,41 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           )}
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-muted-foreground text-xs">Цена за единицу:</span>
-            {isOwner && isEditingPrice ? (
-              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                <Input
-                  type="number"
-                  value={editPrice}
-                  onChange={(e) => setEditPrice(e.target.value)}
-                  className="h-6 w-20 text-xs px-2"
-                  disabled={isSaving}
-                />
-                <Button onClick={handleSavePrice} size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="Check" className="h-3 w-3" />
-                </Button>
-                <Button onClick={(e) => { e.stopPropagation(); setIsEditingPrice(false); setEditPrice(offer.pricePerUnit.toString()); }} variant="ghost" size="sm" className="h-6 px-2" disabled={isSaving}>
-                  <Icon name="X" className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="font-bold text-primary text-base cursor-pointer" onClick={(e) => { if (isOwner) { e.stopPropagation(); setIsEditingPrice(true); } }}>
-                  {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-                  {isOwner && <Icon name="Pencil" className="h-3 w-3 inline ml-1 text-muted-foreground" />}
-                </span>
-                {offer.noNegotiation && (
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                    Без торга
-                  </Badge>
-                )}
-              </div>
-            )}
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="font-bold text-primary text-base">
+                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+              </span>
+              {offer.noNegotiation && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                  Без торга
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="pt-2 space-y-1 border-t text-xs">
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Icon name="MapPin" className="h-3.5 w-3.5" />
-            <span className="truncate">{districtName}</span>
+        <div className="pt-2 border-t text-xs space-y-1.5">
+          <div className="flex items-start gap-1.5 text-muted-foreground">
+            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="font-medium text-foreground truncate">{districtName}</span>
+              {cityName && (
+                <span className="text-xs text-muted-foreground">{cityName}</span>
+              )}
+              {streetAddress && (
+                <span className="truncate">{streetAddress}</span>
+              )}
+            </div>
           </div>
-
-          {offer.seller && (
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Icon name="Building2" className="h-3.5 w-3.5" />
-              <span className="truncate">{offer.seller.name}</span>
+          {expirationInfo.expiryDate && (
+            <div className="flex items-center gap-1.5">
+              <Icon name="Clock" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              <span className={`text-xs ${expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
+                  ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
+                  : 'Истекает сегодня'
+                }
+              </span>
             </div>
           )}
         </div>
@@ -328,15 +259,10 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
       <CardFooter className="p-3 pt-0">
         {isOwner ? (
           <div className="w-full space-y-2">
-            <div className="flex gap-2">
-              <Button onClick={handleEdit} variant="outline" className="flex-1 h-8 text-xs" size="sm">
-                <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
-                Редактировать
-              </Button>
-              <Button onClick={handleDelete} variant="outline" className="h-8 text-xs px-3" size="sm">
-                <Icon name="Trash2" className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <Button onClick={handleEdit} variant="outline" className="w-full h-8 text-xs" size="sm">
+              <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+              Редактировать
+            </Button>
             {unreadMessages && unreadMessages > 0 && (
               <Button onClick={handleMessages} variant="default" className="w-full h-8 text-xs" size="sm">
                 <Icon name="MessageSquare" className="mr-1.5 h-3.5 w-3.5" />

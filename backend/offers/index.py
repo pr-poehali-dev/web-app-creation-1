@@ -1,4 +1,4 @@
-'''Управление предложениями товаров и услуг'''
+'''Управление предложениями товаров и услуг с JWT аутентификацией'''
 
 import json
 import os 
@@ -127,6 +127,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             return update_offer(offer_id, event, headers)
         
+        elif method == 'DELETE':
+            query_params = event.get('queryStringParameters', {}) or {}
+            offer_id = query_params.get('id')
+            if not offer_id:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': 'Offer ID required in query params'}),
+                    'isBase64Encoded': False
+                }
+            return delete_offer(offer_id, headers)
+        
         else:
             return {
                 'statusCode': 405,
@@ -152,6 +164,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     try:
         query_params = event.get('queryStringParameters', {}) or {}
         status_filter = query_params.get('status', 'active')
+        user_id_filter = query_params.get('userId')
         
         # ⚡ ПАГИНАЦИЯ: Добавляем limit и offset параметры
         try:
@@ -167,7 +180,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             offset = 0
         
         # ⚡ КЭШИРОВАНИЕ: Проверяем кэш для списка предложений
-        cache_key = f"offers_list:{status_filter}:{limit}:{offset}"
+        cache_key = f"offers_list:{status_filter}:{user_id_filter}:{limit}:{offset}"
         cached_result = offers_cache.get(cache_key)
         if cached_result is not None:
             return {
@@ -180,20 +193,30 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
+        # Строим WHERE условия
+        where_conditions = []
+        if status_filter and status_filter != 'all':
+            where_conditions.append(f"o.status = '{status_filter}'")
+        if user_id_filter:
+            where_conditions.append(f"o.user_id = {user_id_filter}")
+        
+        where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
+        
         # Получаем общее количество записей (для hasMore на фронте)
-        count_sql = f"SELECT COUNT(*) as total FROM t_p42562714_web_app_creation_1.offers WHERE status = '{status_filter}'"
+        count_sql = f"SELECT COUNT(*) as total FROM t_p42562714_web_app_creation_1.offers o {where_clause}"
         cur.execute(count_sql)
         total_count = cur.fetchone()['total']
         
         # Получаем записи с пагинацией с JOIN на users для получения рейтинга
         sql = f"""
             SELECT 
-                o.id, o.user_id, o.seller_id, o.title, o.description, o.category, o.district, 
+                o.id, o.user_id, o.seller_id, o.title, o.description, o.category, o.district, o.location,
                 o.price_per_unit, o.quantity, o.unit, o.sold_quantity, o.reserved_quantity, o.created_at,
+                o.available_delivery_types, o.status, o.expiry_date, o.views_count,
                 COALESCE(u.rating, 100.0) as seller_rating
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
-            WHERE o.status = '{status_filter}' 
+            {where_clause}
             ORDER BY o.created_at DESC 
             LIMIT {limit} OFFSET {offset}
         """
@@ -202,6 +225,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         offers = cur.fetchall()
         
         images_map = {}
+        favorites_map = {}
         if len(offers) > 0:
             offer_ids = [str(offer['id']) for offer in offers]
             ids_list = ','.join([f"'{oid}'" for oid in offer_ids])
@@ -213,6 +237,16 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             
             for img_row in images_results:
                 images_map[img_row['offer_id']] = [{'id': str(img_row['id']), 'url': img_row['url'], 'alt': ''}]
+            
+            # Загружаем количество избранного отдельным запросом
+            try:
+                favorites_sql = f"SELECT offer_id, COUNT(*) as count FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id IN ({ids_list}) GROUP BY offer_id"
+                cur.execute(favorites_sql)
+                favorites_results = cur.fetchall()
+                for fav_row in favorites_results:
+                    favorites_map[fav_row['offer_id']] = int(fav_row['count'])
+            except Exception as fav_error:
+                print(f'Warning: Could not load favorites: {str(fav_error)}')
         
         result = []
         for offer in offers:
@@ -230,12 +264,18 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'description': offer.get('description', ''),
                 'category': offer.get('category'),
                 'district': offer.get('district'),
+                'location': offer.get('location'),
+                'availableDeliveryTypes': offer.get('available_delivery_types', []),
                 'quantity': offer.get('quantity'),
                 'soldQuantity': offer.get('sold_quantity', 0) or 0,
                 'reservedQuantity': offer.get('reserved_quantity', 0) or 0,
                 'unit': offer.get('unit'),
                 'pricePerUnit': float(offer['price_per_unit']) if offer.get('price_per_unit') else None,
                 'createdAt': offer['created_at'].isoformat() if offer.get('created_at') else None,
+                'status': offer.get('status', 'active'),
+                'expiryDate': offer['expiry_date'].isoformat() if offer.get('expiry_date') else None,
+                'views': offer.get('views_count', 0) or 0,
+                'favorites': favorites_map.get(offer['id'], 0),
                 'images': images_map.get(offer['id'], []),
                 'seller': {
                     'rating': seller_rating
@@ -276,16 +316,8 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
 
 def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
-    # ⚡ Кэширование деталей предложения на 5 минут
+    # ⚠️ НЕ используем кэш для детальной страницы, т.к. нужно увеличивать views_count
     cache_key = f"offer_detail:{offer_id}"
-    cached_result = offers_cache.get(cache_key)
-    if cached_result is not None:
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps(cached_result, default=decimal_default),
-            'isBase64Encoded': False
-        }
     
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
@@ -321,10 +353,9 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     cur.execute(sql)
     offer = cur.fetchone()
     
-    cur.close()
-    conn.close()
-    
     if not offer:
+        cur.close()
+        conn.close()
         return {
             'statusCode': 404,
             'headers': headers,
@@ -333,6 +364,26 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         }
     
     offer_dict = dict(offer)
+    
+    # Увеличиваем счетчик просмотров
+    try:
+        cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET views_count = COALESCE(views_count, 0) + 1 WHERE id = '{offer_id_escaped}'")
+        conn.commit()
+    except Exception as view_error:
+        print(f'Warning: Could not increment views for offer {offer_id}: {str(view_error)}')
+        conn.rollback()
+    
+    # Получаем количество избранного отдельным запросом
+    favorites_count = 0
+    try:
+        cur.execute(f"SELECT COUNT(*) as count FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id = '{offer_id_escaped}'")
+        fav_result = cur.fetchone()
+        favorites_count = int(fav_result['count']) if fav_result else 0
+    except Exception as fav_error:
+        print(f'Warning: Could not load favorites for offer {offer_id}: {str(fav_error)}')
+    
+    cur.close()
+    conn.close()
     
     # Конвертация дат
     created_at = offer_dict.pop('created_at', None)
@@ -394,8 +445,10 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         'isVerified': seller_is_verified
     }
     
-    # ⚡ Кэшируем результат на 5 минут
-    offers_cache.set(cache_key, offer_dict, ttl=300)
+    # Добавляем favorites к ответу
+    offer_dict['favorites'] = favorites_count
+    
+    # ⚠️ НЕ кэшируем, чтобы views_count всегда был актуальным
     
     return {
         'statusCode': 200,
@@ -576,68 +629,235 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
 
 def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Обновить предложение"""
-    body = json.loads(event.get('body', '{}'))
-    
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    updates = []
-    
-    if 'title' in body:
-        title_esc = body['title'].replace("'", "''")
-        updates.append(f"title = '{title_esc}'")
-    
-    if 'description' in body:
-        desc_esc = body['description'].replace("'", "''")
-        updates.append(f"description = '{desc_esc}'")
-    
-    if 'quantity' in body:
-        updates.append(f"quantity = {body['quantity']}")
-    
-    if 'minOrderQuantity' in body:
-        min_order_qty = body['minOrderQuantity']
-        if min_order_qty == '' or min_order_qty == 0:
-            updates.append(f"min_order_quantity = NULL")
-        else:
-            updates.append(f"min_order_quantity = {int(min_order_qty)}")
-    
-    if 'pricePerUnit' in body:
-        updates.append(f"price_per_unit = {body['pricePerUnit']}")
-    
-    if 'status' in body:
-        status_esc = body['status'].replace("'", "''")
-        updates.append(f"status = '{status_esc}'")
-    
-    if not updates:
-        cur.close()
-        conn.close()
+    try:
+        body = json.loads(event.get('body', '{}'))
+        print(f"UPDATE OFFER - Offer ID: {offer_id}")
+        print(f"UPDATE OFFER - Body keys: {list(body.keys())}")
+        print(f"UPDATE OFFER - Has images: {bool(body.get('images'))}")
+        if body.get('images'):
+            print(f"UPDATE OFFER - Images count: {len(body['images'])}")
+    except Exception as e:
+        print(f"ERROR parsing request body: {str(e)}")
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': json.dumps({'error': 'No fields to update'}, default=decimal_default),
+            'body': json.dumps({'error': f'Invalid JSON: {str(e)}'}, default=decimal_default),
             'isBase64Encoded': False
         }
     
-    updates.append("updated_at = CURRENT_TIMESTAMP")
-    offer_id_esc = offer_id.replace("'", "''")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Валидация изменения количества
+        if 'quantity' in body:
+            offer_id_esc = offer_id.replace("'", "''")
+            cur.execute(f"""
+                SELECT 
+                    COALESCE(sold_quantity, 0) as sold, 
+                    COALESCE(reserved_quantity, 0) as reserved
+                FROM t_p42562714_web_app_creation_1.offers 
+                WHERE id = '{offer_id_esc}'
+            """)
+            current_state = cur.fetchone()
+            
+            if current_state:
+                new_quantity = float(body['quantity'])
+                sold = float(current_state['sold'])
+                reserved = float(current_state['reserved'])
+                min_allowed = sold + reserved
+                
+                if new_quantity < min_allowed:
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 400,
+                        'headers': headers,
+                        'body': json.dumps({
+                            'error': 'Недостаточное количество',
+                            'message': f'Нельзя установить количество меньше {min_allowed:.2f} (продано: {sold:.2f}, зарезервировано: {reserved:.2f})',
+                            'minAllowed': min_allowed,
+                            'sold': sold,
+                            'reserved': reserved
+                        }, default=decimal_default),
+                        'isBase64Encoded': False
+                    }
+        
+        updates = []
+        
+        if 'title' in body:
+            title_esc = body['title'].replace("'", "''")
+            updates.append(f"title = '{title_esc}'")
+        
+        if 'description' in body:
+            desc_esc = body['description'].replace("'", "''")
+            updates.append(f"description = '{desc_esc}'")
+        
+        if 'quantity' in body:
+            updates.append(f"quantity = {body['quantity']}")
+        
+        if 'minOrderQuantity' in body:
+            min_order_qty = body['minOrderQuantity']
+            if min_order_qty == '' or min_order_qty == 0:
+                updates.append(f"min_order_quantity = NULL")
+            else:
+                updates.append(f"min_order_quantity = {int(min_order_qty)}")
+        
+        if 'pricePerUnit' in body:
+            updates.append(f"price_per_unit = {body['pricePerUnit']}")
+        
+        if 'status' in body:
+            status_esc = body['status'].replace("'", "''")
+            updates.append(f"status = '{status_esc}'")
+        
+        # Обработка изображений
+        if 'images' in body:
+            s3 = boto3.client('s3',
+                endpoint_url='https://bucket.poehali.dev',
+                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+            )
+            
+            offer_id_esc = offer_id.replace("'", "''")
+            
+            # Удаляем старые связи изображений
+            cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
+            
+            # Добавляем новые изображения
+            for idx, img in enumerate(body['images']):
+                img_url = img['url']
+                
+                # Если изображение base64 - загружаем в S3
+                if img_url.startswith('data:image'):
+                    try:
+                        header, base64_data = img_url.split(',', 1)
+                        image_data = base64.b64decode(base64_data)
+                        optimized_data = optimize_image(image_data)
+                        
+                        import uuid
+                        file_id = str(uuid.uuid4())
+                        s3_key = f"offer-images/{file_id}.jpg"
+                        
+                        s3.put_object(Bucket='files', Key=s3_key, Body=optimized_data, ContentType='image/jpeg')
+                        img_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
+                    except Exception as e:
+                        print(f"Failed to upload image to S3: {str(e)}")
+                        continue
+                
+                url_esc = img_url.replace("'", "''")
+                alt_esc = img.get('alt', '').replace("'", "''")
+                
+                # Проверяем существует ли изображение с таким URL
+                cur.execute(f"SELECT id FROM t_p42562714_web_app_creation_1.offer_images WHERE url = '{url_esc}'")
+                existing_image = cur.fetchone()
+                
+                if existing_image:
+                    image_id = existing_image['id']
+                else:
+                    cur.execute(
+                        f"INSERT INTO t_p42562714_web_app_creation_1.offer_images (url, alt) VALUES ('{url_esc}', '{alt_esc}') RETURNING id"
+                    )
+                    image_id = cur.fetchone()['id']
+                
+                # Создаем связь
+                cur.execute(
+                    f"INSERT INTO t_p42562714_web_app_creation_1.offer_image_relations (offer_id, image_id, sort_order) VALUES ('{offer_id_esc}', '{image_id}', {idx})"
+                )
     
-    sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
-    
-    cur.execute(sql)
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-    # ⚡ Инвалидируем кэш после обновления предложения
-    offers_cache.invalidate('offers_list')
-    offers_cache.invalidate(f'offer_detail:{offer_id}')
-    
-    return {
-        'statusCode': 200,
-        'headers': headers,
-        'body': json.dumps({'message': 'Offer updated successfully'}, default=decimal_default),
-        'isBase64Encoded': False
-    }
+        if updates:
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            offer_id_esc = offer_id.replace("'", "''")
+            
+            sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
+            cur.execute(sql)
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # ⚡ Инвалидируем кэш после обновления предложения
+        offers_cache.invalidate('offers_list')
+        offers_cache.invalidate(f'offer_detail:{offer_id}')
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'Offer updated successfully'}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f'ERROR in update_offer: {str(e)}')
+        print(f'Traceback: {error_trace}')
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e), 'trace': error_trace}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+
+def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Удалить предложение безвозвратно из базы данных"""
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        offer_id_esc = offer_id.replace("'", "''")
+        
+        # Удаляем связи с изображениями (каскадное удаление)
+        try:
+            cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
+        except Exception as e:
+            print(f"Warning: Could not delete image relations: {str(e)}")
+        
+        # Удаляем из избранного (если есть)
+        try:
+            cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id = '{offer_id_esc}'")
+        except Exception as e:
+            print(f"Warning: Could not delete favorites: {str(e)}")
+        
+        # Удаляем само предложение (главная операция)
+        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offers WHERE id = '{offer_id_esc}'")
+        deleted_rows = cur.rowcount
+        
+        if deleted_rows == 0:
+            conn.rollback()
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({'error': 'Offer not found'}, default=decimal_default),
+                'isBase64Encoded': False
+            }
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # Инвалидируем кэш
+        offers_cache.invalidate('offers_list')
+        
+        print(f"Successfully deleted offer {offer_id}")
+        
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'message': 'Offer deleted successfully'}, default=decimal_default),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        import traceback
+        error_trace = traceback.format_exc()
+        print(f'ERROR in delete_offer: {str(e)}')
+        print(f'Traceback: {error_trace}')
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e)}, default=decimal_default),
+            'isBase64Encoded': False
+        }
 
 def optimize_image(image_data: bytes, max_width: int = 800, quality: int = 85) -> bytes:
     """Оптимизация изображения: resize + сжатие + исправление EXIF ориентации"""

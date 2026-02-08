@@ -3,6 +3,33 @@ export interface GeocodingResult {
   district: string;
 }
 
+function shortenAddress(address: any): string {
+  // Сокращаем регион/область максимально
+  const region = address.state || '';
+  const shortRegion = region
+    .replace('Республика Саха (Якутия)', 'РС(Я)')
+    .replace('Московская область', 'МО')
+    .replace('Ленинградская область', 'ЛО')
+    .replace('Республика', 'Р.')
+    .replace('область', 'обл.')
+    .replace('край', 'кр.');
+  
+  // Город/населенный пункт
+  const city = address.city || address.town || address.village || address.hamlet || '';
+  const shortCity = city ? `г.${city}` : '';
+  
+  // Улица (убираем слово "улица")
+  const street = address.road || '';
+  const shortStreet = street.replace('улица', '').trim();
+  
+  // Номер дома
+  const houseNumber = address.house_number || '';
+  
+  // Собираем адрес: РС(Я) г.Нюрба, Степана Васильева, 15
+  const parts = [shortRegion, shortCity, shortStreet, houseNumber].filter(Boolean);
+  return parts.join(', ');
+}
+
 export async function geocodeCoordinates(
   lat: number,
   lng: number,
@@ -20,12 +47,8 @@ export async function geocodeCoordinates(
     
     const address = data.address;
     
-    const settlement = address.city || address.town || address.village || address.hamlet || '';
-    const street = address.road || '';
-    const houseNumber = address.house_number || '';
-    
-    const addressParts = [settlement, street, houseNumber].filter(Boolean);
-    const fullAddress = addressParts.join(', ');
+    // Используем сокращенную версию адреса
+    const fullAddress = shortenAddress(address);
     
     const district = address.county ||
                    address.city ||

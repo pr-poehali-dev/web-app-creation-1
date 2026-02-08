@@ -32,6 +32,7 @@ import {
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import { requestsAPI } from '@/services/api';
+import { dataSync } from '@/utils/dataSync';
 
 interface AdminRequestsProps {
   isAuthenticated: boolean;
@@ -65,6 +66,17 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
   useEffect(() => {
     fetchRequests();
   }, [searchQuery, filterStatus]);
+  
+  useEffect(() => {
+    const unsubscribe = dataSync.subscribe('request_updated', () => {
+      console.log('Request updated, reloading admin requests...');
+      fetchRequests();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     applyFilters();

@@ -1,18 +1,22 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { useOfferDetail } from '@/hooks/useOfferDetail';
+import { getSession, clearSession } from '@/utils/auth';
 import OfferDetailSkeleton from '@/components/offer-detail/OfferDetailSkeleton';
 import OfferDetailNotFound from '@/components/offer-detail/OfferDetailNotFound';
 import OfferDetailContent from '@/components/offer-detail/OfferDetailContent';
 
-interface OfferDetailProps {
-  isAuthenticated: boolean;
-  onLogout: () => void;
-}
-
-export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailProps) {
+export default function OfferDetail() {
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const currentUser = getSession();
+  const isAuthenticated = !!currentUser;
+  
+  const handleLogout = () => {
+    clearSession();
+    navigate('/login');
+  };
   
   const {
     offer,
@@ -40,21 +44,20 @@ export default function OfferDetail({ isAuthenticated, onLogout }: OfferDetailPr
     handleOrderSubmit,
     openGallery,
     handleSendMessage,
-    navigate,
   } = useOfferDetail(id);
 
   if (isLoading) {
-    return <OfferDetailSkeleton isAuthenticated={isAuthenticated} onLogout={onLogout} />;
+    return <OfferDetailSkeleton isAuthenticated={isAuthenticated} onLogout={handleLogout} />;
   }
 
   if (!offer) {
-    return <OfferDetailNotFound isAuthenticated={isAuthenticated} onLogout={onLogout} />;
+    return <OfferDetailNotFound isAuthenticated={isAuthenticated} onLogout={handleLogout} />;
   }
 
   return (
     <OfferDetailContent
       isAuthenticated={isAuthenticated}
-      onLogout={onLogout}
+      onLogout={handleLogout}
       offer={offer}
       currentImageIndex={currentImageIndex}
       isVideoPlaying={isVideoPlaying}

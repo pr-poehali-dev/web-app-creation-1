@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import type { Auction, AuctionBid } from '@/types/auction';
 import { notifyAuctionWinner, notifyAuctionSeller } from '@/utils/notifications';
+import { dataSync } from '@/utils/dataSync';
 
 export function useAuctionData(id: string | undefined) {
   const navigate = useNavigate();
@@ -82,6 +83,15 @@ export function useAuctionData(id: string | undefined) {
     };
 
     loadAuction();
+    
+    const unsubscribe = dataSync.subscribe('auction_updated', () => {
+      console.log('Auction updated, reloading auction detail...');
+      loadAuction();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, [id, navigate, toast]);
 
   useEffect(() => {

@@ -10,6 +10,8 @@ interface ProfileStatsCardProps {
 
 export default function ProfileStatsCard({ registrationDate, formatDate }: ProfileStatsCardProps) {
   const navigate = useNavigate();
+  const userRole = localStorage.getItem('userRole');
+  const isAdmin = userRole === 'admin' || userRole === 'moderator' || userRole === 'superadmin';
 
   return (
     <Card>
@@ -82,6 +84,32 @@ export default function ProfileStatsCard({ registrationDate, formatDate }: Profi
             <Icon name="Gavel" className="mr-2 h-4 w-4" />
             Мои аукционы
           </Button>
+          {isAdmin && (
+            <Button 
+              onClick={() => {
+                // Создаём adminSession автоматически для назначенных администраторов
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                  const user = JSON.parse(currentUser);
+                  const adminSession = {
+                    login: user.email,
+                    timestamp: Date.now()
+                  };
+                  localStorage.setItem('adminSession', JSON.stringify(adminSession));
+                }
+                navigate('/admin/panel');
+              }} 
+              variant="default" 
+              size="sm" 
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              <Icon 
+                name={userRole === 'superadmin' ? 'Crown' : userRole === 'admin' ? 'ShieldCheck' : 'Eye'} 
+                className="mr-2 h-4 w-4" 
+              />
+              Админ-панель
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

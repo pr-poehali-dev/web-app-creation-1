@@ -6,18 +6,13 @@ import Footer from '@/components/Footer';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 import { offersAPI, ordersAPI } from '@/services/api';
-import { getSession } from '@/utils/auth';
+import { getSession, clearSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
-import { useOrdersPolling } from '@/hooks/useOrdersPolling';
 import EditOfferHeader from '@/components/edit-offer/EditOfferHeader';
 import EditOfferTabs from '@/components/edit-offer/EditOfferTabs';
 import EditOfferDeleteDialog from '@/components/edit-offer/EditOfferDeleteDialog';
 import EditOfferOrderModal from '@/components/edit-offer/EditOfferOrderModal';
-
-interface EditOfferProps {
-  isAuthenticated: boolean;
-  onLogout: () => void;
-}
+import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
 
 interface ChatMessage {
   id: string;
@@ -29,12 +24,18 @@ interface ChatMessage {
   isRead: boolean;
 }
 
-export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps) {
+export default function EditOffer() {
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getSession();
+  const isAuthenticated = !!currentUser;
+  
+  const handleLogout = () => {
+    clearSession();
+    navigate('/login');
+  };
   
   const [offer, setOffer] = useState<Offer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,20 +46,27 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isEditingInfo, setIsEditingInfo] = useState(false);
 
-  useOrdersPolling({
-    enabled: isAuthenticated && !!id,
-    interval: 15000,
-    onNewOrder: (order: any) => {
-      if ((order.offer_id || order.offerId) === id) {
-        toast({
-          title: '🎉 Новый заказ!',
-          description: `Заказ от ${order.buyer_name || 'покупателя'} на сумму ${order.total_amount?.toLocaleString('ru-RU') || 0} ₽`,
-        });
-        loadData();
-      }
-    },
-  });
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+    
+    // Подписываемся на обновления заказов и предложений
+    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
+      console.log('Order updated, reloading EditOffer data...');
+      loadData();
+    });
+    
+    const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
+      console.log('Offer updated, reloading EditOffer data...');
+      loadData();
+    });
+    
+    return () => {
+      unsubscribeOrders();
+      unsubscribeOffers();
+    };
+  }, [isAuthenticated, id]);
 
   const loadData = async () => {
     if (!id) return;
@@ -154,6 +162,18 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
       return;
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    const edit = params.get('edit');
+    
+    if (tab) {
+      setActiveTab(tab);
+    }
+    
+    if (edit === 'true') {
+      setIsEditingInfo(true);
+    }
+
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -171,10 +191,13 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
     if (!offer) return;
     
     try {
-      await offersAPI.updateOffer(offer.id, { status: 'deleted' });
+      await offersAPI.updateOffer(offer.id, { status: 'archived' });
       
       localStorage.removeItem('cached_offers');
       localStorage.setItem('offers_updated', 'true');
+      
+      // Уведомляем все открытые страницы об удалении
+      notifyOfferUpdated(offer.id);
       
       setShowDeleteDialog(false);
       
@@ -250,7 +273,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Загрузка...</p>
@@ -264,7 +287,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
   if (!offer) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+        <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
         <main className="flex-1 container mx-auto px-4 py-8">
           <div className="text-center py-12">
             <p className="text-muted-foreground">Объявление не найдено</p>
@@ -277,7 +300,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
+      <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
       
       <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
         <EditOfferHeader />
@@ -288,10 +311,13 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
           messages={messages}
           activeTab={activeTab}
           hasChanges={hasChanges}
+          initialEditMode={isEditingInfo}
           onTabChange={setActiveTab}
           onOpenChat={handleOpenChat}
           onAcceptOrder={handleAcceptOrder}
           onMessageClick={handleMessageClick}
+          onDelete={handleDelete}
+          onUpdate={loadData}
         />
       </main>
 
@@ -299,7 +325,7 @@ export default function EditOffer({ isAuthenticated, onLogout }: EditOfferProps)
 
       <EditOfferDeleteDialog
         isOpen={showDeleteDialog}
-        orders={orders}
+        orders={orders.filter(o => o.status === 'new' || o.status === 'accepted')}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={confirmDelete}
         onDeleteOrder={handleDeleteOrder}

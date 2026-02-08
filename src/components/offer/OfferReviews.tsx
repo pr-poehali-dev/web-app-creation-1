@@ -12,6 +12,8 @@ interface Review {
   comment: string;
   createdAt: Date | string;
   offerTitle?: string;
+  sellerResponse?: string;
+  sellerResponseDate?: Date | string;
 }
 
 interface OfferReviewsProps {
@@ -40,7 +42,7 @@ export default function OfferReviews({ reviews, averageRating, totalReviews }: O
   };
 
   return (
-    <Card>
+    <Card id="seller-reviews">
       <CardHeader className="py-2 md:py-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm md:text-base">
@@ -98,6 +100,24 @@ export default function OfferReviews({ reviews, averageRating, totalReviews }: O
                       {renderStars(review.rating)}
                     </div>
                     <p className="text-sm text-muted-foreground">{review.comment}</p>
+                    
+                    {review.sellerResponse && (
+                      <div className="mt-3 ml-4 pl-4 border-l-2 border-primary/20 bg-primary/5 rounded-r-lg p-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Icon name="MessageCircle" className="h-4 w-4 text-primary" />
+                          <p className="text-xs font-semibold text-primary">Ответ продавца</p>
+                          {review.sellerResponseDate && (
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(review.sellerResponseDate), {
+                                addSuffix: true,
+                                locale: ru,
+                              })}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-sm">{review.sellerResponse}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

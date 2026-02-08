@@ -69,6 +69,10 @@ export function useRealtimeChat({ orderId, enabled, interval = 2000 }: UseRealti
       );
 
       if (response.ok) {
+        // Уведомляем dataSync о новом сообщении
+        const { notifyOrderUpdated } = await import('@/utils/dataSync');
+        notifyOrderUpdated(orderId);
+        
         // Сразу обновляем список сообщений
         await fetchMessages();
       }

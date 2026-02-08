@@ -1,3 +1,4 @@
+'''API для работы с запросами - обновлено для JWT'''
 import json
 import os
 from typing import Dict, Any, List
@@ -162,6 +163,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         req_dict['userId'] = req_dict.pop('user_id', None)
         req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
         req_dict['fullAddress'] = req_dict.pop('full_address', None)
+        req_dict['deliveryAddress'] = req_dict.pop('delivery_address', None)
         req_dict['createdAt'] = req_dict.pop('created_at').isoformat() if req_dict.get('created_at') else None
         req_dict['updatedAt'] = req_dict.pop('updated_at').isoformat() if req_dict.get('updated_at') else None
         
@@ -221,6 +223,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     req_dict['userId'] = req_dict.pop('user_id', None)
     req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
     req_dict['fullAddress'] = req_dict.pop('full_address', None)
+    req_dict['deliveryAddress'] = req_dict.pop('delivery_address', None)
     req_dict['createdAt'] = req_dict.pop('created_at').isoformat() if req_dict.get('created_at') else None
     req_dict['updatedAt'] = req_dict.pop('updated_at').isoformat() if req_dict.get('updated_at') else None
     

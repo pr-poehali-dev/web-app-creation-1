@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { useTimezone } from '@/contexts/TimezoneContext';
 
+
 const TIMEZONE_NAMES: Record<string, string> = {
   'Asia/Yakutsk': 'UTC+9 (Якутск)',
   'Asia/Vladivostok': 'UTC+10 (Владивосток)',
@@ -47,8 +48,13 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <Icon name="Building2" className="h-5 w-5 text-white" />
+              <div className="h-8 w-8 overflow-hidden rounded-lg flex items-center justify-center">
+                <img 
+                  src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+                  alt="ЕРТТП" 
+                  className="h-full w-full brightness-125 contrast-125"
+                  style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))', transform: 'scale(1.9) scaleX(-1)' }}
+                />
               </div>
               <span className="font-bold text-primary">ЕРТТП</span>
             </div>

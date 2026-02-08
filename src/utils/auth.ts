@@ -53,11 +53,13 @@ interface User {
 interface AuthResponse {
   success: boolean;
   user?: User;
+  token?: string;
   error?: string;
   locked_until?: string;
 }
 
 const SESSION_STORAGE_KEY = 'currentUser';
+const JWT_TOKEN_KEY = 'jwt_token';
 const AUTH_API = func2url.auth;
 
 const convertUserFromBackend = (backendUser: any): User => {
@@ -85,6 +87,10 @@ const convertUserFromBackend = (backendUser: any): User => {
   
   if (backendUser.role) {
     localStorage.setItem('userRole', backendUser.role);
+  }
+  
+  if (backendUser.is_root_admin !== undefined) {
+    localStorage.setItem('isRootAdmin', backendUser.is_root_admin ? 'true' : 'false');
   }
   
   return user;
@@ -141,9 +147,11 @@ export const registerUser = async (userData: {
     }
 
     const user = convertUserFromBackend(data.user);
+    const token = data.token;
     return {
       success: true,
       user,
+      token,
     };
   } catch (error) {
     console.error('Registration error:', error);
@@ -155,7 +163,7 @@ export const registerUser = async (userData: {
 };
 
 export const authenticateUser = async (
-  email: string,
+  login: string,
   password: string
 ): Promise<AuthResponse> => {
   try {
@@ -166,7 +174,7 @@ export const authenticateUser = async (
       },
       body: JSON.stringify({
         action: 'login',
-        email,
+        login,
         password,
       }),
     });
@@ -182,11 +190,13 @@ export const authenticateUser = async (
     }
 
     const user = convertUserFromBackend(data.user);
-    saveSession(user);
+    const token = data.token;
+    saveSession(user, token);
 
     return {
       success: true,
       user,
+      token,
     };
   } catch (error) {
     console.error('Login error:', error);
@@ -197,15 +207,27 @@ export const authenticateUser = async (
   }
 };
 
-export const saveSession = (user: User): void => {
+export const saveSession = (user: User, token?: string): void => {
   try {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     if (user.id) {
       localStorage.setItem('userId', user.id.toString());
     }
+    if (token) {
+      localStorage.setItem(JWT_TOKEN_KEY, token);
+    }
     window.dispatchEvent(new Event('userSessionChanged'));
   } catch (error) {
     console.error('Error saving session:', error);
+  }
+};
+
+export const getJwtToken = (): string | null => {
+  try {
+    return localStorage.getItem(JWT_TOKEN_KEY);
+  } catch (error) {
+    console.error('Error getting JWT token:', error);
+    return null;
   }
 };
 
@@ -224,6 +246,8 @@ export const clearSession = (): void => {
     localStorage.removeItem(SESSION_STORAGE_KEY);
     localStorage.removeItem('userRole');
     localStorage.removeItem('userId');
+    localStorage.removeItem('isRootAdmin');
+    localStorage.removeItem(JWT_TOKEN_KEY);
   } catch (error) {
     console.error('Error clearing session:', error);
   }

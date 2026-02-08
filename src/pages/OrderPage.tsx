@@ -220,19 +220,6 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
         url: `/my-orders?id=${result.id}`
       };
 
-      // Отправляем Email уведомление продавцу
-      try {
-        await fetch('https://functions.poehali.dev/a2f5cfb9-ceec-46de-b675-2174dc5241a7', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(notificationData)
-        });
-      } catch (error) {
-        console.error('Ошибка отправки Email уведомления:', error);
-      }
-
       // Отправляем Telegram уведомление продавцу
       try {
         await fetch('https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f', {
@@ -249,12 +236,19 @@ export default function OrderPage({ isAuthenticated, onLogout }: { isAuthenticat
       // Помечаем что заказы обновились
       markDataAsUpdated('orders');
       
+      // Уведомляем dataSync о новом заказе
+      const { notifyOrderUpdated } = await import('@/utils/dataSync');
+      notifyOrderUpdated(result.id);
+      
       toast({
         title: 'Заказ оформлен!',
         description: 'Продавец свяжется с вами в ближайшее время',
       });
 
-      navigate('/my-orders');
+      // Даем серверу время на сохранение заказа перед переходом
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      navigate('/my-orders', { state: { refresh: true, newOrderId: result.id } });
     } catch (error) {
       toast({
         title: 'Ошибка',

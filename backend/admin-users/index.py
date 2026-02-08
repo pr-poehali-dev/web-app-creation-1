@@ -12,7 +12,7 @@ def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 3
         
         cur.execute(
             """SELECT request_count, window_start 
-               FROM rate_limits 
+               FROM t_p42562714_web_app_creation_1.rate_limits 
                WHERE identifier = %s AND endpoint = %s""",
             (identifier, endpoint)
         )
@@ -23,21 +23,21 @@ def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 3
                 if result['request_count'] >= max_requests:
                     return False
                 cur.execute(
-                    """UPDATE rate_limits 
+                    """UPDATE t_p42562714_web_app_creation_1.rate_limits 
                        SET request_count = request_count + 1 
                        WHERE identifier = %s AND endpoint = %s""",
                     (identifier, endpoint)
                 )
             else:
                 cur.execute(
-                    """UPDATE rate_limits 
+                    """UPDATE t_p42562714_web_app_creation_1.rate_limits 
                        SET request_count = 1, window_start = CURRENT_TIMESTAMP 
                        WHERE identifier = %s AND endpoint = %s""",
                     (identifier, endpoint)
                 )
         else:
             cur.execute(
-                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
+                """INSERT INTO t_p42562714_web_app_creation_1.rate_limits (identifier, endpoint, request_count, window_start) 
                    VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
                 (identifier, endpoint)
             )
@@ -94,7 +94,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         cur = conn.cursor()
         
         if method == 'GET':
-            query_params = event.get('queryStringParameters', {})
+            query_params = event.get('queryStringParameters') or {}
             user_id_param = query_params.get('id')
             
             if user_id_param:
@@ -187,10 +187,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.ogrnip,
                         u.ogrn,
                         u.removed_at,
-                        (SELECT COUNT(*) FROM orders WHERE buyer_id = u.id OR seller_id = u.id) as orders_count,
-                        (SELECT COUNT(*) FROM offers WHERE user_id = u.id) as offers_count,
-                        (SELECT COUNT(*) FROM requests WHERE user_id = u.id) as requests_count
-                    FROM users u
+                        (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders WHERE buyer_id = u.id OR seller_id = u.id) as orders_count,
+                        (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.offers WHERE user_id = u.id) as offers_count,
+                        (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.requests WHERE user_id = u.id) as requests_count
+                    FROM t_p42562714_web_app_creation_1.users u
                     WHERE {where_sql}
                     ORDER BY u.removed_at DESC
                     LIMIT 100
@@ -217,8 +217,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.locked_until,
                         u.created_at,
                         COALESCE(uv.status = 'approved', false) as verified
-                    FROM users u
-                    LEFT JOIN user_verifications uv ON u.id = uv.user_id
+                    FROM t_p42562714_web_app_creation_1.users u
+                    LEFT JOIN t_p42562714_web_app_creation_1.user_verifications uv ON u.id = uv.user_id
                     WHERE {where_sql}
                     ORDER BY u.created_at DESC
                     LIMIT 100
@@ -301,20 +301,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 duration = body_data.get('duration', 0)
                 
                 # Отменяем только активные ставки пользователя (не удаляем историю)
-                cur.execute("UPDATE bids SET status = 'cancelled' WHERE user_id = %s AND status = 'active'", (user_id,))
+                cur.execute("UPDATE t_p42562714_web_app_creation_1.bids SET status = 'cancelled' WHERE user_id = %s AND status = 'active'", (user_id,))
                 
                 # Блокируем пользователя (временно или навсегда)
                 if duration > 0:
                     # Временная блокировка
                     locked_until = datetime.now() + timedelta(hours=duration)
                     cur.execute(
-                        "UPDATE users SET locked_until = %s, is_active = true WHERE id = %s",
+                        "UPDATE t_p42562714_web_app_creation_1.users SET locked_until = %s, is_active = true WHERE id = %s",
                         (locked_until, user_id)
                     )
                 else:
                     # Постоянная блокировка
                     cur.execute(
-                        "UPDATE users SET is_active = false, locked_until = NULL WHERE id = %s",
+                        "UPDATE t_p42562714_web_app_creation_1.users SET is_active = false, locked_until = NULL WHERE id = %s",
                         (user_id,)
                     )
                 
@@ -328,7 +328,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             elif action == 'unblock':
                 cur.execute(
-                    "UPDATE users SET is_active = true, locked_until = NULL WHERE id = %s",
+                    "UPDATE t_p42562714_web_app_creation_1.users SET is_active = true, locked_until = NULL WHERE id = %s",
                     (user_id,)
                 )
                 conn.commit()
@@ -341,7 +341,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             elif action == 'restore':
                 # Получаем данные удаленного пользователя
-                cur.execute("SELECT first_name, last_name FROM users WHERE id = %s AND removed_at IS NOT NULL", (user_id,))
+                cur.execute("SELECT first_name, last_name FROM t_p42562714_web_app_creation_1.users WHERE id = %s AND removed_at IS NOT NULL", (user_id,))
                 user_data = cur.fetchone()
                 
                 if not user_data:
@@ -358,7 +358,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 # Восстанавливаем пользователя
                 cur.execute("""
-                    UPDATE users 
+                    UPDATE t_p42562714_web_app_creation_1.users 
                     SET removed_at = NULL,
                         is_active = true,
                         email = %s
@@ -382,17 +382,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 verified = body_data.get('verified')
                 
                 if email:
-                    cur.execute(f"UPDATE users SET email = %s WHERE id = %s", (email, user_id))
+                    cur.execute("UPDATE t_p42562714_web_app_creation_1.users SET email = %s WHERE id = %s", (email, user_id))
                 
                 if verified is not None:
                     if verified:
-                        cur.execute(f"""
-                            INSERT INTO user_verifications (user_id, status)
+                        cur.execute("""
+                            INSERT INTO t_p42562714_web_app_creation_1.user_verifications (user_id, status)
                             VALUES (%s, 'approved')
                             ON CONFLICT (user_id) DO UPDATE SET status = 'approved'
                         """, (user_id,))
                     else:
-                        cur.execute(f"DELETE FROM user_verifications WHERE user_id = %s", (user_id,))
+                        cur.execute("DELETE FROM t_p42562714_web_app_creation_1.user_verifications WHERE user_id = %s", (user_id,))
                 
                 conn.commit()
                 return {
@@ -415,24 +415,27 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 }
             
             # Soft delete: помечаем пользователя как удаленного
-            # Заказы, предложения, запросы, аукционы остаются в истории
             cur.execute("""
-                UPDATE users 
+                UPDATE t_p42562714_web_app_creation_1.users 
                 SET removed_at = CURRENT_TIMESTAMP, 
                     is_active = false,
-                    email = CONCAT('removed_', id, '@removed.local')
-                WHERE id = %s
+                    email = 'removed_' || id || '@removed.local'
+                WHERE id = %s AND removed_at IS NULL
             """, (user_id,))
             
             # Отменяем только активные ставки пользователя
-            cur.execute("UPDATE bids SET status = 'cancelled' WHERE user_id = %s AND status = 'active'", (user_id,))
+            cur.execute("""
+                UPDATE t_p42562714_web_app_creation_1.bids 
+                SET status = 'cancelled' 
+                WHERE user_id = %s AND status = 'active'
+            """, (user_id,))
             
             conn.commit()
             
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': True, 'message': 'User removed (soft delete), orders/offers/requests preserved in history'}),
+                'body': json.dumps({'success': True, 'message': 'User deleted successfully'}),
                 'isBase64Encoded': False
             }
         

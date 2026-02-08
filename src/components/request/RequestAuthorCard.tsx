@@ -76,73 +76,20 @@ export default function RequestAuthorCard({ author }: RequestAuthorCardProps) {
 
         <Separator />
 
-        <div className="space-y-3">
-          {author.responsiblePerson && (
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Ответственный</p>
-              <p className="font-medium">{author.responsiblePerson.name}</p>
-            </div>
-          )}
-          
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Телефон</p>
-            <a
-              href={`tel:${author.phone}`}
-              className="font-medium hover:text-primary transition-colors flex items-center gap-1"
-            >
-              <Icon name="Phone" className="h-4 w-4" />
-              {author.phone}
-            </a>
-          </div>
-          
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Email</p>
-            <a
-              href={`mailto:${author.email}`}
-              className="font-medium hover:text-primary transition-colors flex items-center gap-1"
-            >
-              <Icon name="Mail" className="h-4 w-4" />
-              {author.email}
-            </a>
-          </div>
-        </div>
-
-        <Separator />
-
         <div className="space-y-2">
-          <p className="text-sm font-semibold">Статистика</p>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <p className="text-muted-foreground">Всего запросов</p>
-              <p className="font-semibold">{author.statistics.totalRequests}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Активных</p>
-              <p className="font-semibold">{author.statistics.activeRequests}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Выполнено заказов</p>
-              <p className="font-semibold">{author.statistics.completedOrders}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">На платформе с</p>
-              <p className="font-semibold">
-                {author.statistics.registrationDate.toLocaleDateString('ru-RU', {
-                  month: 'short',
-                  year: 'numeric'
-                })}
-              </p>
-            </div>
-          </div>
+          <p className="text-sm font-semibold">Отзывы</p>
+          {author.reviewsCount > 0 ? (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate(`/seller/${author.id}#reviews`)}
+            >
+              Посмотреть все отзывы ({author.reviewsCount})
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">Пока нет отзывов</p>
+          )}
         </div>
-
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => navigate(`/seller/${author.id}`)}
-        >
-          Перейти к профилю
-        </Button>
       </CardContent>
     </Card>
   );

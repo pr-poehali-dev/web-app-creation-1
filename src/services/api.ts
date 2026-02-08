@@ -12,6 +12,7 @@ const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
 const CONTENT_MANAGEMENT_API = func2url['content-management'];
+const REVIEWS_API = func2url.reviews;
 
 // Продвинутое кэширование с разными TTL для разных типов данных
 interface CacheEntry {
@@ -91,10 +92,11 @@ export function clearCache(): void {
 async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2): Promise<Response> {
   const method = options?.method || 'GET';
   
-  // ⚡ НЕ кэшируем запросы сообщений чата (они должны обновляться в реальном времени)
+  // ⚡ НЕ кэшируем запросы сообщений чата и заказов (они должны обновляться в реальном времени)
   const isMessageRequest = url.includes('messages=true');
+  const isOrdersRequest = url.includes('orders');
   
-  if (method === 'GET' && !isMessageRequest) {
+  if (method === 'GET' && !isMessageRequest && !isOrdersRequest) {
     const cacheKey = getCacheKey(url, options);
     const cached = getFromCache(cacheKey);
     if (cached) {
@@ -152,7 +154,7 @@ export interface CreateOfferData {
   quantity: number;
   unit: string;
   pricePerUnit: number;
-  hasVAT: boolean;
+  hasVAT?: boolean;
   vatRate?: number;
   location?: string;
   district: string;
@@ -193,6 +195,19 @@ function getUserId(): string | null {
   }
 }
 
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {};
+  const token = localStorage.getItem('jwt_token');
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const userId = getUserId();
+  if (userId) {
+    headers['X-User-Id'] = userId;
+  }
+  return headers;
+}
+
 export const offersAPI = {
   async getAll(): Promise<OffersListResponse> {
     const response = await fetchWithRetry(OFFERS_API);
@@ -212,6 +227,7 @@ export const offersAPI = {
     status?: string;
     limit?: number;
     offset?: number;
+    userId?: number | string;
   }): Promise<OffersListResponse> {
     const queryParams = new URLSearchParams();
     if (params) {
@@ -261,7 +277,7 @@ export const offersAPI = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-User-Id': userId,
+        ...getAuthHeaders(),
       },
       body: JSON.stringify(data),
     });
@@ -287,7 +303,16 @@ export const offersAPI = {
     });
     
     if (!response.ok) {
-      throw new Error('Failed to update offer');
+      const errorText = await response.text();
+      console.error('Update offer error:', response.status, errorText);
+      let errorMessage = 'Failed to update offer';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch {
+        errorMessage = errorText.substring(0, 200);
+      }
+      throw new Error(errorMessage);
     }
     
     // Инвалидируем кэш этого предложения и списков
@@ -298,18 +323,16 @@ export const offersAPI = {
   },
 
   async deleteOffer(id: string): Promise<{ message: string }> {
-    const userId = getUserId();
-
-    const response = await fetchWithRetry(ADMIN_OFFERS_API, {
+    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
-        'X-User-Id': userId || 'anonymous',
       },
-      body: JSON.stringify({ offerId: id }),
     });
     
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Delete offer error:', response.status, errorText);
       throw new Error('Failed to delete offer');
     }
     
@@ -320,27 +343,40 @@ export const offersAPI = {
     return response.json();
   },
 
-  async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
-    console.log('uploadVideo: Starting upload, data size:', videoBase64.length);
-    const response = await fetchWithRetry(UPLOAD_VIDEO_API, {
+  async uploadMedia(mediaBase64: string): Promise<{ url: string; message: string }> {
+    console.log('uploadMedia: Starting upload, data size:', mediaBase64.length);
+    
+    // Для загрузки медиа не используем fetchWithRetry, т.к. загрузка может быть долгой
+    const response = await fetch(UPLOAD_VIDEO_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ video: videoBase64 }),
+      body: JSON.stringify({ video: mediaBase64 }),
     });
     
-    console.log('uploadVideo: Response status:', response.status);
+    console.log('uploadMedia: Response status:', response.status);
     
     if (!response.ok) {
-      const error = await response.json();
-      console.error('uploadVideo: Error response:', error);
-      throw new Error(error.error || 'Failed to upload video');
+      let errorMessage = 'Failed to upload media';
+      try {
+        const error = await response.json();
+        errorMessage = error.error || errorMessage;
+      } catch (e) {
+        console.error('uploadMedia: Failed to parse error response:', e);
+      }
+      console.error('uploadMedia: Error response:', errorMessage);
+      throw new Error(errorMessage);
     }
     
     const result = await response.json();
-    console.log('uploadVideo: Success, URL:', result.url);
+    console.log('uploadMedia: Success, URL:', result.url);
     return result;
+  },
+
+  // Алиас для обратной совместимости
+  async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
+    return this.uploadMedia(videoBase64);
   },
 
   async getAdminOffers(params?: {
@@ -637,6 +673,9 @@ export const ordersAPI = {
       throw new Error(error.error || 'Failed to create order');
     }
     
+    // Инвалидируем кэш заказов после создания нового
+    invalidateCache('orders');
+    
     return response.json();
   },
 
@@ -669,6 +708,10 @@ export const ordersAPI = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to update order');
     }
+    
+    // Инвалидируем кэш заказов после обновления
+    invalidateCache('orders');
+    invalidateCache(`id=${id}`);
     
     return response.json();
   },
@@ -1027,5 +1070,69 @@ export const contentAPI = {
     if (!response.ok) {
       throw new Error('Failed to delete banner');
     }
+  },
+};
+
+export const reviewsAPI = {
+  async getReviewsBySeller(sellerId: number): Promise<{ reviews: any[]; stats: { total_reviews: number; average_rating: number } }> {
+    const response = await fetchWithRetry(`${REVIEWS_API}?seller_id=${sellerId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch reviews');
+    }
+    return response.json();
+  },
+
+  async getReviewByOrder(orderId: string): Promise<{ review: any | null }> {
+    const response = await fetchWithRetry(`${REVIEWS_API}?order_id=${orderId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch review');
+    }
+    return response.json();
+  },
+
+  async createReview(data: { order_id: string; seller_id: number; rating: number; comment?: string }): Promise<{ id: number; created_at: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(REVIEWS_API, {
+      method: 'POST',
+      headers: {
+        'X-User-Id': userId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create review');
+    }
+    
+    return response.json();
+  },
+
+  async addSellerResponse(reviewId: number, sellerResponse: string): Promise<{ seller_response_date: string }> {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(REVIEWS_API, {
+      method: 'PUT',
+      headers: {
+        'X-User-Id': userId,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ review_id: reviewId, seller_response: sellerResponse }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add response');
+    }
+    
+    return response.json();
   },
 };

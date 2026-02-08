@@ -1,34 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { useOffers } from '@/contexts/OffersContext';
 import type { Offer } from '@/types/offer';
-import { CATEGORIES } from '@/data/categories';
-import { useDistrict } from '@/contexts/DistrictContext';
+import { offersAPI } from '@/services/api';
+import MyOfferCard from '@/components/my-offers/MyOfferCard';
+import MyOffersStats from '@/components/my-offers/MyOffersStats';
+import MyOffersDialogs from '@/components/my-offers/MyOffersDialogs';
+import { notifyOfferUpdated } from '@/utils/dataSync';
 
 interface MyOffersProps {
   isAuthenticated: boolean;
@@ -50,24 +36,20 @@ const STATUS_LABELS: Record<OfferStatus, string> = {
   archived: 'В архиве',
 };
 
-const STATUS_COLORS: Record<OfferStatus, string> = {
-  active: 'bg-green-500',
-  draft: 'bg-gray-500',
-  moderation: 'bg-orange-500',
-  archived: 'bg-slate-500',
-};
-
 export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   useScrollToTop();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { districts } = useDistrict();
-  const { offers: allOffers, deleteOffer } = useOffers();
+  const { deleteOffer } = useOffers();
   const currentUser = getSession();
   
   const [filterStatus, setFilterStatus] = useState<'all' | OfferStatus>('all');
   const [offerToDelete, setOfferToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [extendDialogOffer, setExtendDialogOffer] = useState<MyOffer | null>(null);
+  const [newExpiryDate, setNewExpiryDate] = useState('');
+  const [myOffers, setMyOffers] = useState<MyOffer[]>([]);
+  const [showClearArchiveDialog, setShowClearArchiveDialog] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -75,31 +57,76 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       return;
     }
 
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 800);
-  }, [isAuthenticated, currentUser, navigate]);
+    const loadMyOffers = async () => {
+      try {
+        setIsLoading(true);
+        const response = await offersAPI.getOffers({ 
+          status: 'all',
+          userId: currentUser.id,
+          limit: 100
+        });
+        
+        const loadedOffers: MyOffer[] = (response.offers || []).map((offer: Offer & { favorites?: number }) => ({
+          ...offer,
+          status: (offer.status as OfferStatus) || 'active',
+          views: offer.views || 0,
+          favorites: offer.favorites || 0,
+        }));
+        
+        setMyOffers(loadedOffers);
+      } catch (error) {
+        console.error('Ошибка загрузки предложений:', error);
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить ваши предложения',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const myOffers: MyOffer[] = allOffers
-    .filter(offer => offer.userId === currentUser?.id)
-    .map(offer => ({
-      ...offer,
-      status: (offer.status as OfferStatus) || 'active',
-      views: offer.views || 0,
-      favorites: 0,
-    }));
+    loadMyOffers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, currentUser?.id, navigate]);
 
-  const filteredOffers = filterStatus === 'all' 
-    ? myOffers 
-    : myOffers.filter(offer => offer.status === filterStatus);
+  const stats = useMemo(() => ({
+    total: myOffers.length,
+    active: myOffers.filter(o => o.status === 'active').length,
+    draft: myOffers.filter(o => o.status === 'draft').length,
+    moderation: myOffers.filter(o => o.status === 'moderation').length,
+    archived: myOffers.filter(o => o.status === 'archived').length,
+  }), [myOffers]);
 
-  const handleDeleteOffer = (offerId: string) => {
-    deleteOffer(offerId);
-    setOfferToDelete(null);
-    toast({
-      title: 'Успешно',
-      description: 'Предложение удалено',
-    });
+  const filteredOffers = useMemo(() => 
+    filterStatus === 'all' 
+      ? myOffers 
+      : myOffers.filter(offer => offer.status === filterStatus),
+    [myOffers, filterStatus]
+  );
+
+  const handleDeleteOffer = async (offerId: string) => {
+    try {
+      await offersAPI.deleteOffer(offerId);
+      deleteOffer(offerId);
+      setMyOffers(prev => prev.filter(o => o.id !== offerId));
+      setOfferToDelete(null);
+      
+      // Уведомляем всех пользователей об удалении предложения
+      notifyOfferUpdated(offerId);
+      
+      toast({
+        title: 'Успешно',
+        description: 'Предложение удалено',
+      });
+    } catch (error) {
+      console.error('Error deleting offer:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить предложение',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleArchiveOffer = (offerId: string) => {
@@ -116,145 +143,52 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     });
   };
 
-  const getOfferStats = () => {
-    return {
-      total: myOffers.length,
-      active: myOffers.filter(o => o.status === 'active').length,
-      draft: myOffers.filter(o => o.status === 'draft').length,
-      moderation: myOffers.filter(o => o.status === 'moderation').length,
-      archived: myOffers.filter(o => o.status === 'archived').length,
-    };
+  const handleExtendExpiry = (offer: MyOffer) => {
+    setExtendDialogOffer(offer);
+    const currentExpiry = offer.expiryDate ? new Date(offer.expiryDate) : new Date();
+    const tomorrow = new Date(currentExpiry);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setNewExpiryDate(tomorrow.toISOString().split('T')[0]);
   };
 
-  const stats = getOfferStats();
+  const confirmExtendExpiry = () => {
+    if (!extendDialogOffer || !newExpiryDate) return;
+    
+    toast({
+      title: 'Функция в разработке',
+      description: `Продление срока публикации будет доступно после подключения платёжной системы`,
+    });
+    
+    setExtendDialogOffer(null);
+    setNewExpiryDate('');
+  };
 
-  const OfferCard = ({ offer }: { offer: MyOffer }) => {
-    const category = CATEGORIES.find(c => c.id === offer.category);
-    const districtName = districts.find(d => d.id === offer.district)?.name;
-
-    return (
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardHeader className="p-0">
-          <div className="relative aspect-video bg-muted overflow-hidden">
-            {offer.images.length > 0 ? (
-              <img
-                src={offer.images[0].url}
-                alt={offer.images[0].alt}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Icon name="Package" className="h-12 w-12 text-muted-foreground" />
-              </div>
-            )}
-            <div className="absolute top-2 left-2">
-              <Badge className={STATUS_COLORS[offer.status]}>
-                {STATUS_LABELS[offer.status]}
-              </Badge>
-            </div>
-            {offer.isPremium && (
-              <div className="absolute top-2 right-2">
-                <Badge className="bg-primary">
-                  <Icon name="Star" className="h-3 w-3 mr-1" />
-                  Премиум
-                </Badge>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-
-        <CardContent className="pt-4 space-y-3">
-          <div>
-            <h3 className="font-semibold text-lg line-clamp-2">{offer.title}</h3>
-          </div>
-
-          {category && (
-            <Badge variant="secondary">{category.name}</Badge>
-          )}
-
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Цена:</span>
-            <span className="font-bold text-lg text-primary">
-              {offer.pricePerUnit.toLocaleString()} ₽
-            </span>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t text-sm">
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                <Icon name="Eye" className="h-4 w-4" />
-                <span>{offer.views}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Просмотры</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                <Icon name="Heart" className="h-4 w-4" />
-                <span>{offer.favorites}</span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">В избранном</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                <Icon name="MapPin" className="h-4 w-4" />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">{districtName}</p>
-            </div>
-          </div>
-        </CardContent>
-
-        <CardFooter className="pt-0 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1"
-            onClick={() => navigate(`/offer/${offer.id}`)}
-          >
-            <Icon name="Eye" className="mr-2 h-4 w-4" />
-            Просмотр
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Icon name="MoreVertical" className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled>
-                <Icon name="Pencil" className="mr-2 h-4 w-4" />
-                Редактировать
-              </DropdownMenuItem>
-              {offer.status === 'draft' && (
-                <DropdownMenuItem onClick={() => handleActivateOffer(offer.id)}>
-                  <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-                  Опубликовать
-                </DropdownMenuItem>
-              )}
-              {offer.status === 'active' && (
-                <DropdownMenuItem onClick={() => handleArchiveOffer(offer.id)}>
-                  <Icon name="Archive" className="mr-2 h-4 w-4" />
-                  В архив
-                </DropdownMenuItem>
-              )}
-              {offer.status === 'archived' && (
-                <DropdownMenuItem onClick={() => handleActivateOffer(offer.id)}>
-                  <Icon name="ArchiveRestore" className="mr-2 h-4 w-4" />
-                  Восстановить
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => setOfferToDelete(offer.id)}
-              >
-                <Icon name="Trash2" className="mr-2 h-4 w-4" />
-                Удалить
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </CardFooter>
-      </Card>
-    );
+  const handleClearArchive = async () => {
+    const archivedOffers = myOffers.filter(o => o.status === 'archived');
+    
+    try {
+      for (const offer of archivedOffers) {
+        await offersAPI.deleteOffer(offer.id);
+        deleteOffer(offer.id);
+        // Уведомляем о каждом удалении
+        notifyOfferUpdated(offer.id);
+      }
+      
+      setMyOffers(prev => prev.filter(o => o.status !== 'archived'));
+      setShowClearArchiveDialog(false);
+      
+      toast({
+        title: 'Успешно',
+        description: `Удалено ${archivedOffers.length} ${archivedOffers.length === 1 ? 'предложение' : archivedOffers.length < 5 ? 'предложения' : 'предложений'} из архива`,
+      });
+    } catch (error) {
+      console.error('Error clearing archive:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось очистить архив',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -281,38 +215,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('all')}>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-primary">{stats.total}</div>
-              <p className="text-sm text-muted-foreground mt-1">Всего</p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('active')}>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-green-500">{stats.active}</div>
-              <p className="text-sm text-muted-foreground mt-1">Активных</p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('draft')}>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-gray-500">{stats.draft}</div>
-              <p className="text-sm text-muted-foreground mt-1">Черновики</p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('moderation')}>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-orange-500">{stats.moderation}</div>
-              <p className="text-sm text-muted-foreground mt-1">На модерации</p>
-            </CardContent>
-          </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('archived')}>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-slate-500">{stats.archived}</div>
-              <p className="text-sm text-muted-foreground mt-1">В архиве</p>
-            </CardContent>
-          </Card>
-        </div>
+        <MyOffersStats stats={stats} onFilterChange={setFilterStatus} />
 
         {isLoading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -336,41 +239,68 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
           </div>
         ) : (
           <>
+            {filterStatus === 'archived' && stats.archived > 0 && (
+              <Card className="mb-6 bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start gap-3">
+                    <Icon name="Info" className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-amber-900 dark:text-amber-100">
+                        <strong>Важно:</strong> Архивные предложения автоматически удаляются безвозвратно через 15 дней для оптимизации работы системы.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             <div className="mb-4 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Показано: <span className="font-semibold text-foreground">{filteredOffers.length}</span>{' '}
                 {filterStatus !== 'all' && `из ${stats.total}`}
               </p>
+              {filterStatus === 'archived' && stats.archived > 0 && (
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={() => setShowClearArchiveDialog(true)}
+                >
+                  <Icon name="Trash2" className="mr-2 h-4 w-4" />
+                  Очистить архив
+                </Button>
+              )}
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredOffers.map((offer) => (
-                <OfferCard key={offer.id} offer={offer} />
+                <MyOfferCard
+                  key={offer.id}
+                  offer={offer}
+                  onExtendExpiry={handleExtendExpiry}
+                  onArchive={handleArchiveOffer}
+                  onActivate={handleActivateOffer}
+                  onDelete={setOfferToDelete}
+                />
               ))}
             </div>
           </>
         )}
       </main>
 
-      <AlertDialog open={!!offerToDelete} onOpenChange={() => setOfferToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить предложение?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Это действие нельзя отменить. Предложение будет удалено безвозвратно.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => offerToDelete && handleDeleteOffer(offerToDelete)}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <MyOffersDialogs
+        offerToDelete={offerToDelete}
+        onCancelDelete={() => setOfferToDelete(null)}
+        onConfirmDelete={handleDeleteOffer}
+        extendDialogOffer={extendDialogOffer}
+        onCloseExtendDialog={() => setExtendDialogOffer(null)}
+        newExpiryDate={newExpiryDate}
+        onExpiryDateChange={setNewExpiryDate}
+        onConfirmExtend={confirmExtendExpiry}
+        showClearArchiveDialog={showClearArchiveDialog}
+        onCloseClearArchive={() => setShowClearArchiveDialog(false)}
+        onConfirmClearArchive={handleClearArchive}
+        archivedCount={stats.archived}
+      />
 
       <Footer />
     </div>

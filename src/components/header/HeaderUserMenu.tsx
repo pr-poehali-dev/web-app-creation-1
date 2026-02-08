@@ -83,9 +83,17 @@ export default function HeaderUserMenu({
             <DropdownMenuSeparator />
           </>
         )}
-        <DropdownMenuItem onClick={() => navigate('/profile')} className="border-2 border-border rounded-md mb-1">
-          <Icon name="User" className="mr-2 h-4 w-4" />
-          Мои данные
+        <DropdownMenuItem onClick={() => navigate('/my-orders')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
+          Мои заказы
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/my-offers')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="Package" className="mr-2 h-4 w-4" />
+          Мои предложения
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/my-requests')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="FileText" className="mr-2 h-4 w-4" />
+          Мои запросы
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/my-auctions')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Gavel" className="mr-2 h-4 w-4" />
@@ -94,10 +102,6 @@ export default function HeaderUserMenu({
         <DropdownMenuItem onClick={() => navigate('/my-reviews')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Star" className="mr-2 h-4 w-4" />
           Мои отзывы
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/my-orders')} className="border-2 border-border rounded-md mb-1">
-          <Icon name="ShoppingCart" className="mr-2 h-4 w-4" />
-          Мои заказы
         </DropdownMenuItem>
         {currentUser?.role === 'admin' && (
           <>
@@ -144,6 +148,10 @@ export default function HeaderUserMenu({
           </>
         )}
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate('/profile')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="User" className="mr-2 h-4 w-4" />
+          Мои данные
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="text-destructive border-2 border-border rounded-md">
           <Icon name="LogOut" className="mr-2 h-4 w-4" />
           Выйти

@@ -33,6 +33,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
 import type { Offer as OfferType } from '@/types/offer';
+import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
 
 interface AdminOffersProps {
   isAuthenticated: boolean;
@@ -68,6 +69,17 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   useEffect(() => {
     fetchOffers();
   }, [searchQuery, filterStatus]);
+
+  useEffect(() => {
+    const unsubscribe = dataSync.subscribe('offer_updated', () => {
+      console.log('Offer updated, reloading admin offers...');
+      fetchOffers();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     applyFilters();
@@ -146,6 +158,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const handleApproveOffer = async (offer: AdminOffer) => {
     try {
       await offersAPI.updateOffer(offer.id, { status: 'active' });
+      notifyOfferUpdated(offer.id);
       toast({
         title: 'Успешно',
         description: `Предложение "${offer.title}" одобрено`,
@@ -163,6 +176,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const handleRejectOffer = async (offer: AdminOffer) => {
     try {
       await offersAPI.updateOffer(offer.id, { status: 'rejected' });
+      notifyOfferUpdated(offer.id);
       toast({
         title: 'Успешно',
         description: `Предложение "${offer.title}" отклонено`,
@@ -181,6 +195,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
     if (selectedOffer) {
       try {
         await offersAPI.deleteOffer(selectedOffer.id);
+        notifyOfferUpdated(selectedOffer.id);
         toast({
           title: 'Успешно',
           description: `Предложение "${selectedOffer.title}" удалено`,
@@ -209,6 +224,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
       for (const offerId of testOfferIds) {
         try {
           await offersAPI.updateOffer(offerId, { status: 'archived' });
+          notifyOfferUpdated(offerId);
           deletedCount++;
         } catch (err) {
           console.error(`Failed to delete offer ${offerId}:`, err);
@@ -351,14 +367,21 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                         </TableCell>
                         <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
                         <TableCell>
-                          <div className="text-sm">
-                            <span className="font-semibold text-green-600">
-                              {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
-                            </span> {offer.unit}
-                            {offer.soldQuantity > 0 && (
+                          <div className="text-sm space-y-1">
+                            <div>
+                              <span className="font-semibold text-green-600">
+                                {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
+                              </span> {offer.unit}
                               <span className="text-muted-foreground ml-1">
                                 (из {offer.quantity})
                               </span>
+                            </div>
+                            {(offer.soldQuantity > 0 || offer.reservedQuantity > 0) && (
+                              <div className="text-xs text-muted-foreground">
+                                {offer.soldQuantity > 0 && `Продано: ${offer.soldQuantity}`}
+                                {offer.soldQuantity > 0 && offer.reservedQuantity > 0 && ', '}
+                                {offer.reservedQuantity > 0 && `Резерв: ${offer.reservedQuantity}`}
+                              </div>
                             )}
                           </div>
                         </TableCell>

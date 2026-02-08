@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { requestsAPI } from '@/services/api';
 import { toast } from 'sonner';
+import { dataSync } from '@/utils/dataSync';
 
 interface RequestImage {
   id: string;
@@ -130,6 +131,15 @@ export function useRequestData(id: string | undefined) {
     };
 
     loadRequest();
+    
+    const unsubscribe = dataSync.subscribe('request_updated', () => {
+      console.log('Request updated, reloading request detail...');
+      loadRequest();
+    });
+    
+    return () => {
+      unsubscribe();
+    };
   }, [id, navigate]);
 
   return { request, isLoading, showVideo };

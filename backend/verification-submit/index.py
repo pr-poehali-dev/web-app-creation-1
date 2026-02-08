@@ -18,41 +18,39 @@ def get_db_connection():
         raise Exception('DATABASE_URL environment variable is not set')
     return psycopg2.connect(dsn, cursor_factory=RealDictCursor)
 
+def escape_sql_string(value):
+    if value is None:
+        return 'NULL'
+    return "'" + str(value).replace("'", "''") + "'"
+
 def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 5, window_minutes: int = 5) -> bool:
     with conn.cursor() as cur:
         window_start = datetime.now() - timedelta(minutes=window_minutes)
+        window_str = window_start.strftime('%Y-%m-%d %H:%M:%S')
         
-        cur.execute(
-            """SELECT request_count, window_start 
-               FROM rate_limits 
-               WHERE identifier = %s AND endpoint = %s""",
-            (identifier, endpoint)
-        )
+        query = f"""SELECT request_count, window_start 
+                   FROM rate_limits 
+                   WHERE identifier = {escape_sql_string(identifier)} AND endpoint = {escape_sql_string(endpoint)}"""
+        cur.execute(query)
         result = cur.fetchone()
         
         if result:
             if result['window_start'] > window_start:
                 if result['request_count'] >= max_requests:
                     return False
-                cur.execute(
-                    """UPDATE rate_limits 
-                       SET request_count = request_count + 1 
-                       WHERE identifier = %s AND endpoint = %s""",
-                    (identifier, endpoint)
-                )
+                update_query = f"""UPDATE rate_limits 
+                               SET request_count = request_count + 1 
+                               WHERE identifier = {escape_sql_string(identifier)} AND endpoint = {escape_sql_string(endpoint)}"""
+                cur.execute(update_query)
             else:
-                cur.execute(
-                    """UPDATE rate_limits 
-                       SET request_count = 1, window_start = CURRENT_TIMESTAMP 
-                       WHERE identifier = %s AND endpoint = %s""",
-                    (identifier, endpoint)
-                )
+                update_query = f"""UPDATE rate_limits 
+                               SET request_count = 1, window_start = CURRENT_TIMESTAMP 
+                               WHERE identifier = {escape_sql_string(identifier)} AND endpoint = {escape_sql_string(endpoint)}"""
+                cur.execute(update_query)
         else:
-            cur.execute(
-                """INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
-                   VALUES (%s, %s, 1, CURRENT_TIMESTAMP)""",
-                (identifier, endpoint)
-            )
+            insert_query = f"""INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) 
+                           VALUES ({escape_sql_string(identifier)}, {escape_sql_string(endpoint)}, 1, CURRENT_TIMESTAMP)"""
+            cur.execute(insert_query)
         
         conn.commit()
         return True
@@ -150,10 +148,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             registration_cert_url = body_data.get('registrationCertUrl')
             agreement_form_url = body_data.get('agreementFormUrl')
             
-            cursor.execute('''
+            query = f"""
                 INSERT INTO user_verifications 
                 (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES ({escape_sql_string(user_id)}, {escape_sql_string(verification_type)}, {escape_sql_string(phone)}, 
+                        {escape_sql_string(company_name)}, {escape_sql_string(inn)}, 
+                        {escape_sql_string(registration_cert_url)}, {escape_sql_string(agreement_form_url)}, 'pending')
                 ON CONFLICT (user_id) 
                 DO UPDATE SET 
                     verification_type = EXCLUDED.verification_type,
@@ -165,7 +165,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     status = EXCLUDED.status,
                     updated_at = CURRENT_TIMESTAMP
                 RETURNING id
-            ''', (user_id, verification_type, phone, company_name, inn, registration_cert_url, agreement_form_url, 'pending'))
+            """
+            cursor.execute(query)
         else:
             registration_address = body_data.get('registrationAddress', '')
             actual_address = body_data.get('actualAddress', '')
@@ -175,10 +176,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             inn = body_data.get('inn', '')
             ogrnip = body_data.get('ogrnip', '')
             
-            cursor.execute('''
+            query = f"""
                 INSERT INTO user_verifications 
-                (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, status)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, 
+                 passport_registration_url, utility_bill_url, inn, ogrnip, status)
+                VALUES ({escape_sql_string(user_id)}, {escape_sql_string(verification_type)}, {escape_sql_string(phone)}, 
+                        {escape_sql_string(registration_address)}, {escape_sql_string(actual_address)}, 
+                        {escape_sql_string(passport_scan_url)}, {escape_sql_string(passport_registration_url)}, 
+                        {escape_sql_string(utility_bill_url)}, {escape_sql_string(inn)}, {escape_sql_string(ogrnip)}, 'pending')
                 ON CONFLICT (user_id) 
                 DO UPDATE SET 
                     verification_type = EXCLUDED.verification_type,
@@ -193,17 +198,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     status = EXCLUDED.status,
                     updated_at = CURRENT_TIMESTAMP
                 RETURNING id
-            ''', (user_id, verification_type, phone, registration_address, actual_address, passport_scan_url, passport_registration_url, utility_bill_url, inn, ogrnip, 'pending'))
+            """
+            cursor.execute(query)
         
-        cursor.execute('''
+        update_query = f"""
             UPDATE users 
-            SET verification_status = %s 
-            WHERE id = %s
-        ''', ('pending', user_id))
+            SET verification_status = 'pending'
+            WHERE id = {escape_sql_string(user_id)}
+        """
+        cursor.execute(update_query)
         
         conn.commit()
         
-        cursor.execute('SELECT first_name, last_name, email FROM users WHERE id = %s', (user_id,))
+        select_query = f"SELECT first_name, last_name, email FROM users WHERE id = {escape_sql_string(user_id)}"
+        cursor.execute(select_query)
         user_info = cursor.fetchone()
         
         cursor.close()
@@ -223,28 +231,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'phone': phone
             }
             
-            if verification_type == 'legal_entity':
-                email_payload['companyName'] = body_data.get('companyName', '')
-                email_payload['inn'] = body_data.get('inn', '')
-                email_payload['registrationCertUrl'] = body_data.get('registrationCertUrl', '')
-                email_payload['agreementFormUrl'] = body_data.get('agreementFormUrl', '')
-            else:
-                email_payload['registrationAddress'] = body_data.get('registrationAddress', '')
-                email_payload['actualAddress'] = body_data.get('actualAddress', '')
-                email_payload['passportScanUrl'] = body_data.get('passportScanUrl', '')
-                email_payload['passportRegistrationUrl'] = body_data.get('passportRegistrationUrl', '')
-                email_payload['utilityBillUrl'] = body_data.get('utilityBillUrl', '')
-                email_payload['inn'] = body_data.get('inn', '')
-            
             try:
-                email_data = json.dumps(email_payload).encode('utf-8')
-                email_req = urllib.request.Request(
-                    'https://functions.poehali.dev/42f9ef7b-b116-430a-ac8a-681742e10551',
-                    data=email_data,
-                    headers={'Content-Type': 'application/json'}
+                telegram_url = 'https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f'
+                req = urllib.request.Request(
+                    telegram_url,
+                    data=json.dumps(email_payload).encode('utf-8'),
+                    headers={'Content-Type': 'application/json'},
+                    method='POST'
                 )
-                urllib.request.urlopen(email_req, timeout=5)
-            except (urllib.error.URLError, Exception):
+                
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    pass
+            except (urllib.error.URLError, urllib.error.HTTPError, Exception):
                 pass
         
         return {
@@ -253,23 +251,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'success': True, 'message': 'Verification request submitted'}),
+            'body': json.dumps({'success': True, 'message': 'Verification request submitted successfully'}),
             'isBase64Encoded': False
         }
+    
     except Exception as e:
-        import traceback
-        error_trace = traceback.format_exc()
-        print(f'ERROR in verification-submit: {str(e)}')
-        print(f'Traceback: {error_trace}')
         conn.rollback()
         cursor.close()
         conn.close()
+        
         return {
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': f'Database error: {str(e)}'}),
+            'body': json.dumps({'error': f'Internal server error: {str(e)}'}),
             'isBase64Encoded': False
         }

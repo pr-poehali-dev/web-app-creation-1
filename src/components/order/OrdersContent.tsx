@@ -12,6 +12,7 @@ interface OrdersContentProps {
   isLoading: boolean;
   onOpenChat: (order: Order) => void;
   onAcceptOrder: (orderId: string) => void;
+  onCompleteOrder?: (orderId: string) => void;
 }
 
 export default function OrdersContent({
@@ -21,24 +22,36 @@ export default function OrdersContent({
   isLoading,
   onOpenChat,
   onAcceptOrder,
+  onCompleteOrder,
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const displayOrders = orders.filter(order => {
-    if (activeTab === 'archive') {
-      const isArchived = order.status === 'completed' || order.status === 'cancelled';
-      if (!isArchived) return false;
+  const displayOrders = orders
+    .filter(order => {
+      if (activeTab === 'archive') {
+        const isArchived = order.status === 'completed' || order.status === 'cancelled';
+        if (!isArchived) return false;
 
-      // Фильтр по названию
-      if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false;
+        // Фильтр по названию
+        if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
+          return false;
+        }
+
+        return true;
       }
-
-      return true;
-    }
-    const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-    return typeMatch && order.status !== 'completed' && order.status !== 'cancelled';
-  });
+      const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
+      return typeMatch && order.status !== 'completed' && order.status !== 'cancelled';
+    })
+    .sort((a, b) => {
+      // Для архива сортируем по дате завершения/отмены (последние сверху)
+      if (activeTab === 'archive') {
+        const dateA = a.completedDate || a.createdAt;
+        const dateB = b.completedDate || b.createdAt;
+        return dateB.getTime() - dateA.getTime();
+      }
+      // Для активных заказов сортируем по дате создания (новые сверху)
+      return b.createdAt.getTime() - a.createdAt.getTime();
+    });
 
   const isSeller = activeTab === 'seller';
 
@@ -89,11 +102,12 @@ export default function OrdersContent({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {displayOrders.map(order => (
           <OrderCard 
-            key={order.id} 
+            key={`${order.id}-${order.counterPricePerUnit || 0}-${order.counterTotalAmount || 0}-${order.counterOfferedAt?.getTime() || 0}`}
             order={order} 
             isSeller={isSeller}
             onOpenChat={onOpenChat}
             onAcceptOrder={isSeller ? onAcceptOrder : undefined}
+            onCompleteOrder={!isSeller ? onCompleteOrder : undefined}
           />
         ))}
       </div>

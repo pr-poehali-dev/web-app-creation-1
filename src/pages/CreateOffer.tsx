@@ -9,6 +9,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { DISTRICTS } from '@/data/districts';
+
 import type { Offer } from '@/types/offer';
 import { canCreateListing } from '@/utils/permissions';
 import { useCreateOfferForm } from './CreateOffer/useCreateOfferForm';
@@ -114,6 +115,21 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       }
     }
     
+    // Валидация периода публикации
+    if (formData.publicationStartDate && formData.publicationDuration) {
+      const startDate = new Date(formData.publicationStartDate);
+      const endDate = new Date(formData.publicationDuration);
+      
+      if (endDate <= startDate) {
+        toast({
+          title: "Ошибка валидации",
+          description: "Дата окончания публикации должна быть позже даты начала",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     const submitData = {
       title: formData.title,
       description: formData.description,
@@ -123,8 +139,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       minOrderQuantity: formData.minOrderQuantity ? parseFloat(formData.minOrderQuantity) : undefined,
       unit: formData.unit,
       pricePerUnit: parseFloat(formData.pricePerUnit) || 0,
-      hasVAT: formData.hasVAT,
-      vatRate: formData.hasVAT ? parseFloat(formData.vatRate) || 20 : undefined,
       location: formData.fullAddress,
       district: formData.district,
       fullAddress: formData.fullAddress,
@@ -133,7 +147,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       deliveryTime: formData.deliveryTime || undefined,
       deliveryPeriodStart: formData.deliveryPeriodStart || undefined,
       deliveryPeriodEnd: formData.deliveryPeriodEnd || undefined,
-      images: [],
       isPremium: false,
       status: isDraft ? 'draft' : 'active',
       noNegotiation: formData.noNegotiation,
@@ -189,7 +202,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               isUploadingVideo={isUploadingVideo}
             />
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3">
               <Button
                 type="submit"
                 size="lg"
@@ -198,7 +211,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                   !formData.title || 
                   !formData.district
                 }
-                className="flex-1"
               >
                 {isSubmitting ? (
                   <>
@@ -208,7 +220,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                 ) : (
                   <>
                     <Icon name="Send" className="mr-2 h-4 w-4" />
-                    Отправить на модерацию
+                    Отправить на публикацию
                   </>
                 )}
               </Button>
@@ -235,6 +247,8 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               </Button>
             </div>
           </form>
+
+
         </div>
       </main>
 

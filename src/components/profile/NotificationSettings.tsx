@@ -5,11 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  setupPushNotifications, 
-  checkPushSubscription, 
-  unsubscribeFromPush 
-} from '@/services/pushNotifications';
+import { showBrowserNotification } from '@/utils/browserNotifications';
 
 interface NotificationSettingsProps {
   userId: string;
@@ -17,37 +13,32 @@ interface NotificationSettingsProps {
 
 export default function NotificationSettings({ userId }: NotificationSettingsProps) {
   const [isEnabled, setIsEnabled] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
     checkNotificationSupport();
-    checkCurrentSubscription();
+    checkCurrentPermission();
   }, []);
 
   const checkNotificationSupport = () => {
-    const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+    const supported = 'Notification' in window;
     setIsSupported(supported);
     
     if (!supported) {
       toast({
         title: 'Уведомления не поддерживаются',
-        description: 'Ваш браузер не поддерживает push-уведомления',
+        description: 'Ваш браузер не поддерживает уведомления',
         variant: 'destructive',
       });
     }
   };
 
-  const checkCurrentSubscription = async () => {
-    setIsLoading(true);
-    try {
-      const subscription = await checkPushSubscription();
-      setIsEnabled(!!subscription);
-    } catch (error) {
-      console.error('Ошибка проверки подписки:', error);
-    } finally {
-      setIsLoading(false);
+  const checkCurrentPermission = () => {
+    if ('Notification' in window) {
+      const permission = Notification.permission;
+      setIsEnabled(permission === 'granted');
     }
   };
 
@@ -58,35 +49,50 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
 
     try {
       if (enabled) {
-        const success = await setupPushNotifications(userId);
-        if (success) {
+        // Запрашиваем разрешение на уведомления
+        const permission = await Notification.requestPermission();
+        
+        if (permission === 'granted') {
           setIsEnabled(true);
+          
+          // Автоматически включаем email-уведомления
+          try {
+            const authUrl = 'https://functions.poehali.dev/e95db6c2-d56f-42e2-b3e6-25fbf5e7bc98';
+            await fetch(authUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: parseInt(userId),
+                emailNotifications: true
+              })
+            });
+          } catch (e) {
+            console.error('Не удалось включить email-уведомления:', e);
+          }
+          
+          // Показываем тестовое уведомление
+          new Notification('Уведомления включены!', {
+            body: 'Теперь вы будете получать важные обновления',
+            icon: '/logo-192.png',
+          });
+          
           toast({
             title: 'Уведомления включены',
-            description: 'Вы будете получать важные обновления',
+            description: 'Вы будете получать важные обновления в браузере и на email',
           });
         } else {
           toast({
-            title: 'Не удалось включить уведомления',
-            description: 'Проверьте разрешения браузера',
+            title: 'Разрешение не предоставлено',
+            description: 'Пожалуйста, разрешите уведомления в настройках браузера',
             variant: 'destructive',
           });
         }
       } else {
-        const success = await unsubscribeFromPush();
-        if (success) {
-          setIsEnabled(false);
-          toast({
-            title: 'Уведомления отключены',
-            description: 'Вы больше не будете получать push-уведомления',
-          });
-        } else {
-          toast({
-            title: 'Ошибка',
-            description: 'Не удалось отключить уведомления',
-            variant: 'destructive',
-          });
-        }
+        setIsEnabled(false);
+        toast({
+          title: 'Уведомления отключены',
+          description: 'Чтобы снова включить, переключите тумблер',
+        });
       }
     } catch (error) {
       console.error('Ошибка переключения уведомлений:', error);
@@ -148,7 +154,19 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
                 <ul className="text-sm text-muted-foreground space-y-1 ml-6">
                   <li className="flex items-center gap-2">
                     <Icon name="Dot" className="h-4 w-4" />
-                    Откликах на ваши запросы и предложения
+                    Новых откликах на ваши запросы и предложения
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Icon name="Dot" className="h-4 w-4" />
+                    Встречных предложениях цены
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Icon name="Dot" className="h-4 w-4" />
+                    Принятии и отклонении заказов
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Icon name="Dot" className="h-4 w-4" />
+                    Новых сообщениях по заказам
                   </li>
                 </ul>
               </div>
@@ -164,25 +182,35 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
               </div>
             )}
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={checkCurrentSubscription}
-              disabled={isLoading}
-              className="w-full"
-            >
-              {isLoading ? (
-                <>
-                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
-                  Проверка...
-                </>
-              ) : (
-                <>
-                  <Icon name="RefreshCw" className="mr-2 h-4 w-4" />
-                  Проверить статус
-                </>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={checkCurrentPermission}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                <Icon name="RefreshCw" className="mr-2 h-4 w-4" />
+                Проверить
+              </Button>
+              
+              {isEnabled && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    showBrowserNotification({
+                      title: 'Тестовое уведомление',
+                      body: 'Уведомления работают отлично! 🎉',
+                    });
+                  }}
+                  className="flex-1"
+                >
+                  <Icon name="TestTube" className="mr-2 h-4 w-4" />
+                  Тест
+                </Button>
               )}
-            </Button>
+            </div>
           </>
         )}
       </CardContent>

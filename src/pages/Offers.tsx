@@ -15,6 +15,9 @@ import { getSession } from '@/utils/auth';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
+import { dataSync } from '@/utils/dataSync';
+import { filterActiveOffers } from '@/utils/expirationFilter';
+import { useOffers } from '@/contexts/OffersContext';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -26,9 +29,10 @@ const ITEMS_PER_PAGE = 20;
 function Offers({ isAuthenticated, onLogout }: OffersProps) {
   useScrollToTop();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { selectedRegion, selectedDistricts, districts } = useDistrict();
+  const { selectedRegion, selectedDistricts, districts, detectedDistrictId } = useDistrict();
   const currentUser = getSession();
   const { toast } = useToast();
+  const { setOffers: setGlobalOffers } = useOffers();
   const [isLoading, setIsLoading] = useState(true);
   const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -81,19 +85,29 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
       
       try {
-        const offersData = await offersAPI.getOffers({ 
-          status: 'active',
-          limit: 20,
-          offset: 0
-        });
+        // Таймаут для предотвращения вечной загрузки
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Превышено время ожидания загрузки')), 15000)
+        );
+        
+        const offersData = await Promise.race([
+          offersAPI.getOffers({ 
+            status: 'active',
+            limit: 20,
+            offset: 0
+          }),
+          timeoutPromise
+        ]) as any;
         
         if (!isMounted) return;
         
-        setOffers(offersData.offers || []);
+        const loadedOffers = offersData.offers || [];
+        setOffers(loadedOffers);
+        setGlobalOffers(loadedOffers);
         setTotalOffersCount(offersData.total || 0);
         setHasMoreOnServer(offersData.hasMore || false);
         
-        SmartCache.set('offers_list', offersData.offers || []);
+        SmartCache.set('offers_list', loadedOffers);
         
         if (showLoading) {
           setIsLoading(false);
@@ -111,6 +125,21 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
         
+        // Устанавливаем пустой массив, чтобы не было белого экрана
+        if (isMounted) {
+          setOffers([]);
+        }
+        
+        const errorMessage = error instanceof Error ? error.message : 'Ошибка загрузки';
+        
+        if (showLoading && isMounted) {
+          toast({
+            title: 'Не удалось загрузить предложения',
+            description: errorMessage,
+            variant: 'destructive',
+          });
+        }
+        
         if (showLoading) {
           setIsLoading(false);
         } else {
@@ -121,14 +150,41 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     loadData(false);
     
+    // Подписываемся на обновления предложений и заказов
+    const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
+      if (isMounted) {
+        console.log('Offer updated, reloading data...');
+        loadFreshData(false);
+      }
+    });
+    
+    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
+      if (isMounted) {
+        console.log('Order updated, reloading data...');
+        loadFreshData(false);
+      }
+    });
+    
     return () => {
       isMounted = false;
       isLoading = false;
+      unsubscribeOffers();
+      unsubscribeOrders();
     };
   }, []);
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
+    
+    console.log('🔍 Фильтрация предложений:', {
+      selectedRegion,
+      selectedDistricts,
+      detectedDistrictId,
+      totalOffers: result.length
+    });
+
+    // Скрываем истекшие предложения
+    result = filterActiveOffers(result);
 
     // Скрываем предложения с нулевым доступным количеством
     if (!showOnlyMy) {
@@ -166,6 +222,11 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           selectedDistricts.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
+      } else if (detectedDistrictId) {
+        result = result.filter((offer) => 
+          offer.district === detectedDistrictId || 
+          (offer.availableDistricts || []).includes(detectedDistrictId)
+        );
       } else {
         result = result.filter((offer) => 
           districtsInRegion.includes(offer.district) || 
@@ -189,7 +250,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     });
 
     return [...premiumOffers, ...regularOffers];
-  }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts]);
+  }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts, detectedDistrictId]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
   const hasMore = displayedCount < filteredOffers.length;

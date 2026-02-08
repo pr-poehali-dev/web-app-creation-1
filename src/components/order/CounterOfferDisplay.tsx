@@ -38,7 +38,13 @@ export default function CounterOfferDisplay({
                       className={`h-4 w-4 ${order.counterOfferedBy === 'buyer' ? 'text-blue-600' : 'text-orange-600'}`} 
                     />
                     <span className="font-semibold text-foreground">
-                      {order.counterOfferedBy === 'buyer' ? 'Встречное предложение покупателя:' : 'Встречное предложение продавца:'}
+                      {order.counterOfferedBy === 'buyer' 
+                        ? (isBuyer 
+                          ? 'Ваше встречное предложение покупки:' 
+                          : `Встречное предложение покупателя: ${order.buyerName}`)
+                        : (isSeller 
+                          ? 'Ваше встречное предложение продажи:' 
+                          : `Встречное предложение продавца: ${order.sellerName}`)}
                     </span>
                   </span>
                 </div>
@@ -93,66 +99,42 @@ export default function CounterOfferDisplay({
                       <Icon name="MessageSquare" className="mr-1 h-3.5 w-3.5" />
                       Встречное
                     </Button>
-                    {onCancelOrder && (
-                      <Button 
-                        onClick={onCancelOrder} 
-                        variant="destructive" 
-                        size="sm"
-                        className="text-[11px] px-2.5 py-1.5 h-auto"
-                      >
-                        <Icon name="X" className="mr-1 h-3.5 w-3.5" />
-                        Отменить
-                      </Button>
-                    )}
                   </div>
                 )}
                 
                 {isBuyer && (!order.counterOfferedBy || order.counterOfferedBy === 'seller') && (
-                  <div className="space-y-1.5 mt-3">
-                    <div className="flex gap-1">
-                      <Button 
-                        onClick={onAcceptCounter} 
-                        size="sm" 
-                        className="bg-green-600 hover:bg-green-700 text-[11px] px-2 py-1.5 h-auto flex-1"
-                      >
-                        <Icon name="Check" className="mr-0.5 h-3 w-3" />
-                        Принять
-                      </Button>
-                      <Button 
-                        onClick={onShowCounterForm} 
-                        size="sm"
-                        className={`text-[11px] px-2 py-1.5 h-auto flex-1 bg-white hover:bg-gray-50 text-black border border-black`}
-                      >
-                        <Icon name="MessageSquare" className="mr-0.5 h-3 w-3" />
-                        Встречное
-                      </Button>
-                    </div>
-                    {onCancelOrder && (
-                      <Button 
-                        onClick={onCancelOrder} 
-                        variant="destructive" 
-                        size="sm"
-                        className="w-full text-[11px] px-2 py-1.5 h-auto"
-                      >
-                        <Icon name="X" className="mr-0.5 h-3 w-3" />
-                        Отменить
-                      </Button>
-                    )}
+                  <div className="flex gap-1 mt-3">
+                    <Button 
+                      onClick={onAcceptCounter} 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700 text-[11px] px-2 py-1.5 h-auto flex-1"
+                    >
+                      <Icon name="Check" className="mr-0.5 h-3 w-3" />
+                      Принять
+                    </Button>
+                    <Button 
+                      onClick={onShowCounterForm} 
+                      size="sm"
+                      className={`text-[11px] px-2 py-1.5 h-auto flex-1 bg-white hover:bg-gray-50 text-black border border-black`}
+                    >
+                      <Icon name="MessageSquare" className="mr-0.5 h-3 w-3" />
+                      Встречное
+                    </Button>
                   </div>
                 )}
               </>
             )}
             
             {isSeller && order.counterOfferedBy === 'seller' && (
-              <div className="flex items-center gap-2 mt-3 text-muted-foreground text-xs">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mt-3">
                 <Icon name="Clock" className="h-3.5 w-3.5" />
-                <span>Ожидание ответа покупателя</span>
+                <span>Ожидание ответа покупателя: <span className="font-semibold text-foreground">{order.buyerName}</span></span>
               </div>
             )}
             {isBuyer && order.counterOfferedBy === 'buyer' && (
-              <div className="flex items-center gap-2 mt-3 text-muted-foreground text-xs">
-                <Icon name="Clock" className="h-3.5 w-3.5" />
-                <span>Ожидание ответа продавца</span>
+              <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm mt-3">
+                <Icon name="Clock" className="h-4 w-4" />
+                <span>Ожидание ответа продавца: <span className="font-bold text-amber-800">{order.sellerName}</span></span>
               </div>
             )}
           </div>

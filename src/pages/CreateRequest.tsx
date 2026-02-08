@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
+
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
@@ -62,11 +63,15 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     pricePerUnit: '',
     hasVAT: false,
     vatRate: '20',
+    negotiableQuantity: false,
+    negotiablePrice: false,
     district: '',
     deliveryAddress: '',
     gpsCoordinates: '',
     availableDistricts: [] as string[],
+    startDate: '',
     expiryDate: '',
+    publicationDuration: '',
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -76,6 +81,31 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
+    // Валидация дат актуальности запроса
+    if (field === 'expiryDate' && typeof value === 'string') {
+      const startDate = formData.startDate;
+      if (startDate && value && new Date(value) < new Date(startDate)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата окончания не может быть раньше даты начала',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
+    if (field === 'startDate' && typeof value === 'string') {
+      const endDate = formData.expiryDate;
+      if (endDate && value && new Date(value) > new Date(endDate)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата начала не может быть позже даты окончания',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (field === 'category') {
@@ -261,21 +291,87 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               <CardHeader>
                 <CardTitle>Дополнительно</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="expiryDate">Срок актуальности запроса (необязательно)</Label>
-                  <Input
-                    id="expiryDate"
-                    type="date"
-                    value={formData.expiryDate}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                  />
+                  <Label>Срок актуальности запроса (необязательно)</Label>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div>
+                      <Label htmlFor="startDate" className="text-sm text-muted-foreground">Дата начала</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={formData.startDate}
+                          onChange={(e) => handleInputChange('startDate', e.target.value)}
+                          min={new Date().toISOString().split('T')[0]}
+                          max={formData.expiryDate || undefined}
+                        />
+                        {formData.startDate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleInputChange('startDate', '')}
+                          >
+                            <Icon name="X" className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="expiryDate" className="text-sm text-muted-foreground">Дата окончания</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="expiryDate"
+                          type="date"
+                          value={formData.expiryDate}
+                          onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                          min={formData.startDate || new Date().toISOString().split('T')[0]}
+                        />
+                        {formData.expiryDate && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleInputChange('expiryDate', '')}
+                          >
+                            <Icon name="X" className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="publicationDuration">Срок публикации *</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Input
+                      id="publicationDuration"
+                      type="date"
+                      value={formData.publicationDuration}
+                      onChange={(e) => handleInputChange('publicationDuration', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      required
+                    />
+                    {formData.publicationDuration && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleInputChange('publicationDuration', '')}
+                      >
+                        <Icon name="X" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Дата, до которой запрос будет активен
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3">
               <Button
                 type="submit"
                 size="lg"
@@ -285,7 +381,6 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                   !formData.category || 
                   !formData.district
                 }
-                className="flex-1"
               >
                 {isSubmitting ? (
                   <>
@@ -322,6 +417,8 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               </Button>
             </div>
           </form>
+
+
         </div>
       </main>
 
