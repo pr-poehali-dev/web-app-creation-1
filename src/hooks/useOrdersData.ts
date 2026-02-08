@@ -218,9 +218,13 @@ export function useOrdersData(
           const updatedOrderData = await ordersAPI.getOrderById(triggerData.orderId);
           const mappedOrder = mapOrderData(updatedOrderData);
           
-          // Обновляем этот заказ в массиве
+          // Обновляем этот заказ в массиве с timestamp для гарантированного ререндера
           setOrders(prevOrders => 
-            prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o)
+            prevOrders.map(o => 
+              o.id === mappedOrder.id 
+                ? { ...mappedOrder, _updateTimestamp: Date.now() } 
+                : o
+            )
           );
           
           // Если это открытый заказ - обновляем selectedOrder
@@ -335,7 +339,11 @@ export function useOrdersData(
           
           // Также обновляем этот заказ в массиве orders для обновления карточки
           setOrders(prevOrders => {
-            const updated = prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o);
+            const updated = prevOrders.map(o => 
+              o.id === mappedOrder.id 
+                ? { ...mappedOrder, _updateTimestamp: Date.now() } 
+                : o
+            );
             console.log('[useOrdersData] Обновлён заказ в массиве orders');
             return updated;
           });
@@ -499,17 +507,24 @@ export function useOrdersData(
         counterTotal: mappedOrder.counterTotalAmount
       });
       
-      // НЕМЕДЛЕННО обновляем selectedOrder
+      // НЕМЕДЛЕННО обновляем selectedOrder (модальное окно)
       setSelectedOrder(mappedOrder);
       
-      // НЕМЕДЛЕННО обновляем этот заказ в массиве orders (для карточки на странице)
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === mappedOrder.id ? { ...mappedOrder } : o)
-      );
+      // НЕМЕДЛЕННО обновляем этот заказ в массиве orders (карточка на странице)
+      // Добавляем _updateTimestamp для гарантированного ререндера React
+      setOrders(prevOrders => {
+        const newOrders = prevOrders.map(o => 
+          o.id === mappedOrder.id 
+            ? { ...mappedOrder, _updateTimestamp: Date.now() } 
+            : o
+        );
+        console.log('[handleCounterOffer] Карточка отправителя обновлена локально');
+        return newOrders;
+      });
       
       console.log('✅ Локальное обновление завершено (модальное окно + карточка отправителя)');
       
-      // Триггер для обновления у контрагента (storage event + broadcast channel)
+      // Триггер для немедленного обновления у контрагента
       const triggerData = JSON.stringify({
         timestamp: Date.now(),
         orderId: selectedOrder.id
@@ -517,8 +532,14 @@ export function useOrdersData(
       
       localStorage.setItem('force_orders_reload', triggerData);
       
-      // Уведомляем систему об обновлении заказа
+      // Уведомляем систему об обновлении заказа (для dataSync)
       notifyOrderUpdated(selectedOrder.id);
+      
+      // КРИТИЧНО: Немедленная перезагрузка всех заказов для синхронизации
+      // Это гарантирует что контрагент получит обновление даже если polling не сработал
+      setTimeout(() => {
+        loadOrders(false);
+      }, 500);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
