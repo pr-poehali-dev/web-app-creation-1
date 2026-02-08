@@ -187,17 +187,55 @@ export function useOrdersData(
     });
 
     // Слушатель триггера принудительного обновления после действий с заказом
-    const handleStorageChange = (e: StorageEvent | Event) => {
+    const handleStorageChange = async (e: StorageEvent | Event) => {
+      let triggerData: { orderId?: string } | null = null;
+      
       if ('key' in e && e.key === 'force_orders_reload') {
         console.log('🔄 Force reload orders triggered by action');
-        loadOrders(false);
+        try {
+          const data = localStorage.getItem('force_orders_reload');
+          if (data) triggerData = JSON.parse(data);
+        } catch (err) {
+          // Старый формат (просто timestamp)
+        }
       } else if (!('key' in e)) {
         const forceReload = localStorage.getItem('force_orders_reload');
         if (forceReload) {
           console.log('🔄 Force reload orders triggered by action (manual)');
+          try {
+            triggerData = JSON.parse(forceReload);
+          } catch (err) {
+            // Старый формат (просто timestamp)
+          }
           localStorage.removeItem('force_orders_reload');
-          loadOrders(false);
         }
+      }
+      
+      // Если есть конкретный orderId - обновляем только его
+      if (triggerData?.orderId) {
+        console.log('🎯 Точечное обновление заказа:', triggerData.orderId);
+        try {
+          const updatedOrderData = await ordersAPI.getOrderById(triggerData.orderId);
+          const mappedOrder = mapOrderData(updatedOrderData);
+          
+          // Обновляем этот заказ в массиве
+          setOrders(prevOrders => 
+            prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o)
+          );
+          
+          // Если это открытый заказ - обновляем selectedOrder
+          if (selectedOrder?.id === mappedOrder.id) {
+            setSelectedOrder(mappedOrder);
+          }
+          
+          console.log('✅ Заказ обновлен мгновенно');
+        } catch (err) {
+          console.error('Ошибка точечного обновления, загружаем все:', err);
+          await loadOrders(false);
+        }
+      } else {
+        // Полная перезагрузка если нет orderId
+        await loadOrders(false);
       }
     };
     
@@ -376,8 +414,11 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
-      // Триггер для немедленного обновления страницы после действия
-      localStorage.setItem('force_orders_reload', Date.now().toString());
+      // Триггер для немедленного обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
+        timestamp: Date.now(),
+        orderId: orderToAccept
+      }));
       window.dispatchEvent(new Event('storage'));
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
@@ -433,15 +474,8 @@ export function useOrdersData(
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
       });
 
-      // Триггер для немедленного обновления страницы после действия
-      localStorage.setItem('force_orders_reload', Date.now().toString());
-      window.dispatchEvent(new Event('storage'));
-
-      // НЕМЕДЛЕННО обновляем данные после отправки встречного предложения
-      notifyOrderUpdated(selectedOrder.id);
-      
       // Небольшая задержка чтобы дать серверу обновить БД
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Получаем обновлённый заказ напрямую из API и маппим его
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
@@ -453,15 +487,24 @@ export function useOrdersData(
         counterTotal: mappedOrder.counterTotalAmount
       });
       
+      // НЕМЕДЛЕННО обновляем selectedOrder
       setSelectedOrder(mappedOrder);
       
-      // Обновляем этот заказ в массиве orders НЕМЕДЛЕННО
+      // НЕМЕДЛЕННО обновляем этот заказ в массиве orders (для карточки на странице)
       setOrders(prevOrders => 
         prevOrders.map(o => o.id === mappedOrder.id ? { ...mappedOrder } : o)
       );
       
-      // Обновляем список заказов для синхронизации с сервером
-      await loadOrders(false);
+      // Триггер для обновления у контрагента в других вкладках/устройствах
+      // Передаем ID заказа для точечного обновления
+      localStorage.setItem('force_orders_reload', JSON.stringify({
+        timestamp: Date.now(),
+        orderId: selectedOrder.id
+      }));
+      window.dispatchEvent(new Event('storage'));
+      
+      // Уведомляем систему об обновлении заказа
+      notifyOrderUpdated(selectedOrder.id);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
@@ -505,8 +548,11 @@ export function useOrdersData(
         description: 'Заказ переведён в статус "Принято"',
       });
 
-      // Триггер для немедленного обновления страницы после действия
-      localStorage.setItem('force_orders_reload', Date.now().toString());
+      // Триггер для немедленного обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
+        timestamp: Date.now(),
+        orderId: orderId
+      }));
       window.dispatchEvent(new Event('storage'));
 
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
@@ -562,8 +608,11 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
-      // Триггер для немедленного обновления страницы после действия
-      localStorage.setItem('force_orders_reload', Date.now().toString());
+      // Триггер для немедленного обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
+        timestamp: Date.now(),
+        orderId: orderToComplete
+      }));
       window.dispatchEvent(new Event('storage'));
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
