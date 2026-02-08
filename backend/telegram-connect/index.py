@@ -69,32 +69,20 @@ def handler(event: dict, context) -> dict:
             body = json.loads(event.get('body', '{}'))
             telegram_chat_id = body.get('telegram_chat_id')
             
-            if not telegram_chat_id or telegram_chat_id == 'undefined' or telegram_chat_id == 'null':
+            if not telegram_chat_id:
                 cur.close()
                 conn.close()
                 return {
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'telegram_chat_id is required and must be a valid number'})
-                }
-            
-            # Преобразуем в integer и валидируем
-            try:
-                chat_id_int = int(telegram_chat_id)
-            except (ValueError, TypeError):
-                cur.close()
-                conn.close()
-                return {
-                    'statusCode': 400,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': f'telegram_chat_id must be a valid integer, got: {telegram_chat_id}'})
+                    'body': json.dumps({'error': 'telegram_chat_id is required'})
                 }
             
             cur.execute(f'''
                 UPDATE {schema}.users 
                 SET telegram_chat_id = %s
                 WHERE id = %s
-            ''', (chat_id_int, user_id))
+            ''', (telegram_chat_id, user_id))
             
             conn.commit()
             cur.close()

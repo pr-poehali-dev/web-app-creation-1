@@ -55,20 +55,12 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activeTab, setActiveTab] = useState('info');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [isEditingInfo, setIsEditingInfo] = useState(false);
   const { deleteRequest } = useOffers();
 
   useEffect(() => {
     if (!currentUser || !isAuthenticated) {
       navigate('/login');
       return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const edit = params.get('edit');
-    
-    if (edit === 'true') {
-      setIsEditingInfo(true);
     }
 
     const loadData = async () => {
@@ -158,19 +150,8 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     setShowDeleteDialog(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!request) return;
-    
-    // Проверяем наличие активных откликов
-    if (responses.length > 0) {
-      toast({
-        title: 'Невозможно удалить',
-        description: 'Нельзя удалить при имеющихся активных откликах',
-        variant: 'destructive',
-      });
-      setShowDeleteDialog(false);
-      return;
-    }
     
     deleteRequest(request.id);
     setShowDeleteDialog(false);
@@ -250,7 +231,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6" defaultValue="info">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="info">
               <Icon name="Info" className="w-4 h-4 mr-2" />

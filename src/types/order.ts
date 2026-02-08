@@ -17,8 +17,6 @@ export interface Order {
   unit: string;
   pricePerUnit: number;
   totalAmount: number;
-  offerAvailableQuantity?: number;
-  offerPricePerUnit?: number;
   counterPricePerUnit?: number;
   counterTotalAmount?: number;
   counterOfferMessage?: string;
@@ -37,7 +35,6 @@ export interface Order {
   type?: 'purchase' | 'sale';
   buyerCompany?: string;
   buyerInn?: string;
-  hasUnreadCounterOffer?: boolean; // Флаг непрочитанной встречной цены
 }
 
 export interface ChatMessage {

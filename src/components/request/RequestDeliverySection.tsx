@@ -135,7 +135,6 @@ export default function RequestDeliverySection({
             }}
             placeholder="Населенный пункт, улица, дом, офис, подъезд"
             required
-            className="text-xs"
           />
           {filteredSettlements.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
@@ -218,16 +217,12 @@ export default function RequestDeliverySection({
             onClose={() => setShowMapModal(false)}
             coordinates={formData.gpsCoordinates || ''}
             onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
-            onAddressChange={(address, districtName, coords) => {
-              console.log('📬 onAddressChange вызван:', { address, districtName, coords });
+            onAddressChange={(address, districtName) => {
+              console.log('📬 onAddressChange вызван:', { address, districtName });
               
               if (address) {
                 setAddressInput(address);
                 onInputChange('deliveryAddress', address);
-              }
-              
-              if (coords) {
-                onInputChange('gpsCoordinates', coords);
               }
               
               if (districtName) {

@@ -9,7 +9,6 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { DISTRICTS } from '@/data/districts';
-
 import type { Offer } from '@/types/offer';
 import { canCreateListing } from '@/utils/permissions';
 import { useCreateOfferForm } from './CreateOffer/useCreateOfferForm';
@@ -115,21 +114,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       }
     }
     
-    // Валидация периода публикации
-    if (formData.publicationStartDate && formData.publicationDuration) {
-      const startDate = new Date(formData.publicationStartDate);
-      const endDate = new Date(formData.publicationDuration);
-      
-      if (endDate <= startDate) {
-        toast({
-          title: "Ошибка валидации",
-          description: "Дата окончания публикации должна быть позже даты начала",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-    
     const submitData = {
       title: formData.title,
       description: formData.description,
@@ -205,7 +189,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               isUploadingVideo={isUploadingVideo}
             />
 
-            <div className="flex flex-col gap-3">
+            <div className="flex gap-4">
               <Button
                 type="submit"
                 size="lg"
@@ -214,6 +198,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                   !formData.title || 
                   !formData.district
                 }
+                className="flex-1"
               >
                 {isSubmitting ? (
                   <>
@@ -223,7 +208,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                 ) : (
                   <>
                     <Icon name="Send" className="mr-2 h-4 w-4" />
-                    Отправить на публикацию
+                    Отправить на модерацию
                   </>
                 )}
               </Button>
@@ -250,8 +235,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               </Button>
             </div>
           </form>
-
-
         </div>
       </main>
 

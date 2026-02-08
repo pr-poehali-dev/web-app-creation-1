@@ -90,10 +90,9 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
       <div className="shrink-0 bg-background border-b px-4 py-3 flex items-center gap-3 min-h-[56px]">
         <button
           onClick={onClose}
-          className="px-2 py-1.5 hover:bg-muted rounded-md transition-colors border-2 border-border flex items-center gap-1"
+          className="p-1.5 hover:bg-muted rounded-md transition-colors border-2 border-border"
         >
           <Icon name="ArrowLeft" className="h-5 w-5" />
-          <span className="text-sm font-medium">Назад</span>
         </button>
         <h3 className="text-lg font-bold flex-1 text-center">
           {selectedRegion === 'all' ? 'Выбери регион и районы' : 'Выбор районов'}
@@ -169,24 +168,13 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
 
             {/* Search */}
             <div className="px-4 py-3 border-b bg-muted/20">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Поиск района..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 pr-8 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-sm transition-colors"
-                    aria-label="Очистить поиск"
-                  >
-                    <Icon name="X" className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
+              <input
+                type="text"
+                placeholder="Поиск района..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              />
             </div>
 
             {/* Districts list */}

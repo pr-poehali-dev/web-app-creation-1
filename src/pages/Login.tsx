@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,46 +14,40 @@ interface LoginProps {
 }
 
 export default function Login({ onLogin }: LoginProps) {
-  const [login, setLogin] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const savedCredentials = getRememberMe();
     if (savedCredentials) {
-      setLogin(savedCredentials.email);
+      setEmail(savedCredentials.email);
       setRememberMe(true);
     }
   }, []);
 
 
 
-  const validateLogin = (login: string) => {
+  const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const digitsOnly = login.replace(/\D/g, '');
-    
-    // Проверка телефона: ровно 11 цифр
-    const isPhone = digitsOnly.length === 11;
-    
-    return emailRegex.test(login) || isPhone;
+    return emailRegex.test(email);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!login) {
-      setLoginError('Введите телефон или email');
+    if (!email) {
+      setEmailError('Введите email');
       return;
     }
 
-    if (!validateLogin(login)) {
-      setLoginError('Некорректный формат телефона или email');
+    if (!validateEmail(email)) {
+      setEmailError('Некорректный формат email');
       return;
     }
 
@@ -74,11 +68,11 @@ export default function Login({ onLogin }: LoginProps) {
     });
 
     try {
-      const result = await authenticateUser(login, password);
+      const result = await authenticateUser(email, password);
       
       if (result.success && result.user) {
         if (rememberMe) {
-          saveRememberMe(login, password);
+          saveRememberMe(email, password);
         } else {
           clearRememberMe();
         }
@@ -88,7 +82,6 @@ export default function Login({ onLogin }: LoginProps) {
         toast({
           title: 'Успешно',
           description: `Добро пожаловать, ${result.user.firstName} ${result.user.lastName}!`,
-          duration: 1000,
         });
         
         setTimeout(() => {
@@ -113,138 +106,9 @@ export default function Login({ onLogin }: LoginProps) {
     }
   };
 
-  const formatPhoneNumber = (value: string) => {
-    const hasPlus = value.trim().startsWith('+');
-    const digitsOnly = value.replace(/\D/g, '');
-    
-    if (digitsOnly.length === 0) {
-      return hasPlus ? '+' : '';
-    }
-    
-    // МАКСИМУМ 11 ЦИФР ВСЕГДА!
-    const limitedDigits = digitsOnly.slice(0, 11);
-    
-    // Если номер начинается с +, просто форматируем
-    if (hasPlus) {
-      return formatWithSpaces('+' + limitedDigits);
-    }
-    
-    // Для номеров без +: преобразуем 8 в 7
-    let normalizedDigits = limitedDigits;
-    if (limitedDigits.startsWith('8')) {
-      normalizedDigits = '7' + limitedDigits.slice(1);
-    } else if (!limitedDigits.startsWith('7')) {
-      // Добавляем 7 если её нет
-      normalizedDigits = '7' + limitedDigits;
-      normalizedDigits = normalizedDigits.slice(0, 11); // Обрезаем до 11
-    }
-    
-    return formatWithSpaces('+' + normalizedDigits);
-  };
-
-  const formatWithSpaces = (phone: string) => {
-    // Убираем все кроме + и цифр
-    const cleaned = phone.replace(/[^\d+]/g, '');
-    const digits = cleaned.replace(/\D/g, '');
-    
-    if (digits.length === 0) return cleaned;
-    
-    // Формат: +7 999 123 45 67 (пробелы вместо нулей)
-    let formatted = '+';
-    
-    if (digits.length >= 1) {
-      formatted += digits.substring(0, 1); // Код страны
-    }
-    if (digits.length >= 2) {
-      formatted += ' ' + digits.substring(1, Math.min(4, digits.length)); // 3 цифры
-    }
-    if (digits.length >= 5) {
-      formatted += ' ' + digits.substring(4, Math.min(7, digits.length)); // 3 цифры
-    }
-    if (digits.length >= 8) {
-      formatted += ' ' + digits.substring(7, Math.min(9, digits.length)); // 2 цифры
-    }
-    if (digits.length >= 10) {
-      formatted += ' ' + digits.substring(9, Math.min(11, digits.length)); // 2 цифры
-    }
-    if (digits.length >= 12) {
-      formatted += ' ' + digits.substring(11); // Остальные для международных
-    }
-    
-    return formatted;
-  };
-
-
-
-  const handleLoginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    
-    // Если поле полностью пустое
-    if (value === '') {
-      setLogin('');
-      setLoginError('');
-      return;
-    }
-    
-    // Если это email или содержит буквы - не форматируем
-    if (value.includes('@') || /[a-zA-Z]/.test(value)) {
-      setLogin(value);
-      setLoginError('');
-      return;
-    }
-    
-    // Разрешаем ввод только + в начале
-    if (value === '+') {
-      setLogin('+');
-      setLoginError('');
-      return;
-    }
-    
-    // Извлекаем только цифры из нового значения
-    const newDigits = value.replace(/\D/g, '');
-    const hasPlus = value.trim().startsWith('+');
-    
-    // Если цифр нет и нет + - очищаем поле
-    if (newDigits.length === 0 && !hasPlus) {
-      setLogin('');
-      setLoginError('');
-      return;
-    }
-    
-    // СТРОГО: Максимум 11 цифр!
-    if (newDigits.length > 11) {
-      return; // Блокируем ввод
-    }
-    
-    // Форматируем телефон
-    const formatted = formatPhoneNumber(value);
-    
-    setLogin(formatted);
-    
-    // Валидация телефона в реальном времени
-    const digits = formatted.replace(/\D/g, '');
-    
-    // Если есть только +, не показываем ошибку
-    if (digits.length === 0) {
-      setLoginError('');
-      return;
-    }
-    
-    // Для российских номеров (начинаются с 7) - строгая проверка
-    if (digits.startsWith('7')) {
-      if (digits.length < 11) {
-        setLoginError('Номер должен содержать 11 цифр');
-      } else {
-        setLoginError('');
-      }
-    } else {
-      // Для международных номеров - проверка диапазона
-      if (digits.length < 10) {
-        setLoginError('Номер слишком короткий (минимум 10 цифр)');
-      } else {
-        setLoginError('');
-      }
-    }
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    setEmailError('');
   };
 
   return (
@@ -272,47 +136,18 @@ export default function Login({ onLogin }: LoginProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="login">Телефон или Email</Label>
-              <div className="relative">
-                <Input
-                  ref={inputRef}
-                  id="login"
-                  name="login"
-                  type="text"
-                  placeholder="+79991234567, +12025551234 или example@company.com"
-                  value={login}
-                  onChange={handleLoginChange}
-                  onBlur={() => {
-                    // Проверка при потере фокуса
-                    if (login && !validateLogin(login)) {
-                      const digits = login.replace(/\D/g, '');
-                      if (digits.length > 0 && digits.length < 11) {
-                        setLoginError('Номер должен содержать 11 цифр');
-                      } else if (digits.length > 11) {
-                        setLoginError('Номер слишком длинный');
-                      } else if (!login.includes('@')) {
-                        setLoginError('Некорректный формат телефона или email');
-                      }
-                    }
-                  }}
-                  autoComplete="username"
-                  className={loginError ? 'border-destructive pr-10' : 'pr-10'}
-                />
-                {login && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLogin('');
-                      setLoginError('');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    tabIndex={-1}
-                  >
-                    <Icon name="X" className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-              {loginError && <p className="text-sm text-destructive">{loginError}</p>}
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="example@company.com"
+                value={email}
+                onChange={handleEmailChange}
+                autoComplete="email"
+                className={emailError ? 'border-destructive' : ''}
+              />
+              {emailError && <p className="text-sm text-destructive">{emailError}</p>}
             </div>
 
             <div className="space-y-2">

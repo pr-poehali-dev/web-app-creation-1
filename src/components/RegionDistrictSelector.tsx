@@ -50,23 +50,11 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
   };
 
   const filteredDistricts = useMemo(() => {
-    let result = districts;
-    
-    if (searchQuery) {
-      result = districts.filter(d => 
-        d.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    return result.sort((a, b) => {
-      const aSelected = selectedDistricts.includes(a.id);
-      const bSelected = selectedDistricts.includes(b.id);
-      
-      if (aSelected && !bSelected) return -1;
-      if (!aSelected && bSelected) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  }, [districts, searchQuery, selectedDistricts]);
+    if (!searchQuery) return districts;
+    return districts.filter(d => 
+      d.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [districts, searchQuery]);
 
   const districtCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -104,34 +92,10 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
   };
 
   const getSubtitleText = () => {
-    if (selectedRegion === 'all') {
-      return null;
-    }
-    
-    // Проверка размера экрана (компьютер vs мобильный)
-    const isMobile = window.innerWidth < 768;
-    
-    if (detectedCity) {
-      if (selectedDistricts.length > 0) {
-        // На компьютере показываем только город, на мобильном с индикатором
-        return isMobile ? `${detectedCity} +${selectedDistricts.length}` : detectedCity;
-      }
+    if (selectedRegion !== 'all' && detectedCity && detectedCity !== 'Не определен') {
       return detectedCity;
     }
-    
-    if (selectedDistricts.length === 0) {
-      return null;
-    }
-    
-    const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
-    if (!firstDistrict) return null;
-    
-    if (selectedDistricts.length === 1) {
-      return firstDistrict.name;
-    }
-    
-    // На компьютере показываем только первый район, на мобильном с индикатором
-    return isMobile ? `${firstDistrict.name} +${selectedDistricts.length - 1}` : firstDistrict.name;
+    return null;
   };
 
   return (
@@ -156,7 +120,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
             <Icon name="ChevronsUpDown" className="ml-1.5 h-3.5 w-3.5 shrink-0 opacity-50 group-hover:text-white" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0 flex flex-col max-h-[600px]" align="start">
+        <PopoverContent className="w-[400px] p-0" align="start">
           {selectedRegion === 'all' ? (
             <div className="p-4">
               <Command shouldFilter={true}>
@@ -205,7 +169,7 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
             </div>
           ) : (
             <>
-              <div className="border-b px-3 py-2 bg-muted/50 shrink-0">
+              <div className="border-b px-3 py-2 bg-muted/50">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
                     {selectedRegionData?.name}
@@ -221,68 +185,52 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                   </Button>
                 </div>
               </div>
-              <div className="border-b shrink-0 relative">
-                <Command shouldFilter={false}>
-                  <CommandInput 
-                    placeholder="Поиск района..." 
-                    value={searchQuery}
-                    onValueChange={setSearchQuery}
-                  />
-                </Command>
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
-                  >
-                    <Icon name="X" className="h-3 w-3" />
-                  </Button>
-                )}
-              </div>
-              <div className="overflow-y-auto flex-1 min-h-0">
-                <Command shouldFilter={false}>
-                  <CommandList>
-                    {filteredDistricts.length === 0 ? (
-                      <div className="py-6 text-center text-sm text-muted-foreground">
-                        Район не найден
-                      </div>
-                    ) : (
-                      <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
-                        {filteredDistricts.map((district) => {
-                          const isSelected = selectedDistricts.includes(district.id);
-                          const count = districtCounts[district.id] || 0;
-                          return (
-                            <CommandItem
-                              key={district.id}
-                              value={district.name}
-                              onSelect={() => handleToggleDistrict(district.id)}
-                            >
-                              <div className="flex items-center justify-between gap-2 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
-                                    {isSelected && (
-                                      <Icon name="Check" className="h-3 w-3 text-white" />
-                                    )}
-                                  </div>
-                                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-                                  <span>{district.name}</span>
+              <Command shouldFilter={false}>
+                <CommandInput 
+                  placeholder="Поиск района..." 
+                  value={searchQuery}
+                  onValueChange={setSearchQuery}
+                />
+                <CommandList>
+                  {filteredDistricts.length === 0 ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      Район не найден
+                    </div>
+                  ) : (
+                    <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
+                      {filteredDistricts.map((district) => {
+                        const isSelected = selectedDistricts.includes(district.id);
+                        const count = districtCounts[district.id] || 0;
+                        return (
+                          <CommandItem
+                            key={district.id}
+                            value={district.name}
+                            onSelect={() => handleToggleDistrict(district.id)}
+                          >
+                            <div className="flex items-center justify-between gap-2 flex-1">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-4 h-4 border-2 rounded flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                                  {isSelected && (
+                                    <Icon name="Check" className="h-3 w-3 text-white" />
+                                  )}
                                 </div>
-                                {count > 0 && (
-                                  <Badge variant="secondary" className="ml-auto text-xs">
-                                    {count}
-                                  </Badge>
-                                )}
+                                <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                                <span>{district.name}</span>
                               </div>
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
-                </Command>
-              </div>
-              <div className="border-t p-3 space-y-2 shrink-0">
+                              {count > 0 && (
+                                <Badge variant="secondary" className="ml-auto text-xs">
+                                  {count}
+                                </Badge>
+                              )}
+                            </div>
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+              <div className="border-t p-3 space-y-2">
                 <div className="flex gap-2">
                   <Button
                     variant="outline"

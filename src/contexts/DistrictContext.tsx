@@ -19,7 +19,6 @@ interface DistrictContextType {
   isDetecting: boolean;
   requestGeolocation: () => Promise<void>;
   detectedCity: string | null;
-  detectedDistrictId: string | null;
 }
 
 const DistrictContext = createContext<DistrictContextType | undefined>(undefined);
@@ -34,73 +33,29 @@ const ALL_REGIONS: District[] = [
 
 export function DistrictProvider({ children }: { children: ReactNode }) {
   const [selectedRegion, setSelectedRegionState] = useState<string>('all');
-  
-  const detectedDistrictIdStored = localStorage.getItem('detectedDistrictId');
-  
   const [selectedDistricts, setSelectedDistrictsState] = useState<string[]>(() => {
     const stored = localStorage.getItem('selectedDistricts');
-    const parsed = stored ? JSON.parse(stored) : [];
-    
-    if (parsed.length === 0 && detectedDistrictIdStored) {
-      return [detectedDistrictIdStored];
-    }
-    
-    return parsed;
+    return stored ? JSON.parse(stored) : [];
   });
-  
-  const [detectedCity, setDetectedCity] = useState<string | null>(() => {
-    const stored = localStorage.getItem('detectedCity');
-    return stored || null;
-  });
-  const [detectedDistrictId, setDetectedDistrictId] = useState<string | null>(() => {
-    return detectedDistrictIdStored || null;
-  });
+  const [detectedCity, setDetectedCity] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [availableDistricts, setAvailableDistricts] = useState<DistrictType[]>([]);
 
   useEffect(() => {
     const initLocation = async () => {
-      console.log('🌍 Инициализация местоположения...');
-      
       const storedLocation = getLocationFromStorage();
-      console.log('📦 Сохранённое местоположение:', storedLocation);
       
       if (storedLocation) {
         const regionId = findRegionByLocation(storedLocation.city, storedLocation.district);
-        console.log('📍 Найден регион:', regionId);
         setSelectedRegionState(regionId);
         setDetectedCity(storedLocation.city);
         
         const districts = getDistrictsByRegion(regionId);
         setAvailableDistricts(districts);
         
-        let district = DISTRICTS.find(d => d.id === storedLocation.district);
-        
-        if (!district) {
-          district = findDistrictByName(storedLocation.district, regionId);
-        }
-        
-        console.log('🎯 Найден район:', district);
-        
+        const district = findDistrictByName(storedLocation.district, regionId);
         if (district) {
-          setDetectedDistrictId(district.id);
-          localStorage.setItem('detectedDistrictId', district.id);
-          localStorage.setItem('detectedCity', storedLocation.city);
-          console.log('✅ Установлен detectedDistrictId:', district.id);
-          
-          const storedDistricts = localStorage.getItem('selectedDistricts');
-          const parsedDistricts = storedDistricts ? JSON.parse(storedDistricts) : [];
-          
-          if (!parsedDistricts.includes(district.id)) {
-            const newDistricts = [district.id, ...parsedDistricts];
-            setSelectedDistrictsState(newDistricts);
-            localStorage.setItem('selectedDistricts', JSON.stringify(newDistricts));
-            console.log('✅ Добавлен район местоположения в selectedDistricts:', newDistricts);
-          } else {
-            console.log('✅ Район местоположения уже в selectedDistricts');
-          }
-        } else {
-          console.log('⚠️ Район не найден для:', storedLocation.district);
+          setSelectedDistrictsState([district.id]);
         }
         return;
       }
@@ -117,15 +72,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         setIsDetecting(true);
         try {
           const location = await detectLocationByIP();
-          console.log('🌍 Определено местоположение:', {
-            city: location.city,
-            district: location.district,
-            coordinates: location.coordinates,
-            source: location.source
-          });
-          
           const regionId = findRegionByLocation(location.city, location.district);
-          console.log('📍 Найден регион:', regionId);
           
           if (regionId !== 'all') {
             setSelectedRegionState(regionId);
@@ -137,12 +84,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
             
             const district = findDistrictByName(location.district, regionId);
             if (district) {
-              console.log('✅ Найден район:', district.name);
-              setDetectedDistrictId(district.id);
-              localStorage.setItem('detectedDistrictId', district.id);
-              localStorage.setItem('detectedCity', location.city);
               setSelectedDistrictsState([district.id]);
-              localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
             }
           }
           
@@ -175,11 +117,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   const setSelectedRegion = (region: string) => {
     setSelectedRegionState(region);
     if (region !== selectedRegion) {
-      if (detectedDistrictId) {
-        setSelectedDistrictsState([detectedDistrictId]);
-      } else {
-        setSelectedDistrictsState([]);
-      }
+      setSelectedDistrictsState([]);
     }
     
     // Сразу обновляем доступные районы
@@ -192,32 +130,19 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   };
 
   const setSelectedDistricts = (districts: string[]) => {
-    if (detectedDistrictId && districts.length > 0 && !districts.includes(detectedDistrictId)) {
-      setSelectedDistrictsState([detectedDistrictId, ...districts]);
-    } else {
-      setSelectedDistrictsState(districts);
-    }
+    setSelectedDistrictsState(districts);
   };
 
   const toggleDistrict = (districtId: string) => {
     if (districtId === 'all') {
-      if (detectedDistrictId) {
-        setSelectedDistrictsState([detectedDistrictId]);
-      } else {
-        setSelectedDistrictsState([]);
-      }
+      setSelectedDistrictsState([]);
       return;
     }
 
     setSelectedDistrictsState(prev => {
-      const isDetectedDistrict = districtId === detectedDistrictId;
-      
       if (prev.includes(districtId)) {
         return prev.filter(id => id !== districtId);
       } else {
-        if (detectedDistrictId && !prev.includes(detectedDistrictId) && !isDetectedDistrict) {
-          return [detectedDistrictId, ...prev, districtId];
-        }
         return [...prev, districtId];
       }
     });
@@ -273,9 +198,6 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         setAvailableDistricts(districts);
         
         if (districtToSelect) {
-          setDetectedDistrictId(districtToSelect.id);
-          localStorage.setItem('detectedDistrictId', districtToSelect.id);
-          localStorage.setItem('detectedCity', location.city);
           const districtIds = [districtToSelect.id];
           setSelectedDistrictsState(districtIds);
           localStorage.setItem('selectedDistricts', JSON.stringify(districtIds));
@@ -299,8 +221,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       districts: availableDistricts,
       isDetecting, 
       requestGeolocation,
-      detectedCity,
-      detectedDistrictId
+      detectedCity
     }}>
       {children}
     </DistrictContext.Provider>

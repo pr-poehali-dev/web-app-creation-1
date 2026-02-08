@@ -1,4 +1,3 @@
-'''Админка для управления предложениями - обновлено'''
 import json
 import os
 import psycopg2

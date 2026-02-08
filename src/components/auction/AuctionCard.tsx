@@ -88,7 +88,7 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
       )}
 
       <CardHeader className="p-0 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
-        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+        <div className="relative aspect-video bg-muted overflow-hidden">
           {auction.images.length > 0 ? (
             <OptimizedImage
               src={auction.images[0].url}

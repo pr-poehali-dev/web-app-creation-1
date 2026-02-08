@@ -10,7 +10,6 @@ import { getSession } from '@/utils/auth';
 import { ordersAPI, type Order } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import OrderInfoCard from '@/components/order/OrderInfoCard';
-import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
 import OrderManagementCard from '@/components/order/OrderManagementCard';
 import OrderStatusHistory from '@/components/order/OrderStatusHistory';
 
@@ -73,14 +72,6 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
       return;
     }
     loadOrder();
-    
-    // Подписываемся на обновления заказа
-    const unsubscribe = dataSync.subscribe('order_updated', () => {
-      console.log('Order updated, reloading order detail...');
-      loadOrder();
-    });
-    
-    return () => unsubscribe();
   }, [id]);
 
   const loadOrder = async () => {
@@ -118,9 +109,6 @@ export default function OrderDetail({ isAuthenticated, onLogout }: OrderDetailPr
       }
       
       await ordersAPI.updateOrder(order.id, updateData);
-      
-      // Уведомляем всех пользователей об обновлении заказа
-      notifyOrderUpdated(order.id);
       
       toast({
         title: 'Успешно',

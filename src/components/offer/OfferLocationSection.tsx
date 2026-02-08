@@ -144,7 +144,6 @@ export default function OfferLocationSection({
             }}
             placeholder="Населенный пункт, улица, дом, офис"
             required={formData.availableDeliveryTypes.length === 1 && formData.availableDeliveryTypes.includes('pickup')}
-            className="text-xs"
           />
           {filteredSettlements.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
@@ -255,17 +254,13 @@ export default function OfferLocationSection({
             onClose={() => setShowMapModal(false)}
             coordinates={formData.gpsCoordinates || ''}
             onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
-            onAddressChange={(address, districtName, coords) => {
+            onAddressChange={(address, districtName) => {
               console.log('🔔 OfferLocationSection: onAddressChange ВЫЗВАН!');
-              console.log('📬 onAddressChange вызван:', { address, districtName, coords });
+              console.log('📬 onAddressChange вызван:', { address, districtName });
               
               if (address) {
                 setAddressInput(address);
                 onInputChange('fullAddress', address);
-              }
-              
-              if (coords) {
-                onInputChange('gpsCoordinates', coords);
               }
               
               if (districtName) {

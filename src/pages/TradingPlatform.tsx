@@ -11,7 +11,6 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
 import { getSession } from '@/utils/auth';
-import { dataSync } from '@/utils/dataSync';
 import {
   Dialog,
   DialogContent,
@@ -80,15 +79,6 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     }
 
     loadContracts();
-    
-    const unsubscribe = dataSync.subscribe('contract_updated', () => {
-      console.log('Contract updated, reloading contracts...');
-      loadContracts();
-    });
-    
-    return () => {
-      unsubscribe();
-    };
   }, [isAuthenticated, navigate]);
 
   const loadContracts = async () => {

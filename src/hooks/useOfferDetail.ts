@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Offer } from '@/types/offer';
 import type { Order, ChatMessage } from '@/types/order';
-import { offersAPI, reviewsAPI } from '@/services/api';
+import { offersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
-import { dataSync, notifyOfferUpdated, notifyOrderUpdated } from '@/utils/dataSync';
 
 export function useOfferDetail(id: string | undefined) {
   const navigate = useNavigate();
@@ -72,34 +71,6 @@ export function useOfferDetail(id: string | undefined) {
         console.log('Mapped offer:', { minOrderQuantity: mappedOffer.minOrderQuantity, unit: mappedOffer.unit });
         setOffer(mappedOffer);
         
-        // Загружаем отзывы о продавце
-        if (mappedOffer.seller?.id) {
-          try {
-            const reviewsData = await reviewsAPI.getReviewsBySeller(Number(mappedOffer.seller.id));
-            setOffer(prev => prev ? {
-              ...prev,
-              seller: {
-                ...prev.seller!,
-                reviews: reviewsData.reviews.map((r: any) => ({
-                  id: String(r.id),
-                  reviewerId: String(r.reviewer_id),
-                  reviewerName: 'Покупатель',
-                  reviewedUserId: String(r.reviewed_user_id),
-                  rating: r.rating,
-                  comment: r.comment || '',
-                  createdAt: r.created_at,
-                  sellerResponse: r.seller_response,
-                  sellerResponseDate: r.seller_response_date,
-                })),
-                rating: reviewsData.stats.average_rating,
-                reviewsCount: reviewsData.stats.total_reviews,
-              }
-            } : prev);
-          } catch (error) {
-            console.error('Error loading reviews:', error);
-          }
-        }
-        
         if (mappedOffer?.video) {
           setShowVideo(true);
         }
@@ -112,16 +83,6 @@ export function useOfferDetail(id: string | undefined) {
     };
 
     loadOffer();
-    
-    // Подписываемся на обновления конкретного предложения
-    const unsubscribe = dataSync.subscribe('offer_updated', () => {
-      console.log('Offer updated, reloading...');
-      loadOffer();
-    });
-    
-    return () => {
-      unsubscribe();
-    };
   }, [id]);
 
   const handlePrevImage = () => {
@@ -187,7 +148,7 @@ export function useOfferDetail(id: string | undefined) {
     if (currentUser && offer && currentUser.id?.toString() === offer.userId) {
       toast({
         title: 'Невозможно создать заказ',
-        description: 'Нельзя заказать собственное предложение',
+        description: 'Нельзя купить собственное предложение',
         variant: 'destructive',
       });
       return;
@@ -226,14 +187,7 @@ export function useOfferDetail(id: string | undefined) {
   };
 
   const handleOrderSubmit = async (orderFormData: any) => {
-    if (!offer) {
-      toast({
-        title: 'Ошибка',
-        description: 'Предложение не найдено',
-        variant: 'destructive',
-      });
-      return;
-    }
+    if (!offer) return;
 
     const currentUser = getSession();
     
@@ -241,12 +195,6 @@ export function useOfferDetail(id: string | undefined) {
       navigate('/login');
       return;
     }
-
-    // Показываем индикатор загрузки
-    toast({
-      title: 'Создаем заказ...',
-      description: 'Пожалуйста, подождите',
-    });
 
     try {
       const orderData = {
@@ -267,7 +215,7 @@ export function useOfferDetail(id: string | undefined) {
         hasVAT: offer.hasVAT || false,
         vatRate: offer.vatRate || 0,
         counterPrice: orderFormData.counterPrice || undefined,
-        counterMessage: orderFormData.counterComment || undefined,
+        counterMessage: orderFormData.counterPrice ? `Встречное предложение: ${orderFormData.counterPrice} ₽/${offer.unit}` : undefined,
       };
 
       const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {
@@ -280,8 +228,7 @@ export function useOfferDetail(id: string | undefined) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Не удалось создать заказ');
+        throw new Error('Failed to create order');
       }
 
       const result = await response.json();
@@ -310,56 +257,7 @@ export function useOfferDetail(id: string | undefined) {
       }
 
       if (!fullOrderData) {
-        console.error('Failed to load full order data after retries');
-        // Используем минимальные данные из первого ответа
-        const minimalOrder: Order = {
-          id: result.id,
-          orderNumber: result.order_number || `ORD-${result.id}`,
-          offerId: offer.id,
-          offerTitle: offer.title,
-          offerImage: offer.images[0]?.url,
-          buyerId: currentUser.id?.toString() || '',
-          buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
-          buyerEmail: currentUser.email,
-          buyerPhone: currentUser.phone || '',
-          sellerId: offer.userId,
-          sellerName: offer.seller?.name || 'Продавец',
-          sellerEmail: offer.seller?.email || '',
-          sellerPhone: offer.seller?.phone || '',
-          quantity: orderFormData.quantity,
-          unit: offer.unit,
-          pricePerUnit: offer.pricePerUnit,
-          totalAmount: offer.pricePerUnit * orderFormData.quantity,
-          counterPricePerUnit: orderFormData.counterPrice,
-          counterTotalAmount: orderFormData.counterPrice ? (orderFormData.counterPrice * orderFormData.quantity) : undefined,
-          counterOfferedBy: orderFormData.counterPrice ? 'buyer' : undefined,
-          deliveryType: orderFormData.deliveryType,
-          deliveryAddress: orderFormData.address || '',
-          comment: orderFormData.comment,
-          status: 'pending',
-          createdAt: new Date(),
-        };
-        
-        setIsOrderModalOpen(false);
-        setCreatedOrder(minimalOrder);
-        
-        // Уведомляем всех пользователей об обновлении предложения и заказа
-        notifyOfferUpdated(offer.id);
-        notifyOrderUpdated(result.id);
-        
-        // Показываем уведомление с автоматическим скрытием через 2 секунды
-        toast({
-          title: '🎉 Ваш заказ оформлен!',
-          description: 'Проверьте детали в разделе "Мои заказы"',
-          duration: 2000,
-        });
-        
-        // Перенаправляем на страницу "Мои заказы"
-        setTimeout(() => {
-          navigate('/my-orders');
-        }, 300);
-        
-        return;
+        throw new Error('Failed to load order details');
       }
 
       const newOrder: Order = {
@@ -405,33 +303,21 @@ export function useOfferDetail(id: string | undefined) {
         newOrder.id
       );
       
-      // Уведомляем всех пользователей об обновлении предложения и заказа
-      notifyOfferUpdated(offer.id);
-      notifyOrderUpdated(result.id);
-      
-      // Показываем уведомление с автоматическим скрытием через 2 секунды
       toast({
-        title: '🎉 Ваш заказ оформлен!',
-        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Проверьте детали в разделе "Мои заказы"',
-        duration: 2000,
+        title: orderFormData.counterPrice ? 'Заказ с встречным предложением отправлен!' : 'Заказ оформлен!',
+        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Теперь вы можете общаться с продавцом',
       });
 
-      // Перенаправляем на страницу "Мои заказы"
       setTimeout(() => {
-        navigate('/my-orders');
-      }, 300);
+        setIsChatOpen(true);
+      }, 500);
     } catch (error) {
       console.error('Error creating order:', error);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось создать заказ';
-      
       toast({
-        title: 'Ошибка создания заказа',
-        description: errorMessage + '. Попробуйте ещё раз.',
+        title: 'Ошибка',
+        description: 'Не удалось создать заказ',
         variant: 'destructive',
       });
-      
-      // Не закрываем модальное окно, чтобы пользователь мог повторить попытку
     }
   };
 

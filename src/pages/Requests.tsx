@@ -21,8 +21,6 @@ import { requestsAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
-import { dataSync } from '@/utils/dataSync';
-import { filterActiveRequests } from '@/utils/expirationFilter';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -34,8 +32,8 @@ const ITEMS_PER_PAGE = 20;
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   useScrollToTop();
   const navigate = useNavigate();
-  const { selectedRegion, selectedDistricts, districts, detectedDistrictId } = useDistrict();
-  const { deleteRequest, setRequests: setGlobalRequests } = useOffers();
+  const { selectedRegion, selectedDistricts, districts } = useDistrict();
+  const { deleteRequest } = useOffers();
   const currentUser = getSession();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -94,13 +92,11 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
           ordersAPI.getAll('all')
         ]);
         
-        const loadedRequests = requestsData.requests || [];
-        setRequests(loadedRequests);
-        setGlobalRequests(loadedRequests);
+        setRequests(requestsData.requests || []);
         setOrders(ordersResponse.orders || []);
         
         // Сохраняем в умный кэш
-        SmartCache.set('requests_list', loadedRequests);
+        SmartCache.set('requests_list', requestsData.requests || []);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
       } finally {
@@ -114,29 +110,13 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
     loadRequests();
     
-    // Подписываемся на обновления запросов и заказов
-    const unsubscribeRequests = dataSync.subscribe('request_updated', () => {
-      console.log('Request updated, reloading...');
-      loadFreshRequests(false);
-    });
-    
-    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
-      console.log('Order updated, reloading...');
-      loadFreshRequests(false);
-    });
-    
     return () => {
       isLoading = false;
-      unsubscribeRequests();
-      unsubscribeOrders();
     };
   }, []);
 
   const filteredRequests = useMemo(() => {
     let result = [...requests];
-
-    // Скрываем истекшие запросы
-    result = filterActiveRequests(result);
 
     if (showOnlyMy && isAuthenticated && currentUser) {
       result = result.filter(offer => offer.userId === currentUser.id);
@@ -163,12 +143,6 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
             selectedDistricts.includes(offer.district) ||
             (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
-      } else if (detectedDistrictId) {
-        result = result.filter(
-          (offer) =>
-            offer.district === detectedDistrictId ||
-            (offer.availableDistricts || []).includes(detectedDistrictId)
-        );
       } else {
         result = result.filter(
           (offer) =>
@@ -183,7 +157,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     });
 
     return result;
-  }, [requests, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts, detectedDistrictId]);
+  }, [requests, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser]);
 
   const currentRequests = filteredRequests.slice(0, displayedCount);
   const hasMore = displayedCount < filteredRequests.length;

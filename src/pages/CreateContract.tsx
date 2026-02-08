@@ -14,7 +14,6 @@ import { Switch } from '@/components/ui/switch';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import ProductMediaUpload from '@/components/ProductMediaUpload';
-import { notifyContractUpdated } from '@/utils/dataSync';
 
 interface CreateContractProps {
   isAuthenticated: boolean;
@@ -136,7 +135,6 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
       const data = await response.json();
 
       if (response.ok && data.success) {
-        notifyContractUpdated(data.contractId);
         toast({
           title: 'Успешно',
           description: 'Контракт успешно создан',

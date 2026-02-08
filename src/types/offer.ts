@@ -79,7 +79,6 @@ export interface Offer {
   availableDeliveryTypes: DeliveryType[];
   viewsCount?: number;
   views?: number;
-  favorites?: number;
   orderedQuantity?: number;
   responses?: number;
   status?: 'active' | 'draft' | 'pending' | 'moderation' | 'archived';
@@ -99,7 +98,6 @@ export interface Request {
   hasVAT: boolean;
   vatRate?: number;
   district: string;
-  location?: string;
   deliveryAddress?: string;
   availableDistricts: string[];
   images: OfferImage[];

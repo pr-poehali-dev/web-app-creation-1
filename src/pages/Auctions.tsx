@@ -18,7 +18,6 @@ import AuctionCard from '@/components/auction/AuctionCard';
 import AuctionStatusFilters from '@/components/auction/AuctionStatusFilters';
 import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
-import { dataSync } from '@/utils/dataSync';
 
 interface AuctionsProps {
   isAuthenticated: boolean;
@@ -150,16 +149,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
       }
     }, 60000); // Было 30000 (30 сек), стало 60000 (60 сек) = экономия 50%
 
-    // Подписываемся на обновления аукционов
-    const unsubscribe = dataSync.subscribe('auction_updated', () => {
-      console.log('Auction updated, reloading...');
-      loadAuctions(true);
-    });
-
-    return () => {
-      clearInterval(refreshInterval);
-      unsubscribe();
-    };
+    return () => clearInterval(refreshInterval);
   }, []);
 
   const filteredAuctions = useMemo(() => {

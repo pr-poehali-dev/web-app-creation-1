@@ -7,7 +7,6 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
 import type { Offer } from '@/types/offer';
-import { notifyOfferUpdated } from '@/utils/dataSync';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,10 +60,6 @@ export default function MyOffersContent({ userId }: MyOffersContentProps) {
 
     try {
       await offersAPI.deleteOffer(deleteOfferId);
-      
-      // Уведомляем всех пользователей об удалении
-      notifyOfferUpdated(deleteOfferId);
-      
       toast({
         title: 'Успешно',
         description: 'Предложение удалено',

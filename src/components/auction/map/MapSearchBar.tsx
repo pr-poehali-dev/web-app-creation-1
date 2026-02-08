@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
@@ -11,19 +11,12 @@ interface SearchResult {
 
 interface MapSearchBarProps {
   onSelectLocation: (lat: number, lng: number, displayName: string) => void;
-  initialValue?: string;
 }
 
-export default function MapSearchBar({ onSelectLocation, initialValue = '' }: MapSearchBarProps) {
-  const [searchQuery, setSearchQuery] = useState(initialValue);
+export default function MapSearchBar({ onSelectLocation }: MapSearchBarProps) {
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
-  useEffect(() => {
-    if (initialValue) {
-      setSearchQuery(initialValue);
-    }
-  }, [initialValue]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
@@ -52,7 +45,7 @@ export default function MapSearchBar({ onSelectLocation, initialValue = '' }: Ma
     const lat = parseFloat(result.lat);
     const lng = parseFloat(result.lon);
     onSelectLocation(lat, lng, result.display_name);
-    setSearchQuery(result.display_name);
+    setSearchQuery('');
     setSearchResults([]);
   };
 
@@ -68,23 +61,12 @@ export default function MapSearchBar({ onSelectLocation, initialValue = '' }: Ma
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="Введите адрес для поиска..."
-          className="pr-10 text-xs"
+          className="pr-10"
         />
-        {isSearching ? (
+        {isSearching && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">
             <Icon name="Loader2" className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
-        ) : searchQuery && (
-          <button
-            type="button"
-            onClick={() => {
-              setSearchQuery('');
-              setSearchResults([]);
-            }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Icon name="X" className="h-4 w-4" />
-          </button>
         )}
       </div>
       

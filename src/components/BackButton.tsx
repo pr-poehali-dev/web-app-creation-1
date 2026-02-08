@@ -12,7 +12,13 @@ export default function BackButton({ className = '', fallbackUrl = '/predlozheni
   const location = useLocation();
 
   const handleBack = () => {
-    navigate(-1);
+    // Если в истории есть предыдущая страница (кроме текущей)
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // Если истории нет, идём на главную (предложения)
+      navigate(fallbackUrl);
+    }
   };
 
   return (

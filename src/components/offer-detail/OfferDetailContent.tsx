@@ -15,7 +15,6 @@ import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 import { getSession } from '@/utils/auth';
 
-
 interface OfferDetailContentProps {
   isAuthenticated: boolean;
   onLogout: () => void;
@@ -186,24 +185,9 @@ export default function OfferDetailContent({
               <CardContent className="pt-6 space-y-3">
                 {(() => {
                   const currentUser = getSession();
-                  const isOwner = currentUser && currentUser.id?.toString() === offer.userId?.toString();
+                  const isOwner = currentUser && currentUser.id?.toString() === offer.userId;
                   
-                  console.log('🔍 Проверка владельца:', {
-                    currentUserId: currentUser?.id,
-                    offerUserId: offer.userId,
-                    isOwner
-                  });
-                  
-                  return isOwner ? (
-                    <Button
-                      onClick={() => navigate(`/edit-offer/${offer.id}?tab=info&edit=true`)}
-                      size="lg"
-                      className="w-full gap-2"
-                    >
-                      <Icon name="Edit" className="h-5 w-5" />
-                      Редактировать предложение
-                    </Button>
-                  ) : (
+                  return !isOwner ? (
                     <Button
                       onClick={onOrderClick}
                       size="lg"
@@ -212,7 +196,7 @@ export default function OfferDetailContent({
                       <Icon name="ShoppingCart" className="h-5 w-5" />
                       Заказать
                     </Button>
-                  );
+                  ) : null;
                 })()}
                 <Button
                   onClick={onShare}
@@ -292,9 +276,20 @@ export default function OfferDetailContent({
         unit={offer.unit}
         pricePerUnit={offer.pricePerUnit}
         availableDeliveryTypes={offer.availableDeliveryTypes}
-        availableDistricts={offer.availableDistricts}
-        offerDistrict={offer.district}
       />
+
+      {createdOrder && (
+        <OrderChatModal
+          isOpen={isChatOpen}
+          onClose={() => {
+            onChatChange(false);
+            navigate('/my-orders');
+          }}
+          order={createdOrder}
+          messages={chatMessages}
+          onSendMessage={onSendMessage}
+        />
+      )}
 
       <Dialog open={isGalleryOpen} onOpenChange={onGalleryChange}>
         <DialogContent className="max-w-7xl w-full h-[90vh] p-0">

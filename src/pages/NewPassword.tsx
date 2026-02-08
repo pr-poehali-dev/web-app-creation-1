@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
-import funcUrl from '../../backend/func2url.json';
 
 export default function NewPassword() {
   const [newPassword, setNewPassword] = useState('');
@@ -84,15 +83,15 @@ export default function NewPassword() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(funcUrl['reset-password'], {
+      const response = await fetch('https://functions.poehali.dev/fbbc018c-3522-4d56-bbb3-1ba113a4d213', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          action: 'reset',
+          action: 'reset_password',
           token: token,
-          password: newPassword,
+          newPassword: newPassword,
         }),
       });
 

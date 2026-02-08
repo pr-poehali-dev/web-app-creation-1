@@ -1,5 +1,4 @@
 import { useParams } from 'react-router-dom';
-import { getSession } from '@/utils/auth';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -263,30 +262,14 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                {(() => {
-                  const currentUser = getSession();
-                  const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
-                  
-                  return isOwner ? (
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={handleResponseClick}
-                    >
-                      <Icon name="Edit" className="mr-2 h-4 w-4" />
-                      Редактировать запрос
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={handleResponseClick}
-                    >
-                      <Icon name="Send" className="mr-2 h-4 w-4" />
-                      Отправить отклик
-                    </Button>
-                  );
-                })()}
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={handleResponseClick}
+                >
+                  <Icon name="Send" className="mr-2 h-4 w-4" />
+                  Отправить отклик
+                </Button>
                 <Button 
                   variant="outline" 
                   className="w-full"

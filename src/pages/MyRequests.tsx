@@ -92,7 +92,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
   }, [isAuthenticated, currentUser, navigate]);
 
   const myRequests: Request[] = allRequests
-    .filter(request => String(request.userId) === String(currentUser?.id))
+    .filter(request => request.userId === currentUser?.id)
     .map(request => ({
       id: request.id,
       title: request.title,
@@ -238,7 +238,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate(`/edit-request/${request.id}`)}>
+              <DropdownMenuItem disabled>
                 <Icon name="Pencil" className="mr-2 h-4 w-4" />
                 Редактировать
               </DropdownMenuItem>

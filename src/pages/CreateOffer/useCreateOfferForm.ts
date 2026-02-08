@@ -23,8 +23,6 @@ interface FormData {
   deliveryTime: string;
   deliveryPeriodStart: string;
   deliveryPeriodEnd: string;
-  publicationDuration: string;
-  publicationStartDate: string;
 }
 
 export function useCreateOfferForm(editOffer?: Offer) {
@@ -51,8 +49,6 @@ export function useCreateOfferForm(editOffer?: Offer) {
     deliveryTime: editOffer.deliveryTime || '',
     deliveryPeriodStart: editOffer.deliveryPeriodStart || '',
     deliveryPeriodEnd: editOffer.deliveryPeriodEnd || '',
-    publicationDuration: '',
-    publicationStartDate: '',
   } : {
     title: '',
     description: '',
@@ -74,8 +70,6 @@ export function useCreateOfferForm(editOffer?: Offer) {
     deliveryTime: '',
     deliveryPeriodStart: '',
     deliveryPeriodEnd: '',
-    publicationDuration: '',
-    publicationStartDate: '',
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -88,56 +82,6 @@ export function useCreateOfferForm(editOffer?: Offer) {
   );
 
   const handleInputChange = (field: string, value: string | boolean) => {
-    // Валидация дат периода поставки
-    if (field === 'deliveryPeriodEnd' && typeof value === 'string') {
-      const startDate = formData.deliveryPeriodStart;
-      if (startDate && value && new Date(value) < new Date(startDate)) {
-        toast({
-          title: 'Некорректная дата',
-          description: 'Дата окончания не может быть раньше даты начала',
-          variant: 'destructive',
-        });
-        return;
-      }
-    }
-    
-    if (field === 'deliveryPeriodStart' && typeof value === 'string') {
-      const endDate = formData.deliveryPeriodEnd;
-      if (endDate && value && new Date(value) > new Date(endDate)) {
-        toast({
-          title: 'Некорректная дата',
-          description: 'Дата начала не может быть позже даты окончания',
-          variant: 'destructive',
-        });
-        return;
-      }
-    }
-    
-    // Валидация дат периода публикации
-    if (field === 'publicationDuration' && typeof value === 'string') {
-      const startDate = formData.publicationStartDate;
-      if (startDate && value && new Date(value) <= new Date(startDate)) {
-        toast({
-          title: 'Некорректная дата',
-          description: 'Дата окончания публикации должна быть позже даты начала',
-          variant: 'destructive',
-        });
-        return;
-      }
-    }
-    
-    if (field === 'publicationStartDate' && typeof value === 'string') {
-      const endDate = formData.publicationDuration;
-      if (endDate && value && new Date(value) >= new Date(endDate)) {
-        toast({
-          title: 'Некорректная дата',
-          description: 'Дата начала публикации должна быть раньше даты окончания',
-          variant: 'destructive',
-        });
-        return;
-      }
-    }
-    
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (field === 'category') {

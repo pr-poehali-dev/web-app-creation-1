@@ -21,13 +21,10 @@ interface EditOfferTabsProps {
   messages: ChatMessage[];
   activeTab: string;
   hasChanges: boolean;
-  initialEditMode?: boolean;
   onTabChange: (tab: string) => void;
   onOpenChat: (order: Order) => void;
   onAcceptOrder: (orderId: string) => void;
   onMessageClick: (orderId: string) => void;
-  onDelete?: () => void;
-  onUpdate?: () => void;
 }
 
 export default function EditOfferTabs({
@@ -36,18 +33,15 @@ export default function EditOfferTabs({
   messages,
   activeTab,
   hasChanges,
-  initialEditMode = false,
   onTabChange,
   onOpenChat,
   onAcceptOrder,
   onMessageClick,
-  onDelete,
-  onUpdate,
 }: EditOfferTabsProps) {
   const unreadCount = messages.filter(m => !m.isRead).length;
 
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} defaultValue="info">
+    <Tabs value={activeTab} onValueChange={onTabChange}>
       <TabsList className="grid w-full grid-cols-3 mb-6">
         <TabsTrigger value="info">Информация</TabsTrigger>
         <TabsTrigger value="orders">
@@ -64,13 +58,7 @@ export default function EditOfferTabs({
       </TabsList>
 
       <TabsContent value="info">
-        <OfferInfoTab 
-          offer={offer} 
-          hasChanges={hasChanges}
-          initialEditMode={initialEditMode}
-          onDelete={onDelete || (() => {})}
-          onUpdate={onUpdate || (() => {})}
-        />
+        <OfferInfoTab offer={offer} hasChanges={hasChanges} />
       </TabsContent>
 
       <TabsContent value="orders">

@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import AddressAutocomplete from '@/components/AddressAutocomplete';
 import FileUploadWithIndicator from '@/components/FileUploadWithIndicator';
 import type { VerificationFormData } from '@/types/verification';
-import { validateINN, formatINN } from '@/utils/innValidation';
 
 interface IndividualFormProps {
   formData: VerificationFormData;
@@ -20,46 +18,17 @@ export default function IndividualForm({
   onFileChange,
   onFormDataChange 
 }: IndividualFormProps) {
-  const [innError, setInnError] = useState<string>('');
-
-  const handleInnChange = (value: string) => {
-    const formatted = formatINN(value);
-    onInputChange('inn', formatted);
-    
-    if (formatted.length === 0) {
-      setInnError('');
-      return;
-    }
-    
-    const validation = validateINN(formatted);
-    if (!validation.isValid && validation.error) {
-      setInnError(validation.error);
-    } else {
-      setInnError('');
-    }
-  };
-
   return (
     <>
-      <div className="space-y-2">
-        <Label htmlFor="inn" className="text-sm font-medium">ИНН *</Label>
+      <div>
+        <Label htmlFor="inn">ИНН *</Label>
         <Input
           id="inn"
           value={formData.inn || ''}
-          onChange={(e) => handleInnChange(e.target.value)}
+          onChange={(e) => onInputChange('inn', e.target.value)}
           placeholder="123456789012"
           required
-          maxLength={12}
-          pattern="[0-9]*"
-          inputMode="numeric"
-          className={`text-base ${innError ? 'border-red-500' : ''}`}
         />
-        {innError && (
-          <p className="text-xs text-red-600">{innError}</p>
-        )}
-        {formData.inn && !innError && formData.inn.length >= 10 && (
-          <p className="text-xs text-green-600">✓ ИНН корректен</p>
-        )}
       </div>
 
       <FileUploadWithIndicator
@@ -80,7 +49,7 @@ export default function IndividualForm({
         onChange={(file) => onFileChange('passportRegistration', file)}
       />
 
-      <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
+      <div className="flex items-center space-x-2">
         <Checkbox
           id="addressesMatch"
           checked={formData.addressesMatch}
@@ -92,9 +61,8 @@ export default function IndividualForm({
               utilityBill: checked ? null : prev.utilityBill
             }));
           }}
-          className="mt-0.5"
         />
-        <Label htmlFor="addressesMatch" className="font-normal cursor-pointer text-sm leading-relaxed">
+        <Label htmlFor="addressesMatch" className="font-normal cursor-pointer">
           Фактический адрес проживания совпадает с адресом прописки
         </Label>
       </div>

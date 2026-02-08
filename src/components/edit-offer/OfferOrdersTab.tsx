@@ -65,9 +65,7 @@ export default function OfferOrdersTab({ orders, onOpenChat }: OfferOrdersTabPro
                   {order.buyerName || 'Покупатель'}
                 </p>
                 <p className="text-sm font-semibold text-primary">
-                  {(order.counterTotalAmount !== undefined && order.counterTotalAmount !== null 
-                    ? order.counterTotalAmount 
-                    : order.totalAmount)?.toLocaleString('ru-RU') || 0} ₽
+                  {order.totalAmount?.toLocaleString('ru-RU') || 0} ₽
                 </p>
               </div>
               <Button onClick={() => handleViewOrder(order)}>

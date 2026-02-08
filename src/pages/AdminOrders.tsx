@@ -11,7 +11,6 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { ordersAPI } from '@/services/api';
 import type { Order } from '@/types/order';
-import { dataSync } from '@/utils/dataSync';
 
 interface AdminOrdersProps {
   isAuthenticated: boolean;
@@ -28,15 +27,6 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
 
   useEffect(() => {
     loadOrders();
-    
-    const unsubscribe = dataSync.subscribe('order_updated', () => {
-      console.log('Order updated, reloading admin orders...');
-      loadOrders();
-    });
-    
-    return () => {
-      unsubscribe();
-    };
   }, []);
 
   const loadOrders = async () => {

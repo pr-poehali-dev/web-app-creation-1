@@ -14,7 +14,6 @@ import type { Auction } from '@/types/auction';
 import AuctionBasicInfoSection from '@/components/auction/AuctionBasicInfoSection';
 import AuctionPricingSection from '@/components/auction/AuctionPricingSection';
 import AuctionMediaSection from '@/components/auction/AuctionMediaSection';
-import { notifyAuctionUpdated } from '@/utils/dataSync';
 
 interface EditAuctionProps {
   isAuthenticated: boolean;
@@ -164,9 +163,6 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
       }
 
       await auctionsAPI.updateAuction(updateData);
-
-      // Уведомляем все открытые страницы об обновлении
-      notifyAuctionUpdated(id);
 
       toast({
         title: 'Успешно',

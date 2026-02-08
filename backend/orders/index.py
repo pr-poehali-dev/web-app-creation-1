@@ -1,5 +1,5 @@
 '''
-Управление заказами пользователей с JWT защитой
+Управление заказами пользователей
 GET / - получить список заказов пользователя
 GET /?id=uuid - получить заказ по ID
 GET /?offerId=uuid&messages=true - получить сообщения по предложению
@@ -11,24 +11,11 @@ PUT /?id=uuid - обновить статус заказа
 
 import json
 import os
-import sys
 from typing import Dict, Any
 from datetime import datetime
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import http.client
-
-# Импортируем offers_cache для инвалидации кэша
-# Кэш находится в backend/offers/cache.py
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'offers'))
-try:
-    from cache import offers_cache
-except ImportError:
-    # Если импорт не удался, создаём заглушку
-    class DummyCache:
-        def clear(self): pass
-    offers_cache = DummyCache()
 
 
 def decimal_to_float(obj):
@@ -54,41 +41,6 @@ def generate_order_number():
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     random_part = random.randint(1000, 9999)
     return f'ORD-{timestamp}-{random_part}'
-
-def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
-    """Отправка push и email уведомлений"""
-    notification_data = json.dumps({
-        'userId': user_id,
-        'title': title,
-        'message': message,
-        'url': url
-    })
-    
-    # Telegram-уведомление (используем существующий endpoint)
-    try:
-        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
-        conn.request('POST', '/d49f8584-6ef9-47c0-9661-02560166e10f',  # telegram-notify
-                    notification_data, 
-                    {'Content-Type': 'application/json'})
-        response = conn.getresponse()
-        response.read()  # Обязательно читаем ответ
-        conn.close()
-        print(f'[NOTIFICATION] Telegram notification sent to user {user_id}: {title}')
-    except Exception as e:
-        print(f'[NOTIFICATION] Telegram error: {e}')
-    
-    # Email-уведомление
-    try:
-        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
-        conn.request('POST', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43', 
-                    notification_data, 
-                    {'Content-Type': 'application/json'})
-        response = conn.getresponse()
-        response.read()  # Обязательно читаем ответ
-        conn.close()
-        print(f'[NOTIFICATION] Email sent to user {user_id}: {title}')
-    except Exception as e:
-        print(f'[NOTIFICATION] Email error: {e}')
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -241,27 +193,19 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     cur.execute(count_sql)
     total_count = cur.fetchone()['total']
     
-    # Запрос с JOIN к таблице offers для получения цены и доступного количества
-    sql = f"""
-        SELECT 
-            o.*,
-            of.price_per_unit as offer_price_per_unit,
-            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity
-        FROM {schema}.orders o
-        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
-        WHERE 1=1
-    """
+    # Запрос БЕЗ JOIN - используем только данные из таблицы orders
+    sql = f"SELECT * FROM {schema}.orders WHERE 1=1"
     
     if order_type == 'purchase':
-        sql += f" AND o.buyer_id = {user_id_int}"
+        sql += f" AND buyer_id = {user_id_int}"
     elif order_type == 'sale':
-        sql += f" AND o.seller_id = {user_id_int}"
+        sql += f" AND seller_id = {user_id_int}"
     else:
-        sql += f" AND (o.buyer_id = {user_id_int} OR o.seller_id = {user_id_int})"
+        sql += f" AND (buyer_id = {user_id_int} OR seller_id = {user_id_int})"
     
     if status != 'all':
         status_escaped = status.replace("'", "''")
-        sql += f" AND o.status = '{status_escaped}'"
+        sql += f" AND status = '{status_escaped}'"
     
     sql += f" ORDER BY order_date DESC LIMIT {limit} OFFSET {offset}"
     
@@ -275,10 +219,6 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     result = []
     for order in orders:
         order_dict = dict(order)
-        
-        # Добавляем поля из offers
-        order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
-        order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
         
         # Определяем тип заказа (покупка или продажа)
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id_int else 'sale'
@@ -295,10 +235,6 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
         order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
         order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
-        
-        # Преобразуем поля встречного предложения в camelCase
-        if 'counter_offer_message' in order_dict:
-            order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
         
         order_dict = decimal_to_float(order_dict)
         result.append(order_dict)
@@ -327,16 +263,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     order_id_escaped = order_id.replace("'", "''")
     schema = get_schema()
     
-    # Запрос с JOIN к таблице offers
-    sql = f"""
-        SELECT 
-            o.*,
-            of.price_per_unit as offer_price_per_unit,
-            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity
-        FROM {schema}.orders o
-        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
-        WHERE o.id = '{order_id_escaped}'
-    """
+    # Простой запрос без JOIN
+    sql = f"SELECT * FROM {schema}.orders WHERE id = '{order_id_escaped}'"
     
     cur.execute(sql)
     order = cur.fetchone()
@@ -354,10 +282,6 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     order_dict = dict(order)
     
-    # Добавляем поля из offers
-    order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
-    order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
-    
     # Добавляем поля из самого заказа
     order_dict['offer_title'] = order_dict.get('title', '')
     order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
@@ -369,11 +293,6 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
     order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
     order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
-    
-    # Преобразуем поля встречного предложения в camelCase
-    if 'counter_offer_message' in order_dict:
-        order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
-    
     order_dict = decimal_to_float(order_dict)
     
     return {
@@ -514,34 +433,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     cur.execute(sql)
     result = cur.fetchone()
-    
-    # Обновляем reserved_quantity в таблице offers
-    update_offer_sql = f"""
-        UPDATE {schema}.offers 
-        SET reserved_quantity = COALESCE(reserved_quantity, 0) + {body['quantity']}
-        WHERE id = '{offer_id_escaped}'
-    """
-    cur.execute(update_offer_sql)
-    
-    # Инвалидируем кэш offers
-    offers_cache.clear()
-    
     conn.commit()
     cur.close()
     conn.close()
-    
-    # Отправляем уведомление продавцу о новом заказе
-    try:
-        if initial_status == 'negotiating':
-            notification_title = 'Новое встречное предложение по заказу'
-            notification_message = f'Покупатель предложил {counter_price} ₽ за единицу товара "{body["title"]}"'
-        else:
-            notification_title = 'Новый заказ на ваше предложение'
-            notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽'
-        
-        send_notification(seller_id, notification_title, notification_message, f'/my-orders?id={result["id"]}')
-    except Exception as e:
-        print(f'Notification error: {e}')
     
     return {
         'statusCode': 201,
@@ -636,62 +530,14 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"status = 'accepted'")
         counter_accepted = True
         
-        # Переносим количество из reserved в sold
+        # Уменьшаем количество в предложении
         offer_id_escaped = str(order['offer_id']).replace("'", "''")
         order_quantity = order['quantity']
         cur.execute(f"""
             UPDATE {schema}.offers 
-            SET 
-                sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
-                reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
+            SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
             WHERE id = '{offer_id_escaped}'
         """)
-        
-        # Инвалидируем кэш offers
-        offers_cache.clear()
-    
-    # Покупатель принимает встречное предложение продавца
-    if 'acceptCounter' in body and body['acceptCounter'] and is_buyer:
-        if order.get('counter_price_per_unit') is None or order.get('counter_total_amount') is None:
-            cur.close()
-            conn.close()
-            return {
-                'statusCode': 400,
-                'headers': headers,
-                'body': json.dumps({'error': 'No counter offer to accept'}),
-                'isBase64Encoded': False
-            }
-        
-        # Проверяем что встречное предложение было от продавца
-        if order.get('counter_offered_by') != 'seller':
-            cur.close()
-            conn.close()
-            return {
-                'statusCode': 400,
-                'headers': headers,
-                'body': json.dumps({'error': 'No seller counter offer to accept'}),
-                'isBase64Encoded': False
-            }
-        
-        updates.append(f"buyer_accepted_counter = TRUE")
-        updates.append(f"price_per_unit = {float(order['counter_price_per_unit'])}")
-        updates.append(f"total_amount = {float(order['counter_total_amount'])}")
-        updates.append(f"status = 'accepted'")
-        counter_accepted = True
-        
-        # Переносим количество из reserved в sold
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
-        order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET 
-                sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
-                reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-            WHERE id = '{offer_id_escaped}'
-        """)
-        
-        # Инвалидируем кэш offers
-        offers_cache.clear()
     
     # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
     if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
@@ -722,17 +568,12 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                     'isBase64Encoded': False
                 }
             
-            # Переносим количество из reserved в sold
+            # Уменьшаем количество в предложении
             cur.execute(f"""
                 UPDATE {schema}.offers 
-                SET 
-                    sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
-                    reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
+                SET sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity}
                 WHERE id = '{offer_id_escaped}'
             """)
-            
-            # Инвалидируем кэш offers
-            offers_cache.clear()
         
         updates.append(f"status = 'accepted'")
     
@@ -759,20 +600,6 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         cancelled_by = 'seller' if is_seller else 'buyer'
         updates.append(f"cancelled_by = '{cancelled_by}'")
         
-        # Возвращаем зарезервированное количество в предложение
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
-        order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-            WHERE id = '{offer_id_escaped}'
-        """)
-        
-        # Инвалидируем кэш offers
-        offers_cache.clear()
-        
-        print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
-        
         # Если отменил продавец - снижаем его рейтинг на 5%
         if is_seller:
             seller_id = order['seller_id']
@@ -782,21 +609,6 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 WHERE id = {seller_id}
             """)
             print(f"[CANCEL_ORDER] Seller {seller_id} rating decreased by 5%")
-    
-    # Отклонение заказа - возвращаем зарезервированное количество
-    elif 'status' in body and body['status'] == 'rejected':
-        status_escaped = body['status'].replace("'", "''")
-        updates.append(f"status = '{status_escaped}'")
-        
-        # Возвращаем зарезервированное количество в предложение
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
-        order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-            WHERE id = '{offer_id_escaped}'
-        """)
-        print(f"[REJECT_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
     
     # Обычное обновление статуса
     elif 'status' in body and body['status'] != 'accepted':
@@ -835,88 +647,6 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     cur.execute(sql)
     conn.commit()
-    
-    # Отправляем уведомления после успешного обновления
-    try:
-        new_status = body.get('status')
-        
-        # Встречное предложение от покупателя
-        if 'counterPrice' in body and is_buyer:
-            send_notification(
-                order['seller_id'],
-                'Встречное предложение по заказу',
-                f'Покупатель предложил {body["counterPrice"]} ₽ за единицу товара',
-                f'/my-orders?id={order_id}'
-            )
-        
-        # Встречное предложение от продавца
-        elif 'counterPrice' in body and is_seller:
-            send_notification(
-                order['buyer_id'],
-                'Встречное предложение от продавца',
-                f'Продавец предложил {body["counterPrice"]} ₽ за единицу товара',
-                f'/my-orders?id={order_id}'
-            )
-        
-        # Встречное предложение принято (продавцом или покупателем)
-        elif counter_accepted:
-            if is_seller:
-                # Продавец принял встречное предложение покупателя
-                send_notification(
-                    order['buyer_id'],
-                    'Встречное предложение принято',
-                    f'Продавец согласился на вашу цену. Заказ принят!',
-                    f'/my-orders?id={order_id}'
-                )
-            elif is_buyer:
-                # Покупатель принял встречное предложение продавца
-                send_notification(
-                    order['seller_id'],
-                    'Встречное предложение принято',
-                    f'Покупатель согласился на вашу цену. Заказ принят!',
-                    f'/my-orders?id={order_id}'
-                )
-        
-        # Продавец принял заказ
-        elif new_status == 'accepted':
-            send_notification(
-                order['buyer_id'],
-                'Заказ принят',
-                f'Ваш заказ №{order.get("order_number", order_id[:8])} принят в работу',
-                f'/my-orders?id={order_id}'
-            )
-        
-        # Заказ отклонен
-        elif new_status == 'rejected':
-            send_notification(
-                order['buyer_id'],
-                'Заказ отклонен',
-                f'К сожалению, ваш заказ №{order.get("order_number", order_id[:8])} был отклонен',
-                f'/my-orders?id={order_id}'
-            )
-        
-        # Заказ отменён
-        elif new_status == 'cancelled':
-            notify_user = order['buyer_id'] if is_seller else order['seller_id']
-            who_cancelled = 'Продавец' if is_seller else 'Покупатель'
-            send_notification(
-                notify_user,
-                'Заказ отменён',
-                f'{who_cancelled} отменил заказ №{order.get("order_number", order_id[:8])}',
-                f'/my-orders?id={order_id}'
-            )
-        
-        # Заказ завершён
-        elif new_status == 'completed':
-            send_notification(
-                order['seller_id'],
-                'Заказ завершён',
-                f'Покупатель подтвердил получение заказа №{order.get("order_number", order_id[:8])}',
-                f'/my-orders?id={order_id}'
-            )
-    except Exception as e:
-        print(f'Notification error: {e}')
-    
     cur.close()
     conn.close()
     
@@ -1062,10 +792,6 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     message_escaped = body['message'].replace("'", "''")
     sender_name_escaped = sender_name.replace("'", "''")
     
-    # Получаем информацию о заказе для определения получателя уведомления
-    cur.execute(f"SELECT buyer_id, seller_id, order_number FROM {schema}.orders WHERE id = '{order_id_escaped}'")
-    order = cur.fetchone()
-    
     sql = f"""
         INSERT INTO {schema}.order_messages (order_id, sender_id, sender_name, sender_type, message)
         VALUES ('{order_id_escaped}', {sender_id}, '{sender_name_escaped}', '{sender_type_escaped}', '{message_escaped}')
@@ -1077,19 +803,6 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     conn.commit()
     cur.close()
     conn.close()
-    
-    # Отправляем уведомление получателю сообщения
-    if order:
-        try:
-            recipient_id = order['seller_id'] if int(sender_id) == order['buyer_id'] else order['buyer_id']
-            send_notification(
-                recipient_id,
-                'Новое сообщение по заказу',
-                f'{sender_name}: {body["message"][:50]}...' if len(body["message"]) > 50 else f'{sender_name}: {body["message"]}',
-                f'/my-orders?id={body["orderId"]}'
-            )
-        except Exception as e:
-            print(f'Message notification error: {e}')
     
     return {
         'statusCode': 201,

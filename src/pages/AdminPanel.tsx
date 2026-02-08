@@ -47,7 +47,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
     const adminSession = localStorage.getItem('adminSession');
     const userRole = localStorage.getItem('userRole');
     
-    if (!adminSession || !['admin', 'superadmin', 'moderator'].includes(userRole || '')) {
+    if (!adminSession || userRole !== 'admin') {
       toast({
         title: 'Доступ запрещен',
         description: 'Требуется авторизация администратора',

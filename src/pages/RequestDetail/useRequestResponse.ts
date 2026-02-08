@@ -14,15 +14,6 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
       navigate('/login');
       return;
     }
-    
-    const currentUser = getSession();
-    const isOwner = currentUser && request && currentUser.id?.toString() === request.author.id?.toString();
-    
-    if (isOwner) {
-      navigate(`/edit-request/${request?.id}?edit=true`);
-      return;
-    }
-    
     setIsResponseModalOpen(true);
   };
 
@@ -73,6 +64,18 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
       };
 
       try {
+        await fetch('https://functions.poehali.dev/a2f5cfb9-ceec-46de-b675-2174dc5241a7', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(notificationData)
+        });
+      } catch (error) {
+        console.error('Ошибка отправки Email уведомления:', error);
+      }
+
+      try {
         await fetch('https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f', {
           method: 'POST',
           headers: {
@@ -84,19 +87,14 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
         console.error('Ошибка отправки Telegram уведомления:', error);
       }
 
-      // Уведомляем dataSync о новом заказе
-      const { notifyOrderUpdated } = await import('@/utils/dataSync');
-      notifyOrderUpdated(result.id);
-      
       setIsResponseModalOpen(false);
       toast.success('Отклик успешно отправлен!', {
         description: 'Автор запроса свяжется с вами в ближайшее время'
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Ошибка отправки отклика:', error);
-      const errorMessage = error?.message || error?.toString() || 'Неизвестная ошибка';
       toast.error('Не удалось отправить отклик', {
-        description: errorMessage
+        description: 'Попробуйте позже'
       });
     }
   };

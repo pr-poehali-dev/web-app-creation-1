@@ -29,7 +29,7 @@ export default function ListingsFilters({
 }: ListingsFiltersProps) {
   return (
     <>
-      <Tabs value={filterStatus} onValueChange={(v) => onStatusChange(v as 'all' | ListingStatus)} defaultValue="all">
+      <Tabs value={filterStatus} onValueChange={(v) => onStatusChange(v as 'all' | ListingStatus)}>
         <TabsList className="mb-6 flex-wrap h-auto">
           <TabsTrigger value="all">
             Все ({stats.total})

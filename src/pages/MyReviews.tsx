@@ -4,16 +4,15 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
-import MyReviewsLoadingSkeleton from '@/components/reviews/MyReviewsLoadingSkeleton';
-import MyReviewsStatsCard from '@/components/reviews/MyReviewsStatsCard';
-import MyReviewsEmptyState from '@/components/reviews/MyReviewsEmptyState';
-import MyReviewsListItem from '@/components/reviews/MyReviewsListItem';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReviewCard from '@/components/reviews/ReviewCard';
+import ReviewStats from '@/components/reviews/ReviewStats';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Icon from '@/components/ui/icon';
 import { getSession } from '@/utils/auth';
-import { reviewsAPI } from '@/services/api';
-import { useToast } from '@/hooks/use-toast';
-import type { Review } from '@/types/review';
+import { reviewsAPI } from '@/services/reviews';
+import type { Review, ReviewStats as ReviewStatsType } from '@/types/review';
 
 interface MyReviewsProps {
   isAuthenticated: boolean;
@@ -23,15 +22,11 @@ interface MyReviewsProps {
 export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps) {
   useScrollToTop();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const currentUser = getSession();
 
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [stats, setStats] = useState<{ total_reviews: number; average_rating: number } | null>(null);
+  const [stats, setStats] = useState<ReviewStatsType | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [respondingTo, setRespondingTo] = useState<string | null>(null);
-  const [responseText, setResponseText] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
@@ -48,74 +43,18 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
 
     setIsLoading(true);
     try {
-      const data = await reviewsAPI.getReviewsBySeller(Number(currentUser.id));
-      
-      const mappedReviews = data.reviews.map((r: any) => ({
-        id: String(r.id),
-        orderId: r.order_id,
-        reviewerId: String(r.reviewer_id),
-        reviewerName: 'Покупатель',
-        reviewedUserId: String(r.reviewed_user_id),
-        rating: r.rating,
-        comment: r.comment || '',
-        createdAt: r.created_at,
-        sellerResponse: r.seller_response,
-        sellerResponseDate: r.seller_response_date,
-      }));
+      const [reviewsData, statsData] = await Promise.all([
+        reviewsAPI.getReviewsByUser(currentUser.id),
+        reviewsAPI.getReviewStats(currentUser.id),
+      ]);
 
-      setReviews(mappedReviews);
-      setStats(data.stats);
+      setReviews(reviewsData);
+      setStats(statsData);
     } catch (error) {
       console.error('Error loading reviews:', error);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSubmitResponse = async (reviewId: string) => {
-    if (!responseText.trim()) {
-      toast({
-        title: 'Ошибка',
-        description: 'Напишите ответ',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await reviewsAPI.addSellerResponse({
-        review_id: Number(reviewId),
-        seller_response: responseText,
-      });
-
-      toast({
-        title: 'Ответ опубликован',
-        description: 'Ваш ответ успешно добавлен',
-      });
-
-      setRespondingTo(null);
-      setResponseText('');
-      await loadReviews();
-    } catch (error) {
-      console.error('Error submitting response:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось опубликовать ответ',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleStartResponse = (reviewId: string) => {
-    setRespondingTo(reviewId);
-  };
-
-  const handleCancelResponse = () => {
-    setRespondingTo(null);
-    setResponseText('');
   };
 
   if (!currentUser) {
@@ -137,18 +76,48 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
         </div>
 
         {isLoading ? (
-          <MyReviewsLoadingSkeleton />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-1">
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-40 w-full" />
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i}>
+                  <CardContent className="pt-6 space-y-3">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-20 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-3">
-            {stats && stats.total_reviews > 0 && (
+            {stats && stats.totalReviews > 0 && (
               <div className="lg:col-span-1">
-                <MyReviewsStatsCard stats={stats} />
+                <ReviewStats stats={stats} />
               </div>
             )}
 
-            <div className={stats && stats.total_reviews > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
+            <div className={stats && stats.totalReviews > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
               {reviews.length === 0 ? (
-                <MyReviewsEmptyState />
+                <Card>
+                  <CardContent className="pt-6 text-center py-12">
+                    <Icon
+                      name="MessageSquare"
+                      className="h-16 w-16 text-muted-foreground mx-auto mb-4"
+                    />
+                    <h3 className="text-xl font-semibold mb-2">Пока нет отзывов</h3>
+                    <p className="text-muted-foreground">
+                      Здесь появятся отзывы от ваших клиентов после завершения заказов
+                    </p>
+                  </CardContent>
+                </Card>
               ) : (
                 <Tabs defaultValue="all" className="w-full">
                   <TabsList className="mb-6">
@@ -165,17 +134,7 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
 
                   <TabsContent value="all" className="space-y-4">
                     {reviews.map((review) => (
-                      <MyReviewsListItem
-                        key={review.id}
-                        review={review}
-                        respondingTo={respondingTo}
-                        responseText={responseText}
-                        isSubmitting={isSubmitting}
-                        onStartResponse={handleStartResponse}
-                        onCancelResponse={handleCancelResponse}
-                        onResponseTextChange={setResponseText}
-                        onSubmitResponse={handleSubmitResponse}
-                      />
+                      <ReviewCard key={review.id} review={review} showOfferTitle />
                     ))}
                   </TabsContent>
 
@@ -183,17 +142,7 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
                     {reviews
                       .filter((r) => r.rating >= 4)
                       .map((review) => (
-                        <MyReviewsListItem
-                          key={review.id}
-                          review={review}
-                          respondingTo={respondingTo}
-                          responseText={responseText}
-                          isSubmitting={isSubmitting}
-                          onStartResponse={handleStartResponse}
-                          onCancelResponse={handleCancelResponse}
-                          onResponseTextChange={setResponseText}
-                          onSubmitResponse={handleSubmitResponse}
-                        />
+                        <ReviewCard key={review.id} review={review} showOfferTitle />
                       ))}
                     {reviews.filter((r) => r.rating >= 4).length === 0 && (
                       <Card>
@@ -210,17 +159,7 @@ export default function MyReviews({ isAuthenticated, onLogout }: MyReviewsProps)
                     {reviews
                       .filter((r) => r.rating <= 2)
                       .map((review) => (
-                        <MyReviewsListItem
-                          key={review.id}
-                          review={review}
-                          respondingTo={respondingTo}
-                          responseText={responseText}
-                          isSubmitting={isSubmitting}
-                          onStartResponse={handleStartResponse}
-                          onCancelResponse={handleCancelResponse}
-                          onResponseTextChange={setResponseText}
-                          onSubmitResponse={handleSubmitResponse}
-                        />
+                        <ReviewCard key={review.id} review={review} showOfferTitle />
                       ))}
                     {reviews.filter((r) => r.rating <= 2).length === 0 && (
                       <Card>

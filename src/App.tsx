@@ -5,8 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SplashScreen from "./components/SplashScreen";
-import PullToRefresh from "./components/PullToRefresh";
-import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
 
 // Ленивая загрузка второстепенных компонентов
@@ -21,54 +19,25 @@ const LoadingScreen = () => <SplashScreen />;
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<any>) =>
   lazy(async () => {
-    const maxRetries = 3;
+    const maxRetries = 2;
     for (let i = 0; i < maxRetries; i++) {
       try {
-        const component = await componentImport();
-        return component;
+        return await componentImport();
       } catch (error) {
-        console.warn(`Attempt ${i + 1}/${maxRetries} failed:`, error);
-        
-        // На последней попытке очищаем кэш и перезагружаем
+        // На последней попытке просто возвращаем компонент с ошибкой
         if (i === maxRetries - 1) {
           console.error('Failed to load module after retries:', error);
-          
-          // Очищаем все кэши
-          if ('caches' in window) {
-            try {
-              const names = await caches.keys();
-              await Promise.all(names.map(name => caches.delete(name)));
-            } catch (e) {
-              console.error('Failed to clear cache:', e);
-            }
-          }
-          
-          // Автоматически перезагружаем страницу один раз
-          const hasReloaded = sessionStorage.getItem('chunk-reload');
-          if (!hasReloaded) {
-            sessionStorage.setItem('chunk-reload', 'true');
-            window.location.reload();
-            // Возвращаем пустой компонент пока перезагружается
-            return { 
-              default: () => <div className="flex items-center justify-center min-h-screen">Загрузка...</div>
-            };
-          }
-          
-          // Если уже перезагружали, показываем ошибку
           return { 
             default: () => (
               <div className="flex items-center justify-center min-h-screen p-4">
                 <div className="text-center max-w-md">
                   <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
-                  <p className="text-muted-foreground mb-4">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
+                  <p className="text-muted-foreground mb-4">Не удалось загрузить компонент</p>
                   <button 
-                    onClick={() => {
-                      sessionStorage.removeItem('chunk-reload');
-                      window.location.reload();
-                    }} 
+                    onClick={() => window.location.reload()} 
                     className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
                   >
-                    Попробовать снова
+                    Обновить страницу
                   </button>
                 </div>
               </div>
@@ -77,7 +46,7 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
         }
         
         // Ждём перед следующей попыткой
-        await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, i)));
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
     throw new Error('Failed to load module after retries');
@@ -86,7 +55,6 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
 // Критически важные страницы загружаем сразу (самые частые маршруты)
 import Login from "./pages/Login";
 import Offers from "./pages/Offers";
-import OfferDetail from "./pages/OfferDetail";
 import Header from "./components/Header";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
@@ -94,18 +62,16 @@ import { OffersProvider } from "./contexts/OffersContext";
 // Ленивая загрузка остальных страниц
 const Home = lazyWithRetry(() => import("./pages/Home"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
+const OfferDetail = lazyWithRetry(() => import("./pages/OfferDetail"));
 const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
 const Profile = lazyWithRetry(() => import("./pages/Profile"));
 const SearchResults = lazyWithRetry(() => import("./pages/SearchResults"));
 const Requests = lazyWithRetry(() => import("./pages/Requests"));
 const MyListings = lazyWithRetry(() => import("./pages/MyListings"));
-const MyOffers = lazyWithRetry(() => import("./pages/MyOffers"));
-const MyRequests = lazyWithRetry(() => import("./pages/MyRequests"));
 const CreateOffer = lazyWithRetry(() => import("./pages/CreateOffer"));
 const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
 const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
-const VerifyEmail = lazyWithRetry(() => import("./pages/VerifyEmail"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
 const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
@@ -153,7 +119,6 @@ const ClearData = lazyWithRetry(() => import("./pages/ClearData"));
 const DeleteTestData = lazyWithRetry(() => import("./pages/DeleteTestData"));
 const MigrateImages = lazyWithRetry(() => import("./pages/MigrateImages"));
 const TelegramSetup = lazyWithRetry(() => import("./pages/TelegramSetup"));
-const VerifyPhone = lazyWithRetry(() => import("./pages/VerifyPhone"));
 
 // Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
@@ -176,41 +141,6 @@ const App = () => {
     const session = getSession();
     if (session) {
       setIsAuthenticated(true);
-      
-      // Синхронизируем профиль с сервером в фоне
-      if (session.id) {
-        setTimeout(async () => {
-          try {
-            const response = await fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${session.id}`, {
-              headers: {
-                'X-User-Id': String(session.id),
-              },
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              const updatedUser = {
-                ...session,
-                firstName: data.first_name,
-                lastName: data.last_name,
-                middleName: data.middle_name,
-                phone: data.phone,
-                companyName: data.company_name,
-                inn: data.inn,
-                ogrnip: data.ogrnip,
-                ogrn: data.ogrn,
-              };
-              
-              // Обновляем localStorage с актуальными данными
-              localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-              window.dispatchEvent(new Event('userSessionChanged'));
-            }
-          } catch (error) {
-            // Игнорируем ошибки синхронизации
-            console.log('Background profile sync failed:', error);
-          }
-        }, 1000);
-      }
     }
 
     // Регистрируем Service Worker в фоне
@@ -237,33 +167,21 @@ const App = () => {
   const handleLogout = () => {
     clearSession();
     setIsAuthenticated(false);
-    // Отправляем событие для сброса состояния во всех компонентах
-    window.dispatchEvent(new Event('userLoggedOut'));
-  };
-
-  const handleGlobalRefresh = async () => {
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
-    }
-    window.location.reload();
   };
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <PullToRefresh onRefresh={handleGlobalRefresh}>
-          <Suspense fallback={<LoadingScreen />}>
-            <TimezoneProvider>
-              <DistrictProvider>
-                <OffersProvider>
-                  <Toaster />
-                  <Sonner />
-                  <TechnicalIssuesBanner />
-                  {isAuthenticated && <NotificationPermissionBanner />}
-                  <InstallPrompt />
-                  <BrowserRouter>
-                <ErrorBoundary>
+        <Suspense fallback={<LoadingScreen />}>
+          <TimezoneProvider>
+            <DistrictProvider>
+              <OffersProvider>
+                <Toaster />
+                <Sonner />
+                <TechnicalIssuesBanner />
+                {isAuthenticated && <NotificationPermissionBanner />}
+                <InstallPrompt />
+                <BrowserRouter>
                 <Suspense fallback={<LoadingScreen />}>
             <Routes>
             <Route path="/" element={<Navigate to="/predlozheniya" replace />} />
@@ -310,8 +228,8 @@ const App = () => {
             <Route path="/response-detail/:id" element={<ResponseDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
 
             <Route path="/my-listings" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-offers" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-requests" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
@@ -325,8 +243,6 @@ const App = () => {
             <Route path="/register" element={<Register onRegister={handleLogin} />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/new-password" element={<NewPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/verify-phone" element={<VerifyPhone />} />
             <Route path="/terms" element={<TermsOfService isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/privacy" element={<PrivacyPolicy isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer-agreement" element={<OfferAgreement isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
@@ -336,13 +252,11 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
                 </Suspense>
-                </ErrorBoundary>
         </BrowserRouter>
             </OffersProvider>
           </DistrictProvider>
         </TimezoneProvider>
         </Suspense>
-        </PullToRefresh>
       </TooltipProvider>
     </QueryClientProvider>
   );

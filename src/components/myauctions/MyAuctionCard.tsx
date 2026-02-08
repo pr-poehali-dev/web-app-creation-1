@@ -52,7 +52,7 @@ export default function MyAuctionCard({
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="p-0">
-        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+        <div className="relative aspect-video bg-muted overflow-hidden">
           {auction.images && auction.images.length > 0 ? (
             <img
               key={auction.images[0].url}

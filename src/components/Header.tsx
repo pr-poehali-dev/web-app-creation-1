@@ -25,25 +25,9 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [listingsCount, setListingsCount] = useState(0);
   const [ordersCount, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity, selectedRegion, regions, detectedDistrictId } = useDistrict();
+  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity } = useDistrict();
   const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
-
-  const getShortRegionName = (regionId: string): string => {
-    if (regionId === 'all') return 'Все районы';
-    
-    const region = regions.find(r => r.id === regionId);
-    if (!region) return 'Якутия';
-    
-    let name = region.name;
-    name = name.replace('Республика', 'Респ.');
-    name = name.replace('область', 'обл.');
-    name = name.replace('Область', 'Обл.');
-    name = name.replace('край', 'кр.');
-    name = name.replace('Край', 'Кр.');
-    
-    return name;
-  };
   const touchStartY = useRef<number>(0);
   const touchEndY = useRef<number>(0);
   
@@ -184,16 +168,14 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-gradient-to-br from-white via-blue-100/60 to-purple-100/50 dark:from-gray-900 dark:via-blue-900/40 dark:to-purple-900/30 shadow-lg backdrop-blur-sm">
-      <div className="container mx-auto px-2 md:px-4">
-        <div className="flex h-14 md:h-18 items-center justify-between gap-1">
+      <div className="container mx-auto px-4">
+        <div className="flex h-14 md:h-18 items-center justify-between">
           <Link 
             to="/home" 
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className={`flex items-center space-x-1 md:space-x-2.5 px-1 md:px-3 py-1 rounded-md md:rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all shrink-0 ${
-              location.pathname === '/home' || location.pathname === '/' ? 'border-[3px] border-primary' : 'border-2 border-primary/20'
-            }`}
+            className="flex items-center space-x-1.5 md:space-x-2.5 px-1.5 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all mr-2 md:mr-3"
           >
-            <div className="h-8 w-8 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center shrink-0">
+            <div className="h-9 w-9 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center">
               <img 
                 src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
                 alt="ЕРТТП" 
@@ -202,73 +184,67 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               />
             </div>
             <div className="flex flex-col items-start">
-              <span className="text-[10px] md:text-base font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
-              <span className="text-[9px] md:text-[15px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
+              <span className="text-[11px] md:text-base font-bold text-primary whitespace-nowrap leading-tight">ЕРТТП</span>
+              <span className="text-[10.5px] md:text-[15px] text-primary/70 whitespace-nowrap leading-tight font-bold">О нас</span>
             </div>
           </Link>
 
           {/* Mobile buttons */}
-          <div className="md:hidden flex items-center gap-1 flex-1 justify-end">
+          <div className="md:hidden flex items-center gap-2">
+            {shouldShowDistricts() && (
+              <button
+                className="flex flex-col items-start px-2 py-1 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0 flex-1 max-w-[180px]"
+                onClick={() => setRegionModalOpen(true)}
+              >
+                <div className="flex items-center gap-1 w-full">
+                  <Icon name="MapPin" className="h-3 w-3 text-primary shrink-0" />
+                  <span className="font-bold text-primary truncate text-[10px] leading-tight">
+                    {(() => {
+                      if (selectedDistricts.length === 0) return 'Все районы';
+                      if (selectedDistricts.length === districts.length) return 'Все районы';
+                      if (selectedDistricts.length === 1) {
+                        const district = districts.find(d => d.id === selectedDistricts[0]);
+                        return district?.name || 'Район';
+                      }
+                      return `${selectedDistricts.length} район${selectedDistricts.length < 5 ? 'а' : 'ов'}`;
+                    })()}
+                  </span>
+                </div>
+                <span className="text-[10px] leading-tight text-primary/70 font-bold truncate w-full">
+                  {detectedCity && detectedCity !== 'Не определен' ? detectedCity : 'Якутия'}
+                </span>
+              </button>
+            )}
             <button
-              className={`h-9 px-2 text-[10px] font-bold text-primary uppercase rounded-md hover:bg-primary/10 transition-all shrink-0 ${
-                mobileMenuOpen ? 'border-[3px] border-primary shadow-md' : 'border-[2.5px] border-primary/50'
-              }`}
+              className="px-3 py-2 text-sm font-bold text-primary uppercase border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors shrink-0"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? "Закрыть" : "Меню"}
             </button>
-            {shouldShowDistricts() && (
-              <button
-                className="h-9 flex flex-col items-start justify-center px-1.5 text-xs border-2 border-primary/20 rounded-md hover:border-primary/40 transition-colors min-w-0"
-                onClick={() => setRegionModalOpen(true)}
-              >
-                <span className="font-bold text-primary truncate text-[9px] leading-tight w-full">
-                  {getShortRegionName(selectedRegion)}
-                </span>
-                <span className="text-[9px] leading-tight text-primary/70 font-bold truncate w-full">
-                  {(() => {
-                    if (selectedDistricts.length === 0) return 'Все районы';
-                    if (selectedDistricts.length === districts.length) return 'Все районы';
-                    
-                    const detectedDistrict = detectedDistrictId 
-                      ? districts.find(d => d.id === detectedDistrictId)
-                      : null;
-                    
-                    const districtName = detectedDistrict?.name || districts.find(d => d.id === selectedDistricts[0])?.name || 'Район';
-                    
-                    if (selectedDistricts.length === 1) {
-                      return districtName;
-                    }
-                    
-                    return `${districtName} +${selectedDistricts.length - 1}`;
-                  })()}
-                </span>
-              </button>
-            )}
           </div>
 
-          <nav className="hidden md:flex items-center space-x-0.5 lg:space-x-1 mr-1 lg:mr-2">
+          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 mr-1.5 lg:mr-3">
             <Link
               to="/predlozheniya"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2.5 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Предложения
             </Link>
             <Link
               to="/zaprosy"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/zaprosy' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2.5 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/zaprosy' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Запросы
             </Link>
             <Link
               to="/auction"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2.5 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Аукционы
             </Link>
             <Link
               to="/trading"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2.5 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               <span className="flex items-center gap-1">
                 Контракты
@@ -277,13 +253,13 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
             </Link>
             <Link
               to="/support"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/support' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2.5 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/support' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Поддержка
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-1 md:space-x-1.5">
+          <div className="flex items-center space-x-1.5 md:space-x-2">
             <div className="hidden md:block w-44 lg:w-60">
               <RegionDistrictSelector showBadges={false} />
             </div>

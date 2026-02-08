@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from './use-toast';
 import { getSession } from '@/utils/auth';
 import { notifyOrderAccepted } from '@/utils/notifications';
 import type { Order } from '@/types/order';
-import { ordersAPI, reviewsAPI } from '@/services/api';
+import { ordersAPI } from '@/services/api';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
-import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
 
 export function useOrdersData(
   isAuthenticated: boolean, 
@@ -22,278 +21,22 @@ export function useOrdersData(
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [pendingReviewOrder, setPendingReviewOrder] = useState<Order | null>(null);
 
   const playNotificationSound = () => {
     const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjsj6sD5+GfJMKAAAAASUVORK5CYII=');
     audio.volume = 0.3;
     audio.play().catch(() => {});
   };
-
-  // Вспомогательная функция для маппинга заказа
-  const mapOrderData = (orderData: any): Order => {
-    const counterOfferedAt = orderData.counter_offered_at || orderData.counterOfferedAt 
-      ? new Date(orderData.counter_offered_at || orderData.counterOfferedAt) 
-      : undefined;
-    
-    const counterOfferedBy = orderData.counter_offered_by || orderData.counterOfferedBy;
-    
-    // Определяем, есть ли непрочитанная встречная цена
-    let hasUnreadCounterOffer = false;
-    if (counterOfferedAt && counterOfferedBy && currentUser) {
-      // Проверяем, что встречную цену предложил контрагент (не я)
-      const isCounterByOther = (
-        (counterOfferedBy === 'buyer' && currentUser.id !== orderData.buyer_id?.toString()) ||
-        (counterOfferedBy === 'seller' && currentUser.id !== orderData.seller_id?.toString())
-      );
-      
-      if (isCounterByOther) {
-        // Время последнего просмотра этого заказа
-        const lastViewedKey = `order_viewed_${orderData.id}`;
-        const lastViewedStr = localStorage.getItem(lastViewedKey);
-        const lastViewedAt = lastViewedStr ? new Date(lastViewedStr) : null;
-        
-        // Если встречная цена новее последнего просмотра — она непрочитана
-        hasUnreadCounterOffer = !lastViewedAt || counterOfferedAt > lastViewedAt;
-      }
-    }
-    
-    return {
-      id: orderData.id,
-      orderNumber: orderData.order_number || orderData.orderNumber,
-      offerId: orderData.offer_id,
-      offerTitle: orderData.offer_title || orderData.title,
-      offerImage: orderData.offer_image ? (typeof orderData.offer_image === 'string' ? JSON.parse(orderData.offer_image)[0]?.url : orderData.offer_image[0]?.url) : undefined,
-      quantity: orderData.quantity,
-      originalQuantity: orderData.original_quantity || orderData.originalQuantity,
-      unit: orderData.unit,
-      pricePerUnit: orderData.price_per_unit || orderData.pricePerUnit,
-      totalAmount: orderData.total_amount || orderData.totalAmount,
-      offerPricePerUnit: orderData.offerPricePerUnit,
-      offerAvailableQuantity: orderData.offerAvailableQuantity,
-      counterPricePerUnit: orderData.counter_price_per_unit || orderData.counterPricePerUnit,
-      counterTotalAmount: orderData.counter_total_amount || orderData.counterTotalAmount,
-      counterOfferMessage: orderData.counter_offer_message || orderData.counterOfferMessage,
-      counterOfferedAt,
-      counterOfferedBy,
-      buyerAcceptedCounter: orderData.buyer_accepted_counter || orderData.buyerAcceptedCounter,
-      buyerId: orderData.buyer_id?.toString() || orderData.buyerId,
-      buyerName: orderData.buyer_name || orderData.buyerName || orderData.buyer_full_name,
-      buyerPhone: orderData.buyer_phone || orderData.buyerPhone,
-      buyerEmail: orderData.buyer_email || orderData.buyerEmail,
-      sellerId: orderData.seller_id?.toString() || orderData.sellerId,
-      sellerName: orderData.seller_name || orderData.sellerName || orderData.seller_full_name,
-      sellerPhone: orderData.seller_phone || orderData.sellerPhone,
-      sellerEmail: orderData.seller_email || orderData.sellerEmail,
-      status: orderData.status,
-      deliveryType: orderData.delivery_type || orderData.deliveryType || 'delivery',
-      comment: orderData.comment,
-      type: orderData.type,
-      createdAt: new Date(orderData.createdAt || orderData.created_at),
-      acceptedAt: orderData.acceptedAt || orderData.accepted_at ? new Date(orderData.acceptedAt || orderData.accepted_at) : undefined,
-      completedDate: orderData.completedDate || orderData.completed_date ? new Date(orderData.completedDate || orderData.completed_date) : undefined,
-      cancelledBy: orderData.cancelled_by || orderData.cancelledBy,
-      cancellationReason: orderData.cancellation_reason || orderData.cancellationReason,
-      buyerCompany: orderData.buyer_company || orderData.buyerCompany,
-      buyerInn: orderData.buyer_inn || orderData.buyerInn,
-      hasUnreadCounterOffer,
-    };
-  };
-
-  const loadOrders = useCallback(async (showLoader = false) => {
-    try {
-      if (showLoader) {
-        setIsLoading(true);
-      } else {
-        setIsSyncing(true);
-      }
-      
-      // Таймаут для предотвращения вечной загрузки
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Превышено время ожидания')), 15000)
-      );
-      
-      // Загружаем ВСЕ заказы сразу для правильного подсчета
-      const response = await Promise.race([
-        ordersAPI.getAll('all'),
-        timeoutPromise
-      ]) as any;
-      
-      const mappedOrders = response.orders.map(mapOrderData);
-      
-      // Логируем встречные цены для отладки
-      const ordersWithCounter = mappedOrders.filter((o: Order) => o.counterPricePerUnit);
-      if (ordersWithCounter.length > 0) {
-        console.log('[loadOrders] Заказы со встречными ценами:', ordersWithCounter.map((o: Order) => ({
-          id: o.id,
-          title: o.offerTitle,
-          counterPrice: o.counterPricePerUnit,
-          counterTotal: o.counterTotalAmount,
-          counterBy: o.counterOfferedBy,
-          counterAt: o.counterOfferedAt,
-          hasUnread: o.hasUnreadCounterOffer
-        })));
-      }
-      
-      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами
-      // чтобы React гарантированно обнаружил изменения
-      setOrders(mappedOrders.map(order => ({ ...order })));
-      
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-      }
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось загрузить заказы';
-      
-      if (showLoader) {
-        toast({
-          title: 'Ошибка загрузки',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      }
-      
-      // Устанавливаем пустой массив, чтобы не было белого экрана
-      setOrders([]);
-    } finally {
-      if (showLoader) {
-        setIsLoading(false);
-      } else {
-        setIsSyncing(false);
-      }
-    }
-  }, [isInitialLoad, toast]);
   
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
-    
-    // Сбрасываем данные при смене пользователя
-    setOrders([]);
-    setSelectedOrder(null);
-    setIsChatOpen(false);
-    
     loadOrders(true);
 
-    // Подписываемся на обновления заказов
-    const unsubscribe = dataSync.subscribe('order_updated', () => {
-      console.log('[useOrdersData] Получено событие order_updated, обновляем заказы');
-      loadOrders(false);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [isAuthenticated, navigate, currentUser?.id, loadOrders]);
-
-  // Закрываем модальное окно, если открытый заказ не принадлежит текущему пользователю
-  useEffect(() => {
-    if (selectedOrder && currentUser && isChatOpen) {
-      const isUserInvolved = 
-        String(selectedOrder.buyerId) === String(currentUser.id) ||
-        String(selectedOrder.sellerId) === String(currentUser.id);
-      
-      if (!isUserInvolved) {
-        console.log('[useOrdersData] Закрываем чужой заказ при смене пользователя');
-        setSelectedOrder(null);
-        setIsChatOpen(false);
-      }
-    }
-  }, [currentUser?.id, selectedOrder, isChatOpen]);
-
-  // Синхронизируем selectedOrder с актуальными данными из orders
-  // НО: Когда модальное окно открыто, быстрое обновление управляет данными
-  useEffect(() => {
-    if (selectedOrder && !isChatOpen) {
-      const actualOrder = orders.find(o => o.id === selectedOrder.id);
-      if (actualOrder && JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
-        console.log('[useOrdersData] Синхронизируем selectedOrder с orders (окно закрыто)');
-        setSelectedOrder(actualOrder);
-      }
-    }
-  }, [orders, selectedOrder?.id, isChatOpen]);
-
-  // Автообновление при возвращении на страницу
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated) {
-        console.log('[useOrdersData] Страница стала видимой, обновляем заказы');
-        loadOrders(false);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isAuthenticated, loadOrders]);
-
-  // Периодическое автообновление каждые 3 секунды для очень быстрой синхронизации встречных предложений
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const intervalId = setInterval(() => {
-      console.log('[useOrdersData] Периодическое обновление заказов');
-      loadOrders(false);
-    }, 3000); // 3 секунды - очень быстрое обновление для встречных предложений
-
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated, loadOrders]);
-
-  // Дополнительное быстрое обновление при открытом чате (каждую секунду)
-  useEffect(() => {
-    if (!isAuthenticated || !isChatOpen || !selectedOrder) return;
-
-    const fastIntervalId = setInterval(async () => {
-      console.log('[useOrdersData] Быстрое обновление открытого заказа');
-      try {
-        const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-        const mappedOrder = mapOrderData(updatedOrderData);
-        
-        // Обновляем только если данные действительно изменились
-        if (JSON.stringify(mappedOrder) !== JSON.stringify(selectedOrder)) {
-          console.log('[useOrdersData] Быстрое обновление: данные изменились', {
-            counterPrice: mappedOrder.counterPricePerUnit,
-            counterTotal: mappedOrder.counterTotalAmount,
-            prevCounterPrice: selectedOrder.counterPricePerUnit,
-            prevCounterTotal: selectedOrder.counterTotalAmount
-          });
-          
-          // Обновляем selectedOrder
-          setSelectedOrder(mappedOrder);
-          
-          // Также обновляем этот заказ в массиве orders для обновления карточки
-          setOrders(prevOrders => {
-            const updated = prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o);
-            console.log('[useOrdersData] Обновлён заказ в массиве orders');
-            return updated;
-          });
-        }
-      } catch (error) {
-        console.error('[useOrdersData] Ошибка быстрого обновления:', error);
-      }
-    }, 1000); // 1 секунда - мгновенное обновление для активного заказа
-
-    return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrder?.id]);
-
-  // Сбрасываем состояние при выходе из системы
-  useEffect(() => {
-    const handleLogout = () => {
-      console.log('[useOrdersData] Пользователь вышел, сбрасываем состояние');
-      setSelectedOrder(null);
-      setIsChatOpen(false);
-      setOrders([]);
-      setPendingReviewOrder(null);
-      setReviewModalOpen(false);
-    };
-
-    window.addEventListener('userLoggedOut', handleLogout);
-    return () => window.removeEventListener('userLoggedOut', handleLogout);
-  }, []);
+    return () => {};
+  }, [isAuthenticated, navigate]);
 
   // Отмечаем заказы как просмотренные при открытии вкладки продавца
   useEffect(() => {
@@ -316,7 +59,78 @@ export function useOrdersData(
         setTimeout(() => loadOrders(false), 500);
       }
     }
-  }, [activeTab, orders.length, loadOrders]);
+  }, [activeTab, orders.length]);
+
+  const loadOrders = async (showLoader = false) => {
+    try {
+      if (showLoader) {
+        setIsLoading(true);
+      } else {
+        setIsSyncing(true);
+      }
+      // Загружаем ВСЕ заказы сразу для правильного подсчета
+      const response = await ordersAPI.getAll('all');
+      
+      const mappedOrders = response.orders.map((order: any) => ({
+        id: order.id,
+        orderNumber: order.order_number || order.orderNumber,
+        offerId: order.offer_id,
+        offerTitle: order.offer_title || order.title,
+        offerImage: order.offer_image ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) : undefined,
+        quantity: order.quantity,
+        originalQuantity: order.original_quantity || order.originalQuantity,
+        unit: order.unit,
+        pricePerUnit: order.price_per_unit || order.pricePerUnit,
+        totalAmount: order.total_amount || order.totalAmount,
+        counterPricePerUnit: order.counter_price_per_unit || order.counterPricePerUnit,
+        counterTotalAmount: order.counter_total_amount || order.counterTotalAmount,
+        counterOfferMessage: order.counter_offer_message || order.counterOfferMessage,
+        counterOfferedAt: order.counter_offered_at || order.counterOfferedAt ? new Date(order.counter_offered_at || order.counterOfferedAt) : undefined,
+        counterOfferedBy: order.counter_offered_by || order.counterOfferedBy,
+        buyerAcceptedCounter: order.buyer_accepted_counter || order.buyerAcceptedCounter,
+        buyerId: order.buyer_id?.toString() || order.buyerId,
+        buyerName: order.buyer_name || order.buyerName || order.buyer_full_name,
+        buyerPhone: order.buyer_phone || order.buyerPhone,
+        buyerEmail: order.buyer_email || order.buyerEmail,
+        sellerId: order.seller_id?.toString() || order.sellerId,
+        sellerName: order.seller_name || order.sellerName || order.seller_full_name,
+        sellerPhone: order.seller_phone || order.sellerPhone,
+        sellerEmail: order.seller_email || order.sellerEmail,
+        status: order.status,
+        deliveryType: order.delivery_type || order.deliveryType || 'delivery',
+        comment: order.comment,
+        type: order.type,
+        createdAt: new Date(order.createdAt || order.created_at),
+        acceptedAt: order.acceptedAt || order.accepted_at ? new Date(order.acceptedAt || order.accepted_at) : undefined,
+        completedDate: order.completedDate || order.completed_date ? new Date(order.completedDate || order.completed_date) : undefined,
+        cancelledBy: order.cancelled_by || order.cancelledBy,
+        cancellationReason: order.cancellation_reason || order.cancellationReason,
+        buyerCompany: order.buyer_company || order.buyerCompany,
+        buyerInn: order.buyer_inn || order.buyerInn,
+      }));
+      
+      setOrders(mappedOrders);
+      
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      if (showLoader) {
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось загрузить заказы',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      if (showLoader) {
+        setIsLoading(false);
+      } else {
+        setIsSyncing(false);
+      }
+    }
+  };
 
 
 
@@ -324,54 +138,28 @@ export function useOrdersData(
     const orderToAccept = orderId || selectedOrder?.id;
     if (!orderToAccept) return;
 
-    const order = orders.find(o => o.id === orderToAccept);
-    if (!order) return;
-
     try {
-      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
-      const updatedOrder = {
-        ...order,
-        status: 'accepted' as const,
-        acceptedAt: new Date(),
-      };
-      
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderToAccept ? updatedOrder : o)
-      );
-      
-      if (selectedOrder && selectedOrder.id === orderToAccept) {
-        setSelectedOrder(updatedOrder);
-      }
-
-      // Отправляем на сервер в фоне
       await ordersAPI.updateOrder(orderToAccept, { status: 'accepted' });
       
-      notifyOrderAccepted(
-        order.buyerId,
-        order.sellerName,
-        order.offerTitle,
-        order.id
-      );
+      const order = orders.find(o => o.id === orderToAccept);
+      if (order) {
+        notifyOrderAccepted(
+          order.buyerId,
+          order.sellerName,
+          order.offerTitle,
+          order.id
+        );
+      }
 
       toast({
         title: 'Заказ принят',
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
-      // notifyOrderUpdated уже триггерит обновление через событие order_updated
-      notifyOrderUpdated(orderToAccept);
+      setIsChatOpen(false);
+      await loadOrders(false);
     } catch (error: any) {
       console.error('Error accepting order:', error);
-      
-      // В случае ошибки откатываем изменения
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderToAccept ? order : o)
-      );
-      
-      if (selectedOrder?.id === orderToAccept) {
-        setSelectedOrder(order);
-      }
-      
       toast({
         title: 'Ошибка',
         description: error.message || 'Не удалось принять заказ',
@@ -406,36 +194,33 @@ export function useOrdersData(
 
       console.log('[handleCounterOffer] API call successful');
 
+      // Мгновенно обновляем данные локально для быстрого отклика
+      setSelectedOrder({
+        ...selectedOrder,
+        status: 'negotiating',
+        quantity: finalQuantity,
+        counterPricePerUnit: price,
+        counterTotalAmount: price * finalQuantity,
+        counterOfferedBy: isSeller ? 'seller' : 'buyer',
+        counterOfferMessage: message,
+        counterOfferedAt: new Date(),
+      });
+
       toast({
         title: 'Встречное предложение отправлено',
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
       });
 
-      // НЕМЕДЛЕННО обновляем данные после отправки встречного предложения
-      notifyOrderUpdated(selectedOrder.id);
-      
-      // Небольшая задержка чтобы дать серверу обновить БД
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Получаем обновлённый заказ напрямую из API и маппим его
-      const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-      const mappedOrder = mapOrderData(updatedOrderData);
-      
-      console.log('[handleCounterOffer] Обновлённый заказ с сервера:', {
-        id: mappedOrder.id,
-        counterPrice: mappedOrder.counterPricePerUnit,
-        counterTotal: mappedOrder.counterTotalAmount
-      });
-      
-      setSelectedOrder(mappedOrder);
-      
-      // Обновляем этот заказ в массиве orders НЕМЕДЛЕННО
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === mappedOrder.id ? { ...mappedOrder } : o)
-      );
-      
       // Обновляем список заказов для синхронизации с сервером
       await loadOrders(false);
+      
+      // Дополнительно обновляем selectedOrder из свежих данных через 500мс
+      setTimeout(() => {
+        const updatedOrder = orders.find(o => o.id === selectedOrder.id);
+        if (updatedOrder) {
+          setSelectedOrder(updatedOrder);
+        }
+      }, 500);
     } catch (error) {
       console.error('Error sending counter offer:', error);
       toast({
@@ -449,47 +234,38 @@ export function useOrdersData(
   const handleAcceptCounter = async () => {
     if (!selectedOrder) return;
 
-    const orderId = selectedOrder.id;
-
     try {
-      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
-      const updatedOrder = {
-        ...selectedOrder,
-        status: 'accepted' as const,
-        buyerAcceptedCounter: true,
-        pricePerUnit: selectedOrder.counterPricePerUnit || selectedOrder.pricePerUnit,
-        totalAmount: selectedOrder.counterTotalAmount || selectedOrder.totalAmount,
-        acceptedAt: new Date(),
-      };
-      
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderId ? updatedOrder : o)
-      );
-      
-      setSelectedOrder(updatedOrder);
-
-      // Отправляем на сервер в фоне
-      await ordersAPI.updateOrder(orderId, { 
+      await ordersAPI.updateOrder(selectedOrder.id, { 
         acceptCounter: true,
         status: 'accepted'
       });
+
+      // Мгновенно обновляем статус локально для быстрого отклика
+      setSelectedOrder({
+        ...selectedOrder,
+        status: 'accepted',
+        buyerAcceptedCounter: true,
+        pricePerUnit: selectedOrder.counterPricePerUnit || selectedOrder.pricePerUnit,
+        totalAmount: selectedOrder.counterTotalAmount || selectedOrder.totalAmount,
+      });
+
+      // Обновляем список заказов для синхронизации с сервером
+      await loadOrders(false);
 
       toast({
         title: 'Встречное предложение принято',
         description: 'Заказ переведён в статус "Принято"',
       });
-
-      // notifyOrderUpdated уже триггерит обновление через событие order_updated
-      notifyOrderUpdated(orderId);
+      
+      // Дополнительно обновляем selectedOrder из свежих данных через 500мс
+      setTimeout(() => {
+        const updatedOrder = orders.find(o => o.id === selectedOrder.id);
+        if (updatedOrder) {
+          setSelectedOrder(updatedOrder);
+        }
+      }, 500);
     } catch (error) {
       console.error('Error accepting counter offer:', error);
-      
-      // В случае ошибки откатываем изменения
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderId ? selectedOrder : o)
-      );
-      setSelectedOrder(selectedOrder);
-      
       toast({
         title: 'Ошибка',
         description: 'Не удалось принять встречное предложение',
@@ -498,64 +274,27 @@ export function useOrdersData(
     }
   };
 
-  const handleCompleteOrder = async (orderId?: string) => {
-    const orderToComplete = orderId || selectedOrder?.id;
-    if (!orderToComplete) return;
-
-    const order = orders.find(o => o.id === orderToComplete);
-    if (!order) return;
-    
-    const isBuyer = currentUser?.id?.toString() === order?.buyerId?.toString();
+  const handleCompleteOrder = async () => {
+    if (!selectedOrder) return;
 
     try {
-      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
-      const updatedOrder = {
-        ...order,
-        status: 'completed' as const,
-        completedDate: new Date(),
-      };
-      
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderToComplete ? updatedOrder : o)
-      );
-      
-      if (selectedOrder?.id === orderToComplete) {
-        setSelectedOrder(updatedOrder);
-      }
+      await ordersAPI.updateOrder(selectedOrder.id, { status: 'completed' });
 
-      // Отправляем на сервер в фоне
-      await ordersAPI.updateOrder(orderToComplete, { status: 'completed' });
+      toast({
+        title: 'Заказ завершён',
+        description: 'Заказ успешно завершён. Спасибо за работу!',
+      });
 
       setIsChatOpen(false);
       
+      // Переключаем на вкладку "Архив" сразу после завершения
       if (onTabChange) {
         onTabChange('archive');
       }
       
-      // notifyOrderUpdated уже триггерит обновление через событие order_updated
-      notifyOrderUpdated(orderToComplete);
-
-      if (isBuyer) {
-        setPendingReviewOrder(order);
-        setReviewModalOpen(true);
-      } else {
-        toast({
-          title: 'Заказ завершён',
-          description: 'Заказ успешно завершён. Спасибо за работу!',
-        });
-      }
+      await loadOrders(false);
     } catch (error) {
       console.error('Error completing order:', error);
-      
-      // В случае ошибки откатываем изменения
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderToComplete ? order : o)
-      );
-      
-      if (selectedOrder?.id === orderToComplete) {
-        setSelectedOrder(order);
-      }
-      
       toast({
         title: 'Ошибка',
         description: 'Не удалось завершить заказ',
@@ -564,46 +303,9 @@ export function useOrdersData(
     }
   };
 
-  const handleOpenChat = async (order: Order) => {
-    // Ищем самую актуальную версию заказа из списка orders
-    const actualOrder = orders.find(o => o.id === order.id) || order;
-    
-    // Сохраняем время просмотра для отметки встречных цен как прочитанных
-    const lastViewedKey = `order_viewed_${actualOrder.id}`;
-    localStorage.setItem(lastViewedKey, new Date().toISOString());
-    
-    // Обновляем заказ, чтобы сбросить флаг непрочитанной встречной цены
-    const updatedOrder = { ...actualOrder, hasUnreadCounterOffer: false };
-    
-    setSelectedOrder(updatedOrder);
+  const handleOpenChat = (order: Order) => {
+    setSelectedOrder(order);
     setIsChatOpen(true);
-    
-    // Также обновляем в массиве orders
-    setOrders(prevOrders => 
-      prevOrders.map(o => o.id === actualOrder.id ? updatedOrder : o)
-    );
-    
-    // КРИТИЧНО: Получаем свежие данные с сервера при открытии модалки
-    try {
-      const freshOrderData = await ordersAPI.getOrderById(actualOrder.id);
-      const freshOrder = mapOrderData(freshOrderData);
-      
-      console.log('[handleOpenChat] Получены свежие данные:', {
-        id: freshOrder.id,
-        counterPrice: freshOrder.counterPricePerUnit,
-        counterTotal: freshOrder.counterTotalAmount
-      });
-      
-      // Обновляем selectedOrder свежими данными
-      setSelectedOrder({ ...freshOrder, hasUnreadCounterOffer: false });
-      
-      // Обновляем карточку в списке заказов
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === freshOrder.id ? { ...freshOrder, hasUnreadCounterOffer: false } : o)
-      );
-    } catch (error) {
-      console.error('[handleOpenChat] Ошибка получения свежих данных:', error);
-    }
   };
 
   const handleCloseChat = () => {
@@ -611,115 +313,27 @@ export function useOrdersData(
     setSelectedOrder(null);
   };
 
-  const handleCancelOrder = async (orderId?: string, reason?: string) => {
-    const orderToCancel = orderId || selectedOrder?.id;
-    if (!orderToCancel) return;
-
-    const order = orders.find(o => o.id === orderToCancel);
-    if (!order) return;
-    
-    const cancelledBy = currentUser?.id?.toString() === order?.buyerId?.toString() ? 'buyer' : 'seller';
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
 
     try {
-      // СРАЗУ обновляем локальный статус ДО отправки на сервер (optimistic update)
-      const updatedOrder = {
-        ...order,
-        status: 'cancelled' as const,
-        cancelledBy,
-        cancellationReason: reason || undefined,
-      };
-      
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderToCancel ? updatedOrder : o)
-      );
-      
-      // Обновляем selectedOrder для корректного отображения в модалке
-      if (selectedOrder?.id === orderToCancel) {
-        setSelectedOrder(updatedOrder);
-      }
-      
-      // Отправляем на сервер в фоне
-      await ordersAPI.updateOrder(orderToCancel, { 
-        status: 'cancelled',
-        cancelledBy,
-        cancellationReason: reason || undefined
-      });
+      await ordersAPI.updateOrder(selectedOrder.id, { status: 'cancelled' });
 
-      notifyOrderUpdated(orderToCancel);
-      
       toast({
         title: 'Заказ отменён',
         description: 'Заказ успешно отменён',
       });
 
-      // Закрываем модалку
       setIsChatOpen(false);
-      
-      // Даём время на обновление локального состояния перед переключением вкладки
-      setTimeout(() => {
-        if (onTabChange) {
-          onTabChange('archive');
-        }
-      }, 100);
-      
-      // notifyOrderUpdated уже триггерит обновление через событие order_updated (вызвано выше)
+      await loadOrders(false);
     } catch (error) {
       console.error('Error cancelling order:', error);
-      
-      // В случае ошибки откатываем изменения
-      setOrders(prevOrders => 
-        prevOrders.map(o => o.id === orderToCancel ? order : o)
-      );
-      
-      if (selectedOrder?.id === orderToCancel) {
-        setSelectedOrder(order);
-      }
-      
       toast({
         title: 'Ошибка',
         description: 'Не удалось отменить заказ',
         variant: 'destructive',
       });
     }
-  };
-
-  const handleSubmitReview = async (rating: number, comment: string) => {
-    if (!pendingReviewOrder || !currentUser) return;
-
-    try {
-      await reviewsAPI.createReview({
-        order_id: pendingReviewOrder.id,
-        seller_id: Number(pendingReviewOrder.sellerId),
-        rating,
-        comment,
-      });
-
-      toast({
-        title: 'Отзыв опубликован',
-        description: 'Спасибо за ваш отзыв!',
-      });
-
-      setPendingReviewOrder(null);
-      
-      // Обновляем список заказов после публикации отзыва
-      await loadOrders(false);
-    } catch (error: any) {
-      console.error('Error submitting review:', error);
-      toast({
-        title: 'Ошибка',
-        description: error?.message || 'Не удалось опубликовать отзыв',
-        variant: 'destructive',
-      });
-      throw error;
-    }
-  };
-
-  const handleCloseReviewModal = async () => {
-    setReviewModalOpen(false);
-    setPendingReviewOrder(null);
-    
-    // Обновляем список заказов при закрытии модального окна (кнопка "Пропустить")
-    await loadOrders(false);
   };
 
   return {
@@ -729,8 +343,6 @@ export function useOrdersData(
     isLoading,
     isSyncing,
     currentUser,
-    reviewModalOpen,
-    pendingReviewOrder,
     handleAcceptOrder,
     handleCounterOffer,
     handleAcceptCounter,
@@ -738,8 +350,6 @@ export function useOrdersData(
     handleCompleteOrder,
     handleOpenChat,
     handleCloseChat,
-    handleSubmitReview,
-    handleCloseReviewModal,
     loadOrders,
   };
 }

@@ -142,27 +142,14 @@ export function notifyNewOrder(
     `/my-orders`
   );
 
-  // КРИТИЧНО: Показываем пуш-уведомление ТОЛЬКО продавцу, а не покупателю
   if ('Notification' in window && Notification.permission === 'granted') {
-    // Проверяем, что текущий пользователь - это продавец
-    const currentUserStr = localStorage.getItem('marketplace_session');
-    if (currentUserStr) {
-      try {
-        const currentUser = JSON.parse(currentUserStr);
-        // Показываем уведомление только если текущий пользователь = продавец
-        if (currentUser.id?.toString() === sellerId) {
-          new Notification('Новый заказ!', {
-            body: `${buyerName} заказал ${quantity} ${unit}`,
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
-            tag: `order-${orderId}`,
-            requireInteraction: true,
-          });
-        }
-      } catch (e) {
-        console.error('Error checking user for notification:', e);
-      }
-    }
+    new Notification('Новый заказ!', {
+      body: `${buyerName} заказал ${quantity} ${unit}`,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `order-${orderId}`,
+      requireInteraction: true,
+    });
   }
 }
 
