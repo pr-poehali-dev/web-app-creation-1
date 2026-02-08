@@ -269,14 +269,13 @@ export default function OfferLocationSection({
         )}
       </CardContent>
 
-      {showMapModal && (
-        <Suspense fallback={null}>
-          <MapModal
-            isOpen={showMapModal}
-            onClose={() => setShowMapModal(false)}
-            coordinates={formData.gpsCoordinates || ''}
-            onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
-            onAddressChange={(address, districtName, coords) => {
+      <Suspense fallback={<div />}>
+        <MapModal
+          isOpen={showMapModal}
+          onClose={() => setShowMapModal(false)}
+          coordinates={formData.gpsCoordinates || ''}
+          onCoordinatesChange={(coords) => onInputChange('gpsCoordinates', coords)}
+          onAddressChange={(address, districtName, coords) => {
               console.log('🔔 OfferLocationSection: onAddressChange ВЫЗВАН!');
               console.log('📬 onAddressChange вызван:', { address, districtName, coords });
               
@@ -348,8 +347,7 @@ export default function OfferLocationSection({
               }
             }}
           />
-        </Suspense>
-      )}
+      </Suspense>
     </Card>
   );
 }
