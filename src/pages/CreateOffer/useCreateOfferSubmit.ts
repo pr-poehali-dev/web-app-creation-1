@@ -189,18 +189,31 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       const dataSize = new Blob([JSON.stringify(offerData)]).size;
       console.log(`Offer data size: ${(dataSize / 1024 / 1024).toFixed(2)} MB`);
       console.log(`Images uploaded: ${uploadedImageUrls.length}, Video: ${videoUrl ? 'yes' : 'no'}`);
+      console.log('Offer data to submit:', JSON.stringify(offerData, null, 2));
 
       toast({
         title: 'Сохранение предложения...',
         description: 'Почти готово',
       });
 
+      console.log('Sending request to backend...');
       let result;
-      if (isEditMode && editOffer) {
-        result = await offersAPI.updateOffer(editOffer.id, offerData);
-        result.id = editOffer.id;
-      } else {
-        result = await offersAPI.createOffer(offerData);
+      try {
+        if (isEditMode && editOffer) {
+          result = await offersAPI.updateOffer(editOffer.id, offerData);
+          result.id = editOffer.id;
+        } else {
+          result = await offersAPI.createOffer(offerData);
+        }
+        console.log('Backend response:', result);
+      } catch (backendError) {
+        console.error('Backend request failed:', backendError);
+        console.error('Error details:', {
+          name: backendError instanceof Error ? backendError.name : 'unknown',
+          message: backendError instanceof Error ? backendError.message : String(backendError),
+          stack: backendError instanceof Error ? backendError.stack : undefined
+        });
+        throw backendError; // Пробросим дальше в общий catch
       }
       
       const newOffer: Offer = {
