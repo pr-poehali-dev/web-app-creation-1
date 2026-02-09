@@ -26,8 +26,12 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
+    } else {
+      // Обновляем заказы при каждом заходе на страницу
+      console.log('[MyOrders] Переход на страницу, обновляем заказы');
+      loadOrders(false);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, loadOrders]);
 
   useEffect(() => {
     if (tabParam && (tabParam === 'buyer' || tabParam === 'seller' || tabParam === 'archive')) {
@@ -120,9 +124,9 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
       }
     };
 
-    window.addEventListener('openOrderChat' as any, handleOpenOrderChat);
-    return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
-  }, [orders, activeTab]);
+    window.addEventListener('openOrderChat' as EventListener, handleOpenOrderChat as EventListener);
+    return () => window.removeEventListener('openOrderChat' as EventListener, handleOpenOrderChat as EventListener);
+  }, [orders, activeTab, handleOpenChat, loadOrders]);
 
   // Считаем количество заказов для каждого типа
   const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && order.status !== 'completed' && order.status !== 'cancelled').length;
@@ -156,7 +160,11 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6"  defaultValue="buyer">
+          <Tabs value={activeTab} onValueChange={(v) => {
+            console.log('[MyOrders] Смена вкладки, обновляем заказы');
+            setActiveTab(v as 'buyer' | 'seller' | 'archive');
+            loadOrders(false);
+          }} className="mb-6"  defaultValue="buyer">
             <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
               <TabsTrigger value="buyer" className="py-2.5">
                 Я покупатель {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}

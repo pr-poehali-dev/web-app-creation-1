@@ -631,7 +631,12 @@ export function useOrdersData(
   };
 
   const handleOpenChat = async (order: Order) => {
-    // Ищем самую актуальную версию заказа из списка orders
+    console.log('[handleOpenChat] Открытие модального окна, обновляем все заказы');
+    
+    // Сначала полностью обновляем список заказов с сервера
+    await loadOrders(false);
+    
+    // Ищем самую актуальную версию заказа из обновлённого списка orders
     const actualOrder = orders.find(o => o.id === order.id) || order;
     
     // Сохраняем время просмотра для отметки встречных цен как прочитанных
