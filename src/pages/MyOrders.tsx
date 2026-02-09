@@ -24,16 +24,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'archive'>(tabParam || 'buyer');
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    } else {
-      // Обновляем заказы при каждом заходе на страницу
-      console.log('[MyOrders] Переход на страницу, обновляем заказы');
-      loadOrders(false);
-    }
-  }, [isAuthenticated, navigate, loadOrders]);
-
-  useEffect(() => {
     if (tabParam && (tabParam === 'buyer' || tabParam === 'seller' || tabParam === 'archive')) {
       setActiveTab(tabParam);
     }
@@ -59,6 +49,16 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleCloseReviewModal,
     loadOrders,
   } = useOrdersData(isAuthenticated, activeTab, setActiveTab);
+
+  // Обновляем заказы при заходе на страницу
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    } else {
+      console.log('[MyOrders] Переход на страницу, обновляем заказы');
+      loadOrders(false);
+    }
+  }, [isAuthenticated, navigate, loadOrders]);
 
   // Обновляем заказы при переходе после создания нового заказа
   useEffect(() => {
