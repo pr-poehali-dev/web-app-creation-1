@@ -24,6 +24,12 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'archive'>(tabParam || 'buyer');
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
     if (tabParam && (tabParam === 'buyer' || tabParam === 'seller' || tabParam === 'archive')) {
       setActiveTab(tabParam);
     }
@@ -49,16 +55,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleCloseReviewModal,
     loadOrders,
   } = useOrdersData(isAuthenticated, activeTab, setActiveTab);
-
-  // Обновляем заказы при заходе на страницу
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    } else {
-      console.log('[MyOrders] Переход на страницу, обновляем заказы');
-      loadOrders(false);
-    }
-  }, [isAuthenticated, navigate, loadOrders]);
 
   // Обновляем заказы при переходе после создания нового заказа
   useEffect(() => {
@@ -124,9 +120,9 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
       }
     };
 
-    window.addEventListener('openOrderChat' as EventListener, handleOpenOrderChat as EventListener);
-    return () => window.removeEventListener('openOrderChat' as EventListener, handleOpenOrderChat as EventListener);
-  }, [orders, activeTab, handleOpenChat, loadOrders]);
+    window.addEventListener('openOrderChat' as any, handleOpenOrderChat);
+    return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
+  }, [orders, activeTab]);
 
   // Считаем количество заказов для каждого типа
   const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && order.status !== 'completed' && order.status !== 'cancelled').length;
@@ -160,11 +156,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-          <Tabs value={activeTab} onValueChange={(v) => {
-            console.log('[MyOrders] Смена вкладки, обновляем заказы');
-            setActiveTab(v as 'buyer' | 'seller' | 'archive');
-            loadOrders(false);
-          }} className="mb-6"  defaultValue="buyer">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'archive')} className="mb-6"  defaultValue="buyer">
             <TabsList className="grid w-full max-w-md grid-cols-3 gap-2 mb-6 h-auto p-1">
               <TabsTrigger value="buyer" className="py-2.5">
                 Я покупатель {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}

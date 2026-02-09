@@ -195,33 +195,25 @@ export function useOrdersData(
     });
 
     // Слушатель триггера принудительного обновления после действий с заказом
-    const handleOrderUpdate = async (e: CustomEvent | StorageEvent | Event) => {
+    const handleStorageChange = async (e: StorageEvent | Event) => {
       let triggerData: { orderId?: string } | null = null;
       
-      // Обработка CustomEvent (для того же окна/устройства)
-      if ('detail' in e && e.detail) {
-        triggerData = e.detail;
-        console.log('🔄 Force reload orders triggered by CustomEvent:', triggerData);
-      }
-      // Обработка StorageEvent (для других вкладок/устройств - не работает!)
-      else if ('key' in e && e.key === 'force_orders_reload') {
-        console.log('🔄 Force reload orders triggered by StorageEvent');
+      if ('key' in e && e.key === 'force_orders_reload') {
+        console.log('🔄 Force reload orders triggered by action');
         try {
           const data = localStorage.getItem('force_orders_reload');
           if (data) triggerData = JSON.parse(data);
         } catch (err) {
-          console.error('Parse error:', err);
+          // Старый формат (просто timestamp)
         }
-      } 
-      // Обработка manual Event (fallback)
-      else if (!('key' in e) && !('detail' in e)) {
+      } else if (!('key' in e)) {
         const forceReload = localStorage.getItem('force_orders_reload');
         if (forceReload) {
-          console.log('🔄 Force reload orders triggered by manual Event');
+          console.log('🔄 Force reload orders triggered by action (manual)');
           try {
             triggerData = JSON.parse(forceReload);
           } catch (err) {
-            console.error('Parse error:', err);
+            // Старый формат (просто timestamp)
           }
           localStorage.removeItem('force_orders_reload');
         }
@@ -251,26 +243,22 @@ export function useOrdersData(
             console.log('✅ Модальное окно обновлено синхронно с карточкой');
           }
           
-          console.log('✅ Заказ', triggerData.orderId, 'обновлен мгновенно');
+          console.log('✅ Заказ', triggerData.orderId, 'обновлен мгновенно у контрагента');
         } catch (err) {
           console.error('Ошибка точечного обновления, загружаем все:', err);
           await loadOrders(false);
         }
-      } else if (triggerData) {
+      } else {
         // Полная перезагрузка если нет orderId
         await loadOrders(false);
       }
     };
     
-    // Слушаем CustomEvent для обновлений в том же окне
-    window.addEventListener('orderForceUpdate', handleOrderUpdate as EventListener);
-    // StorageEvent НЕ работает в том же окне, только между вкладками
-    window.addEventListener('storage', handleOrderUpdate as EventListener);
+    window.addEventListener('storage', handleStorageChange);
 
     return () => {
       unsubscribe();
-      window.removeEventListener('orderForceUpdate', handleOrderUpdate as EventListener);
-      window.removeEventListener('storage', handleOrderUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [isAuthenticated, navigate, currentUser?.id, loadOrders]);
 
@@ -383,14 +371,12 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
-      // Триггер для МГНОВЕННОГО обновления (в том же окне и у контрагента)
-      const triggerPayload = {
+      // Триггер для МГНОВЕННОГО обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
         orderId: orderToAccept,
         action: 'accept'
-      };
-      localStorage.setItem('force_orders_reload', JSON.stringify(triggerPayload));
-      window.dispatchEvent(new CustomEvent('orderForceUpdate', { detail: triggerPayload }));
+      }));
       window.dispatchEvent(new Event('storage'));
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
@@ -451,33 +437,28 @@ export function useOrdersData(
       const mappedOrder = mapOrderData(updatedOrderData);
       const updateTimestamp = Date.now();
       
-      // КРИТИЧНО: создаём ОДИН объект с timestamp для модалки И карточки
+      // СИНХРОННОЕ обновление: модалка + карточка ОДНОВРЕМЕННО
       const updatedOrderWithTimestamp = { ...mappedOrder, _updateTimestamp: updateTimestamp };
       
-      // 1. СРАЗУ обновляем selectedOrder (модальное окно отправителя)
+      // 1. Обновляем selectedOrder (модальное окно)
       setSelectedOrder(updatedOrderWithTimestamp);
       
-      // 2. ОДНОВРЕМЕННО обновляем карточку в списке orders
-      setOrders(prevOrders => 
-        prevOrders.map(o => 
-          o.id === mappedOrder.id ? updatedOrderWithTimestamp : o
-        )
-      );
+      // 2. Обновляем этот заказ в массиве orders (карточка)
+      setOrders(prevOrders => {
+        const orderIndex = prevOrders.findIndex(o => o.id === mappedOrder.id);
+        if (orderIndex === -1) return prevOrders;
+        
+        const newOrders = [...prevOrders];
+        newOrders[orderIndex] = updatedOrderWithTimestamp;
+        return newOrders;
+      });
       
-      console.log('✅ [handleCounterOffer] Обновлены модалка И карточка отправителя синхронно');
-      
-      // 3. Триггер для МГНОВЕННОГО обновления (в том же окне и у контрагента)
-      const triggerPayload = {
+      // 3. Триггер для МГНОВЕННОГО обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: updateTimestamp,
         orderId: selectedOrder.id,
         action: 'counter_offer'
-      };
-      localStorage.setItem('force_orders_reload', JSON.stringify(triggerPayload));
-      
-      // CustomEvent для обновления в том же окне (отправитель видит обновление карточки)
-      window.dispatchEvent(new CustomEvent('orderForceUpdate', { detail: triggerPayload }));
-      
-      // storage event НЕ работает в том же окне, но нужен для других вкладок
+      }));
       window.dispatchEvent(new Event('storage'));
       
       // Уведомляем систему об обновлении заказа (для dataSync)
@@ -525,14 +506,12 @@ export function useOrdersData(
         description: 'Заказ переведён в статус "Принято"',
       });
 
-      // Триггер для МГНОВЕННОГО обновления (в том же окне и у контрагента)
-      const triggerPayload = {
+      // Триггер для МГНОВЕННОГО обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
         orderId: orderId,
         action: 'accept_counter'
-      };
-      localStorage.setItem('force_orders_reload', JSON.stringify(triggerPayload));
-      window.dispatchEvent(new CustomEvent('orderForceUpdate', { detail: triggerPayload }));
+      }));
       window.dispatchEvent(new Event('storage'));
 
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
@@ -588,14 +567,12 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
-      // Триггер для МГНОВЕННОГО обновления (в том же окне и у контрагента)
-      const triggerPayload = {
+      // Триггер для МГНОВЕННОГО обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
         orderId: orderToComplete,
         action: 'complete'
-      };
-      localStorage.setItem('force_orders_reload', JSON.stringify(triggerPayload));
-      window.dispatchEvent(new CustomEvent('orderForceUpdate', { detail: triggerPayload }));
+      }));
       window.dispatchEvent(new Event('storage'));
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
@@ -631,12 +608,7 @@ export function useOrdersData(
   };
 
   const handleOpenChat = async (order: Order) => {
-    console.log('[handleOpenChat] Открытие модального окна, обновляем все заказы');
-    
-    // Сначала полностью обновляем список заказов с сервера
-    await loadOrders(false);
-    
-    // Ищем самую актуальную версию заказа из обновлённого списка orders
+    // Ищем самую актуальную версию заказа из списка orders
     const actualOrder = orders.find(o => o.id === order.id) || order;
     
     // Сохраняем время просмотра для отметки встречных цен как прочитанных
@@ -724,14 +696,12 @@ export function useOrdersData(
         description: 'Заказ успешно отменён',
       });
 
-      // Триггер для МГНОВЕННОГО обновления (в том же окне и у контрагента)
-      const triggerPayload = {
+      // Триггер для МГНОВЕННОГО обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
         orderId: orderToCancel,
         action: 'cancel'
-      };
-      localStorage.setItem('force_orders_reload', JSON.stringify(triggerPayload));
-      window.dispatchEvent(new CustomEvent('orderForceUpdate', { detail: triggerPayload }));
+      }));
       window.dispatchEvent(new Event('storage'));
 
       // Закрываем модалку
