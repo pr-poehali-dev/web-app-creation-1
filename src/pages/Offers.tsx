@@ -38,7 +38,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showOnlyMy, setShowOnlyMy] = useState(false);
   const [offers, setOffers] = useState<Offer[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<unknown[]>([]);
   const [totalOffersCount, setTotalOffersCount] = useState(0);
   const [hasMoreOnServer, setHasMoreOnServer] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -97,7 +97,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
             offset: 0
           }),
           timeoutPromise
-        ]) as any;
+        ]) as { offers: Offer[]; total: number; hasMore: boolean };
         
         if (!isMounted) return;
         
@@ -150,31 +150,24 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     loadData(false);
     
-    // Подписываемся на обновления предложений и заказов
     const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
       if (isMounted) {
-        console.log('Offer updated, reloading data...');
         loadFreshData(false);
       }
     });
     
     const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
       if (isMounted) {
-        console.log('Order updated, reloading data...');
         loadFreshData(false);
       }
     });
     
-    // Слушатель триггера принудительного обновления после публикации
     const handleStorageChange = (e: StorageEvent | Event) => {
       if ('key' in e && e.key === 'force_offers_reload') {
-        console.log('🔄 Force reload triggered by publication');
         loadFreshData(true);
       } else if (!('key' in e)) {
-        // Для событий dispatchEvent без key проверяем наличие флага
         const forceReload = localStorage.getItem('force_offers_reload');
         if (forceReload) {
-          console.log('🔄 Force reload triggered by publication (manual)');
           localStorage.removeItem('force_offers_reload');
           loadFreshData(true);
         }
@@ -190,22 +183,17 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       unsubscribeOrders();
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
+  }, [setGlobalOffers, toast]);
+
+  const userIdStr = currentUser?.id;
+  const selectedDistrictsKey = selectedDistricts.join(',');
+  const districtsLength = districts.length;
 
   const filteredOffers = useMemo(() => {
     let result = [...offers];
-    
-    console.log('🔍 Фильтрация предложений:', {
-      selectedRegion,
-      selectedDistricts,
-      detectedDistrictId,
-      totalOffers: result.length
-    });
 
-    // Скрываем истекшие предложения
     result = filterActiveOffers(result);
 
-    // Скрываем предложения с нулевым доступным количеством
     if (!showOnlyMy) {
       result = result.filter((offer) => {
         const availableQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
@@ -213,8 +201,8 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       });
     }
 
-    if (showOnlyMy && isAuthenticated && currentUser) {
-      result = result.filter(offer => String(offer.userId) === String(currentUser.id));
+    if (showOnlyMy && isAuthenticated && userIdStr) {
+      result = result.filter(offer => String(offer.userId) === String(userIdStr));
     }
 
     if (filters.query && filters.query.length >= 2) {
@@ -269,7 +257,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     });
 
     return [...premiumOffers, ...regularOffers];
-  }, [offers, filters, selectedDistricts, showOnlyMy, isAuthenticated, currentUser, selectedRegion, districts, detectedDistrictId]);
+  }, [offers, filters.query, filters.category, filters.subcategory, selectedDistrictsKey, districtsLength, showOnlyMy, isAuthenticated, userIdStr, selectedRegion, detectedDistrictId]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
   const hasMore = displayedCount < filteredOffers.length;
