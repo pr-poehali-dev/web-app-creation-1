@@ -299,14 +299,14 @@ export function useOrdersData(
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [isAuthenticated, loadOrders]);
 
-  // Периодическое автообновление каждые 3 секунды для очень быстрой синхронизации встречных предложений
+  // Периодическое автообновление каждые 5 секунд (синхронизировано с DataSync)
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const intervalId = setInterval(() => {
       console.log('[useOrdersData] Периодическое обновление заказов');
       loadOrders(false);
-    }, 3000); // 3 секунды - очень быстрое обновление для встречных предложений
+    }, 5000); // 5 секунд - синхронизировано с DataSync
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
@@ -332,30 +332,25 @@ export function useOrdersData(
         const updatedOrderData = await ordersAPI.getOrderById(orderId);
         const mappedOrder = mapOrderData(updatedOrderData);
         
-        // Обновляем только если данные действительно изменились
-        const current = selectedOrderRef.current;
-        if (!current || JSON.stringify(mappedOrder) !== JSON.stringify(current)) {
-          console.log('[useOrdersData] Быстрое обновление: данные изменились', {
-            counterPrice: mappedOrder.counterPricePerUnit,
-            counterTotal: mappedOrder.counterTotalAmount,
-            prevCounterPrice: current?.counterPricePerUnit,
-            prevCounterTotal: current?.counterTotalAmount
-          });
-          
-          // Обновляем selectedOrder
-          setSelectedOrder(mappedOrder);
-          
-          // Также обновляем этот заказ в массиве orders для обновления карточки
-          setOrders(prevOrders => {
-            const updated = prevOrders.map(o => 
-              o.id === mappedOrder.id 
-                ? { ...mappedOrder, _updateTimestamp: Date.now() } 
-                : o
-            );
-            console.log('[useOrdersData] Обновлён заказ в массиве orders');
-            return updated;
-          });
-        }
+        // CRITICAL: Обновляем И selectedOrder И карточку ОДНОВРЕМЕННО
+        const timestamp = Date.now();
+        const orderWithTimestamp = { ...mappedOrder, _updateTimestamp: timestamp };
+        
+        console.log('[useOrdersData] Быстрое обновление заказа #' + orderId, {
+          counterPrice: mappedOrder.counterPricePerUnit,
+          counterTotal: mappedOrder.counterTotalAmount,
+          timestamp
+        });
+        
+        // 1. Обновляем selectedOrder для модалки
+        setSelectedOrder(orderWithTimestamp);
+        
+        // 2. Обновляем карточку в списке orders
+        setOrders(prevOrders => 
+          prevOrders.map(o => 
+            o.id === mappedOrder.id ? orderWithTimestamp : o
+          )
+        );
       } catch (error) {
         console.error('[useOrdersData] Ошибка быстрого обновления:', error);
       }

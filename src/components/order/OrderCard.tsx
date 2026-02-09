@@ -13,9 +13,6 @@ interface OrderCardProps {
 }
 
 export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder }: OrderCardProps) {
-  // Логируем каждую перерисовку карточки
-  console.log(`[OrderCard] Рендер карточки #${order.id}, counterPrice:`, order.counterPricePerUnit, 'timestamp:', order._updateTimestamp);
-  
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
