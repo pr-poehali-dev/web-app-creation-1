@@ -437,21 +437,20 @@ export function useOrdersData(
       const mappedOrder = mapOrderData(updatedOrderData);
       const updateTimestamp = Date.now();
       
-      // СИНХРОННОЕ обновление: модалка + карточка ОДНОВРЕМЕННО
+      // КРИТИЧНО: создаём ОДИН объект с timestamp для модалки И карточки
       const updatedOrderWithTimestamp = { ...mappedOrder, _updateTimestamp: updateTimestamp };
       
-      // 1. Обновляем selectedOrder (модальное окно)
+      // 1. СРАЗУ обновляем selectedOrder (модальное окно отправителя)
       setSelectedOrder(updatedOrderWithTimestamp);
       
-      // 2. Обновляем этот заказ в массиве orders (карточка)
-      setOrders(prevOrders => {
-        const orderIndex = prevOrders.findIndex(o => o.id === mappedOrder.id);
-        if (orderIndex === -1) return prevOrders;
-        
-        const newOrders = [...prevOrders];
-        newOrders[orderIndex] = updatedOrderWithTimestamp;
-        return newOrders;
-      });
+      // 2. ОДНОВРЕМЕННО обновляем карточку в списке orders
+      setOrders(prevOrders => 
+        prevOrders.map(o => 
+          o.id === mappedOrder.id ? updatedOrderWithTimestamp : o
+        )
+      );
+      
+      console.log('✅ [handleCounterOffer] Обновлены модалка И карточка отправителя синхронно');
       
       // 3. Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
