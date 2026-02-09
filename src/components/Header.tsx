@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
@@ -16,6 +16,68 @@ interface HeaderProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
+
+// Мемоизированный компонент фильтров районов
+const DistrictsFilter = memo(({ 
+  selectedDistricts, 
+  districts, 
+  toggleDistrict, 
+  setSelectedDistricts 
+}: {
+  selectedDistricts: string[];
+  districts: any[];
+  toggleDistrict: (id: string) => void;
+  setSelectedDistricts: (districts: string[]) => void;
+}) => (
+  <div className="hidden md:block border-t py-2">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2 flex-1">
+        <span className="text-xs text-foreground font-bold">Выбранные районы:</span>
+        {selectedDistricts.length === districts.length && districts.length > 0 ? (
+          <Badge
+            variant="default"
+            className="cursor-pointer hover:bg-primary/80 transition-colors text-xs"
+            onClick={() => setSelectedDistricts([])}
+          >
+            Выбраны все районы
+            <Icon name="X" className="ml-1 h-3 w-3" />
+          </Badge>
+        ) : (
+          <>
+            {selectedDistricts.slice(0, 3).map((districtId) => {
+              const district = districts.find(d => d.id === districtId);
+              return (
+                <Badge
+                  key={districtId}
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors text-xs"
+                  onClick={() => toggleDistrict(districtId)}
+                >
+                  {district?.name}
+                  <Icon name="X" className="ml-1 h-3 w-3" />
+                </Badge>
+              );
+            })}
+            {selectedDistricts.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{selectedDistricts.length - 3} ещё
+              </Badge>
+            )}
+          </>
+        )}
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setSelectedDistricts([])}
+        className="shrink-0 h-7 text-xs text-muted-foreground hover:text-destructive"
+      >
+        <Icon name="X" className="h-3 w-3 mr-1" />
+        Сбросить
+      </Button>
+    </div>
+  </div>
+));
 
 export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const location = useLocation();
@@ -306,54 +368,12 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         />
 
         {selectedDistricts.length > 0 && shouldShowDistricts() && (
-          <div className="hidden md:block border-t py-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2 flex-1">
-                <span className="text-xs text-foreground font-bold">Выбранные районы:</span>
-                {selectedDistricts.length === districts.length && districts.length > 0 ? (
-                  <Badge
-                    variant="default"
-                    className="cursor-pointer hover:bg-primary/80 transition-colors text-xs"
-                    onClick={() => setSelectedDistricts([])}
-                  >
-                    Выбраны все районы
-                    <Icon name="X" className="ml-1 h-3 w-3" />
-                  </Badge>
-                ) : (
-                  <>
-                    {selectedDistricts.slice(0, 3).map((districtId) => {
-                      const district = districts.find(d => d.id === districtId);
-                      return (
-                        <Badge
-                          key={districtId}
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors text-xs"
-                          onClick={() => toggleDistrict(districtId)}
-                        >
-                          {district?.name}
-                          <Icon name="X" className="ml-1 h-3 w-3" />
-                        </Badge>
-                      );
-                    })}
-                    {selectedDistricts.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{selectedDistricts.length - 3} ещё
-                      </Badge>
-                    )}
-                  </>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedDistricts([])}
-                className="shrink-0 h-7 text-xs text-muted-foreground hover:text-destructive"
-              >
-                <Icon name="X" className="h-3 w-3 mr-1" />
-                Сбросить
-              </Button>
-            </div>
-          </div>
+          <DistrictsFilter
+            selectedDistricts={selectedDistricts}
+            districts={districts}
+            toggleDistrict={toggleDistrict}
+            setSelectedDistricts={setSelectedDistricts}
+          />
         )}
 
         <HeaderRegionModal

@@ -275,89 +275,29 @@ export function useOrdersData(
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
   // Синхронизируем selectedOrder с актуальными данными из orders
-  // НО: Когда модальное окно открыто, быстрое обновление управляет данными
   useEffect(() => {
-    if (selectedOrder && !isChatOpen) {
+    if (selectedOrder) {
       const actualOrder = orders.find(o => o.id === selectedOrder.id);
-      if (actualOrder && JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
-        console.log('[useOrdersData] Синхронизируем selectedOrder с orders (окно закрыто)');
+      if (actualOrder) {
         setSelectedOrder(actualOrder);
       }
     }
-  }, [orders, selectedOrder?.id, isChatOpen]);
+  }, [orders]);
 
-  // Автообновление при возвращении на страницу
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated) {
-        console.log('[useOrdersData] Страница стала видимой, обновляем заказы');
-        loadOrders(false);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isAuthenticated, loadOrders]);
-
-  // Периодическое автообновление каждые 5 секунд (синхронизировано с DataSync)
+  // ЕДИНСТВЕННЫЙ источник обновления - периодический опрос каждые 3 секунды
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    // Загружаем сразу при монтировании
+    loadOrders(false);
+
+    // И каждые 3 секунды
     const intervalId = setInterval(() => {
-      console.log('[useOrdersData] Периодическое обновление заказов');
       loadOrders(false);
-    }, 5000); // 5 секунд - синхронизировано с DataSync
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
-
-  // Ref для хранения актуального selectedOrder (избегаем stale closure)
-  const selectedOrderRef = useRef(selectedOrder);
-  useEffect(() => {
-    selectedOrderRef.current = selectedOrder;
-  }, [selectedOrder]);
-
-  // Дополнительное быстрое обновление при открытом чате (каждую секунду)
-  useEffect(() => {
-    if (!isAuthenticated || !isChatOpen || !selectedOrderRef.current) return;
-
-    const orderId = selectedOrderRef.current.id;
-    
-    const fastIntervalId = setInterval(async () => {
-      const currentSelectedOrder = selectedOrderRef.current;
-      if (!currentSelectedOrder || currentSelectedOrder.id !== orderId) return;
-      
-      console.log('[useOrdersData] Быстрое обновление открытого заказа:', orderId);
-      try {
-        const updatedOrderData = await ordersAPI.getOrderById(orderId);
-        const mappedOrder = mapOrderData(updatedOrderData);
-        
-        // CRITICAL: Обновляем И selectedOrder И карточку ОДНОВРЕМЕННО
-        const timestamp = Date.now();
-        const orderWithTimestamp = { ...mappedOrder, _updateTimestamp: timestamp };
-        
-        console.log('[useOrdersData] Быстрое обновление заказа #' + orderId, {
-          counterPrice: mappedOrder.counterPricePerUnit,
-          counterTotal: mappedOrder.counterTotalAmount,
-          timestamp
-        });
-        
-        // 1. Обновляем selectedOrder для модалки
-        setSelectedOrder(orderWithTimestamp);
-        
-        // 2. Обновляем карточку в списке orders
-        setOrders(prevOrders => 
-          prevOrders.map(o => 
-            o.id === mappedOrder.id ? orderWithTimestamp : o
-          )
-        );
-      } catch (error) {
-        console.error('[useOrdersData] Ошибка быстрого обновления:', error);
-      }
-    }, 1000); // 1 секунда - мгновенное обновление для активного заказа
-
-    return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrderRef.current?.id]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
@@ -746,7 +686,8 @@ export function useOrdersData(
 
   const handleCloseChat = () => {
     setIsChatOpen(false);
-    setSelectedOrder(null);
+    // НЕ сбрасываем selectedOrder в null, чтобы избежать пропадания карточки
+    // Он автоматически обновится при следующем loadOrders
   };
 
   const handleCancelOrder = async (orderId?: string, reason?: string) => {
