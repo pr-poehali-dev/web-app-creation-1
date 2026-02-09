@@ -280,51 +280,18 @@ export function useOrdersData(
   // Удалено: этот effect вызывал постоянные перерисовки модалки
   // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
 
-  // Умный polling: частая проверка открытого заказа + редкая полная загрузка
+  // Периодическое обновление всех заказов каждые 3 секунды
   useEffect(() => {
     if (!isAuthenticated) return;
 
     loadOrders(false);
 
-    // Полная загрузка всех заказов каждые 10 секунд
-    const fullReloadInterval = setInterval(() => {
+    const intervalId = setInterval(() => {
       loadOrders(false);
-    }, 10000);
+    }, 3000);
 
-    // Быстрая проверка открытого заказа каждую 1 секунду
-    const quickCheckInterval = setInterval(async () => {
-      if (!selectedOrder) return;
-
-      try {
-        const freshOrderData = await ordersAPI.getOrderById(selectedOrder.id);
-        const freshOrder = mapOrderData(freshOrderData);
-
-        // Проверяем updatedAt — если изменился, обновляем
-        const currentUpdatedAt = selectedOrder.updatedAt?.getTime?.() || 0;
-        const freshUpdatedAt = freshOrder.updatedAt?.getTime?.() || 0;
-
-        if (freshUpdatedAt > currentUpdatedAt) {
-          const updateTimestamp = Date.now();
-          const updatedOrderWithTimestamp = { ...freshOrder, _updateTimestamp: updateTimestamp };
-
-          // СИНХРОННОЕ обновление карточки и модалки
-          setSelectedOrder(updatedOrderWithTimestamp);
-          setOrders(prevOrders =>
-            prevOrders.map(o => o.id === freshOrder.id ? updatedOrderWithTimestamp : o)
-          );
-
-          console.log('✅ Заказ', selectedOrder.id, 'обновлён мгновенно (умный polling)');
-        }
-      } catch (err) {
-        console.error('Ошибка быстрой проверки заказа:', err);
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(fullReloadInterval);
-      clearInterval(quickCheckInterval);
-    };
-  }, [isAuthenticated, loadOrders, selectedOrder?.id, mapOrderData]);
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated, loadOrders]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
