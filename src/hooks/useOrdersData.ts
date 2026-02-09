@@ -90,6 +90,7 @@ export function useOrdersData(
       comment: orderData.comment,
       type: orderData.type,
       createdAt: new Date(orderData.createdAt || orderData.created_at),
+      updatedAt: orderData.updatedAt || orderData.updated_at ? new Date(orderData.updatedAt || orderData.updated_at) : undefined,
       acceptedAt: orderData.acceptedAt || orderData.accepted_at ? new Date(orderData.acceptedAt || orderData.accepted_at) : undefined,
       completedDate: orderData.completedDate || orderData.completed_date ? new Date(orderData.completedDate || orderData.completed_date) : undefined,
       cancelledBy: orderData.cancelled_by || orderData.cancelledBy,
@@ -279,18 +280,51 @@ export function useOrdersData(
   // Удалено: этот effect вызывал постоянные перерисовки модалки
   // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
 
-  // Периодический опрос каждые 3 секунды (фоновое обновление)
+  // Умный polling: частая проверка открытого заказа + редкая полная загрузка
   useEffect(() => {
     if (!isAuthenticated) return;
 
     loadOrders(false);
 
-    const intervalId = setInterval(() => {
+    // Полная загрузка всех заказов каждые 10 секунд
+    const fullReloadInterval = setInterval(() => {
       loadOrders(false);
-    }, 3000);
+    }, 10000);
 
-    return () => clearInterval(intervalId);
-  }, [isAuthenticated, loadOrders]);
+    // Быстрая проверка открытого заказа каждую 1 секунду
+    const quickCheckInterval = setInterval(async () => {
+      if (!selectedOrder) return;
+
+      try {
+        const freshOrderData = await ordersAPI.getOrderById(selectedOrder.id);
+        const freshOrder = mapOrderData(freshOrderData);
+
+        // Проверяем updatedAt — если изменился, обновляем
+        const currentUpdatedAt = selectedOrder.updatedAt?.getTime?.() || 0;
+        const freshUpdatedAt = freshOrder.updatedAt?.getTime?.() || 0;
+
+        if (freshUpdatedAt > currentUpdatedAt) {
+          const updateTimestamp = Date.now();
+          const updatedOrderWithTimestamp = { ...freshOrder, _updateTimestamp: updateTimestamp };
+
+          // СИНХРОННОЕ обновление карточки и модалки
+          setSelectedOrder(updatedOrderWithTimestamp);
+          setOrders(prevOrders =>
+            prevOrders.map(o => o.id === freshOrder.id ? updatedOrderWithTimestamp : o)
+          );
+
+          console.log('✅ Заказ', selectedOrder.id, 'обновлён мгновенно (умный polling)');
+        }
+      } catch (err) {
+        console.error('Ошибка быстрой проверки заказа:', err);
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(fullReloadInterval);
+      clearInterval(quickCheckInterval);
+    };
+  }, [isAuthenticated, loadOrders, selectedOrder?.id, mapOrderData]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {

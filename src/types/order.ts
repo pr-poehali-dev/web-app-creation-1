@@ -30,6 +30,7 @@ export interface Order {
   comment?: string;
   status: 'new' | 'pending' | 'accepted' | 'rejected' | 'completed' | 'cancelled' | 'negotiating';
   createdAt: Date;
+  updatedAt?: Date;
   acceptedAt?: Date;
   completedDate?: Date;
   cancelledBy?: 'buyer' | 'seller';
