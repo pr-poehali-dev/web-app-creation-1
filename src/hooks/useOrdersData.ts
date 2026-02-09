@@ -31,8 +31,7 @@ export function useOrdersData(
     audio.play().catch(() => {});
   };
 
-  // Вспомогательная функция для маппинга заказа
-  const mapOrderData = (orderData: any): Order => {
+  const mapOrderData = (orderData: Record<string, unknown>): Order => {
     const counterOfferedAt = orderData.counter_offered_at || orderData.counterOfferedAt 
       ? new Date(orderData.counter_offered_at || orderData.counterOfferedAt) 
       : undefined;
@@ -118,7 +117,7 @@ export function useOrdersData(
       const response = await Promise.race([
         ordersAPI.getAll('all'),
         timeoutPromise
-      ]) as any;
+      ]) as { orders: Record<string, unknown>[] };
       
       const mappedOrders = response.orders.map(mapOrderData);
       
@@ -154,7 +153,7 @@ export function useOrdersData(
     } catch (error) {
       console.error('Error loading orders:', error);
       
-      const errorMessage = error instanceof Error ? error.message : 'Не удалось загрузить заказы';
+      const errorMessage = error instanceof Error ? error.message : String(error || 'Не удалось загрузить заказы');
       
       if (showLoader) {
         toast({
@@ -274,15 +273,8 @@ export function useOrdersData(
     }
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
-  // Синхронизируем selectedOrder с актуальными данными из orders
-  useEffect(() => {
-    if (selectedOrder) {
-      const actualOrder = orders.find(o => o.id === selectedOrder.id);
-      if (actualOrder) {
-        setSelectedOrder(actualOrder);
-      }
-    }
-  }, [orders]);
+  // Удалено: этот effect вызывал постоянные перерисовки модалки
+  // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
 
   // ЕДИНСТВЕННЫЙ источник обновления - периодический опрос каждые 3 секунды
   useEffect(() => {
@@ -386,7 +378,7 @@ export function useOrdersData(
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderToAccept);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error accepting order:', error);
       
       // В случае ошибки откатываем изменения
@@ -437,66 +429,29 @@ export function useOrdersData(
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
       });
 
-      // Небольшая задержка чтобы дать серверу обновить БД
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Получаем обновлённый заказ напрямую из API и маппим его
+      // Получаем обновлённый заказ напрямую из API
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
       const mappedOrder = mapOrderData(updatedOrderData);
       
-      console.log('[handleCounterOffer] Обновлённый заказ с сервера:', {
-        id: mappedOrder.id,
-        counterPrice: mappedOrder.counterPricePerUnit,
-        counterTotal: mappedOrder.counterTotalAmount
-      });
-      
-      // НЕМЕДЛЕННО обновляем selectedOrder (модальное окно)
+      // Обновляем selectedOrder (модальное окно)
       setSelectedOrder(mappedOrder);
       
-      // НЕМЕДЛЕННО обновляем этот заказ в массиве orders (карточка на странице)
+      // Обновляем этот заказ в массиве orders (карточка)
       setOrders(prevOrders => {
-        console.log('[handleCounterOffer] Обновляем orders, текущий размер:', prevOrders.length);
-        console.log('[handleCounterOffer] Ищем заказ ID:', mappedOrder.id);
-        
         const orderIndex = prevOrders.findIndex(o => o.id === mappedOrder.id);
-        console.log('[handleCounterOffer] Индекс заказа в массиве:', orderIndex);
-        
-        if (orderIndex === -1) {
-          console.warn('[handleCounterOffer] ⚠️ Заказ НЕ найден в массиве orders!');
-          return prevOrders;
-        }
+        if (orderIndex === -1) return prevOrders;
         
         const newOrders = [...prevOrders];
-        newOrders[orderIndex] = { 
-          ...mappedOrder, 
-          _updateTimestamp: Date.now() 
-        };
-        
-        console.log('[handleCounterOffer] ✅ Заказ обновлен в orders[' + orderIndex + ']');
-        console.log('[handleCounterOffer] Новые данные:', {
-          id: newOrders[orderIndex].id,
-          counterPrice: newOrders[orderIndex].counterPricePerUnit,
-          counterTotal: newOrders[orderIndex].counterTotalAmount,
-          timestamp: newOrders[orderIndex]._updateTimestamp
-        });
-        
+        newOrders[orderIndex] = { ...mappedOrder, _updateTimestamp: Date.now() };
         return newOrders;
       });
       
-      console.log('✅ Локальное обновление завершено (модальное окно + карточка отправителя)');
-      
-      // Триггер для немедленного обновления у контрагента
-      const triggerData = JSON.stringify({
+      // Триггер для обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
         orderId: selectedOrder.id
-      });
-      
-      localStorage.setItem('force_orders_reload', triggerData);
-      
-      // CRITICAL: Принудительно вызываем storage event для обновления в другой вкладке контрагента
+      }));
       window.dispatchEvent(new Event('storage'));
-      
-      console.log('🔔 Отправлен триггер обновления для контрагента, orderId:', selectedOrder.id);
       
       // Уведомляем систему об обновлении заказа (для dataSync)
       notifyOrderUpdated(selectedOrder.id);
@@ -782,7 +737,7 @@ export function useOrdersData(
       
       // Обновляем список заказов после публикации отзыва
       await loadOrders(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting review:', error);
       toast({
         title: 'Ошибка',
