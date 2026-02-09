@@ -148,15 +148,6 @@ export function useOrdersData(
       
       setOrders(ordersWithTimestamp);
       
-      // КРИТИЧНО: Если открыто модальное окно - обновляем его данными из свежего списка
-      if (selectedOrder) {
-        const freshOrder = ordersWithTimestamp.find(o => o.id === selectedOrder.id);
-        if (freshOrder) {
-          setSelectedOrder(freshOrder);
-          console.log('[loadOrders] ✅ Обновлено открытое модальное окно:', freshOrder.id);
-        }
-      }
-      
       if (isInitialLoad) {
         setIsInitialLoad(false);
       }
@@ -182,7 +173,7 @@ export function useOrdersData(
         setIsSyncing(false);
       }
     }
-  }, [isInitialLoad, toast, selectedOrder]);
+  }, [isInitialLoad, toast]);
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -255,13 +246,10 @@ export function useOrdersData(
           );
           
           // 2. СИНХРОННО обновляем selectedOrder если модалка открыта для этого заказа
-          setSelectedOrder(prev => {
-            if (prev?.id === mappedOrder.id) {
-              console.log('✅ Модальное окно обновлено синхронно с карточкой');
-              return updatedOrderWithTimestamp;
-            }
-            return prev;
-          });
+          if (selectedOrder?.id === mappedOrder.id) {
+            setSelectedOrder(updatedOrderWithTimestamp);
+            console.log('✅ Модальное окно обновлено синхронно с карточкой');
+          }
           
           console.log('✅ Заказ', triggerData.orderId, 'обновлен мгновенно');
         } catch (err) {
