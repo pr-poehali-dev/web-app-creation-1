@@ -218,28 +218,31 @@ export function useOrdersData(
         }
       }
       
-      // Если есть конкретный orderId - обновляем только его
+      // Если есть конкретный orderId - МГНОВЕННОЕ обновление только этого заказа
       if (triggerData?.orderId) {
         console.log('🎯 Точечное обновление заказа:', triggerData.orderId);
         try {
           const updatedOrderData = await ordersAPI.getOrderById(triggerData.orderId);
           const mappedOrder = mapOrderData(updatedOrderData);
+          const updateTimestamp = Date.now();
           
-          // Обновляем этот заказ в массиве с timestamp для гарантированного ререндера
+          // КРИТИЧНО: используем ОДИНАКОВЫЙ объект с timestamp для карточки И модалки
+          const updatedOrderWithTimestamp = { ...mappedOrder, _updateTimestamp: updateTimestamp };
+          
+          // 1. Обновляем этот заказ в массиве orders (карточка на странице)
           setOrders(prevOrders => 
             prevOrders.map(o => 
-              o.id === mappedOrder.id 
-                ? { ...mappedOrder, _updateTimestamp: Date.now() } 
-                : o
+              o.id === mappedOrder.id ? updatedOrderWithTimestamp : o
             )
           );
           
-          // Если это открытый заказ - обновляем selectedOrder
+          // 2. СИНХРОННО обновляем selectedOrder если модалка открыта для этого заказа
           if (selectedOrder?.id === mappedOrder.id) {
-            setSelectedOrder(mappedOrder);
+            setSelectedOrder(updatedOrderWithTimestamp);
+            console.log('✅ Модальное окно обновлено синхронно с карточкой');
           }
           
-          console.log('✅ Заказ обновлен мгновенно');
+          console.log('✅ Заказ', triggerData.orderId, 'обновлен мгновенно у контрагента');
         } catch (err) {
           console.error('Ошибка точечного обновления, загружаем все:', err);
           await loadOrders(false);
@@ -276,14 +279,12 @@ export function useOrdersData(
   // Удалено: этот effect вызывал постоянные перерисовки модалки
   // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
 
-  // ЕДИНСТВЕННЫЙ источник обновления - периодический опрос каждые 3 секунды
+  // Периодический опрос каждые 3 секунды (фоновое обновление)
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Загружаем сразу при монтировании
     loadOrders(false);
 
-    // И каждые 3 секунды
     const intervalId = setInterval(() => {
       loadOrders(false);
     }, 3000);
@@ -369,10 +370,11 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
-      // Триггер для немедленного обновления у контрагента
+      // Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
-        orderId: orderToAccept
+        orderId: orderToAccept,
+        action: 'accept'
       }));
       window.dispatchEvent(new Event('storage'));
       
@@ -432,24 +434,29 @@ export function useOrdersData(
       // Получаем обновлённый заказ напрямую из API
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
       const mappedOrder = mapOrderData(updatedOrderData);
+      const updateTimestamp = Date.now();
       
-      // Обновляем selectedOrder (модальное окно)
-      setSelectedOrder(mappedOrder);
+      // СИНХРОННОЕ обновление: модалка + карточка ОДНОВРЕМЕННО
+      const updatedOrderWithTimestamp = { ...mappedOrder, _updateTimestamp: updateTimestamp };
       
-      // Обновляем этот заказ в массиве orders (карточка)
+      // 1. Обновляем selectedOrder (модальное окно)
+      setSelectedOrder(updatedOrderWithTimestamp);
+      
+      // 2. Обновляем этот заказ в массиве orders (карточка)
       setOrders(prevOrders => {
         const orderIndex = prevOrders.findIndex(o => o.id === mappedOrder.id);
         if (orderIndex === -1) return prevOrders;
         
         const newOrders = [...prevOrders];
-        newOrders[orderIndex] = { ...mappedOrder, _updateTimestamp: Date.now() };
+        newOrders[orderIndex] = updatedOrderWithTimestamp;
         return newOrders;
       });
       
-      // Триггер для обновления у контрагента
+      // 3. Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
-        timestamp: Date.now(),
-        orderId: selectedOrder.id
+        timestamp: updateTimestamp,
+        orderId: selectedOrder.id,
+        action: 'counter_offer'
       }));
       window.dispatchEvent(new Event('storage'));
       
@@ -498,10 +505,11 @@ export function useOrdersData(
         description: 'Заказ переведён в статус "Принято"',
       });
 
-      // Триггер для немедленного обновления у контрагента
+      // Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
-        orderId: orderId
+        orderId: orderId,
+        action: 'accept_counter'
       }));
       window.dispatchEvent(new Event('storage'));
 
@@ -558,10 +566,11 @@ export function useOrdersData(
         onTabChange('archive');
       }
       
-      // Триггер для немедленного обновления у контрагента
+      // Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
-        orderId: orderToComplete
+        orderId: orderToComplete,
+        action: 'complete'
       }));
       window.dispatchEvent(new Event('storage'));
       
@@ -686,6 +695,14 @@ export function useOrdersData(
         description: 'Заказ успешно отменён',
       });
 
+      // Триггер для МГНОВЕННОГО обновления у контрагента
+      localStorage.setItem('force_orders_reload', JSON.stringify({
+        timestamp: Date.now(),
+        orderId: orderToCancel,
+        action: 'cancel'
+      }));
+      window.dispatchEvent(new Event('storage'));
+
       // Закрываем модалку
       setIsChatOpen(false);
       
@@ -695,8 +712,6 @@ export function useOrdersData(
           onTabChange('archive');
         }
       }, 100);
-      
-      // notifyOrderUpdated уже триггерит обновление через событие order_updated (вызвано выше)
     } catch (error) {
       console.error('Error cancelling order:', error);
       
