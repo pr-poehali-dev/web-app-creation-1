@@ -124,6 +124,15 @@ export function useOrdersData(
       
       // Логируем встречные цены для отладки
       const ordersWithCounter = mappedOrders.filter((o: Order) => o.counterPricePerUnit);
+      
+      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами + timestamp
+      // чтобы React гарантированно обнаружил изменения и перерисовал карточки
+      const timestamp = Date.now();
+      const ordersWithTimestamp = mappedOrders.map((order, index) => ({ 
+        ...order, 
+        _updateTimestamp: timestamp + index // Уникальный timestamp для каждого заказа
+      }));
+      
       if (ordersWithCounter.length > 0) {
         console.log('[loadOrders] Заказы со встречными ценами:', ordersWithCounter.map((o: Order) => ({
           id: o.id,
@@ -134,15 +143,10 @@ export function useOrdersData(
           counterAt: o.counterOfferedAt,
           hasUnread: o.hasUnreadCounterOffer
         })));
+        console.log('[loadOrders] 🔄 Установлен новый _updateTimestamp:', timestamp);
       }
       
-      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами + timestamp
-      // чтобы React гарантированно обнаружил изменения и перерисовал карточки
-      const timestamp = Date.now();
-      setOrders(mappedOrders.map((order, index) => ({ 
-        ...order, 
-        _updateTimestamp: timestamp + index // Уникальный timestamp для каждого заказа
-      })));
+      setOrders(ordersWithTimestamp);
       
       if (isInitialLoad) {
         setIsInitialLoad(false);
@@ -271,94 +275,29 @@ export function useOrdersData(
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
   // Синхронизируем selectedOrder с актуальными данными из orders
-  // НО: Когда модальное окно открыто, быстрое обновление управляет данными
   useEffect(() => {
-    if (selectedOrder && !isChatOpen) {
+    if (selectedOrder) {
       const actualOrder = orders.find(o => o.id === selectedOrder.id);
-      if (actualOrder && JSON.stringify(actualOrder) !== JSON.stringify(selectedOrder)) {
-        console.log('[useOrdersData] Синхронизируем selectedOrder с orders (окно закрыто)');
+      if (actualOrder) {
         setSelectedOrder(actualOrder);
       }
     }
-  }, [orders, selectedOrder?.id, isChatOpen]);
+  }, [orders]);
 
-  // Автообновление при возвращении на страницу
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && isAuthenticated) {
-        console.log('[useOrdersData] Страница стала видимой, обновляем заказы');
-        loadOrders(false);
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [isAuthenticated, loadOrders]);
-
-  // Периодическое автообновление каждые 3 секунды для очень быстрой синхронизации встречных предложений
+  // ЕДИНСТВЕННЫЙ источник обновления - периодический опрос каждые 3 секунды
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    // Загружаем сразу при монтировании
+    loadOrders(false);
+
+    // И каждые 3 секунды
     const intervalId = setInterval(() => {
-      console.log('[useOrdersData] Периодическое обновление заказов');
       loadOrders(false);
-    }, 3000); // 3 секунды - очень быстрое обновление для встречных предложений
+    }, 3000);
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
-
-  // Ref для хранения актуального selectedOrder (избегаем stale closure)
-  const selectedOrderRef = useRef(selectedOrder);
-  useEffect(() => {
-    selectedOrderRef.current = selectedOrder;
-  }, [selectedOrder]);
-
-  // Дополнительное быстрое обновление при открытом чате (каждую секунду)
-  useEffect(() => {
-    if (!isAuthenticated || !isChatOpen || !selectedOrderRef.current) return;
-
-    const orderId = selectedOrderRef.current.id;
-    
-    const fastIntervalId = setInterval(async () => {
-      const currentSelectedOrder = selectedOrderRef.current;
-      if (!currentSelectedOrder || currentSelectedOrder.id !== orderId) return;
-      
-      console.log('[useOrdersData] Быстрое обновление открытого заказа:', orderId);
-      try {
-        const updatedOrderData = await ordersAPI.getOrderById(orderId);
-        const mappedOrder = mapOrderData(updatedOrderData);
-        
-        // Обновляем только если данные действительно изменились
-        const current = selectedOrderRef.current;
-        if (!current || JSON.stringify(mappedOrder) !== JSON.stringify(current)) {
-          console.log('[useOrdersData] Быстрое обновление: данные изменились', {
-            counterPrice: mappedOrder.counterPricePerUnit,
-            counterTotal: mappedOrder.counterTotalAmount,
-            prevCounterPrice: current?.counterPricePerUnit,
-            prevCounterTotal: current?.counterTotalAmount
-          });
-          
-          // Обновляем selectedOrder
-          setSelectedOrder(mappedOrder);
-          
-          // Также обновляем этот заказ в массиве orders для обновления карточки
-          setOrders(prevOrders => {
-            const updated = prevOrders.map(o => 
-              o.id === mappedOrder.id 
-                ? { ...mappedOrder, _updateTimestamp: Date.now() } 
-                : o
-            );
-            console.log('[useOrdersData] Обновлён заказ в массиве orders');
-            return updated;
-          });
-        }
-      } catch (error) {
-        console.error('[useOrdersData] Ошибка быстрого обновления:', error);
-      }
-    }, 1000); // 1 секунда - мгновенное обновление для активного заказа
-
-    return () => clearInterval(fastIntervalId);
-  }, [isAuthenticated, isChatOpen, selectedOrderRef.current?.id]);
 
   // Сбрасываем состояние при выходе из системы
   useEffect(() => {
@@ -747,7 +686,8 @@ export function useOrdersData(
 
   const handleCloseChat = () => {
     setIsChatOpen(false);
-    setSelectedOrder(null);
+    // НЕ сбрасываем selectedOrder в null, чтобы избежать пропадания карточки
+    // Он автоматически обновится при следующем loadOrders
   };
 
   const handleCancelOrder = async (orderId?: string, reason?: string) => {
