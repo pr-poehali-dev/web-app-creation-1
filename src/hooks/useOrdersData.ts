@@ -124,15 +124,6 @@ export function useOrdersData(
       
       // Логируем встречные цены для отладки
       const ordersWithCounter = mappedOrders.filter((o: Order) => o.counterPricePerUnit);
-      
-      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами + timestamp
-      // чтобы React гарантированно обнаружил изменения и перерисовал карточки
-      const timestamp = Date.now();
-      const ordersWithTimestamp = mappedOrders.map((order, index) => ({ 
-        ...order, 
-        _updateTimestamp: timestamp + index // Уникальный timestamp для каждого заказа
-      }));
-      
       if (ordersWithCounter.length > 0) {
         console.log('[loadOrders] Заказы со встречными ценами:', ordersWithCounter.map((o: Order) => ({
           id: o.id,
@@ -143,10 +134,15 @@ export function useOrdersData(
           counterAt: o.counterOfferedAt,
           hasUnread: o.hasUnreadCounterOffer
         })));
-        console.log('[loadOrders] 🔄 Установлен новый _updateTimestamp:', timestamp);
       }
       
-      setOrders(ordersWithTimestamp);
+      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами + timestamp
+      // чтобы React гарантированно обнаружил изменения и перерисовал карточки
+      const timestamp = Date.now();
+      setOrders(mappedOrders.map((order, index) => ({ 
+        ...order, 
+        _updateTimestamp: timestamp + index // Уникальный timestamp для каждого заказа
+      })));
       
       if (isInitialLoad) {
         setIsInitialLoad(false);
