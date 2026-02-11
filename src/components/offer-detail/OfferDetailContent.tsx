@@ -177,6 +177,11 @@ export default function OfferDetailContent({
                 deliveryTime={offer.deliveryTime}
                 deliveryPeriodStart={offer.deliveryPeriodStart}
                 deliveryPeriodEnd={offer.deliveryPeriodEnd}
+                deadlineStart={offer.deadlineStart}
+                deadlineEnd={offer.deadlineEnd}
+                negotiableDeadline={offer.negotiableDeadline}
+                budget={offer.budget}
+                negotiableBudget={offer.negotiableBudget}
               />
             </div>
           </div>
@@ -253,6 +258,11 @@ export default function OfferDetailContent({
                 deliveryTime={offer.deliveryTime}
                 deliveryPeriodStart={offer.deliveryPeriodStart}
                 deliveryPeriodEnd={offer.deliveryPeriodEnd}
+                deadlineStart={offer.deadlineStart}
+                deadlineEnd={offer.deadlineEnd}
+                negotiableDeadline={offer.negotiableDeadline}
+                budget={offer.budget}
+                negotiableBudget={offer.negotiableBudget}
               />
             </div>
           </div>

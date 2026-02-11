@@ -33,6 +33,11 @@ interface OfferInfoCardProps {
   deliveryTime?: string;
   deliveryPeriodStart?: Date | string;
   deliveryPeriodEnd?: Date | string;
+  deadlineStart?: string;
+  deadlineEnd?: string;
+  negotiableDeadline?: boolean;
+  budget?: number;
+  negotiableBudget?: boolean;
 }
 
 export default function OfferInfoCard({
@@ -60,7 +65,13 @@ export default function OfferInfoCard({
   deliveryTime,
   deliveryPeriodStart,
   deliveryPeriodEnd,
+  deadlineStart,
+  deadlineEnd,
+  negotiableDeadline,
+  budget,
+  negotiableBudget,
 }: OfferInfoCardProps) {
+  const isService = category === 'utilities';
   const { districts } = useDistrict();
   
   // Найти название категории
@@ -88,7 +99,7 @@ export default function OfferInfoCard({
   // Извлечь только адрес из location (убрать "г. Город," если есть)
   const getCleanAddress = (loc: string) => {
     return loc
-      .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё\-]+,?\s*/, '')
+      .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё-]+,?\s*/, '')
       .replace(/улица/gi, 'ул.')
       .trim();
   };
@@ -126,26 +137,61 @@ export default function OfferInfoCard({
         </div>
 
         {/* Основная информация - всегда видна */}
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Доступно сейчас:</p>
-            <p className="font-semibold">{remainingQuantity} {unit}</p>
-            {remainingQuantity < quantity && (
-              <p className="text-xs text-muted-foreground">Всего: {quantity} {unit}</p>
+        {isService ? (
+          <div className="space-y-3">
+            {deadlineStart && deadlineEnd && (
+              <div>
+                <p className="text-xs text-muted-foreground">Срок работы:</p>
+                <p className="font-semibold text-sm">
+                  {new Date(deadlineStart).toLocaleDateString('ru-RU')} - {new Date(deadlineEnd).toLocaleDateString('ru-RU')}
+                </p>
+              </div>
             )}
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Цена за единицу:</p>
-            <div className="flex items-center gap-2">
-              <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
-              {noNegotiation && (
-                <Badge variant="secondary" className="text-[10px] h-5">
-                  Без торга
+            {negotiableDeadline && (
+              <div>
+                <p className="text-xs text-muted-foreground">Срок работы:</p>
+                <Badge variant="secondary" className="text-xs">
+                  Ваши предложения
                 </Badge>
-              )}
+              </div>
+            )}
+            <div>
+              <p className="text-xs text-muted-foreground">Бюджет:</p>
+              <div className="flex items-center gap-2">
+                {budget ? (
+                  <p className="font-semibold text-lg">{budget.toLocaleString('ru-RU')} ₽</p>
+                ) : negotiableBudget ? (
+                  <Badge variant="secondary" className="text-xs">
+                    Ваши предложения
+                  </Badge>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Не указан</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <p className="text-xs text-muted-foreground">Доступно сейчас:</p>
+              <p className="font-semibold">{remainingQuantity} {unit}</p>
+              {remainingQuantity < quantity && (
+                <p className="text-xs text-muted-foreground">Всего: {quantity} {unit}</p>
+              )}
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Цена за единицу:</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+                {noNegotiation && (
+                  <Badge variant="secondary" className="text-[10px] h-5">
+                    Без торга
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {minOrderQuantity && (
           <div className="bg-orange-500/10 border border-orange-500/20 p-2.5 rounded-md">

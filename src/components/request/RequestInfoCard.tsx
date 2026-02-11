@@ -26,9 +26,15 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     availableDistricts,
     createdAt,
     expiryDate,
-    responsesCount
+    responsesCount,
+    deadlineStart,
+    deadlineEnd,
+    negotiableDeadline,
+    budget,
+    negotiableBudget
   } = request;
   
+  const isService = category === 'utilities';
   const totalAmount = pricePerUnit * quantity;
   return (
     <Card className="mb-3">
@@ -42,23 +48,60 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
         </div>
 
         {/* Основная информация - всегда видна */}
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Количество</p>
-            <p className="font-semibold">{quantity} {unit}</p>
+        {isService ? (
+          <div className="space-y-3">
+            {deadlineStart && deadlineEnd && (
+              <div>
+                <p className="text-xs text-muted-foreground">Срок работы</p>
+                <p className="font-semibold text-sm">
+                  {new Date(deadlineStart).toLocaleDateString('ru-RU')} - {new Date(deadlineEnd).toLocaleDateString('ru-RU')}
+                </p>
+              </div>
+            )}
+            {negotiableDeadline && (
+              <div>
+                <p className="text-xs text-muted-foreground">Срок работы</p>
+                <Badge variant="secondary" className="text-xs">
+                  Ваши предложения
+                </Badge>
+              </div>
+            )}
+            <div className="bg-primary/5 p-2 rounded-md">
+              <p className="text-xs text-muted-foreground mb-0.5">Бюджет</p>
+              {budget ? (
+                <p className="text-xl font-bold text-primary">
+                  {budget.toLocaleString('ru-RU')} ₽
+                </p>
+              ) : negotiableBudget ? (
+                <Badge variant="secondary" className="text-sm">
+                  Ваши предложения
+                </Badge>
+              ) : (
+                <p className="text-sm text-muted-foreground">Не указан</p>
+              )}
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Цена за {unit}</p>
-            <p className="font-semibold">{pricePerUnit?.toLocaleString('ru-RU') || '0'} ₽</p>
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <p className="text-xs text-muted-foreground">Количество</p>
+                <p className="font-semibold">{quantity} {unit}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Цена за {unit}</p>
+                <p className="font-semibold">{pricePerUnit?.toLocaleString('ru-RU') || '0'} ₽</p>
+              </div>
+            </div>
 
-        <div className="bg-primary/5 p-2 rounded-md">
-          <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
-          <p className="text-xl font-bold text-primary">
-            {totalAmount?.toLocaleString('ru-RU') || '0'} ₽
-          </p>
-        </div>
+            <div className="bg-primary/5 p-2 rounded-md">
+              <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
+              <p className="text-xl font-bold text-primary">
+                {totalAmount?.toLocaleString('ru-RU') || '0'} ₽
+              </p>
+            </div>
+          </>
+        )}
 
         {/* Дополнительная информация в аккордеоне */}
         <Accordion type="single" collapsible className="w-full">

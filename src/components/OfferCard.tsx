@@ -232,38 +232,18 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               </div>
             </>
           ) : (
-            <>
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground text-xs">Доступно:</span>
-                <span className="font-medium text-xs">
-                  {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
-                  {(offer.soldQuantity || 0) > 0 && (
-                    <span className="text-muted-foreground ml-1">
-                      (из {offer.quantity})
-                    </span>
-                  )}
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="flex flex-col items-end gap-0.5 w-full">
+                <span className="font-bold text-primary text-lg">
+                  {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
                 </span>
+                {offer.noNegotiation && (
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                    Без торга
+                  </Badge>
+                )}
               </div>
-              {offer.minOrderQuantity && (
-                <div className="flex items-baseline justify-between">
-                  <span className="text-muted-foreground text-xs">Мин. заказ:</span>
-                  <span className="font-medium text-xs">{offer.minOrderQuantity} {offer.unit}</span>
-                </div>
-              )}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground text-xs">Цена за единицу:</span>
-                <div className="flex flex-col items-end gap-0.5">
-                  <span className="font-bold text-primary text-base">
-                    {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-                  </span>
-                  {offer.noNegotiation && (
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                      Без торга
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </>
+            </div>
           )}
         </div>
 
