@@ -102,8 +102,9 @@ def handler(event: dict, context) -> dict:
         
         print(f"DEBUG: org_status = '{org_status}', user_type = '{user_type}'")
         
-        # Проверка статуса организации
-        if org_status and org_status != 'ACTIVE':
+        # Для юрлиц проверяем статус организации
+        # Для ИП и самозанятых НЕ проверяем статус (ИНН физлица остается после ликвидации ИП)
+        if user_type == 'legal-entity' and org_status and org_status != 'ACTIVE':
             status_messages = {
                 'LIQUIDATED': 'ИНН принадлежит ликвидированной организации',
                 'LIQUIDATING': 'Организация находится в процессе ликвидации',
