@@ -20,6 +20,7 @@ interface RequestDeliverySectionProps {
     deliveryAddress: string;
     gpsCoordinates: string;
     availableDistricts: string[];
+    category?: string;
   };
   districts: District[];
   onInputChange: (field: string, value: string) => void;
@@ -32,10 +33,33 @@ export default function RequestDeliverySection({
   onInputChange,
   onDistrictToggle,
 }: RequestDeliverySectionProps) {
+  const isService = formData.category === 'utilities';
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
   const [isDistrictsOpen, setIsDistrictsOpen] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [allDistrictsSelected, setAllDistrictsSelected] = useState(false);
+
+  useEffect(() => {
+    const allSelected = districts.filter(d => d.id !== 'all').every(d => formData.availableDistricts.includes(d.id));
+    setAllDistrictsSelected(allSelected);
+  }, [formData.availableDistricts, districts]);
+
+  const handleAllDistrictsToggle = () => {
+    if (allDistrictsSelected) {
+      districts.filter(d => d.id !== 'all').forEach(d => {
+        if (formData.availableDistricts.includes(d.id)) {
+          onDistrictToggle(d.id);
+        }
+      });
+    } else {
+      districts.filter(d => d.id !== 'all').forEach(d => {
+        if (!formData.availableDistricts.includes(d.id)) {
+          onDistrictToggle(d.id);
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     const selectedDistrict = districts.find(d => d.id === formData.district);
@@ -67,9 +91,9 @@ export default function RequestDeliverySection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Адрес доставки</CardTitle>
+        <CardTitle>{isService ? 'Адрес оказания услуг' : 'Адрес доставки'}</CardTitle>
         <CardDescription>
-          Укажите куда нужно доставить товар или оказать услугу
+          {isService ? 'Укажите район, где нужно оказать услугу' : 'Укажите куда нужно доставить товар'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -114,7 +138,7 @@ export default function RequestDeliverySection({
 
         <div className="relative">
           <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-            <Label htmlFor="deliveryAddress">Точный адрес доставки *</Label>
+            <Label htmlFor="deliveryAddress">{isService ? 'Точный адрес (необязательно)' : 'Точный адрес доставки *'}</Label>
             <Button
               type="button"
               variant="outline"
@@ -134,7 +158,7 @@ export default function RequestDeliverySection({
               onInputChange('deliveryAddress', e.target.value);
             }}
             placeholder="Населенный пункт, улица, дом, офис, подъезд"
-            required
+            required={!isService}
             className="text-xs"
           />
           {filteredSettlements.length > 0 && (
@@ -160,7 +184,7 @@ export default function RequestDeliverySection({
 
         <Collapsible open={isDistrictsOpen} onOpenChange={setIsDistrictsOpen}>
           <div className="flex items-center gap-2 flex-wrap mb-3">
-            <Label>Принимаются отклики из регионов</Label>
+            <Label>Принимаются отклики из районов</Label>
             <CollapsibleTrigger asChild>
               <Button 
                 variant="outline" 
@@ -190,6 +214,21 @@ export default function RequestDeliverySection({
             })}
           </div>
           <CollapsibleContent>
+            <div className="mb-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="all-districts"
+                  checked={allDistrictsSelected}
+                  onCheckedChange={handleAllDistrictsToggle}
+                />
+                <label
+                  htmlFor="all-districts"
+                  className="text-sm font-bold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Все районы
+                </label>
+              </div>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
               {districts.map(district => (
                 <div key={district.id} className="flex items-center space-x-2">

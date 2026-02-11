@@ -285,6 +285,7 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                 deliveryAddress: formData.deliveryAddress,
                 gpsCoordinates: formData.gpsCoordinates,
                 availableDistricts: formData.availableDistricts,
+                category: formData.category,
               }}
               districts={districts}
               onInputChange={handleInputChange}
