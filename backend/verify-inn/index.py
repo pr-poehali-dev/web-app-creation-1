@@ -87,15 +87,23 @@ def handler(event: dict, context) -> dict:
             }
         
         org_data = suggestions[0].get('data', {})
-        org_name = org_data.get('name', {}).get('full_with_opf', '')
+        
+        # Debug: выводим структуру данных для анализа
+        print(f"DEBUG: org_data keys: {list(org_data.keys())}")
+        print(f"DEBUG: state field: {org_data.get('state')}")
+        
+        org_name = org_data.get('name', {}).get('full_with_opf', '') if org_data.get('name') else ''
         org_inn = org_data.get('inn', '')
         org_ogrn = org_data.get('ogrn', '')
         org_ogrnip = org_data.get('ogrnip', '')
         state_data = org_data.get('state')
-        org_status = state_data.get('status', '') if state_data else ''
-        org_address = org_data.get('address', {}).get('value', '')
+        org_status = state_data.get('status', '') if isinstance(state_data, dict) and state_data else ''
+        org_address = org_data.get('address', {}).get('value', '') if org_data.get('address') else ''
         
-        # Проверка статуса организации (только если есть информация о статусе)
+        print(f"DEBUG: org_status = '{org_status}', user_type = '{user_type}'")
+        
+        # Проверка статуса только для юрлиц и ИП (не для самозанятых)
+        # Для самозанятых физлиц может не быть поля state
         if org_status and org_status != 'ACTIVE':
             return {
                 'statusCode': 400,
