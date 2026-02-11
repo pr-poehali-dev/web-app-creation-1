@@ -111,9 +111,10 @@ export const useProfileForm = (
     try {
       const typeChanged = formData.userType !== currentUser?.userType;
       const needsVerification = ['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || '');
+      const innChanged = formData.inn !== currentUser?.inn;
       
-      // Если изменился тип на тот, который требует верификации, проверяем ИНН
-      if (typeChanged && needsVerification && formData.inn) {
+      // Проверяем ИНН если: 1) тип требует верификации И 2) (изменился тип ИЛИ изменился ИНН)
+      if (needsVerification && formData.inn && (typeChanged || innChanged)) {
         try {
           const response = await fetch('https://functions.poehali.dev/966b73dd-99eb-4b00-aef4-ed100a06f958', {
             method: 'POST',
@@ -132,7 +133,6 @@ export const useProfileForm = (
           const result = await response.json();
 
           if (!response.ok) {
-            // Проверяем, есть ли детали о несоответствии ФИО
             let errorMessage = result.error || 'Не удалось проверить ИНН через ФНС';
             let errorTitle = 'Ошибка проверки ИНН';
             
@@ -148,10 +148,10 @@ export const useProfileForm = (
               duration: 10000,
             });
             setIsSaving(false);
+            setIsEditing(true);
             return;
           }
 
-          // Автозаполнение данных из ФНС
           if (result.verified) {
             toast({
               title: 'ИНН проверен',
@@ -165,6 +165,7 @@ export const useProfileForm = (
             variant: 'destructive',
           });
           setIsSaving(false);
+          setIsEditing(true);
           return;
         }
       }
