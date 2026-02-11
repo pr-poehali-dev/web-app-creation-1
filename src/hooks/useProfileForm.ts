@@ -92,22 +92,8 @@ export const useProfileForm = (
     
     if (!validation.isValid) return;
 
-    const updatedUser = {
-      ...currentUser,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      middleName: formData.middleName,
-      phone: formData.phone,
-      userType: formData.userType || currentUser?.userType,
-      inn: formData.inn,
-      ogrnip: formData.ogrnip,
-      companyName: formData.companyName,
-      ogrn: formData.ogrn,
-    };
-
-    setCurrentUser(updatedUser);
-    setIsEditing(false);
     setIsSaving(true);
+    
     try {
       const typeChanged = formData.userType !== currentUser?.userType;
       const needsVerification = ['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || '');
@@ -139,6 +125,8 @@ export const useProfileForm = (
             if (result.details) {
               errorTitle = '❌ ФИО не совпадает с владельцем ИНН';
               errorMessage = `Ваши данные в профиле:\n${result.details.profile_fio}\n\nВладелец ИНН по данным ФНС:\n${result.details.inn_fio}\n\n💡 Исправьте ФИО в профиле, чтобы оно совпадало с данными ФНС, или используйте ИНН на свое имя.`;
+            } else if (result.error && result.error.includes('не совпадает')) {
+              errorTitle = '❌ ФИО не совпадает с владельцем ИНН';
             }
             
             toast({
@@ -148,7 +136,6 @@ export const useProfileForm = (
               duration: 10000,
             });
             setIsSaving(false);
-            setIsEditing(true);
             return;
           }
 
@@ -165,10 +152,22 @@ export const useProfileForm = (
             variant: 'destructive',
           });
           setIsSaving(false);
-          setIsEditing(true);
           return;
         }
       }
+
+      const updatedUser = {
+        ...currentUser,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        middleName: formData.middleName,
+        phone: formData.phone,
+        userType: formData.userType || currentUser?.userType,
+        inn: formData.inn,
+        ogrnip: formData.ogrnip,
+        companyName: formData.companyName,
+        ogrn: formData.ogrn,
+      };
 
       if (typeChanged && needsVerification) {
         const finalUser = { ...updatedUser, isVerified: false };
@@ -176,8 +175,10 @@ export const useProfileForm = (
         setCurrentUser(finalUser);
       } else {
         updateUser(updatedUser);
+        setCurrentUser(updatedUser);
       }
       
+      setIsEditing(false);
       toast({
         title: '✅ Профиль сохранен!',
         description: typeChanged && needsVerification
@@ -186,8 +187,6 @@ export const useProfileForm = (
         duration: 2000,
       });
     } catch (error) {
-      setIsEditing(true);
-      setCurrentUser(currentUser);
       toast({
         title: 'Ошибка',
         description: 'Не удалось обновить профиль',
