@@ -91,7 +91,7 @@ export default function RequestDeliverySection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{isService ? 'Адрес оказания услуг' : 'Адрес доставки'}</CardTitle>
+        <CardTitle>{isService ? 'Место оказания услуг' : 'Адрес доставки'}</CardTitle>
         <CardDescription>
           {isService ? 'Укажите район, где нужно оказать услугу' : 'Укажите куда нужно доставить товар'}
         </CardDescription>
@@ -197,21 +197,32 @@ export default function RequestDeliverySection({
                 />
               </Button>
             </CollapsibleTrigger>
-            {formData.availableDistricts.map(districtId => {
-              const district = districts.find(d => d.id === districtId);
-              if (!district) return null;
-              return (
-                <button
-                  key={districtId}
-                  type="button"
-                  onClick={() => onDistrictToggle(districtId)}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
-                >
-                  {district.name}
-                  <Icon name="X" className="h-3 w-3" />
-                </button>
-              );
-            })}
+            {allDistrictsSelected ? (
+              <button
+                type="button"
+                onClick={handleAllDistrictsToggle}
+                className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+              >
+                Все районы
+                <Icon name="X" className="h-3 w-3" />
+              </button>
+            ) : (
+              formData.availableDistricts.map(districtId => {
+                const district = districts.find(d => d.id === districtId);
+                if (!district) return null;
+                return (
+                  <button
+                    key={districtId}
+                    type="button"
+                    onClick={() => onDistrictToggle(districtId)}
+                    className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+                  >
+                    {district.name}
+                    <Icon name="X" className="h-3 w-3" />
+                  </button>
+                );
+              })
+            )}
           </div>
           <CollapsibleContent>
             <div className="mb-3">
