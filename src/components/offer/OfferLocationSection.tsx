@@ -26,6 +26,7 @@ interface OfferLocationSectionProps {
     gpsCoordinates: string;
     availableDistricts: string[];
     availableDeliveryTypes: DeliveryType[];
+    category?: string;
   };
   districts: District[];
   onInputChange: (field: string, value: string) => void;
@@ -40,6 +41,7 @@ export default function OfferLocationSection({
   onDistrictToggle,
   onDeliveryTypeToggle
 }: OfferLocationSectionProps) {
+  const isService = formData.category === 'utilities';
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.fullAddress);
   const [showDistrictDelivery, setShowDistrictDelivery] = useState(true);
@@ -180,44 +182,46 @@ export default function OfferLocationSection({
           )}
         </div>
 
-        <div>
-          <Label className="mb-3 block">Способы получения *</Label>
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="delivery-pickup"
-                checked={formData.availableDeliveryTypes.includes('pickup')}
-                onCheckedChange={() => onDeliveryTypeToggle('pickup')}
-              />
-              <label
-                htmlFor="delivery-pickup"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
-              >
-                <Icon name="Store" className="h-4 w-4" />
-                Самовывоз
-              </label>
+        {!isService && (
+          <div>
+            <Label className="mb-3 block">Способы получения *</Label>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="delivery-pickup"
+                  checked={formData.availableDeliveryTypes.includes('pickup')}
+                  onCheckedChange={() => onDeliveryTypeToggle('pickup')}
+                />
+                <label
+                  htmlFor="delivery-pickup"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                >
+                  <Icon name="Store" className="h-4 w-4" />
+                  Самовывоз
+                </label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="delivery-delivery"
+                  checked={formData.availableDeliveryTypes.includes('delivery')}
+                  onCheckedChange={() => onDeliveryTypeToggle('delivery')}
+                />
+                <label
+                  htmlFor="delivery-delivery"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
+                >
+                  <Icon name="Truck" className="h-4 w-4" />
+                  Доставка
+                </label>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="delivery-delivery"
-                checked={formData.availableDeliveryTypes.includes('delivery')}
-                onCheckedChange={() => onDeliveryTypeToggle('delivery')}
-              />
-              <label
-                htmlFor="delivery-delivery"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
-              >
-                <Icon name="Truck" className="h-4 w-4" />
-                Доставка
-              </label>
-            </div>
+            {formData.availableDeliveryTypes.length === 0 && (
+              <p className="text-xs text-destructive mt-2">
+                Выберите хотя бы один способ получения
+              </p>
+            )}
           </div>
-          {formData.availableDeliveryTypes.length === 0 && (
-            <p className="text-xs text-destructive mt-2">
-              Выберите хотя бы один способ получения
-            </p>
-          )}
-        </div>
+        )}
 
         {formData.availableDeliveryTypes.includes('delivery') && (
           <div>

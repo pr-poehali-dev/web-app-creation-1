@@ -111,6 +111,7 @@ export default function CreateOfferFormFields({
           gpsCoordinates: formData.gpsCoordinates,
           availableDistricts: formData.availableDistricts,
           availableDeliveryTypes: formData.availableDeliveryTypes,
+          category: formData.category,
         }}
         districts={districts}
         onInputChange={onInputChange}
