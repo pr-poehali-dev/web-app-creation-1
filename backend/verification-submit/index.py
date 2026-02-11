@@ -8,6 +8,7 @@ Returns: HTTP response dict with statusCode, headers, body
 import json
 import os
 import psycopg2
+import requests
 from psycopg2.extras import RealDictCursor
 from typing import Dict, Any
 from datetime import datetime, timedelta
@@ -54,6 +55,82 @@ def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 5
         
         conn.commit()
         return True
+
+def verify_inn_with_dadata(inn: str, user_id: str, conn) -> Dict[str, Any]:
+    dadata_key = os.environ.get('DADATA_API_KEY')
+    if not dadata_key:
+        return {'error': 'DaData API key не настроен', 'statusCode': 500}
+    
+    dadata_url = 'https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party'
+    headers = {
+        'Authorization': f'Token {dadata_key}',
+        'Content-Type': 'application/json'
+    }
+    
+    try:
+        response = requests.post(dadata_url, headers=headers, json={'query': inn}, timeout=10)
+    except Exception as e:
+        return {'error': f'Ошибка запроса к DaData: {str(e)}', 'statusCode': 500}
+    
+    if response.status_code != 200:
+        return {'error': 'Не удалось проверить ИНН', 'statusCode': 400}
+    
+    data = response.json()
+    suggestions = data.get('suggestions', [])
+    
+    if not suggestions:
+        return {'error': 'ИНН не найден в базе ФНС', 'statusCode': 404}
+    
+    org_data = suggestions[0].get('data', {})
+    org_status = org_data.get('state', {}).get('status', '')
+    
+    if org_status != 'ACTIVE':
+        return {'error': 'Организация не активна', 'statusCode': 400, 'status': org_status}
+    
+    return {'success': True, 'orgData': org_data}
+
+def check_fio_match(org_data: dict, user_id: str, conn) -> Dict[str, Any]:
+    fio_data = org_data.get('fio', {})
+    if not isinstance(fio_data, dict):
+        return {'success': True}
+    
+    fns_surname = fio_data.get('surname', '').strip().lower()
+    fns_name = fio_data.get('name', '').strip().lower()
+    fns_patronymic = fio_data.get('patronymic', '').strip().lower()
+    
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT first_name, last_name, middle_name FROM users WHERE id = %s",
+            (user_id,)
+        )
+        user_data = cur.fetchone()
+    
+    if not user_data:
+        return {'error': 'Пользователь не найден', 'statusCode': 404}
+    
+    user_surname = user_data['last_name'].strip().lower() if user_data['last_name'] else ''
+    user_name = user_data['first_name'].strip().lower() if user_data['first_name'] else ''
+    user_patronymic = user_data['middle_name'].strip().lower() if user_data['middle_name'] else ''
+    
+    name_match = (
+        fns_surname == user_surname and 
+        fns_name == user_name and 
+        (not fns_patronymic or not user_patronymic or fns_patronymic == user_patronymic)
+    )
+    
+    if not name_match:
+        profile_fio = f"{user_data['last_name']} {user_data['first_name']} {user_data['middle_name'] or ''}".strip()
+        inn_fio = f"{fio_data.get('surname', '')} {fio_data.get('name', '')} {fio_data.get('patronymic', '') or ''}".strip()
+        return {
+            'error': 'ФИО в профиле не совпадает с владельцем ИНН',
+            'statusCode': 400,
+            'details': {
+                'profile_fio': profile_fio,
+                'inn_fio': inn_fio
+            }
+        }
+    
+    return {'success': True}
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -142,9 +219,46 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     cursor = conn.cursor()
     
     try:
+        inn = body_data.get('inn', '').strip()
+        
+        if inn:
+            inn_check = verify_inn_with_dadata(inn, user_id, conn)
+            if 'error' in inn_check:
+                cursor.close()
+                conn.close()
+                return {
+                    'statusCode': inn_check.get('statusCode', 400),
+                    'headers': {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    'body': json.dumps({
+                        'error': inn_check['error'],
+                        'details': inn_check.get('details', {})
+                    }),
+                    'isBase64Encoded': False
+                }
+            
+            if verification_type in ['individual', 'entrepreneur']:
+                fio_check = check_fio_match(inn_check['orgData'], user_id, conn)
+                if 'error' in fio_check:
+                    cursor.close()
+                    conn.close()
+                    return {
+                        'statusCode': fio_check.get('statusCode', 400),
+                        'headers': {
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': '*'
+                        },
+                        'body': json.dumps({
+                            'error': fio_check['error'],
+                            'details': fio_check.get('details', {})
+                        }),
+                        'isBase64Encoded': False
+                    }
+        
         if verification_type == 'legal_entity':
             company_name = body_data.get('companyName', '')
-            inn = body_data.get('inn', '')
             registration_cert_url = body_data.get('registrationCertUrl')
             agreement_form_url = body_data.get('agreementFormUrl')
             
@@ -173,7 +287,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             passport_scan_url = body_data.get('passportScanUrl')
             passport_registration_url = body_data.get('passportRegistrationUrl')
             utility_bill_url = body_data.get('utilityBillUrl')
-            inn = body_data.get('inn', '')
             ogrnip = body_data.get('ogrnip', '')
             
             query = f"""
