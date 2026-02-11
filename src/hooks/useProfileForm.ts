@@ -134,15 +134,18 @@ export const useProfileForm = (
           if (!response.ok) {
             // Проверяем, есть ли детали о несоответствии ФИО
             let errorMessage = result.error || 'Не удалось проверить ИНН через ФНС';
+            let errorTitle = 'Ошибка проверки ИНН';
+            
             if (result.details) {
-              errorMessage = `${result.error}\n\nВаши данные: ${result.details.profile_fio}\nВладелец ИНН: ${result.details.inn_fio}`;
+              errorTitle = '❌ ФИО не совпадает с владельцем ИНН';
+              errorMessage = `Ваши данные в профиле:\n${result.details.profile_fio}\n\nВладелец ИНН по данным ФНС:\n${result.details.inn_fio}\n\n💡 Исправьте ФИО в профиле, чтобы оно совпадало с данными ФНС, или используйте ИНН на свое имя.`;
             }
             
             toast({
-              title: 'Ошибка проверки ИНН',
+              title: errorTitle,
               description: errorMessage,
               variant: 'destructive',
-              duration: 8000,
+              duration: 10000,
             });
             setIsSaving(false);
             return;
