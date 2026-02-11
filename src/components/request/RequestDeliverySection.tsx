@@ -207,21 +207,23 @@ export default function RequestDeliverySection({
                 <Icon name="X" className="h-3 w-3" />
               </button>
             ) : (
-              formData.availableDistricts.map(districtId => {
-                const district = districts.find(d => d.id === districtId);
-                if (!district) return null;
-                return (
-                  <button
-                    key={districtId}
-                    type="button"
-                    onClick={() => onDistrictToggle(districtId)}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
-                  >
-                    {district.name}
-                    <Icon name="X" className="h-3 w-3" />
-                  </button>
-                );
-              })
+              formData.availableDistricts
+                .filter(districtId => districtId !== 'all')
+                .map(districtId => {
+                  const district = districts.find(d => d.id === districtId);
+                  if (!district) return null;
+                  return (
+                    <button
+                      key={districtId}
+                      type="button"
+                      onClick={() => onDistrictToggle(districtId)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+                    >
+                      {district.name}
+                      <Icon name="X" className="h-3 w-3" />
+                    </button>
+                  );
+                })
             )}
           </div>
           <CollapsibleContent>
