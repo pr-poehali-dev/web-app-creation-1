@@ -508,13 +508,21 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     delivery_period_start = body.get('deliveryPeriodStart')
     delivery_period_end = body.get('deliveryPeriodEnd')
     
+    # Поля для услуг
+    deadline_start = body.get('deadlineStart')
+    deadline_end = body.get('deadlineEnd')
+    negotiable_deadline = body.get('negotiableDeadline', False)
+    budget = body.get('budget')
+    negotiable_budget = body.get('negotiableBudget', False)
+    
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
             user_id, title, description, category, subcategory,
             quantity, unit, price_per_unit, min_order_quantity, has_vat, vat_rate,
             location, district, full_address, available_districts,
             available_delivery_types, is_premium, status, no_negotiation, delivery_time,
-            delivery_period_start, delivery_period_end
+            delivery_period_start, delivery_period_end,
+            deadline_start, deadline_end, negotiable_deadline, budget, negotiable_budget
         ) VALUES (
             '{user_id_esc}', 
             '{title_esc}', 
@@ -537,7 +545,12 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {body.get('noNegotiation', False)},
             {'NULL' if delivery_time_esc is None else f"'{delivery_time_esc}'"},
             {'NULL' if not delivery_period_start else f"'{delivery_period_start}'"},
-            {'NULL' if not delivery_period_end else f"'{delivery_period_end}'"}
+            {'NULL' if not delivery_period_end else f"'{delivery_period_end}'"},
+            {'NULL' if not deadline_start else f"'{deadline_start}'"},
+            {'NULL' if not deadline_end else f"'{deadline_end}'"},
+            {negotiable_deadline},
+            {budget if budget else 'NULL'},
+            {negotiable_budget}
         )
         RETURNING id, created_at
     """

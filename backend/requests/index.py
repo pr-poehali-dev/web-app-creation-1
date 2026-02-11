@@ -256,8 +256,10 @@ def create_request(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
             user_id, title, description, category, subcategory,
             quantity, unit, price_per_unit, has_vat, vat_rate,
             district, delivery_address, available_districts,
-            is_premium, status
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            is_premium, status,
+            deadline_start, deadline_end, negotiable_deadline, budget, negotiable_budget,
+            negotiable_quantity, negotiable_price
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id, created_at
     """
     
@@ -276,7 +278,14 @@ def create_request(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
         body.get('deliveryAddress'),
         body['availableDistricts'],
         body.get('isPremium', False),
-        body.get('status', 'active')
+        body.get('status', 'active'),
+        body.get('deadlineStart'),
+        body.get('deadlineEnd'),
+        body.get('negotiableDeadline', False),
+        body.get('budget'),
+        body.get('negotiableBudget', False),
+        body.get('negotiableQuantity', False),
+        body.get('negotiablePrice', False)
     ))
     
     result = cur.fetchone()

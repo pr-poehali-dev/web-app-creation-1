@@ -16,6 +16,8 @@ interface RequestPricingSectionProps {
     negotiablePrice: boolean;
     category?: string;
     deadline?: string;
+    deadlineStart?: string;
+    deadlineEnd?: string;
     negotiableDeadline?: boolean;
     budget?: string;
     negotiableBudget?: boolean;
@@ -80,25 +82,45 @@ export default function RequestPricingSection({
       <CardContent className="space-y-4">
         {isService ? (
           <>
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="deadline">Срок работы *</Label>
-                <Input
-                  id="deadline"
-                  type="date"
-                  value={formData.deadline || ''}
-                  onChange={(e) => onInputChange('deadline', e.target.value)}
-                  required={!formData.negotiableDeadline}
-                  disabled={formData.negotiableDeadline}
-                  min={new Date().toISOString().split('T')[0]}
-                />
+                <Label>Срок работы *</Label>
+                <div className="grid md:grid-cols-2 gap-4 mt-2">
+                  <div>
+                    <Label htmlFor="deadlineStart" className="text-sm text-muted-foreground">Начало</Label>
+                    <Input
+                      id="deadlineStart"
+                      type="date"
+                      value={formData.deadlineStart || ''}
+                      onChange={(e) => onInputChange('deadlineStart', e.target.value)}
+                      required={!formData.negotiableDeadline}
+                      disabled={formData.negotiableDeadline}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="deadlineEnd" className="text-sm text-muted-foreground">Окончание</Label>
+                    <Input
+                      id="deadlineEnd"
+                      type="date"
+                      value={formData.deadlineEnd || ''}
+                      onChange={(e) => onInputChange('deadlineEnd', e.target.value)}
+                      required={!formData.negotiableDeadline}
+                      disabled={formData.negotiableDeadline}
+                      min={formData.deadlineStart || new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                </div>
                 <div className="flex items-center space-x-2 mt-2">
                   <Checkbox
                     id="negotiableDeadline"
                     checked={formData.negotiableDeadline || false}
                     onCheckedChange={(checked) => {
                       onInputChange('negotiableDeadline', checked as boolean);
-                      if (checked) onInputChange('deadline', '');
+                      if (checked) {
+                        onInputChange('deadlineStart', '');
+                        onInputChange('deadlineEnd', '');
+                      }
                     }}
                   />
                   <label
