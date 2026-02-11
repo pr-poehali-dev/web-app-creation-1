@@ -83,6 +83,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         ogrn = company_data.get('ogrn')
         ogrnip = company_data.get('ogrnip')
         
+        # Получаем ФИО для ИП/самозанятых
+        fio_data = company_data.get('fio', {})
+        owner_fio = None
+        if isinstance(fio_data, dict) and fio_data:
+            owner_fio = f"{fio_data.get('surname', '')} {fio_data.get('name', '')} {fio_data.get('patronymic', '') or ''}".strip()
+        
         result = {
             'inn': company_data.get('inn'),
             'ogrn': ogrn,
@@ -90,6 +96,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'company_name': company_data.get('name', {}).get('full_with_opf') if isinstance(company_data.get('name'), dict) else company_data.get('name'),
             'legal_address': company_data.get('address', {}).get('value') if isinstance(company_data.get('address'), dict) else company_data.get('address'),
             'director_name': company_data.get('management', {}).get('name') if isinstance(company_data.get('management'), dict) else None,
+            'owner_fio': owner_fio,
             'kpp': company_data.get('kpp'),
             'okpo': company_data.get('okpo'),
             'okved': company_data.get('okved'),

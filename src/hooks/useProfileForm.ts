@@ -132,10 +132,17 @@ export const useProfileForm = (
           const result = await response.json();
 
           if (!response.ok) {
+            // Проверяем, есть ли детали о несоответствии ФИО
+            let errorMessage = result.error || 'Не удалось проверить ИНН через ФНС';
+            if (result.details) {
+              errorMessage = `${result.error}\n\nВаши данные: ${result.details.profile_fio}\nВладелец ИНН: ${result.details.inn_fio}`;
+            }
+            
             toast({
               title: 'Ошибка проверки ИНН',
-              description: result.error || 'Не удалось проверить ИНН через ФНС',
+              description: errorMessage,
               variant: 'destructive',
+              duration: 8000,
             });
             setIsSaving(false);
             return;

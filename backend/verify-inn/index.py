@@ -106,7 +106,68 @@ def handler(event: dict, context) -> dict:
                 'isBase64Encoded': False
             }
         
-        # Сохранение заявки на верификацию в БД
+        # Проверка соответствия ФИО для ИП и самозанятых
+        if user_type in ['entrepreneur', 'self-employed']:
+            # Получаем ФИО владельца ИНН из ФНС
+            fio_data = org_data.get('fio', {})
+            fns_surname = fio_data.get('surname', '').strip().lower() if isinstance(fio_data, dict) else ''
+            fns_name = fio_data.get('name', '').strip().lower() if isinstance(fio_data, dict) else ''
+            fns_patronymic = fio_data.get('patronymic', '').strip().lower() if isinstance(fio_data, dict) else ''
+            
+            # Получаем данные пользователя из БД
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+            db_url = os.environ.get('DATABASE_URL')
+            conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)
+            cur = conn.cursor()
+            
+            cur.execute(
+                "SELECT first_name, last_name, middle_name FROM users WHERE id = %s",
+                (user_id,)
+            )
+            user_data = cur.fetchone()
+            
+            if not user_data:
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 404,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'error': 'Пользователь не найден'}),
+                    'isBase64Encoded': False
+                }
+            
+            user_surname = user_data['last_name'].strip().lower() if user_data['last_name'] else ''
+            user_name = user_data['first_name'].strip().lower() if user_data['first_name'] else ''
+            user_patronymic = user_data['middle_name'].strip().lower() if user_data['middle_name'] else ''
+            
+            # Сравниваем ФИО (фамилия и имя обязательны, отчество опционально)
+            name_match = (
+                fns_surname == user_surname and 
+                fns_name == user_name and 
+                (not fns_patronymic or not user_patronymic or fns_patronymic == user_patronymic)
+            )
+            
+            if not name_match:
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 400,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({
+                        'error': 'ФИО в профиле не совпадает с владельцем ИНН',
+                        'details': {
+                            'profile_fio': f"{user_data['last_name']} {user_data['first_name']} {user_data['middle_name'] or ''}".strip(),
+                            'inn_fio': f"{fio_data.get('surname', '')} {fio_data.get('name', '')} {fio_data.get('patronymic', '') or ''}".strip() if isinstance(fio_data, dict) else org_name
+                        }
+                    }),
+                    'isBase64Encoded': False
+                }
+            
+            cur.close()
+            conn.close()
+        
+        # Сохранение заявки на верификацию в БД (повторное подключение для юрлиц или после проверки ФИО)
         import psycopg2
         db_url = os.environ.get('DATABASE_URL')
         
