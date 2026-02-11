@@ -27,7 +27,7 @@ export default function RequestPricingSection({
   formData,
   onInputChange,
 }: RequestPricingSectionProps) {
-  const isService = formData.category === 'Услуги';
+  const isService = formData.category === 'utilities';
   
   const totalBudget = !isService && formData.quantity && formData.pricePerUnit
     ? (Number(formData.quantity) * Number(formData.pricePerUnit)).toLocaleString('ru-RU')
