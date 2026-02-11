@@ -102,14 +102,21 @@ def handler(event: dict, context) -> dict:
         
         print(f"DEBUG: org_status = '{org_status}', user_type = '{user_type}'")
         
-        # Проверка статуса только для юрлиц и ИП (не для самозанятых)
-        # Для самозанятых физлиц может не быть поля state
+        # Проверка статуса организации
         if org_status and org_status != 'ACTIVE':
+            status_messages = {
+                'LIQUIDATED': 'ИНН принадлежит ликвидированной организации',
+                'LIQUIDATING': 'Организация находится в процессе ликвидации',
+                'BANKRUPT': 'Организация признана банкротом',
+                'REORGANIZING': 'Организация находится в процессе реорганизации'
+            }
+            error_message = status_messages.get(org_status, f'Организация не активна (статус: {org_status})')
+            
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                 'body': json.dumps({
-                    'error': 'Организация не активна',
+                    'error': error_message,
                     'status': org_status
                 }),
                 'isBase64Encoded': False
