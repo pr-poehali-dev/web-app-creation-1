@@ -185,27 +185,27 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </div>
       </CardHeader>
 
-      <CardContent className="p-3 space-y-2">
-        <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors">
+      <CardContent className="p-2.5 space-y-1.5">
+        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-tight">
           {offer.title}
         </h3>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           {isService ? (
-            <div className="flex flex-col items-start gap-1">
+            <div className="flex flex-col items-start gap-0.5">
               {offer.budget ? (
-                <span className="font-bold text-primary text-xl">
+                <span className="font-bold text-primary text-base">
                   {offer.budget.toLocaleString('ru-RU')} ₽
                 </span>
               ) : offer.negotiableBudget ? (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
                   Бюджет: Ваши предложения
                 </Badge>
               ) : null}
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-1">
-              <span className="font-bold text-primary text-xl">
+            <div className="flex flex-col items-start gap-0.5">
+              <span className="font-bold text-primary text-base">
                 {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
               </span>
               {offer.noNegotiation && (
@@ -216,14 +216,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             </div>
           )}
           
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Icon name="MapPin" className="h-4 w-4 flex-shrink-0" />
-            <span className="font-medium text-foreground truncate">{districtName}</span>
+          <div className="flex items-center gap-1 text-muted-foreground">
+            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="text-xs font-medium text-foreground truncate">{districtName}</span>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="p-3 pt-0">
+      <CardFooter className="p-2.5 pt-0">
         {isOwner ? (
           <div className="w-full space-y-2">
             <Button onClick={handleEdit} variant="outline" className="w-full h-8 text-xs" size="sm">
