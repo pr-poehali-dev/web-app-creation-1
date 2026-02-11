@@ -155,7 +155,7 @@ def handler(event: dict, context) -> dict:
                     'statusCode': 400,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({
-                        'error': 'ФИО в профиле не совпадает с владельцем ИНН',
+                        'error': 'ИНН не совпадает с именем пользователя',
                         'details': {
                             'profile_fio': f"{user_data['last_name']} {user_data['first_name']} {user_data['middle_name'] or ''}".strip(),
                             'inn_fio': f"{fio_data.get('surname', '')} {fio_data.get('name', '')} {fio_data.get('patronymic', '') or ''}".strip() if isinstance(fio_data, dict) else org_name
