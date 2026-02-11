@@ -44,6 +44,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
   const districtName = districts.find(d => d.id === offer.district)?.name;
   const expirationInfo = getExpirationStatus(offer);
+  const isService = offer.category === 'utilities';
   
   // Найти административный центр района (settlement)
   const getDistrictCenter = (districtId: string) => {
@@ -57,7 +58,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   // Извлечь только адрес из location (убрать "г. Город," если есть)
   const getCleanAddress = (loc: string) => {
     return loc
-      .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё\-]+,?\s*/, '')
+      .replace(/^(г|с|пгт|рп)\.?\s+[А-Яа-яЁё-]+,?\s*/, '')
       .replace(/улица/gi, 'ул.')
       .replace(/проспект/gi, 'пр.')
       .replace(/переулок/gi, 'пер.')
@@ -197,36 +198,73 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               <span className="text-muted-foreground">рейтинг продавца</span>
             </div>
           )}
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-muted-foreground text-xs">Доступно:</span>
-            <span className="font-medium text-xs">
-              {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
-              {(offer.soldQuantity || 0) > 0 && (
-                <span className="text-muted-foreground ml-1">
-                  (из {offer.quantity})
+          {isService ? (
+            <>
+              {offer.deadlineStart && offer.deadlineEnd && (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-muted-foreground text-xs">Срок работы:</span>
+                  <span className="font-medium text-xs">
+                    {new Date(offer.deadlineStart).toLocaleDateString('ru-RU')} - {new Date(offer.deadlineEnd).toLocaleDateString('ru-RU')}
+                  </span>
+                </div>
+              )}
+              {offer.negotiableDeadline && (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-muted-foreground text-xs">Срок работы:</span>
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                    Ваши предложения
+                  </Badge>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-muted-foreground text-xs">Бюджет:</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  {offer.budget ? (
+                    <span className="font-bold text-primary text-base">
+                      {offer.budget.toLocaleString('ru-RU')} ₽
+                    </span>
+                  ) : offer.negotiableBudget ? (
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                      Ваши предложения
+                    </Badge>
+                  ) : null}
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-muted-foreground text-xs">Доступно:</span>
+                <span className="font-medium text-xs">
+                  {(offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0))} {offer.unit}
+                  {(offer.soldQuantity || 0) > 0 && (
+                    <span className="text-muted-foreground ml-1">
+                      (из {offer.quantity})
+                    </span>
+                  )}
                 </span>
+              </div>
+              {offer.minOrderQuantity && (
+                <div className="flex items-baseline justify-between">
+                  <span className="text-muted-foreground text-xs">Мин. заказ:</span>
+                  <span className="font-medium text-xs">{offer.minOrderQuantity} {offer.unit}</span>
+                </div>
               )}
-            </span>
-          </div>
-          {offer.minOrderQuantity && (
-            <div className="flex items-baseline justify-between">
-              <span className="text-muted-foreground text-xs">Мин. заказ:</span>
-              <span className="font-medium text-xs">{offer.minOrderQuantity} {offer.unit}</span>
-            </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-muted-foreground text-xs">Цена за единицу:</span>
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="font-bold text-primary text-base">
+                    {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+                  </span>
+                  {offer.noNegotiation && (
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                      Без торга
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </>
           )}
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-muted-foreground text-xs">Цена за единицу:</span>
-            <div className="flex flex-col items-end gap-0.5">
-              <span className="font-bold text-primary text-base">
-                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-              </span>
-              {offer.noNegotiation && (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                  Без торга
-                </Badge>
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="pt-2 border-t text-xs space-y-1.5">

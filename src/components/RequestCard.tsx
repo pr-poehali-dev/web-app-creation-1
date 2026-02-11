@@ -33,6 +33,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const isOwner = currentUser && request.userId === currentUser.id;
   const districtName = districts.find(d => d.id === request.district)?.name;
   const expirationInfo = getExpirationStatus(request);
+  const isService = request.category === 'utilities';
 
   const handleCardClick = () => {
     // Если это свой запрос - открываем редактирование
@@ -94,26 +95,66 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
             </div>
           )}
           
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-bold text-primary">
-              {request.negotiablePrice 
-                ? `${request.pricePerUnit ? (request.pricePerUnit * request.quantity).toLocaleString() : '0'} ₽ (Торг)`
-                : request.pricePerUnit 
-                ? `${request.pricePerUnit.toLocaleString()} ₽`
-                : 'Торг'
-              }
-            </span>
-            {!isOwner && (
-              <Button 
-                size="sm" 
-                onClick={handleResponse}
-                variant="outline"
-                className="h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
-              >
-                Просмотр
-              </Button>
-            )}
-          </div>
+          {isService ? (
+            <div className="space-y-1.5 text-xs">
+              {request.deadlineStart && request.deadlineEnd ? (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-muted-foreground">Срок:</span>
+                  <span className="font-medium">
+                    {new Date(request.deadlineStart).toLocaleDateString('ru-RU')} - {new Date(request.deadlineEnd).toLocaleDateString('ru-RU')}
+                  </span>
+                </div>
+              ) : request.negotiableDeadline ? (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-muted-foreground">Срок:</span>
+                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                    Ваши предложения
+                  </Badge>
+                </div>
+              ) : null}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-bold text-primary">
+                  {request.budget 
+                    ? `${request.budget.toLocaleString()} ₽`
+                    : request.negotiableBudget
+                    ? 'Бюджет: Ваши предложения'
+                    : 'Бюджет не указан'
+                  }
+                </span>
+                {!isOwner && (
+                  <Button 
+                    size="sm" 
+                    onClick={handleResponse}
+                    variant="outline"
+                    className="h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
+                  >
+                    Просмотр
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-bold text-primary">
+                {request.negotiablePrice 
+                  ? `${request.pricePerUnit ? (request.pricePerUnit * request.quantity).toLocaleString() : '0'} ₽ (Торг)`
+                  : request.pricePerUnit 
+                  ? `${request.pricePerUnit.toLocaleString()} ₽`
+                  : 'Торг'
+                }
+              </span>
+              {!isOwner && (
+                <Button 
+                  size="sm" 
+                  onClick={handleResponse}
+                  variant="outline"
+                  className="h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
+                >
+                  Просмотр
+                </Button>
+              )}
+            </div>
+          )}
 
           {isOwner && (
             <div className="flex items-center gap-2">

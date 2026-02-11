@@ -65,6 +65,11 @@ export interface Offer {
   deliveryTime?: string;
   deliveryPeriodStart?: string;
   deliveryPeriodEnd?: string;
+  deadlineStart?: string;
+  deadlineEnd?: string;
+  negotiableDeadline?: boolean;
+  budget?: number;
+  negotiableBudget?: boolean;
   location?: string;
   district: string;
   fullAddress?: string;
@@ -100,6 +105,11 @@ export interface Request {
   vatRate?: number;
   negotiableQuantity?: boolean;
   negotiablePrice?: boolean;
+  deadlineStart?: string;
+  deadlineEnd?: string;
+  negotiableDeadline?: boolean;
+  budget?: number;
+  negotiableBudget?: boolean;
   district: string;
   location?: string;
   deliveryAddress?: string;
