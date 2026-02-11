@@ -174,8 +174,7 @@ def handler(event: dict, context) -> dict:
                     'body': json.dumps({
                         'error': 'ИНН не совпадает с именем пользователя',
                         'details': {
-                            'profile_fio': f"{user_data['last_name']} {user_data['first_name']} {user_data['middle_name'] or ''}".strip(),
-                            'inn_fio': f"{fio_data.get('surname', '')} {fio_data.get('name', '')} {fio_data.get('patronymic', '') or ''}".strip() if isinstance(fio_data, dict) else org_name
+                            'profile_fio': f"{user_data['last_name']} {user_data['first_name']} {user_data['middle_name'] or ''}".strip()
                         }
                     }),
                     'isBase64Encoded': False
