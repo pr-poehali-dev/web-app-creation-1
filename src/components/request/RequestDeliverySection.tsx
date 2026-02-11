@@ -241,7 +241,7 @@ export default function RequestDeliverySection({
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {districts.map(district => (
+              {districts.filter(d => d.id !== 'all').map(district => (
                 <div key={district.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={`district-${district.id}`}
