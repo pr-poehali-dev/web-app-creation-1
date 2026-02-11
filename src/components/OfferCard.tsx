@@ -190,87 +190,36 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           {offer.title}
         </h3>
 
-        <div className="space-y-1 text-sm">
-          {offer.seller?.rating !== undefined && !isOwner && (
-            <div className="flex items-center gap-1 text-xs">
-              <Icon name="Star" className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium">{offer.seller.rating.toFixed(1)}</span>
-              <span className="text-muted-foreground">рейтинг продавца</span>
-            </div>
-          )}
+        <div className="space-y-2">
           {isService ? (
-            <>
-              {offer.deadlineStart && offer.deadlineEnd && (
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-muted-foreground text-xs">Срок работы:</span>
-                  <span className="font-medium text-xs">
-                    {new Date(offer.deadlineStart).toLocaleDateString('ru-RU')} - {new Date(offer.deadlineEnd).toLocaleDateString('ru-RU')}
-                  </span>
-                </div>
-              )}
-              {offer.negotiableDeadline && (
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-muted-foreground text-xs">Срок работы:</span>
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                    Ваши предложения
-                  </Badge>
-                </div>
-              )}
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-muted-foreground text-xs">Бюджет:</span>
-                <div className="flex flex-col items-end gap-0.5">
-                  {offer.budget ? (
-                    <span className="font-bold text-primary text-base">
-                      {offer.budget.toLocaleString('ru-RU')} ₽
-                    </span>
-                  ) : offer.negotiableBudget ? (
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                      Ваши предложения
-                    </Badge>
-                  ) : null}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex items-baseline justify-between gap-2">
-              <div className="flex flex-col items-end gap-0.5 w-full">
-                <span className="font-bold text-primary text-lg">
-                  {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
+            <div className="flex flex-col items-start gap-1">
+              {offer.budget ? (
+                <span className="font-bold text-primary text-xl">
+                  {offer.budget.toLocaleString('ru-RU')} ₽
                 </span>
-                {offer.noNegotiation && (
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                    Без торга
-                  </Badge>
-                )}
-              </div>
+              ) : offer.negotiableBudget ? (
+                <Badge variant="secondary" className="text-xs">
+                  Бюджет: Ваши предложения
+                </Badge>
+              ) : null}
             </div>
-          )}
-        </div>
-
-        <div className="pt-2 border-t text-xs space-y-1.5">
-          <div className="flex items-start gap-1.5 text-muted-foreground">
-            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="font-medium text-foreground truncate">{districtName}</span>
-              {cityName && (
-                <span className="text-xs text-muted-foreground">{cityName}</span>
-              )}
-              {streetAddress && (
-                <span className="truncate">{streetAddress}</span>
-              )}
-            </div>
-          </div>
-          {expirationInfo.expiryDate && (
-            <div className="flex items-center gap-1.5">
-              <Icon name="Clock" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-              <span className={`text-xs ${expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
-                {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
-                  ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
-                  : 'Истекает сегодня'
-                }
+          ) : (
+            <div className="flex flex-col items-start gap-1">
+              <span className="font-bold text-primary text-xl">
+                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
               </span>
+              {offer.noNegotiation && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                  Без торга
+                </Badge>
+              )}
             </div>
           )}
+          
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Icon name="MapPin" className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium text-foreground truncate">{districtName}</span>
+          </div>
         </div>
       </CardContent>
 
