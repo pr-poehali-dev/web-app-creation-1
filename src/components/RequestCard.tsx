@@ -32,11 +32,9 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   
   const isOwner = currentUser && request.userId === currentUser.id;
   const districtName = districts.find(d => d.id === request.district)?.name;
-  const expirationInfo = getExpirationStatus(request);
   const isService = request.category === 'utilities';
 
   const handleCardClick = () => {
-    // Если это свой запрос - открываем редактирование
     if (isOwner) {
       navigate(`/edit-request/${request.id}`);
     } else {
@@ -73,107 +71,64 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
 
   return (
     <>
-      <div className="border-2 border-primary/20 rounded-lg p-2.5 hover:border-primary/40 hover:shadow-md transition-all">
-        <div onClick={handleCardClick} className="cursor-pointer mb-2">
-          <h3 className="font-semibold text-sm mb-1 line-clamp-2">{request.title}</h3>
-          <div className="flex items-center gap-1.5 text-xs">
-            <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-            <span className="text-muted-foreground truncate">{districtName}</span>
-          </div>
-        </div>
-        
+      <div 
+        className="border-2 border-primary/20 rounded-lg p-3 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer"
+        onClick={handleCardClick}
+      >
+        <h3 className="font-semibold text-base line-clamp-2 mb-2">{request.title}</h3>
+
         <div className="space-y-2">
-          {expirationInfo.expiryDate && (
-            <div className="flex items-center gap-1.5 text-xs">
-              <Icon name="Clock" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-              <span className={expirationInfo.daysRemaining && expirationInfo.daysRemaining <= 3 ? 'text-destructive font-medium' : 'text-muted-foreground'}>
-                {expirationInfo.daysRemaining && expirationInfo.daysRemaining > 0 
-                  ? `Осталось ${expirationInfo.daysRemaining} ${expirationInfo.daysRemaining === 1 ? 'день' : expirationInfo.daysRemaining < 5 ? 'дня' : 'дней'}`
-                  : 'Истекает сегодня'
+          {isService ? (
+            <div className="flex flex-col items-start gap-1">
+              {request.budget ? (
+                <span className="font-bold text-primary text-xl">
+                  {request.budget.toLocaleString('ru-RU')} ₽
+                </span>
+              ) : request.negotiableBudget ? (
+                <Badge variant="secondary" className="text-xs">
+                  Бюджет: Ваши предложения
+                </Badge>
+              ) : null}
+            </div>
+          ) : (
+            <div className="flex flex-col items-start gap-1">
+              <span className="font-bold text-primary text-xl">
+                {request.pricePerUnit 
+                  ? `${(request.pricePerUnit * request.quantity).toLocaleString('ru-RU')} ₽`
+                  : 'Цена не указана'
                 }
               </span>
+              {request.negotiablePrice && (
+                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                  Торг
+                </Badge>
+              )}
             </div>
           )}
           
-          {isService ? (
-            <div className="space-y-1.5 text-xs">
-              {request.deadlineStart && request.deadlineEnd ? (
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-muted-foreground">Срок:</span>
-                  <span className="font-medium">
-                    {new Date(request.deadlineStart).toLocaleDateString('ru-RU')} - {new Date(request.deadlineEnd).toLocaleDateString('ru-RU')}
-                  </span>
-                </div>
-              ) : request.negotiableDeadline ? (
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-muted-foreground">Срок:</span>
-                  <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                    Ваши предложения
-                  </Badge>
-                </div>
-              ) : null}
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-bold text-primary">
-                  {request.budget 
-                    ? `${request.budget.toLocaleString()} ₽`
-                    : request.negotiableBudget
-                    ? 'Бюджет: Ваши предложения'
-                    : 'Бюджет не указан'
-                  }
-                </span>
-                {!isOwner && (
-                  <Button 
-                    size="sm" 
-                    onClick={handleResponse}
-                    variant="outline"
-                    className="h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
-                  >
-                    Просмотр
-                  </Button>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-bold text-primary">
-                {request.negotiablePrice 
-                  ? `${request.pricePerUnit ? (request.pricePerUnit * request.quantity).toLocaleString() : '0'} ₽ (Торг)`
-                  : request.pricePerUnit 
-                  ? `${request.pricePerUnit.toLocaleString()} ₽`
-                  : 'Торг'
-                }
-              </span>
-              {!isOwner && (
-                <Button 
-                  size="sm" 
-                  onClick={handleResponse}
-                  variant="outline"
-                  className="h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground"
-                >
-                  Просмотр
-                </Button>
-              )}
-            </div>
-          )}
-
-          {isOwner && (
-            <div className="flex items-center gap-2">
-              <Button onClick={handleEdit} variant="outline" className="flex-1 h-7 text-xs px-3 border-2 border-primary hover:bg-primary hover:text-primary-foreground" size="sm">
-                Редактировать
-              </Button>
-              {unreadMessages && unreadMessages > 0 && (
-                <Button onClick={handleMessages} variant="default" className="h-7 w-7 p-0" size="sm">
-                  <div className="relative">
-                    <Icon name="MessageSquare" className="h-3.5 w-3.5" />
-                    <Badge variant="destructive" className="absolute -top-2 -right-2 h-4 min-w-4 px-1 text-[10px]">
-                      {unreadMessages}
-                    </Badge>
-                  </div>
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Icon name="MapPin" className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium text-foreground truncate">{districtName}</span>
+          </div>
         </div>
+
+        {isOwner && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t" onClick={(e) => e.stopPropagation()}>
+            <Button onClick={handleEdit} variant="outline" className="flex-1 h-8 text-xs" size="sm">
+              <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+              Редактировать
+            </Button>
+            {unreadMessages && unreadMessages > 0 && (
+              <Button onClick={handleMessages} variant="default" className="h-8 text-xs" size="sm">
+                <Icon name="MessageSquare" className="mr-1.5 h-3.5 w-3.5" />
+                Сообщения
+                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
+                  {unreadMessages}
+                </Badge>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
