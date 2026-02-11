@@ -11,6 +11,10 @@ interface FormData {
   minOrderQuantity: string;
   unit: string;
   pricePerUnit: string;
+  deadline: string;
+  negotiableDeadline: boolean;
+  budget: string;
+  negotiableBudget: boolean;
   district: string;
   fullAddress: string;
   gpsCoordinates: string;
@@ -37,13 +41,17 @@ export function useCreateOfferForm(editOffer?: Offer) {
     minOrderQuantity: String(editOffer.minOrderQuantity || ''),
     unit: editOffer.unit || 'шт',
     pricePerUnit: String(editOffer.pricePerUnit || ''),
+    deadline: '',
+    negotiableDeadline: false,
+    budget: '',
+    negotiableBudget: false,
     district: editOffer.district || '',
     fullAddress: editOffer.fullAddress || '',
     gpsCoordinates: '',
     availableDistricts: editOffer.availableDistricts || [],
     availableDeliveryTypes: editOffer.availableDeliveryTypes || [],
     expiryDate: '',
-    noNegotiation: (editOffer as any).noNegotiation || false,
+    noNegotiation: 'noNegotiation' in editOffer ? Boolean(editOffer.noNegotiation) : false,
     deliveryTime: editOffer.deliveryTime || '',
     deliveryPeriodStart: editOffer.deliveryPeriodStart || '',
     deliveryPeriodEnd: editOffer.deliveryPeriodEnd || '',
@@ -58,6 +66,10 @@ export function useCreateOfferForm(editOffer?: Offer) {
     minOrderQuantity: '',
     unit: 'шт',
     pricePerUnit: '',
+    deadline: '',
+    negotiableDeadline: false,
+    budget: '',
+    negotiableBudget: false,
     district: '',
     fullAddress: '',
     gpsCoordinates: '',

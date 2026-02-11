@@ -14,6 +14,11 @@ interface RequestPricingSectionProps {
     vatRate: string;
     negotiableQuantity: boolean;
     negotiablePrice: boolean;
+    category?: string;
+    deadline?: string;
+    negotiableDeadline?: boolean;
+    budget?: string;
+    negotiableBudget?: boolean;
   };
   onInputChange: (field: string, value: string | boolean) => void;
 }
@@ -22,7 +27,9 @@ export default function RequestPricingSection({
   formData,
   onInputChange,
 }: RequestPricingSectionProps) {
-  const totalBudget = formData.quantity && formData.pricePerUnit
+  const isService = formData.category === 'Услуги';
+  
+  const totalBudget = !isService && formData.quantity && formData.pricePerUnit
     ? (Number(formData.quantity) * Number(formData.pricePerUnit)).toLocaleString('ru-RU')
     : null;
 
@@ -62,122 +69,189 @@ export default function RequestPricingSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Количество и бюджет</CardTitle>
+        <CardTitle>{isService ? 'Сроки и бюджет' : 'Количество и бюджет'}</CardTitle>
         <CardDescription>
-          Укажите требуемое количество и желаемую цену
+          {isService 
+            ? 'Укажите срок выполнения работ и бюджет'
+            : 'Укажите требуемое количество и желаемую цену'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid md:grid-cols-3 gap-4">
-          <div>
-            <Label htmlFor="quantity">Требуемое количество *</Label>
-            <Input
-              id="quantity"
-              type="number"
-              value={formData.quantity}
-              onChange={(e) => onInputChange('quantity', e.target.value)}
-              placeholder="0"
-              required={!formData.negotiableQuantity}
-              min="0.01"
-              step="0.01"
-              disabled={formData.negotiableQuantity}
-            />
-            <div className="flex items-center space-x-2 mt-2">
-              <Checkbox
-                id="negotiableQuantity"
-                checked={formData.negotiableQuantity}
-                onCheckedChange={(checked) => {
-                  onInputChange('negotiableQuantity', checked as boolean);
-                  if (checked) onInputChange('quantity', '');
-                }}
-              />
-              <label
-                htmlFor="negotiableQuantity"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Ваши предложения
-              </label>
-            </div>
-          </div>
-
-          <div className="relative">
-            <Label htmlFor="unit">Единица измерения *</Label>
-            <div className="relative">
-              <Input
-                id="unit"
-                value={selectedUnit?.label || ''}
-                onFocus={() => setIsUnitOpen(true)}
-                placeholder="Выберите единицу..."
-                className="pr-8"
-                readOnly
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setIsUnitOpen(!isUnitOpen)}
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-              >
-                <Icon name={isUnitOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-            
-            {isUnitOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setIsUnitOpen(false)}
+        {isService ? (
+          <>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="deadline">Срок работы *</Label>
+                <Input
+                  id="deadline"
+                  type="date"
+                  value={formData.deadline || ''}
+                  onChange={(e) => onInputChange('deadline', e.target.value)}
+                  required={!formData.negotiableDeadline}
+                  disabled={formData.negotiableDeadline}
+                  min={new Date().toISOString().split('T')[0]}
                 />
-                <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
-                  {unitOptions.map(option => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => handleSelectUnit(option.value)}
-                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
-                        formData.unit === option.value ? 'bg-accent font-medium' : ''
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                <div className="flex items-center space-x-2 mt-2">
+                  <Checkbox
+                    id="negotiableDeadline"
+                    checked={formData.negotiableDeadline || false}
+                    onCheckedChange={(checked) => {
+                      onInputChange('negotiableDeadline', checked as boolean);
+                      if (checked) onInputChange('deadline', '');
+                    }}
+                  />
+                  <label
+                    htmlFor="negotiableDeadline"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Ваши предложения
+                  </label>
                 </div>
-              </>
-            )}
-          </div>
+              </div>
 
-          <div>
-            <Label htmlFor="pricePerUnit">Желаемая цена за единицу (₽) *</Label>
-            <Input
-              id="pricePerUnit"
-              type="number"
-              value={formData.pricePerUnit}
-              onChange={(e) => onInputChange('pricePerUnit', e.target.value)}
-              placeholder="0"
-              required={!formData.negotiablePrice}
-              min="0"
-              step="0.01"
-              disabled={formData.negotiablePrice}
-            />
-            <div className="flex items-center space-x-2 mt-2">
-              <Checkbox
-                id="negotiablePrice"
-                checked={formData.negotiablePrice}
-                onCheckedChange={(checked) => {
-                  onInputChange('negotiablePrice', checked as boolean);
-                  if (checked) onInputChange('pricePerUnit', '');
-                }}
+              <div>
+                <Label htmlFor="budget">Бюджет для оплаты (₽) *</Label>
+                <Input
+                  id="budget"
+                  type="number"
+                  value={formData.budget || ''}
+                  onChange={(e) => onInputChange('budget', e.target.value)}
+                  placeholder="0"
+                  required={!formData.negotiableBudget}
+                  min="0"
+                  step="0.01"
+                  disabled={formData.negotiableBudget}
+                />
+                <div className="flex items-center space-x-2 mt-2">
+                  <Checkbox
+                    id="negotiableBudget"
+                    checked={formData.negotiableBudget || false}
+                    onCheckedChange={(checked) => {
+                      onInputChange('negotiableBudget', checked as boolean);
+                      if (checked) onInputChange('budget', '');
+                    }}
+                  />
+                  <label
+                    htmlFor="negotiableBudget"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    Ваша цена (Торг)
+                  </label>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="quantity">Требуемое количество *</Label>
+              <Input
+                id="quantity"
+                type="number"
+                value={formData.quantity}
+                onChange={(e) => onInputChange('quantity', e.target.value)}
+                placeholder="0"
+                required={!formData.negotiableQuantity}
+                min="0.01"
+                step="0.01"
+                disabled={formData.negotiableQuantity}
               />
-              <label
-                htmlFor="negotiablePrice"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Ваша цена (Торг)
-              </label>
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox
+                  id="negotiableQuantity"
+                  checked={formData.negotiableQuantity}
+                  onCheckedChange={(checked) => {
+                    onInputChange('negotiableQuantity', checked as boolean);
+                    if (checked) onInputChange('quantity', '');
+                  }}
+                />
+                <label
+                  htmlFor="negotiableQuantity"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Ваши предложения
+                </label>
+              </div>
+            </div>
+
+            <div className="relative">
+              <Label htmlFor="unit">Единица измерения *</Label>
+              <div className="relative">
+                <Input
+                  id="unit"
+                  value={selectedUnit?.label || ''}
+                  onFocus={() => setIsUnitOpen(true)}
+                  placeholder="Выберите единицу..."
+                  className="pr-8"
+                  readOnly
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsUnitOpen(!isUnitOpen)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                >
+                  <Icon name={isUnitOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </div>
+              
+              {isUnitOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setIsUnitOpen(false)}
+                  />
+                  <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                    {unitOptions.map(option => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => handleSelectUnit(option.value)}
+                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                          formData.unit === option.value ? 'bg-accent font-medium' : ''
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="pricePerUnit">Желаемая цена за единицу (₽) *</Label>
+              <Input
+                id="pricePerUnit"
+                type="number"
+                value={formData.pricePerUnit}
+                onChange={(e) => onInputChange('pricePerUnit', e.target.value)}
+                placeholder="0"
+                required={!formData.negotiablePrice}
+                min="0"
+                step="0.01"
+                disabled={formData.negotiablePrice}
+              />
+              <div className="flex items-center space-x-2 mt-2">
+                <Checkbox
+                  id="negotiablePrice"
+                  checked={formData.negotiablePrice}
+                  onCheckedChange={(checked) => {
+                    onInputChange('negotiablePrice', checked as boolean);
+                    if (checked) onInputChange('pricePerUnit', '');
+                  }}
+                />
+                <label
+                  htmlFor="negotiablePrice"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Ваша цена (Торг)
+                </label>
+              </div>
             </div>
           </div>
-        </div>
-
-
+        )}
 
         {formData.hasVAT && (
           <div className="w-40 relative">
@@ -225,7 +299,7 @@ export default function RequestPricingSection({
           </div>
         )}
 
-        {totalBudget && (
+        {totalBudget && !isService && (
           <div className="pt-4 border-t">
             <p className="text-sm text-muted-foreground mb-1">Общий бюджет</p>
             <p className="text-2xl font-bold text-primary">

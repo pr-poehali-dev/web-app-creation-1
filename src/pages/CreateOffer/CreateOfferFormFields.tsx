@@ -23,6 +23,10 @@ interface FormData {
   minOrderQuantity: string;
   unit: string;
   pricePerUnit: string;
+  deadline: string;
+  negotiableDeadline: boolean;
+  budget: string;
+  negotiableBudget: boolean;
   district: string;
   fullAddress: string;
   gpsCoordinates: string;
@@ -90,9 +94,12 @@ export default function CreateOfferFormFields({
           minOrderQuantity: formData.minOrderQuantity,
           unit: formData.unit,
           pricePerUnit: formData.pricePerUnit,
-          hasVAT: formData.hasVAT,
-          vatRate: formData.vatRate,
           noNegotiation: formData.noNegotiation,
+          category: formData.category,
+          deadline: formData.deadline,
+          negotiableDeadline: formData.negotiableDeadline,
+          budget: formData.budget,
+          negotiableBudget: formData.negotiableBudget,
         }}
         onInputChange={onInputChange}
       />

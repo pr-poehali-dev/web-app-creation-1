@@ -65,6 +65,10 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     vatRate: '20',
     negotiableQuantity: false,
     negotiablePrice: false,
+    deadline: '',
+    negotiableDeadline: false,
+    budget: '',
+    negotiableBudget: false,
     district: '',
     deliveryAddress: '',
     gpsCoordinates: '',
@@ -264,6 +268,13 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                 pricePerUnit: formData.pricePerUnit,
                 hasVAT: formData.hasVAT,
                 vatRate: formData.vatRate,
+                negotiableQuantity: formData.negotiableQuantity,
+                negotiablePrice: formData.negotiablePrice,
+                category: formData.category,
+                deadline: formData.deadline,
+                negotiableDeadline: formData.negotiableDeadline,
+                budget: formData.budget,
+                negotiableBudget: formData.negotiableBudget,
               }}
               onInputChange={handleInputChange}
             />
