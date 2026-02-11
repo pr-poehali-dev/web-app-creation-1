@@ -91,11 +91,12 @@ def handler(event: dict, context) -> dict:
         org_inn = org_data.get('inn', '')
         org_ogrn = org_data.get('ogrn', '')
         org_ogrnip = org_data.get('ogrnip', '')
-        org_status = org_data.get('state', {}).get('status', '')
+        state_data = org_data.get('state')
+        org_status = state_data.get('status', '') if state_data else ''
         org_address = org_data.get('address', {}).get('value', '')
         
-        # Проверка статуса организации
-        if org_status != 'ACTIVE':
+        # Проверка статуса организации (только если есть информация о статусе)
+        if org_status and org_status != 'ACTIVE':
             return {
                 'statusCode': 400,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
