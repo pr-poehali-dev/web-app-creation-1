@@ -300,6 +300,8 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
         quantity={request.quantity}
         unit={request.unit}
         pricePerUnit={request.pricePerUnit}
+        category={request.category}
+        budget={request.budget}
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
