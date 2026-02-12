@@ -216,8 +216,8 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             </div>
           )}
           
-          <div className="flex items-center pb-0.5">
-            <span className="text-xs text-muted-foreground truncate">{districtName}</span>
+          <div className="flex items-center min-h-[20px]">
+            <span className="text-xs text-foreground/70 truncate leading-relaxed">{districtName}</span>
           </div>
         </div>
       </CardContent>

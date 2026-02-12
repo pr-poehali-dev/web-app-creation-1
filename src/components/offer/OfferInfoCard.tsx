@@ -111,12 +111,12 @@ export default function OfferInfoCard({
     <Card className="mb-3">
       <CardContent className="pt-3 pb-3 space-y-3">
         <div>
-          <h1 className="text-lg md:text-xl font-bold mb-1.5">{title}</h1>
-          <div className="flex flex-wrap gap-1.5 mb-2">
+          <div className="flex items-start justify-between gap-2 mb-1.5">
+            <h1 className="text-lg md:text-xl font-bold flex-1">{title}</h1>
             {categoryName ? (
-              <Badge variant="secondary" className="text-xs">{categoryName}</Badge>
+              <Badge variant="secondary" className="text-xs flex-shrink-0">{categoryName}</Badge>
             ) : (
-              <Badge variant="secondary" className="text-xs">Без категории</Badge>
+              <Badge variant="secondary" className="text-xs flex-shrink-0">Без категории</Badge>
             )}
           </div>
           {sellerRating !== undefined && (
