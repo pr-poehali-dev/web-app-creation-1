@@ -194,17 +194,12 @@ export default function OfferInfoCard({
         )}
 
         {minOrderQuantity && (
-          <div className="bg-orange-500/10 border border-orange-500/20 p-2.5 rounded-md">
-            <div className="flex items-center gap-2">
-              <Icon name="Info" className="h-4 w-4 text-orange-600" />
-              <div>
-                <p className="text-xs font-medium text-orange-900 dark:text-orange-100">
-                  Минимальное количество для заказа
-                </p>
-                <p className="text-sm font-bold text-orange-600">
-                  {minOrderQuantity} {unit}
-                </p>
-              </div>
+          <div className="bg-orange-500/10 border border-orange-500/20 px-2.5 py-1.5 rounded-md">
+            <div className="flex items-center gap-1.5">
+              <Icon name="Info" className="h-3.5 w-3.5 text-orange-600 flex-shrink-0" />
+              <span className="text-xs text-orange-900 dark:text-orange-100">
+                Мин. заказ: <span className="font-bold">{minOrderQuantity} {unit}</span>
+              </span>
             </div>
           </div>
         )}

@@ -217,7 +217,8 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           )}
           
           {districtName && (
-            <div className="flex items-center min-h-[20px] mt-1">
+            <div className="flex items-center gap-1 min-h-[20px] mt-1">
+              <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
               <span className="text-sm font-medium text-foreground truncate">{districtName}</span>
             </div>
           )}
