@@ -52,6 +52,85 @@ export default function ProfileEditForm({
 }: ProfileEditFormProps) {
   if (!isEditing) return null;
 
+  const formatPhoneNumber = (value: string) => {
+    const hasPlus = value.trim().startsWith('+');
+    const digitsOnly = value.replace(/\D/g, '');
+    
+    if (digitsOnly.length === 0) {
+      return hasPlus ? '+' : '';
+    }
+    
+    const limitedDigits = digitsOnly.slice(0, 11);
+    
+    if (hasPlus) {
+      return formatWithSpaces('+' + limitedDigits);
+    }
+    
+    let normalizedDigits = limitedDigits;
+    if (limitedDigits.startsWith('8')) {
+      normalizedDigits = '7' + limitedDigits.slice(1);
+    } else if (!limitedDigits.startsWith('7')) {
+      normalizedDigits = '7' + limitedDigits;
+      normalizedDigits = normalizedDigits.slice(0, 11);
+    }
+    
+    return formatWithSpaces('+' + normalizedDigits);
+  };
+
+  const formatWithSpaces = (phone: string) => {
+    const cleaned = phone.replace(/[^\d+]/g, '');
+    const digits = cleaned.replace(/\D/g, '');
+    
+    if (digits.length === 0) return cleaned;
+    
+    let formatted = '+';
+    
+    if (digits.length >= 1) {
+      formatted += digits.substring(0, 1);
+    }
+    if (digits.length >= 2) {
+      formatted += ' ' + digits.substring(1, Math.min(4, digits.length));
+    }
+    if (digits.length >= 5) {
+      formatted += ' ' + digits.substring(4, Math.min(7, digits.length));
+    }
+    if (digits.length >= 8) {
+      formatted += ' ' + digits.substring(7, Math.min(9, digits.length));
+    }
+    if (digits.length >= 10) {
+      formatted += ' ' + digits.substring(9, Math.min(11, digits.length));
+    }
+    
+    return formatted;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    if (value === '') {
+      onInputChange('phone', '');
+      return;
+    }
+    
+    const hasPlus = value.trim().startsWith('+');
+    if (value === '+') {
+      onInputChange('phone', '+');
+      return;
+    }
+    
+    const newDigits = value.replace(/\D/g, '');
+    
+    if (newDigits.length === 0 && !hasPlus) {
+      onInputChange('phone', '');
+      return;
+    }
+    
+    if (newDigits.length > 11) {
+      return;
+    }
+    
+    const formatted = formatPhoneNumber(value);
+    onInputChange('phone', formatted);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -111,12 +190,15 @@ export default function ProfileEditForm({
             id="edit-phone"
             type="tel"
             value={formData.phone}
-            onChange={(e) => onInputChange('phone', e.target.value)}
-            placeholder="+7 (___) ___-__-__"
+            onChange={(e) => handlePhoneChange(e.target.value)}
+            placeholder="+7 999 123 45 67"
             className={errors.phone ? 'border-destructive' : ''}
           />
           {errors.phone && (
             <p className="text-sm text-destructive">{errors.phone}</p>
+          )}
+          {!errors.phone && formData.phone && formData.phone.replace(/\D/g, '').length < 11 && (
+            <p className="text-xs text-muted-foreground">Номер должен содержать 11 цифр</p>
           )}
         </div>
 
