@@ -62,6 +62,11 @@ export interface Request {
   expiryDate?: Date;
   viewsCount?: number;
   responsesCount?: number;
+  deadlineStart?: string;
+  deadlineEnd?: string;
+  negotiableDeadline?: boolean;
+  budget?: number;
+  negotiableBudget?: boolean;
 }
 
 export function useRequestData(id: string | undefined) {
@@ -115,6 +120,11 @@ export function useRequestData(id: string | undefined) {
           expiryDate: data.expiryDate ? (data.expiryDate instanceof Date ? data.expiryDate : new Date(data.expiryDate)) : undefined,
           viewsCount: data.views,
           responsesCount: data.responses,
+          deadlineStart: data.deadlineStart,
+          deadlineEnd: data.deadlineEnd,
+          negotiableDeadline: data.negotiableDeadline,
+          budget: data.budget,
+          negotiableBudget: data.negotiableBudget,
         };
         setRequest(mappedRequest);
         
