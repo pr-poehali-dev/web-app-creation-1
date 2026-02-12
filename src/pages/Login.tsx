@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,11 @@ export default function Login({ onLogin }: LoginProps) {
   const [rememberMe, setRememberMe] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
+  // Получаем URL для возврата из state или localStorage
+  const returnUrl = (location.state as { returnUrl?: string })?.returnUrl || localStorage.getItem('returnUrl') || '/';
 
   useEffect(() => {
     const savedCredentials = getRememberMe();
@@ -91,8 +95,11 @@ export default function Login({ onLogin }: LoginProps) {
           duration: 1000,
         });
         
+        // Очищаем сохраненный returnUrl
+        localStorage.removeItem('returnUrl');
+        
         setTimeout(() => {
-          navigate('/');
+          navigate(returnUrl);
         }, 100);
       } else {
         setIsLoading(false);

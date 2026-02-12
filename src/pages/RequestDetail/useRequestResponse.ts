@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ordersAPI } from '@/services/api';
 import { toast } from 'sonner';
 import { getSession } from '@/utils/auth';
@@ -7,11 +7,13 @@ import type { Request } from './useRequestData';
 
 export function useRequestResponse(request: Request | null, isAuthenticated: boolean) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
 
   const handleResponseClick = () => {
     if (!isAuthenticated) {
-      navigate('/login');
+      localStorage.setItem('returnUrl', location.pathname);
+      navigate('/login', { state: { returnUrl: location.pathname } });
       return;
     }
     
@@ -34,7 +36,8 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
     const session = getSession();
     if (!session) {
       toast.error('Необходима авторизация');
-      navigate('/login');
+      localStorage.setItem('returnUrl', location.pathname);
+      navigate('/login', { state: { returnUrl: location.pathname } });
       return;
     }
 
@@ -92,9 +95,9 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
       toast.success('Отклик успешно отправлен!', {
         description: 'Автор запроса свяжется с вами в ближайшее время'
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Ошибка отправки отклика:', error);
-      const errorMessage = error?.message || error?.toString() || 'Неизвестная ошибка';
+      const errorMessage = (error as Error)?.message || String(error) || 'Неизвестная ошибка';
       toast.error('Не удалось отправить отклик', {
         description: errorMessage
       });

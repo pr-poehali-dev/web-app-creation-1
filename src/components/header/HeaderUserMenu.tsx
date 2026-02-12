@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -35,15 +35,22 @@ export default function HeaderUserMenu({
   getUserDisplayName
 }: HeaderUserMenuProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     onLogout();
     navigate('/');
   };
+  
+  const handleLoginClick = () => {
+    // Сохраняем текущий URL для возврата после авторизации
+    localStorage.setItem('returnUrl', location.pathname);
+    navigate('/login', { state: { returnUrl: location.pathname } });
+  };
 
   if (!isAuthenticated) {
     return (
-      <Button onClick={() => navigate('/login')} className="h-8 md:h-10 px-3 md:px-5 text-[10px] md:text-sm">
+      <Button onClick={handleLoginClick} className="h-8 md:h-10 px-3 md:px-5 text-[10px] md:text-sm">
         Вход/Регистрация
       </Button>
     );
