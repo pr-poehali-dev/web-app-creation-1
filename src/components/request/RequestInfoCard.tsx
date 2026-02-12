@@ -1,4 +1,4 @@
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -19,8 +19,6 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     quantity,
     unit,
     pricePerUnit,
-    hasVAT,
-    vatRate,
     description,
     deliveryAddress,
     district,
@@ -37,17 +35,25 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
   
   const isService = category === 'utilities';
   const totalAmount = pricePerUnit * quantity;
+
   return (
     <Card className="mb-3">
-      <CardContent className="pt-3 pb-3 space-y-3">
-        <div>
-          <h1 className="text-lg md:text-xl font-bold mb-1.5">{title}</h1>
-          <div className="flex flex-wrap gap-1.5">
-            <Badge variant="secondary" className="text-xs">{category}</Badge>
-            <Badge variant="outline" className="text-xs">{subcategory}</Badge>
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-3">
+          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
+            <Icon name="ShoppingBag" className="w-8 h-8 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg md:text-xl font-bold mb-1.5 line-clamp-2">{title}</h1>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant="secondary" className="text-xs">{category}</Badge>
+              <Badge variant="outline" className="text-xs">{subcategory}</Badge>
+            </div>
           </div>
         </div>
+      </CardHeader>
 
+      <CardContent className="space-y-3">
         {/* Основная информация - всегда видна */}
         {isService ? (
           <div className="space-y-3">
@@ -67,10 +73,10 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
                 </Badge>
               </div>
             )}
-            <div className="bg-primary/5 p-2 rounded-md">
+            <div className="bg-primary/5 p-3 rounded-lg">
               <p className="text-xs text-muted-foreground mb-0.5">Бюджет</p>
               {budget ? (
-                <p className="text-xl font-bold text-primary">
+                <p className="text-2xl font-bold text-primary">
                   {budget.toLocaleString('ru-RU')} ₽
                 </p>
               ) : negotiableBudget ? (
@@ -95,9 +101,9 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
               </div>
             </div>
 
-            <div className="bg-primary/5 p-2 rounded-md">
+            <div className="bg-primary/5 p-3 rounded-lg">
               <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
-              <p className="text-xl font-bold text-primary">
+              <p className="text-2xl font-bold text-primary">
                 {totalAmount?.toLocaleString('ru-RU') || '0'} ₽
               </p>
             </div>
@@ -111,22 +117,16 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
               Подробная информация
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pt-2">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Откликов</p>
-                  <p className="font-medium">{responsesCount || 0}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">НДС</p>
-                  <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
-                </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Откликов</p>
+                <p className="font-medium">{responsesCount || 0}</p>
               </div>
 
               <Separator />
 
               <div>
                 <p className="text-sm font-medium mb-1">Описание запроса</p>
-                <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{description}</p>
               </div>
 
               <Separator />
