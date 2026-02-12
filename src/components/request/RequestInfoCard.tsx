@@ -6,6 +6,7 @@ import Icon from '@/components/ui/icon';
 import { safeToLocaleDateString } from '@/utils/dateUtils';
 import type { Request } from '@/types/offer';
 import { DISTRICTS } from '@/data/districts';
+import { CATEGORIES } from '@/data/categories';
 
 interface RequestInfoCardProps {
   request: Request;
@@ -35,6 +36,9 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
   
   const isService = category === 'utilities';
   const totalAmount = pricePerUnit * quantity;
+  
+  const categoryName = CATEGORIES.find(c => c.id === category)?.name || category;
+  const subcategoryName = CATEGORIES.find(c => c.id === category)?.subcategories.find(s => s.id === subcategory)?.name || subcategory;
 
   return (
     <Card className="mb-3">
@@ -46,8 +50,8 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
           <div className="flex-1 min-w-0">
             <h1 className="text-lg md:text-xl font-bold mb-1.5 line-clamp-2">{title}</h1>
             <div className="flex flex-wrap gap-1.5">
-              <Badge variant="secondary" className="text-xs">{category}</Badge>
-              <Badge variant="outline" className="text-xs">{subcategory}</Badge>
+              <Badge variant="secondary" className="text-xs">{categoryName}</Badge>
+              {subcategoryName && <Badge variant="outline" className="text-xs">{subcategoryName}</Badge>}
             </div>
           </div>
         </div>
