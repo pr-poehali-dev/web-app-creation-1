@@ -109,7 +109,7 @@ export default function OfferInfoCard({
 
   return (
     <Card className="mb-1">
-      <CardContent className="pt-2.5 pb-2.5 space-y-2.5">
+      <CardContent className="pt-2 pb-2 space-y-2 md:pt-2.5 md:pb-2.5 md:space-y-2.5">
         <div>
           <div className="flex items-start justify-between gap-2 mb-1.5">
             <h1 className="text-lg md:text-xl font-bold flex-1">{title}</h1>
