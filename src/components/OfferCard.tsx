@@ -20,6 +20,7 @@ import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
+import { DISTRICTS } from '@/data/districts';
 import { getSession } from '@/utils/auth';
 import { getExpirationStatus } from '@/utils/expirationFilter';
 import { NASLEGS } from '@/data/naslegs';
@@ -32,7 +33,6 @@ interface OfferCardProps {
 
 export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCardProps) {
   const navigate = useNavigate();
-  const { districts } = useDistrict();
   const currentUser = getSession();
   const { toast } = useToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -42,7 +42,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
   const category = CATEGORIES.find(c => c.id === offer.category);
   const subcategory = category?.subcategories.find(s => s.id === offer.subcategory);
-  const districtName = districts.find(d => d.id === offer.district)?.name;
+  const districtName = DISTRICTS.find(d => d.id === offer.district)?.name;
   const expirationInfo = getExpirationStatus(offer);
   const isService = offer.category === 'utilities';
   
@@ -216,9 +216,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             </div>
           )}
           
-          <div className="flex items-center min-h-[20px]">
-            <span className="text-xs text-foreground/70 truncate leading-relaxed">{districtName}</span>
-          </div>
+          {districtName && (
+            <div className="flex items-center min-h-[20px] mt-1">
+              <span className="text-sm font-medium text-foreground truncate">{districtName}</span>
+            </div>
+          )}
         </div>
       </CardContent>
 
