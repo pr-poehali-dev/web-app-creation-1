@@ -139,11 +139,44 @@ export function useOfferDetail(id: string | undefined) {
   const handleShare = async () => {
     const url = window.location.href;
     
-    if (navigator.share && navigator.canShare && navigator.canShare({ url })) {
+    // Формируем красивый текст для шаринга
+    const shareTitle = offer?.title || 'Предложение';
+    const shareText = offer 
+      ? `${offer.title}\n\n💰 ${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}\n\n${offer.description || ''}\n\n`
+      : '';
+    
+    if (navigator.share) {
       try {
+        // Пытаемся отправить с изображением (работает не везде)
+        if (offer?.images && offer.images.length > 0) {
+          try {
+            const imageUrl = offer.images[0].url;
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], 'image.jpg', { type: blob.type });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: shareTitle,
+                text: shareText,
+                url: url,
+                files: [file],
+              });
+              toast({
+                title: 'Успешно!',
+                description: 'Ссылка отправлена с фото',
+              });
+              return;
+            }
+          } catch (e) {
+            console.log('Cannot share with image, fallback to text:', e);
+          }
+        }
+        
+        // Фолбэк: отправляем без изображения
         await navigator.share({
-          title: offer?.title || 'Предложение',
-          text: offer?.description || '',
+          title: shareTitle,
+          text: shareText,
           url: url,
         });
         toast({
