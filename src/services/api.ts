@@ -188,6 +188,11 @@ export interface CreateRequestData {
   images?: Array<{ url: string; alt?: string }>;
   isPremium?: boolean;
   status?: string;
+  deadlineStart?: string;
+  deadlineEnd?: string;
+  budget?: number;
+  negotiableDeadline?: boolean;
+  negotiableBudget?: boolean;
 }
 
 function getUserId(): string | null {

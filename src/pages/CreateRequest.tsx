@@ -66,6 +66,8 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     negotiableQuantity: false,
     negotiablePrice: false,
     deadline: '',
+    deadlineStart: '',
+    deadlineEnd: '',
     negotiableDeadline: false,
     budget: '',
     negotiableBudget: false,
@@ -104,6 +106,31 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
         toast({
           title: 'Некорректная дата',
           description: 'Дата начала не может быть позже даты окончания',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    // Валидация дат для услуг (deadlineEnd не может быть раньше deadlineStart)
+    if (field === 'deadlineEnd' && typeof value === 'string') {
+      const deadlineStart = formData.deadlineStart;
+      if (deadlineStart && value && new Date(value) < new Date(deadlineStart)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата окончания работ не может быть раньше даты начала',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    
+    if (field === 'deadlineStart' && typeof value === 'string') {
+      const deadlineEnd = formData.deadlineEnd;
+      if (deadlineEnd && value && new Date(value) > new Date(deadlineEnd)) {
+        toast({
+          title: 'Некорректная дата',
+          description: 'Дата начала работ не может быть позже даты окончания',
           variant: 'destructive',
         });
         return;
@@ -185,6 +212,8 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     setIsSubmitting(true);
 
     try {
+      const isService = formData.category === 'utilities';
+      
       const requestData = {
         title: formData.title,
         description: formData.description,
@@ -204,6 +233,13 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
         })),
         isPremium: false,
         status: isDraft ? 'draft' : 'active',
+        ...(isService && {
+          deadlineStart: formData.deadlineStart || undefined,
+          deadlineEnd: formData.deadlineEnd || undefined,
+          budget: formData.budget ? parseFloat(formData.budget) : undefined,
+          negotiableDeadline: formData.negotiableDeadline,
+          negotiableBudget: formData.negotiableBudget,
+        }),
       };
 
       const result = await requestsAPI.createRequest(requestData);
@@ -272,6 +308,8 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
                 negotiablePrice: formData.negotiablePrice,
                 category: formData.category,
                 deadline: formData.deadline,
+                deadlineStart: formData.deadlineStart,
+                deadlineEnd: formData.deadlineEnd,
                 negotiableDeadline: formData.negotiableDeadline,
                 budget: formData.budget,
                 negotiableBudget: formData.negotiableBudget,
