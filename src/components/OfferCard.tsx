@@ -185,12 +185,12 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </div>
       </CardHeader>
 
-      <CardContent className="p-3 space-y-2">
-        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-snug min-h-[40px]">
+      <CardContent className="p-2.5 space-y-1.5">
+        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-snug">
           {offer.title}
         </h3>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <div className="flex items-baseline gap-1">
             {isService ? (
               <>
@@ -220,7 +220,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </div>
       </CardContent>
 
-      <CardFooter className="p-3 pt-0">
+      <CardFooter className="p-2.5 pt-0">
         {isOwner ? (
           <div className="w-full space-y-1.5">
             <Button onClick={handleEdit} variant="outline" className="w-full h-7 text-xs" size="sm">
