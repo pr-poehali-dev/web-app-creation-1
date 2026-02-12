@@ -185,42 +185,42 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </div>
       </CardHeader>
 
-      <CardContent className="p-2 space-y-0.5">
-        <h3 className="font-semibold text-xs line-clamp-1 group-hover:text-primary transition-colors leading-tight">
+      <CardContent className="p-3 space-y-2">
+        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-snug min-h-[40px]">
           {offer.title}
         </h3>
 
-        <div className="flex items-center justify-between gap-2">
-          {isService ? (
-            <div className="flex-1">
-              {offer.budget ? (
-                <span className="font-bold text-primary text-sm">
-                  {offer.budget.toLocaleString('ru-RU')} ₽
-                </span>
-              ) : offer.negotiableBudget ? (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                  По договор.
-                </Badge>
-              ) : null}
-            </div>
-          ) : (
-            <div className="flex-1">
-              <span className="font-bold text-primary text-sm">
-                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
+        <div className="space-y-1.5">
+          <div className="flex items-baseline gap-1">
+            {isService ? (
+              <>
+                {offer.budget ? (
+                  <span className="font-bold text-primary text-lg">
+                    {offer.budget.toLocaleString('ru-RU')} ₽
+                  </span>
+                ) : offer.negotiableBudget ? (
+                  <Badge variant="secondary" className="text-xs h-5 px-2">
+                    По договоренности
+                  </Badge>
+                ) : null}
+              </>
+            ) : (
+              <span className="font-bold text-primary text-lg">
+                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽<span className="text-sm text-muted-foreground">/{offer.unit}</span>
               </span>
-            </div>
-          )}
+            )}
+          </div>
           
           {districtName && (
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              <Icon name="MapPin" className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">{districtName}</span>
+            <div className="flex items-center gap-1.5">
+              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-xs text-muted-foreground truncate">{districtName}</span>
             </div>
           )}
         </div>
       </CardContent>
 
-      <CardFooter className="p-2 pt-0">
+      <CardFooter className="p-3 pt-0">
         {isOwner ? (
           <div className="w-full space-y-1.5">
             <Button onClick={handleEdit} variant="outline" className="w-full h-7 text-xs" size="sm">
