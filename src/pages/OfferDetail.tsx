@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { useOfferDetail } from '@/hooks/useOfferDetail';
 import { getSession, clearSession } from '@/utils/auth';
@@ -45,6 +46,51 @@ export default function OfferDetail() {
     openGallery,
     handleSendMessage,
   } = useOfferDetail(id);
+
+  // Обновляем метатеги для красивого превью при шаринге
+  useEffect(() => {
+    if (!offer) return;
+
+    const title = offer.title;
+    const description = offer.description || `${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}`;
+    const imageUrl = offer.images[0]?.url || 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/og-image-1769423236981.png';
+
+    // Обновляем title
+    document.title = `${title} — ЕРТТП`;
+
+    // Обновляем og:title
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) {
+      ogTitle.setAttribute('content', title);
+    }
+
+    // Обновляем og:description
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) {
+      ogDescription.setAttribute('content', description);
+    }
+
+    // Обновляем og:image
+    const ogImage = document.querySelector('meta[property="og:image"]');
+    if (ogImage) {
+      ogImage.setAttribute('content', imageUrl);
+    }
+
+    // Обновляем twitter:image
+    const twitterImage = document.querySelector('meta[name="twitter:image"]');
+    if (twitterImage) {
+      twitterImage.setAttribute('content', imageUrl);
+    }
+
+    // Cleanup: возвращаем дефолтные значения при размонтировании
+    return () => {
+      document.title = 'Единая Региональная Товарно-Торговая Площадка';
+      if (ogTitle) ogTitle.setAttribute('content', 'Единая Региональная Товарно-Торговая Площадка');
+      if (ogDescription) ogDescription.setAttribute('content', 'Единая Региональная Товарно-Торговая Площадка — (B2B)-(СС)-(СВ)-(ВС) -платформа для бизнеса');
+      if (ogImage) ogImage.setAttribute('content', 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/og-image-1769423236981.png');
+      if (twitterImage) twitterImage.setAttribute('content', 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/og-image-1769423236981.png');
+    };
+  }, [offer]);
 
   if (isLoading) {
     return <OfferDetailSkeleton isAuthenticated={isAuthenticated} onLogout={handleLogout} />;
