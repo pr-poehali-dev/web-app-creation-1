@@ -85,9 +85,9 @@ export default function RequestPricingSection({
             <div className="space-y-4">
               <div>
                 <Label>Срок работы *</Label>
-                <div className="grid md:grid-cols-2 gap-4 mt-2">
+                <div className="grid grid-cols-2 gap-2 sm:gap-4 mt-2">
                   <div>
-                    <Label htmlFor="deadlineStart" className="text-sm text-muted-foreground">Начало</Label>
+                    <Label htmlFor="deadlineStart" className="text-xs sm:text-sm text-muted-foreground">Начало</Label>
                     <Input
                       id="deadlineStart"
                       type="date"
@@ -96,10 +96,11 @@ export default function RequestPricingSection({
                       required={!formData.negotiableDeadline}
                       disabled={formData.negotiableDeadline}
                       min={new Date().toISOString().split('T')[0]}
+                      className="h-9 text-sm"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="deadlineEnd" className="text-sm text-muted-foreground">Окончание</Label>
+                    <Label htmlFor="deadlineEnd" className="text-xs sm:text-sm text-muted-foreground">Окончание</Label>
                     <Input
                       id="deadlineEnd"
                       type="date"
@@ -108,6 +109,7 @@ export default function RequestPricingSection({
                       required={!formData.negotiableDeadline}
                       disabled={formData.negotiableDeadline}
                       min={formData.deadlineStart || new Date().toISOString().split('T')[0]}
+                      className="h-9 text-sm"
                     />
                   </div>
                 </div>
