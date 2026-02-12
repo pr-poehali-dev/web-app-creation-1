@@ -185,12 +185,12 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </div>
       </CardHeader>
 
-      <CardContent className="p-2.5 space-y-1.5">
+      <CardContent className="p-2.5 space-y-1">
         <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-tight">
           {offer.title}
         </h3>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {isService ? (
             <div className="flex flex-col items-start gap-0.5">
               {offer.budget ? (
@@ -217,9 +217,9 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           )}
           
           {districtName && (
-            <div className="flex items-center gap-1 min-h-[20px] mt-1">
+            <div className="flex items-center gap-1 min-h-[20px] mt-0.5">
               <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground truncate">{districtName}</span>
+              <span className="text-sm text-foreground truncate">{districtName}</span>
             </div>
           )}
         </div>
