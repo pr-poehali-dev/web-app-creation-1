@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
-import { useDistrict } from '@/contexts/DistrictContext';
+import { DISTRICTS } from '@/data/districts';
 import { formatDateWithTimezone } from '@/utils/dateUtils';
 import { NASLEGS } from '@/data/naslegs';
 
@@ -72,19 +72,18 @@ export default function OfferInfoCard({
   negotiableBudget,
 }: OfferInfoCardProps) {
   const isService = category === 'utilities';
-  const { districts } = useDistrict();
   
   // Найти название категории
   const categoryData = CATEGORIES.find(c => c.id === category);
   const categoryName = categoryData?.name || category;
   
   // Найти название района
-  const districtData = districts.find(d => d.id === district);
+  const districtData = DISTRICTS.find(d => d.id === district);
   const districtName = districtData?.name || district;
   
   // Найти названия доступных районов
   const availableDistrictNames = availableDistricts
-    .map(id => districts.find(d => d.id === id)?.name || id)
+    .map(id => DISTRICTS.find(d => d.id === id)?.name || id)
     .filter(Boolean);
 
   // Найти административный центр района (settlement)
