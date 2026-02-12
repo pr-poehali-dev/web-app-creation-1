@@ -186,9 +186,9 @@ export default function OfferDetailContent({
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-1">
             <Card>
-              <CardContent className="pt-6 space-y-3">
+              <CardContent className="pt-6 space-y-2.5">
                 {(() => {
                   const currentUser = getSession();
                   const isOwner = currentUser && currentUser.id?.toString() === offer.userId?.toString();
