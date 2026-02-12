@@ -250,22 +250,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
 
           <div className="space-y-6">
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-2xl font-bold">
-                      {request.pricePerUnit.toLocaleString('ru-RU')} ₽
-                    </h3>
-                    <p className="text-sm text-muted-foreground">за {request.unit}</p>
-                  </div>
-                  {request.hasVAT && (
-                    <div className="px-2 py-1 bg-primary/10 rounded text-xs text-primary">
-                      НДС {request.vatRate}%
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="pt-6 space-y-3">
                 {(() => {
                   const currentUser = getSession();
                   const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
