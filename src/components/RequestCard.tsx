@@ -77,7 +77,11 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
         <CardHeader className="p-0">
           <div className="relative aspect-[16/9] bg-muted overflow-hidden">
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <Icon name="FileText" className="w-16 h-16 text-primary/30" />
+              <img 
+                src="/favicon.svg" 
+                alt="Logo" 
+                className="w-20 h-20 opacity-30"
+              />
             </div>
           </div>
         </CardHeader>
