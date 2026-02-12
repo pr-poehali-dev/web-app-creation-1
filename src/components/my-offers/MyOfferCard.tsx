@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
-import { useDistrict } from '@/contexts/DistrictContext';
+import { DISTRICTS } from '@/data/districts';
 import { getExpirationStatus } from '@/utils/expirationFilter';
 import type { Offer } from '@/types/offer';
 
@@ -53,7 +53,6 @@ export default function MyOfferCard({
   onDelete 
 }: MyOfferCardProps) {
   const navigate = useNavigate();
-  const { districts } = useDistrict();
   
   const category = useMemo(() => 
     CATEGORIES.find(c => c.id === offer.category), 
@@ -61,8 +60,8 @@ export default function MyOfferCard({
   );
   
   const districtName = useMemo(() => 
-    districts.find(d => d.id === offer.district)?.name,
-    [districts, offer.district]
+    DISTRICTS.find(d => d.id === offer.district)?.name,
+    [offer.district]
   );
   
   const expirationInfo = useMemo(() => 

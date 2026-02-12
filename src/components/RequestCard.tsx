@@ -15,7 +15,7 @@ import {
 import Icon from '@/components/ui/icon';
 import type { Request } from '@/types/offer';
 import { getSession } from '@/utils/auth';
-import { useDistrict } from '@/contexts/DistrictContext';
+import { DISTRICTS } from '@/data/districts';
 import { getExpirationStatus } from '@/utils/expirationFilter';
 
 interface RequestCardProps {
@@ -26,12 +26,11 @@ interface RequestCardProps {
 
 export default function RequestCard({ request, onDelete, unreadMessages }: RequestCardProps) {
   const navigate = useNavigate();
-  const { districts } = useDistrict();
   const currentUser = getSession();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
   const isOwner = currentUser && request.userId === currentUser.id;
-  const districtName = districts.find(d => d.id === request.district)?.name;
+  const districtName = DISTRICTS.find(d => d.id === request.district)?.name;
   const isService = request.category === 'utilities';
 
   const handleCardClick = () => {
