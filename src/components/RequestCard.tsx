@@ -105,9 +105,9 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
             </div>
           )}
           
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <Icon name="MapPin" className="h-4 w-4 flex-shrink-0" />
-            <span className="font-medium text-foreground truncate">{districtName}</span>
+          <div className="flex items-center gap-1.5">
+            <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-xs text-muted-foreground truncate">{districtName}</span>
           </div>
         </div>
 
