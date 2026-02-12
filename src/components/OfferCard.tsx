@@ -190,7 +190,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
           {offer.title}
         </h3>
 
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           {isService ? (
             <div className="flex flex-col items-start gap-0.5">
               {offer.budget ? (
@@ -216,7 +216,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
             </div>
           )}
           
-          <div className="flex items-center">
+          <div className="flex items-center pb-0.5">
             <span className="text-xs text-muted-foreground truncate">{districtName}</span>
           </div>
         </div>
