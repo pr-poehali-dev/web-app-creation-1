@@ -158,14 +158,29 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         req_dict = dict(req)
         if isinstance(req_dict.get('price_per_unit'), Decimal):
             req_dict['price_per_unit'] = float(req_dict['price_per_unit'])
+        if isinstance(req_dict.get('budget'), Decimal):
+            req_dict['budget'] = float(req_dict['budget'])
         
         # Преобразуем snake_case в camelCase для фронтенда
+        created_at = req_dict.pop('created_at', None)
+        updated_at = req_dict.pop('updated_at', None)
+        expiry_date = req_dict.pop('expiry_date', None)
+        deadline_start = req_dict.pop('deadline_start', None)
+        deadline_end = req_dict.pop('deadline_end', None)
+        
         req_dict['userId'] = req_dict.pop('user_id', None)
         req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
         req_dict['fullAddress'] = req_dict.pop('full_address', None)
         req_dict['deliveryAddress'] = req_dict.pop('delivery_address', None)
-        req_dict['createdAt'] = req_dict.pop('created_at').isoformat() if req_dict.get('created_at') else None
-        req_dict['updatedAt'] = req_dict.pop('updated_at').isoformat() if req_dict.get('updated_at') else None
+        req_dict['negotiableDeadline'] = req_dict.pop('negotiable_deadline', None)
+        req_dict['negotiableBudget'] = req_dict.pop('negotiable_budget', None)
+        req_dict['negotiableQuantity'] = req_dict.pop('negotiable_quantity', None)
+        req_dict['negotiablePrice'] = req_dict.pop('negotiable_price', None)
+        req_dict['createdAt'] = created_at.isoformat() if created_at else None
+        req_dict['updatedAt'] = updated_at.isoformat() if updated_at else None
+        req_dict['expiryDate'] = expiry_date.isoformat() if expiry_date else None
+        req_dict['deadlineStart'] = deadline_start.isoformat() if deadline_start else None
+        req_dict['deadlineEnd'] = deadline_end.isoformat() if deadline_end else None
         
         result.append(req_dict)
     
@@ -218,14 +233,29 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     req_dict = dict(req)
     if isinstance(req_dict.get('price_per_unit'), Decimal):
         req_dict['price_per_unit'] = float(req_dict['price_per_unit'])
+    if isinstance(req_dict.get('budget'), Decimal):
+        req_dict['budget'] = float(req_dict['budget'])
     
     # Преобразуем snake_case в camelCase для фронтенда
+    created_at = req_dict.pop('created_at', None)
+    updated_at = req_dict.pop('updated_at', None)
+    expiry_date = req_dict.pop('expiry_date', None)
+    deadline_start = req_dict.pop('deadline_start', None)
+    deadline_end = req_dict.pop('deadline_end', None)
+    
     req_dict['userId'] = req_dict.pop('user_id', None)
     req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
     req_dict['fullAddress'] = req_dict.pop('full_address', None)
     req_dict['deliveryAddress'] = req_dict.pop('delivery_address', None)
-    req_dict['createdAt'] = req_dict.pop('created_at').isoformat() if req_dict.get('created_at') else None
-    req_dict['updatedAt'] = req_dict.pop('updated_at').isoformat() if req_dict.get('updated_at') else None
+    req_dict['negotiableDeadline'] = req_dict.pop('negotiable_deadline', None)
+    req_dict['negotiableBudget'] = req_dict.pop('negotiable_budget', None)
+    req_dict['negotiableQuantity'] = req_dict.pop('negotiable_quantity', None)
+    req_dict['negotiablePrice'] = req_dict.pop('negotiable_price', None)
+    req_dict['createdAt'] = created_at.isoformat() if created_at else None
+    req_dict['updatedAt'] = updated_at.isoformat() if updated_at else None
+    req_dict['expiryDate'] = expiry_date.isoformat() if expiry_date else None
+    req_dict['deadlineStart'] = deadline_start.isoformat() if deadline_start else None
+    req_dict['deadlineEnd'] = deadline_end.isoformat() if deadline_end else None
     
     return {
         'statusCode': 200,
