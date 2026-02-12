@@ -77,11 +77,16 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
         <CardHeader className="p-0">
           <div className="relative aspect-[16/9] bg-muted overflow-hidden">
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <img 
-                src="/favicon.svg" 
-                alt="Logo" 
-                className="w-20 h-20 opacity-30"
-              />
+              <div className="flex items-center gap-2 opacity-30">
+                <div className="h-16 w-16 overflow-hidden rounded-md flex items-center justify-center">
+                  <img 
+                    src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+                    alt="ЕРТТП" 
+                    className="h-full w-full scale-[2.5] brightness-125 contrast-125"
+                    style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)', transform: 'scaleX(-1)' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </CardHeader>
