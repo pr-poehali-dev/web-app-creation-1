@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getSession } from '@/utils/auth';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
@@ -25,6 +25,7 @@ interface RequestDetailProps {
 export default function RequestDetail({ isAuthenticated, onLogout }: RequestDetailProps) {
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   
   const { request, isLoading, showVideo } = useRequestData(id);
   
@@ -273,7 +274,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                     <Button 
                       className="w-full" 
                       size="lg"
-                      onClick={handleResponseClick}
+                      onClick={() => navigate(`/edit-request/${request.id}`)}
                     >
                       <Icon name="Edit" className="mr-2 h-4 w-4" />
                       Редактировать запрос

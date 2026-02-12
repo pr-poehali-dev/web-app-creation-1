@@ -5,6 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import Icon from '@/components/ui/icon';
 import { safeToLocaleDateString } from '@/utils/dateUtils';
 import type { Request } from '@/types/offer';
+import { DISTRICTS } from '@/data/districts';
 
 interface RequestInfoCardProps {
   request: Request;
@@ -142,16 +143,19 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
                 )}
                 <div>
                   <p className="text-muted-foreground mb-0.5">Район</p>
-                  <p className="font-medium">{district}</p>
+                  <p className="font-medium">{DISTRICTS.find(d => d.id === district)?.name || district}</p>
                 </div>
               </div>
 
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Принимаются отклики из районов</p>
                 <div className="flex flex-wrap gap-1">
-                  {availableDistricts.map((district) => (
-                    <Badge key={district} variant="outline" className="text-xs px-1.5 py-0">{district}</Badge>
-                  ))}
+                  {availableDistricts.map((districtId) => {
+                    const districtName = DISTRICTS.find(d => d.id === districtId)?.name || districtId;
+                    return (
+                      <Badge key={districtId} variant="outline" className="text-xs px-1.5 py-0">{districtName}</Badge>
+                    );
+                  })}
                 </div>
               </div>
 

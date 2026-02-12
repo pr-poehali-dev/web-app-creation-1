@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,7 +17,6 @@ import Icon from '@/components/ui/icon';
 import type { Request } from '@/types/offer';
 import { getSession } from '@/utils/auth';
 import { DISTRICTS } from '@/data/districts';
-import { getExpirationStatus } from '@/utils/expirationFilter';
 
 interface RequestCardProps {
   request: Request;
@@ -70,65 +70,92 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
 
   return (
     <>
-      <div 
-        className="border-2 border-primary/20 rounded-lg p-3 hover:border-primary/40 hover:shadow-md transition-all cursor-pointer"
+      <Card
+        className="transition-all hover:shadow-xl cursor-pointer group"
         onClick={handleCardClick}
       >
-        <h3 className="font-semibold text-base line-clamp-2 mb-2">{request.title}</h3>
-
-        <div className="space-y-2">
-          {isService ? (
-            <div className="flex flex-col items-start gap-1">
-              {request.budget ? (
-                <span className="font-bold text-primary text-xl">
-                  {request.budget.toLocaleString('ru-RU')} ₽
-                </span>
-              ) : request.negotiableBudget ? (
-                <Badge variant="secondary" className="text-xs">
-                  Бюджет: Ваши предложения
-                </Badge>
-              ) : null}
+        <CardHeader className="p-0">
+          <div className="relative aspect-[16/9] bg-muted overflow-hidden">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
+              <Icon name="FileText" className="w-16 h-16 text-primary/30" />
             </div>
-          ) : (
-            <div className="flex flex-col items-start gap-1">
-              <span className="font-bold text-primary text-xl">
-                {request.pricePerUnit 
-                  ? `${(request.pricePerUnit * request.quantity).toLocaleString('ru-RU')} ₽`
-                  : 'Цена не указана'
-                }
-              </span>
-              {request.negotiablePrice && (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                  Торг
-                </Badge>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-2.5 space-y-1.5">
+          <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-snug">
+            {request.title}
+          </h3>
+
+          <div className="space-y-1">
+            <div className="flex items-baseline gap-1">
+              {isService ? (
+                <>
+                  {request.budget ? (
+                    <span className="font-bold text-primary text-lg">
+                      {request.budget.toLocaleString('ru-RU')} ₽
+                    </span>
+                  ) : request.negotiableBudget ? (
+                    <Badge variant="secondary" className="text-xs h-5 px-2">
+                      По договоренности
+                    </Badge>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <span className="font-bold text-primary text-lg">
+                    {request.pricePerUnit 
+                      ? `${(request.pricePerUnit * request.quantity).toLocaleString('ru-RU')} ₽`
+                      : 'Цена не указана'
+                    }
+                  </span>
+                  {request.negotiablePrice && (
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                      Торг
+                    </Badge>
+                  )}
+                </>
               )}
             </div>
-          )}
-          
-          <div className="flex items-center gap-1.5">
-            <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-xs text-muted-foreground truncate">{districtName}</span>
-          </div>
-        </div>
-
-        {isOwner && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t" onClick={(e) => e.stopPropagation()}>
-            <Button onClick={handleEdit} variant="outline" className="flex-1 h-8 text-xs" size="sm">
-              <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
-              Редактировать
-            </Button>
-            {unreadMessages && unreadMessages > 0 && (
-              <Button onClick={handleMessages} variant="default" className="h-8 text-xs" size="sm">
-                <Icon name="MessageSquare" className="mr-1.5 h-3.5 w-3.5" />
-                Сообщения
-                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
-                  {unreadMessages}
-                </Badge>
-              </Button>
+            
+            {districtName && (
+              <div className="flex items-center gap-1.5">
+                <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs text-muted-foreground truncate">{districtName}</span>
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </CardContent>
+
+        <CardFooter className="p-2.5 pt-0">
+          {isOwner ? (
+            <div className="flex items-center gap-2 w-full" onClick={(e) => e.stopPropagation()}>
+              <Button onClick={handleEdit} variant="outline" className="flex-1 h-8 text-xs" size="sm">
+                <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+                Редактировать
+              </Button>
+              {unreadMessages && unreadMessages > 0 && (
+                <Button onClick={handleMessages} variant="default" className="h-8 text-xs" size="sm">
+                  <Icon name="MessageSquare" className="mr-1.5 h-3.5 w-3.5" />
+                  Сообщения
+                  <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
+                    {unreadMessages}
+                  </Badge>
+                </Button>
+              )}
+            </div>
+          ) : (
+            <Button
+              onClick={handleResponse}
+              variant="default"
+              className="w-full h-8 text-xs"
+              size="sm"
+            >
+              Откликнуться
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
