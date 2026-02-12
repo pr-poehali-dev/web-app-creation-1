@@ -108,7 +108,7 @@ export default function OfferInfoCard({
   const streetAddress = fullAddress || (location ? getCleanAddress(location) : '');
 
   return (
-    <Card className="mb-3">
+    <Card className="mb-1.5">
       <CardContent className="pt-3 pb-3 space-y-3">
         <div>
           <div className="flex items-start justify-between gap-2 mb-1.5">
