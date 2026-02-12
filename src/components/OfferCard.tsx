@@ -131,7 +131,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
       )}
 
       <CardHeader className="p-0">
-        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+        <div className="relative aspect-[16/9] bg-muted overflow-hidden">
           {offer.images.length > 0 ? (
             <>
               <img
@@ -185,66 +185,61 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </div>
       </CardHeader>
 
-      <CardContent className="p-2.5 space-y-1">
-        <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+      <CardContent className="p-2 space-y-0.5">
+        <h3 className="font-semibold text-xs line-clamp-1 group-hover:text-primary transition-colors leading-tight">
           {offer.title}
         </h3>
 
-        <div className="space-y-1">
+        <div className="flex items-center justify-between gap-2">
           {isService ? (
-            <div className="flex flex-col items-start gap-0.5">
+            <div className="flex-1">
               {offer.budget ? (
-                <span className="font-bold text-primary text-base">
+                <span className="font-bold text-primary text-sm">
                   {offer.budget.toLocaleString('ru-RU')} ₽
                 </span>
               ) : offer.negotiableBudget ? (
                 <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                  Бюджет: Ваши предложения
+                  По договор.
                 </Badge>
               ) : null}
             </div>
           ) : (
-            <div className="flex flex-col items-start gap-0.5">
-              <span className="font-bold text-primary text-base">
+            <div className="flex-1">
+              <span className="font-bold text-primary text-sm">
                 {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
               </span>
-              {offer.noNegotiation && (
-                <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                  Без торга
-                </Badge>
-              )}
             </div>
           )}
           
           {districtName && (
-            <div className="flex items-center gap-1 min-h-[20px] mt-0.5">
-              <Icon name="MapPin" className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground truncate">{districtName}</span>
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              <Icon name="MapPin" className="h-3 w-3 text-muted-foreground" />
+              <span className="text-[10px] text-muted-foreground truncate max-w-[80px]">{districtName}</span>
             </div>
           )}
         </div>
       </CardContent>
 
-      <CardFooter className="p-2.5 pt-0">
+      <CardFooter className="p-2 pt-0">
         {isOwner ? (
-          <div className="w-full space-y-2">
-            <Button onClick={handleEdit} variant="outline" className="w-full h-8 text-xs" size="sm">
-              <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+          <div className="w-full space-y-1.5">
+            <Button onClick={handleEdit} variant="outline" className="w-full h-7 text-xs" size="sm">
+              <Icon name="Pencil" className="mr-1 h-3 w-3" />
               Редактировать
             </Button>
             {unreadMessages && unreadMessages > 0 && (
-              <Button onClick={handleMessages} variant="default" className="w-full h-8 text-xs" size="sm">
-                <Icon name="MessageSquare" className="mr-1.5 h-3.5 w-3.5" />
+              <Button onClick={handleMessages} variant="default" className="w-full h-7 text-xs" size="sm">
+                <Icon name="MessageSquare" className="mr-1 h-3 w-3" />
                 Сообщения
-                <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5">
+                <Badge variant="destructive" className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">
                   {unreadMessages}
                 </Badge>
               </Button>
             )}
           </div>
         ) : (
-          <Button onClick={handleOrderClick} className="w-full h-8 text-xs" size="sm">
-            <Icon name="ShoppingCart" className="mr-1.5 h-3.5 w-3.5" />
+          <Button onClick={handleOrderClick} className="w-full h-7 text-xs" size="sm">
+            <Icon name="ShoppingCart" className="mr-1 h-3 w-3" />
             Заказать
           </Button>
         )}
