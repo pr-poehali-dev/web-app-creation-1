@@ -565,10 +565,6 @@ export function useOrdersData(
 
       setIsChatOpen(false);
       
-      if (onTabChange) {
-        onTabChange('archive');
-      }
-      
       // Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
@@ -706,15 +702,7 @@ export function useOrdersData(
       }));
       window.dispatchEvent(new Event('storage'));
 
-      // Закрываем модалку
       setIsChatOpen(false);
-      
-      // Даём время на обновление локального состояния перед переключением вкладки
-      setTimeout(() => {
-        if (onTabChange) {
-          onTabChange('archive');
-        }
-      }, 100);
     } catch (error) {
       console.error('Error cancelling order:', error);
       

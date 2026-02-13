@@ -162,16 +162,16 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as OrderTab)} className="mb-6" defaultValue="buyer">
             <TabsList className="grid w-full max-w-3xl grid-cols-5 gap-1 mb-6 h-auto p-1">
               <TabsTrigger value="buyer" className="py-2.5 text-xs sm:text-sm">
-                Покупки {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}
+                Мои покупки {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}
               </TabsTrigger>
               <TabsTrigger value="seller" className="py-2.5 text-xs sm:text-sm">
-                Продажи {sellerOrdersCount > 0 && `(${sellerOrdersCount})`}
+                Мои продажи {sellerOrdersCount > 0 && `(${sellerOrdersCount})`}
               </TabsTrigger>
               <TabsTrigger value="my-requests" className="py-2.5 text-xs sm:text-sm">
-                Запросы {myRequestsCount > 0 && `(${myRequestsCount})`}
+                Мои запросы {myRequestsCount > 0 && `(${myRequestsCount})`}
               </TabsTrigger>
               <TabsTrigger value="my-responses" className="py-2.5 text-xs sm:text-sm">
-                Отклики {myResponsesCount > 0 && `(${myResponsesCount})`}
+                Мои отклики {myResponsesCount > 0 && `(${myResponsesCount})`}
               </TabsTrigger>
               <TabsTrigger value="archive" className="py-2.5 text-xs sm:text-sm">
                 Архив {archiveOrdersCount > 0 && `(${archiveOrdersCount})`}
