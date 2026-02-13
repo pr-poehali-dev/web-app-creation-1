@@ -404,20 +404,29 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     schema = get_schema()
     offer_id_escaped = body['offerId'].replace("'", "''")
+    
+    # Пробуем найти в offers (предложения)
     cur.execute(f"SELECT user_id FROM {schema}.offers WHERE id = '{offer_id_escaped}'")
     offer = cur.fetchone()
     
+    # Если не нашли в offers, пробуем найти в requests (запросы)
     if not offer:
-        cur.close()
-        conn.close()
-        return {
-            'statusCode': 404,
-            'headers': headers,
-            'body': json.dumps({'error': 'Offer not found'}),
-            'isBase64Encoded': False
-        }
-    
-    seller_id = offer['user_id']
+        cur.execute(f"SELECT user_id FROM {schema}.requests WHERE id = '{offer_id_escaped}'")
+        request = cur.fetchone()
+        
+        if not request:
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 404,
+                'headers': headers,
+                'body': json.dumps({'error': 'Offer or request not found'}),
+                'isBase64Encoded': False
+            }
+        
+        seller_id = request['user_id']
+    else:
+        seller_id = offer['user_id']
     
     # ПРОВЕРКА 1: Автор предложения не может купить у самого себя
     if int(user_id) == seller_id:
