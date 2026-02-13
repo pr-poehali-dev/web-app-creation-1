@@ -8,10 +8,12 @@ import { ordersAPI, reviewsAPI } from '@/services/api';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
 
+export type OrderTab = 'buyer' | 'seller' | 'my-requests' | 'my-responses' | 'archive';
+
 export function useOrdersData(
   isAuthenticated: boolean, 
-  activeTab: 'buyer' | 'seller' | 'responses' | 'archive',
-  onTabChange?: (tab: 'buyer' | 'seller' | 'responses' | 'archive') => void
+  activeTab: OrderTab,
+  onTabChange?: (tab: OrderTab) => void
 ) {
   const navigate = useNavigate();
   const { toast } = useToast();

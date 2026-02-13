@@ -4,10 +4,11 @@ import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import OrderCard from './OrderCard';
 import type { Order } from '@/types/order';
+import type { OrderTab } from '@/hooks/useOrdersData';
 
 interface OrdersContentProps {
-  activeTab: 'buyer' | 'seller' | 'responses' | 'archive';
-  onTabChange: (tab: 'buyer' | 'seller' | 'responses' | 'archive') => void;
+  activeTab: OrderTab;
+  onTabChange: (tab: OrderTab) => void;
   orders: Order[];
   isLoading: boolean;
   onOpenChat: (order: Order) => void;
@@ -31,17 +32,16 @@ export default function OrdersContent({
       if (activeTab === 'archive') {
         const isArchived = order.status === 'completed' || order.status === 'cancelled';
         if (!isArchived) return false;
-
-        // Фильтр по названию
         if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
           return false;
         }
-
         return true;
       }
-      if (activeTab === 'responses') {
-        // Показываем только отклики на запросы
-        return order.isRequest && order.status !== 'completed' && order.status !== 'cancelled';
+      if (activeTab === 'my-requests') {
+        return order.isRequest && order.type === 'sale' && order.status !== 'completed' && order.status !== 'cancelled';
+      }
+      if (activeTab === 'my-responses') {
+        return order.isRequest && order.type === 'purchase' && order.status !== 'completed' && order.status !== 'cancelled';
       }
       const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
       return typeMatch && !order.isRequest && order.status !== 'completed' && order.status !== 'cancelled';
@@ -57,7 +57,7 @@ export default function OrdersContent({
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
-  const isSeller = activeTab === 'seller' || activeTab === 'responses';
+  const isSeller = activeTab === 'seller' || activeTab === 'my-requests';
 
   if (isLoading) {
     return (
@@ -75,13 +75,15 @@ export default function OrdersContent({
         <CardContent className="py-12 text-center">
           <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground">
-            {activeTab === 'responses'
-              ? 'У вас пока нет откликов на запросы'
-              : isSeller 
-                ? 'У вас пока нет заказов на ваши товары' 
-                : activeTab === 'archive' 
-                  ? 'У вас пока нет завершенных заказов'
-                  : 'У вас пока нет заказов'}
+            {activeTab === 'my-requests'
+              ? 'Пока никто не откликнулся на ваши запросы'
+              : activeTab === 'my-responses'
+                ? 'Вы пока не откликались на чужие запросы'
+                : isSeller 
+                  ? 'У вас пока нет заказов на ваши товары' 
+                  : activeTab === 'archive' 
+                    ? 'У вас пока нет завершенных заказов'
+                    : 'У вас пока нет заказов'}
           </p>
         </CardContent>
       </Card>

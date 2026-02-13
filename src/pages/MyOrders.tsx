@@ -9,7 +9,7 @@ import OrderReviewModal from '@/components/reviews/OrderReviewModal';
 import OrdersContent from '@/components/order/OrdersContent';
 import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useOrdersData } from '@/hooks/useOrdersData';
+import { useOrdersData, type OrderTab } from '@/hooks/useOrdersData';
 
 interface MyOrdersProps {
   isAuthenticated: boolean;
@@ -20,8 +20,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const tabParam = searchParams.get('tab') as 'buyer' | 'seller' | 'responses' | 'archive' | null;
-  const [activeTab, setActiveTab] = useState<'buyer' | 'seller' | 'responses' | 'archive'>(tabParam || 'buyer');
+  const tabParam = searchParams.get('tab') as OrderTab | null;
+  const [activeTab, setActiveTab] = useState<OrderTab>(tabParam || 'buyer');
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -30,7 +30,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    if (tabParam && (tabParam === 'buyer' || tabParam === 'seller' || tabParam === 'responses' || tabParam === 'archive')) {
+    const validTabs: OrderTab[] = ['buyer', 'seller', 'my-requests', 'my-responses', 'archive'];
+    if (tabParam && validTabs.includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -124,10 +125,11 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
   }, [orders, activeTab]);
 
-  // Считаем количество заказов для каждого типа
-  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && order.status !== 'completed' && order.status !== 'cancelled').length;
-  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && order.status !== 'completed' && order.status !== 'cancelled').length;
-  const responsesCount = orders.filter(order => order.isRequest && order.status !== 'completed' && order.status !== 'cancelled').length;
+  const activeFilter = (order: { status: string }) => order.status !== 'completed' && order.status !== 'cancelled';
+  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && activeFilter(order)).length;
+  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length;
+  const myRequestsCount = orders.filter(order => order.isRequest && order.type === 'sale' && activeFilter(order)).length;
+  const myResponsesCount = orders.filter(order => order.isRequest && order.type === 'purchase' && activeFilter(order)).length;
   const archiveOrdersCount = orders.filter(order => order.status === 'completed' || order.status === 'cancelled').length;
 
   if (!isAuthenticated) {
@@ -157,16 +159,19 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
           ) : (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'buyer' | 'seller' | 'responses' | 'archive')} className="mb-6"  defaultValue="buyer">
-            <TabsList className="grid w-full max-w-2xl grid-cols-4 gap-2 mb-6 h-auto p-1">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as OrderTab)} className="mb-6" defaultValue="buyer">
+            <TabsList className="grid w-full max-w-3xl grid-cols-5 gap-1 mb-6 h-auto p-1">
               <TabsTrigger value="buyer" className="py-2.5 text-xs sm:text-sm">
                 Покупки {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}
               </TabsTrigger>
               <TabsTrigger value="seller" className="py-2.5 text-xs sm:text-sm">
                 Продажи {sellerOrdersCount > 0 && `(${sellerOrdersCount})`}
               </TabsTrigger>
-              <TabsTrigger value="responses" className="py-2.5 text-xs sm:text-sm">
-                Отклики {responsesCount > 0 && `(${responsesCount})`}
+              <TabsTrigger value="my-requests" className="py-2.5 text-xs sm:text-sm">
+                Запросы {myRequestsCount > 0 && `(${myRequestsCount})`}
+              </TabsTrigger>
+              <TabsTrigger value="my-responses" className="py-2.5 text-xs sm:text-sm">
+                Отклики {myResponsesCount > 0 && `(${myResponsesCount})`}
               </TabsTrigger>
               <TabsTrigger value="archive" className="py-2.5 text-xs sm:text-sm">
                 Архив {archiveOrdersCount > 0 && `(${archiveOrdersCount})`}
@@ -196,9 +201,20 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
             />
           </TabsContent>
 
-          <TabsContent value="responses">
+          <TabsContent value="my-requests">
             <OrdersContent
-              activeTab="responses"
+              activeTab="my-requests"
+              onTabChange={setActiveTab}
+              orders={orders}
+              isLoading={isLoading}
+              onOpenChat={handleOpenChat}
+              onAcceptOrder={handleAcceptOrder}
+            />
+          </TabsContent>
+
+          <TabsContent value="my-responses">
+            <OrdersContent
+              activeTab="my-responses"
               onTabChange={setActiveTab}
               orders={orders}
               isLoading={isLoading}

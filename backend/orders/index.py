@@ -241,14 +241,15 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     cur.execute(count_sql)
     total_count = cur.fetchone()['total']
     
-    # Запрос с JOIN к таблице offers для получения цены и доступного количества
     sql = f"""
         SELECT 
             o.*,
             of.price_per_unit as offer_price_per_unit,
-            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity
+            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity,
+            CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
+        LEFT JOIN {schema}.requests r ON o.offer_id = r.id
         WHERE 1=1
     """
     
@@ -280,9 +281,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
         order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
         
-        # Определяем, это запрос (request) или предложение (offer)
-        # Если offer_price_per_unit = None, значит это запрос (нет связи с таблицей offers)
-        order_dict['isRequest'] = order_dict.get('offer_price_per_unit') is None
+        order_dict['is_request'] = order_dict.get('is_request', False)
         
         # Определяем тип заказа (покупка или продажа)
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id_int else 'sale'
