@@ -53,7 +53,7 @@ const OrderCard = ({ order, districts, onNavigate, onReview }: OrderCardProps) =
   const canReview = order.status === 'completed' && order.type === 'purchase';
 
   return (
-    <Card className="hover:shadow-lg transition-shadow animate-order-enter">
+    <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">

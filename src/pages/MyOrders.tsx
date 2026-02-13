@@ -57,45 +57,19 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     loadOrders,
   } = useOrdersData(isAuthenticated, activeTab, setActiveTab);
 
-  // Обновляем заказы при переходе после создания нового заказа
+  // При переходе после создания заказа — принудительно обновляем данные
   useEffect(() => {
-    if (location.state?.refresh && location.state?.newOrderId) {
-      console.log('[MyOrders] Обнаружен флаг refresh с новым заказом:', location.state.newOrderId);
-      
-      const updateOrders = async () => {
-        let attempts = 0;
-        const maxAttempts = 5;
-        
-        // Пытаемся загрузить заказы несколько раз, пока не найдем новый заказ
-        while (attempts < maxAttempts) {
-          console.log(`[MyOrders] Попытка ${attempts + 1} загрузки заказов`);
-          await loadOrders(attempts === 0); // Показываем лоадер только при первой попытке
-          
-          // Небольшая задержка перед проверкой
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // Проверяем, появился ли новый заказ
-          const orderExists = orders.some(o => o.id === location.state.newOrderId);
-          
-          if (orderExists) {
-            console.log('[MyOrders] Новый заказ найден, обновление завершено');
-            break;
-          }
-          
-          attempts++;
-          
-          // Задержка перед следующей попыткой (кроме последней)
-          if (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-        
-        // Очищаем state после завершения
-        navigate(location.pathname, { replace: true, state: {} });
-      };
-      
-      updateOrders();
-    }
+    if (!location.state?.refresh || !location.state?.newOrderId) return;
+    
+    console.log('[MyOrders] Обнаружен флаг refresh с новым заказом:', location.state.newOrderId);
+    navigate(location.pathname, { replace: true, state: {} });
+    
+    // Доп. загрузка через 1.5с на случай если первоначальная не подхватила новый заказ
+    const timer = setTimeout(() => {
+      loadOrders(false);
+    }, 1500);
+    
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.refresh, location.state?.newOrderId]);
 

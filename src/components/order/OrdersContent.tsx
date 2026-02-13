@@ -27,7 +27,20 @@ export default function OrdersContent({
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [exitingOrderIds, setExitingOrderIds] = useState<Set<string>>(new Set());
+  const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const prevOrderIdsRef = useRef<Set<string>>(new Set());
+  const isFirstRenderRef = useRef(true);
+  const wasLoadingRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoading) {
+      wasLoadingRef.current = true;
+    } else if (wasLoadingRef.current) {
+      wasLoadingRef.current = false;
+      isFirstRenderRef.current = true;
+      prevOrderIdsRef.current = new Set();
+    }
+  }, [isLoading]);
 
   const isOrderVisible = (order: Order) => {
     if (activeTab === 'archive') {
@@ -58,12 +71,22 @@ export default function OrdersContent({
     const prev = prevOrderIdsRef.current;
     const currentIds = new Set(visibleIdsKey.split(',').filter(Boolean));
     const disappeared: string[] = [];
+    const appeared: string[] = [];
 
     prev.forEach(id => {
       if (!currentIds.has(id) && !exitingOrderIds.has(id)) {
         disappeared.push(id);
       }
     });
+
+    if (!isFirstRenderRef.current) {
+      currentIds.forEach(id => {
+        if (!prev.has(id)) {
+          appeared.push(id);
+        }
+      });
+    }
+    isFirstRenderRef.current = false;
 
     if (disappeared.length > 0) {
       setExitingOrderIds(prev => {
@@ -79,6 +102,13 @@ export default function OrdersContent({
           return next;
         });
       }, 550);
+    }
+
+    if (appeared.length > 0) {
+      setNewOrderIds(new Set(appeared));
+      setTimeout(() => {
+        setNewOrderIds(new Set());
+      }, 400);
     }
 
     prevOrderIdsRef.current = currentIds;
@@ -149,13 +179,14 @@ export default function OrdersContent({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {displayOrders.map(order => (
           <OrderCard 
-            key={`${order.id}-${order._updateTimestamp || Date.now()}`}
+            key={order.id}
             order={order} 
             isSeller={isSeller}
             onOpenChat={onOpenChat}
             onAcceptOrder={isSeller ? onAcceptOrder : undefined}
             onCompleteOrder={!isSeller ? onCompleteOrder : undefined}
             isExiting={exitingOrderIds.has(order.id as string)}
+            isNew={newOrderIds.has(order.id as string)}
           />
         ))}
       </div>

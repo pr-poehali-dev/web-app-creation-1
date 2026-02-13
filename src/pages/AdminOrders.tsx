@@ -350,7 +350,7 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
         ) : (
           <div className="space-y-4">
             {filteredOrders.map((order) => (
-              <Card key={order.id} className="hover:shadow-lg transition-shadow animate-order-enter">
+              <Card key={order.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex gap-4">
                     {order.offerImage && (
