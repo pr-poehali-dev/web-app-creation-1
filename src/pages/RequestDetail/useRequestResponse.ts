@@ -74,7 +74,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
         userId: request.author.id,
         title: 'Новый отклик на запрос',
         message: `${session.firstName} ${session.lastName} откликнулся на "${request.title}"`,
-        url: `/my-orders?id=${result.id}`
+        url: `/my-orders?tab=my-requests`
       };
 
       try {
