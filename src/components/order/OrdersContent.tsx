@@ -6,8 +6,8 @@ import OrderCard from './OrderCard';
 import type { Order } from '@/types/order';
 
 interface OrdersContentProps {
-  activeTab: 'buyer' | 'seller' | 'archive';
-  onTabChange: (tab: 'buyer' | 'seller' | 'archive') => void;
+  activeTab: 'buyer' | 'seller' | 'responses' | 'archive';
+  onTabChange: (tab: 'buyer' | 'seller' | 'responses' | 'archive') => void;
   orders: Order[];
   isLoading: boolean;
   onOpenChat: (order: Order) => void;
@@ -39,8 +39,12 @@ export default function OrdersContent({
 
         return true;
       }
+      if (activeTab === 'responses') {
+        // Показываем только отклики на запросы
+        return order.isRequest && order.status !== 'completed' && order.status !== 'cancelled';
+      }
       const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-      return typeMatch && order.status !== 'completed' && order.status !== 'cancelled';
+      return typeMatch && !order.isRequest && order.status !== 'completed' && order.status !== 'cancelled';
     })
     .sort((a, b) => {
       // Для архива сортируем по дате завершения/отмены (последние сверху)
@@ -53,7 +57,7 @@ export default function OrdersContent({
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
-  const isSeller = activeTab === 'seller';
+  const isSeller = activeTab === 'seller' || activeTab === 'responses';
 
   if (isLoading) {
     return (
@@ -71,11 +75,13 @@ export default function OrdersContent({
         <CardContent className="py-12 text-center">
           <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground">
-            {isSeller 
-              ? 'У вас пока нет заказов на ваши товары' 
-              : activeTab === 'archive' 
-                ? 'У вас пока нет завершенных заказов'
-                : 'У вас пока нет заказов'}
+            {activeTab === 'responses'
+              ? 'У вас пока нет откликов на запросы'
+              : isSeller 
+                ? 'У вас пока нет заказов на ваши товары' 
+                : activeTab === 'archive' 
+                  ? 'У вас пока нет завершенных заказов'
+                  : 'У вас пока нет заказов'}
           </p>
         </CardContent>
       </Card>

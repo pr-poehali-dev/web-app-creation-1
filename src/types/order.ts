@@ -36,6 +36,7 @@ export interface Order {
   cancelledBy?: 'buyer' | 'seller';
   cancellationReason?: string;
   type?: 'purchase' | 'sale';
+  isRequest?: boolean; // true если это отклик на запрос, false если на предложение
   buyerCompany?: string;
   buyerInn?: string;
   hasUnreadCounterOffer?: boolean; // Флаг непрочитанной встречной цены

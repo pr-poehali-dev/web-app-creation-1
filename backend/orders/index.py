@@ -280,6 +280,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
         order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
         
+        # Определяем, это запрос (request) или предложение (offer)
+        # Если offer_price_per_unit = None, значит это запрос (нет связи с таблицей offers)
+        order_dict['isRequest'] = order_dict.get('offer_price_per_unit') is None
+        
         # Определяем тип заказа (покупка или продажа)
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id_int else 'sale'
         
