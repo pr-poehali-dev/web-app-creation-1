@@ -531,16 +531,17 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     cur.execute(sql)
     result = cur.fetchone()
     
-    # Обновляем reserved_quantity в таблице offers
-    update_offer_sql = f"""
-        UPDATE {schema}.offers 
-        SET reserved_quantity = COALESCE(reserved_quantity, 0) + {body['quantity']}
-        WHERE id = '{offer_id_escaped}'
-    """
-    cur.execute(update_offer_sql)
-    
-    # Инвалидируем кэш offers
-    offers_cache.clear()
+    # Обновляем reserved_quantity только для offers (не для requests)
+    if not is_request:
+        update_offer_sql = f"""
+            UPDATE {schema}.offers 
+            SET reserved_quantity = COALESCE(reserved_quantity, 0) + {quantity}
+            WHERE id = '{offer_id_escaped}'
+        """
+        cur.execute(update_offer_sql)
+        
+        # Инвалидируем кэш offers
+        offers_cache.clear()
     
     conn.commit()
     cur.close()
