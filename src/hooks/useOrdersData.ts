@@ -126,28 +126,19 @@ export function useOrdersData(
       
       const mappedOrders = response.orders.map(mapOrderData);
       
-      const now = Date.now();
-      const OPTIMISTIC_TTL = 10000;
-      optimisticUpdatesRef.current.forEach((val, key) => {
-        if (now - val.timestamp > OPTIMISTIC_TTL) {
-          optimisticUpdatesRef.current.delete(key);
-        }
-      });
-
       const ordersWithOptimistic = mappedOrders.map((order: Order) => {
         const opt = optimisticUpdatesRef.current.get(order.id as string);
-        if (opt && order.status !== opt.status) {
-          return { ...order, status: opt.status };
-        }
-        if (opt && order.status === opt.status) {
+        if (!opt) return order;
+        if (order.status === opt.status) {
           optimisticUpdatesRef.current.delete(order.id as string);
+          return order;
         }
-        return order;
+        return { ...order, status: opt.status };
       });
       
       const ordersWithCounter = ordersWithOptimistic.filter((o: Order) => o.counterPricePerUnit);
       
-      const timestamp = now;
+      const timestamp = Date.now();
       const ordersWithTimestamp = ordersWithOptimistic.map((order: Order, index: number) => ({ 
         ...order, 
         _updateTimestamp: timestamp + index
