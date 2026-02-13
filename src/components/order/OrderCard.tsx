@@ -10,9 +10,10 @@ interface OrderCardProps {
   onOpenChat: (order: Order) => void;
   onAcceptOrder?: (orderId: string) => void;
   onCompleteOrder?: (orderId: string) => void;
+  isExiting?: boolean;
 }
 
-export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder }: OrderCardProps) {
+export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, isExiting }: OrderCardProps) {
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -36,7 +37,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
 
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer relative"
+      className={`hover:shadow-md transition-shadow cursor-pointer relative ${isExiting ? 'animate-order-exit' : 'animate-order-enter'}`}
       onClick={() => onOpenChat(order)}
     >
       <CardContent className="p-4 space-y-3">

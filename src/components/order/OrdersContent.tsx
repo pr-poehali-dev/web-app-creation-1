@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
@@ -26,34 +26,73 @@ export default function OrdersContent({
   onCompleteOrder,
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [exitingOrderIds, setExitingOrderIds] = useState<Set<string>>(new Set());
+  const prevOrderIdsRef = useRef<Set<string>>(new Set());
 
-  const displayOrders = orders
-    .filter(order => {
-      if (activeTab === 'archive') {
-        const isArchived = order.status === 'completed' || order.status === 'cancelled';
-        if (!isArchived) return false;
-        if (searchQuery && !order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase())) {
-          return false;
-        }
-        return true;
+  const isOrderVisible = (order: Order) => {
+    if (activeTab === 'archive') {
+      return order.status === 'completed' || order.status === 'cancelled';
+    }
+    if (activeTab === 'my-requests') {
+      return order.isRequest && order.type === 'sale' && order.status !== 'completed' && order.status !== 'cancelled';
+    }
+    if (activeTab === 'my-responses') {
+      return order.isRequest && order.type === 'purchase' && order.status !== 'completed' && order.status !== 'cancelled';
+    }
+    const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
+    return typeMatch && !order.isRequest && order.status !== 'completed' && order.status !== 'cancelled';
+  };
+
+  const visibleOrders = orders.filter(order => {
+    if (!isOrderVisible(order)) return false;
+    if (activeTab === 'archive' && searchQuery) {
+      return order.offerTitle.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return true;
+  });
+
+  const visibleOrderIds = new Set(visibleOrders.map(o => o.id as string));
+  const visibleIdsKey = Array.from(visibleOrderIds).sort().join(',');
+
+  useEffect(() => {
+    const prev = prevOrderIdsRef.current;
+    const currentIds = new Set(visibleIdsKey.split(',').filter(Boolean));
+    const disappeared: string[] = [];
+
+    prev.forEach(id => {
+      if (!currentIds.has(id) && !exitingOrderIds.has(id)) {
+        disappeared.push(id);
       }
-      if (activeTab === 'my-requests') {
-        return order.isRequest && order.type === 'sale' && order.status !== 'completed' && order.status !== 'cancelled';
-      }
-      if (activeTab === 'my-responses') {
-        return order.isRequest && order.type === 'purchase' && order.status !== 'completed' && order.status !== 'cancelled';
-      }
-      const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-      return typeMatch && !order.isRequest && order.status !== 'completed' && order.status !== 'cancelled';
-    })
+    });
+
+    if (disappeared.length > 0) {
+      setExitingOrderIds(prev => {
+        const next = new Set(prev);
+        disappeared.forEach(id => next.add(id));
+        return next;
+      });
+
+      setTimeout(() => {
+        setExitingOrderIds(prev => {
+          const next = new Set(prev);
+          disappeared.forEach(id => next.delete(id));
+          return next;
+        });
+      }, 550);
+    }
+
+    prevOrderIdsRef.current = currentIds;
+  }, [visibleIdsKey]);
+
+  const exitingOrders = orders.filter(o => exitingOrderIds.has(o.id as string) && !visibleOrderIds.has(o.id as string));
+
+  const displayOrders = [...visibleOrders, ...exitingOrders]
     .sort((a, b) => {
-      // Для архива сортируем по дате завершения/отмены (последние сверху)
       if (activeTab === 'archive') {
         const dateA = a.completedDate || a.createdAt;
         const dateB = b.completedDate || b.createdAt;
         return dateB.getTime() - dateA.getTime();
       }
-      // Для активных заказов сортируем по дате создания (новые сверху)
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
@@ -116,6 +155,7 @@ export default function OrdersContent({
             onOpenChat={onOpenChat}
             onAcceptOrder={isSeller ? onAcceptOrder : undefined}
             onCompleteOrder={!isSeller ? onCompleteOrder : undefined}
+            isExiting={exitingOrderIds.has(order.id as string)}
           />
         ))}
       </div>

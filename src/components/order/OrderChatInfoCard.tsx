@@ -167,7 +167,33 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           </>
         )}
 
-        {order.status !== 'completed' && order.status !== 'cancelled' && (
+        {order.status === 'completed' && (
+        <div className="animate-in fade-in-0 zoom-in-95 duration-300 bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <Icon name="CheckCircle" className="h-6 w-6 text-green-600" />
+          </div>
+          <div>
+            <p className="font-semibold text-green-800">Заказ завершён</p>
+            <p className="text-sm text-green-600">Спасибо за сотрудничество</p>
+          </div>
+        </div>
+      )}
+
+      {order.status === 'cancelled' && (
+        <div className="animate-in fade-in-0 zoom-in-95 duration-300 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <Icon name="XCircle" className="h-6 w-6 text-red-600" />
+          </div>
+          <div>
+            <p className="font-semibold text-red-800">Заказ отменён</p>
+            {order.cancellationReason && (
+              <p className="text-sm text-red-600">{order.cancellationReason}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {order.status !== 'completed' && order.status !== 'cancelled' && (
           <>
             <Separator />
             {order.status === 'pending' && isBuyer && (

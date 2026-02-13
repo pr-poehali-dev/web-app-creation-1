@@ -571,9 +571,8 @@ export function useOrdersData(
 
       await ordersAPI.updateOrder(orderToComplete, { status: 'completed' });
 
-      setIsChatOpen(false);
+      setTimeout(() => setIsChatOpen(false), 400);
       
-      // Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
         orderId: orderToComplete,
@@ -701,7 +700,6 @@ export function useOrdersData(
         description: 'Заказ успешно отменён',
       });
 
-      // Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
         orderId: orderToCancel,
@@ -709,7 +707,7 @@ export function useOrdersData(
       }));
       window.dispatchEvent(new Event('storage'));
 
-      setIsChatOpen(false);
+      setTimeout(() => setIsChatOpen(false), 400);
     } catch (error) {
       console.error('Error cancelling order:', error);
       optimisticUpdatesRef.current.delete(orderToCancel as string);

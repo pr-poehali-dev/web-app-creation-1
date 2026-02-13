@@ -190,6 +190,51 @@ button {
     animation: slide-up 0.3s ease-out;
   }
 
+  @keyframes order-card-exit {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+      max-height: 500px;
+    }
+    40% {
+      opacity: 0.5;
+      transform: scale(0.97);
+    }
+    70% {
+      opacity: 0;
+      transform: scale(0.95);
+      max-height: 500px;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.95);
+      max-height: 0;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+  }
+
+  .animate-order-exit {
+    animation: order-card-exit 0.5s ease-in-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes order-card-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .animate-order-enter {
+    animation: order-card-enter 0.3s ease-out;
+  }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
