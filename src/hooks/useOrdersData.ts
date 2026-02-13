@@ -26,6 +26,7 @@ export function useOrdersData(
   const [isSyncing, setIsSyncing] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [pendingReviewOrder, setPendingReviewOrder] = useState<Order | null>(null);
+  const optimisticUpdatesRef = useRef<Map<string, { status: string; timestamp: number }>>(new Map());
 
   const playNotificationSound = () => {
     const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjsj6sD5+GfJMKAAAAASUVORK5CYII=');
@@ -125,15 +126,31 @@ export function useOrdersData(
       
       const mappedOrders = response.orders.map(mapOrderData);
       
-      // Логируем встречные цены для отладки
-      const ordersWithCounter = mappedOrders.filter((o: Order) => o.counterPricePerUnit);
+      const now = Date.now();
+      const OPTIMISTIC_TTL = 10000;
+      optimisticUpdatesRef.current.forEach((val, key) => {
+        if (now - val.timestamp > OPTIMISTIC_TTL) {
+          optimisticUpdatesRef.current.delete(key);
+        }
+      });
+
+      const ordersWithOptimistic = mappedOrders.map((order: Order) => {
+        const opt = optimisticUpdatesRef.current.get(order.id as string);
+        if (opt && order.status !== opt.status) {
+          return { ...order, status: opt.status };
+        }
+        if (opt && order.status === opt.status) {
+          optimisticUpdatesRef.current.delete(order.id as string);
+        }
+        return order;
+      });
       
-      // CRITICAL: Принудительно создаём НОВЫЙ массив с НОВЫМИ объектами + timestamp
-      // чтобы React гарантированно обнаружил изменения и перерисовал карточки
-      const timestamp = Date.now();
-      const ordersWithTimestamp = mappedOrders.map((order, index) => ({ 
+      const ordersWithCounter = ordersWithOptimistic.filter((o: Order) => o.counterPricePerUnit);
+      
+      const timestamp = now;
+      const ordersWithTimestamp = ordersWithOptimistic.map((order: Order, index: number) => ({ 
         ...order, 
-        _updateTimestamp: timestamp + index // Уникальный timestamp для каждого заказа
+        _updateTimestamp: timestamp + index
       }));
       
       if (ordersWithCounter.length > 0) {
@@ -545,7 +562,8 @@ export function useOrdersData(
     const isBuyer = currentUser?.id?.toString() === order?.buyerId?.toString();
 
     try {
-      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
+      optimisticUpdatesRef.current.set(orderToComplete as string, { status: 'completed', timestamp: Date.now() });
+
       const updatedOrder = {
         ...order,
         status: 'completed' as const,
@@ -560,7 +578,6 @@ export function useOrdersData(
         setSelectedOrder(updatedOrder);
       }
 
-      // Отправляем на сервер в фоне
       await ordersAPI.updateOrder(orderToComplete, { status: 'completed' });
 
       setIsChatOpen(false);
@@ -587,8 +604,8 @@ export function useOrdersData(
       }
     } catch (error) {
       console.error('Error completing order:', error);
+      optimisticUpdatesRef.current.delete(orderToComplete as string);
       
-      // В случае ошибки откатываем изменения
       setOrders(prevOrders => 
         prevOrders.map(o => o.id === orderToComplete ? order : o)
       );
@@ -663,7 +680,8 @@ export function useOrdersData(
     const cancelledBy = currentUser?.id?.toString() === order?.buyerId?.toString() ? 'buyer' : 'seller';
 
     try {
-      // СРАЗУ обновляем локальный статус ДО отправки на сервер (optimistic update)
+      optimisticUpdatesRef.current.set(orderToCancel as string, { status: 'cancelled', timestamp: Date.now() });
+
       const updatedOrder = {
         ...order,
         status: 'cancelled' as const,
@@ -675,12 +693,10 @@ export function useOrdersData(
         prevOrders.map(o => o.id === orderToCancel ? updatedOrder : o)
       );
       
-      // Обновляем selectedOrder для корректного отображения в модалке
       if (selectedOrder?.id === orderToCancel) {
         setSelectedOrder(updatedOrder);
       }
       
-      // Отправляем на сервер в фоне
       await ordersAPI.updateOrder(orderToCancel, { 
         status: 'cancelled',
         cancelledBy,
@@ -705,8 +721,8 @@ export function useOrdersData(
       setIsChatOpen(false);
     } catch (error) {
       console.error('Error cancelling order:', error);
+      optimisticUpdatesRef.current.delete(orderToCancel as string);
       
-      // В случае ошибки откатываем изменения
       setOrders(prevOrders => 
         prevOrders.map(o => o.id === orderToCancel ? order : o)
       );
