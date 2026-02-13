@@ -37,6 +37,19 @@ export default function RequestResponseModal({
   const isService = category === 'utilities';
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [priceValue, setPriceValue] = useState('');
+  
+  const formatNumber = (value: string) => {
+    // Убираем все кроме цифр
+    const numbers = value.replace(/\D/g, '');
+    // Форматируем с пробелами
+    return numbers.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1 ');
+  };
+  
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatNumber(e.target.value);
+    setPriceValue(formatted);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -139,11 +152,17 @@ export default function RequestResponseModal({
                 <Input
                   id="response-price"
                   name="response-price"
-                  type="number"
-                  min="1"
+                  type="text"
+                  value={priceValue}
+                  onChange={handlePriceChange}
                   placeholder={budget ? `Бюджет заказчика: ${budget.toLocaleString('ru-RU')} ₽` : 'Укажите стоимость'}
                   required
                   className="h-9 mt-1"
+                />
+                <input 
+                  type="hidden" 
+                  name="response-price-value" 
+                  value={priceValue.replace(/\s/g, '')}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Укажите полную стоимость выполнения работ

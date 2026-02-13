@@ -44,7 +44,9 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const responseQuantity = parseFloat(formData.get('response-quantity') as string);
-    const responsePrice = parseFloat(formData.get('response-price') as string);
+    // Получаем цену из скрытого поля (без пробелов) или из обычного поля
+    const priceValue = formData.get('response-price-value') as string || formData.get('response-price') as string;
+    const responsePrice = parseFloat(priceValue.replace(/\s/g, ''));
     const deliveryTime = parseInt(formData.get('response-delivery') as string);
     const comment = formData.get('response-comment') as string;
 
