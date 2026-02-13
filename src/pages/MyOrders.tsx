@@ -135,20 +135,20 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           ) : (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as OrderTab)} className="mb-6" defaultValue="buyer">
             <TabsList className="grid w-full max-w-3xl grid-cols-5 gap-1 mb-6 h-auto p-1">
-              <TabsTrigger value="buyer" className="py-2.5 text-xs sm:text-sm">
-                Мои покупки {buyerOrdersCount > 0 && `(${buyerOrdersCount})`}
+              <TabsTrigger value="buyer" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
+                Покупки{buyerOrdersCount > 0 ? ` (${buyerOrdersCount})` : ''}
               </TabsTrigger>
-              <TabsTrigger value="seller" className="py-2.5 text-xs sm:text-sm">
-                Мои продажи {sellerOrdersCount > 0 && `(${sellerOrdersCount})`}
+              <TabsTrigger value="seller" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
+                Продажи{sellerOrdersCount > 0 ? ` (${sellerOrdersCount})` : ''}
               </TabsTrigger>
-              <TabsTrigger value="my-requests" className="py-2.5 text-xs sm:text-sm">
-                Мои запросы {myRequestsCount > 0 && `(${myRequestsCount})`}
+              <TabsTrigger value="my-requests" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
+                Запросы{myRequestsCount > 0 ? ` (${myRequestsCount})` : ''}
               </TabsTrigger>
-              <TabsTrigger value="my-responses" className="py-2.5 text-xs sm:text-sm">
-                Мои отклики {myResponsesCount > 0 && `(${myResponsesCount})`}
+              <TabsTrigger value="my-responses" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
+                Отклики{myResponsesCount > 0 ? ` (${myResponsesCount})` : ''}
               </TabsTrigger>
-              <TabsTrigger value="archive" className="py-2.5 text-xs sm:text-sm">
-                Архив {archiveOrdersCount > 0 && `(${archiveOrdersCount})`}
+              <TabsTrigger value="archive" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
+                Архив{archiveOrdersCount > 0 ? ` (${archiveOrdersCount})` : ''}
               </TabsTrigger>
             </TabsList>
 
