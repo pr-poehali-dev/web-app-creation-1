@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -35,9 +36,24 @@ export default function RequestResponseModal({
 }: RequestResponseModalProps) {
   const isService = category === 'utilities';
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    
+    // Проверка количества и размера
+    if (attachments.length + files.length > 5) {
+      toast.error('Можно прикрепить максимум 5 файлов');
+      return;
+    }
+    
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`Файл ${file.name} слишком большой (макс. 10 МБ)`);
+        return;
+      }
+    }
+    
     setAttachments(prev => [...prev, ...files]);
   };
 
@@ -45,15 +61,61 @@ export default function RequestResponseModal({
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    // Добавляем файлы в FormData перед отправкой
-    const form = e.target as HTMLFormElement;
-    const formData = new FormData(form);
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     
-    attachments.forEach((file, index) => {
-      formData.append(`attachment-${index}`, file);
-    });
-
+    // Если есть файлы - загружаем их сначала
+    if (attachments.length > 0 && isService) {
+      setIsUploading(true);
+      toast.info('Загрузка файлов...');
+      
+      try {
+        const uploadedUrls: string[] = [];
+        
+        for (const file of attachments) {
+          const reader = new FileReader();
+          const base64 = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          
+          const response = await fetch('https://functions.poehali.dev/b7dd4633-d02b-45c1-bef3-e42a0fbfa170', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              file: base64,
+              filename: file.name,
+              contentType: file.type
+            })
+          });
+          
+          if (!response.ok) throw new Error('Upload failed');
+          
+          const result = await response.json();
+          if (result.fileUrl) {
+            uploadedUrls.push(result.fileUrl);
+          }
+        }
+        
+        // Добавляем ссылки на файлы в комментарий
+        const form = e.target as HTMLFormElement;
+        const commentField = form.querySelector('#response-comment') as HTMLTextAreaElement;
+        const currentComment = commentField.value;
+        const filesText = '\n\nПрикрепленные файлы:\n' + uploadedUrls.map((url, i) => `${i + 1}. ${url}`).join('\n');
+        commentField.value = currentComment + filesText;
+        
+        toast.success('Файлы загружены!');
+        setIsUploading(false);
+      } catch (error) {
+        console.error('File upload error:', error);
+        toast.error('Ошибка загрузки файлов');
+        setIsUploading(false);
+        return;
+      }
+    }
+    
     onSubmit(e);
   };
 
@@ -125,6 +187,7 @@ export default function RequestResponseModal({
                       size="sm"
                       className="relative"
                       onClick={() => document.getElementById('file-upload')?.click()}
+                      disabled={isUploading}
                     >
                       <Icon name="Paperclip" className="h-4 w-4 mr-1" />
                       Прикрепить файлы
@@ -229,13 +292,14 @@ export default function RequestResponseModal({
           )}
 
           <div className="flex gap-2 pt-2">
-            <Button type="submit" className="flex-1">
-              Отправить отклик
+            <Button type="submit" className="flex-1" disabled={isUploading}>
+              {isUploading ? 'Загрузка...' : 'Отправить отклик'}
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
+              disabled={isUploading}
             >
               Отмена
             </Button>
