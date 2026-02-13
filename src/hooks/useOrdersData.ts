@@ -10,8 +10,8 @@ import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
 
 export function useOrdersData(
   isAuthenticated: boolean, 
-  activeTab: 'buyer' | 'seller' | 'archive',
-  onTabChange?: (tab: 'buyer' | 'seller' | 'archive') => void
+  activeTab: 'buyer' | 'seller' | 'responses' | 'archive',
+  onTabChange?: (tab: 'buyer' | 'seller' | 'responses' | 'archive') => void
 ) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -97,6 +97,7 @@ export function useOrdersData(
       cancellationReason: orderData.cancellation_reason || orderData.cancellationReason,
       buyerCompany: orderData.buyer_company || orderData.buyerCompany,
       buyerInn: orderData.buyer_inn || orderData.buyerInn,
+      isRequest: orderData.is_request || orderData.isRequest || false,
       hasUnreadCounterOffer,
     };
   };
@@ -381,10 +382,9 @@ export function useOrdersData(
       
       // notifyOrderUpdated уже триггерит обновление через событие order_updated
       notifyOrderUpdated(orderToAccept);
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('Error accepting order:', error);
       
-      // В случае ошибки откатываем изменения
       setOrders(prevOrders => 
         prevOrders.map(o => o.id === orderToAccept ? order : o)
       );
@@ -395,7 +395,7 @@ export function useOrdersData(
       
       toast({
         title: 'Ошибка',
-        description: error.message || 'Не удалось принять заказ',
+        description: error instanceof Error ? error.message : 'Не удалось принять заказ',
         variant: 'destructive',
       });
     }
