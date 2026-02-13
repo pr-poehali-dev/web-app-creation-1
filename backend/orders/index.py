@@ -405,16 +405,19 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     schema = get_schema()
     offer_id_escaped = body['offerId'].replace("'", "''")
     
-    # Пробуем найти в offers (предложения)
-    cur.execute(f"SELECT user_id FROM {schema}.offers WHERE id = '{offer_id_escaped}'")
-    offer = cur.fetchone()
+    # Сначала ищем в requests (запросы) - приоритет
+    cur.execute(f"SELECT user_id FROM {schema}.requests WHERE id = '{offer_id_escaped}'")
+    request = cur.fetchone()
     
-    # Если не нашли в offers, пробуем найти в requests (запросы)
-    if not offer:
-        cur.execute(f"SELECT user_id FROM {schema}.requests WHERE id = '{offer_id_escaped}'")
-        request = cur.fetchone()
+    if request:
+        seller_id = request['user_id']
+        is_request = True
+    else:
+        # Если не нашли в requests, ищем в offers (предложения)
+        cur.execute(f"SELECT user_id FROM {schema}.offers WHERE id = '{offer_id_escaped}'")
+        offer = cur.fetchone()
         
-        if not request:
+        if not offer:
             cur.close()
             conn.close()
             return {
@@ -424,9 +427,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
                 'isBase64Encoded': False
             }
         
-        seller_id = request['user_id']
-    else:
         seller_id = offer['user_id']
+        is_request = False
     
     # ПРОВЕРКА 1: Автор предложения не может купить у самого себя
     if int(user_id) == seller_id:
@@ -454,11 +456,16 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     order_number = generate_order_number()
     
+    # Для запросов (услуг) quantity может быть null - используем 1
+    quantity = body.get('quantity')
+    if quantity is None or quantity == 0:
+        quantity = 1
+    
     vat_amount = None
     if body.get('hasVAT') and body.get('vatRate'):
-        vat_amount = (body['pricePerUnit'] * body['quantity'] * body['vatRate']) / 100
+        vat_amount = (body['pricePerUnit'] * quantity * body['vatRate']) / 100
     
-    total_amount = body['pricePerUnit'] * body['quantity']
+    total_amount = body['pricePerUnit'] * quantity
     if vat_amount:
         total_amount += vat_amount
     
@@ -510,7 +517,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
-            '{title_escaped}', {body['quantity']}, {body['quantity']}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
+            '{title_escaped}', {quantity}, {quantity}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
             {body.get('hasVAT', False)}, {vat_amount if vat_amount else 'NULL'},
             '{delivery_type_escaped}', '{delivery_address_escaped}', '{district_escaped}',
             '{buyer_name_escaped}', '{buyer_phone_escaped}', '{buyer_email_escaped}', '{buyer_company_escaped}', '{buyer_inn_escaped}', '{buyer_comment_escaped}',
