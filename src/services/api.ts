@@ -92,9 +92,9 @@ export function clearCache(): void {
 async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2): Promise<Response> {
   const method = options?.method || 'GET';
   
-  // ⚡ НЕ кэшируем запросы сообщений чата и заказов (они должны обновляться в реальном времени)
+  // НЕ кэшируем запросы сообщений чата и заказов (они должны обновляться в реальном времени)
   const isMessageRequest = url.includes('messages=true');
-  const isOrdersRequest = url.includes('orders');
+  const isOrdersRequest = url.includes('orders') || url.startsWith(ORDERS_API);
   
   if (method === 'GET' && !isMessageRequest && !isOrdersRequest) {
     const cacheKey = getCacheKey(url, options);
@@ -113,8 +113,8 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2
     try {
       const response = await fetch(url, options);
       
-      // Кэшируем только GET запросы (кроме сообщений чата)
-      if (response.ok && method === 'GET' && !isMessageRequest) {
+      // Кэшируем только GET запросы (кроме сообщений чата и заказов)
+      if (response.ok && method === 'GET' && !isMessageRequest && !isOrdersRequest) {
         const clonedResponse = response.clone();
         const data = await clonedResponse.json();
         const cacheKey = getCacheKey(url, options);

@@ -215,23 +215,16 @@ export function useOrdersData(
         try {
           const updatedOrderData = await ordersAPI.getOrderById(triggerData.orderId);
           const mappedOrder = mapOrderData(updatedOrderData);
-          const updateTimestamp = Date.now();
           
-          // КРИТИЧНО: используем ОДИНАКОВЫЙ объект с timestamp для карточки И модалки
-          const updatedOrderWithTimestamp = { ...mappedOrder, _updateTimestamp: updateTimestamp };
-          
-          // 1. Обновляем этот заказ в массиве orders (карточка на странице)
           setOrders(prevOrders => 
             prevOrders.map(o => 
-              o.id === mappedOrder.id ? updatedOrderWithTimestamp : o
+              o.id === mappedOrder.id ? mappedOrder : o
             )
           );
           
-          // 2. СИНХРОННО обновляем selectedOrder если модалка открыта для этого заказа
-          if (selectedOrder?.id === mappedOrder.id) {
-            setSelectedOrder(updatedOrderWithTimestamp);
-            console.log('✅ Модальное окно обновлено синхронно с карточкой');
-          }
+          setSelectedOrder(prev => 
+            prev?.id === mappedOrder.id ? mappedOrder : prev
+          );
           
           console.log('✅ Заказ', triggerData.orderId, 'обновлен мгновенно у контрагента');
         } catch (err) {
@@ -270,7 +263,7 @@ export function useOrdersData(
   // Удалено: этот effect вызывал постоянные перерисовки модалки
   // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
 
-  // Периодическое обновление всех заказов каждые 3 секунды
+  // Периодическое обновление всех заказов каждые 30 секунд (optimistic updates уже мгновенные)
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -278,7 +271,7 @@ export function useOrdersData(
 
     const intervalId = setInterval(() => {
       loadOrders(false);
-    }, 3000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
@@ -421,30 +414,17 @@ export function useOrdersData(
         description: isSeller ? 'Покупатель получит уведомление' : 'Продавец получит уведомление',
       });
 
-      // Получаем обновлённый заказ напрямую из API
       const updatedOrderData = await ordersAPI.getOrderById(selectedOrder.id);
       const mappedOrder = mapOrderData(updatedOrderData);
-      const updateTimestamp = Date.now();
       
-      // СИНХРОННОЕ обновление: модалка + карточка ОДНОВРЕМЕННО
-      const updatedOrderWithTimestamp = { ...mappedOrder, _updateTimestamp: updateTimestamp };
+      setSelectedOrder(mappedOrder);
       
-      // 1. Обновляем selectedOrder (модальное окно)
-      setSelectedOrder(updatedOrderWithTimestamp);
+      setOrders(prevOrders => 
+        prevOrders.map(o => o.id === mappedOrder.id ? mappedOrder : o)
+      );
       
-      // 2. Обновляем этот заказ в массиве orders (карточка)
-      setOrders(prevOrders => {
-        const orderIndex = prevOrders.findIndex(o => o.id === mappedOrder.id);
-        if (orderIndex === -1) return prevOrders;
-        
-        const newOrders = [...prevOrders];
-        newOrders[orderIndex] = updatedOrderWithTimestamp;
-        return newOrders;
-      });
-      
-      // 3. Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
-        timestamp: updateTimestamp,
+        timestamp: Date.now(),
         orderId: selectedOrder.id,
         action: 'counter_offer'
       }));
