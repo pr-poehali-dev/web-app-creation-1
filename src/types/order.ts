@@ -40,7 +40,6 @@ export interface Order {
   buyerCompany?: string;
   buyerInn?: string;
   hasUnreadCounterOffer?: boolean; // Флаг непрочитанной встречной цены
-  _updateTimestamp?: number; // Timestamp для принудительной перерисовки React компонентов
 }
 
 export interface ChatMessage {

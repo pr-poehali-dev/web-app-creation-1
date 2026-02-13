@@ -136,28 +136,7 @@ export function useOrdersData(
         return { ...order, status: opt.status };
       });
       
-      const ordersWithCounter = ordersWithOptimistic.filter((o: Order) => o.counterPricePerUnit);
-      
-      const timestamp = Date.now();
-      const ordersWithTimestamp = ordersWithOptimistic.map((order: Order, index: number) => ({ 
-        ...order, 
-        _updateTimestamp: timestamp + index
-      }));
-      
-      if (ordersWithCounter.length > 0) {
-        console.log('[loadOrders] Заказы со встречными ценами:', ordersWithCounter.map((o: Order) => ({
-          id: o.id,
-          title: o.offerTitle,
-          counterPrice: o.counterPricePerUnit,
-          counterTotal: o.counterTotalAmount,
-          counterBy: o.counterOfferedBy,
-          counterAt: o.counterOfferedAt,
-          hasUnread: o.hasUnreadCounterOffer
-        })));
-        console.log('[loadOrders] 🔄 Установлен новый _updateTimestamp:', timestamp);
-      }
-      
-      setOrders(ordersWithTimestamp);
+      setOrders(ordersWithOptimistic);
       
       if (isInitialLoad) {
         setIsInitialLoad(false);
