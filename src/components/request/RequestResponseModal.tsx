@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import { uploadFile } from '@/utils/fileUpload';
 
 interface RequestResponseModalProps {
   isOpen: boolean;
@@ -77,42 +78,19 @@ export default function RequestResponseModal({
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Если есть файлы - загружаем их сначала
     if (attachments.length > 0 && isService) {
       setIsUploading(true);
       toast.info('Загрузка файлов...');
       
       try {
+        const userId = localStorage.getItem('userId') || 'anonymous';
         const uploadedUrls: string[] = [];
         
         for (const file of attachments) {
-          const reader = new FileReader();
-          const base64 = await new Promise<string>((resolve) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          
-          const response = await fetch('https://functions.poehali.dev/b7dd4633-d02b-45c1-bef3-e42a0fbfa170', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              file: base64,
-              filename: file.name,
-              contentType: file.type
-            })
-          });
-          
-          if (!response.ok) throw new Error('Upload failed');
-          
-          const result = await response.json();
-          if (result.fileUrl) {
-            uploadedUrls.push(result.fileUrl);
-          }
+          const url = await uploadFile(file, 'response_attachment', userId);
+          uploadedUrls.push(url);
         }
         
-        // Добавляем ссылки на файлы в комментарий
         const form = e.target as HTMLFormElement;
         const commentField = form.querySelector('#response-comment') as HTMLTextAreaElement;
         const currentComment = commentField.value;
