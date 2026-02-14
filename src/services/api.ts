@@ -187,6 +187,7 @@ export interface CreateRequestData {
   deliveryAddress?: string;
   availableDistricts: string[];
   images?: Array<{ url: string; alt?: string }>;
+  video?: { url: string; thumbnail?: string } | null;
   isPremium?: boolean;
   status?: string;
   deadlineStart?: string;

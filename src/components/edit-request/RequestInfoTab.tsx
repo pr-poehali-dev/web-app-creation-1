@@ -12,6 +12,7 @@ import type { Request } from '@/types/offer';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { requestsAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import ProductMediaUpload from '@/components/ProductMediaUpload';
 
 type PricingType = 'fixed' | 'negotiable' | 'not_set';
 
@@ -39,6 +40,10 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   const [pricingType, setPricingType] = useState<PricingType>(getInitialPricingType());
   const [price, setPrice] = useState(request.pricePerUnit > 0 ? String(request.pricePerUnit) : '');
   const [negotiablePrice, setNegotiablePrice] = useState(request.negotiablePrice || false);
+  const [images, setImages] = useState<string[]>(
+    (request.images || []).map(img => img.url)
+  );
+  const [videoUrl, setVideoUrl] = useState<string>(request.video?.url || '');
 
   const handlePricingTypeChange = (value: string) => {
     const pt = value as PricingType;
@@ -59,6 +64,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     setPricingType(getInitialPricingType());
     setPrice(request.pricePerUnit > 0 ? String(request.pricePerUnit) : '');
     setNegotiablePrice(request.negotiablePrice || false);
+    setImages((request.images || []).map(img => img.url));
+    setVideoUrl(request.video?.url || '');
     setIsEditing(false);
   };
 
@@ -67,12 +74,21 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     const priceValue = price ? parseFloat(price) : 0;
 
     try {
-      await requestsAPI.updateRequest(request.id, {
+      const updateData: Record<string, unknown> = {
         title,
         description,
         pricePerUnit: priceValue,
         negotiablePrice,
-      });
+        images: images.map((url, idx) => ({ url, alt: `${title} ${idx + 1}` })),
+      };
+
+      if (videoUrl) {
+        updateData.video = { url: videoUrl };
+      } else {
+        updateData.video = null;
+      }
+
+      await requestsAPI.updateRequest(request.id, updateData);
 
       toast({ title: 'Сохранено', description: 'Запрос успешно обновлён' });
 
@@ -83,6 +99,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
           description,
           pricePerUnit: priceValue,
           negotiablePrice,
+          images: images.map((url, idx) => ({ id: `img-${idx}`, url, alt: `${title} ${idx + 1}` })),
+          video: videoUrl ? { id: 'vid', url: videoUrl } : undefined,
         });
       }
 
@@ -106,6 +124,9 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     if (request.negotiablePrice) return 'Ваши предложения (торг)';
     return 'Не указана';
   };
+
+  const currentImages = (request.images || []).map(img => img.url);
+  const currentVideo = request.video?.url;
 
   return (
     <Card>
@@ -178,6 +199,16 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
               </div>
             )}
 
+            <div className="border-t pt-4">
+              <ProductMediaUpload
+                productImages={images}
+                productVideoUrl={videoUrl || undefined}
+                onImagesChange={setImages}
+                onVideoChange={setVideoUrl}
+                maxImages={5}
+              />
+            </div>
+
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} disabled={isSaving} size="sm">
                 {isSaving ? (
@@ -193,7 +224,30 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground">{request.description}</p>
+          <>
+            <p className="text-muted-foreground">{request.description}</p>
+
+            {currentImages.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {currentImages.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={url}
+                    alt={`${request.title} ${idx + 1}`}
+                    className="w-full h-32 object-cover rounded-lg border"
+                  />
+                ))}
+              </div>
+            )}
+
+            {currentVideo && (
+              <video
+                src={currentVideo}
+                controls
+                className="w-full max-h-64 rounded-lg border"
+              />
+            )}
+          </>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

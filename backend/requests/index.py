@@ -211,12 +211,16 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
                     ORDER BY rir.sort_order
                 ) FILTER (WHERE ri.id IS NOT NULL),
                 '[]'
-            ) as images
+            ) as images,
+            v.id as video_db_id,
+            v.url as video_url,
+            v.thumbnail as video_thumbnail
         FROM t_p42562714_web_app_creation_1.requests r
         LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
+        LEFT JOIN t_p42562714_web_app_creation_1.offer_videos v ON r.video_id = v.id
         WHERE r.id = %s AND r.status != 'deleted'
-        GROUP BY r.id
+        GROUP BY r.id, v.id, v.url, v.thumbnail
     """
     
     cur.execute(sql, (request_id,))
@@ -234,6 +238,14 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
         }
     
     req_dict = dict(req)
+    
+    video_url = req_dict.pop('video_url', None)
+    video_thumbnail = req_dict.pop('video_thumbnail', None)
+    video_db_id = req_dict.pop('video_db_id', None)
+    if video_url:
+        req_dict['video'] = {'id': str(video_db_id), 'url': video_url, 'thumbnail': video_thumbnail}
+    else:
+        req_dict['video'] = None
     if isinstance(req_dict.get('price_per_unit'), Decimal):
         req_dict['price_per_unit'] = float(req_dict['price_per_unit'])
     if isinstance(req_dict.get('budget'), Decimal):
@@ -411,7 +423,10 @@ def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, st
             updates.append(f"{db_col} = %s")
             params.append(body[js_key])
 
-    if not updates:
+    images_changed = 'images' in body
+    video_changed = 'video' in body
+
+    if not updates and not images_changed and not video_changed:
         cur.close()
         conn.close()
         return {
@@ -421,11 +436,69 @@ def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, st
             'isBase64Encoded': False
         }
 
-    updates.append("updated_at = CURRENT_TIMESTAMP")
-    params.append(request_id)
+    if updates:
+        updates.append("updated_at = CURRENT_TIMESTAMP")
+        params.append(request_id)
+        sql = f"UPDATE t_p42562714_web_app_creation_1.requests SET {', '.join(updates)} WHERE id = %s"
+        cur.execute(sql, params)
 
-    sql = f"UPDATE t_p42562714_web_app_creation_1.requests SET {', '.join(updates)} WHERE id = %s"
-    cur.execute(sql, params)
+    SCHEMA = 't_p42562714_web_app_creation_1'
+
+    if images_changed:
+        cur.execute(
+            f"DELETE FROM {SCHEMA}.request_image_relations WHERE request_id = %s",
+            (request_id,)
+        )
+        new_images = body.get('images') or []
+        for idx, img in enumerate(new_images):
+            url = img.get('url', '') if isinstance(img, dict) else str(img)
+            alt = img.get('alt', '') if isinstance(img, dict) else ''
+            if not url:
+                continue
+            cur.execute(
+                f"SELECT id FROM {SCHEMA}.offer_images WHERE url = %s",
+                (url,)
+            )
+            existing = cur.fetchone()
+            if existing:
+                image_id = existing['id']
+            else:
+                cur.execute(
+                    f"INSERT INTO {SCHEMA}.offer_images (url, alt) VALUES (%s, %s) RETURNING id",
+                    (url, alt)
+                )
+                image_id = cur.fetchone()['id']
+            cur.execute(
+                f"INSERT INTO {SCHEMA}.request_image_relations (request_id, image_id, sort_order) VALUES (%s, %s, %s)",
+                (request_id, image_id, idx)
+            )
+
+    if video_changed:
+        video_data = body.get('video')
+        if video_data and isinstance(video_data, dict) and video_data.get('url'):
+            cur.execute(
+                f"SELECT id FROM {SCHEMA}.offer_videos WHERE url = %s",
+                (video_data['url'],)
+            )
+            existing_vid = cur.fetchone()
+            if existing_vid:
+                video_id = existing_vid['id']
+            else:
+                cur.execute(
+                    f"INSERT INTO {SCHEMA}.offer_videos (url, thumbnail) VALUES (%s, %s) RETURNING id",
+                    (video_data['url'], video_data.get('thumbnail', ''))
+                )
+                video_id = cur.fetchone()['id']
+            cur.execute(
+                f"UPDATE {SCHEMA}.requests SET video_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                (video_id, request_id)
+            )
+        else:
+            cur.execute(
+                f"UPDATE {SCHEMA}.requests SET video_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                (request_id,)
+            )
+
     conn.commit()
     cur.close()
     conn.close()
