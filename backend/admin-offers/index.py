@@ -219,7 +219,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'body': json.dumps({'success': True, 'message': 'Offer rejected'}),
                     'isBase64Encoded': False
                 }
-        
+
+            elif action == 'edit_title':
+                new_title = body_data.get('title', '').strip()
+                if not new_title:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'title required'}),
+                        'isBase64Encoded': False
+                    }
+                cur.execute(
+                    "UPDATE t_p42562714_web_app_creation_1.offers SET title = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                    (new_title, offer_id)
+                )
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Title updated'}),
+                    'isBase64Encoded': False
+                }
+
         elif method == 'DELETE':
             body_data = json.loads(event.get('body', '{}'))
             offer_id = body_data.get('offerId')

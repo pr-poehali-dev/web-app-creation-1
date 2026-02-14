@@ -65,6 +65,8 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const [offers, setOffers] = useState<AdminOffer[]>([]);
   const [allOffers, setAllOffers] = useState<AdminOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState('');
 
   useEffect(() => {
     fetchOffers();
@@ -213,6 +215,29 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
     }
   };
 
+  const handleEditTitle = (offer: AdminOffer) => {
+    setEditingTitleId(offer.id);
+    setEditingTitleValue(offer.title);
+  };
+
+  const handleSaveTitle = async (offerId: string) => {
+    const trimmed = editingTitleValue.trim();
+    if (!trimmed) return;
+    try {
+      await offersAPI.adminEditTitle(offerId, trimmed);
+      toast({ title: 'Сохранено', description: 'Название обновлено' });
+      setEditingTitleId(null);
+      fetchOffers();
+    } catch {
+      toast({ title: 'Ошибка', description: 'Не удалось сохранить название', variant: 'destructive' });
+    }
+  };
+
+  const handleCancelEditTitle = () => {
+    setEditingTitleId(null);
+    setEditingTitleValue('');
+  };
+
   const handleDeleteTestOffers = async () => {
     const testOfferIds = [
       'a235d4f8-c303-40f2-8aa3-b1adf798bb37',
@@ -352,7 +377,36 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                       </TableRow>
                     ) : offers.map((offer) => (
                       <TableRow key={offer.id}>
-                        <TableCell className="font-medium">{offer.title}</TableCell>
+                        <TableCell className="font-medium">
+                          {editingTitleId === offer.id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                value={editingTitleValue}
+                                onChange={(e) => setEditingTitleValue(e.target.value)}
+                                className="h-8 text-sm"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveTitle(offer.id);
+                                  if (e.key === 'Escape') handleCancelEditTitle();
+                                }}
+                                autoFocus
+                              />
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleSaveTitle(offer.id)}>
+                                <Icon name="Check" className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleCancelEditTitle}>
+                                <Icon name="X" className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span
+                              className="cursor-pointer hover:text-primary"
+                              onDoubleClick={() => handleEditTitle(offer)}
+                              title="Двойной клик для редактирования"
+                            >
+                              {offer.title}
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           {offer.sellerId ? (
                             <button
@@ -389,6 +443,14 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                         <TableCell>{new Date(offer.createdAt).toLocaleDateString('ru-RU')}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditTitle(offer)}
+                              title="Редактировать название"
+                            >
+                              <Icon name="Pencil" className="h-4 w-4" />
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"

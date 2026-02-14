@@ -414,6 +414,27 @@ export const offersAPI = {
     
     return response.json();
   },
+
+  async adminEditTitle(offerId: string, title: string): Promise<{ success: boolean }> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(ADMIN_OFFERS_API, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ offerId, action: 'edit_title', title }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to edit offer title');
+    }
+
+    invalidateCache(`id=${offerId}`);
+    invalidateCache('offers');
+
+    return response.json();
+  },
 };
 
 export const requestsAPI = {
@@ -559,6 +580,34 @@ export const requestsAPI = {
     return response.json();
   },
 
+  async adminApproveRequest(requestId: string): Promise<{ success: boolean }> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(ADMIN_REQUESTS_API, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ requestId, action: 'approve' }),
+    });
+    if (!response.ok) throw new Error('Failed to approve request');
+    return response.json();
+  },
+
+  async adminRejectRequest(requestId: string): Promise<{ success: boolean }> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(ADMIN_REQUESTS_API, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ requestId, action: 'reject' }),
+    });
+    if (!response.ok) throw new Error('Failed to reject request');
+    return response.json();
+  },
+
   async deleteAdminRequest(id: string): Promise<{ message: string }> {
     const userId = getUserId();
 
@@ -575,6 +624,27 @@ export const requestsAPI = {
       throw new Error('Failed to delete request');
     }
     
+    return response.json();
+  },
+
+  async adminEditTitle(requestId: string, title: string): Promise<{ success: boolean }> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(ADMIN_REQUESTS_API, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ requestId, action: 'edit_title', title }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to edit request title');
+    }
+
+    invalidateCache(`id=${requestId}`);
+    invalidateCache('requests');
+
     return response.json();
   },
 };

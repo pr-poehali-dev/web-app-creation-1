@@ -62,6 +62,8 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
   const [requests, setRequests] = useState<AdminRequest[]>([]);
   const [allRequests, setAllRequests] = useState<AdminRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitleValue, setEditingTitleValue] = useState('');
 
   useEffect(() => {
     fetchRequests();
@@ -151,22 +153,45 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
 
   const handleApproveRequest = async (request: AdminRequest) => {
     try {
-      await requestsAPI.updateRequest(request.id, { status: 'active' });
+      await requestsAPI.adminApproveRequest(request.id);
       toast.success(`Запрос "${request.title}" одобрен`);
       fetchRequests();
-    } catch (error) {
+    } catch {
       toast.error('Ошибка при одобрении запроса');
     }
   };
 
   const handleRejectRequest = async (request: AdminRequest) => {
     try {
-      await requestsAPI.updateRequest(request.id, { status: 'rejected' });
+      await requestsAPI.adminRejectRequest(request.id);
       toast.success(`Запрос "${request.title}" отклонен`);
       fetchRequests();
-    } catch (error) {
+    } catch {
       toast.error('Ошибка при отклонении запроса');
     }
+  };
+
+  const handleEditTitle = (request: AdminRequest) => {
+    setEditingTitleId(request.id);
+    setEditingTitleValue(request.title);
+  };
+
+  const handleSaveTitle = async (requestId: string) => {
+    const trimmed = editingTitleValue.trim();
+    if (!trimmed) return;
+    try {
+      await requestsAPI.adminEditTitle(requestId, trimmed);
+      toast.success('Название обновлено');
+      setEditingTitleId(null);
+      fetchRequests();
+    } catch {
+      toast.error('Не удалось сохранить название');
+    }
+  };
+
+  const handleCancelEditTitle = () => {
+    setEditingTitleId(null);
+    setEditingTitleValue('');
   };
 
   const handleDeleteRequest = async () => {
@@ -275,7 +300,36 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                       </TableRow>
                     ) : requests.map((request) => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.title}</TableCell>
+                        <TableCell className="font-medium">
+                          {editingTitleId === request.id ? (
+                            <div className="flex items-center gap-1">
+                              <Input
+                                value={editingTitleValue}
+                                onChange={(e) => setEditingTitleValue(e.target.value)}
+                                className="h-8 text-sm"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveTitle(request.id);
+                                  if (e.key === 'Escape') handleCancelEditTitle();
+                                }}
+                                autoFocus
+                              />
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleSaveTitle(request.id)}>
+                                <Icon name="Check" className="h-4 w-4 text-green-600" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleCancelEditTitle}>
+                                <Icon name="X" className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span
+                              className="cursor-pointer hover:text-primary"
+                              onDoubleClick={() => handleEditTitle(request)}
+                              title="Двойной клик для редактирования"
+                            >
+                              {request.title}
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           {request.buyerId ? (
                             <button
@@ -295,6 +349,14 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                         <TableCell>{new Date(request.createdAt).toLocaleDateString('ru-RU')}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditTitle(request)}
+                              title="Редактировать название"
+                            >
+                              <Icon name="Pencil" className="h-4 w-4" />
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"

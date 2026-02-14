@@ -34,6 +34,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [title, setTitle] = useState(request.title);
   const [description, setDescription] = useState(request.description);
   const [pricingType, setPricingType] = useState<PricingType>(getInitialPricingType());
   const [price, setPrice] = useState(request.pricePerUnit > 0 ? String(request.pricePerUnit) : '');
@@ -53,6 +54,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   };
 
   const handleCancel = () => {
+    setTitle(request.title);
     setDescription(request.description);
     setPricingType(getInitialPricingType());
     setPrice(request.pricePerUnit > 0 ? String(request.pricePerUnit) : '');
@@ -66,6 +68,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
 
     try {
       await requestsAPI.updateRequest(request.id, {
+        title,
         description,
         pricePerUnit: priceValue,
         negotiablePrice,
@@ -76,6 +79,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
       if (onUpdate) {
         onUpdate({
           ...request,
+          title,
           description,
           pricePerUnit: priceValue,
           negotiablePrice,
@@ -118,6 +122,15 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
 
         {isEditing ? (
           <div className="space-y-5">
+            <div className="space-y-2">
+              <Label>Название</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Название запроса"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label>Описание</Label>
               <Textarea
