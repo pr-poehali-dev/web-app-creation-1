@@ -137,6 +137,46 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           )}
         </div>
 
+        {order.isRequest && order.buyerComment && (() => {
+          const educationMatch = order.buyerComment.match(/Образование: ([^\n]*)/);
+          return educationMatch ? (
+            <div className="text-sm">
+              <p className="text-muted-foreground">Образование</p>
+              <p className="font-medium">{educationMatch[1].trim()}</p>
+            </div>
+          ) : null;
+        })()}
+
+        {order.status === 'accepted' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-2.5 text-sm space-y-1">
+            <p className="font-semibold text-green-800 flex items-center gap-1.5">
+              <Icon name="UserCheck" className="h-3.5 w-3.5" />
+              Контакты {isSeller ? 'исполнителя' : 'заказчика'}
+            </p>
+            <p className="font-medium">{isSeller ? order.buyerName : order.sellerName}</p>
+            {(isSeller ? order.buyerPhone : order.sellerPhone) && (
+              <a
+                href={`tel:${isSeller ? order.buyerPhone : order.sellerPhone}`}
+                className="text-blue-600 hover:underline flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Icon name="Phone" className="h-3 w-3" />
+                {isSeller ? order.buyerPhone : order.sellerPhone}
+              </a>
+            )}
+            {(isSeller ? order.buyerEmail : order.sellerEmail) && (
+              <a
+                href={`mailto:${isSeller ? order.buyerEmail : order.sellerEmail}`}
+                className="text-blue-600 hover:underline flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Icon name="Mail" className="h-3 w-3" />
+                {isSeller ? order.buyerEmail : order.sellerEmail}
+              </a>
+            )}
+          </div>
+        )}
+
         {order.comment && (
           <div className="text-sm">
             <p className="text-muted-foreground">Комментарий</p>
@@ -145,19 +185,58 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
         )}
 
         <div className="flex gap-2">
-          {order.status === 'accepted' ? (
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpenChat(order);
-              }}
-              variant="outline"
-              className="flex-1"
-              size="sm"
-            >
-              <Icon name="FileText" className="mr-1.5 h-4 w-4" />
-              {isSeller ? 'Детали заказа в работе' : 'Детали заказа'}
-            </Button>
+          {order.isRequest && isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder ? (
+            <>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAcceptOrder(order.id);
+                }}
+                size="sm"
+                className="flex-1 bg-green-600 hover:bg-green-700"
+              >
+                <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                Принять
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenChat(order);
+                }}
+                variant="outline"
+                size="sm"
+              >
+                <Icon name="FileText" className="h-4 w-4" />
+              </Button>
+            </>
+          ) : order.status === 'accepted' ? (
+            <div className="flex gap-2 w-full">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenChat(order);
+                }}
+                variant="outline"
+                className="flex-1"
+                size="sm"
+              >
+                <Icon name="FileText" className="mr-1.5 h-4 w-4" />
+                {isSeller ? 'Детали заказа' : 'Детали заказа'}
+              </Button>
+              {onCompleteOrder && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCompleteOrder(order.id);
+                  }}
+                  size="sm"
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
+                  Завершить
+                </Button>
+              )}
+            </div>
           ) : isSeller && (order.status === 'new' || order.status === 'pending') ? (
             <Button
               onClick={(e) => {

@@ -116,9 +116,12 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
         </div>
 
         {order.buyerComment && (() => {
+          const educationMatch = order.buyerComment.match(/Образование: ([^\n]*)/);
+          const education = educationMatch ? educationMatch[1].trim() : '';
           const cleanComment = order.buyerComment
             .replace(/\n?\n?Прикрепленные файлы:[\s\S]*$/, '')
             .replace(/Срок (?:поставки|выполнения): \d+ дней\.\s*/, '')
+            .replace(/Образование: [^\n]*\n?/, '')
             .trim();
           
           const parsedFiles: { url: string; name: string }[] = [];
@@ -136,6 +139,12 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           
           return (
             <>
+              {education && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground mb-1">Образование</p>
+                  <p className="font-medium">{education}</p>
+                </div>
+              )}
               {cleanComment && (
                 <div className="text-sm">
                   <p className="text-muted-foreground mb-1">{order.isRequest ? 'Комментарий к отклику' : 'Комментарий покупателя'}</p>

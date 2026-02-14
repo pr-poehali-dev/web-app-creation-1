@@ -184,7 +184,7 @@ export default function OrdersContent({
             isSeller={isSeller}
             onOpenChat={onOpenChat}
             onAcceptOrder={isSeller ? onAcceptOrder : undefined}
-            onCompleteOrder={!isSeller ? onCompleteOrder : undefined}
+            onCompleteOrder={onCompleteOrder}
             isExiting={exitingOrderIds.has(order.id as string)}
             isNew={newOrderIds.has(order.id as string)}
           />
