@@ -122,7 +122,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             print(f"[GET] order_id={order_id}, offer_id={offer_id}, messages={messages_flag}")
             
-            if messages_flag == 'true' and offer_id:
+            check_response = query_params.get('checkResponse')
+            
+            if check_response == 'true' and offer_id:
+                return check_existing_response(event, offer_id, headers)
+            elif messages_flag == 'true' and offer_id:
                 return get_messages_by_offer(offer_id, headers)
             elif messages_flag == 'true' and order_id:
                 return get_messages_by_order(order_id, headers)
@@ -193,6 +197,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'body': json.dumps({'error': str(e), 'trace': error_trace}),
             'isBase64Encoded': False
         }
+
+def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+    """Проверить, есть ли у пользователя отклик на запрос"""
+    user_headers = event.get('headers', {})
+    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    if not user_id:
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'exists': False}),
+            'isBase64Encoded': False
+        }
+    conn = get_db_connection()
+    cur = conn.cursor()
+    schema = get_schema()
+    offer_id_escaped = offer_id.replace("'", "''")
+    cur.execute(
+        f"SELECT id, price_per_unit, quantity, buyer_comment, status, attachments FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}' AND buyer_id = {int(user_id)} AND status NOT IN ('cancelled') LIMIT 1"
+    )
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+    if row:
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({
+                'exists': True,
+                'orderId': str(row['id']),
+                'pricePerUnit': float(row['price_per_unit']),
+                'quantity': row['quantity'],
+                'buyerComment': row.get('buyer_comment', ''),
+                'status': row['status'],
+                'attachments': row.get('attachments') or []
+            }),
+            'isBase64Encoded': False
+        }
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'exists': False}),
+        'isBase64Encoded': False
+    }
 
 def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить список заказов пользователя"""
@@ -444,6 +491,22 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             'isBase64Encoded': False
         }
     
+    # ПРОВЕРКА 2: Нельзя отправить повторный отклик на тот же запрос
+    if is_request:
+        cur.execute(
+            f"SELECT id FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}' AND buyer_id = {int(user_id)} AND status NOT IN ('cancelled')"
+        )
+        existing_response = cur.fetchone()
+        if existing_response:
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 409,
+                'headers': headers,
+                'body': json.dumps({'error': 'Вы уже отправили отклик на этот запрос', 'existingOrderId': str(existing_response['id'])}),
+                'isBase64Encoded': False
+            }
+    
     # Получаем данные продавца
     cur.execute(f"SELECT first_name, last_name, phone, email FROM {schema}.users WHERE id = {seller_id}")
     seller = cur.fetchone()
@@ -508,6 +571,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         counter_offered_at_sql = 'CURRENT_TIMESTAMP'
         counter_offered_by_sql = "'buyer'"
     
+    attachments_json = json.dumps(body.get('attachments', []))
+    attachments_escaped = attachments_json.replace("'", "''")
+    
     sql = f"""
         INSERT INTO {schema}.orders (
             order_number, buyer_id, seller_id, offer_id,
@@ -517,7 +583,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             buyer_name, buyer_phone, buyer_email, buyer_company, buyer_inn, buyer_comment,
             seller_name, seller_phone, seller_email,
             status,
-            counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by
+            counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by,
+            attachments
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
             '{title_escaped}', {quantity}, {quantity}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
@@ -526,7 +593,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             '{buyer_name_escaped}', '{buyer_phone_escaped}', '{buyer_email_escaped}', '{buyer_company_escaped}', '{buyer_inn_escaped}', '{buyer_comment_escaped}',
             '{seller_name_escaped}', '{seller_phone_escaped}', '{seller_email_escaped}',
             '{initial_status}',
-            {counter_price_sql}, {counter_total_sql}, {counter_message_sql}, {counter_offered_at_sql}, {counter_offered_by_sql}
+            {counter_price_sql}, {counter_total_sql}, {counter_message_sql}, {counter_offered_at_sql}, {counter_offered_by_sql},
+            '{attachments_escaped}'::jsonb
         )
         RETURNING id, order_number, order_date
     """
@@ -604,6 +672,43 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     user_id = int(user_headers.get('X-User-Id') or user_headers.get('x-user-id') or 0)
     is_buyer = user_id == order['buyer_id']
     is_seller = user_id == order['seller_id']
+    
+    # Редактирование отклика покупателем (до принятия продавцом)
+    if body.get('editResponse') and is_buyer and order['status'] in ('new', 'negotiating'):
+        if 'pricePerUnit' in body:
+            new_price = float(body['pricePerUnit'])
+            new_qty = int(body.get('quantity', order['quantity']))
+            new_total = new_price * new_qty
+            updates.append(f"price_per_unit = {new_price}")
+            updates.append(f"quantity = {new_qty}")
+            updates.append(f"total_amount = {new_total}")
+        if 'buyerComment' in body:
+            comment_escaped = body['buyerComment'].replace("'", "''")
+            updates.append(f"buyer_comment = '{comment_escaped}'")
+        if 'deliveryDays' in body:
+            delivery_escaped = str(body['deliveryDays']).replace("'", "''")
+            old_comment = order.get('buyer_comment', '') or ''
+            import re
+            cleaned = re.sub(r'Срок поставки: \d+ дней\.?\s*', '', old_comment).strip()
+            new_comment = f"Срок поставки: {delivery_escaped} дней. {cleaned}".strip()
+            new_comment_escaped = new_comment.replace("'", "''")
+            updates.append(f"buyer_comment = '{new_comment_escaped}'")
+        if 'attachments' in body:
+            att_json = json.dumps(body['attachments']).replace("'", "''")
+            updates.append(f"attachments = '{att_json}'::jsonb")
+        if updates:
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            sql = f"UPDATE {schema}.orders SET {', '.join(updates)} WHERE id = '{order_id_escaped}'"
+            cur.execute(sql)
+            conn.commit()
+            cur.close()
+            conn.close()
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({'message': 'Response updated successfully'}),
+                'isBase64Encoded': False
+            }
     
     # Предложение цены от покупателя
     if 'counterPrice' in body and is_buyer:

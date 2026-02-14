@@ -808,6 +808,54 @@ export const ordersAPI = {
     return response.json();
   },
 
+  async checkExistingResponse(offerId: string): Promise<{
+    exists: boolean;
+    orderId?: string;
+    pricePerUnit?: number;
+    quantity?: number;
+    buyerComment?: string;
+    status?: string;
+    attachments?: { url: string; name: string }[];
+  }> {
+    const userId = getUserId();
+    if (!userId) {
+      return { exists: false };
+    }
+    const response = await fetchWithRetry(`${ORDERS_API}?offerId=${offerId}&checkResponse=true`, {
+      headers: { 'X-User-Id': userId },
+    });
+    if (!response.ok) {
+      return { exists: false };
+    }
+    return response.json();
+  },
+
+  async updateResponse(orderId: string, data: {
+    editResponse: true;
+    pricePerUnit?: number;
+    quantity?: number;
+    buyerComment?: string;
+    deliveryDays?: number;
+    attachments?: { url: string; name: string }[];
+  }): Promise<{ message: string }> {
+    const userId = getUserId();
+    if (!userId) throw new Error('User not authenticated');
+    const response = await fetchWithRetry(`${ORDERS_API}?id=${orderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId,
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update response');
+    }
+    invalidateCache('orders');
+    return response.json();
+  },
+
   async getMessagesByOffer(offerId: string): Promise<any[]> {
     const userId = getUserId();
     if (!userId) {

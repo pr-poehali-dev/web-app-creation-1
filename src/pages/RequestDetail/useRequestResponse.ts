@@ -1,14 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ordersAPI } from '@/services/api';
 import { toast } from 'sonner';
 import { getSession } from '@/utils/auth';
 import type { Request } from './useRequestData';
 
+export interface ExistingResponse {
+  orderId: string;
+  pricePerUnit: number;
+  quantity: number;
+  buyerComment: string;
+  status: string;
+  attachments: { url: string; name: string }[];
+}
+
 export function useRequestResponse(request: Request | null, isAuthenticated: boolean) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
+  const [existingResponse, setExistingResponse] = useState<ExistingResponse | null>(null);
+  const [isCheckingResponse, setIsCheckingResponse] = useState(false);
+
+  useEffect(() => {
+    if (!request || !isAuthenticated) return;
+    const session = getSession();
+    if (!session) return;
+    const isOwner = session.id?.toString() === request.author.id?.toString();
+    if (isOwner) return;
+
+    setIsCheckingResponse(true);
+    ordersAPI.checkExistingResponse(request.id)
+      .then((data) => {
+        if (data.exists && data.orderId) {
+          setExistingResponse({
+            orderId: data.orderId,
+            pricePerUnit: data.pricePerUnit || 0,
+            quantity: data.quantity || 1,
+            buyerComment: data.buyerComment || '',
+            status: data.status || 'new',
+            attachments: data.attachments || [],
+          });
+        } else {
+          setExistingResponse(null);
+        }
+      })
+      .catch(() => setExistingResponse(null))
+      .finally(() => setIsCheckingResponse(false));
+  }, [request, isAuthenticated]);
 
   const handleResponseClick = () => {
     if (!isAuthenticated) {
@@ -44,71 +82,123 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
     const responseQuantity = parseFloat(formData.get('response-quantity') as string);
-    // Получаем цену из скрытого поля (без пробелов) или из обычного поля
     const priceValue = formData.get('response-price-value') as string || formData.get('response-price') as string;
     const responsePrice = parseFloat(priceValue.replace(/\s/g, ''));
     const deliveryTime = parseInt(formData.get('response-delivery') as string);
     const comment = formData.get('response-comment') as string;
 
+    const attachmentsInput = formData.get('response-attachments') as string;
+    let attachments: { url: string; name: string }[] = [];
+    if (attachmentsInput) {
+      try { attachments = JSON.parse(attachmentsInput); } catch { /* ignore */ }
+    }
+
     try {
-      const orderData = {
-        offerId: request.id,
-        title: request.title,
-        quantity: responseQuantity,
-        unit: request.unit,
-        pricePerUnit: responsePrice,
-        hasVAT: request.hasVAT,
-        vatRate: request.vatRate,
-        deliveryType: 'delivery',
-        deliveryAddress: request.deliveryAddress,
-        district: request.district,
-        buyerName: `${session.firstName} ${session.lastName}`,
-        buyerPhone: session.phone || '',
-        buyerEmail: session.email || '',
-        buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
-      };
-
-      const result = await ordersAPI.createOrder(orderData);
-
-      const notificationData = {
-        userId: request.author.id,
-        title: 'Новый отклик на запрос',
-        message: `${session.firstName} ${session.lastName} откликнулся на "${request.title}"`,
-        url: `/my-orders?tab=my-requests`
-      };
-
-      try {
-        await fetch('https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(notificationData)
+      if (existingResponse) {
+        await ordersAPI.updateResponse(existingResponse.orderId, {
+          editResponse: true,
+          pricePerUnit: responsePrice,
+          quantity: responseQuantity || 1,
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          attachments,
         });
-      } catch (error) {
-        console.error('Ошибка отправки Telegram уведомления:', error);
-      }
 
-      // Уведомляем dataSync о новом заказе
-      const { notifyOrderUpdated } = await import('@/utils/dataSync');
-      notifyOrderUpdated(result.id);
-      
-      setIsResponseModalOpen(false);
-      toast.success('Отклик успешно отправлен!', {
-        description: 'Автор запроса свяжется с вами в ближайшее время'
-      });
+        setExistingResponse({
+          ...existingResponse,
+          pricePerUnit: responsePrice,
+          quantity: responseQuantity || 1,
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          attachments,
+        });
+
+        setIsResponseModalOpen(false);
+        toast.success('Отклик обновлен!');
+      } else {
+        const orderData = {
+          offerId: request.id,
+          title: request.title,
+          quantity: responseQuantity,
+          unit: request.unit,
+          pricePerUnit: responsePrice,
+          hasVAT: request.hasVAT,
+          vatRate: request.vatRate,
+          deliveryType: 'delivery',
+          deliveryAddress: request.deliveryAddress,
+          district: request.district,
+          buyerName: `${session.firstName} ${session.lastName}`,
+          buyerPhone: session.phone || '',
+          buyerEmail: session.email || '',
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          attachments,
+        };
+
+        const result = await ordersAPI.createOrder(orderData);
+
+        setExistingResponse({
+          orderId: result.id,
+          pricePerUnit: responsePrice,
+          quantity: responseQuantity || 1,
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          status: 'new',
+          attachments,
+        });
+
+        const notificationData = {
+          userId: request.author.id,
+          title: 'Новый отклик на запрос',
+          message: `${session.firstName} ${session.lastName} откликнулся на "${request.title}"`,
+          url: `/my-orders?tab=my-requests`
+        };
+
+        try {
+          await fetch('https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(notificationData)
+          });
+        } catch (error) {
+          console.error('Telegram notification error:', error);
+        }
+
+        const { notifyOrderUpdated } = await import('@/utils/dataSync');
+        notifyOrderUpdated(result.id);
+        
+        setIsResponseModalOpen(false);
+        toast.success('Отклик успешно отправлен!', {
+          description: 'Автор запроса свяжется с вами в ближайшее время'
+        });
+      }
     } catch (error: unknown) {
-      console.error('Ошибка отправки отклика:', error);
-      const errorMessage = (error as Error)?.message || String(error) || 'Неизвестная ошибка';
-      toast.error('Не удалось отправить отклик', {
-        description: errorMessage
-      });
+      console.error('Response error:', error);
+      const errorMessage = (error as Error)?.message || String(error);
+      
+      if (errorMessage.includes('уже отправили отклик')) {
+        toast.error('Вы уже откликнулись на этот запрос', {
+          description: 'Нажмите "Редактировать отклик" для изменения'
+        });
+        ordersAPI.checkExistingResponse(request.id).then((data) => {
+          if (data.exists && data.orderId) {
+            setExistingResponse({
+              orderId: data.orderId,
+              pricePerUnit: data.pricePerUnit || 0,
+              quantity: data.quantity || 1,
+              buyerComment: data.buyerComment || '',
+              status: data.status || 'new',
+              attachments: data.attachments || [],
+            });
+          }
+        });
+      } else {
+        toast.error('Не удалось отправить отклик', { description: errorMessage });
+      }
     }
   };
 
   return {
     isResponseModalOpen,
     setIsResponseModalOpen,
+    existingResponse,
+    isCheckingResponse,
     handleResponseClick,
     handleResponseSubmit,
   };

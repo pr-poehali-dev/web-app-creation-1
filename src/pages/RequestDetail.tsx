@@ -47,6 +47,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
   const {
     isResponseModalOpen,
     setIsResponseModalOpen,
+    existingResponse,
     handleResponseClick,
     handleResponseSubmit,
   } = useRequestResponse(request, isAuthenticated);
@@ -264,6 +265,16 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                       <Icon name="Edit" className="mr-2 h-4 w-4" />
                       Редактировать запрос
                     </Button>
+                  ) : existingResponse ? (
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      variant="outline"
+                      onClick={handleResponseClick}
+                    >
+                      <Icon name="Pencil" className="mr-2 h-4 w-4" />
+                      Редактировать отклик
+                    </Button>
                   ) : (
                     <Button 
                       className="w-full" 
@@ -302,6 +313,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
         pricePerUnit={request.pricePerUnit}
         category={request.category}
         budget={request.budget}
+        existingResponse={existingResponse}
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
