@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
@@ -19,8 +20,23 @@ export default function NegotiationActions({
   onCounterOffer,
   onCancelOrder,
 }: NegotiationActionsProps) {
-  // Кнопки действий для покупателя - предложить свою цену (только для новых заказов)
-  if (isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer) {
+  const navigate = useNavigate();
+
+  if (isBuyer && order.isRequest && order.status === 'new' && order.offerId) {
+    return (
+      <Button 
+        onClick={() => navigate(`/request/${order.offerId}`)}
+        variant="outline" 
+        size="sm" 
+        className="w-full border-2 border-primary hover:bg-primary/10 font-semibold shadow-sm"
+      >
+        <Icon name="Pencil" className="mr-1.5 h-4 w-4" />
+        Редактировать отклик
+      </Button>
+    );
+  }
+
+  if (isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && !order.isRequest) {
     return (
       <Button 
         onClick={onShowCounterForm} 

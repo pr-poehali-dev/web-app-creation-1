@@ -92,57 +92,85 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 : order.pricePerUnit)?.toLocaleString('ru-RU')} ₽/{order.unit}
             </p>
           </div>
-          {order.status !== 'accepted' && order.status !== 'completed' && order.offerAvailableQuantity !== undefined && (
+          {!order.isRequest && order.status !== 'accepted' && order.status !== 'completed' && order.offerAvailableQuantity !== undefined && (
             <div>
               <p className="text-muted-foreground">Доступно</p>
               <p className="font-medium">{order.offerAvailableQuantity} {order.unit}</p>
             </div>
           )}
+          {!order.isRequest && (
           <div>
             <p className="text-muted-foreground">Способ получения</p>
             <p className="font-medium">
               {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
             </p>
           </div>
+          )}
         </div>
 
-        {order.buyerComment && (
-          <div className="text-sm">
-            <p className="text-muted-foreground mb-1">Комментарий покупателя</p>
-            <p className="font-medium whitespace-pre-line">{order.buyerComment}</p>
-          </div>
-        )}
-
-        {order.attachments && order.attachments.length > 0 && (
-          <div className="text-sm">
-            <p className="text-muted-foreground mb-2">Прикрепленные файлы</p>
-            <div className="space-y-1.5">
-              {order.attachments.map((file, index) => {
-                const isImage = file.url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i);
-                return (
-                  <div key={index}>
-                    {isImage ? (
-                      <a href={file.url} target="_blank" rel="noopener noreferrer" className="block">
-                        <img src={file.url} alt={file.name} className="w-full max-w-[200px] rounded border object-cover" />
-                        <span className="text-xs text-primary hover:underline mt-0.5 block">{file.name}</span>
-                      </a>
-                    ) : (
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-primary hover:underline bg-muted px-2 py-1.5 rounded"
-                      >
-                        <Icon name="File" className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{file.name}</span>
-                      </a>
-                    )}
+        {order.buyerComment && (() => {
+          const cleanComment = order.buyerComment
+            .replace(/\n?\n?Прикрепленные файлы:[\s\S]*$/, '')
+            .trim();
+          
+          const parsedFiles: { url: string; name: string }[] = [];
+          if ((!order.attachments || order.attachments.length === 0) && order.buyerComment.includes('Прикрепленные файлы:')) {
+            const urlMatches = order.buyerComment.match(/https?:\/\/[^\s]+/g);
+            if (urlMatches) {
+              urlMatches.forEach(url => {
+                const fileName = url.split('/').pop() || 'Файл';
+                parsedFiles.push({ url, name: fileName });
+              });
+            }
+          }
+          
+          const allFiles = (order.attachments && order.attachments.length > 0) ? order.attachments : parsedFiles;
+          
+          return (
+            <>
+              {cleanComment && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground mb-1">Комментарий покупателя</p>
+                  <p className="font-medium whitespace-pre-line">{cleanComment}</p>
+                </div>
+              )}
+              {allFiles.length > 0 && (
+                <div className="text-sm">
+                  <p className="text-muted-foreground mb-2">Прикрепленные файлы</p>
+                  <div className="space-y-2">
+                    {allFiles.map((file, index) => {
+                      const isImage = file.url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i);
+                      return (
+                        <div key={index}>
+                          {isImage ? (
+                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="block group">
+                              <img src={file.url} alt={file.name} className="w-full max-w-[200px] rounded border object-cover group-hover:opacity-90 transition-opacity" />
+                              <span className="text-xs text-primary hover:underline mt-0.5 inline-flex items-center gap-1">
+                                <Icon name="ExternalLink" className="h-3 w-3" />
+                                {file.name}
+                              </span>
+                            </a>
+                          ) : (
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 text-primary hover:underline bg-muted px-3 py-2 rounded hover:bg-muted/80 transition-colors"
+                            >
+                              <Icon name="FileText" className="h-4 w-4 flex-shrink-0" />
+                              <span className="truncate flex-1">{file.name}</span>
+                              <Icon name="ExternalLink" className="h-3.5 w-3.5 flex-shrink-0 opacity-60" />
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {order.status === 'accepted' && (
           <>
