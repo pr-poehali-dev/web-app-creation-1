@@ -365,7 +365,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 className="w-full mt-3"
               >
                 <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-                Отменить заказ
+                {order.isRequest ? 'Отклонить отклик' : 'Отменить заказ'}
               </Button>
             )}
 
