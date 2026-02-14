@@ -185,30 +185,19 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
         )}
 
         <div className="flex gap-2">
-          {order.isRequest && isSeller && (order.status === 'new' || order.status === 'pending') && onAcceptOrder ? (
-            <>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAcceptOrder(order.id);
-                }}
-                size="sm"
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                Принять
-              </Button>
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenChat(order);
-                }}
-                variant="outline"
-                size="sm"
-              >
-                <Icon name="FileText" className="h-4 w-4" />
-              </Button>
-            </>
+          {order.isRequest && isSeller && (order.status === 'new' || order.status === 'pending') ? (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onOpenChat(order);
+              }}
+              variant="outline"
+              className="flex-1"
+              size="sm"
+            >
+              <Icon name="Eye" className="mr-1.5 h-4 w-4" />
+              Просмотреть отклик
+            </Button>
           ) : order.status === 'accepted' ? (
             <div className="flex gap-2 w-full">
               <Button
