@@ -59,6 +59,12 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm">
+          {order.isRequest && order.buyerComment?.match(/Срок (?:поставки|выполнения): (\d+) дней/) ? (
+          <div>
+            <p className="text-muted-foreground">Срок выполнения</p>
+            <p className="font-medium">{order.buyerComment.match(/Срок (?:поставки|выполнения): (\d+) дней/)?.[1]} дней</p>
+          </div>
+          ) : (
           <div>
             <p className="text-muted-foreground">Количество</p>
             <div className="flex items-center gap-2">
@@ -70,6 +76,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               )}
             </div>
           </div>
+          )}
           <div>
             <p className="text-muted-foreground">Сумма</p>
             <p className="font-bold text-primary">
