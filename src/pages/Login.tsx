@@ -381,12 +381,12 @@ export default function Login({ onLogin }: LoginProps) {
               )}
             </Button>
 
-            <div className="text-center pt-2">
-              <span className="text-sm text-muted-foreground block mb-2">Нет аккаунта?</span>
+            <div className="text-center text-base">
+              <span className="text-muted-foreground">Нет аккаунта? </span>
               <Button
                 type="button"
-                variant="outline"
-                className="w-full"
+                variant="link"
+                className="px-1 text-base"
                 onClick={() => navigate('/register')}
               >
                 Зарегистрироваться
