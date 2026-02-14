@@ -57,7 +57,8 @@ export default function RequestResponseModal({
       setUploadedFiles(existingResponse.attachments || []);
       setNewFiles([]);
     } else if (isOpen && !existingResponse) {
-      setPriceValue('');
+      const defaultPrice = isService ? budget : pricePerUnit;
+      setPriceValue(defaultPrice ? formatNumber(String(defaultPrice)) : '');
       setUploadedFiles([]);
       setNewFiles([]);
     }
@@ -187,7 +188,7 @@ export default function RequestResponseModal({
                   value={priceValue.replace(/\s/g, '')}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Укажите полную стоимость выполнения работ
+                  Можете указать свою стоимость выполнения работ
                 </p>
               </div>
 
