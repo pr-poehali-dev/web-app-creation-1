@@ -121,7 +121,10 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     sql = """
         SELECT 
             r.*,
-            '[]'::json as images
+            '[]'::json as images,
+            (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders o 
+             WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
+            ) as responses
         FROM t_p42562714_web_app_creation_1.requests r
         WHERE r.status != 'deleted' AND r.status != 'archived'
     """
@@ -214,7 +217,10 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             ) as images,
             v.id as video_db_id,
             v.url as video_url,
-            v.thumbnail as video_thumbnail
+            v.thumbnail as video_thumbnail,
+            (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders o 
+             WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
+            ) as responses
         FROM t_p42562714_web_app_creation_1.requests r
         LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
