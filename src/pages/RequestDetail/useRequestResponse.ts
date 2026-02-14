@@ -18,6 +18,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
   const navigate = useNavigate();
   const location = useLocation();
   const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
   const [existingResponse, setExistingResponse] = useState<ExistingResponse | null>(null);
   const [isCheckingResponse, setIsCheckingResponse] = useState(false);
 
@@ -44,7 +45,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
             attachments: data.attachments || [],
           });
           if (shouldAutoOpen) {
-            setIsResponseModalOpen(true);
+            setIsEditFormOpen(true);
           }
         } else {
           setExistingResponse(null);
@@ -69,7 +70,11 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
       return;
     }
     
-    setIsResponseModalOpen(true);
+    if (existingResponse) {
+      setIsEditFormOpen(true);
+    } else {
+      setIsResponseModalOpen(true);
+    }
   };
 
   const handleResponseSubmit = async (e: React.FormEvent) => {
@@ -118,6 +123,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
         });
 
         setIsResponseModalOpen(false);
+        setIsEditFormOpen(false);
         toast.success('Отклик обновлен!');
       } else {
         const orderData = {
@@ -203,6 +209,8 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
   return {
     isResponseModalOpen,
     setIsResponseModalOpen,
+    isEditFormOpen,
+    setIsEditFormOpen,
     existingResponse,
     isCheckingResponse,
     handleResponseClick,

@@ -13,6 +13,7 @@ import RequestMediaGallery from '@/components/request/RequestMediaGallery';
 import RequestInfoCard from '@/components/request/RequestInfoCard';
 import RequestAuthorCard from '@/components/request/RequestAuthorCard';
 import RequestResponseModal from '@/components/request/RequestResponseModal';
+import RequestResponseForm from '@/components/request/RequestResponseForm';
 import { useRequestData } from './RequestDetail/useRequestData';
 import { useRequestGallery } from './RequestDetail/useRequestGallery';
 import { useRequestResponse } from './RequestDetail/useRequestResponse';
@@ -47,6 +48,8 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
   const {
     isResponseModalOpen,
     setIsResponseModalOpen,
+    isEditFormOpen,
+    setIsEditFormOpen,
     existingResponse,
     handleResponseClick,
     handleResponseSubmit,
@@ -250,52 +253,65 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
           </div>
 
           <div className="space-y-6">
-            <Card>
-              <CardContent className="pt-6 space-y-3">
-                {(() => {
-                  const currentUser = getSession();
-                  const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
-                  
-                  return isOwner ? (
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={() => navigate(`/edit-request/${request.id}`)}
-                    >
-                      <Icon name="Edit" className="mr-2 h-4 w-4" />
-                      Редактировать запрос
-                    </Button>
-                  ) : existingResponse ? (
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      variant="outline"
-                      onClick={handleResponseClick}
-                    >
-                      <Icon name="Pencil" className="mr-2 h-4 w-4" />
-                      Редактировать отклик
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="w-full" 
-                      size="lg"
-                      onClick={handleResponseClick}
-                    >
-                      <Icon name="Send" className="mr-2 h-4 w-4" />
-                      Отправить отклик
-                    </Button>
-                  );
-                })()}
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleShare}
-                >
-                  <Icon name="Share2" className="mr-2 h-4 w-4" />
-                  Поделиться
-                </Button>
-              </CardContent>
-            </Card>
+            {isEditFormOpen && existingResponse ? (
+              <RequestResponseForm
+                onSubmit={handleResponseSubmit}
+                onCancel={() => setIsEditFormOpen(false)}
+                quantity={request.quantity}
+                unit={request.unit}
+                pricePerUnit={request.pricePerUnit}
+                category={request.category}
+                budget={request.budget}
+                existingResponse={existingResponse}
+              />
+            ) : (
+              <Card>
+                <CardContent className="pt-6 space-y-3">
+                  {(() => {
+                    const currentUser = getSession();
+                    const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
+                    
+                    return isOwner ? (
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={() => navigate(`/edit-request/${request.id}`)}
+                      >
+                        <Icon name="Edit" className="mr-2 h-4 w-4" />
+                        Редактировать запрос
+                      </Button>
+                    ) : existingResponse ? (
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        variant="outline"
+                        onClick={handleResponseClick}
+                      >
+                        <Icon name="Pencil" className="mr-2 h-4 w-4" />
+                        Редактировать отклик
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={handleResponseClick}
+                      >
+                        <Icon name="Send" className="mr-2 h-4 w-4" />
+                        Отправить отклик
+                      </Button>
+                    );
+                  })()}
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleShare}
+                  >
+                    <Icon name="Share2" className="mr-2 h-4 w-4" />
+                    Поделиться
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
             <RequestAuthorCard author={request.author} />
           </div>
