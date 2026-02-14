@@ -21,6 +21,9 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
   const [existingResponse, setExistingResponse] = useState<ExistingResponse | null>(null);
   const [isCheckingResponse, setIsCheckingResponse] = useState(false);
 
+  const searchParams = new URLSearchParams(location.search);
+  const shouldAutoOpen = searchParams.get('editResponse') === 'true';
+
   useEffect(() => {
     if (!request || !isAuthenticated) return;
     const session = getSession();
@@ -40,6 +43,9 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
             status: data.status || 'new',
             attachments: data.attachments || [],
           });
+          if (shouldAutoOpen) {
+            setIsResponseModalOpen(true);
+          }
         } else {
           setExistingResponse(null);
         }

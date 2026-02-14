@@ -48,7 +48,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-muted-foreground text-xs">Товар</p>
+            <p className="text-muted-foreground text-xs">{order.isRequest ? 'Услуга' : 'Товар'}</p>
             <p className="font-medium">{order.offerTitle}</p>
             {isBuyer && order.status === 'new' && (
               <div className="flex items-center gap-1.5 mt-1.5 text-amber-600">

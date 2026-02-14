@@ -25,7 +25,7 @@ export default function NegotiationActions({
   if (isBuyer && order.isRequest && order.status === 'new' && order.offerId) {
     return (
       <Button 
-        onClick={() => navigate(`/request/${order.offerId}`)}
+        onClick={() => navigate(`/request/${order.offerId}?editResponse=true`)}
         variant="outline" 
         size="sm" 
         className="w-full border-2 border-primary hover:bg-primary/10 font-semibold shadow-sm"
