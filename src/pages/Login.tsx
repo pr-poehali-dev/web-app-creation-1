@@ -286,7 +286,7 @@ export default function Login({ onLogin }: LoginProps) {
                   id="login"
                   name="login"
                   type="text"
-                  placeholder="+79991234567, +12025551234 или example@company.com"
+                  placeholder="+7... или email@example.com"
                   value={login}
                   onChange={handleLoginChange}
                   onBlur={() => {
