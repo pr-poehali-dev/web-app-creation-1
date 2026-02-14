@@ -118,6 +118,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
         {order.buyerComment && (() => {
           const cleanComment = order.buyerComment
             .replace(/\n?\n?Прикрепленные файлы:[\s\S]*$/, '')
+            .replace(/Срок (?:поставки|выполнения): \d+ дней\.\s*/, '')
             .trim();
           
           const parsedFiles: { url: string; name: string }[] = [];
@@ -137,7 +138,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             <>
               {cleanComment && (
                 <div className="text-sm">
-                  <p className="text-muted-foreground mb-1">Комментарий покупателя</p>
+                  <p className="text-muted-foreground mb-1">{order.isRequest ? 'Комментарий к отклику' : 'Комментарий покупателя'}</p>
                   <p className="font-medium whitespace-pre-line">{cleanComment}</p>
                 </div>
               )}
