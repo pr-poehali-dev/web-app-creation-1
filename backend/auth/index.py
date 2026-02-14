@@ -491,7 +491,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     return {
                         'statusCode': 401,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                        'body': json.dumps({'error': 'Неверный логин или пароль'}),
+                        'body': json.dumps({'error': 'Пользователь с такими данными не зарегистрирован'}),
                         'isBase64Encoded': False
                     }
                 

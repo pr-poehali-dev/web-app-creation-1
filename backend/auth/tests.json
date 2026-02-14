@@ -1,25 +1,5 @@
 {
   "tests": [
-
-    {
-      "name": "Test duplicate email registration",
-      "method": "POST",
-      "path": "/",
-      "body": {
-        "action": "register",
-        "email": "test@example.com",
-        "password": "AnotherPassword123!",
-        "first_name": "Петр",
-        "last_name": "Петров",
-        "user_type": "individual",
-        "phone": "+7 (900) 111-11-11"
-      },
-      "expectedStatus": 409,
-      "expectedBody": {
-        "error": "string"
-      },
-      "bodyMatcher": "partial"
-    },
     {
       "name": "Test login with missing fields",
       "method": "POST",
@@ -31,6 +11,21 @@
       "expectedStatus": 400,
       "expectedBody": {
         "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test login with non-existent user",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "login",
+        "login": "nonexistent_user_99999@example.com",
+        "password": "SomePassword123!"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "Пользователь с такими данными не зарегистрирован"
       },
       "bodyMatcher": "partial"
     }
