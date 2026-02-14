@@ -106,6 +106,44 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           </div>
         </div>
 
+        {order.buyerComment && (
+          <div className="text-sm">
+            <p className="text-muted-foreground mb-1">Комментарий покупателя</p>
+            <p className="font-medium whitespace-pre-line">{order.buyerComment}</p>
+          </div>
+        )}
+
+        {order.attachments && order.attachments.length > 0 && (
+          <div className="text-sm">
+            <p className="text-muted-foreground mb-2">Прикрепленные файлы</p>
+            <div className="space-y-1.5">
+              {order.attachments.map((file, index) => {
+                const isImage = file.url.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i);
+                return (
+                  <div key={index}>
+                    {isImage ? (
+                      <a href={file.url} target="_blank" rel="noopener noreferrer" className="block">
+                        <img src={file.url} alt={file.name} className="w-full max-w-[200px] rounded border object-cover" />
+                        <span className="text-xs text-primary hover:underline mt-0.5 block">{file.name}</span>
+                      </a>
+                    ) : (
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-primary hover:underline bg-muted px-2 py-1.5 rounded"
+                      >
+                        <Icon name="File" className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{file.name}</span>
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {order.status === 'accepted' && (
           <>
             <Separator />

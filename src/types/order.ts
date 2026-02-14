@@ -36,10 +36,12 @@ export interface Order {
   cancelledBy?: 'buyer' | 'seller';
   cancellationReason?: string;
   type?: 'purchase' | 'sale';
-  isRequest?: boolean; // true если это отклик на запрос, false если на предложение
+  isRequest?: boolean;
   buyerCompany?: string;
   buyerInn?: string;
-  hasUnreadCounterOffer?: boolean; // Флаг непрочитанной встречной цены
+  buyerComment?: string;
+  attachments?: { url: string; name: string }[];
+  hasUnreadCounterOffer?: boolean;
 }
 
 export interface ChatMessage {

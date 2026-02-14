@@ -101,6 +101,8 @@ export function useOrdersData(
       buyerCompany: orderData.buyer_company || orderData.buyerCompany,
       buyerInn: orderData.buyer_inn || orderData.buyerInn,
       isRequest: orderData.is_request || orderData.isRequest || false,
+      buyerComment: orderData.buyer_comment || orderData.buyerComment,
+      attachments: orderData.attachments,
       hasUnreadCounterOffer,
     };
   };

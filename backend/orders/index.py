@@ -131,7 +131,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif messages_flag == 'true' and order_id:
                 return get_messages_by_order(order_id, headers)
             elif order_id:
-                return get_order_by_id(order_id, headers)
+                return get_order_by_id(order_id, headers, event)
             else:
                 return get_user_orders(event, headers)
         
@@ -369,7 +369,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         'isBase64Encoded': False
     }
 
-def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any] = None) -> Dict[str, Any]:
     """Получить заказ по ID"""
     conn = get_db_connection()
     cur = conn.cursor()
@@ -377,14 +377,15 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     order_id_escaped = order_id.replace("'", "''")
     schema = get_schema()
     
-    # Запрос с JOIN к таблице offers
     sql = f"""
         SELECT 
             o.*,
             of.price_per_unit as offer_price_per_unit,
-            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity
+            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity,
+            CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
+        LEFT JOIN {schema}.requests r ON o.offer_id = r.id
         WHERE o.id = '{order_id_escaped}'
     """
     
@@ -404,14 +405,22 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     order_dict = dict(order)
     
-    # Добавляем поля из offers
     order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
     order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
+    order_dict['is_request'] = order_dict.get('is_request', False)
     
-    # Добавляем поля из самого заказа
     order_dict['offer_title'] = order_dict.get('title', '')
     order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
     order_dict['seller_full_name'] = order_dict.get('seller_name', 'Продавец')
+    
+    user_id = None
+    if event:
+        user_headers = event.get('headers', {})
+        user_id_str = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+        if user_id_str:
+            user_id = int(user_id_str)
+    if user_id:
+        order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id else 'sale'
     
     order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
     order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
@@ -420,7 +429,6 @@ def get_order_by_id(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
     order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
     
-    # Преобразуем поля встречного предложения в camelCase
     if 'counter_offer_message' in order_dict:
         order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
     
