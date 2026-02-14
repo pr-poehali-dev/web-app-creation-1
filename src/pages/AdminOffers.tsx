@@ -4,54 +4,17 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
-import type { Offer as OfferType } from '@/types/offer';
 import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
+import AdminOffersFilters from '@/components/admin-offers/AdminOffersFilters';
+import AdminOffersTable, { type AdminOffer } from '@/components/admin-offers/AdminOffersTable';
+import AdminOffersDeleteDialog from '@/components/admin-offers/AdminOffersDeleteDialog';
 
 interface AdminOffersProps {
   isAuthenticated: boolean;
   onLogout: () => void;
-}
-
-interface AdminOffer {
-  id: string;
-  title: string;
-  seller: string;
-  sellerId?: string;
-  price: number;
-  quantity: number;
-  soldQuantity: number;
-  reservedQuantity: number;
-  unit: string;
-  status: 'active' | 'moderation' | 'rejected' | 'completed' | 'deleted';
-  createdAt: string;
 }
 
 export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersProps) {
@@ -90,24 +53,24 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const fetchOffers = async () => {
     setIsLoading(true);
     try {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (searchQuery) params.search = searchQuery;
       if (filterStatus !== 'all') params.status = filterStatus;
 
       const data = await offersAPI.getAdminOffers(params);
       
-      const mappedOffers: AdminOffer[] = (data.offers || []).map((offer: any) => ({
-        id: offer.id,
-        title: offer.title,
-        seller: offer.seller || 'Неизвестно',
-        sellerId: offer.sellerId,
-        price: offer.pricePerUnit || offer.price_per_unit || offer.price || 0,
-        quantity: offer.quantity || 0,
-        soldQuantity: offer.sold_quantity || offer.soldQuantity || 0,
-        reservedQuantity: offer.reserved_quantity || offer.reservedQuantity || 0,
-        unit: offer.unit || 'шт',
-        status: offer.status || 'active',
-        createdAt: offer.createdAt || offer.created_at
+      const mappedOffers: AdminOffer[] = (data.offers || []).map((offer: Record<string, unknown>) => ({
+        id: offer.id as string,
+        title: offer.title as string,
+        seller: (offer.seller as string) || 'Неизвестно',
+        sellerId: offer.sellerId as string | undefined,
+        price: (offer.pricePerUnit || offer.price_per_unit || offer.price || 0) as number,
+        quantity: (offer.quantity || 0) as number,
+        soldQuantity: (offer.sold_quantity || offer.soldQuantity || 0) as number,
+        reservedQuantity: (offer.reserved_quantity || offer.reservedQuantity || 0) as number,
+        unit: (offer.unit as string) || 'шт',
+        status: (offer.status as AdminOffer['status']) || 'active',
+        createdAt: (offer.createdAt || offer.created_at) as string
       }));
       
       setAllOffers(mappedOffers);
@@ -139,23 +102,6 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         .map(o => [o.sellerId, { id: o.sellerId!, name: o.seller }])
     ).values()
   ).sort((a, b) => a.name.localeCompare(b.name));
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-500">Активно</Badge>;
-      case 'moderation':
-        return <Badge variant="secondary">На модерации</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Отклонено</Badge>;
-      case 'completed':
-        return <Badge>Завершено</Badge>;
-      case 'deleted':
-        return <Badge variant="outline" className="bg-gray-100">Удалено</Badge>;
-      default:
-        return null;
-    }
-  };
 
   const handleApproveOffer = async (offer: AdminOffer) => {
     try {
@@ -301,222 +247,44 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
               <CardDescription>Всего предложений: {offers.length}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="mb-6 flex flex-col gap-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Поиск по названию или продавцу..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full"
-                    />
-                  </div>
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger className="w-full md:w-[200px]">
-                      <SelectValue placeholder="Статус" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все статусы</SelectItem>
-                      <SelectItem value="active">Активные</SelectItem>
-                      <SelectItem value="moderation">На модерации</SelectItem>
-                      <SelectItem value="rejected">Отклоненные</SelectItem>
-                      <SelectItem value="completed">Завершенные</SelectItem>
-                      <SelectItem value="deleted">Удаленные</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={filterSeller} onValueChange={setFilterSeller}>
-                    <SelectTrigger className="w-full md:w-[250px]">
-                      <SelectValue placeholder="Продавец" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Все продавцы</SelectItem>
-                      {uniqueSellers.map(seller => (
-                        <SelectItem key={seller.id} value={seller.id}>
-                          {seller.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteTestOffers}
-                    className="md:w-auto"
-                  >
-                    <Icon name="Trash2" className="mr-2 h-4 w-4" />
-                    Очистить тест
-                  </Button>
-                </div>
-              </div>
+              <AdminOffersFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                filterStatus={filterStatus}
+                onFilterStatusChange={setFilterStatus}
+                filterSeller={filterSeller}
+                onFilterSellerChange={setFilterSeller}
+                uniqueSellers={uniqueSellers}
+                onDeleteTestOffers={handleDeleteTestOffers}
+              />
 
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Название</TableHead>
-                      <TableHead>Продавец</TableHead>
-                      <TableHead>Цена</TableHead>
-                      <TableHead>Доступно</TableHead>
-                      <TableHead>Статус</TableHead>
-                      <TableHead>Дата создания</TableHead>
-                      <TableHead className="text-right">Действия</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8">
-                          Загрузка...
-                        </TableCell>
-                      </TableRow>
-                    ) : offers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                          Предложения не найдены
-                        </TableCell>
-                      </TableRow>
-                    ) : offers.map((offer) => (
-                      <TableRow key={offer.id}>
-                        <TableCell className="font-medium">
-                          {editingTitleId === offer.id ? (
-                            <div className="flex items-center gap-1">
-                              <Input
-                                value={editingTitleValue}
-                                onChange={(e) => setEditingTitleValue(e.target.value)}
-                                className="h-8 text-sm"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleSaveTitle(offer.id);
-                                  if (e.key === 'Escape') handleCancelEditTitle();
-                                }}
-                                autoFocus
-                              />
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleSaveTitle(offer.id)}>
-                                <Icon name="Check" className="h-4 w-4 text-green-600" />
-                              </Button>
-                              <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={handleCancelEditTitle}>
-                                <Icon name="X" className="h-4 w-4 text-red-600" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <span
-                              className="cursor-pointer hover:text-primary"
-                              onDoubleClick={() => handleEditTitle(offer)}
-                              title="Двойной клик для редактирования"
-                            >
-                              {offer.title}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {offer.sellerId ? (
-                            <button
-                              onClick={() => navigate(`/profile?userId=${offer.sellerId}`)}
-                              className="text-primary hover:underline"
-                            >
-                              {offer.seller}
-                            </button>
-                          ) : (
-                            <span className="text-muted-foreground">{offer.seller}</span>
-                          )}
-                        </TableCell>
-                        <TableCell>{offer.price.toLocaleString('ru-RU')} ₽</TableCell>
-                        <TableCell>
-                          <div className="text-sm space-y-1">
-                            <div>
-                              <span className="font-semibold text-green-600">
-                                {offer.quantity - offer.soldQuantity - offer.reservedQuantity}
-                              </span> {offer.unit}
-                              <span className="text-muted-foreground ml-1">
-                                (из {offer.quantity})
-                              </span>
-                            </div>
-                            {(offer.soldQuantity > 0 || offer.reservedQuantity > 0) && (
-                              <div className="text-xs text-muted-foreground">
-                                {offer.soldQuantity > 0 && `Продано: ${offer.soldQuantity}`}
-                                {offer.soldQuantity > 0 && offer.reservedQuantity > 0 && ', '}
-                                {offer.reservedQuantity > 0 && `Резерв: ${offer.reservedQuantity}`}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(offer.status)}</TableCell>
-                        <TableCell>{new Date(offer.createdAt).toLocaleDateString('ru-RU')}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditTitle(offer)}
-                              title="Редактировать название"
-                            >
-                              <Icon name="Pencil" className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => navigate(`/offer/${offer.id}`)}
-                            >
-                              <Icon name="Eye" className="h-4 w-4" />
-                            </Button>
-                            {offer.status === 'moderation' && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="default"
-                                  onClick={() => handleApproveOffer(offer)}
-                                >
-                                  <Icon name="Check" className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleRejectOffer(offer)}
-                                >
-                                  <Icon name="X" className="h-4 w-4" />
-                                </Button>
-                              </>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedOffer(offer);
-                                setShowDeleteDialog(true);
-                              }}
-                            >
-                              <Icon name="Trash2" className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+              <AdminOffersTable
+                offers={offers}
+                isLoading={isLoading}
+                editingTitleId={editingTitleId}
+                editingTitleValue={editingTitleValue}
+                onEditingTitleValueChange={setEditingTitleValue}
+                onEditTitle={handleEditTitle}
+                onSaveTitle={handleSaveTitle}
+                onCancelEditTitle={handleCancelEditTitle}
+                onApprove={handleApproveOffer}
+                onReject={handleRejectOffer}
+                onDelete={(offer) => {
+                  setSelectedOffer(offer);
+                  setShowDeleteDialog(true);
+                }}
+              />
             </CardContent>
           </Card>
         </div>
       </main>
 
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Удалить предложение?</DialogTitle>
-            <DialogDescription>
-              Вы действительно хотите удалить предложение "{selectedOffer?.title}"? 
-              Это действие нельзя отменить.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-              Отмена
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteOffer}>
-              Удалить
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminOffersDeleteDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDeleteOffer}
+        offerTitle={selectedOffer?.title}
+      />
 
       <Footer />
     </div>
