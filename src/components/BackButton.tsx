@@ -12,7 +12,11 @@ export default function BackButton({ className = '', fallbackUrl = '/predlozheni
   const location = useLocation();
 
   const handleBack = () => {
-    navigate(-1);
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(fallbackUrl);
+    }
   };
 
   return (

@@ -577,6 +577,15 @@ export function useOrdersData(
     // Ищем самую актуальную версию заказа из списка orders
     const actualOrder = orders.find(o => o.id === order.id) || order;
     
+    // Для откликов по услугам — сразу переходим на страницу редактирования
+    if (actualOrder.isRequest && actualOrder.offerId) {
+      const isBuyer = currentUser?.id?.toString() === actualOrder.buyerId?.toString();
+      if (isBuyer) {
+        navigate(`/request/${actualOrder.offerId}?editResponse=true`);
+        return;
+      }
+    }
+    
     // Сохраняем время просмотра для отметки встречных цен как прочитанных
     const lastViewedKey = `order_viewed_${actualOrder.id}`;
     localStorage.setItem(lastViewedKey, new Date().toISOString());

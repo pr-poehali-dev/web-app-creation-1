@@ -117,7 +117,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
-        <BackButton />
+        <BackButton fallbackUrl="/my-orders?tab=my-responses" />
 
         <div className="grid gap-8 lg:grid-cols-3 mb-8">
           <div className="lg:col-span-2">

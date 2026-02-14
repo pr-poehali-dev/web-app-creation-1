@@ -70,10 +70,12 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm">
+          {!order.isRequest && (
           <div>
             <p className="text-muted-foreground">Количество</p>
             <p className="font-medium">{order.quantity} {order.unit}</p>
           </div>
+          )}
           <div>
             <p className="text-muted-foreground">Сумма</p>
             <p className="font-bold text-primary">
@@ -95,12 +97,14 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               </p>
             </div>
           )}
+          {!order.isRequest && (
           <div>
             <p className="text-muted-foreground">Способ получения</p>
             <p className="font-medium">
               {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
             </p>
           </div>
+          )}
           <div>
             <p className="text-muted-foreground">{isSeller ? 'Покупатель' : 'Продавец'}</p>
             <p className="font-medium truncate">
