@@ -97,6 +97,9 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
     const responsePrice = parseFloat(priceValue.replace(/\s/g, ''));
     const deliveryTime = parseInt(formData.get('response-delivery') as string);
     const comment = formData.get('response-comment') as string;
+    const education = formData.get('response-education') as string;
+
+    const educationPart = education?.trim() ? `Образование: ${education.trim()}\n` : '';
 
     const attachmentsInput = formData.get('response-attachments') as string;
     let attachments: { url: string; name: string }[] = [];
@@ -110,7 +113,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
           editResponse: true,
           pricePerUnit: responsePrice,
           quantity: responseQuantity || 1,
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
           attachments,
         });
 
@@ -118,7 +121,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
           ...existingResponse,
           pricePerUnit: responsePrice,
           quantity: responseQuantity || 1,
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
           attachments,
         });
 
@@ -140,7 +143,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
           buyerName: `${session.firstName} ${session.lastName}`,
           buyerPhone: session.phone || '',
           buyerEmail: session.email || '',
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
           attachments,
         };
 
@@ -150,7 +153,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
           orderId: result.id,
           pricePerUnit: responsePrice,
           quantity: responseQuantity || 1,
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${comment || ''}`,
+          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
           status: 'new',
           attachments,
         });

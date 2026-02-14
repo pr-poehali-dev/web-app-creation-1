@@ -93,15 +93,15 @@ export default function RequestResponseForm({
   };
 
   const parseExistingComment = () => {
-    if (!existingResponse?.buyerComment) return { deliveryDays: '', comment: '' };
+    if (!existingResponse?.buyerComment) return { deliveryDays: '', comment: '', education: '' };
     const cleaned = existingResponse.buyerComment
       .replace(/\n?\n?Прикрепленные файлы:[\s\S]*$/, '')
       .trim();
-    const match = cleaned.match(/Срок (?:поставки|выполнения): (\d+) дней\.\s*(.*)/s);
+    const match = cleaned.match(/Срок (?:поставки|выполнения): (\d+) дней\.\s*(?:Образование: ([^\n]*)\n?)?\s*(.*)/s);
     if (match) {
-      return { deliveryDays: match[1], comment: match[2].trim() };
+      return { deliveryDays: match[1], education: match[2]?.trim() || '', comment: match[3].trim() };
     }
-    return { deliveryDays: '', comment: cleaned };
+    return { deliveryDays: '', education: '', comment: cleaned };
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -209,6 +209,21 @@ export default function RequestResponseForm({
                   placeholder="Расскажите о вашем опыте и условиях"
                   rows={3}
                   className="text-sm mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="response-education" className="text-sm">
+                  Образование
+                  <span className="text-muted-foreground font-normal ml-1">(необязательно)</span>
+                </Label>
+                <Input
+                  id="response-education"
+                  name="response-education"
+                  type="text"
+                  defaultValue={isEditMode ? existingParsed.education : undefined}
+                  placeholder="Например: МГУ, экономический факультет"
+                  className="h-9 mt-1"
                 />
               </div>
             </>
