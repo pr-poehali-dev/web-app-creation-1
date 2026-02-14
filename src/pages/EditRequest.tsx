@@ -150,6 +150,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onDelete={handleDelete}
+          onUpdate={setRequest}
         />
       </main>
 

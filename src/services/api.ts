@@ -182,6 +182,7 @@ export interface CreateRequestData {
   pricePerUnit: number;
   hasVAT: boolean;
   vatRate?: number;
+  negotiablePrice?: boolean;
   district: string;
   deliveryAddress?: string;
   availableDistricts: string[];
@@ -489,10 +490,16 @@ export const requestsAPI = {
   },
 
   async updateRequest(id: string, data: Partial<CreateRequestData>): Promise<{ message: string }> {
-    const response = await fetchWithRetry(`${REQUESTS_API}/${id}`, {
+    const userId = getUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+
+    const response = await fetchWithRetry(`${REQUESTS_API}?id=${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'X-User-Id': userId,
       },
       body: JSON.stringify(data),
     });
@@ -500,6 +507,9 @@ export const requestsAPI = {
     if (!response.ok) {
       throw new Error('Failed to update request');
     }
+    
+    invalidateCache(`id=${id}`);
+    invalidateCache('requests');
     
     return response.json();
   },

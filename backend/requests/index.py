@@ -61,8 +61,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return create_request(event, headers)
         
         elif method == 'PUT':
-            path_params = event.get('pathParams', {})
-            request_id = path_params.get('id')
+            query_params = event.get('queryStringParameters', {}) or {}
+            request_id = query_params.get('id')
+            if not request_id:
+                path_params = event.get('pathParams', {})
+                request_id = path_params.get('id')
             if not request_id:
                 return {
                     'statusCode': 400,
@@ -345,36 +348,88 @@ def create_request(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     }
 
 def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    """Обновить запрос"""
+    """Обновить запрос (только автор может редактировать)"""
     body = json.loads(event.get('body', '{}'))
-    
+    user_headers = event.get('headers', {})
+    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+
+    if not user_id:
+        return {
+            'statusCode': 401,
+            'headers': headers,
+            'body': json.dumps({'error': 'User ID required'}),
+            'isBase64Encoded': False
+        }
+
     conn = get_db_connection()
-    cur = conn.cursor()
-    
-    sql = """
-        UPDATE requests SET
-            title = %s,
-            description = %s,
-            quantity = %s,
-            price_per_unit = %s,
-            status = %s,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = %s
-    """
-    
-    cur.execute(sql, (
-        body.get('title'),
-        body.get('description'),
-        body.get('quantity'),
-        body.get('pricePerUnit'),
-        body.get('status'),
-        request_id
-    ))
-    
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    cur.execute(
+        "SELECT user_id FROM t_p42562714_web_app_creation_1.requests WHERE id = %s AND status != 'deleted'",
+        (request_id,)
+    )
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 404,
+            'headers': headers,
+            'body': json.dumps({'error': 'Request not found'}),
+            'isBase64Encoded': False
+        }
+
+    if str(row['user_id']) != str(user_id):
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 403,
+            'headers': headers,
+            'body': json.dumps({'error': 'Access denied'}),
+            'isBase64Encoded': False
+        }
+
+    updates = []
+    params: List[Any] = []
+
+    field_map = {
+        'description': 'description',
+        'pricePerUnit': 'price_per_unit',
+        'negotiablePrice': 'negotiable_price',
+        'hasVAT': 'has_vat',
+        'vatRate': 'vat_rate',
+        'title': 'title',
+        'status': 'status',
+        'quantity': 'quantity',
+        'unit': 'unit',
+        'budget': 'budget',
+        'negotiableBudget': 'negotiable_budget',
+    }
+
+    for js_key, db_col in field_map.items():
+        if js_key in body:
+            updates.append(f"{db_col} = %s")
+            params.append(body[js_key])
+
+    if not updates:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 400,
+            'headers': headers,
+            'body': json.dumps({'error': 'No fields to update'}),
+            'isBase64Encoded': False
+        }
+
+    updates.append("updated_at = CURRENT_TIMESTAMP")
+    params.append(request_id)
+
+    sql = f"UPDATE t_p42562714_web_app_creation_1.requests SET {', '.join(updates)} WHERE id = %s"
+    cur.execute(sql, params)
     conn.commit()
     cur.close()
     conn.close()
-    
+
     return {
         'statusCode': 200,
         'headers': headers,

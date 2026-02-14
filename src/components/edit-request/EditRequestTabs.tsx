@@ -7,6 +7,7 @@ interface EditRequestTabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onDelete: () => void;
+  onUpdate?: (updated: Request) => void;
 }
 
 export default function EditRequestTabs({
@@ -14,6 +15,7 @@ export default function EditRequestTabs({
   activeTab,
   onTabChange,
   onDelete,
+  onUpdate,
 }: EditRequestTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} defaultValue="info">
@@ -25,6 +27,7 @@ export default function EditRequestTabs({
         <RequestInfoTab 
           request={request} 
           onDelete={onDelete}
+          onUpdate={onUpdate}
         />
       </TabsContent>
     </Tabs>
