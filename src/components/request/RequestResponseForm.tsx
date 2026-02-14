@@ -298,16 +298,20 @@ export default function RequestResponseForm({
                       key={`uploaded-${index}`}
                       className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs"
                     >
-                      <div className="flex items-center gap-1 flex-1 min-w-0">
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 flex-1 min-w-0 hover:text-primary transition-colors cursor-pointer"
+                      >
                         <Icon name="File" className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{file.name}</span>
-                        <span className="text-green-600 flex-shrink-0">(загружен)</span>
-                      </div>
+                        <span className="truncate underline">{file.name}</span>
+                      </a>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-5 w-5 p-0 ml-2"
+                        className="h-5 w-5 p-0 ml-2 flex-shrink-0"
                         onClick={() => removeUploadedFile(index)}
                       >
                         <Icon name="X" className="h-3 w-3" />
