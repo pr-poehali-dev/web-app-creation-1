@@ -14,6 +14,7 @@ import RequestInfoCard from '@/components/request/RequestInfoCard';
 import RequestAuthorCard from '@/components/request/RequestAuthorCard';
 import RequestResponseModal from '@/components/request/RequestResponseModal';
 import RequestResponseForm from '@/components/request/RequestResponseForm';
+import OrderFeedbackChat from '@/components/order/OrderFeedbackChat';
 import { useRequestData } from './RequestDetail/useRequestData';
 import { useRequestGallery } from './RequestDetail/useRequestGallery';
 import { useRequestResponse } from './RequestDetail/useRequestResponse';
@@ -309,6 +310,18 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                     <Icon name="Share2" className="mr-2 h-4 w-4" />
                     Поделиться
                   </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {existingResponse && !isEditFormOpen && (
+              <Card>
+                <CardContent className="pt-4 space-y-2">
+                  <OrderFeedbackChat
+                    orderId={existingResponse.orderId}
+                    orderStatus={existingResponse.status}
+                    isBuyer={true}
+                  />
                 </CardContent>
               </Card>
             )}

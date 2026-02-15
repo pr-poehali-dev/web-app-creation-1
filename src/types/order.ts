@@ -42,6 +42,7 @@ export interface Order {
   buyerComment?: string;
   attachments?: { url: string; name: string }[];
   hasUnreadCounterOffer?: boolean;
+  unreadMessages?: number;
 }
 
 export interface ChatMessage {

@@ -47,7 +47,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-lg line-clamp-1">{order.offerTitle}</h3>
-              {order.hasUnreadCounterOffer && (
+              {(order.hasUnreadCounterOffer || (order.unreadMessages && order.unreadMessages > 0)) && (
                 <div className="relative flex items-center">
                   <span className="flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -190,6 +190,15 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
             <p className="text-sm mt-1">{order.comment}</p>
           </div>
         )}
+
+        {order.unreadMessages && order.unreadMessages > 0 ? (
+          <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 text-sm">
+            <Icon name="MessageSquare" className="h-3.5 w-3.5 text-blue-600" />
+            <span className="text-blue-700 font-medium">
+              {order.unreadMessages === 1 ? 'Новое сообщение' : `${order.unreadMessages} новых сообщений`}
+            </span>
+          </div>
+        ) : null}
 
         <div className="flex gap-2">
           {order.isRequest && isSeller && (order.status === 'new' || order.status === 'pending') ? (

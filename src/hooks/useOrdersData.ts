@@ -104,6 +104,7 @@ export function useOrdersData(
       buyerComment: orderData.buyer_comment || orderData.buyerComment,
       attachments: orderData.attachments,
       hasUnreadCounterOffer,
+      unreadMessages: orderData.unreadMessages || 0,
     };
   };
 

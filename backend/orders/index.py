@@ -174,7 +174,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif messages_flag == 'true' and offer_id:
                 return get_messages_by_offer(offer_id, headers)
             elif messages_flag == 'true' and order_id:
-                return get_messages_by_order(order_id, headers)
+                return get_messages_by_order(order_id, headers, event)
             elif order_id:
                 return get_order_by_id(order_id, headers, event)
             else:
@@ -338,7 +338,12 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             o.*,
             of.price_per_unit as offer_price_per_unit,
             COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity,
-            CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request
+            CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
+            COALESCE((
+                SELECT COUNT(*) FROM {schema}.order_messages om 
+                WHERE om.order_id = o.id AND om.is_read = false 
+                AND om.sender_id != {user_id_int}
+            ), 0) as unread_messages
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
         LEFT JOIN {schema}.requests r ON o.offer_id = r.id
@@ -372,6 +377,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         # Добавляем поля из offers
         order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
         order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
+        order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
         
         order_dict['is_request'] = order_dict.get('is_request', False)
         
@@ -1185,13 +1191,28 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
         'isBase64Encoded': False
     }
 
-def get_messages_by_order(order_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
-    """Получить все сообщения по заказу"""
+def get_messages_by_order(order_id: str, headers: Dict[str, str], event: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Получить все сообщения по заказу и отметить чужие как прочитанные"""
     conn = get_db_connection()
     cur = conn.cursor()
     
     schema = get_schema()
     order_id_escaped = order_id.replace("'", "''")
+    
+    user_id = None
+    if event:
+        user_headers = event.get('headers', {})
+        user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    
+    if user_id:
+        cur.execute(f"""
+            UPDATE {schema}.order_messages 
+            SET is_read = true 
+            WHERE order_id = '{order_id_escaped}' 
+            AND sender_id != {int(user_id)} 
+            AND is_read = false
+        """)
+        conn.commit()
     
     sql = f"SELECT * FROM {schema}.order_messages WHERE order_id = '{order_id_escaped}' ORDER BY created_at ASC"
     
