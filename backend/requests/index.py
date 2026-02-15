@@ -232,6 +232,13 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     cur.execute(sql, (request_id,))
     req = cur.fetchone()
     
+    if req:
+        cur.execute(
+            "UPDATE t_p42562714_web_app_creation_1.requests SET views = COALESCE(views, 0) + 1 WHERE id = %s",
+            (request_id,)
+        )
+        conn.commit()
+    
     cur.close()
     conn.close()
     
