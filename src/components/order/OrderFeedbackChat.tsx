@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,36 +23,76 @@ interface OrderFeedbackChatProps {
   isBuyer: boolean;
 }
 
+function playNotificationSound() {
+  try {
+    const W = window as unknown as { AudioContext: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+    const ctx = new (W.AudioContext || W.webkitAudioContext!)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(1046, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (e) {
+    // ignore
+  }
+}
+
 export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: OrderFeedbackChatProps) {
   const [messages, setMessages] = useState<OrderMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef<number>(0);
+  const isFirstLoad = useRef(true);
+
+  const loadMessages = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setIsLoadingMessages(true);
+      const data = await ordersAPI.getMessagesByOrder(orderId);
+      const fetched = data.messages || [];
+
+      if (!isFirstLoad.current && fetched.length > prevCountRef.current) {
+        const lastMsg = fetched[fetched.length - 1];
+        const isFromOther = isBuyer ? lastMsg.senderType !== 'buyer' : lastMsg.senderType !== 'seller';
+        if (isFromOther) {
+          playNotificationSound();
+        }
+      }
+
+      prevCountRef.current = fetched.length;
+      isFirstLoad.current = false;
+      setMessages(fetched);
+    } catch (e) {
+      console.error('Error loading messages:', e);
+    } finally {
+      if (!silent) setIsLoadingMessages(false);
+    }
+  }, [orderId, isBuyer]);
 
   useEffect(() => {
     if (orderStatus !== 'cancelled' && orderStatus !== 'rejected') {
+      isFirstLoad.current = true;
       loadMessages();
     }
-  }, [orderId]);
+  }, [orderId, orderStatus, loadMessages]);
+
+  useEffect(() => {
+    if (orderStatus === 'cancelled' || orderStatus === 'rejected') return;
+    const interval = setInterval(() => loadMessages(true), 15000);
+    return () => clearInterval(interval);
+  }, [orderId, orderStatus, loadMessages]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
-
-  const loadMessages = async () => {
-    try {
-      setIsLoadingMessages(true);
-      const data = await ordersAPI.getMessagesByOrder(orderId);
-      setMessages(data.messages || []);
-    } catch (e) {
-      console.error('Error loading messages:', e);
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || isSending) return;
@@ -68,7 +108,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
         message: newMessage.trim(),
       });
       setNewMessage('');
-      await loadMessages();
+      await loadMessages(true);
     } catch (e) {
       console.error('Error sending message:', e);
     } finally {

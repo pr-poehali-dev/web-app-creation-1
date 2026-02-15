@@ -109,7 +109,7 @@ def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: s
         return
     
     entity_type = 'запрос' if is_request else 'предложение'
-    reason_text = f'Автоматически отклонён — выбран другой {"исполнитель" if is_request else "покупатель"}'
+    reason_text = 'Автоматически отклонён — выбран другой исполнитель'
     reason_escaped = reason_text.replace("'", "''")
     
     other_ids = [f"'{str(o['id'])}'" for o in other_orders]
@@ -123,7 +123,7 @@ def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: s
     
     print(f"[AUTO_REJECT] Rejected {len(other_orders)} other responses for {entity_type} {offer_id}")
     
-    notify_text = f'К сожалению, по {entity_type}у «{title}» выбран другой {"исполнитель" if is_request else "покупатель"}'
+    notify_text = f'К сожалению, по {entity_type}у «{title}» выбран другой исполнитель'
     for o in other_orders:
         try:
             send_notification(
