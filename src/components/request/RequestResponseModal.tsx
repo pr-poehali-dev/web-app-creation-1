@@ -12,6 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { uploadFile } from '@/utils/fileUpload';
 import type { ExistingResponse } from '@/pages/RequestDetail/useRequestResponse';
 
@@ -49,6 +56,11 @@ export default function RequestResponseModal({
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [priceValue, setPriceValue] = useState('');
+  const [education, setEducation] = useState('');
+  const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
+  const [uploadedDiploma, setUploadedDiploma] = useState<UploadedFile | null>(null);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [uploadedCertificate, setUploadedCertificate] = useState<UploadedFile | null>(null);
   
   useEffect(() => {
     if (isOpen && existingResponse) {
@@ -56,11 +68,22 @@ export default function RequestResponseModal({
       setPriceValue(price ? formatNumber(String(price)) : '');
       setUploadedFiles(existingResponse.attachments || []);
       setNewFiles([]);
+      const ext = existingResponse as ExistingResponse & { education?: string; diploma?: UploadedFile; certificate?: UploadedFile };
+      setEducation(ext.education || '');
+      setUploadedDiploma(ext.diploma || null);
+      setDiplomaFile(null);
+      setUploadedCertificate(ext.certificate || null);
+      setCertificateFile(null);
     } else if (isOpen && !existingResponse) {
       const defaultPrice = isService ? budget : pricePerUnit;
       setPriceValue(defaultPrice ? formatNumber(String(defaultPrice)) : '');
       setUploadedFiles([]);
       setNewFiles([]);
+      setEducation('');
+      setUploadedDiploma(null);
+      setDiplomaFile(null);
+      setUploadedCertificate(null);
+      setCertificateFile(null);
     }
   }, [isOpen, existingResponse]);
   
@@ -101,6 +124,28 @@ export default function RequestResponseModal({
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleDiplomaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Файл слишком большой (макс. 10 МБ)');
+      return;
+    }
+    setDiplomaFile(file);
+    setUploadedDiploma(null);
+  };
+
+  const handleCertificateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Файл слишком большой (макс. 10 МБ)');
+      return;
+    }
+    setCertificateFile(file);
+    setUploadedCertificate(null);
+  };
+
   const parseExistingComment = () => {
     if (!existingResponse?.buyerComment) return { deliveryDays: '', comment: '' };
     const match = existingResponse.buyerComment.match(/Срок поставки: (\d+) дней\.\s*(.*)/s);
@@ -115,39 +160,61 @@ export default function RequestResponseModal({
     
     const allAttachments = [...uploadedFiles];
     
-    if (newFiles.length > 0) {
-      setIsUploading(true);
-      toast.info('Загрузка файлов...');
+    setIsUploading(true);
+    
+    try {
+      const userId = localStorage.getItem('userId') || 'anonymous';
       
-      try {
-        const userId = localStorage.getItem('userId') || 'anonymous';
-        
-        for (const file of newFiles) {
-          const url = await uploadFile(file, 'response_attachment', userId);
-          allAttachments.push({ url, name: file.name });
-        }
-        
-        toast.success('Файлы загружены!');
-        setIsUploading(false);
-      } catch (error) {
-        console.error('File upload error:', error);
-        toast.error('Ошибка загрузки файлов');
-        setIsUploading(false);
-        return;
+      for (const file of newFiles) {
+        const url = await uploadFile(file, 'response_attachment', userId);
+        allAttachments.push({ url, name: file.name });
       }
+
+      let diplomaData = uploadedDiploma;
+      if (diplomaFile) {
+        const url = await uploadFile(diplomaFile, 'diploma', userId);
+        diplomaData = { url, name: diplomaFile.name };
+      }
+
+      let certificateData = uploadedCertificate;
+      if (certificateFile) {
+        const url = await uploadFile(certificateFile, 'certificate', userId);
+        certificateData = { url, name: certificateFile.name };
+      }
+
+      if (newFiles.length > 0 || diplomaFile || certificateFile) {
+        toast.success('Файлы загружены!');
+      }
+      setIsUploading(false);
+      
+      const form = e.target as HTMLFormElement;
+
+      const setHiddenInput = (name: string, value: string) => {
+        let input = form.querySelector(`input[name="${name}"]`) as HTMLInputElement;
+        if (!input) {
+          input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          form.appendChild(input);
+        }
+        input.value = value;
+      };
+
+      setHiddenInput('response-attachments', JSON.stringify(allAttachments));
+      
+      if (isService) {
+        setHiddenInput('response-education', education);
+        setHiddenInput('response-diploma', JSON.stringify(diplomaData));
+      } else {
+        setHiddenInput('response-certificate', JSON.stringify(certificateData));
+      }
+      
+      onSubmit(e);
+    } catch (error) {
+      console.error('File upload error:', error);
+      toast.error('Ошибка загрузки файлов');
+      setIsUploading(false);
     }
-    
-    const form = e.target as HTMLFormElement;
-    let attachmentsInput = form.querySelector('input[name="response-attachments"]') as HTMLInputElement;
-    if (!attachmentsInput) {
-      attachmentsInput = document.createElement('input');
-      attachmentsInput.type = 'hidden';
-      attachmentsInput.name = 'response-attachments';
-      form.appendChild(attachmentsInput);
-    }
-    attachmentsInput.value = JSON.stringify(allAttachments);
-    
-    onSubmit(e);
   };
 
   const existingParsed = parseExistingComment();
@@ -219,6 +286,84 @@ export default function RequestResponseModal({
                   className="text-sm mt-1"
                 />
               </div>
+
+              <div>
+                <Label className="text-sm">Образование</Label>
+                <Select value={education} onValueChange={setEducation}>
+                  <SelectTrigger className="h-9 mt-1">
+                    <SelectValue placeholder="Выберите уровень образования" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="secondary_professional">Среднее профессиональное</SelectItem>
+                    <SelectItem value="higher">Высшее</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {education && (
+                <div>
+                  <Label className="text-sm">Диплом (подтверждающий документ)</Label>
+                  <div className="mt-1">
+                    {uploadedDiploma ? (
+                      <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{uploadedDiploma.name}</span>
+                          <span className="text-green-600 flex-shrink-0">(загружен)</span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0 ml-2"
+                          onClick={() => setUploadedDiploma(null)}
+                        >
+                          <Icon name="X" className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : diplomaFile ? (
+                      <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{diplomaFile.name}</span>
+                          <span className="text-muted-foreground flex-shrink-0">
+                            ({(diplomaFile.size / 1024).toFixed(0)} КБ)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0 ml-2"
+                          onClick={() => setDiplomaFile(null)}
+                        >
+                          <Icon name="X" className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('diploma-upload')?.click()}
+                      >
+                        <Icon name="Upload" className="h-4 w-4 mr-1" />
+                        Загрузить диплом
+                      </Button>
+                    )}
+                    <input
+                      id="diploma-upload"
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={handleDiplomaChange}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Одна страница формата А4 (изображение или PDF, макс. 10 МБ)
+                    </p>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -273,6 +418,69 @@ export default function RequestResponseModal({
                   rows={2}
                   className="text-sm mt-1"
                 />
+              </div>
+
+              <div>
+                <Label className="text-sm">Сертификат на товар</Label>
+                <div className="mt-1">
+                  {uploadedCertificate ? (
+                    <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
+                      <div className="flex items-center gap-1 flex-1 min-w-0">
+                        <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{uploadedCertificate.name}</span>
+                        <span className="text-green-600 flex-shrink-0">(загружен)</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 ml-2"
+                        onClick={() => setUploadedCertificate(null)}
+                      >
+                        <Icon name="X" className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : certificateFile ? (
+                    <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
+                      <div className="flex items-center gap-1 flex-1 min-w-0">
+                        <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{certificateFile.name}</span>
+                        <span className="text-muted-foreground flex-shrink-0">
+                          ({(certificateFile.size / 1024).toFixed(0)} КБ)
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-5 w-5 p-0 ml-2"
+                        onClick={() => setCertificateFile(null)}
+                      >
+                        <Icon name="X" className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('certificate-upload')?.click()}
+                    >
+                      <Icon name="Upload" className="h-4 w-4 mr-1" />
+                      Загрузить сертификат
+                    </Button>
+                  )}
+                  <input
+                    id="certificate-upload"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleCertificateChange}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Сертификат качества или соответствия (изображение или PDF, макс. 10 МБ)
+                  </p>
+                </div>
               </div>
             </>
           )}
