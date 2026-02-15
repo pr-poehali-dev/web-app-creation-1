@@ -254,6 +254,18 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
           </div>
 
           <div className="space-y-6">
+            {existingResponse && (
+              <Card>
+                <CardContent className="pt-4 space-y-2">
+                  <OrderFeedbackChat
+                    orderId={existingResponse.orderId}
+                    orderStatus={existingResponse.status}
+                    isBuyer={true}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {isEditFormOpen && existingResponse ? (
               <RequestResponseForm
                 onSubmit={handleResponseSubmit}
@@ -310,18 +322,6 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                     <Icon name="Share2" className="mr-2 h-4 w-4" />
                     Поделиться
                   </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {existingResponse && (
-              <Card>
-                <CardContent className="pt-4 space-y-2">
-                  <OrderFeedbackChat
-                    orderId={existingResponse.orderId}
-                    orderStatus={existingResponse.status}
-                    isBuyer={true}
-                  />
                 </CardContent>
               </Card>
             )}
