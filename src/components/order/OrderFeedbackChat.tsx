@@ -1,0 +1,155 @@
+import { useState, useEffect, useRef } from 'react';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import Icon from '@/components/ui/icon';
+import { ordersAPI } from '@/services/api';
+import { getSession } from '@/utils/auth';
+
+interface OrderMessage {
+  id: string;
+  orderId: string;
+  senderId: number;
+  senderName: string;
+  senderType: 'buyer' | 'seller';
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+interface OrderFeedbackChatProps {
+  orderId: string;
+  orderStatus: string;
+  isBuyer: boolean;
+}
+
+export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: OrderFeedbackChatProps) {
+  const [messages, setMessages] = useState<OrderMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (orderStatus !== 'cancelled' && orderStatus !== 'rejected') {
+      loadMessages();
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const loadMessages = async () => {
+    try {
+      setIsLoadingMessages(true);
+      const data = await ordersAPI.getMessagesByOrder(orderId);
+      setMessages(data.messages || []);
+    } catch (e) {
+      console.error('Error loading messages:', e);
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || isSending) return;
+    const user = getSession();
+    if (!user?.id) return;
+
+    try {
+      setIsSending(true);
+      await ordersAPI.createMessage({
+        orderId,
+        senderId: user.id,
+        senderType: isBuyer ? 'buyer' : 'seller',
+        message: newMessage.trim(),
+      });
+      setNewMessage('');
+      await loadMessages();
+    } catch (e) {
+      console.error('Error sending message:', e);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  if (orderStatus === 'cancelled' || orderStatus === 'rejected') {
+    return null;
+  }
+
+  return (
+    <>
+      <Separator />
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Icon name="MessageSquare" className="h-4 w-4 text-muted-foreground" />
+            <h3 className="font-semibold text-sm">Обратная связь</h3>
+          </div>
+          {messages.length > 0 && (
+            <span className="text-xs text-muted-foreground">{messages.length}</span>
+          )}
+        </div>
+
+        {isLoadingMessages ? (
+          <div className="flex items-center justify-center py-4">
+            <Icon name="Loader2" className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : messages.length > 0 ? (
+          <div className="space-y-2 max-h-[200px] overflow-y-auto mb-3 pr-1">
+            {messages.map((msg) => {
+              const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
+              return (
+                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                    {!isMe && <p className="text-xs font-medium mb-0.5 opacity-70">{msg.senderName}</p>}
+                    <p className="whitespace-pre-line break-words">{msg.message}</p>
+                    <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
+                      {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground mb-3">Здесь можно уточнить детали, задать вопрос или оставить комментарий</p>
+        )}
+
+        <div className="flex gap-2">
+          <Input
+            placeholder="Написать сообщение..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isSending}
+            className="text-sm"
+          />
+          <Button
+            size="sm"
+            onClick={handleSendMessage}
+            disabled={!newMessage.trim() || isSending}
+            className="flex-shrink-0 px-3"
+          >
+            {isSending ? (
+              <Icon name="Loader2" className="h-4 w-4 animate-spin" />
+            ) : (
+              <Icon name="Send" className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </div>
+    </>
+  );
+}
