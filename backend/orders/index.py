@@ -1079,14 +1079,21 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                     f'/my-orders?id={order_id}'
                 )
         
-        # Продавец принял заказ
         elif new_status == 'accepted':
-            send_notification(
-                order['buyer_id'],
-                'Заказ принят',
-                f'Ваш заказ №{order.get("order_number", order_id[:8])} принят в работу',
-                f'/my-orders?id={order_id}'
-            )
+            if is_seller:
+                send_notification(
+                    order['buyer_id'],
+                    'Заказ принят',
+                    f'Ваш заказ №{order.get("order_number", order_id[:8])} принят в работу',
+                    f'/my-orders?id={order_id}'
+                )
+            elif is_buyer:
+                send_notification(
+                    order['seller_id'],
+                    'Ваш отклик принят',
+                    f'Заказчик принял ваш отклик по заказу №{order.get("order_number", order_id[:8])}',
+                    f'/my-orders?id={order_id}'
+                )
         
         # Заказ отклонен
         elif new_status == 'rejected':
