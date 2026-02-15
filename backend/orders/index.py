@@ -1025,13 +1025,14 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             oid = str(order['offer_id']).replace("'", "''")
             cur.execute(f"SELECT id FROM {schema}.requests WHERE id = '{oid}'")
             is_request = cur.fetchone() is not None
-            reject_other_responses(
-                cur, schema,
-                str(order['offer_id']),
-                order_id,
-                order.get('title', 'предложение'),
-                is_request=is_request
-            )
+            if is_request:
+                reject_other_responses(
+                    cur, schema,
+                    str(order['offer_id']),
+                    order_id,
+                    order.get('title', 'предложение'),
+                    is_request=True
+                )
         except Exception as e:
             print(f"[AUTO_REJECT] Error: {e}")
     

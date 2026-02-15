@@ -15,6 +15,9 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
   const [isEnabled, setIsEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    return localStorage.getItem('soundNotificationsEnabled') !== 'false';
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -142,6 +145,31 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
                 checked={isEnabled}
                 onCheckedChange={handleToggleNotifications}
                 disabled={isLoading}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="sound-notifications" className="text-base">
+                  Звук уведомлений
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Звуковой сигнал при новых сообщениях в чате
+                </p>
+              </div>
+              <Switch
+                id="sound-notifications"
+                checked={soundEnabled}
+                onCheckedChange={(checked) => {
+                  setSoundEnabled(checked);
+                  localStorage.setItem('soundNotificationsEnabled', String(checked));
+                  toast({
+                    title: checked ? 'Звук включён' : 'Звук отключён',
+                    description: checked
+                      ? 'Вы будете слышать звук при новых сообщениях'
+                      : 'Звуковые уведомления отключены',
+                  });
+                }}
               />
             </div>
 

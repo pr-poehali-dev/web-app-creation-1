@@ -60,7 +60,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
       if (!isFirstLoad.current && fetched.length > prevCountRef.current) {
         const lastMsg = fetched[fetched.length - 1];
         const isFromOther = isBuyer ? lastMsg.senderType !== 'buyer' : lastMsg.senderType !== 'seller';
-        if (isFromOther) {
+        if (isFromOther && localStorage.getItem('soundNotificationsEnabled') !== 'false') {
           playNotificationSound();
         }
       }
