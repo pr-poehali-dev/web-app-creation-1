@@ -90,6 +90,46 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
     except Exception as e:
         print(f'[NOTIFICATION] Email error: {e}')
 
+def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: str, request_title: str):
+    """Отклоняет все остальные отклики на тот же запрос при принятии одного"""
+    offer_id_escaped = offer_id.replace("'", "''")
+    accepted_id_escaped = accepted_order_id.replace("'", "''")
+    
+    cur.execute(f"""
+        SELECT id, buyer_id, order_number 
+        FROM {schema}.orders 
+        WHERE offer_id = '{offer_id_escaped}' 
+          AND id != '{accepted_id_escaped}'
+          AND status IN ('new', 'pending', 'negotiating')
+    """)
+    other_orders = cur.fetchall()
+    
+    if not other_orders:
+        print(f"[AUTO_REJECT] No other responses to reject for offer {offer_id}")
+        return
+    
+    other_ids = [f"'{str(o['id'])}'" for o in other_orders]
+    cur.execute(f"""
+        UPDATE {schema}.orders 
+        SET status = 'rejected', 
+            cancellation_reason = 'Автоматически отклонён — заказчик выбрал другого исполнителя',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id IN ({','.join(other_ids)})
+    """)
+    
+    print(f"[AUTO_REJECT] Rejected {len(other_orders)} other responses for offer {offer_id}")
+    
+    for o in other_orders:
+        try:
+            send_notification(
+                o['buyer_id'],
+                'Ваш отклик отклонён',
+                f'К сожалению, над запросом «{request_title}» работает другой исполнитель',
+                f'/my-orders?tab=my-responses'
+            )
+        except Exception as e:
+            print(f"[AUTO_REJECT] Notification error for user {o['buyer_id']}: {e}")
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
     
@@ -967,6 +1007,20 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     print(f"[UPDATE_ORDER] SQL: {sql}")
     
     cur.execute(sql)
+    
+    # Если заказ принят — автоматически отклоняем все остальные отклики на тот же запрос
+    accepted_now = counter_accepted or (body.get('status') == 'accepted')
+    if accepted_now:
+        try:
+            reject_other_responses(
+                cur, schema,
+                str(order['offer_id']),
+                order_id,
+                order.get('title', 'запрос')
+            )
+        except Exception as e:
+            print(f"[AUTO_REJECT] Error: {e}")
+    
     conn.commit()
     
     # Отправляем уведомления после успешного обновления
