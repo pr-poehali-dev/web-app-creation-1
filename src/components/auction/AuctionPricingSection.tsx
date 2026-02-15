@@ -83,60 +83,6 @@ export default function AuctionPricingSection({ formData, onInputChange }: Aucti
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="hasVAT"
-            checked={formData.hasVAT}
-            onCheckedChange={(checked) => onInputChange('hasVAT', checked)}
-          />
-          <Label htmlFor="hasVAT">Цена включает НДС</Label>
-        </div>
-
-        {formData.hasVAT && (
-          <div className="relative">
-            <Label htmlFor="vatRate">Ставка НДС (%)</Label>
-            <div className="relative">
-              <Input
-                id="vatRate"
-                value={selectedVatRate?.label || ''}
-                onFocus={() => setIsVatRateOpen(true)}
-                placeholder="Выберите ставку НДС..."
-                className="pr-8"
-                readOnly
-              />
-              <button
-                type="button"
-                onClick={() => setIsVatRateOpen(!isVatRateOpen)}
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-              >
-                <Icon name={isVatRateOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
-              </button>
-            </div>
-            
-            {isVatRateOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setIsVatRateOpen(false)}
-                />
-                <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
-                  {vatOptions.map(option => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => handleSelectVatRate(option.value)}
-                      className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
-                        formData.vatRate === option.value ? 'bg-accent font-medium' : ''
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

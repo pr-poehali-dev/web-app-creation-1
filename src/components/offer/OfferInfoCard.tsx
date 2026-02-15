@@ -210,16 +210,14 @@ export default function OfferInfoCard({
               Подробная информация
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pt-2">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">Осталось</p>
-                  <p className="font-medium">{remainingQuantity} {unit}</p>
+              {category !== 'utilities' && (
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Осталось</p>
+                    <p className="font-medium">{remainingQuantity} {unit}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">НДС</p>
-                  <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
-                </div>
-              </div>
+              )}
 
               <Separator />
 
@@ -320,16 +318,14 @@ export default function OfferInfoCard({
           <p className="text-sm font-medium">Подробная информация</p>
           
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">Осталось</p>
-                <p className="font-medium">{remainingQuantity} {unit}</p>
+            {category !== 'utilities' && (
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Осталось</p>
+                  <p className="font-medium">{remainingQuantity} {unit}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">НДС</p>
-                <p className="font-medium">{hasVAT ? `${vatRate}%` : 'Без НДС'}</p>
-              </div>
-            </div>
+            )}
 
             <Separator />
 

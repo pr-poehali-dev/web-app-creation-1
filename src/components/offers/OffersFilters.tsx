@@ -87,7 +87,7 @@ function OffersFilters({
                   className="scale-75"
                 />
                 <Label htmlFor="show-only-my" className="cursor-pointer text-foreground font-medium">
-                  Только мои
+                  Ваши предложения цены
                 </Label>
               </div>
             )}

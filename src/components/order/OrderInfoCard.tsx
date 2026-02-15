@@ -101,12 +101,6 @@ export default function OrderInfoCard({ order, formatDate, formatPrice }: OrderI
                 <span className="text-gray-600">Цена за единицу:</span>
                 <span className="font-medium">{formatPrice(order.price_per_unit)} ₽</span>
               </div>
-              {order.has_vat && order.vat_amount && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">НДС:</span>
-                  <span className="font-medium">{formatPrice(order.vat_amount)} ₽</span>
-                </div>
-              )}
               <Separator />
               <div className="flex justify-between text-base">
                 <span className="font-semibold">Итого:</span>
