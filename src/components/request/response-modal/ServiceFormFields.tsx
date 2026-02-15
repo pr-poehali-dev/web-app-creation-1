@@ -84,9 +84,10 @@ export default function ServiceFormFields({
         <Label className="text-sm">Образование</Label>
         <Select value={education} onValueChange={onEducationChange}>
           <SelectTrigger className="h-9 mt-1">
-            <SelectValue placeholder="Выберите уровень образования" />
+            <SelectValue placeholder="Можете указать уровень образования" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="secondary">Среднее</SelectItem>
             <SelectItem value="secondary_professional">Среднее профессиональное</SelectItem>
             <SelectItem value="higher">Высшее</SelectItem>
           </SelectContent>
