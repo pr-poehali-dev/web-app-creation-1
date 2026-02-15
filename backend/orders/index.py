@@ -90,8 +90,8 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
     except Exception as e:
         print(f'[NOTIFICATION] Email error: {e}')
 
-def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: str, request_title: str):
-    """Отклоняет все остальные отклики на тот же запрос при принятии одного"""
+def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: str, title: str, is_request: bool = True):
+    """Отклоняет все остальные отклики на тот же запрос/предложение при принятии одного"""
     offer_id_escaped = offer_id.replace("'", "''")
     accepted_id_escaped = accepted_order_id.replace("'", "''")
     
@@ -108,23 +108,28 @@ def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: s
         print(f"[AUTO_REJECT] No other responses to reject for offer {offer_id}")
         return
     
+    entity_type = 'запрос' if is_request else 'предложение'
+    reason_text = f'Автоматически отклонён — выбран другой {"исполнитель" if is_request else "покупатель"}'
+    reason_escaped = reason_text.replace("'", "''")
+    
     other_ids = [f"'{str(o['id'])}'" for o in other_orders]
     cur.execute(f"""
         UPDATE {schema}.orders 
         SET status = 'rejected', 
-            cancellation_reason = 'Автоматически отклонён — заказчик выбрал другого исполнителя',
+            cancellation_reason = '{reason_escaped}',
             updated_at = CURRENT_TIMESTAMP
         WHERE id IN ({','.join(other_ids)})
     """)
     
-    print(f"[AUTO_REJECT] Rejected {len(other_orders)} other responses for offer {offer_id}")
+    print(f"[AUTO_REJECT] Rejected {len(other_orders)} other responses for {entity_type} {offer_id}")
     
+    notify_text = f'К сожалению, по {entity_type}у «{title}» выбран другой {"исполнитель" if is_request else "покупатель"}'
     for o in other_orders:
         try:
             send_notification(
                 o['buyer_id'],
                 'Ваш отклик отклонён',
-                f'К сожалению, над запросом «{request_title}» работает другой исполнитель',
+                notify_text,
                 f'/my-orders?tab=my-responses'
             )
         except Exception as e:
@@ -1008,15 +1013,18 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     cur.execute(sql)
     
-    # Если заказ принят — автоматически отклоняем все остальные отклики на тот же запрос
     accepted_now = counter_accepted or (body.get('status') == 'accepted')
     if accepted_now:
         try:
+            oid = str(order['offer_id']).replace("'", "''")
+            cur.execute(f"SELECT id FROM {schema}.requests WHERE id = '{oid}'")
+            is_request = cur.fetchone() is not None
             reject_other_responses(
                 cur, schema,
                 str(order['offer_id']),
                 order_id,
-                order.get('title', 'запрос')
+                order.get('title', 'предложение'),
+                is_request=is_request
             )
         except Exception as e:
             print(f"[AUTO_REJECT] Error: {e}")
