@@ -10,11 +10,12 @@ interface OrderCardProps {
   onOpenChat: (order: Order) => void;
   onAcceptOrder?: (orderId: string) => void;
   onCompleteOrder?: (orderId: string) => void;
+  onDeleteOrder?: (orderId: string) => void;
   isExiting?: boolean;
   isNew?: boolean;
 }
 
-export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, isExiting, isNew }: OrderCardProps) {
+export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, onDeleteOrder, isExiting, isNew }: OrderCardProps) {
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -106,9 +107,15 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           </div>
           )}
           <div>
-            <p className="text-muted-foreground">{isSeller ? 'Покупатель' : 'Продавец'}</p>
+            <p className="text-muted-foreground">
+              {order.isRequest 
+                ? (isSeller ? 'Исполнитель' : 'Заказчик')
+                : (isSeller ? 'Покупатель' : 'Продавец')}
+            </p>
             <p className="font-medium truncate">
-              {isSeller ? order.buyerName : (order.sellerName || 'Продавец')}
+              {isSeller 
+                ? order.buyerName 
+                : (order.sellerName || (order.isRequest ? 'Исполнитель' : 'Продавец'))}
             </p>
           </div>
 
@@ -198,6 +205,36 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               <Icon name="Eye" className="mr-1.5 h-4 w-4" />
               Просмотреть отклик
             </Button>
+          ) : order.isRequest && !isSeller && (order.status === 'new' || order.status === 'pending') ? (
+            <>
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenChat(order);
+                }}
+                variant="outline"
+                className="flex-1"
+                size="sm"
+              >
+                <Icon name="Eye" className="mr-1.5 h-4 w-4" />
+                Детали отклика
+              </Button>
+              {onDeleteOrder && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm('Вы уверены, что хотите удалить свой отклик?')) {
+                      onDeleteOrder(order.id);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                >
+                  <Icon name="Trash2" className="h-4 w-4" />
+                </Button>
+              )}
+            </>
           ) : order.status === 'accepted' ? (
             <div className="flex gap-2 w-full">
               <Button

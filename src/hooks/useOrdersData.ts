@@ -737,6 +737,38 @@ export function useOrdersData(
     await loadOrders(false);
   };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return;
+
+    try {
+      setOrders(prev => prev.filter(o => o.id !== orderId));
+
+      await ordersAPI.deleteOrder(orderId);
+
+      toast({
+        title: 'Отклик удалён',
+        description: 'Ваш отклик успешно удалён',
+      });
+
+      localStorage.setItem('force_orders_reload', JSON.stringify({
+        timestamp: Date.now(),
+        orderId,
+        action: 'delete'
+      }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      setOrders(prev => [...prev, order].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить отклик',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return {
     orders,
     selectedOrder,
@@ -751,6 +783,7 @@ export function useOrdersData(
     handleAcceptCounter,
     handleCancelOrder,
     handleCompleteOrder,
+    handleDeleteOrder,
     handleOpenChat,
     handleCloseChat,
     handleSubmitReview,

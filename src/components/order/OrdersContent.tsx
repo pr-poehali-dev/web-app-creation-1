@@ -14,6 +14,7 @@ interface OrdersContentProps {
   onOpenChat: (order: Order) => void;
   onAcceptOrder: (orderId: string) => void;
   onCompleteOrder?: (orderId: string) => void;
+  onDeleteOrder?: (orderId: string) => void;
 }
 
 export default function OrdersContent({
@@ -24,6 +25,7 @@ export default function OrdersContent({
   onOpenChat,
   onAcceptOrder,
   onCompleteOrder,
+  onDeleteOrder,
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [exitingOrderIds, setExitingOrderIds] = useState<Set<string>>(new Set());
@@ -185,6 +187,7 @@ export default function OrdersContent({
             onOpenChat={onOpenChat}
             onAcceptOrder={isSeller ? onAcceptOrder : undefined}
             onCompleteOrder={onCompleteOrder}
+            onDeleteOrder={onDeleteOrder}
             isExiting={exitingOrderIds.has(order.id as string)}
             isNew={newOrderIds.has(order.id as string)}
           />

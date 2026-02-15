@@ -50,6 +50,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleAcceptCounter,
     handleCancelOrder,
     handleCompleteOrder,
+    handleDeleteOrder,
     handleOpenChat,
     handleCloseChat,
     handleSubmitReview,
@@ -196,6 +197,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               onOpenChat={handleOpenChat}
               onAcceptOrder={handleAcceptOrder}
               onCompleteOrder={handleCompleteOrder}
+              onDeleteOrder={handleDeleteOrder}
             />
           </TabsContent>
 
