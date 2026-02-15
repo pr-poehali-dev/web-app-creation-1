@@ -314,7 +314,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
               </Card>
             )}
 
-            {existingResponse && !isEditFormOpen && (
+            {existingResponse && (
               <Card>
                 <CardContent className="pt-4 space-y-2">
                   <OrderFeedbackChat
