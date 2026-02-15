@@ -89,7 +89,10 @@ export default function ServiceFormFields({
           <SelectContent>
             <SelectItem value="secondary">Среднее</SelectItem>
             <SelectItem value="secondary_professional">Среднее профессиональное</SelectItem>
+            <SelectItem value="incomplete_higher">Незаконченное высшее</SelectItem>
             <SelectItem value="higher">Высшее</SelectItem>
+            <SelectItem value="candidate">Кандидат наук</SelectItem>
+            <SelectItem value="doctor">Доктор наук</SelectItem>
           </SelectContent>
         </Select>
       </div>
