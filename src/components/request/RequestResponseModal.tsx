@@ -7,20 +7,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import Icon from '@/components/ui/icon';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { uploadFile } from '@/utils/fileUpload';
 import type { ExistingResponse } from '@/pages/RequestDetail/useRequestResponse';
+import type { UploadedFile } from './response-modal/types';
+import ServiceFormFields from './response-modal/ServiceFormFields';
+import GoodsFormFields from './response-modal/GoodsFormFields';
+import FileAttachments from './response-modal/FileAttachments';
 
 interface RequestResponseModalProps {
   isOpen: boolean;
@@ -32,11 +25,6 @@ interface RequestResponseModalProps {
   category: string;
   budget?: number;
   existingResponse?: ExistingResponse | null;
-}
-
-interface UploadedFile {
-  url: string;
-  name: string;
 }
 
 export default function RequestResponseModal({
@@ -234,343 +222,44 @@ export default function RequestResponseModal({
         </DialogHeader>
         <form onSubmit={handleFormSubmit} className="space-y-3">
           {isService ? (
-            <>
-              <div>
-                <Label htmlFor="response-price" className="text-sm">
-                  Стоимость услуги (₽)
-                </Label>
-                <Input
-                  id="response-price"
-                  name="response-price"
-                  type="text"
-                  value={priceValue}
-                  onChange={handlePriceChange}
-                  placeholder={budget ? `Бюджет заказчика: ${budget.toLocaleString('ru-RU')} ₽` : 'Укажите стоимость'}
-                  required
-                  className="h-9 mt-1"
-                />
-                <input 
-                  type="hidden" 
-                  name="response-price-value" 
-                  value={priceValue.replace(/\s/g, '')}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Можете указать свою стоимость выполнения работ
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="response-delivery" className="text-sm">
-                  Срок выполнения (дней)
-                </Label>
-                <Input
-                  id="response-delivery"
-                  name="response-delivery"
-                  type="number"
-                  min="1"
-                  defaultValue={isEditMode ? existingParsed.deliveryDays : undefined}
-                  placeholder="Укажите срок выполнения"
-                  required
-                  className="h-9 mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="response-comment" className="text-sm">Опыт и комментарий</Label>
-                <Textarea
-                  id="response-comment"
-                  name="response-comment"
-                  defaultValue={isEditMode ? existingParsed.comment : undefined}
-                  placeholder="Расскажите о вашем опыте, условиях работы и других деталях"
-                  rows={3}
-                  className="text-sm mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm">Образование</Label>
-                <Select value={education} onValueChange={setEducation}>
-                  <SelectTrigger className="h-9 mt-1">
-                    <SelectValue placeholder="Выберите уровень образования" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="secondary_professional">Среднее профессиональное</SelectItem>
-                    <SelectItem value="higher">Высшее</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {education && (
-                <div>
-                  <Label className="text-sm">Диплом (подтверждающий документ)</Label>
-                  <div className="mt-1">
-                    {uploadedDiploma ? (
-                      <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
-                        <div className="flex items-center gap-1 flex-1 min-w-0">
-                          <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{uploadedDiploma.name}</span>
-                          <span className="text-green-600 flex-shrink-0">(загружен)</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0 ml-2"
-                          onClick={() => setUploadedDiploma(null)}
-                        >
-                          <Icon name="X" className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : diplomaFile ? (
-                      <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
-                        <div className="flex items-center gap-1 flex-1 min-w-0">
-                          <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{diplomaFile.name}</span>
-                          <span className="text-muted-foreground flex-shrink-0">
-                            ({(diplomaFile.size / 1024).toFixed(0)} КБ)
-                          </span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0 ml-2"
-                          onClick={() => setDiplomaFile(null)}
-                        >
-                          <Icon name="X" className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => document.getElementById('diploma-upload')?.click()}
-                      >
-                        <Icon name="Upload" className="h-4 w-4 mr-1" />
-                        Загрузить диплом
-                      </Button>
-                    )}
-                    <input
-                      id="diploma-upload"
-                      type="file"
-                      accept="image/*,.pdf"
-                      onChange={handleDiplomaChange}
-                      className="hidden"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Одна страница формата А4 (изображение или PDF, макс. 10 МБ)
-                    </p>
-                  </div>
-                </div>
-              )}
-            </>
+            <ServiceFormFields
+              isEditMode={isEditMode}
+              existingParsed={existingParsed}
+              priceValue={priceValue}
+              onPriceChange={handlePriceChange}
+              budget={budget}
+              education={education}
+              onEducationChange={setEducation}
+              uploadedDiploma={uploadedDiploma}
+              diplomaFile={diplomaFile}
+              onDiplomaChange={handleDiplomaChange}
+              onRemoveUploadedDiploma={() => setUploadedDiploma(null)}
+              onRemoveDiplomaFile={() => setDiplomaFile(null)}
+            />
           ) : (
-            <>
-              <div>
-                <Label htmlFor="response-quantity" className="text-sm">Количество ({unit})</Label>
-                <Input
-                  id="response-quantity"
-                  name="response-quantity"
-                  type="number"
-                  min="1"
-                  max={quantity}
-                  defaultValue={isEditMode ? existingResponse?.quantity : quantity}
-                  required
-                  className="h-9 mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="response-price" className="text-sm">Ваша цена за единицу (₽)</Label>
-                <Input
-                  id="response-price"
-                  name="response-price"
-                  type="number"
-                  min="1"
-                  defaultValue={isEditMode ? existingResponse?.pricePerUnit : pricePerUnit}
-                  required
-                  className="h-9 mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="response-delivery" className="text-sm">Срок поставки (дней)</Label>
-                <Input
-                  id="response-delivery"
-                  name="response-delivery"
-                  type="number"
-                  min="1"
-                  defaultValue={isEditMode ? existingParsed.deliveryDays : undefined}
-                  placeholder="Укажите срок поставки"
-                  required
-                  className="h-9 mt-1"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="response-comment" className="text-sm">Комментарий</Label>
-                <Textarea
-                  id="response-comment"
-                  name="response-comment"
-                  defaultValue={isEditMode ? existingParsed.comment : undefined}
-                  placeholder="Дополнительная информация о вашем предложении"
-                  rows={2}
-                  className="text-sm mt-1"
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm">Сертификат на товар</Label>
-                <div className="mt-1">
-                  {uploadedCertificate ? (
-                    <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
-                      <div className="flex items-center gap-1 flex-1 min-w-0">
-                        <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{uploadedCertificate.name}</span>
-                        <span className="text-green-600 flex-shrink-0">(загружен)</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0 ml-2"
-                        onClick={() => setUploadedCertificate(null)}
-                      >
-                        <Icon name="X" className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : certificateFile ? (
-                    <div className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs">
-                      <div className="flex items-center gap-1 flex-1 min-w-0">
-                        <Icon name="FileText" className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{certificateFile.name}</span>
-                        <span className="text-muted-foreground flex-shrink-0">
-                          ({(certificateFile.size / 1024).toFixed(0)} КБ)
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0 ml-2"
-                        onClick={() => setCertificateFile(null)}
-                      >
-                        <Icon name="X" className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => document.getElementById('certificate-upload')?.click()}
-                    >
-                      <Icon name="Upload" className="h-4 w-4 mr-1" />
-                      Загрузить сертификат
-                    </Button>
-                  )}
-                  <input
-                    id="certificate-upload"
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handleCertificateChange}
-                    className="hidden"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Сертификат качества или соответствия (изображение или PDF, макс. 10 МБ)
-                  </p>
-                </div>
-              </div>
-            </>
+            <GoodsFormFields
+              isEditMode={isEditMode}
+              existingParsed={existingParsed}
+              existingResponse={existingResponse}
+              unit={unit}
+              quantity={quantity}
+              pricePerUnit={pricePerUnit}
+              uploadedCertificate={uploadedCertificate}
+              certificateFile={certificateFile}
+              onCertificateChange={handleCertificateChange}
+              onRemoveUploadedCertificate={() => setUploadedCertificate(null)}
+              onRemoveCertificateFile={() => setCertificateFile(null)}
+            />
           )}
 
-          <div>
-            <Label className="text-sm">Портфолио и документы</Label>
-            <div className="mt-1 space-y-2">
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="relative"
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                  disabled={isUploading}
-                >
-                  <Icon name="Paperclip" className="h-4 w-4 mr-1" />
-                  Прикрепить файлы
-                </Button>
-                <input
-                  id="file-upload"
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-              </div>
-              
-              {uploadedFiles.length > 0 && (
-                <div className="space-y-1">
-                  {uploadedFiles.map((file, index) => (
-                    <div
-                      key={`uploaded-${index}`}
-                      className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs"
-                    >
-                      <div className="flex items-center gap-1 flex-1 min-w-0">
-                        <Icon name="File" className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{file.name}</span>
-                        <span className="text-green-600 flex-shrink-0">
-                          (загружен)
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0 ml-2"
-                        onClick={() => removeUploadedFile(index)}
-                      >
-                        <Icon name="X" className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {newFiles.length > 0 && (
-                <div className="space-y-1">
-                  {newFiles.map((file, index) => (
-                    <div
-                      key={`new-${index}`}
-                      className="flex items-center justify-between bg-muted px-2 py-1 rounded text-xs"
-                    >
-                      <div className="flex items-center gap-1 flex-1 min-w-0">
-                        <Icon name="File" className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{file.name}</span>
-                        <span className="text-muted-foreground flex-shrink-0">
-                          ({(file.size / 1024).toFixed(0)} КБ)
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-5 w-5 p-0 ml-2"
-                        onClick={() => removeNewFile(index)}
-                      >
-                        <Icon name="X" className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <p className="text-xs text-muted-foreground">
-                Прикрепите фото работ, сертификаты или документы (до 5 файлов, макс. 10 МБ каждый)
-              </p>
-            </div>
-          </div>
+          <FileAttachments
+            uploadedFiles={uploadedFiles}
+            newFiles={newFiles}
+            isUploading={isUploading}
+            onFileChange={handleFileChange}
+            onRemoveNewFile={removeNewFile}
+            onRemoveUploadedFile={removeUploadedFile}
+          />
 
           <div className="flex gap-2 pt-2">
             <Button type="submit" className="flex-1" disabled={isUploading}>
