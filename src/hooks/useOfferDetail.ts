@@ -568,6 +568,7 @@ export function useOfferDetail(id: string | undefined) {
     handleOrderClick,
     handleOrderSubmit,
     openGallery,
+    setGalleryIndex,
     handleSendMessage,
     navigate,
   };

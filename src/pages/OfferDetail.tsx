@@ -44,6 +44,7 @@ export default function OfferDetail() {
     handleOrderClick,
     handleOrderSubmit,
     openGallery,
+    setGalleryIndex,
     handleSendMessage,
   } = useOfferDetail(id);
 
@@ -120,6 +121,7 @@ export default function OfferDetail() {
       onMuteChange={setIsMuted}
       onOrderModalChange={setIsOrderModalOpen}
       onGalleryChange={setIsGalleryOpen}
+      onGalleryIndexChange={setGalleryIndex}
       onChatChange={setIsChatOpen}
       onPrevImage={handlePrevImage}
       onNextImage={handleNextImage}

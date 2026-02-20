@@ -33,6 +33,7 @@ interface OfferDetailContentProps {
   onMuteChange: (muted: boolean) => void;
   onOrderModalChange: (open: boolean) => void;
   onGalleryChange: (open: boolean) => void;
+  onGalleryIndexChange: (index: number) => void;
   onPrevImage: () => void;
   onNextImage: () => void;
   onShare: () => void;
@@ -59,6 +60,7 @@ export default function OfferDetailContent({
   onMuteChange,
   onOrderModalChange,
   onGalleryChange,
+  onGalleryIndexChange,
   onPrevImage,
   onNextImage,
   onShare,
@@ -89,19 +91,18 @@ export default function OfferDetailContent({
   const handleTouchEnd = () => {
     if (!touchStart) return;
     
-    const threshold = 0.25;
-    const distanceMoved = Math.sqrt(
-      touchOffset.x * touchOffset.x + 
-      touchOffset.y * touchOffset.y
-    );
-    const screenDiagonal = Math.sqrt(
-      window.innerWidth * window.innerWidth + 
-      window.innerHeight * window.innerHeight
-    );
+    const absX = Math.abs(touchOffset.x);
+    const absY = Math.abs(touchOffset.y);
     
-    const shouldClose = distanceMoved > screenDiagonal * threshold;
-    
-    if (shouldClose) {
+    if (absX > 50 && absX > absY) {
+      // Горизонтальный свайп — переключаем фото
+      if (touchOffset.x < 0) {
+        handleGalleryNext();
+      } else {
+        handleGalleryPrev();
+      }
+    } else if (absY > 100 && absY > absX) {
+      // Вертикальный свайп вниз — закрываем
       onVideoPlayingChange(false);
       onGalleryChange(false);
     }
@@ -110,16 +111,16 @@ export default function OfferDetailContent({
     setTouchOffset({ x: 0, y: 0 });
   };
 
+  const totalGalleryItems = offer.images.length + (offer.video ? 1 : 0);
+
   const handleGalleryPrev = () => {
-    const totalItems = offer.images.length + (offer.video ? 1 : 0);
-    const newIndex = galleryIndex === 0 ? totalItems - 1 : galleryIndex - 1;
-    onImageIndexChange(newIndex);
+    const newIndex = galleryIndex === 0 ? totalGalleryItems - 1 : galleryIndex - 1;
+    onGalleryIndexChange(newIndex);
   };
 
   const handleGalleryNext = () => {
-    const totalItems = offer.images.length + (offer.video ? 1 : 0);
-    const newIndex = galleryIndex === totalItems - 1 ? 0 : galleryIndex + 1;
-    onImageIndexChange(newIndex);
+    const newIndex = galleryIndex === totalGalleryItems - 1 ? 0 : galleryIndex + 1;
+    onGalleryIndexChange(newIndex);
   };
 
   return (
@@ -366,7 +367,7 @@ export default function OfferDetailContent({
               {[...offer.images, ...(offer.video ? [{ isVideo: true }] : [])].map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => onImageIndexChange(index)}
+                  onClick={() => onGalleryIndexChange(index)}
                   className={`h-2 rounded-full transition-all ${
                     index === galleryIndex ? 'w-8 bg-white' : 'w-2 bg-white/50'
                   }`}
