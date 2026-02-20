@@ -31,10 +31,26 @@ export default function ChatBox({
   const [attachments, setAttachments] = useState<File[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isAtBottomRef = useRef(true);
+  const prevLengthRef = useRef(0);
 
-  useEffect(() => {
+  const scrollToBottom = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 60;
+  };
+
+  useEffect(() => {
+    const isNewMessage = messages.length > prevLengthRef.current;
+    prevLengthRef.current = messages.length;
+    if (isNewMessage && isAtBottomRef.current) {
+      scrollToBottom();
     }
   }, [messages]);
 
@@ -44,6 +60,8 @@ export default function ChatBox({
     onSendMessage(messageText.trim(), attachments);
     setMessageText('');
     setAttachments([]);
+    isAtBottomRef.current = true;
+    setTimeout(scrollToBottom, 100);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -100,7 +118,7 @@ export default function ChatBox({
       <Separator />
 
       <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollRef}>
+        <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollRef} onScroll={handleScroll}>
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
               <Icon name="MessageCircle" className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-2 sm:mb-3" />
