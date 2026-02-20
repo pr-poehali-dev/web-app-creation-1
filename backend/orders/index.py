@@ -1213,6 +1213,14 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
             msg_dict['sender_name'] = 'Пользователь'
         
         msg_dict['createdAt'] = msg_dict.pop('created_at').isoformat() if msg_dict.get('created_at') else None
+        
+        # Преобразуем UUID и нестандартные типы в строки
+        for k, v in list(msg_dict.items()):
+            if hasattr(v, 'hex'):  # UUID
+                msg_dict[k] = str(v)
+            elif hasattr(v, 'isoformat'):  # datetime
+                msg_dict[k] = v.isoformat()
+        
         result.append(msg_dict)
     
     cur.close()
