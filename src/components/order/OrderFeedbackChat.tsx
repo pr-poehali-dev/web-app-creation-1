@@ -188,7 +188,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
               const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                  <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-muted' : 'bg-primary text-primary-foreground'}`}>
                     <div className="mb-0.5">
                       {isMe ? (
                         <span className="text-[10px] opacity-60">Вы</span>
