@@ -74,22 +74,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef<number>(0);
   const isFirstLoad = useRef(true);
-  const isAtBottomRef = useRef(true);
-
-  const handleMessagesScroll = () => {
-    if (!messagesContainerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 60;
-  };
-
-  const scrollToBottom = (smooth = false) => {
-    if (messagesEndRef.current && isAtBottomRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
-    }
-  };
 
   const getSenderRole = (senderType: 'buyer' | 'seller') => {
     if (isRequest) {
@@ -140,7 +126,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   }, [orderId, orderStatus, loadMessages]);
 
   useEffect(() => {
-    scrollToBottom();
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -157,7 +145,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         message: newMessage.trim(),
       });
       setNewMessage('');
-      isAtBottomRef.current = true;
       await loadMessages(true);
     } catch (e) {
       console.error('Error sending message:', e);
@@ -196,7 +183,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
             <Icon name="Loader2" className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ) : messages.length > 0 ? (
-          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="space-y-2 max-h-[200px] overflow-y-auto mb-3 pr-1">
+          <div className="space-y-2 max-h-[200px] overflow-y-auto mb-3 pr-1">
             {messages.map((msg) => {
               const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
               return (
