@@ -76,14 +76,14 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
   }, [orderId, isBuyer]);
 
   useEffect(() => {
-    if (orderStatus === 'accepted' || orderStatus === 'completed') {
+    if (orderStatus === 'accepted') {
       isFirstLoad.current = true;
       loadMessages();
     }
   }, [orderId, orderStatus, loadMessages]);
 
   useEffect(() => {
-    if (orderStatus !== 'accepted' && orderStatus !== 'completed') return;
+    if (orderStatus !== 'accepted') return;
     const interval = setInterval(() => loadMessages(true), 15000);
     return () => clearInterval(interval);
   }, [orderId, orderStatus, loadMessages]);
@@ -123,7 +123,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
     }
   };
 
-  if (orderStatus !== 'accepted' && orderStatus !== 'completed') {
+  if (orderStatus !== 'accepted') {
     return null;
   }
 
