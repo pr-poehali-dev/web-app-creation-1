@@ -187,12 +187,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
                   <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                     {!isMe && (
                       <div className="mb-0.5">
-                        <p className="text-xs font-semibold opacity-80">{msg.senderName}</p>
-                        <p className="text-[10px] opacity-60">{getSenderRole(msg.senderType)}</p>
+                        <span className="text-xs font-semibold opacity-80">{msg.senderName}</span>
+                        <span className="text-[10px] opacity-50 ml-1.5">· {getSenderRole(msg.senderType)}</span>
                       </div>
-                    )}
-                    {isMe && (
-                      <p className="text-[10px] opacity-60 mb-0.5 text-right">{getSenderRole(msg.senderType)}</p>
                     )}
                     <p className="whitespace-pre-line break-words">{msg.message}</p>
                     <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
