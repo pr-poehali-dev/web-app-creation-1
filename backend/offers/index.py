@@ -723,6 +723,29 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             status_esc = body['status'].replace("'", "''")
             updates.append(f"status = '{status_esc}'")
         
+        # Обработка видео
+        if 'video' in body:
+            offer_id_esc = offer_id.replace("'", "''")
+            video_data = body['video']
+            if video_data is None:
+                updates.append("video_id = NULL")
+            else:
+                video_url = video_data.get('url', '')
+                video_thumb = video_data.get('thumbnail', '')
+                video_thumb_esc = video_thumb.replace("'", "''") if video_thumb else ''
+                url_esc = video_url.replace("'", "''")
+                cur.execute(f"SELECT id FROM t_p42562714_web_app_creation_1.offer_videos WHERE url = '{url_esc}'")
+                existing_video = cur.fetchone()
+                if existing_video:
+                    video_id = existing_video['id']
+                else:
+                    cur.execute(
+                        f"INSERT INTO t_p42562714_web_app_creation_1.offer_videos (url, thumbnail) VALUES ('{url_esc}', '{video_thumb_esc}') RETURNING id"
+                    )
+                    video_id = cur.fetchone()['id']
+                updates.append(f"video_id = '{video_id}'")
+            print(f"UPDATE OFFER - Video processed, video_data={video_data}")
+        
         # Обработка изображений
         if 'images' in body:
             s3 = boto3.client('s3',
