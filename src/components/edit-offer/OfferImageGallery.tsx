@@ -1,19 +1,23 @@
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
-import type { OfferImage } from '@/types/offer';
+import type { OfferImage, OfferVideo } from '@/types/offer';
 
 interface OfferImageGalleryProps {
   images: OfferImage[];
   currentImageIndex: number;
   isEditing: boolean;
   isUploadingImage: boolean;
+  isUploadingVideo: boolean;
   isSaving: boolean;
+  video?: OfferVideo;
   onPrev: () => void;
   onNext: () => void;
   onDelete: (imageId: string) => void;
   onSetMain: () => void;
   onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onVideoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onVideoDelete: () => void;
 }
 
 export default function OfferImageGallery({
@@ -21,14 +25,19 @@ export default function OfferImageGallery({
   currentImageIndex,
   isEditing,
   isUploadingImage,
+  isUploadingVideo,
   isSaving,
+  video,
   onPrev,
   onNext,
   onDelete,
   onSetMain,
   onUpload,
+  onVideoUpload,
+  onVideoDelete,
 }: OfferImageGalleryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <>
@@ -121,6 +130,69 @@ export default function OfferImageGallery({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">JPG, PNG до 5 МБ</p>
+          </div>
+        </div>
+      )}
+
+      {/* Видео секция */}
+      {isEditing && (
+        <div className="col-span-full">
+          <p className="text-xs font-medium text-muted-foreground mb-2">Видео</p>
+          {video ? (
+            <div className="relative aspect-video rounded-lg overflow-hidden border bg-muted max-w-md">
+              <video
+                src={video.url}
+                poster={video.thumbnail}
+                controls
+                className="w-full h-full object-cover"
+              />
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={onVideoDelete}
+                className="absolute top-2 right-2"
+              >
+                <Icon name="Trash2" className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                onChange={onVideoUpload}
+                className="hidden"
+                id="video-upload"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => videoInputRef.current?.click()}
+                disabled={isUploadingVideo || isSaving}
+              >
+                {isUploadingVideo ? (
+                  <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Загрузка...</>
+                ) : (
+                  <><Icon name="Video" className="h-4 w-4 mr-2" />Добавить видео</>
+                )}
+              </Button>
+              <span className="text-xs text-muted-foreground">MP4, MOV до 100 МБ</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Видео в режиме просмотра */}
+      {!isEditing && video && (
+        <div className="col-span-full">
+          <div className="relative aspect-video rounded-lg overflow-hidden border bg-muted max-w-md">
+            <video
+              src={video.url}
+              poster={video.thumbnail}
+              controls
+              className="w-full h-full object-cover"
+            />
           </div>
         </div>
       )}

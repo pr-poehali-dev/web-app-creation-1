@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Offer, OfferImage } from '@/types/offer';
+import type { Offer, OfferImage, OfferVideo } from '@/types/offer';
 import { offersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -37,6 +37,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
   const [images, setImages] = useState<OfferImage[]>(offer.images || []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [video, setVideo] = useState<OfferVideo | undefined>(offer.video);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   // --- Handlers: Save / Cancel ---
 
@@ -70,6 +72,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         minOrderQuantity,
         description: editData.description,
         images: images,
+        video: video || null,
       });
 
       localStorage.removeItem('cached_offers');
@@ -97,6 +100,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     });
     setImages(offer.images || []);
     setCurrentImageIndex(0);
+    setVideo(offer.video);
     setIsEditing(false);
   };
 
@@ -187,6 +191,47 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     toast({ title: 'Главное фото изменено', description: 'Не забудьте сохранить изменения' });
   };
 
+  // --- Handlers: Video ---
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    if (file.size > 100 * 1024 * 1024) {
+      toast({ title: 'Ошибка', description: 'Видео слишком большое. Максимум 100 МБ', variant: 'destructive' });
+      return;
+    }
+
+    setIsUploadingVideo(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        try {
+          const base64 = ev.target?.result as string;
+          const result = await offersAPI.uploadMedia(base64);
+          setVideo({ id: Date.now().toString(), url: result.url });
+          toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });
+        } catch (err) {
+          console.error('Video upload error:', err);
+          toast({ title: 'Ошибка', description: 'Не удалось загрузить видео', variant: 'destructive' });
+        } finally {
+          setIsUploadingVideo(false);
+          if (e.target) e.target.value = '';
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setIsUploadingVideo(false);
+      toast({ title: 'Ошибка', description: 'Не удалось загрузить видео', variant: 'destructive' });
+    }
+  };
+
+  const handleVideoDelete = () => {
+    setVideo(undefined);
+    toast({ title: 'Видео удалено', description: 'Не забудьте сохранить изменения' });
+  };
+
   // --- Handlers: Drag & Drop ---
 
   const dragIndex = useRef<number | null>(null);
@@ -226,12 +271,16 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
             currentImageIndex={currentImageIndex}
             isEditing={isEditing}
             isUploadingImage={isUploadingImage}
+            isUploadingVideo={isUploadingVideo}
             isSaving={isSaving}
+            video={video}
             onPrev={handlePrevImage}
             onNext={handleNextImage}
             onDelete={handleDeleteImage}
             onSetMain={handleSetMainImage}
             onUpload={handleImageUpload}
+            onVideoUpload={handleVideoUpload}
+            onVideoDelete={handleVideoDelete}
           />
 
           {isEditing && (
