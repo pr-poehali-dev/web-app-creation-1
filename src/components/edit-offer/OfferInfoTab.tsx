@@ -1,17 +1,14 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import Icon from '@/components/ui/icon';
 import type { Offer, OfferImage } from '@/types/offer';
 import { offersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { notifyOfferUpdated } from '@/utils/dataSync';
+import OfferImageGallery from './OfferImageGallery';
+import OfferImageSortable from './OfferImageSortable';
+import OfferInfoFields from './OfferInfoFields';
 
 interface OfferInfoTabProps {
   offer: Offer;
@@ -40,7 +37,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
   const [images, setImages] = useState<OfferImage[]>(offer.images || []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // --- Handlers: Save / Cancel ---
 
   const handleSave = async () => {
     const pricePerUnit = parseFloat(editData.pricePerUnit);
@@ -48,29 +46,15 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     const minOrderQuantity = editData.minOrderQuantity ? parseInt(editData.minOrderQuantity) : undefined;
 
     if (isNaN(pricePerUnit) || pricePerUnit <= 0) {
-      toast({
-        title: 'Ошибка',
-        description: 'Укажите корректную цену',
-        variant: 'destructive',
-      });
+      toast({ title: 'Ошибка', description: 'Укажите корректную цену', variant: 'destructive' });
       return;
     }
-
     if (isNaN(quantity) || quantity <= 0) {
-      toast({
-        title: 'Ошибка',
-        description: 'Укажите корректное количество',
-        variant: 'destructive',
-      });
+      toast({ title: 'Ошибка', description: 'Укажите корректное количество', variant: 'destructive' });
       return;
     }
-
     if (minOrderQuantity && (isNaN(minOrderQuantity) || minOrderQuantity <= 0 || minOrderQuantity > quantity)) {
-      toast({
-        title: 'Ошибка',
-        description: 'Минимальное количество должно быть больше 0 и не превышать общее количество',
-        variant: 'destructive',
-      });
+      toast({ title: 'Ошибка', description: 'Минимальное количество должно быть больше 0 и не превышать общее количество', variant: 'destructive' });
       return;
     }
 
@@ -79,7 +63,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       console.log('Updating offer with images:', images.length, 'images');
       const imagesSize = JSON.stringify(images).length;
       console.log('Images data size:', imagesSize, 'bytes', (imagesSize / 1024 / 1024).toFixed(2), 'MB');
-      
+
       await offersAPI.updateOffer(offer.id, {
         pricePerUnit,
         quantity,
@@ -87,33 +71,18 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         description: editData.description,
         images: images,
       });
-      
-      // Очищаем кэш предложений
+
       localStorage.removeItem('cached_offers');
-      
-      // Уведомляем все открытые страницы об обновлении
       notifyOfferUpdated(offer.id);
-      
-      // Отмечаем что были изменения
-      if (onDataChanged) {
-        onDataChanged();
-      }
-      
-      toast({
-        title: 'Успешно',
-        description: 'Объявление обновлено',
-      });
-      
+      if (onDataChanged) onDataChanged();
+
+      toast({ title: 'Успешно', description: 'Объявление обновлено' });
       setIsEditing(false);
       onUpdate();
     } catch (error) {
       console.error('Error updating offer:', error);
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-      toast({
-        title: 'Ошибка',
-        description: `Не удалось обновить объявление: ${errorMessage}`,
-        variant: 'destructive',
-      });
+      toast({ title: 'Ошибка', description: `Не удалось обновить объявление: ${errorMessage}`, variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
@@ -131,6 +100,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     setIsEditing(false);
   };
 
+  // --- Handlers: Image ---
+
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -143,31 +114,18 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
           let width = img.width;
           let height = img.height;
 
-          // Рассчитываем новые размеры
           if (width > height) {
-            if (width > maxWidth) {
-              height = height * (maxWidth / width);
-              width = maxWidth;
-            }
+            if (width > maxWidth) { height = height * (maxWidth / width); width = maxWidth; }
           } else {
-            if (height > maxHeight) {
-              width = width * (maxHeight / height);
-              height = maxHeight;
-            }
+            if (height > maxHeight) { width = width * (maxHeight / height); height = maxHeight; }
           }
 
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Could not get canvas context'));
-            return;
-          }
+          if (!ctx) { reject(new Error('Could not get canvas context')); return; }
           ctx.drawImage(img, 0, 0, width, height);
-          
-          // Сжимаем с качеством 0.8
-          const compressed = canvas.toDataURL('image/jpeg', 0.8);
-          resolve(compressed);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
         };
         img.onerror = reject;
         img.src = e.target?.result as string;
@@ -184,43 +142,21 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     setIsUploadingImage(true);
     try {
       const file = files[0];
-      
-      // Проверяем размер файла (макс 10MB)
       if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Ошибка',
-          description: 'Файл слишком большой. Максимум 10 МБ',
-          variant: 'destructive',
-        });
+        toast({ title: 'Ошибка', description: 'Файл слишком большой. Максимум 10 МБ', variant: 'destructive' });
         return;
       }
-      
-      // Сжимаем изображение
       const compressed = await compressImage(file);
       console.log('Original size:', file.size, 'Compressed size:', compressed.length);
-      
-      const newImage: OfferImage = {
-        id: Date.now().toString(),
-        url: compressed,
-        alt: offer.title,
-      };
+      const newImage: OfferImage = { id: Date.now().toString(), url: compressed, alt: offer.title };
       setImages([...images, newImage]);
-      toast({
-        title: 'Фото добавлено',
-        description: 'Не забудьте сохранить изменения',
-      });
+      toast({ title: 'Фото добавлено', description: 'Не забудьте сохранить изменения' });
     } catch (error) {
       console.error('Error uploading image:', error);
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить фото',
-        variant: 'destructive',
-      });
+      toast({ title: 'Ошибка', description: 'Не удалось загрузить фото', variant: 'destructive' });
     } finally {
       setIsUploadingImage(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -230,10 +166,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     if (currentImageIndex >= newImages.length && newImages.length > 0) {
       setCurrentImageIndex(newImages.length - 1);
     }
-    toast({
-      title: 'Фото удалено',
-      description: 'Не забудьте сохранить изменения',
-    });
+    toast({ title: 'Фото удалено', description: 'Не забудьте сохранить изменения' });
   };
 
   const handlePrevImage = () => {
@@ -253,6 +186,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     setCurrentImageIndex(0);
     toast({ title: 'Главное фото изменено', description: 'Не забудьте сохранить изменения' });
   };
+
+  // --- Handlers: Drag & Drop ---
 
   const dragIndex = useRef<number | null>(null);
   const dragOverIndex = useRef<number | null>(null);
@@ -286,258 +221,42 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {images && images.length > 0 && (
-            <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-              <img
-                src={images[currentImageIndex].url}
-                alt={images[currentImageIndex].alt}
-                className="w-full h-full object-cover"
-              />
-              {images.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
-                  >
-                    <Icon name="ChevronLeft" className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={handleNextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
-                  >
-                    <Icon name="ChevronRight" className="h-5 w-5" />
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {images.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`h-2 rounded-full transition-all ${
-                          index === currentImageIndex ? 'w-8 bg-white' : 'w-2 bg-white/50'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-              {isEditing && (
-                <div className="absolute top-2 right-2 flex gap-2">
-                  {currentImageIndex !== 0 && images.length > 1 && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={handleSetMainImage}
-                      className="text-xs px-2 h-8 gap-1"
-                    >
-                      <Icon name="Star" className="h-3 w-3" />
-                      Сделать главной
-                    </Button>
-                  )}
-                  {currentImageIndex === 0 && images.length > 1 && (
-                    <span className="flex items-center gap-1 bg-primary text-primary-foreground text-xs px-2 h-8 rounded-md font-medium">
-                      <Icon name="Star" className="h-3 w-3" />
-                      Главное
-                    </span>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDeleteImage(images[currentImageIndex].id)}
-                    disabled={images.length <= 1}
-                  >
-                    <Icon name="Trash2" className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+          <OfferImageGallery
+            images={images}
+            currentImageIndex={currentImageIndex}
+            isEditing={isEditing}
+            isUploadingImage={isUploadingImage}
+            isSaving={isSaving}
+            onPrev={handlePrevImage}
+            onNext={handleNextImage}
+            onDelete={handleDeleteImage}
+            onSetMain={handleSetMainImage}
+            onUpload={handleImageUpload}
+          />
+
           {isEditing && (
-            <div className="flex items-center justify-center aspect-video rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/50">
-              <div className="text-center space-y-3">
-                <Icon name="Upload" className="h-8 w-8 mx-auto text-muted-foreground" />
-                <div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                    id="image-upload"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage || isSaving}
-                  >
-                    <Icon name="Plus" className="h-4 w-4 mr-2" />
-                    Добавить фото
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">JPG, PNG до 5 МБ</p>
-              </div>
-            </div>
+            <OfferImageSortable
+              images={images}
+              currentImageIndex={currentImageIndex}
+              onSelect={setCurrentImageIndex}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            />
           )}
 
-          {isEditing && images.length > 1 && (
-            <div className="col-span-full">
-              <p className="text-xs text-muted-foreground mb-2">Перетащите фото для изменения порядка. Первое фото — главное на карточке.</p>
-              <div className="flex gap-2 flex-wrap">
-                {images.map((img, index) => (
-                  <div
-                    key={img.id}
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDrop={handleDrop}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${
-                      index === currentImageIndex ? 'border-primary scale-95' : 'border-transparent hover:border-muted-foreground/40'
-                    }`}
-                  >
-                    <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
-                    {index === 0 && (
-                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[9px] text-center font-medium py-0.5">
-                        Главное
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <div className="space-y-3">
-            <div>
-              <h3 className="text-2xl font-bold">{offer.title}</h3>
-              {!isEditing ? (
-                <p className="text-muted-foreground mt-2">{offer.description}</p>
-              ) : null}
-            </div>
-            
-            <Separator />
-            
-            <div className="space-y-3">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Описание</Label>
-                    <Textarea
-                      id="description"
-                      value={editData.description}
-                      onChange={(e) => setEditData({ ...editData, description: e.target.value })}
-                      disabled={isSaving}
-                      rows={3}
-                      placeholder="Опишите ваше предложение"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pricePerUnit">Цена за единицу (₽)</Label>
-                    <Input
-                      id="pricePerUnit"
-                      type="number"
-                      value={editData.pricePerUnit}
-                      onChange={(e) => setEditData({ ...editData, pricePerUnit: e.target.value })}
-                      disabled={isSaving}
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity">Доступное количество ({offer.unit})</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      value={editData.quantity}
-                      onChange={(e) => setEditData({ ...editData, quantity: e.target.value })}
-                      disabled={isSaving}
-                      min="1"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="minOrderQuantity">Минимальное количество для заказа ({offer.unit})</Label>
-                    <Input
-                      id="minOrderQuantity"
-                      type="number"
-                      value={editData.minOrderQuantity}
-                      onChange={(e) => setEditData({ ...editData, minOrderQuantity: e.target.value })}
-                      disabled={isSaving}
-                      min="0"
-                      placeholder="Не задано"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Цена за единицу:</span>
-                    <p className="font-bold text-lg text-primary">
-                      {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Количество:</span>
-                    <p className="font-semibold">{offer.quantity} {offer.unit}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Доступно:</span>
-                    <p className="font-semibold text-green-600">
-                      {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
-                    </p>
-                  </div>
-                  {offer.minOrderQuantity && (
-                    <div>
-                      <span className="text-muted-foreground">Мин. заказ:</span>
-                      <p className="font-semibold">{offer.minOrderQuantity} {offer.unit}</p>
-                    </div>
-                  )}
-                  <div>
-                    <span className="text-muted-foreground">Район:</span>
-                    <p className="font-semibold">{districtName}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Просмотры:</span>
-                    <p className="font-semibold">{offer.views_count || 0}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <Separator />
-            
-            <div className="flex gap-2">
-              {isEditing ? (
-                <>
-                  <Button className="flex-1" onClick={handleSave} disabled={isSaving}>
-                    <Icon name="Check" className="w-4 h-4 mr-2" />
-                    Сохранить
-                  </Button>
-                  <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
-                    <Icon name="X" className="w-4 h-4 mr-2" />
-                    Отмена
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button className="flex-1" onClick={() => setIsEditing(true)}>
-                    <Icon name="Pencil" className="w-4 h-4 mr-2" />
-                    Редактировать
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onDelete();
-                    }}
-                    type="button"
-                  >
-                    <Icon name="Trash2" className="w-4 h-4 mr-2" />
-                    Удалить
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
+          <OfferInfoFields
+            offer={offer}
+            districtName={districtName}
+            isEditing={isEditing}
+            isSaving={isSaving}
+            editData={editData}
+            onEditDataChange={setEditData}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            onStartEditing={() => setIsEditing(true)}
+            onDelete={onDelete}
+          />
         </div>
       </CardContent>
     </Card>
