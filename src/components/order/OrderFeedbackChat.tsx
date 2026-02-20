@@ -84,7 +84,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
 
   useEffect(() => {
     if (orderStatus !== 'accepted') return;
-    const interval = setInterval(() => loadMessages(true), 15000);
+    const interval = setInterval(() => loadMessages(true), 5000);
     return () => clearInterval(interval);
   }, [orderId, orderStatus, loadMessages]);
 

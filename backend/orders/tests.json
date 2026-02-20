@@ -9,6 +9,7 @@
         "error": "User ID required"
       }
     },
+
     {
       "name": "Create order without auth",
       "method": "POST",

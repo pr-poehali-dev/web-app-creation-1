@@ -18,6 +18,8 @@ from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import http.client
+import time
+from rate_limiter import rate_limiter
 
 # Импортируем offers_cache для инвалидации кэша
 # Кэш находится в backend/offers/cache.py
@@ -159,6 +161,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         print(f"[ORDERS] Method: {method}, Query: {event.get('queryStringParameters')}, Body: {event.get('body', '')[:200]}")
         
+        source_ip = (event.get('requestContext', {}) or {}).get('identity', {}).get('sourceIp', 'unknown')
+        user_id_header = (event.get('headers', {}) or {}).get('X-User-Id', '')
+        rate_key = f"orders:{user_id_header or source_ip}"
+
         if method == 'GET':
             query_params = event.get('queryStringParameters', {}) or {}
             order_id = query_params.get('id') or query_params.get('orderId')
@@ -168,6 +174,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             print(f"[GET] order_id={order_id}, offer_id={offer_id}, messages={messages_flag}")
             
             check_response = query_params.get('checkResponse')
+
+            if messages_flag == 'true':
+                allowed, remaining = rate_limiter.check_rate_limit(rate_key, max_requests=40, window_seconds=60)
+                if not allowed:
+                    retry_after = rate_limiter.get_retry_after(rate_key, window_seconds=60)
+                    return {
+                        'statusCode': 429,
+                        'headers': {**headers, 'Retry-After': str(retry_after), 'X-RateLimit-Limit': '40', 'X-RateLimit-Remaining': '0'},
+                        'body': json.dumps({'error': 'Too many requests', 'retry_after': retry_after}),
+                        'isBase64Encoded': False
+                    }
             
             if check_response == 'true' and offer_id:
                 return check_existing_response(event, offer_id, headers)
@@ -185,8 +202,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             is_message = query_params.get('message') == 'true'
             
             print(f"[POST] is_message={is_message}, query={query_params}")
-            
+
             if is_message:
+                allowed, remaining = rate_limiter.check_rate_limit(rate_key, max_requests=40, window_seconds=60)
+                if not allowed:
+                    retry_after = rate_limiter.get_retry_after(rate_key, window_seconds=60)
+                    return {
+                        'statusCode': 429,
+                        'headers': {**headers, 'Retry-After': str(retry_after), 'X-RateLimit-Limit': '40', 'X-RateLimit-Remaining': '0'},
+                        'body': json.dumps({'error': 'Too many requests', 'retry_after': retry_after}),
+                        'isBase64Encoded': False
+                    }
                 return create_message(event, headers)
             else:
                 return create_order(event, headers)
