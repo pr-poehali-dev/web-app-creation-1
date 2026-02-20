@@ -128,7 +128,7 @@ export default function OrdersContent({
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
-  const isSeller = activeTab === 'seller' || activeTab === 'my-requests';
+  const isSeller = activeTab === 'seller' || activeTab === 'my-requests' || activeTab === 'my-responses';
 
   if (isLoading) {
     return (
