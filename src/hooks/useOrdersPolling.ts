@@ -10,7 +10,7 @@ interface UseOrdersPollingOptions {
 
 export function useOrdersPolling({
   enabled,
-  interval = 10000,
+  interval = 3000,
   onNewOrder,
   onNewMessage,
 }: UseOrdersPollingOptions) {
