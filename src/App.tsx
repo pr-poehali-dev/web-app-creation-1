@@ -8,7 +8,6 @@ import SplashScreen from "./components/SplashScreen";
 import PullToRefresh from "./components/PullToRefresh";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
-import { useGlobalMessagePolling } from "./hooks/useGlobalMessagePolling";
 
 // Ленивая загрузка второстепенных компонентов
 const NotificationPermissionBanner = lazy(() => import("./components/NotificationPermissionBanner"));
@@ -171,7 +170,6 @@ const queryClient = new QueryClient({
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  useGlobalMessagePolling(isAuthenticated);
 
   useEffect(() => {
     // Быстрая проверка сессии без лишних операций
