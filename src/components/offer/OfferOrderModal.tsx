@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import SwipeableModal from '@/components/ui/SwipeableModal';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import MapModal from '@/components/auction/MapModal';
@@ -199,19 +193,22 @@ export default function OfferOrderModal({
 
   return (
     <>
-    <Dialog open={isOpen && !isMapOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-start justify-between gap-4 pr-10">
-            <DialogTitle>Оформление заказа</DialogTitle>
-            <div className="text-sm font-bold text-black whitespace-nowrap">
-              Доступно: {remainingQuantity} {unit}
-            </div>
-          </div>
-          <DialogDescription>
-            Заполните форму, и мы свяжемся с вами для подтверждения заказа
-          </DialogDescription>
-        </DialogHeader>
+    <SwipeableModal
+      isOpen={isOpen && !isMapOpen}
+      onClose={onClose}
+      title={
+        <div className="flex items-center justify-between gap-2 flex-1 pr-2">
+          <span>Оформление заказа</span>
+          <span className="text-sm font-bold text-foreground whitespace-nowrap">
+            Доступно: {remainingQuantity} {unit}
+          </span>
+        </div>
+      }
+    >
+      <div className="px-4 sm:px-6 py-4">
+        <p className="text-sm text-muted-foreground mb-4">
+          Заполните форму, и мы свяжемся с вами для подтверждения заказа
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <QuantitySelector
@@ -278,8 +275,8 @@ export default function OfferOrderModal({
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </SwipeableModal>
 
     {isMapOpen && (
       <div className="fixed inset-0 z-[100] bg-background">

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import SwipeableModal from '@/components/ui/SwipeableModal';
 
 interface OrderReviewModalProps {
   isOpen: boolean;
@@ -70,20 +70,21 @@ export default function OrderReviewModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Оставить отзыв о продавце (необязательно)</DialogTitle>
-          <DialogDescription>
-            Заказ: <span className="font-semibold">{offerTitle}</span>
-            <br />
-            Продавец: <span className="font-semibold">{sellerName}</span>
-            <br />
-            <span className="text-muted-foreground mt-2 block">Вы можете пропустить этот шаг или оставить отзыв</span>
-          </DialogDescription>
-        </DialogHeader>
+    <SwipeableModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Оставить отзыв о продавце (необязательно)"
+    >
+      <div className="px-4 sm:px-6 py-4">
+        <p className="text-sm text-muted-foreground mb-4">
+          Заказ: <span className="font-semibold">{offerTitle}</span>
+          <br />
+          Продавец: <span className="font-semibold">{sellerName}</span>
+          <br />
+          <span className="mt-2 block">Вы можете пропустить этот шаг или оставить отзыв</span>
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label className="text-base font-semibold mb-3 block">
               Оценка продавца
@@ -129,7 +130,7 @@ export default function OrderReviewModal({
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </SwipeableModal>
   );
 }

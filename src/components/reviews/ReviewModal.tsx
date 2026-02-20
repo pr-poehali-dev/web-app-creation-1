@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import SwipeableModal from '@/components/ui/SwipeableModal';
 import type { CreateReviewData } from '@/types/review';
 
 interface ReviewModalProps {
@@ -141,18 +141,19 @@ export default function ReviewModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Оставить отзыв</DialogTitle>
-          <DialogDescription>
-            Отзыв о заказе: <span className="font-semibold">{offerTitle}</span>
-            <br />
-            Продавец: <span className="font-semibold">{sellerName}</span>
-          </DialogDescription>
-        </DialogHeader>
+    <SwipeableModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Оставить отзыв"
+    >
+      <div className="px-4 sm:px-6 py-4">
+        <p className="text-sm text-muted-foreground mb-4">
+          Отзыв о заказе: <span className="font-semibold">{offerTitle}</span>
+          <br />
+          Продавец: <span className="font-semibold">{sellerName}</span>
+        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <Label className="text-base font-semibold mb-3 block">
               Общая оценка <span className="text-red-500">*</span>
@@ -251,7 +252,7 @@ export default function ReviewModal({
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </SwipeableModal>
   );
 }
