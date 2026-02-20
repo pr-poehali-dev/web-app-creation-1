@@ -78,16 +78,20 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const prevCountRef = useRef<number>(0);
   const isFirstLoad = useRef(true);
   const isAtBottomRef = useRef(true);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
 
   const handleMessagesScroll = () => {
     if (!messagesContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
     isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 60;
+    if (isAtBottomRef.current) setHasNewMessages(false);
   };
 
-  const scrollToBottom = () => {
-    if (isAtBottomRef.current && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'auto' });
+  const scrollToBottom = (force = false) => {
+    if ((isAtBottomRef.current || force) && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      setHasNewMessages(false);
+      isAtBottomRef.current = true;
     }
   };
 
@@ -140,7 +144,11 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   }, [orderId, orderStatus, loadMessages]);
 
   useEffect(() => {
-    scrollToBottom();
+    if (isAtBottomRef.current) {
+      scrollToBottom();
+    } else {
+      setHasNewMessages(true);
+    }
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -196,7 +204,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
             <Icon name="Loader2" className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ) : messages.length > 0 ? (
-          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="space-y-2 max-h-[200px] overflow-y-auto mb-3 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="relative">
+            <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="space-y-2 max-h-[200px] overflow-y-auto mb-3 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
             {messages.map((msg) => {
               const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
               return (
@@ -221,6 +230,16 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
               );
             })}
             <div ref={messagesEndRef} />
+            </div>
+            {hasNewMessages && (
+              <button
+                onClick={() => scrollToBottom(true)}
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-primary text-primary-foreground text-xs font-medium px-3 py-1.5 rounded-full shadow-lg hover:bg-primary/90 transition-all animate-bounce z-10"
+              >
+                <Icon name="ArrowDown" size={12} />
+                Новые сообщения
+              </button>
+            )}
           </div>
         ) : (
           <p className="text-xs text-muted-foreground mb-3">Здесь можно уточнить детали, задать вопрос или оставить комментарий</p>
