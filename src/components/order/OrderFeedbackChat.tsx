@@ -88,7 +88,11 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     try {
       if (!silent) setIsLoadingMessages(true);
       const data = await ordersAPI.getMessagesByOrder(orderId);
-      const fetched = data.messages || [];
+      const fetched = (data.messages || []).map((m: Record<string, unknown>) => ({
+        ...m,
+        senderType: m.senderType || m.sender_type,
+        senderName: m.senderName || m.sender_name,
+      })) as OrderMessage[];
 
       if (!isFirstLoad.current && fetched.length > prevCountRef.current) {
         const lastMsg = fetched[fetched.length - 1];
@@ -185,12 +189,16 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                    {!isMe && (
-                      <div className="mb-0.5">
-                        <span className="text-xs font-semibold opacity-80">{msg.senderName}</span>
-                        <span className="text-[10px] opacity-50 ml-1.5">· {getSenderRole(msg.senderType)}</span>
-                      </div>
-                    )}
+                    <div className="mb-0.5">
+                      {isMe ? (
+                        <span className="text-[10px] opacity-60">Вы</span>
+                      ) : (
+                        <>
+                          <span className="text-xs font-semibold opacity-80">{msg.senderName}</span>
+                          <span className="text-[10px] opacity-50 ml-1.5">· {getSenderRole(msg.senderType)}</span>
+                        </>
+                      )}
+                    </div>
                     <p className="whitespace-pre-line break-words">{msg.message}</p>
                     <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
                       {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
