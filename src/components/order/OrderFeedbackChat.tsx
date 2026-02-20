@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrderMessage {
   id: string;
@@ -69,7 +70,10 @@ function playNotificationSound() {
 }
 
 export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest }: OrderFeedbackChatProps) {
+  const { toast } = useToast();
   const [messages, setMessages] = useState<OrderMessage[]>([]);
+  const prevOrderStatus = useRef(orderStatus);
+  const [showHistory, setShowHistory] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -132,8 +136,19 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   }, [orderId, isBuyer]);
 
+  // Уведомление при завершении заказа пока открыт чат
   useEffect(() => {
-    if (orderStatus === 'accepted') {
+    if (prevOrderStatus.current === 'accepted' && orderStatus === 'completed') {
+      toast({
+        title: 'Заказ завершён',
+        description: 'Контрагент завершил заказ. Отправка сообщений недоступна.',
+      });
+    }
+    prevOrderStatus.current = orderStatus;
+  }, [orderStatus, toast]);
+
+  useEffect(() => {
+    if (orderStatus === 'accepted' || orderStatus === 'completed') {
       isFirstLoad.current = true;
       initialScrollDone.current = false;
       prevMessagesLengthRef.current = 0;
@@ -206,8 +221,71 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
-  if (orderStatus !== 'accepted') {
+  if (orderStatus !== 'accepted' && orderStatus !== 'completed') {
     return null;
+  }
+
+  const isCompleted = orderStatus === 'completed';
+
+  // Для завершённых — кнопка раскрытия истории
+  if (isCompleted) {
+    return (
+      <>
+        <Separator />
+        <div>
+          <button
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+            onClick={() => setShowHistory(!showHistory)}
+          >
+            <Icon name="MessageSquare" className="h-4 w-4" />
+            <span>История сообщений</span>
+            {messages.length > 0 && <span className="text-xs">({messages.length})</span>}
+            <Icon name={showHistory ? 'ChevronUp' : 'ChevronDown'} className="h-3.5 w-3.5 ml-auto" />
+          </button>
+
+          {showHistory && (
+            <div className="mt-2">
+              {isLoadingMessages ? (
+                <div className="flex items-center justify-center py-4">
+                  <Icon name="Loader2" className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length > 0 ? (
+                <div className="relative">
+                  <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="space-y-2 max-h-[200px] overflow-y-auto mb-2 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                    {messages.map((msg) => {
+                      const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
+                      return (
+                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-muted' : 'bg-primary/10 text-foreground'}`}>
+                            <div className="mb-0.5">
+                              {isMe ? (
+                                <span className="text-[10px] opacity-60">Вы</span>
+                              ) : (
+                                <>
+                                  <span className="text-xs font-semibold opacity-80">{msg.senderName}</span>
+                                  <span className="text-[10px] opacity-50 ml-1.5">· {getSenderRole(msg.senderType)}</span>
+                                </>
+                              )}
+                            </div>
+                            <p className="whitespace-pre-line break-words">{msg.message}</p>
+                            <p className="text-[10px] mt-1 text-muted-foreground">
+                              {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground py-2">Сообщений не было</p>
+              )}
+            </div>
+          )}
+        </div>
+      </>
+    );
   }
 
   return (
