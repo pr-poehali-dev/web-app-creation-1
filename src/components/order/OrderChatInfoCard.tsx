@@ -58,6 +58,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           orderId={order.id}
           orderStatus={order.status}
           isBuyer={isBuyer}
+          isRequest={order.isRequest}
         />
       </CardContent>
 

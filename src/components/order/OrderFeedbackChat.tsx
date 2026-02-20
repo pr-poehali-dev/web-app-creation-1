@@ -21,12 +21,38 @@ interface OrderFeedbackChatProps {
   orderId: string;
   orderStatus: string;
   isBuyer: boolean;
+  isRequest?: boolean;
+}
+
+let audioCtx: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  try {
+    const W = window as unknown as { AudioContext: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
+    if (!audioCtx) {
+      audioCtx = new (W.AudioContext || W.webkitAudioContext!)();
+    }
+    return audioCtx;
+  } catch {
+    return null;
+  }
+}
+
+function unlockAudio() {
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().catch(() => {});
+  }
 }
 
 function playNotificationSound() {
   try {
-    const W = window as unknown as { AudioContext: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
-    const ctx = new (W.AudioContext || W.webkitAudioContext!)();
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => playNotificationSound());
+      return;
+    }
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -37,12 +63,12 @@ function playNotificationSound() {
     gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.3);
-  } catch (e) {
+  } catch {
     // ignore
   }
 }
 
-export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: OrderFeedbackChatProps) {
+export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest }: OrderFeedbackChatProps) {
   const [messages, setMessages] = useState<OrderMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -50,6 +76,13 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef<number>(0);
   const isFirstLoad = useRef(true);
+
+  const getSenderRole = (senderType: 'buyer' | 'seller') => {
+    if (isRequest) {
+      return senderType === 'buyer' ? 'Заказчик' : 'Исполнитель';
+    }
+    return senderType === 'buyer' ? 'Покупатель' : 'Продавец';
+  };
 
   const loadMessages = useCallback(async (silent = false) => {
     try {
@@ -152,7 +185,15 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                    {!isMe && <p className="text-xs font-medium mb-0.5 opacity-70">{msg.senderName}</p>}
+                    {!isMe && (
+                      <div className="mb-0.5">
+                        <p className="text-xs font-semibold opacity-80">{msg.senderName}</p>
+                        <p className="text-[10px] opacity-60">{getSenderRole(msg.senderType)}</p>
+                      </div>
+                    )}
+                    {isMe && (
+                      <p className="text-[10px] opacity-60 mb-0.5 text-right">{getSenderRole(msg.senderType)}</p>
+                    )}
                     <p className="whitespace-pre-line break-words">{msg.message}</p>
                     <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
                       {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -173,12 +214,15 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer }: Ord
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={unlockAudio}
+            onTouchStart={unlockAudio}
             disabled={isSending}
             className="text-sm"
           />
           <Button
             size="sm"
             onClick={handleSendMessage}
+            onTouchStart={unlockAudio}
             disabled={!newMessage.trim() || isSending}
             className="flex-shrink-0 px-3"
           >
