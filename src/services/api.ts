@@ -1253,7 +1253,7 @@ export const reviewsAPI = {
     return response.json();
   },
 
-  async addSellerResponse(reviewId: number, sellerResponse: string): Promise<{ seller_response_date: string }> {
+  async addSellerResponse(data: { review_id: number; seller_response: string }): Promise<{ seller_response_date: string }> {
     const userId = getUserId();
     if (!userId) {
       throw new Error('User not authenticated');
@@ -1265,7 +1265,7 @@ export const reviewsAPI = {
         'X-User-Id': userId,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ review_id: reviewId, seller_response: sellerResponse }),
+      body: JSON.stringify(data),
     });
     
     if (!response.ok) {

@@ -132,9 +132,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             if not user_id:
                 return error_response('Unauthorized', 401)
             
-            body = json.loads(event.get('body', '{}'))
+            raw_body = event.get('body') or '{}'
+            body = json.loads(raw_body) if raw_body else {}
             review_id = body.get('review_id')
             seller_response = body.get('seller_response')
+            
+            print(f"[PUT] user_id={user_id}, review_id={review_id}, has_response={bool(seller_response)}")
             
             if not review_id or not seller_response:
                 return error_response('review_id and seller_response are required', 400)
