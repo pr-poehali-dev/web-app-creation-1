@@ -26,8 +26,6 @@ export function useOrdersPolling({
     }
 
     const checkForUpdates = async () => {
-      // ⚡ ОПТИМИЗАЦИЯ: Пропускаем запрос если вкладка неактивна
-      if (document.hidden) return;
       
       try {
         const response = await ordersAPI.getAll('sale');
