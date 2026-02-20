@@ -88,8 +88,10 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   };
 
   const scrollToBottom = (force = false) => {
-    if ((isAtBottomRef.current || force) && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    if (isAtBottomRef.current || force) {
+      container.scrollTop = container.scrollHeight;
       setHasNewMessages(false);
       isAtBottomRef.current = true;
     }
@@ -133,6 +135,10 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   useEffect(() => {
     if (orderStatus === 'accepted') {
       isFirstLoad.current = true;
+      initialScrollDone.current = false;
+      prevMessagesLengthRef.current = 0;
+      isAtBottomRef.current = true;
+      setHasNewMessages(false);
       loadMessages();
     }
   }, [orderId, orderStatus, loadMessages]);
@@ -143,7 +149,26 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     return () => clearInterval(interval);
   }, [orderId, orderStatus, loadMessages]);
 
+  const prevMessagesLengthRef = useRef(0);
+  const initialScrollDone = useRef(false);
+
   useEffect(() => {
+    const isNewArrived = messages.length > prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = messages.length;
+
+    if (!isNewArrived) return;
+
+    // Первая загрузка — всегда скроллим вниз через requestAnimationFrame (iOS fix)
+    if (!initialScrollDone.current) {
+      initialScrollDone.current = true;
+      isAtBottomRef.current = true;
+      requestAnimationFrame(() => {
+        const container = messagesContainerRef.current;
+        if (container) container.scrollTop = container.scrollHeight;
+      });
+      return;
+    }
+
     if (isAtBottomRef.current) {
       scrollToBottom();
     } else {
