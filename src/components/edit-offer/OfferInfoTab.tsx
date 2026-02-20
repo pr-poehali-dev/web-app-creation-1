@@ -244,6 +244,16 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
+  const handleSetMainImage = () => {
+    if (currentImageIndex === 0) return;
+    const newImages = [...images];
+    const [selected] = newImages.splice(currentImageIndex, 1);
+    newImages.unshift(selected);
+    setImages(newImages);
+    setCurrentImageIndex(0);
+    toast({ title: 'Главное фото изменено', description: 'Не забудьте сохранить изменения' });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -286,6 +296,23 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
               )}
               {isEditing && (
                 <div className="absolute top-2 right-2 flex gap-2">
+                  {currentImageIndex !== 0 && images.length > 1 && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={handleSetMainImage}
+                      className="text-xs px-2 h-8 gap-1"
+                    >
+                      <Icon name="Star" className="h-3 w-3" />
+                      Главное
+                    </Button>
+                  )}
+                  {currentImageIndex === 0 && images.length > 1 && (
+                    <span className="flex items-center gap-1 bg-primary text-primary-foreground text-xs px-2 h-8 rounded-md font-medium">
+                      <Icon name="Star" className="h-3 w-3" />
+                      Главное
+                    </span>
+                  )}
                   <Button
                     size="sm"
                     variant="destructive"
