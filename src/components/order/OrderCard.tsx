@@ -258,7 +258,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                 <Icon name="FileText" className="mr-1.5 h-4 w-4" />
                 {isSeller ? 'Детали заказа' : 'Детали заказа'}
               </Button>
-              {onCompleteOrder && (
+              {onCompleteOrder && !isSeller && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
