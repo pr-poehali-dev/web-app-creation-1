@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -254,6 +254,31 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     toast({ title: 'Главное фото изменено', description: 'Не забудьте сохранить изменения' });
   };
 
+  const dragIndex = useRef<number | null>(null);
+  const dragOverIndex = useRef<number | null>(null);
+
+  const handleDragStart = useCallback((index: number) => {
+    dragIndex.current = index;
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    dragOverIndex.current = index;
+  }, []);
+
+  const handleDrop = useCallback(() => {
+    if (dragIndex.current === null || dragOverIndex.current === null) return;
+    if (dragIndex.current === dragOverIndex.current) return;
+    const newImages = [...images];
+    const [dragged] = newImages.splice(dragIndex.current, 1);
+    newImages.splice(dragOverIndex.current, 0, dragged);
+    setImages(newImages);
+    setCurrentImageIndex(dragOverIndex.current);
+    dragIndex.current = null;
+    dragOverIndex.current = null;
+    toast({ title: 'Порядок фото изменён', description: 'Не забудьте сохранить изменения' });
+  }, [images, toast]);
+
   return (
     <Card>
       <CardHeader>
@@ -304,7 +329,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
                       className="text-xs px-2 h-8 gap-1"
                     >
                       <Icon name="Star" className="h-3 w-3" />
-                      Главное
+                      Сделать главной
                     </Button>
                   )}
                   {currentImageIndex === 0 && images.length > 1 && (
@@ -349,6 +374,34 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">JPG, PNG до 5 МБ</p>
+              </div>
+            </div>
+          )}
+
+          {isEditing && images.length > 1 && (
+            <div className="col-span-full">
+              <p className="text-xs text-muted-foreground mb-2">Перетащите фото для изменения порядка. Первое фото — главное на карточке.</p>
+              <div className="flex gap-2 flex-wrap">
+                {images.map((img, index) => (
+                  <div
+                    key={img.id}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={handleDrop}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`relative w-16 h-16 rounded-lg overflow-hidden border-2 cursor-grab active:cursor-grabbing transition-all ${
+                      index === currentImageIndex ? 'border-primary scale-95' : 'border-transparent hover:border-muted-foreground/40'
+                    }`}
+                  >
+                    <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />
+                    {index === 0 && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-primary-foreground text-[9px] text-center font-medium py-0.5">
+                        Главное
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           )}
