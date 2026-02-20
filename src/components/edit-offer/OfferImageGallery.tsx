@@ -138,33 +138,50 @@ export default function OfferImageGallery({
       {isEditing && (
         <div className="col-span-full">
           <p className="text-xs font-medium text-muted-foreground mb-2">Видео</p>
+          <input
+            ref={videoInputRef}
+            type="file"
+            accept="video/*"
+            onChange={onVideoUpload}
+            className="hidden"
+            id="video-upload"
+          />
           {video ? (
-            <div className="relative aspect-video rounded-lg overflow-hidden border bg-muted max-w-md">
-              <video
-                src={video.url}
-                poster={video.thumbnail}
-                controls
-                className="w-full h-full object-cover"
-              />
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={onVideoDelete}
-                className="absolute top-2 right-2"
-              >
-                <Icon name="Trash2" className="h-4 w-4" />
-              </Button>
+            <div className="space-y-2">
+              <div className="relative aspect-video rounded-lg overflow-hidden border bg-muted max-w-md">
+                <video
+                  src={video.url}
+                  poster={video.thumbnail}
+                  controls
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={isUploadingVideo || isSaving}
+                >
+                  {isUploadingVideo ? (
+                    <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Загрузка...</>
+                  ) : (
+                    <><Icon name="RefreshCw" className="h-4 w-4 mr-2" />Заменить видео</>
+                  )}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={onVideoDelete}
+                  disabled={isSaving}
+                >
+                  <Icon name="Trash2" className="h-4 w-4 mr-2" />
+                  Удалить
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <input
-                ref={videoInputRef}
-                type="file"
-                accept="video/*"
-                onChange={onVideoUpload}
-                className="hidden"
-                id="video-upload"
-              />
               <Button
                 variant="outline"
                 size="sm"

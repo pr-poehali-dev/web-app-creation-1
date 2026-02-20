@@ -84,6 +84,9 @@ export default function EditOffer() {
         pricePerUnit: offerData.price_per_unit || offerData.pricePerUnit || 0,
         userId: offerData.user_id || offerData.userId,
         createdAt: new Date(offerData.createdAt || offerData.created_at),
+        video: offerData.videoUrl
+          ? { id: offerData.video_id || 'existing', url: offerData.videoUrl, thumbnail: offerData.videoThumbnail }
+          : offerData.video || undefined,
       };
 
       if (mappedOffer.userId !== currentUser?.id) {
