@@ -196,7 +196,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
             <Icon name="Loader2" className="h-4 w-4 animate-spin text-muted-foreground" />
           </div>
         ) : messages.length > 0 ? (
-          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="space-y-2 max-h-[200px] overflow-y-auto mb-3 pr-1">
+          <div ref={messagesContainerRef} onScroll={handleMessagesScroll} className="space-y-2 max-h-[200px] overflow-y-auto mb-3 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
             {messages.map((msg) => {
               const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
               return (

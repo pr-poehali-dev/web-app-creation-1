@@ -67,8 +67,8 @@ export default function HeaderUserMenu({
             </>
           ) : (
             <>
-              {currentUser?.userType !== 'legal-entity' && <Icon name="User" className="h-3 w-3 md:h-4 md:w-4" />}
-              <span className={currentUser?.userType === 'legal-entity' ? 'max-w-[150px] lg:max-w-[220px] truncate text-[10px] md:text-sm' : 'max-w-[80px] lg:max-w-[140px] truncate text-[10px] md:text-sm'}>{getUserDisplayName()}</span>
+              <Icon name="User" className="h-3 w-3 md:h-4 md:w-4" />
+              <span className={`hidden md:inline truncate text-sm ${currentUser?.userType === 'legal-entity' ? 'max-w-[220px]' : 'max-w-[140px]'}`}>{getUserDisplayName()}</span>
             </>
           )}
           <Icon name="ChevronDown" className="h-3 w-3 md:h-4 md:w-4" />
