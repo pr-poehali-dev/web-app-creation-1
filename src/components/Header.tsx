@@ -259,7 +259,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               <img 
                 src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png" 
                 alt="ЕРТТП" 
-                className="h-full w-full object-contain"
+                className="h-full w-full object-cover"
               />
             </div>
             <div className="flex flex-col items-start">
