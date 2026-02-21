@@ -37,6 +37,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
 
           if (navigator.canShare({ files: [file] })) {
             await navigator.share({ title, text: fullText, files: [file] });
+            toast.success('Ссылка отправлена!');
             return;
           }
         } catch {
@@ -45,6 +46,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
       }
 
       await navigator.share({ title, text: fullText, url });
+      toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
       if ((e as Error).name === 'AbortError') return;
