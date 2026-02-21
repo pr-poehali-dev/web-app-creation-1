@@ -257,7 +257,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           >
             <div className="h-8 w-8 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center shrink-0">
               <img 
-                src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/dd8c8d50-49d4-4988-8c71-a554db285535.jpg" 
+                src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png" 
                 alt="ЕРТТП" 
                 className="h-full w-full object-contain"
               />
