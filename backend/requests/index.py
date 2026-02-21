@@ -117,6 +117,16 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Авто-архивация истёкших запросов
+    cur.execute("""
+        UPDATE t_p42562714_web_app_creation_1.requests
+        SET status = 'archived', updated_at = NOW()
+        WHERE status = 'active'
+          AND expiry_date IS NOT NULL
+          AND expiry_date < NOW()
+    """)
+    conn.commit()
     
     sql = """
         SELECT 

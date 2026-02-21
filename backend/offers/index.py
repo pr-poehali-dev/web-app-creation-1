@@ -192,6 +192,16 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Авто-архивация истёкших предложений
+        cur.execute("""
+            UPDATE t_p42562714_web_app_creation_1.offers
+            SET status = 'archived', updated_at = NOW()
+            WHERE status = 'active'
+              AND expiry_date IS NOT NULL
+              AND expiry_date < NOW()
+        """)
+        conn.commit()
         
         # Строим WHERE условия
         where_conditions = []
