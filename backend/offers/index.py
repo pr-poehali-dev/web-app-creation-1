@@ -1,4 +1,4 @@
-'''Управление предложениями товаров и услуг с JWT аутентификацией'''
+'''Управление предложениями товаров и услуг с JWT аутентификацией. v4'''
 
 import json
 import os 
@@ -229,7 +229,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                         pass
             except Exception as e:
                 print(f'[EXPIRY] Notification error: {e}')
-        
+
         # Строим WHERE условия
         where_conditions = []
         if status_filter and status_filter != 'all':
