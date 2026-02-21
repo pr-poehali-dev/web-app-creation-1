@@ -45,6 +45,8 @@ export default function OfferInfoFields({
       text: `📦 ${offer.title}\n\n💰 Цена: ${offer.pricePerUnit?.toLocaleString('ru-RU')} ₽/${offer.unit}${offer.description ? `\n\n📝 ${offer.description}` : ''}`,
       url: `${window.location.origin}/offer/${offer.id}`,
       imageUrl: offer.images?.[0]?.url,
+      itemType: 'offer',
+      itemId: offer.id,
     });
   };
 

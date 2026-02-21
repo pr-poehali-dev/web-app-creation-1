@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "OG proxy for offer",
+      "method": "GET",
+      "path": "/?type=offer&id=136c413c-b2d6-4373-a570-438f7a351d88",
+      "expectedStatus": 200
+    },
+    {
+      "name": "OG proxy unknown type redirect",
+      "method": "GET",
+      "path": "/?type=unknown&id=123",
+      "expectedStatus": 302
+    }
+  ]
+}

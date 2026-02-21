@@ -49,6 +49,8 @@ export default function AuctionInfoPanel({
       text: `🔨 ${auction.title}\n\n💰 Текущая ставка: ${auction.currentBid.toLocaleString('ru-RU')} ₽${auction.description ? `\n\n📝 ${auction.description}` : ''}`,
       url: window.location.href,
       imageUrl: auction.images?.[0]?.url,
+      itemType: 'auction',
+      itemId: auction.id,
     });
   };
   
