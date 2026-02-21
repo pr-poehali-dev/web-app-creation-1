@@ -7,6 +7,7 @@ import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
 import { dataSync, notifyOfferUpdated, notifyOrderUpdated } from '@/utils/dataSync';
+import { shareContent } from '@/utils/shareUtils';
 
 export function useOfferDetail(id: string | undefined) {
   const navigate = useNavigate();
@@ -137,101 +138,13 @@ export function useOfferDetail(id: string | undefined) {
   };
 
   const handleShare = async () => {
-    const url = window.location.href;
-    
-    // Формируем подробный текст для шаринга
-    const shareTitle = offer?.title || 'Предложение';
-    const shareText = offer 
-      ? `📦 ${offer.title}\n\n💰 Цена: ${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}\n${offer.description ? `\n📝 ${offer.description}\n` : ''}\n🔗 Ссылка: `
-      : '';
-    
-    if (navigator.share) {
-      try {
-        // Пытаемся отправить с изображением
-        if (offer?.images && offer.images.length > 0) {
-          try {
-            const imageUrl = offer.images[0].url;
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            const file = new File([blob], `${offer.title}.jpg`, { type: blob.type });
-            
-            // Проверяем поддержку отправки файлов
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-              await navigator.share({
-                title: shareTitle,
-                text: `${shareText}${url}`,
-                files: [file],
-              });
-              toast({
-                title: 'Успешно!',
-                description: 'Товар отправлен с фото',
-              });
-              return;
-            }
-          } catch (e) {
-            console.log('Cannot share with image:', e);
-          }
-        }
-        
-        // Фолбэк: отправляем текст с ссылкой
-        await navigator.share({
-          title: shareTitle,
-          text: `${shareText}${url}`,
-        });
-        toast({
-          title: 'Ссылка отправлена',
-          description: 'Получатель увидит описание товара',
-        });
-      } catch (error) {
-        if ((error as Error).name !== 'AbortError') {
-          console.log('Error sharing:', error);
-          copyWithDescription(url);
-        }
-      }
-    } else {
-      copyWithDescription(url);
-    }
-  };
-  
-  const copyWithDescription = async (url: string) => {
-    const shareText = offer 
-      ? `📦 ${offer.title}\n\n💰 ${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}\n${offer.description ? `\n📝 ${offer.description}\n` : ''}\n🔗 ${url}`
-      : url;
-      
-    const copied = await copyTextToClipboard(shareText);
-    if (copied) {
-      toast({
-        title: 'Описание товара скопировано!',
-        description: 'Вставьте в мессенджер — получатель увидит полную информацию',
-      });
-    } else {
-      toast({
-        title: 'Ссылка скопирована',
-        description: url,
-      });
-    }
-  };
-
-  const copyTextToClipboard = async (text: string): Promise<boolean> => {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.focus();
-        textarea.select();
-        const success = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return success;
-      } catch {
-        return false;
-      }
-    }
+    if (!offer) return;
+    await shareContent({
+      title: offer.title,
+      text: `📦 ${offer.title}\n\n💰 Цена: ${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}${offer.description ? `\n\n📝 ${offer.description}` : ''}`,
+      url: window.location.href,
+      imageUrl: offer.images?.[0]?.url,
+    });
   };
 
   const handleOrderClick = (isAuthenticated: boolean) => {

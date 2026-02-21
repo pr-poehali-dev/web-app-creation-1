@@ -5,7 +5,7 @@ import Icon from '@/components/ui/icon';
 import type { Auction } from '@/types/auction';
 import { getTimeUntilStart } from './AuctionHelpers';
 import { useDateFormat } from '@/hooks/useDateFormat';
-import { toast } from 'sonner';
+import { shareContent } from '@/utils/shareUtils';
 
 interface AuctionInfoPanelProps {
   auction: Auction;
@@ -44,31 +44,12 @@ export default function AuctionInfoPanel({
   const { formatDateTime } = useDateFormat();
 
   const handleShare = async () => {
-    const url = window.location.href;
-    const shareText = `🔨 ${auction.title}\n\n💰 Текущая ставка: ${auction.currentBid.toLocaleString('ru-RU')} ₽${auction.description ? `\n\n📝 ${auction.description.slice(0, 150)}` : ''}\n\n🔗 `;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: auction.title, text: `${shareText}${url}`, url });
-      } catch (e) {
-        if ((e as Error).name !== 'AbortError') await copyText(`${shareText}${url}`);
-      }
-    } else {
-      await copyText(`${shareText}${url}`);
-    }
-  };
-
-  const copyText = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-    toast.success('Описание аукциона скопировано!', { description: 'Вставьте в мессенджер' });
+    await shareContent({
+      title: auction.title,
+      text: `🔨 ${auction.title}\n\n💰 Текущая ставка: ${auction.currentBid.toLocaleString('ru-RU')} ₽${auction.description ? `\n\n📝 ${auction.description}` : ''}`,
+      url: window.location.href,
+      imageUrl: auction.images?.[0]?.url,
+    });
   };
   
   return (

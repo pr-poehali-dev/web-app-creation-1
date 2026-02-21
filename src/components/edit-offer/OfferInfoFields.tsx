@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
-import { useToast } from '@/hooks/use-toast';
+import { shareContent } from '@/utils/shareUtils';
 import type { Offer } from '@/types/offer';
 
 interface EditData {
@@ -39,18 +39,13 @@ export default function OfferInfoFields({
   onStartEditing,
   onDelete,
 }: OfferInfoFieldsProps) {
-  const { toast } = useToast();
-
   const handleShare = async () => {
-    const url = `${window.location.origin}/offer/${offer.id}`;
-    const text = `${offer.pricePerUnit?.toLocaleString('ru-RU')} ₽/${offer.unit}${offer.description ? '\n' + offer.description.slice(0, 100) : ''}`;
-    if (navigator.share) {
-      await navigator.share({ title: offer.title, text, url });
-    } else {
-      const shareText = `${offer.title}\n${text}\n${url}`;
-      await navigator.clipboard.writeText(shareText);
-      toast({ title: 'Ссылка скопирована в буфер обмена' });
-    }
+    await shareContent({
+      title: offer.title,
+      text: `📦 ${offer.title}\n\n💰 Цена: ${offer.pricePerUnit?.toLocaleString('ru-RU')} ₽/${offer.unit}${offer.description ? `\n\n📝 ${offer.description}` : ''}`,
+      url: `${window.location.origin}/offer/${offer.id}`,
+      imageUrl: offer.images?.[0]?.url,
+    });
   };
 
   return (
