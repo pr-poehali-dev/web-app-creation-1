@@ -50,7 +50,7 @@ export default function Footer() {
             <div className="flex items-center space-x-2 mb-4">
               <div className="h-8 w-8 overflow-hidden rounded-lg flex items-center justify-center">
                 <img 
-                  src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png" 
+                  src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/dd8c8d50-49d4-4988-8c71-a554db285535.jpg" 
                   alt="ЕРТТП" 
                   className="h-full w-full object-contain"
                 />
