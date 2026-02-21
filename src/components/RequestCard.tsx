@@ -80,10 +80,9 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               <div className="flex items-center gap-2 opacity-30">
                 <div className="h-16 w-16 overflow-hidden rounded-md flex items-center justify-center">
                   <img 
-                    src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+                    src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png" 
                     alt="ЕРТТП" 
-                    className="h-full w-full scale-[2.5] brightness-125 contrast-125"
-                    style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)', transform: 'scaleX(-1)' }}
+                    className="h-full w-full object-cover"
                   />
                 </div>
               </div>
