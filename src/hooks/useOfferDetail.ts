@@ -144,8 +144,7 @@ export function useOfferDetail(id: string | undefined) {
       text: `📦 ${offer.title}\n\n💰 Цена: ${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}${offer.description ? `\n\n📝 ${offer.description}` : ''}`,
       url: window.location.href,
       imageUrl: offer.images?.[0]?.url,
-      itemType: 'offer',
-      itemId: offer.id,
+
     });
   };
 

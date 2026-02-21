@@ -36,8 +36,7 @@ export function useRequestGallery(request: Request | null, showVideo: boolean) {
       text: `📋 ${request.title}${price ? `\n\n💰 Бюджет: ${price}` : ''}${request.description ? `\n\n📝 ${request.description}` : ''}`,
       url: window.location.href,
       imageUrl: request.images?.[0]?.url,
-      itemType: 'request',
-      itemId: request.id,
+
     });
   };
 

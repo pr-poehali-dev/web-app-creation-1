@@ -1,14 +1,10 @@
 import { toast } from 'sonner';
 
-const OG_PROXY_URL = 'https://functions.poehali.dev/2a7d2949-7159-4c2e-aeda-5cd18c67e0e7';
-
 interface ShareOptions {
   title: string;
   text: string;
   url: string;
   imageUrl?: string;
-  itemType?: 'offer' | 'request' | 'auction';
-  itemId?: string;
 }
 
 async function copyToClipboard(text: string): Promise<void> {
@@ -27,11 +23,7 @@ async function copyToClipboard(text: string): Promise<void> {
   }
 }
 
-export async function shareContent({ title, text, url, imageUrl, itemType, itemId }: ShareOptions): Promise<void> {
-  const shareUrl = (itemType && itemId)
-    ? `${OG_PROXY_URL}?type=${itemType}&id=${itemId}`
-    : url;
-
+export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
   const fullText = `${text}\n\n🔗 ${url}`;
 
   if (navigator.share) {
@@ -52,7 +44,7 @@ export async function shareContent({ title, text, url, imageUrl, itemType, itemI
         }
       }
 
-      await navigator.share({ title, text: fullText, url: shareUrl });
+      await navigator.share({ title, text: fullText, url });
       return;
     } catch (e) {
       if ((e as Error).name === 'AbortError') return;
