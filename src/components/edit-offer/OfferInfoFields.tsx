@@ -43,11 +43,13 @@ export default function OfferInfoFields({
 
   const handleShare = async () => {
     const url = `${window.location.origin}/offer/${offer.id}`;
+    const text = `${offer.pricePerUnit?.toLocaleString('ru-RU')} ₽/${offer.unit}${offer.description ? '\n' + offer.description.slice(0, 100) : ''}`;
     if (navigator.share) {
-      await navigator.share({ title: offer.title, url });
+      await navigator.share({ title: offer.title, text, url });
     } else {
-      await navigator.clipboard.writeText(url);
-      toast({ title: 'Ссылка скопирована', description: url });
+      const shareText = `${offer.title}\n${text}\n${url}`;
+      await navigator.clipboard.writeText(shareText);
+      toast({ title: 'Ссылка скопирована в буфер обмена' });
     }
   };
 

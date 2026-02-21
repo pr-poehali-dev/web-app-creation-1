@@ -63,6 +63,7 @@ export default function OfferDetail() {
         description={`${offer.description ? offer.description.slice(0, 150) : ''} — ${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}. ${offer.category}, ${offer.district}.`}
         keywords={`${offer.title}, ${offer.category}, купить ${offer.district}, ЕРТТП`}
         canonical={`/offer/${offer.id}`}
+        image={offer.images?.[0]?.url}
       />
       <OfferDetailContent
         isAuthenticated={isAuthenticated}
