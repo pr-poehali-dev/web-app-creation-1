@@ -4,6 +4,7 @@ import json
 import os 
 import base64
 import time
+import http.client
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from decimal import Decimal
@@ -200,8 +201,30 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             WHERE status = 'active'
               AND expiry_date IS NOT NULL
               AND expiry_date < NOW()
+            RETURNING user_id, title
         """)
+        expired_offers = cur.fetchall()
         conn.commit()
+
+        # Уведомляем владельцев об архивации
+        for row in expired_offers:
+            try:
+                payload = json.dumps({
+                    'userId': row['user_id'],
+                    'title': 'Предложение снято с публикации',
+                    'message': f'Срок публикации предложения «{row["title"]}» истёк. Перейдите в «Мои предложения» чтобы опубликовать снова.',
+                    'url': '/my-offers'
+                })
+                for endpoint in ['/d49f8584-6ef9-47c0-9661-02560166e10f', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43']:
+                    try:
+                        conn2 = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
+                        conn2.request('POST', endpoint, payload, {'Content-Type': 'application/json'})
+                        conn2.getresponse().read()
+                        conn2.close()
+                    except Exception:
+                        pass
+            except Exception as e:
+                print(f'[EXPIRY] Notification error: {e}')
         
         # Строим WHERE условия
         where_conditions = []

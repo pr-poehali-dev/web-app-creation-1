@@ -1,6 +1,7 @@
 '''API для работы с запросами - обновлено для JWT'''
 import json
 import os
+import http.client
 from typing import Dict, Any, List
 from datetime import datetime
 from decimal import Decimal
@@ -125,8 +126,30 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         WHERE status = 'active'
           AND expiry_date IS NOT NULL
           AND expiry_date < NOW()
+        RETURNING user_id, title
     """)
+    expired_requests = cur.fetchall()
     conn.commit()
+
+    # Уведомляем владельцев об архивации
+    for row in expired_requests:
+        try:
+            payload = json.dumps({
+                'userId': row['user_id'],
+                'title': 'Запрос снят с публикации',
+                'message': f'Срок публикации запроса «{row["title"]}» истёк. Перейдите в «Мои запросы» чтобы опубликовать снова.',
+                'url': '/my-requests'
+            })
+            for endpoint in ['/d49f8584-6ef9-47c0-9661-02560166e10f', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43']:
+                try:
+                    conn2 = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
+                    conn2.request('POST', endpoint, payload, {'Content-Type': 'application/json'})
+                    conn2.getresponse().read()
+                    conn2.close()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f'[EXPIRY] Notification error: {e}')
     
     sql = """
         SELECT 
