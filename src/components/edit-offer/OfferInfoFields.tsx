@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import { useToast } from '@/hooks/use-toast';
 import type { Offer } from '@/types/offer';
 
 interface EditData {
@@ -38,6 +39,18 @@ export default function OfferInfoFields({
   onStartEditing,
   onDelete,
 }: OfferInfoFieldsProps) {
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/offer/${offer.id}`;
+    if (navigator.share) {
+      await navigator.share({ title: offer.title, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Ссылка скопирована', description: url });
+    }
+  };
+
   return (
     <div className="space-y-3">
       <div>
@@ -155,6 +168,10 @@ export default function OfferInfoFields({
               <Icon name="Pencil" className="w-4 h-4 mr-2" />
               Редактировать
             </Button>
+            <Button variant="outline" onClick={handleShare} type="button">
+              <Icon name="Share2" className="w-4 h-4 mr-2" />
+              Поделиться
+            </Button>
             <Button
               variant="destructive"
               onClick={(e) => {
@@ -164,8 +181,7 @@ export default function OfferInfoFields({
               }}
               type="button"
             >
-              <Icon name="Trash2" className="w-4 h-4 mr-2" />
-              Удалить
+              <Icon name="Trash2" className="w-4 h-4" />
             </Button>
           </>
         )}
