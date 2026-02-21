@@ -763,7 +763,31 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         if 'status' in body:
             status_esc = body['status'].replace("'", "''")
             updates.append(f"status = '{status_esc}'")
-        
+
+        if 'expiryDate' in body:
+            expiry_val = body['expiryDate']
+            if expiry_val:
+                expiry_esc = str(expiry_val).replace("'", "''")
+                updates.append(f"expiry_date = '{expiry_esc}'")
+                if 'status' not in body:
+                    updates.append("status = 'active'")
+            else:
+                updates.append("expiry_date = NULL")
+
+        if 'deliveryPeriodStart' in body:
+            val = body['deliveryPeriodStart']
+            if val:
+                updates.append(f"delivery_period_start = '{str(val).replace(chr(39), chr(39)+chr(39))}'")
+            else:
+                updates.append("delivery_period_start = NULL")
+
+        if 'deliveryPeriodEnd' in body:
+            val = body['deliveryPeriodEnd']
+            if val:
+                updates.append(f"delivery_period_end = '{str(val).replace(chr(39), chr(39)+chr(39))}'")
+            else:
+                updates.append("delivery_period_end = NULL")
+
         # Обработка видео
         if 'video' in body:
             offer_id_esc = offer_id.replace("'", "''")

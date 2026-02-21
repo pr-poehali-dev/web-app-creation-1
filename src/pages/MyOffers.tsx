@@ -151,14 +151,21 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     setNewExpiryDate(tomorrow.toISOString().split('T')[0]);
   };
 
-  const confirmExtendExpiry = () => {
+  const confirmExtendExpiry = async () => {
     if (!extendDialogOffer || !newExpiryDate) return;
-    
-    toast({
-      title: 'Функция в разработке',
-      description: `Продление срока публикации будет доступно после подключения платёжной системы`,
-    });
-    
+
+    try {
+      await offersAPI.updateOffer(extendDialogOffer.id, { expiryDate: newExpiryDate });
+      setMyOffers(prev => prev.map(o =>
+        o.id === extendDialogOffer.id
+          ? { ...o, expiryDate: new Date(newExpiryDate), status: o.status === 'archived' ? 'active' : o.status }
+          : o
+      ));
+      toast({ title: 'Готово', description: 'Срок публикации продлён' });
+    } catch (error) {
+      toast({ title: 'Ошибка', description: 'Не удалось продлить срок публикации', variant: 'destructive' });
+    }
+
     setExtendDialogOffer(null);
     setNewExpiryDate('');
   };

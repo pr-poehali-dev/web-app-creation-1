@@ -170,6 +170,7 @@ export interface CreateOfferData {
   videoUrl?: string;
   isPremium?: boolean;
   status?: string;
+  expiryDate?: string;
 }
 
 export interface CreateRequestData {
