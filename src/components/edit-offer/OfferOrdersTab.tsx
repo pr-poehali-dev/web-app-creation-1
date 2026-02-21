@@ -55,8 +55,10 @@ export default function OfferOrdersTab({ orders, onOpenChat }: OfferOrdersTabPro
                   }>
                     {order.status === 'pending' ? 'Ожидает' :
                      order.status === 'accepted' ? 'Принят' :
-                     order.status === 'rejected' ? 'Отклонен' :
+                     order.status === 'rejected' ? 'Отклонён' :
                      order.status === 'completed' ? 'Завершён' :
+                     order.status === 'cancelled' ? 'Отменён' :
+                     order.status === 'negotiating' ? 'Переговоры' :
                      order.status}
                   </Badge>
                 </div>
