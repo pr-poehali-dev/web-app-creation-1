@@ -80,7 +80,7 @@ export function useOfferDetail(id: string | undefined) {
               ...prev,
               seller: {
                 ...prev.seller!,
-                reviews: reviewsData.reviews.map((r: any) => ({
+                reviews: reviewsData.reviews.map((r: Record<string, unknown>) => ({
                   id: String(r.id),
                   reviewerId: String(r.reviewer_id),
                   reviewerName: 'Покупатель',
@@ -198,30 +198,39 @@ export function useOfferDetail(id: string | undefined) {
       ? `📦 ${offer.title}\n\n💰 ${offer.pricePerUnit.toLocaleString('ru-RU')} ₽/${offer.unit}\n${offer.description ? `\n📝 ${offer.description}\n` : ''}\n🔗 ${url}`
       : url;
       
-    try {
-      await navigator.clipboard.writeText(shareText);
+    const copied = await copyTextToClipboard(shareText);
+    if (copied) {
       toast({
         title: 'Описание товара скопировано!',
         description: 'Вставьте в мессенджер — получатель увидит полную информацию',
       });
-    } catch (error) {
-      copyToClipboard(url);
+    } else {
+      toast({
+        title: 'Ссылка скопирована',
+        description: url,
+      });
     }
   };
 
-  const copyToClipboard = async (text: string) => {
+  const copyTextToClipboard = async (text: string): Promise<boolean> => {
     try {
       await navigator.clipboard.writeText(text);
-      toast({
-        title: 'Ссылка скопирована!',
-        description: 'Теперь можно поделиться с друзьями',
-      });
-    } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось скопировать ссылку',
-        variant: 'destructive',
-      });
+      return true;
+    } catch {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return success;
+      } catch {
+        return false;
+      }
     }
   };
 
@@ -257,7 +266,7 @@ export function useOfferDetail(id: string | undefined) {
 
       if (response.ok) {
         const data = await response.json();
-        const messages: ChatMessage[] = (data.messages || []).map((msg: any) => ({
+        const messages: ChatMessage[] = (data.messages || []).map((msg: Record<string, unknown>) => ({
           id: msg.id,
           orderId: msg.order_id,
           senderId: msg.sender_id?.toString() || '',
@@ -273,7 +282,7 @@ export function useOfferDetail(id: string | undefined) {
     }
   };
 
-  const handleOrderSubmit = async (orderFormData: any) => {
+  const handleOrderSubmit = async (orderFormData: Record<string, unknown>) => {
     if (!offer) {
       toast({
         title: 'Ошибка',

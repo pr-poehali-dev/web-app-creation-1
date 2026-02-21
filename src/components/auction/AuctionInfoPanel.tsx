@@ -5,6 +5,7 @@ import Icon from '@/components/ui/icon';
 import type { Auction } from '@/types/auction';
 import { getTimeUntilStart } from './AuctionHelpers';
 import { useDateFormat } from '@/hooks/useDateFormat';
+import { toast } from 'sonner';
 
 interface AuctionInfoPanelProps {
   auction: Auction;
@@ -41,6 +42,34 @@ export default function AuctionInfoPanel({
   onMakeBidClick 
 }: AuctionInfoPanelProps) {
   const { formatDateTime } = useDateFormat();
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const shareText = `🔨 ${auction.title}\n\n💰 Текущая ставка: ${auction.currentBid.toLocaleString('ru-RU')} ₽${auction.description ? `\n\n📝 ${auction.description.slice(0, 150)}` : ''}\n\n🔗 `;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: auction.title, text: `${shareText}${url}`, url });
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') await copyText(`${shareText}${url}`);
+      }
+    } else {
+      await copyText(`${shareText}${url}`);
+    }
+  };
+
+  const copyText = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    toast.success('Описание аукциона скопировано!', { description: 'Вставьте в мессенджер' });
+  };
   
   return (
     <div className="space-y-2 md:space-y-3">
@@ -119,19 +148,28 @@ export default function AuctionInfoPanel({
         </div>
       </div>
 
-      {auction.status === 'active' && (
-        <>
-          <Separator className="my-2" />
+      <Separator className="my-2" />
+      <div className="flex gap-2">
+        {auction.status === 'active' && (
           <Button 
             size="sm"
-            className="w-full h-9 text-sm"
+            className="flex-1 h-9 text-sm"
             onClick={onMakeBidClick}
           >
             <Icon name="Gavel" className="h-3.5 w-3.5 mr-1.5" />
             Сделать ставку
           </Button>
-        </>
-      )}
+        )}
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-9 text-sm"
+          onClick={handleShare}
+        >
+          <Icon name="Share2" className="h-3.5 w-3.5 mr-1.5" />
+          Поделиться
+        </Button>
+      </div>
     </div>
   );
 }
