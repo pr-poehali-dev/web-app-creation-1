@@ -1,12 +1,15 @@
 import type { Offer, Request } from '@/types/offer';
 
 export function isExpired(item: Offer | Request): boolean {
-  if (!item.expiryDate) return false;
-  
-  const expiryDate = new Date(item.expiryDate);
   const now = new Date();
-  
-  return expiryDate < now;
+
+  if ('deliveryPeriodEnd' in item && item.deliveryPeriodEnd) {
+    const deliveryEnd = new Date(item.deliveryPeriodEnd);
+    if (deliveryEnd < now) return true;
+  }
+
+  if (!item.expiryDate) return false;
+  return new Date(item.expiryDate) < now;
 }
 
 export function filterActiveOffers(offers: Offer[]): Offer[] {

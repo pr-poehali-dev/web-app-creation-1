@@ -12,6 +12,8 @@ interface EditData {
   quantity: string;
   minOrderQuantity: string;
   description: string;
+  deliveryPeriodStart: string;
+  deliveryPeriodEnd: string;
 }
 
 interface OfferInfoFieldsProps {
@@ -108,6 +110,39 @@ export default function OfferInfoFields({
                 min="0"
                 placeholder="Не задано"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Период поставки</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="deliveryPeriodStart" className="text-xs text-muted-foreground">Начало</Label>
+                  <Input
+                    id="deliveryPeriodStart"
+                    type="date"
+                    value={editData.deliveryPeriodStart}
+                    onChange={(e) => onEditDataChange({ ...editData, deliveryPeriodStart: e.target.value })}
+                    disabled={isSaving}
+                    max={editData.deliveryPeriodEnd || undefined}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="deliveryPeriodEnd" className="text-xs text-muted-foreground">Окончание</Label>
+                  <Input
+                    id="deliveryPeriodEnd"
+                    type="date"
+                    value={editData.deliveryPeriodEnd}
+                    onChange={(e) => onEditDataChange({ ...editData, deliveryPeriodEnd: e.target.value })}
+                    disabled={isSaving}
+                    min={editData.deliveryPeriodStart || undefined}
+                    max={offer.expiryDate ? new Date(offer.expiryDate).toISOString().split('T')[0] : undefined}
+                  />
+                </div>
+              </div>
+              {offer.expiryDate && (
+                <p className="text-xs text-muted-foreground">
+                  Срок публикации до: {new Date(offer.expiryDate).toLocaleDateString('ru-RU')}
+                </p>
+              )}
             </div>
           </div>
         ) : (

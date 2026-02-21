@@ -28,11 +28,20 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(initialEditMode);
   const [isSaving, setIsSaving] = useState(false);
+  const toDateInputValue = (val?: string | Date | null) => {
+    if (!val) return '';
+    const d = val instanceof Date ? val : new Date(val);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString().split('T')[0];
+  };
+
   const [editData, setEditData] = useState({
     pricePerUnit: offer.pricePerUnit.toString(),
     quantity: offer.quantity.toString(),
     minOrderQuantity: offer.minOrderQuantity?.toString() || '',
     description: offer.description || '',
+    deliveryPeriodStart: toDateInputValue(offer.deliveryPeriodStart),
+    deliveryPeriodEnd: toDateInputValue(offer.deliveryPeriodEnd),
   });
   const [images, setImages] = useState<OfferImage[]>(offer.images || []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -60,6 +69,22 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       return;
     }
 
+    if (editData.deliveryPeriodStart && editData.deliveryPeriodEnd) {
+      if (new Date(editData.deliveryPeriodEnd) <= new Date(editData.deliveryPeriodStart)) {
+        toast({ title: 'Ошибка', description: 'Дата окончания периода поставки должна быть позже даты начала', variant: 'destructive' });
+        return;
+      }
+    }
+
+    if (editData.deliveryPeriodEnd && offer.expiryDate) {
+      const deliveryEnd = new Date(editData.deliveryPeriodEnd);
+      const publicationEnd = new Date(offer.expiryDate);
+      if (deliveryEnd > publicationEnd) {
+        toast({ title: 'Ошибка', description: 'Срок поставки не может быть позже срока публикации объявления', variant: 'destructive' });
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       console.log('Updating offer with images:', images.length, 'images');
@@ -73,6 +98,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         description: editData.description,
         images: images,
         video: video || null,
+        deliveryPeriodStart: editData.deliveryPeriodStart || null,
+        deliveryPeriodEnd: editData.deliveryPeriodEnd || null,
       });
 
       localStorage.removeItem('cached_offers');
@@ -97,6 +124,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       quantity: offer.quantity.toString(),
       minOrderQuantity: offer.minOrderQuantity?.toString() || '',
       description: offer.description || '',
+      deliveryPeriodStart: toDateInputValue(offer.deliveryPeriodStart),
+      deliveryPeriodEnd: toDateInputValue(offer.deliveryPeriodEnd),
     });
     setImages(offer.images || []);
     setCurrentImageIndex(0);
