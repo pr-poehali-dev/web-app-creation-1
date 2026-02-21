@@ -71,7 +71,8 @@ export function formatWithTimezone(
   date: Date | string,
   options?: Intl.DateTimeFormatOptions
 ): string {
-  const d = date instanceof Date ? date : new Date(date);
+  const d = safeDate(date);
+  if (!d) return 'Дата неизвестна';
   const tz = getUserTimezone();
   return d.toLocaleString('ru-RU', { ...options, timeZone: tz });
 }
