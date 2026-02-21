@@ -102,7 +102,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         
         if (!isMounted) return;
         
-        const loadedOffers = offersData.offers || [];
+        const loadedOffers = filterActiveOffers(offersData.offers || []);
         setOffers(loadedOffers);
         setGlobalOffers(loadedOffers);
         setTotalOffersCount(offersData.total || 0);

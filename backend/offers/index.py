@@ -206,6 +206,10 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         expired_offers = cur.fetchall()
         conn.commit()
 
+        # Сбрасываем кеш если были архивированы записи
+        if expired_offers:
+            offers_cache.clear()
+
         # Уведомляем владельцев об архивации
         for row in expired_offers:
             try:

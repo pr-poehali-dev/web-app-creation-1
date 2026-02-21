@@ -95,7 +95,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
           ordersAPI.getAll('all')
         ]);
         
-        const loadedRequests = requestsData.requests || [];
+        const loadedRequests = filterActiveRequests(requestsData.requests || []);
         setRequests(loadedRequests);
         setGlobalRequests(loadedRequests);
         setOrders(ordersResponse.orders || []);
