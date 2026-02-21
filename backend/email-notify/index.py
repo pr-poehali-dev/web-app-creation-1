@@ -46,8 +46,12 @@ def handler(event: dict, context) -> dict:
         
         db_url = os.environ.get('DATABASE_URL')
         schema = os.environ.get('DB_SCHEMA', 'public')
-        smtp_user = os.environ.get('SMTP_USER')
-        smtp_pass = os.environ.get('SMTP_PASS')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://preview--web-app-creation-1.poehali.dev').rstrip('/')
+        # Поддерживаем оба набора переменных: MAIL_* (основной) и SMTP_* (запасной)
+        smtp_user = os.environ.get('MAIL_USER') or os.environ.get('SMTP_USER')
+        smtp_pass = os.environ.get('MAIL_PASSWORD') or os.environ.get('SMTP_PASS')
+        smtp_host = os.environ.get('MAIL_HOST') or os.environ.get('SMTP_HOST')
+        smtp_port = int(os.environ.get('MAIL_PORT') or os.environ.get('SMTP_PORT') or 587)
         
         if not smtp_user or not smtp_pass:
             return {
@@ -61,10 +65,11 @@ def handler(event: dict, context) -> dict:
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         
+        user_id_int = int(user_id)
         cur.execute(f'''
             SELECT email, email_notifications FROM {schema}.users 
-            WHERE id = %s
-        ''', (user_id,))
+            WHERE id = {user_id_int}
+        ''')
         
         result = cur.fetchone()
         cur.close()
@@ -135,7 +140,7 @@ def handler(event: dict, context) -> dict:
                                     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 30px;">
                                         <tr>
                                             <td align="center">
-                                                <a href="https://your-domain.com{url}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); transition: all 0.3s;">
+                                                <a href="{frontend_url}{url}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.3); transition: all 0.3s;">
                                                     📦 Перейти к заказу
                                                 </a>
                                             </td>
@@ -163,7 +168,7 @@ def handler(event: dict, context) -> dict:
                                         Это автоматическое уведомление от платформы ЕРТТП
                                     </p>
                                     <p style="margin: 0 0 16px 0; color: #9ca3af; font-size: 12px;">
-                                        Вы можете отключить email-уведомления в <a href="https://your-domain.com/profile" style="color: #2563eb; text-decoration: none;">настройках профиля</a>
+                                        Вы можете отключить email-уведомления в <a href="{frontend_url}/profile" style="color: #2563eb; text-decoration: none;">настройках профиля</a>
                                     </p>
                                     <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                                         <p style="margin: 0; color: #9ca3af; font-size: 11px;">
@@ -195,27 +200,25 @@ def handler(event: dict, context) -> dict:
         # Отправляем email через SMTP
         msg = MIMEMultipart('alternative')
         msg['Subject'] = title
-        msg['From'] = smtp_user
+        msg['From'] = f'ЕРТТП <{smtp_user}>'
         msg['To'] = user_email
         
         html_part = MIMEText(html_body, 'html')
         msg.attach(html_part)
         
-        # Определяем SMTP сервер по email
-        if 'gmail.com' in smtp_user:
-            smtp_server = 'smtp.gmail.com'
-            smtp_port = 587
-        elif 'yandex' in smtp_user:
-            smtp_server = 'smtp.yandex.ru'
-            smtp_port = 587
-        elif 'mail.ru' in smtp_user:
-            smtp_server = 'smtp.mail.ru'
-            smtp_port = 587
-        else:
-            smtp_server = 'smtp.gmail.com'
-            smtp_port = 587
-        
-        server = smtplib.SMTP(smtp_server, smtp_port)
+        # Определяем SMTP сервер: сначала из переменных окружения, потом по домену email
+        if not smtp_host:
+            if 'gmail.com' in smtp_user:
+                smtp_host = 'smtp.gmail.com'
+            elif 'yandex' in smtp_user:
+                smtp_host = 'smtp.yandex.ru'
+            elif 'mail.ru' in smtp_user:
+                smtp_host = 'smtp.mail.ru'
+            else:
+                smtp_host = 'smtp.mail.ru'
+
+        print(f'[EMAIL] Sending to {user_email} via {smtp_host}:{smtp_port} from {smtp_user}')
+        server = smtplib.SMTP(smtp_host, smtp_port)
         server.starttls()
         server.login(smtp_user, smtp_pass)
         server.send_message(msg)

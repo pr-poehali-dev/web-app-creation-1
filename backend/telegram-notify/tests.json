@@ -4,7 +4,7 @@
       "name": "Send Telegram notification",
       "method": "POST",
       "body": {
-        "userId": "test-user-123",
+        "userId": 4,
         "title": "Новый отклик",
         "message": "Кто-то откликнулся на ваше предложение",
         "url": "/my-orders?id=123"

@@ -43,6 +43,7 @@ def handler(event: dict, context) -> dict:
         db_url = os.environ.get('DATABASE_URL')
         schema = os.environ.get('DB_SCHEMA', 'public')
         bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        frontend_url = os.environ.get('FRONTEND_URL', 'https://preview--web-app-creation-1.poehali.dev').rstrip('/')
         
         if not bot_token:
             return {
@@ -55,10 +56,11 @@ def handler(event: dict, context) -> dict:
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         
+        user_id_int = int(user_id)
         cur.execute(f'''
             SELECT telegram_chat_id FROM {schema}.users 
-            WHERE id = %s AND telegram_chat_id IS NOT NULL
-        ''', (user_id,))
+            WHERE id = {user_id_int} AND telegram_chat_id IS NOT NULL
+        ''')
         
         result = cur.fetchone()
         cur.close()
@@ -79,7 +81,7 @@ def handler(event: dict, context) -> dict:
         # Формируем сообщение для Telegram
         full_message = f"🔔 *{title}*\n\n{message}"
         if url:
-            full_message += f"\n\n[Перейти к заказу](https://your-domain.com{url})"
+            full_message += f"\n\n[Перейти →]({frontend_url}{url})"
         
         # Отправляем через Telegram Bot API
         telegram_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
