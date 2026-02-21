@@ -455,6 +455,10 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     delivery_period_end = offer_dict.pop('delivery_period_end', None)
     offer_dict['deliveryPeriodEnd'] = delivery_period_end.isoformat() if delivery_period_end else None
+
+    expiry_date = offer_dict.pop('expiry_date', None)
+    offer_dict['expiryDate'] = expiry_date.isoformat() if expiry_date else None
+
     seller_name = offer_dict.pop('seller_name', None)
     seller_type = offer_dict.pop('seller_type', None)
     seller_phone = offer_dict.pop('seller_phone', None)
