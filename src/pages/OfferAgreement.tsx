@@ -13,8 +13,13 @@ export default function OfferAgreement({ isAuthenticated, onLogout }: OfferAgree
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Icon name="Building2" className="h-6 w-6 text-white" />
+              <div className="h-10 w-10 overflow-hidden rounded-lg flex items-center justify-center shrink-0">
+                <img
+                  src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png"
+                  alt="ЕРТТП"
+                  className="h-full w-full brightness-125 contrast-125"
+                  style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))', transform: 'scale(1.9) scaleX(-1)' }}
+                />
               </div>
               <span className="font-bold text-xl text-primary">ЕРТТП</span>
             </Link>
