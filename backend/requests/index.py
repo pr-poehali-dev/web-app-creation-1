@@ -131,6 +131,41 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     expired_requests = cur.fetchall()
     conn.commit()
 
+    # Авто-закрытие запросов принятых в работу
+    cur.execute("""
+        UPDATE t_p42562714_web_app_creation_1.requests
+        SET status = 'closed', updated_at = NOW()
+        WHERE status = 'active'
+          AND EXISTS (
+              SELECT 1 FROM t_p42562714_web_app_creation_1.orders o
+              WHERE o.offer_id = requests.id
+                AND o.status = 'accepted'
+          )
+        RETURNING user_id, title
+    """)
+    accepted_requests = cur.fetchall()
+    conn.commit()
+
+    # Уведомляем владельцев о закрытии принятых запросов
+    for row in accepted_requests:
+        try:
+            payload = json.dumps({
+                'userId': row['user_id'],
+                'title': 'Запрос закрыт — исполнитель найден',
+                'message': f'Запрос «{row["title"]}» скрыт из публичного списка, так как по нему принят исполнитель.',
+                'url': '/my-orders?tab=my-requests'
+            })
+            for endpoint in ['/d49f8584-6ef9-47c0-9661-02560166e10f', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43']:
+                try:
+                    conn2 = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
+                    conn2.request('POST', endpoint, payload, {'Content-Type': 'application/json'})
+                    conn2.getresponse().read()
+                    conn2.close()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f'[ACCEPTED] Notification error: {e}')
+
     # Уведомляем владельцев об архивации
     for row in expired_requests:
         try:
@@ -159,7 +194,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
              WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
             ) as responses
         FROM t_p42562714_web_app_creation_1.requests r
-        WHERE r.status != 'deleted' AND r.status != 'archived'
+        WHERE r.status != 'deleted' AND r.status != 'archived' AND r.status != 'closed'
     """
     
     query_params = []
