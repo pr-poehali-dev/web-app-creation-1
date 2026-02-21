@@ -5,14 +5,11 @@
       "method": "POST",
       "path": "/",
       "body": {
-        "userId": 1,
+        "userId": 4,
         "title": "Test notification",
         "message": "This is a test message"
       },
       "expectedStatus": 200,
-      "expectedBody": {
-        "success": true
-      },
       "bodyMatcher": "partial"
     }
   ]

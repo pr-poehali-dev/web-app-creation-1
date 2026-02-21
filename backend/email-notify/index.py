@@ -47,11 +47,10 @@ def handler(event: dict, context) -> dict:
         db_url = os.environ.get('DATABASE_URL')
         schema = os.environ.get('DB_SCHEMA', 'public')
         frontend_url = os.environ.get('FRONTEND_URL', 'https://preview--web-app-creation-1.poehali.dev').rstrip('/')
-        # Поддерживаем оба набора переменных: MAIL_* (основной) и SMTP_* (запасной)
-        smtp_user = os.environ.get('MAIL_USER') or os.environ.get('SMTP_USER')
-        smtp_pass = os.environ.get('MAIL_PASSWORD') or os.environ.get('SMTP_PASS')
-        smtp_host = os.environ.get('MAIL_HOST') or os.environ.get('SMTP_HOST')
-        smtp_port = int(os.environ.get('MAIL_PORT') or os.environ.get('SMTP_PORT') or 587)
+        smtp_user = os.environ.get('SMTP_USER')
+        smtp_pass = os.environ.get('SMTP_PASS')
+        smtp_host = 'smtp.mail.ru'
+        smtp_port = 587
         
         if not smtp_user or not smtp_pass:
             return {
@@ -200,23 +199,12 @@ def handler(event: dict, context) -> dict:
         # Отправляем email через SMTP
         msg = MIMEMultipart('alternative')
         msg['Subject'] = title
-        msg['From'] = f'ЕРТТП <{smtp_user}>'
+        msg['From'] = smtp_user
         msg['To'] = user_email
         
         html_part = MIMEText(html_body, 'html')
         msg.attach(html_part)
         
-        # Определяем SMTP сервер: сначала из переменных окружения, потом по домену email
-        if not smtp_host:
-            if 'gmail.com' in smtp_user:
-                smtp_host = 'smtp.gmail.com'
-            elif 'yandex' in smtp_user:
-                smtp_host = 'smtp.yandex.ru'
-            elif 'mail.ru' in smtp_user:
-                smtp_host = 'smtp.mail.ru'
-            else:
-                smtp_host = 'smtp.mail.ru'
-
         print(f'[EMAIL] Sending to {user_email} via {smtp_host}:{smtp_port} from {smtp_user}')
         server = smtplib.SMTP(smtp_host, smtp_port)
         server.starttls()
@@ -224,6 +212,7 @@ def handler(event: dict, context) -> dict:
         server.send_message(msg)
         server.quit()
         
+        print(f'[EMAIL] Successfully sent to {user_email}')
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -235,6 +224,7 @@ def handler(event: dict, context) -> dict:
         }
         
     except Exception as e:
+        print(f'[EMAIL] Error: {str(e)}')
         return {
             'statusCode': 500,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

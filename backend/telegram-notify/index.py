@@ -67,6 +67,7 @@ def handler(event: dict, context) -> dict:
         conn.close()
         
         if not result or not result[0]:
+            print(f'[TELEGRAM] User {user_id} has no telegram_chat_id in DB')
             return {
                 'statusCode': 200,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -101,6 +102,7 @@ def handler(event: dict, context) -> dict:
             response_data = json.loads(response.read().decode('utf-8'))
             
             if response_data.get('ok'):
+                print(f'[TELEGRAM] Successfully sent to user {user_id} (chat_id={chat_id}): {title}')
                 return {
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -110,12 +112,14 @@ def handler(event: dict, context) -> dict:
                     })
                 }
             else:
+                err = response_data.get('description', 'Failed to send')
+                print(f'[TELEGRAM] Error for user {user_id}: {err}')
                 return {
                     'statusCode': 500,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({
                         'success': False,
-                        'error': response_data.get('description', 'Failed to send')
+                        'error': err
                     })
                 }
         
