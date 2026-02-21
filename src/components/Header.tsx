@@ -255,11 +255,11 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               location.pathname === '/home' || location.pathname === '/' ? 'border-[3px] border-primary' : 'border-2 border-primary/20'
             }`}
           >
-            <div className="h-8 w-8 md:h-12 md:w-12 overflow-hidden rounded-md md:rounded-lg flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 md:h-12 md:w-12 rounded-md md:rounded-lg flex items-center justify-center shrink-0">
               <img 
                 src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png" 
                 alt="ЕРТТП" 
-                className="h-full w-full object-cover"
+                className="h-full w-full"
               />
             </div>
             <div className="flex flex-col items-start">
