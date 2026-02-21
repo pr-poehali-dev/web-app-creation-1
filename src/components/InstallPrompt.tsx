@@ -86,10 +86,9 @@ const InstallPrompt = () => {
             <div className="flex items-center justify-center mb-4">
               <div className="w-16 h-16 bg-white rounded-2xl p-2 shadow-lg overflow-hidden">
                 <img
-                  src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png"
+                  src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png"
                   alt="ЕРТТП"
-                  className="w-full h-full object-contain scale-[1.8]"
-                  style={{ transform: 'scaleX(-1)' }}
+                  className="w-full h-full object-contain"
                 />
               </div>
             </div>
