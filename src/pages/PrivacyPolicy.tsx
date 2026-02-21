@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import SEO from '@/components/SEO';
 
 interface PrivacyPolicyProps {
   isAuthenticated: boolean;
@@ -9,6 +10,11 @@ interface PrivacyPolicyProps {
 export default function PrivacyPolicy({ isAuthenticated, onLogout }: PrivacyPolicyProps) {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Политика конфиденциальности"
+        description="Политика конфиденциальности ЕРТТП — как мы обрабатываем и защищаем персональные данные пользователей."
+        canonical="/privacy-policy"
+      />
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

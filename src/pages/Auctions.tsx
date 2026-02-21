@@ -19,6 +19,7 @@ import AuctionStatusFilters from '@/components/auction/AuctionStatusFilters';
 import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
 import { dataSync } from '@/utils/dataSync';
+import SEO from '@/components/SEO';
 
 interface AuctionsProps {
   isAuthenticated: boolean;
@@ -306,6 +307,12 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO 
+        title="Аукционы и торги"
+        description="Участвуйте в аукционах и электронных торгах Якутии. Покупайте товары по лучшим ценам или выставляйте лоты на ЕРТТП."
+        keywords="аукционы Якутия, электронные торги Якутск, тендеры онлайн, закупки аукцион"
+        canonical="/auktsiony"
+      />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-2 md:px-3 py-2 md:py-3 flex-1">

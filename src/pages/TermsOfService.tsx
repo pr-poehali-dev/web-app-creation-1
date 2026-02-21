@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import SEO from '@/components/SEO';
 
 interface TermsOfServiceProps {
   isAuthenticated: boolean;
@@ -9,6 +10,11 @@ interface TermsOfServiceProps {
 export default function TermsOfService({ isAuthenticated, onLogout }: TermsOfServiceProps) {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Пользовательское соглашение"
+        description="Пользовательское соглашение ЕРТТП — условия использования торговой площадки Якутии."
+        canonical="/terms-of-service"
+      />
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

@@ -23,6 +23,7 @@ import { safeGetTime } from '@/utils/dateUtils';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync } from '@/utils/dataSync';
 import { filterActiveRequests } from '@/utils/expirationFilter';
+import SEO from '@/components/SEO';
 
 interface RequestsProps {
   isAuthenticated: boolean;
@@ -284,6 +285,12 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO 
+        title="Запросы на товары и услуги"
+        description="Запросы на поставку товаров и услуг от компаний Якутии. Откликайтесь на запросы и находите новых клиентов на ЕРТТП."
+        keywords="запросы на поставку Якутия, тендеры Якутск, закупки товаров Якутия, заявки на услуги"
+        canonical="/zaprosy"
+      />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       <DataSyncIndicator isVisible={isSyncing} />
 

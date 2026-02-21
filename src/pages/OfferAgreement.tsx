@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import SEO from '@/components/SEO';
 
 interface OfferAgreementProps {
   isAuthenticated: boolean;
@@ -9,6 +10,11 @@ interface OfferAgreementProps {
 export default function OfferAgreement({ isAuthenticated, onLogout }: OfferAgreementProps) {
   return (
     <div className="min-h-screen bg-background">
+      <SEO 
+        title="Публичная оферта"
+        description="Публичная оферта ЕРТТП — условия заключения договора на торговой площадке Якутии."
+        canonical="/offer-agreement"
+      />
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">

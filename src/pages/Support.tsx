@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import Icon from '@/components/ui/icon';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import SEO from '@/components/SEO';
 
 interface SupportProps {
   isAuthenticated: boolean;
@@ -17,6 +18,12 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
   const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'telegram' | 'call'>('call');
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO 
+        title="Поддержка"
+        description="Служба поддержки ЕРТТП. Задайте вопрос, сообщите о проблеме или получите помощь по работе с платформой."
+        keywords="поддержка ЕРТТП, помощь торговая площадка Якутия"
+        canonical="/support"
+      />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-4 md:py-6 flex-1">

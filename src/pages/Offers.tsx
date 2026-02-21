@@ -18,6 +18,7 @@ import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync } from '@/utils/dataSync';
 import { filterActiveOffers } from '@/utils/expirationFilter';
 import { useOffers } from '@/contexts/OffersContext';
+import SEO from '@/components/SEO';
 
 interface OffersProps {
   isAuthenticated: boolean;
@@ -354,6 +355,12 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO 
+        title="Предложения товаров и услуг"
+        description="Актуальные предложения товаров и услуг от компаний Якутии. Найдите поставщика, сравните цены и оформите сделку на ЕРТТП."
+        keywords="предложения товаров Якутия, поставщики Якутск, купить товары Якутия, услуги Якутия"
+        canonical="/predlozheniya"
+      />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       <DataSyncIndicator isVisible={isSyncing} />
 
