@@ -8,6 +8,7 @@ import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { useAuctionData } from '@/hooks/useAuctionData';
+import SEO from '@/components/SEO';
 import AuctionImageGallery from '@/components/auction/AuctionImageGallery';
 import AuctionInfoPanel from '@/components/auction/AuctionInfoPanel';
 import AuctionBidForm from '@/components/auction/AuctionBidForm';
@@ -60,6 +61,12 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO
+        title={auction.title}
+        description={`${auction.description ? auction.description.slice(0, 150) : ''} — стартовая цена ${(auction.startingPrice || auction.currentPrice || 0).toLocaleString('ru-RU')} ₽. ${auction.category}, ${districtName || auction.district}.`}
+        keywords={`${auction.title}, аукцион ${auction.category}, торги ${districtName || auction.district}, ЕРТТП`}
+        canonical={`/auction/${auction.id}`}
+      />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-2 md:px-3 py-2 md:py-3 flex-1">

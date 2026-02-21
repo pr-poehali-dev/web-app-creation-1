@@ -18,6 +18,7 @@ import OrderFeedbackChat from '@/components/order/OrderFeedbackChat';
 import { useRequestData } from './RequestDetail/useRequestData';
 import { useRequestGallery } from './RequestDetail/useRequestGallery';
 import { useRequestResponse } from './RequestDetail/useRequestResponse';
+import SEO from '@/components/SEO';
 
 interface RequestDetailProps {
   isAuthenticated: boolean;
@@ -115,6 +116,12 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO
+        title={request.title}
+        description={`${request.description ? request.description.slice(0, 150) : ''} — бюджет ${request.pricePerUnit.toLocaleString('ru-RU')} ₽/${request.unit}. ${request.category}, ${request.district}.`}
+        keywords={`${request.title}, ${request.category}, запрос ${request.district}, ЕРТТП`}
+        canonical={`/request/${request.id}`}
+      />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
       <main className="container mx-auto px-4 py-8 flex-1">
