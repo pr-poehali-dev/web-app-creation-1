@@ -4,9 +4,10 @@ const SplashScreen = () => {
       <div className="flex flex-col items-center gap-4">
         <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden">
           <img 
-            src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png" 
+            src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
             alt="ЕРТТП" 
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain scale-[1.8]"
+            style={{ transform: 'scaleX(-1)' }}
           />
         </div>
         <div className="flex gap-1">
