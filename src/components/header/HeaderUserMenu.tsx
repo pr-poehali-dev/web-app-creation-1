@@ -37,7 +37,8 @@ export default function HeaderUserMenu({
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
+  const handleLogout = (e?: Event) => {
+    e?.preventDefault();
     onLogout();
     navigate('/');
   };
@@ -159,7 +160,7 @@ export default function HeaderUserMenu({
           <Icon name="User" className="mr-2 h-4 w-4" />
           Мои данные
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleLogout} className="text-destructive border-2 border-border rounded-md">
+        <DropdownMenuItem onSelect={handleLogout} className="text-destructive border-2 border-border rounded-md">
           <Icon name="LogOut" className="mr-2 h-4 w-4" />
           Выйти
         </DropdownMenuItem>
