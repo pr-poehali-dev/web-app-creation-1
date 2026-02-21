@@ -173,7 +173,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               <div className="flex items-center gap-2 opacity-30">
                 <div className="h-16 w-16 overflow-hidden rounded-md flex items-center justify-center">
                   <img 
-                    src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/dd8c8d50-49d4-4988-8c71-a554db285535.jpg" 
+                    src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/33aebfb8-14a4-47db-8883-2c74b62cdba4.png" 
                     alt="ЕРТТП" 
                     className="h-full w-full object-contain"
                   />
