@@ -87,6 +87,11 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -266,6 +271,59 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : 'audio/mp4';
+      const recorder = new MediaRecorder(stream, { mimeType });
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+        const file = new File([blob], `voice_${Date.now()}.${ext}`, { type: mimeType });
+        const preview = URL.createObjectURL(blob);
+        setPendingFile({ file, preview });
+      };
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => setRecordingTime((t) => t + 1), 1000);
+    } catch {
+      toast({ title: 'Нет доступа к микрофону', variant: 'destructive' });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      setIsRecording(false);
+      setRecordingTime(0);
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
+      audioChunksRef.current = [];
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      setIsRecording(false);
+      setRecordingTime(0);
+    }
+  };
+
+  const formatRecordingTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+
   if (orderStatus !== 'accepted' && orderStatus !== 'completed') {
     return null;
   }
@@ -373,7 +431,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className="mt-1.5 space-y-1">
                         {msg.attachments.map((att, i) => (
-                          att.type.startsWith('video/') ? (
+                          att.type.startsWith('audio/') ? (
+                            <audio key={i} src={att.url} controls className="max-w-full h-8" style={{ minWidth: 180 }} />
+                          ) : att.type.startsWith('video/') ? (
                             <video key={i} src={att.url} controls className="max-w-full rounded max-h-40" />
                           ) : att.type.startsWith('image/') ? (
                             <img
@@ -417,71 +477,114 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
         {pendingFile && (
           <div className="mb-2 flex items-center gap-2 bg-muted rounded-lg px-2 py-1.5">
-            {pendingFile.file.type.startsWith('image/') ? (
+            {pendingFile.file.type.startsWith('audio/') ? (
+              <Icon name="Mic" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            ) : pendingFile.file.type.startsWith('image/') ? (
               <img src={pendingFile.preview} alt="preview" className="h-10 w-10 object-cover rounded" />
             ) : pendingFile.file.type.startsWith('video/') ? (
               <video src={pendingFile.preview} className="h-10 w-10 object-cover rounded" />
             ) : (
               <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
             )}
-            <span className="text-xs text-muted-foreground flex-1 truncate">{pendingFile.file.name}</span>
+            {pendingFile.file.type.startsWith('audio/') ? (
+              <audio src={pendingFile.preview} controls className="h-8 flex-1" />
+            ) : (
+              <span className="text-xs text-muted-foreground flex-1 truncate">{pendingFile.file.name}</span>
+            )}
             <button onClick={removePendingFile} className="text-muted-foreground hover:text-destructive transition-colors">
               <Icon name="X" size={14} />
             </button>
           </div>
         )}
 
-        <div className="flex gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,video/*"
-            className="hidden"
-            onChange={handleFileSelect}
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isSending}
-            className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
-            title="Прикрепить фото/видео"
-          >
-            <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
-          </button>
-          <Input
-            placeholder="Написать сообщение..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onFocus={unlockAudio}
-            onTouchStart={unlockAudio}
-            disabled={isSending}
-            className="text-sm"
-          />
-          <Button
-            size="sm"
-            onClick={handleSendMessage}
-            onTouchStart={unlockAudio}
-            disabled={(!newMessage.trim() && !pendingFile) || isSending}
-            className="flex-shrink-0 px-3"
-          >
-            {isSending ? (
-              <Icon name="Loader2" className="h-4 w-4 animate-spin" />
-            ) : (
-              <Icon name="Send" className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
+        {isRecording ? (
+          <div className="flex gap-2 items-center">
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md border border-destructive bg-destructive/5">
+              <span className="inline-block w-2 h-2 rounded-full bg-destructive animate-pulse" />
+              <span className="text-sm text-destructive font-medium">Запись {formatRecordingTime(recordingTime)}</span>
+            </div>
+            <button
+              type="button"
+              onClick={cancelRecording}
+              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors"
+              title="Отменить"
+            >
+              <Icon name="X" className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <Button size="sm" onClick={stopRecording} className="flex-shrink-0 px-3 bg-destructive hover:bg-destructive/90">
+              <Icon name="Square" className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,video/*"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSending || !!pendingFile}
+              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+              title="Прикрепить фото/видео"
+            >
+              <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
+            </button>
+            {!pendingFile && !newMessage.trim() ? (
+              <button
+                type="button"
+                onClick={startRecording}
+                disabled={isSending}
+                className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                title="Голосовое сообщение"
+              >
+                <Icon name="Mic" className="h-4 w-4 text-muted-foreground" />
+              </button>
+            ) : null}
+            <Input
+              placeholder="Написать сообщение..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={unlockAudio}
+              onTouchStart={unlockAudio}
+              disabled={isSending}
+              className="text-sm"
+            />
+            <Button
+              size="sm"
+              onClick={handleSendMessage}
+              onTouchStart={unlockAudio}
+              disabled={(!newMessage.trim() && !pendingFile) || isSending}
+              className="flex-shrink-0 px-3"
+            >
+              {isSending ? (
+                <Icon name="Loader2" className="h-4 w-4 animate-spin" />
+              ) : (
+                <Icon name="Send" className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {lightboxUrl && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={() => setLightboxUrl(null)}
+          onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); setLightboxUrl(null); } }}
+          tabIndex={-1}
         >
           <button
-            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors z-10"
             onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
           >
             <Icon name="X" size={28} />
           </button>
