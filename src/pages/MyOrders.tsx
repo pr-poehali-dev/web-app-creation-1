@@ -8,6 +8,7 @@ import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrderReviewModal from '@/components/reviews/OrderReviewModal';
 import OrdersContent from '@/components/order/OrdersContent';
 import PullToRefresh from '@/components/PullToRefresh';
+import TelegramConnectBanner from '@/components/order/TelegramConnectBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData, type OrderTab } from '@/hooks/useOrdersData';
 
@@ -127,6 +128,9 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Мои заказы</h1>
             <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
+            {currentUser?.id && (
+              <TelegramConnectBanner userId={String(currentUser.id)} />
+            )}
           </div>
 
           {isLoading ? (

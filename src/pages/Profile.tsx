@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -9,6 +10,7 @@ import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
 import NotificationSettings from '@/components/profile/NotificationSettings';
 import EmailNotificationSettings from '@/components/profile/EmailNotificationSettings';
+import TelegramNotificationSettings from '@/components/profile/TelegramNotificationSettings';
 import ProfileEditForm from '@/components/profile/ProfileEditForm';
 import ProfilePasswordForm from '@/components/profile/ProfilePasswordForm';
 import { useProfileData } from '@/hooks/useProfileData';
@@ -30,6 +32,16 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   useScrollToTop();
   const [searchParams] = useSearchParams();
   const viewingUserId = searchParams.get('userId');
+  const section = searchParams.get('section');
+  const telegramRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (section === 'telegram' && telegramRef.current) {
+      setTimeout(() => {
+        telegramRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    }
+  }, [section]);
   
   const {
     currentUser,
@@ -185,6 +197,9 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             <>
               <NotificationSettings />
               <EmailNotificationSettings />
+              <div ref={telegramRef}>
+                <TelegramNotificationSettings userId={String(currentUser.id)} />
+              </div>
             </>
           )}
         </div>
