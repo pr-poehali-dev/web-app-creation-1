@@ -1,4 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
+import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -109,6 +110,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
 
       <main className="container mx-auto px-4 py-8 flex-1">
         <div className="max-w-4xl mx-auto space-y-6">
+          <BackButton />
           <ProfileHeader
             firstName={currentUser.firstName || ''}
             lastName={currentUser.lastName || ''}
