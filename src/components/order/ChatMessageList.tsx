@@ -31,6 +31,12 @@ export default function ChatMessageList({
 }: ChatMessageListProps) {
   const isAtBottomRef = useRef(true);
 
+  useEffect(() => {
+    if (messages.length > 0 && messagesContainerRef.current) {
+      messagesContainerRef.current.focus({ preventScroll: true });
+    }
+  }, [messages.length, messagesContainerRef]);
+
   const getSenderRole = useCallback((senderType: 'buyer' | 'seller') => {
     if (isRequest) {
       return senderType === 'buyer' ? 'Исполнитель' : 'Заказчик';
@@ -58,7 +64,8 @@ export default function ChatMessageList({
       <div
         ref={messagesContainerRef}
         onScroll={onScroll}
-        className={`space-y-2 overflow-y-auto pr-1 ${isHistory ? 'max-h-[200px] mb-2' : 'max-h-[200px] mb-3'}`}
+        tabIndex={0}
+        className={`space-y-2 overflow-y-auto pr-1 outline-none ${isHistory ? 'max-h-[200px] mb-2' : 'max-h-[200px] mb-3'}`}
         style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
       >
         {messages.map((msg) => {
