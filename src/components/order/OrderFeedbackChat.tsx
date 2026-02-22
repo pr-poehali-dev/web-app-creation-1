@@ -481,7 +481,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         >
           <button
             className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
-            onClick={() => setLightboxUrl(null)}
+            onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
           >
             <Icon name="X" size={28} />
           </button>
