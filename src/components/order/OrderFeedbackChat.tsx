@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -473,9 +474,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         </div>
       </div>
 
-      {lightboxUrl && (
+      {lightboxUrl && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
           onClick={() => setLightboxUrl(null)}
         >
           <button
@@ -490,7 +491,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
             className="max-w-[95vw] max-h-[90vh] rounded-lg object-contain shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
