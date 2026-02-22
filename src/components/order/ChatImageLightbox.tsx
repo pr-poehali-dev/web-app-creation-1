@@ -19,7 +19,7 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
       tabIndex={-1}
     >
       <button
-        className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors z-10"
+        className="absolute top-4 left-4 text-white/80 hover:text-white transition-colors z-10"
         onClick={(e) => { e.stopPropagation(); onClose(); }}
         onMouseDown={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
