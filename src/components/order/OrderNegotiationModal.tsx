@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,6 +9,7 @@ import type { Order } from '@/types/order';
 import { getSession } from '@/utils/auth';
 import OrderNegotiationSection from './OrderNegotiationSection';
 import OrderChatInfoCard from './OrderChatInfoCard';
+import ChatImageLightbox from './ChatImageLightbox';
 
 interface OrderNegotiationModalProps {
   isOpen: boolean;
@@ -33,43 +35,49 @@ export default function OrderNegotiationModal({
   const currentUser = getSession();
   const isBuyer = currentUser?.id?.toString() === order.buyerId?.toString();
   const isSeller = currentUser?.id?.toString() === order.sellerId?.toString();
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const contactPerson = isBuyer 
     ? { name: order.sellerName, phone: order.sellerPhone, email: order.sellerEmail }
     : { name: order.buyerName, phone: order.buyerPhone, email: order.buyerEmail };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b">
-          <DialogTitle>
-            <span>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</span>
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b">
+            <DialogTitle>
+              <span>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</span>
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-          <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
-            <OrderNegotiationSection
-              order={order}
-              isBuyer={isBuyer}
-              isSeller={isSeller}
-              onCounterOffer={onCounterOffer}
-              onAcceptCounter={onAcceptCounter}
-              onCancelOrder={onCancelOrder}
-              onCompleteOrder={onCompleteOrder}
-            />
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+            <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+              <OrderNegotiationSection
+                order={order}
+                isBuyer={isBuyer}
+                isSeller={isSeller}
+                onCounterOffer={onCounterOffer}
+                onAcceptCounter={onAcceptCounter}
+                onCancelOrder={onCancelOrder}
+                onCompleteOrder={onCompleteOrder}
+              />
 
-            <OrderChatInfoCard
-              order={order}
-              isBuyer={isBuyer}
-              contactPerson={contactPerson}
-              onCancelOrder={onCancelOrder ? (orderId, reason) => onCancelOrder(orderId, reason) : undefined}
-              onCompleteOrder={onCompleteOrder ? () => onCompleteOrder() : undefined}
-              onAcceptOrder={onAcceptOrder ? () => onAcceptOrder() : undefined}
-            />
+              <OrderChatInfoCard
+                order={order}
+                isBuyer={isBuyer}
+                contactPerson={contactPerson}
+                onLightboxOpen={setLightboxUrl}
+                onCancelOrder={onCancelOrder ? (orderId, reason) => onCancelOrder(orderId, reason) : undefined}
+                onCompleteOrder={onCompleteOrder ? () => onCompleteOrder() : undefined}
+                onAcceptOrder={onAcceptOrder ? () => onAcceptOrder() : undefined}
+              />
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <ChatImageLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />
+    </>
   );
 }

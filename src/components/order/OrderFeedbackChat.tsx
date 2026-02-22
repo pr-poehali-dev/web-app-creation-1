@@ -7,16 +7,16 @@ import { useToast } from '@/hooks/use-toast';
 import { type OrderMessage, playNotificationSound } from './chat-types';
 import ChatMessageList from './ChatMessageList';
 import ChatInputBar from './ChatInputBar';
-import ChatImageLightbox from './ChatImageLightbox';
 
 interface OrderFeedbackChatProps {
   orderId: string;
   orderStatus: string;
   isBuyer: boolean;
   isRequest?: boolean;
+  onLightboxOpen?: (url: string) => void;
 }
 
-export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest }: OrderFeedbackChatProps) {
+export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest, onLightboxOpen }: OrderFeedbackChatProps) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<OrderMessage[]>([]);
   const prevOrderStatus = useRef(orderStatus);
@@ -25,7 +25,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -282,7 +282,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
                 hasNewMessages={false}
                 isHistory
                 onNewMessagesSeen={() => {}}
-                onLightboxOpen={setLightboxUrl}
+                onLightboxOpen={onLightboxOpen ?? (() => {})}
                 messagesContainerRef={messagesContainerRef}
                 messagesEndRef={messagesEndRef}
                 onScroll={handleMessagesScroll}
@@ -290,7 +290,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
             </div>
           )}
         </div>
-        <ChatImageLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />
       </>
     );
   }
@@ -316,7 +315,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
           isRequest={isRequest}
           hasNewMessages={hasNewMessages}
           onNewMessagesSeen={() => scrollToBottom(true)}
-          onLightboxOpen={setLightboxUrl}
+          onLightboxOpen={onLightboxOpen ?? (() => {})}
           messagesContainerRef={messagesContainerRef}
           messagesEndRef={messagesEndRef}
           onScroll={handleMessagesScroll}
@@ -338,8 +337,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
           onCancelRecording={cancelRecording}
         />
       </div>
-
-      <ChatImageLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />
     </>
   );
 }
