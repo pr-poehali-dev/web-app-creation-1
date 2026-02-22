@@ -58,35 +58,46 @@ def generate_order_number():
     return f'ORD-{timestamp}-{random_part}'
 
 def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
-    """Отправка push и email уведомлений"""
+    """Отправка push, telegram и email уведомлений"""
     notification_data = json.dumps({
         'userId': user_id,
         'title': title,
         'message': message,
         'url': url
     })
-    
-    # Telegram-уведомление (используем существующий endpoint)
+    headers = {'Content-Type': 'application/json'}
+
+    # Web Push-уведомление
+    try:
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
+        conn.request('POST', '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a',  # push-send
+                    notification_data, headers)
+        response = conn.getresponse()
+        response.read()
+        conn.close()
+        print(f'[NOTIFICATION] Push sent to user {user_id}: {title}')
+    except Exception as e:
+        print(f'[NOTIFICATION] Push error: {e}')
+
+    # Telegram-уведомление
     try:
         conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
         conn.request('POST', '/d49f8584-6ef9-47c0-9661-02560166e10f',  # telegram-notify
-                    notification_data, 
-                    {'Content-Type': 'application/json'})
+                    notification_data, headers)
         response = conn.getresponse()
-        response.read()  # Обязательно читаем ответ
+        response.read()
         conn.close()
-        print(f'[NOTIFICATION] Telegram notification sent to user {user_id}: {title}')
+        print(f'[NOTIFICATION] Telegram sent to user {user_id}: {title}')
     except Exception as e:
         print(f'[NOTIFICATION] Telegram error: {e}')
     
     # Email-уведомление
     try:
         conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
-        conn.request('POST', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43', 
-                    notification_data, 
-                    {'Content-Type': 'application/json'})
+        conn.request('POST', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43',  # email-notify
+                    notification_data, headers)
         response = conn.getresponse()
-        response.read()  # Обязательно читаем ответ
+        response.read()
         conn.close()
         print(f'[NOTIFICATION] Email sent to user {user_id}: {title}')
     except Exception as e:
