@@ -4,7 +4,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogPortal,
 } from '@/components/ui/dialog';
 import type { Order } from '@/types/order';
 import { getSession } from '@/utils/auth';
@@ -74,13 +73,11 @@ export default function OrderNegotiationModal({
             />
           </div>
         </div>
-      </DialogContent>
 
-      {lightboxUrl && (
-        <DialogPortal>
+        {lightboxUrl && (
           <ChatImageLightbox url={lightboxUrl} onClose={() => setLightboxUrl(null)} />
-        </DialogPortal>
-      )}
+        )}
+      </DialogContent>
     </Dialog>
   );
 }

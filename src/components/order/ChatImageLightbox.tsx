@@ -10,22 +10,22 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      style={{ zIndex: 99999 }}
+      className="absolute inset-0 flex items-center justify-center bg-black/90 rounded-lg"
+      style={{ zIndex: 50 }}
     >
       <button
         type="button"
         aria-label="Закрыть"
-        className="absolute top-4 left-4 flex items-center justify-center w-14 h-14 rounded-full bg-white/30 text-white"
-        style={{ touchAction: 'manipulation' }}
+        className="absolute top-3 left-3 flex items-center justify-center w-12 h-12 rounded-full bg-white/30 text-white active:bg-white/60"
+        style={{ touchAction: 'manipulation', zIndex: 51 }}
         onClick={onClose}
       >
-        <Icon name="X" size={26} />
+        <Icon name="X" size={24} />
       </button>
       <img
         src={url}
         alt="Полный размер"
-        className="max-w-[95vw] max-h-[90vh] rounded-lg object-contain shadow-2xl"
+        className="max-w-full max-h-full rounded-lg object-contain"
       />
     </div>
   );
