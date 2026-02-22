@@ -12,25 +12,20 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
   return createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={(e) => { e.stopPropagation(); onClose(); }}
-      onMouseDown={(e) => e.stopPropagation()}
-      onPointerDown={(e) => e.stopPropagation()}
-      onKeyDown={(e) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } }}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
       tabIndex={-1}
     >
       <button
-        className="absolute top-4 left-4 text-white/80 hover:text-white transition-colors z-10"
-        onClick={(e) => { e.stopPropagation(); onClose(); }}
-        onMouseDown={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
+        type="button"
+        className="absolute top-4 left-4 z-10 flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white transition-colors"
+        onClick={onClose}
       >
-        <Icon name="X" size={28} />
+        <Icon name="X" size={22} />
       </button>
       <img
         src={url}
         alt="Полный размер"
         className="max-w-[95vw] max-h-[90vh] rounded-lg object-contain shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       />
     </div>,
     document.body
