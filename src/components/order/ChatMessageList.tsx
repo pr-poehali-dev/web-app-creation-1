@@ -65,6 +65,7 @@ export default function ChatMessageList({
         ref={messagesContainerRef}
         onScroll={onScroll}
         tabIndex={0}
+        onTouchStart={() => messagesContainerRef.current?.focus({ preventScroll: true })}
         className={`space-y-2 overflow-y-auto pr-1 outline-none ${isHistory ? 'max-h-[200px] mb-2' : 'max-h-[200px] mb-3'}`}
         style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
       >
