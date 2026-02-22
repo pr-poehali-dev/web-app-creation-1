@@ -48,7 +48,7 @@ export function getNotifications(userId: string): Notification[] {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) return [];
     
-    const all: Notification[] = JSON.parse(stored).map((n: any) => ({
+    const all: Notification[] = JSON.parse(stored).map((n: Notification & { createdAt: string }) => ({
       ...n,
       createdAt: new Date(n.createdAt),
     }));
@@ -180,14 +180,6 @@ export function notifyOrderAccepted(
     `/my-orders`
   );
 
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification('Заказ принят!', {
-      body: `${sellerName} принял ваш заказ`,
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      tag: `order-${orderId}`,
-    });
-  }
 }
 
 export function notifyNewMessage(
@@ -204,14 +196,6 @@ export function notifyNewMessage(
     `/my-orders`
   );
 
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(`Сообщение от ${senderName}`, {
-      body: message.slice(0, 100),
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      tag: `message-${orderId}`,
-    });
-  }
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {

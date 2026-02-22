@@ -344,13 +344,6 @@ export function useOrdersData(
 
       // Отправляем на сервер в фоне
       await ordersAPI.updateOrder(orderToAccept, { status: 'accepted' });
-      
-      notifyOrderAccepted(
-        order.buyerId,
-        order.sellerName,
-        order.offerTitle,
-        order.id
-      );
 
       toast({
         title: 'Заказ принят',
