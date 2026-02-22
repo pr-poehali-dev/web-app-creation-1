@@ -85,6 +85,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -374,9 +375,13 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
                           att.type.startsWith('video/') ? (
                             <video key={i} src={att.url} controls className="max-w-full rounded max-h-40" />
                           ) : att.type.startsWith('image/') ? (
-                            <a key={i} href={att.url} target="_blank" rel="noopener noreferrer">
-                              <img src={att.url} alt={att.name} className="max-w-full rounded max-h-40 cursor-pointer hover:opacity-90 transition-opacity" />
-                            </a>
+                            <img
+                              key={i}
+                              src={att.url}
+                              alt={att.name}
+                              onClick={() => setLightboxUrl(att.url)}
+                              className="max-w-full rounded max-h-40 cursor-zoom-in hover:opacity-90 transition-opacity"
+                            />
                           ) : (
                             <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs underline opacity-80">
                               <Icon name="Paperclip" size={12} />
@@ -467,6 +472,26 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
           </Button>
         </div>
       </div>
+
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <Icon name="X" size={28} />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Полный размер"
+            className="max-w-[95vw] max-h-[90vh] rounded-lg object-contain shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </>
   );
 }
