@@ -16,7 +16,6 @@
   "verify-inn": "https://functions.poehali.dev/966b73dd-99eb-4b00-aef4-ed100a06f958",
   "telegram-setup-webhook": "https://functions.poehali.dev/50d426b2-7c22-44d0-8474-b4b2f19b9a09",
   "telegram-connect": "https://functions.poehali.dev/e57f42ad-e2c3-420c-a418-16a98422a47d",
-  "telegram-notify": "https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f",
   "content-management": "https://functions.poehali.dev/c034aa7b-b222-4174-a498-ac62ab8ba0f0",
   "upload-video": "https://functions.poehali.dev/9999daf2-27bb-4ac4-a09e-001928741e24",
   "admin-stats": "https://functions.poehali.dev/a764d5ef-b512-4cbd-b25b-36a52baa08b7",
