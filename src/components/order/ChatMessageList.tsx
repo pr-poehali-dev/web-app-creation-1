@@ -59,7 +59,7 @@ export default function ChatMessageList({
         ref={messagesContainerRef}
         onScroll={onScroll}
         className={`space-y-2 overflow-y-auto pr-1 ${isHistory ? 'max-h-[200px] mb-2' : 'max-h-[200px] mb-3'}`}
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
       >
         {messages.map((msg) => {
           const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
