@@ -122,10 +122,10 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     if (!initialScrollDone.current) {
       initialScrollDone.current = true;
       isAtBottomRef.current = true;
-      requestAnimationFrame(() => {
+      setTimeout(() => {
         const container = messagesContainerRef.current;
         if (container) container.scrollTop = container.scrollHeight;
-      });
+      }, 300);
       return;
     }
 
