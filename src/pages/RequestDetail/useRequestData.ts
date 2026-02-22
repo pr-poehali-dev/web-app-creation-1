@@ -101,13 +101,13 @@ export function useRequestData(id: string | undefined) {
           isPremium: data.isPremium,
           author: {
             id: data.userId,
-            name: 'Пользователь',
+            name: data.authorName || 'Пользователь',
             type: 'individual',
             phone: '',
             email: '',
             rating: 0,
             reviewsCount: 0,
-            isVerified: false,
+            isVerified: data.authorIsVerified || false,
             statistics: {
               totalRequests: 0,
               activeRequests: 0,

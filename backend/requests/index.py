@@ -288,13 +288,16 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             v.thumbnail as video_thumbnail,
             (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders o 
              WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
-            ) as responses
+            ) as responses,
+            COALESCE(u.company_name, TRIM(CONCAT(u.first_name, ' ', u.last_name))) as author_name,
+            u.is_verified as author_is_verified
         FROM t_p42562714_web_app_creation_1.requests r
         LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_videos v ON r.video_id = v.id
+        LEFT JOIN t_p42562714_web_app_creation_1.users u ON r.user_id = u.id
         WHERE r.id = %s AND r.status != 'deleted'
-        GROUP BY r.id, v.id, v.url, v.thumbnail
+        GROUP BY r.id, v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.is_verified
     """
     
     cur.execute(sql, (request_id,))
@@ -340,6 +343,8 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     deadline_end = req_dict.pop('deadline_end', None)
     
     req_dict['userId'] = req_dict.pop('user_id', None)
+    req_dict['authorName'] = req_dict.pop('author_name', None)
+    req_dict['authorIsVerified'] = req_dict.pop('author_is_verified', False)
     req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
     req_dict['fullAddress'] = req_dict.pop('full_address', None)
     req_dict['deliveryAddress'] = req_dict.pop('delivery_address', None)
