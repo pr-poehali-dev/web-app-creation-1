@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '@/components/ui/icon';
 
@@ -7,42 +6,47 @@ interface ChatImageLightboxProps {
   onClose: () => void;
 }
 
-export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxProps) {
-  useEffect(() => {
-    if (!url) return;
-    const stop = (e: Event) => e.stopPropagation();
-    document.addEventListener('pointerdown', stop, { capture: true });
-    document.addEventListener('mousedown', stop, { capture: true });
-    document.addEventListener('click', stop, { capture: true });
-    return () => {
-      document.removeEventListener('pointerdown', stop, { capture: true });
-      document.removeEventListener('mousedown', stop, { capture: true });
-      document.removeEventListener('click', stop, { capture: true });
-    };
-  }, [url]);
+const stopAll = (e: React.SyntheticEvent) => {
+  e.stopPropagation();
+  e.nativeEvent?.stopImmediatePropagation();
+};
 
+export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxProps) {
   if (!url) return null;
+
+  const handleClose = (e: React.SyntheticEvent) => {
+    stopAll(e);
+    onClose();
+  };
 
   return createPortal(
     <div
       className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      style={{ zIndex: 99999, pointerEvents: 'all' }}
+      style={{ zIndex: 99999 }}
+      onClick={stopAll}
+      onMouseDown={stopAll}
+      onPointerDown={stopAll}
+      onTouchStart={stopAll}
+      onTouchEnd={stopAll}
     >
       <button
         type="button"
-        style={{ pointerEvents: 'all', zIndex: 100000 }}
-        className="absolute top-4 left-4 flex items-center justify-center w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white transition-colors"
-        onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
-        onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); }}
-        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        aria-label="Закрыть"
+        className="absolute top-4 left-4 flex items-center justify-center w-12 h-12 rounded-full bg-white/25 hover:bg-white/45 active:bg-white/60 text-white transition-colors"
+        style={{ zIndex: 100000, touchAction: 'manipulation' }}
+        onClick={handleClose}
+        onTouchEnd={handleClose}
+        onPointerDown={stopAll}
+        onMouseDown={stopAll}
       >
-        <Icon name="X" size={22} />
+        <Icon name="X" size={24} />
       </button>
       <img
         src={url}
         alt="Полный размер"
         className="max-w-[95vw] max-h-[90vh] rounded-lg object-contain shadow-2xl"
-        style={{ pointerEvents: 'none' }}
+        onClick={stopAll}
+        onTouchEnd={stopAll}
       />
     </div>,
     document.body
