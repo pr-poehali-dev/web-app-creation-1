@@ -19,13 +19,13 @@ const TimezoneProvider = lazy(() => import("./contexts/TimezoneContext").then(m 
 const LoadingScreen = () => <SplashScreen />;
 
 // Функция для обработки ошибок динамического импорта
-const lazyWithRetry = (componentImport: () => Promise<any>) =>
+const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
   lazy(async () => {
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
       try {
         const component = await componentImport();
-        return component;
+        return component as { default: React.ComponentType };
       } catch (error) {
         console.warn(`Attempt ${i + 1}/${maxRetries} failed:`, error);
         
@@ -43,15 +43,15 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
             }
           }
           
-          // Автоматически перезагружаем страницу один раз
-          const hasReloaded = sessionStorage.getItem('chunk-reload');
+          // Автоматически перезагружаем страницу один раз (с ?reload чтобы сбросить кэш)
+          const hasReloaded = new URLSearchParams(window.location.search).has('reload');
           if (!hasReloaded) {
-            sessionStorage.setItem('chunk-reload', 'true');
-            window.location.reload();
-            // Возвращаем пустой компонент пока перезагружается
-            return { 
+            const url = new URL(window.location.href);
+            url.searchParams.set('reload', '1');
+            window.location.replace(url.toString());
+            return {
               default: () => <div className="flex items-center justify-center min-h-screen">Загрузка...</div>
-            };
+            } as { default: React.ComponentType };
           }
           
           // Если уже перезагружали, показываем ошибку
@@ -63,8 +63,9 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
                   <p className="text-muted-foreground mb-4">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
                   <button 
                     onClick={() => {
-                      sessionStorage.removeItem('chunk-reload');
-                      window.location.reload();
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete('reload');
+                      window.location.replace(url.toString());
                     }} 
                     className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
                   >
@@ -73,7 +74,7 @@ const lazyWithRetry = (componentImport: () => Promise<any>) =>
                 </div>
               </div>
             )
-          };
+          } as { default: React.ComponentType };
         }
         
         // Ждём перед следующей попыткой
