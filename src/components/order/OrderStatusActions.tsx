@@ -28,7 +28,10 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             <div className="flex items-center gap-2 mb-2">
               <Icon name="User" className="h-4 w-4 text-muted-foreground" />
               <h3 className="font-semibold text-sm">
-                {isBuyer ? 'Продавец' : 'Покупатель'}
+                {order.isRequest
+                  ? (isBuyer ? 'Заказчик' : 'Исполнитель')
+                  : (isBuyer ? 'Продавец' : 'Покупатель')
+                }
               </h3>
             </div>
             <p className="text-sm font-medium">{contactPerson.name}</p>

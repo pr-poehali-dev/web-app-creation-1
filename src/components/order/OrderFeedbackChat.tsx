@@ -103,7 +103,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
   const getSenderRole = (senderType: 'buyer' | 'seller') => {
     if (isRequest) {
-      return senderType === 'buyer' ? 'Заказчик' : 'Исполнитель';
+      // В откликах buyer_id = Исполнитель, seller_id = Заказчик (инверсия в БД)
+      return senderType === 'buyer' ? 'Исполнитель' : 'Заказчик';
     }
     return senderType === 'buyer' ? 'Покупатель' : 'Продавец';
   };
