@@ -165,7 +165,6 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               <Icon name="UserCheck" className="h-3.5 w-3.5" />
               Контакты {isSeller ? 'исполнителя' : 'заказчика'}
             </p>
-            <p className="font-medium">{isSeller ? order.buyerName : order.sellerName}</p>
             {(isSeller ? order.buyerPhone : order.sellerPhone) && (
               <a
                 href={`tel:${isSeller ? order.buyerPhone : order.sellerPhone}`}
