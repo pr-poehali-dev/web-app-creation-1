@@ -29,6 +29,21 @@
       "expectedBody": {
         "error": "User ID required"
       }
+    },
+    {
+      "name": "Create message without auth",
+      "method": "POST",
+      "path": "/?message=true",
+      "body": {
+        "orderId": "00000000-0000-0000-0000-000000000000",
+        "senderId": 1,
+        "senderType": "buyer",
+        "message": "test"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "User ID required"
+      }
     }
   ]
 }

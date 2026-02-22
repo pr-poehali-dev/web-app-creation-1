@@ -18,6 +18,10 @@ from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import http.client
+import base64
+import uuid
+import mimetypes
+import boto3
 import time
 from rate_limiter import rate_limiter
 
@@ -1270,6 +1274,7 @@ def get_messages_by_order(order_id: str, headers: Dict[str, str], event: Dict[st
             'sender_type': msg['sender_type'],
             'message': msg['message'],
             'is_read': msg['is_read'],
+            'attachments': msg.get('attachments') or [],
             'createdAt': msg['created_at'].isoformat() if msg.get('created_at') else None
         })
     
@@ -1283,13 +1288,29 @@ def get_messages_by_order(order_id: str, headers: Dict[str, str], event: Dict[st
         'isBase64Encoded': False
     }
 
+def upload_message_file(file_data_b64: str, file_name: str, content_type: str) -> str:
+    """Загрузить файл в S3 и вернуть CDN URL"""
+    s3 = boto3.client(
+        's3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+    )
+    file_bytes = base64.b64decode(file_data_b64)
+    ext = os.path.splitext(file_name)[1] or mimetypes.guess_extension(content_type) or ''
+    key = f"order-messages/{uuid.uuid4()}{ext}"
+    s3.put_object(Bucket='files', Key=key, Body=file_bytes, ContentType=content_type)
+    cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
+    return cdn_url
+
+
 def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    """Создать новое сообщение по заказу"""
+    """Создать новое сообщение по заказу (поддерживает вложения фото/видео)"""
     body = json.loads(event.get('body', '{}'))
     user_headers = event.get('headers', {})
     user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
     
-    print(f"[CREATE_MESSAGE] user_id={user_id}, body={body}")
+    print(f"[CREATE_MESSAGE] user_id={user_id}, body keys={list(body.keys())}")
     
     if not user_id:
         return {
@@ -1316,16 +1337,33 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     
     order_id_escaped = body['orderId'].replace("'", "''")
     sender_type_escaped = body['senderType'].replace("'", "''")
-    message_escaped = body['message'].replace("'", "''")
+    message_text = body.get('message', '')
+    message_escaped = message_text.replace("'", "''")
     sender_name_escaped = sender_name.replace("'", "''")
+    
+    # Загружаем файл-вложение если есть
+    attachments = []
+    if body.get('fileData') and body.get('fileName'):
+        file_url = upload_message_file(
+            body['fileData'],
+            body['fileName'],
+            body.get('fileType', 'application/octet-stream')
+        )
+        attachments.append({
+            'url': file_url,
+            'name': body['fileName'],
+            'type': body.get('fileType', 'application/octet-stream')
+        })
+    
+    attachments_json = json.dumps(attachments, ensure_ascii=False).replace("'", "''")
     
     # Получаем информацию о заказе для определения получателя уведомления
     cur.execute(f"SELECT buyer_id, seller_id, order_number FROM {schema}.orders WHERE id = '{order_id_escaped}'")
     order = cur.fetchone()
     
     sql = f"""
-        INSERT INTO {schema}.order_messages (order_id, sender_id, sender_name, sender_type, message)
-        VALUES ('{order_id_escaped}', {sender_id}, '{sender_name_escaped}', '{sender_type_escaped}', '{message_escaped}')
+        INSERT INTO {schema}.order_messages (order_id, sender_id, sender_name, sender_type, message, attachments)
+        VALUES ('{order_id_escaped}', {sender_id}, '{sender_name_escaped}', '{sender_type_escaped}', '{message_escaped}', '{attachments_json}')
         RETURNING id, created_at
     """
     
@@ -1339,10 +1377,11 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     if order:
         try:
             recipient_id = order['seller_id'] if int(sender_id) == order['buyer_id'] else order['buyer_id']
+            notif_text = message_text if message_text else '📎 Файл'
             send_notification(
                 recipient_id,
                 'Новое сообщение по заказу',
-                f'{sender_name}: {body["message"][:50]}...' if len(body["message"]) > 50 else f'{sender_name}: {body["message"]}',
+                f'{sender_name}: {notif_text[:50]}...' if len(notif_text) > 50 else f'{sender_name}: {notif_text}',
                 f'/my-orders?id={body["orderId"]}'
             )
         except Exception as e:

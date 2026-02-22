@@ -7,6 +7,12 @@ import { ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 
+interface MessageAttachment {
+  url: string;
+  name: string;
+  type: string;
+}
+
 interface OrderMessage {
   id: string;
   orderId: string;
@@ -15,6 +21,7 @@ interface OrderMessage {
   senderType: 'buyer' | 'seller';
   message: string;
   isRead: boolean;
+  attachments?: MessageAttachment[];
   createdAt: string;
 }
 
@@ -77,6 +84,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevCountRef = useRef<number>(0);
@@ -192,20 +201,53 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   }, [messages]);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 20 * 1024 * 1024) {
+      toast({ title: 'Файл слишком большой', description: 'Максимальный размер — 20 МБ', variant: 'destructive' });
+      return;
+    }
+    const preview = URL.createObjectURL(file);
+    setPendingFile({ file, preview });
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removePendingFile = () => {
+    if (pendingFile) URL.revokeObjectURL(pendingFile.preview);
+    setPendingFile(null);
+  };
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || isSending) return;
+    if (!newMessage.trim() && !pendingFile) return;
+    if (isSending) return;
     const user = getSession();
     if (!user?.id) return;
 
     try {
       setIsSending(true);
-      await ordersAPI.createMessage({
+      const payload: Record<string, unknown> = {
         orderId,
         senderId: user.id,
         senderType: isBuyer ? 'buyer' : 'seller',
         message: newMessage.trim(),
-      });
+      };
+
+      if (pendingFile) {
+        const reader = new FileReader();
+        const fileData = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(pendingFile.file);
+        });
+        payload.fileData = fileData;
+        payload.fileName = pendingFile.file.name;
+        payload.fileType = pendingFile.file.type;
+      }
+
+      await ordersAPI.createMessage(payload as Parameters<typeof ordersAPI.createMessage>[0]);
       setNewMessage('');
+      removePendingFile();
       isAtBottomRef.current = true;
       await loadMessages(true);
     } catch (e) {
@@ -325,7 +367,25 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
                         </>
                       )}
                     </div>
-                    <p className="whitespace-pre-line break-words">{msg.message}</p>
+                    {msg.message && <p className="whitespace-pre-line break-words">{msg.message}</p>}
+                    {msg.attachments && msg.attachments.length > 0 && (
+                      <div className="mt-1.5 space-y-1">
+                        {msg.attachments.map((att, i) => (
+                          att.type.startsWith('video/') ? (
+                            <video key={i} src={att.url} controls className="max-w-full rounded max-h-40" />
+                          ) : att.type.startsWith('image/') ? (
+                            <a key={i} href={att.url} target="_blank" rel="noopener noreferrer">
+                              <img src={att.url} alt={att.name} className="max-w-full rounded max-h-40 cursor-pointer hover:opacity-90 transition-opacity" />
+                            </a>
+                          ) : (
+                            <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs underline opacity-80">
+                              <Icon name="Paperclip" size={12} />
+                              {att.name}
+                            </a>
+                          )
+                        ))}
+                      </div>
+                    )}
                     <p className={`text-[10px] mt-1 ${isMe ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
                       {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </p>
@@ -349,7 +409,39 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
           <p className="text-xs text-muted-foreground mb-3">Здесь можно уточнить детали, задать вопрос или оставить комментарий</p>
         )}
 
+        {pendingFile && (
+          <div className="mb-2 flex items-center gap-2 bg-muted rounded-lg px-2 py-1.5">
+            {pendingFile.file.type.startsWith('image/') ? (
+              <img src={pendingFile.preview} alt="preview" className="h-10 w-10 object-cover rounded" />
+            ) : pendingFile.file.type.startsWith('video/') ? (
+              <video src={pendingFile.preview} className="h-10 w-10 object-cover rounded" />
+            ) : (
+              <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-xs text-muted-foreground flex-1 truncate">{pendingFile.file.name}</span>
+            <button onClick={removePendingFile} className="text-muted-foreground hover:text-destructive transition-colors">
+              <Icon name="X" size={14} />
+            </button>
+          </div>
+        )}
+
         <div className="flex gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={handleFileSelect}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending}
+            className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+            title="Прикрепить фото/видео"
+          >
+            <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
+          </button>
           <Input
             placeholder="Написать сообщение..."
             value={newMessage}
@@ -364,7 +456,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
             size="sm"
             onClick={handleSendMessage}
             onTouchStart={unlockAudio}
-            disabled={!newMessage.trim() || isSending}
+            disabled={(!newMessage.trim() && !pendingFile) || isSending}
             className="flex-shrink-0 px-3"
           >
             {isSending ? (

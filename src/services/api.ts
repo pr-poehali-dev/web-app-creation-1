@@ -896,7 +896,7 @@ export const ordersAPI = {
     return { messages: data.messages || [] };
   },
 
-  async createMessage(data: { orderId: string; senderId: number; senderType: 'buyer' | 'seller'; message: string }): Promise<any> {
+  async createMessage(data: { orderId: string; senderId: number; senderType: 'buyer' | 'seller'; message: string; fileData?: string; fileName?: string; fileType?: string }): Promise<unknown> {
     const userId = getUserId();
     if (!userId) {
       throw new Error('User not authenticated');
