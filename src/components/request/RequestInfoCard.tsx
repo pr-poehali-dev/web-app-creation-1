@@ -4,12 +4,12 @@ import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Icon from '@/components/ui/icon';
 import { safeToLocaleDateString } from '@/utils/dateUtils';
-import type { Request } from '@/types/offer';
+import type { Request as RequestType } from '@/pages/RequestDetail/useRequestData';
 import { DISTRICTS } from '@/data/districts';
 import { CATEGORIES } from '@/data/categories';
 
 interface RequestInfoCardProps {
-  request: Request;
+  request: RequestType;
 }
 
 export default function RequestInfoCard({ request }: RequestInfoCardProps) {
@@ -31,7 +31,8 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     deadlineEnd,
     negotiableDeadline,
     budget,
-    negotiableBudget
+    negotiableBudget,
+    author
   } = request;
   
   const isService = category === 'utilities';
@@ -48,7 +49,15 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
             <Icon name="ShoppingBag" className="w-8 h-8 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg md:text-xl font-bold mb-1.5 line-clamp-2">{title}</h1>
+            <div className="flex items-center gap-2 flex-wrap mb-1.5">
+              <h1 className="text-lg md:text-xl font-bold line-clamp-2">{title}</h1>
+              {author?.name && (
+                <span className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
+                  <Icon name="User" className="w-3.5 h-3.5" />
+                  {author.name}
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-1.5">
               <Badge variant="secondary" className="text-xs">{categoryName}</Badge>
               {subcategoryName && <Badge variant="outline" className="text-xs">{subcategoryName}</Badge>}
