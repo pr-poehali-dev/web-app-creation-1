@@ -194,32 +194,25 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         <div className="space-y-1">
           {isTransport ? (
             <>
+              {offer.transportServiceType && (
+                <Badge variant="secondary" className="text-xs h-5 px-2 w-fit">{offer.transportServiceType}</Badge>
+              )}
               {offer.transportRoute && (
                 <div className="flex items-center gap-1.5">
-                  <Icon name="Route" className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                  <span className="text-xs font-medium truncate">{offer.transportRoute}</span>
+                  <Icon name="ArrowRight" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs text-foreground truncate">{offer.transportRoute}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {offer.transportServiceType && (
-                  <Badge variant="secondary" className="text-xs h-5 px-2">{offer.transportServiceType}</Badge>
-                )}
-                {offer.transportType && (
-                  <Badge variant="outline" className="text-xs h-5 px-2">{offer.transportType}</Badge>
-                )}
+              <div className="flex items-baseline gap-1">
+                {offer.transportNegotiable ? (
+                  <span className="font-bold text-primary text-base">Договорная</span>
+                ) : offer.transportPrice ? (
+                  <span className="font-bold text-primary text-lg">
+                    {Number(offer.transportPrice).toLocaleString('ru-RU')} ₽
+                    {offer.transportPriceType && <span className="text-xs text-muted-foreground ml-1">{offer.transportPriceType}</span>}
+                  </span>
+                ) : null}
               </div>
-              {(offer.transportPrice || offer.transportNegotiable) && (
-                <div className="flex items-baseline gap-1">
-                  {offer.transportNegotiable ? (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">Договорная</Badge>
-                  ) : (
-                    <span className="font-bold text-primary text-lg">
-                      {Number(offer.transportPrice).toLocaleString('ru-RU')} ₽
-                      {offer.transportPriceType && <span className="text-xs text-muted-foreground ml-1">{offer.transportPriceType}</span>}
-                    </span>
-                  )}
-                </div>
-              )}
             </>
           ) : (
             <div className="flex items-baseline gap-1">
