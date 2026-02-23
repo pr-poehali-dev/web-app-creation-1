@@ -142,12 +142,14 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     const isVideo = file.type.startsWith('video/');
     const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
     if (file.size > maxSize) {
-      if (isVideo) {
-        toast({ title: 'Лимит загрузки видео исчерпан', description: 'Максимальный размер видео — 30 МБ (~30 сек в 720p)', variant: 'destructive' });
-      } else {
-        toast({ title: 'Файл слишком большой', description: 'Максимальный размер фото — 20 МБ', variant: 'destructive' });
-      }
-      if (e.target) e.target.value = '';
+      e.target.value = '';
+      setTimeout(() => {
+        if (isVideo) {
+          toast({ title: 'Файл слишком большой для отправки', description: 'Лимит видео — 30 МБ (~30 сек). Попробуй отправить частями или сократи длительность.', variant: 'destructive' });
+        } else {
+          toast({ title: 'Файл слишком большой для отправки', description: 'Максимальный размер фото — 20 МБ.', variant: 'destructive' });
+        }
+      }, 100);
       return;
     }
     const preview = URL.createObjectURL(file);
