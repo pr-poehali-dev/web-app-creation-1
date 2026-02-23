@@ -2,31 +2,6 @@ import type { Category } from '@/types/offer';
 
 export const CATEGORIES: Category[] = [
   {
-    id: 'solid-fuel',
-    name: 'Твердое топливо',
-    subcategories: [],
-  },
-  {
-    id: 'raw-materials',
-    name: 'Строительные товары',
-    subcategories: [],
-  },
-  {
-    id: 'animal-feed',
-    name: 'Корма для животных',
-    subcategories: [],
-  },
-  {
-    id: 'baby-food',
-    name: 'Детское питание',
-    subcategories: [],
-  },
-  {
-    id: 'household-appliances',
-    name: 'Бытовая техника и мебель',
-    subcategories: [],
-  },
-  {
     id: 'dairy',
     name: 'Молочная продукция',
     subcategories: [],
@@ -47,13 +22,18 @@ export const CATEGORIES: Category[] = [
     subcategories: [],
   },
   {
-    id: 'utilities',
-    name: 'Услуги',
+    id: 'animal-feed',
+    name: 'Корма для животных',
     subcategories: [],
   },
   {
-    id: 'essentials',
-    name: 'Товары',
+    id: 'lumber',
+    name: 'Пиломатериалы',
+    subcategories: [],
+  },
+  {
+    id: 'raw-materials',
+    name: 'Строительные материалы',
     subcategories: [],
   },
   {
@@ -62,8 +42,23 @@ export const CATEGORIES: Category[] = [
     subcategories: [],
   },
   {
-    id: 'lumber',
-    name: 'Пиломатериалы',
+    id: 'essentials',
+    name: 'Товары',
+    subcategories: [],
+  },
+  {
+    id: 'household-appliances',
+    name: 'Бытовая техника и мебель',
+    subcategories: [],
+  },
+  {
+    id: 'equipment',
+    name: 'Техника и оборудование',
+    subcategories: [],
+  },
+  {
+    id: 'utilities',
+    name: 'Услуги',
     subcategories: [],
   },
   {
