@@ -181,10 +181,6 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         transportRoute: formData.transportRoute || undefined,
         transportType: formData.transportType || undefined,
         transportCapacity: formData.transportCapacity || undefined,
-        transportPrice: formData.transportPrice || undefined,
-        transportPriceType: formData.transportPriceType || undefined,
-        transportNegotiable: formData.transportNegotiable || undefined,
-        transportDateTime: formData.transportDateTime || undefined,
         transportComment: formData.transportComment || undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
