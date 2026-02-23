@@ -528,7 +528,8 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     subcategory_esc = body.get('subcategory', '').replace("'", "''") if body.get('subcategory') else None
     unit_esc = body['unit'].replace("'", "''")
     location_esc = body.get('location', '').replace("'", "''") if body.get('location') else None
-    district_esc = body['district'].replace("'", "''")
+    district_raw = body.get('district') or ''
+    district_esc = district_raw.replace("'", "''")
     full_address_esc = body.get('fullAddress', '').replace("'", "''") if body.get('fullAddress') else None
     
     # Arrays to PostgreSQL array format

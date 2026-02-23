@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { cn } from '@/lib/utils';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 const MapModal = lazy(() => import('@/components/auction/MapModal'));
 import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
@@ -42,10 +43,22 @@ export default function OfferLocationSection({
   onDeliveryTypeToggle
 }: OfferLocationSectionProps) {
   const isService = formData.category === 'utilities' || formData.category === 'transport';
+  const { detectedDistrictId } = useDistrict();
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.fullAddress);
   const [showDistrictDelivery, setShowDistrictDelivery] = useState(true);
   const [showMapModal, setShowMapModal] = useState(false);
+
+  // Автоопределение района по геолокации при первой загрузке
+  useEffect(() => {
+    if (!formData.district && detectedDistrictId) {
+      const found = DISTRICTS.find(d => d.id === detectedDistrictId);
+      if (found) {
+        setDistrictInput(found.name);
+        onInputChange('district', detectedDistrictId);
+      }
+    }
+  }, [detectedDistrictId]);
 
   useEffect(() => {
     const selectedDistrict = districts.find(d => d.id === formData.district);
