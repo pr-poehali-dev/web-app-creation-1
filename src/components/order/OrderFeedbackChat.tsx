@@ -136,19 +136,27 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   }, [messages]);
 
+  const checkFileSize = (file: File): { ok: boolean; isVideo: boolean } => {
+    const videoExtensions = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|hevc|heic)$/i;
+    const isVideo = file.type.startsWith('video/') || videoExtensions.test(file.name) || (!file.type && file.size > 5 * 1024 * 1024);
+    const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
+    return { ok: file.size <= maxSize, isVideo };
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isVideo = file.type.startsWith('video/');
-    const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
-    if (file.size > maxSize) {
+    const { ok, isVideo } = checkFileSize(file);
+    if (!ok) {
       e.target.value = '';
       setTimeout(() => {
-        if (isVideo) {
-          toast({ title: 'Файл слишком большой для отправки', description: 'Лимит видео — 30 МБ (~30 сек). Попробуй отправить частями или сократи длительность.', variant: 'destructive' });
-        } else {
-          toast({ title: 'Файл слишком большой для отправки', description: 'Максимальный размер фото — 20 МБ.', variant: 'destructive' });
-        }
+        toast({
+          title: 'Файл слишком большой для отправки',
+          description: isVideo
+            ? 'Лимит видео — 30 МБ (~30 сек). Попробуй отправить частями или сократи длительность.'
+            : 'Максимальный размер фото — 20 МБ.',
+          variant: 'destructive',
+        });
       }, 100);
       return;
     }
@@ -178,9 +186,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     if (!user?.id) return;
 
     if (pendingFile) {
-      const isVideo = pendingFile.file.type.startsWith('video/');
-      const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
-      if (pendingFile.file.size > maxSize) {
+      const { ok, isVideo } = checkFileSize(pendingFile.file);
+      if (!ok) {
         toast({
           title: 'Файл слишком большой для отправки',
           description: isVideo
