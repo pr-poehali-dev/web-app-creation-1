@@ -18,18 +18,5 @@ export default function DataSyncIndicator({ isVisible }: DataSyncIndicatorProps)
     }
   }, [isVisible]);
 
-  if (!show) return null;
-
-  return (
-    <div 
-      className={`fixed top-16 right-4 z-40 transition-all duration-300 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
-      }`}
-    >
-      <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm">
-        <Icon name="RefreshCw" className="h-4 w-4 animate-spin" />
-        <span>Обновление...</span>
-      </div>
-    </div>
-  );
+  return null;
 }
