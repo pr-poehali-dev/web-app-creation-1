@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 
 interface OfferTransportSectionProps {
@@ -13,6 +14,7 @@ interface OfferTransportSectionProps {
     transportDateTime: string;
     transportPrice: string;
     transportPriceType: string;
+    transportComment?: string;
   };
   onInputChange: (field: string, value: string | boolean) => void;
 }
@@ -37,21 +39,15 @@ const TRANSPORT_TYPES = [
   'Спецтехника',
 ];
 
-const PRICE_TYPES = [
-  { value: 'per_km', label: 'За км' },
-  { value: 'per_ton', label: 'За тонну' },
-  { value: 'per_hour', label: 'За час' },
-  { value: 'per_seat', label: 'За место' },
-  { value: 'negotiable', label: 'Договорная' },
-];
-
 function CollapsibleSelectList({
   label,
+  placeholder,
   options,
   value,
   onChange,
 }: {
   label: string;
+  placeholder?: string;
   options: string[];
   value: string;
   onChange: (v: string) => void;
@@ -67,9 +63,11 @@ function CollapsibleSelectList({
       >
         <Label className="cursor-pointer text-sm font-medium">{label}</Label>
         <div className="flex items-center gap-2">
-          {value && (
-            <span className="text-xs text-muted-foreground">{value}</span>
-          )}
+          {value ? (
+            <span className="text-xs font-medium text-foreground">{value}</span>
+          ) : placeholder ? (
+            <span className="text-xs text-muted-foreground">{placeholder}</span>
+          ) : null}
           <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
         </div>
       </button>
@@ -102,10 +100,6 @@ function CollapsibleSelectList({
 export default function OfferTransportSection({ formData, onInputChange }: OfferTransportSectionProps) {
   const [routeOpen, setRouteOpen] = useState(false);
   const [routeMode, setRouteMode] = useState<'preset' | 'custom'>('preset');
-  const [priceOpen, setPriceOpen] = useState(false);
-  const isNegotiable = formData.transportPriceType === 'negotiable';
-
-  const currentPriceLabel = PRICE_TYPES.find(p => p.value === formData.transportPriceType)?.label;
 
   return (
     <Card>
@@ -116,6 +110,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
       <CardContent className="space-y-5">
         <CollapsibleSelectList
           label="Тип услуги *"
+          placeholder="Выберите тип услуги"
           options={SERVICE_TYPES}
           value={formData.transportServiceType}
           onChange={(v) => onInputChange('transportServiceType', v)}
@@ -129,8 +124,10 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
           >
             <Label className="cursor-pointer text-sm font-medium">Маршрут *</Label>
             <div className="flex items-center gap-2">
-              {formData.transportRoute && (
-                <span className="text-xs text-muted-foreground">{formData.transportRoute}</span>
+              {formData.transportRoute ? (
+                <span className="text-xs font-medium text-foreground">{formData.transportRoute}</span>
+              ) : (
+                <span className="text-xs text-muted-foreground">Выберите маршрут</span>
               )}
               <Icon name={routeOpen ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
             </div>
@@ -185,6 +182,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
 
         <CollapsibleSelectList
           label="Тип транспорта *"
+          placeholder="Выберите тип транспорта"
           options={TRANSPORT_TYPES}
           value={formData.transportType}
           onChange={(v) => onInputChange('transportType', v)}
@@ -201,69 +199,15 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="transportDateTime">Дата и время *</Label>
-          <Input
-            id="transportDateTime"
-            type="datetime-local"
-            value={formData.transportDateTime}
-            onChange={(e) => onInputChange('transportDateTime', e.target.value)}
-            min={new Date().toISOString().slice(0, 16)}
+          <Label htmlFor="transportComment">Комментарий</Label>
+          <Textarea
+            id="transportComment"
+            value={formData.transportComment || ''}
+            onChange={(e) => onInputChange('transportComment', e.target.value)}
+            placeholder="Дополнительная информация об услуге, условиях, особенностях..."
+            rows={3}
           />
         </div>
-
-        <div className="space-y-1">
-          <button
-            type="button"
-            onClick={() => setPriceOpen((o) => !o)}
-            className="flex items-center justify-between w-full text-left"
-          >
-            <Label className="cursor-pointer text-sm font-medium">Тип цены *</Label>
-            <div className="flex items-center gap-2">
-              {currentPriceLabel && (
-                <span className="text-xs text-muted-foreground">{currentPriceLabel}</span>
-              )}
-              <Icon name={priceOpen ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
-            </div>
-          </button>
-          {priceOpen && (
-            <div className="flex flex-col gap-1 pt-1">
-              {PRICE_TYPES.map((pt) => (
-                <button
-                  key={pt.value}
-                  type="button"
-                  onClick={() => {
-                    onInputChange('transportPriceType', pt.value);
-                    if (pt.value === 'negotiable') onInputChange('transportPrice', '');
-                    setPriceOpen(false);
-                  }}
-                  className={`flex items-center justify-between w-full px-3 py-2 rounded-md border text-sm text-left transition-colors ${
-                    formData.transportPriceType === pt.value
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background border-input hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  <span>{pt.label}</span>
-                  {formData.transportPriceType === pt.value && <Icon name="Check" size={14} />}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {!isNegotiable && (
-          <div className="space-y-2">
-            <Label htmlFor="transportPrice">Ориентировочная стоимость (₽)</Label>
-            <Input
-              id="transportPrice"
-              type="number"
-              value={formData.transportPrice}
-              onChange={(e) => onInputChange('transportPrice', e.target.value)}
-              placeholder="0"
-              min="0"
-              step="1"
-            />
-          </div>
-        )}
       </CardContent>
     </Card>
   );

@@ -34,6 +34,7 @@ interface FormData {
   transportDateTime: string;
   transportPrice: string;
   transportPriceType: string;
+  transportComment: string;
 }
 
 export function useCreateOfferForm(editOffer?: Offer) {
@@ -71,6 +72,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportDateTime: '',
     transportPrice: '',
     transportPriceType: '',
+    transportComment: '',
   } : {
     title: '',
     description: '',
@@ -103,6 +105,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportDateTime: '',
     transportPrice: '',
     transportPriceType: '',
+    transportComment: '',
   });
 
   const [images, setImages] = useState<File[]>([]);

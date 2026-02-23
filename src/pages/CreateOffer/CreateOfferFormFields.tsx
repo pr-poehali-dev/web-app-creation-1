@@ -44,6 +44,7 @@ interface FormData {
   transportDateTime: string;
   transportPrice: string;
   transportPriceType: string;
+  transportComment: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -103,6 +104,7 @@ export default function CreateOfferFormFields({
             transportDateTime: formData.transportDateTime,
             transportPrice: formData.transportPrice,
             transportPriceType: formData.transportPriceType,
+            transportComment: formData.transportComment,
           }}
           onInputChange={onInputChange}
         />
@@ -124,20 +126,22 @@ export default function CreateOfferFormFields({
         onInputChange={onInputChange}
       />
 
-      <OfferLocationSection
-        formData={{
-          district: formData.district,
-          fullAddress: formData.fullAddress,
-          gpsCoordinates: formData.gpsCoordinates,
-          availableDistricts: formData.availableDistricts,
-          availableDeliveryTypes: formData.availableDeliveryTypes,
-          category: formData.category,
-        }}
-        districts={districts}
-        onInputChange={onInputChange}
-        onDistrictToggle={onDistrictToggle}
-        onDeliveryTypeToggle={onDeliveryTypeToggle}
-      />
+      {formData.category !== 'transport' && (
+        <OfferLocationSection
+          formData={{
+            district: formData.district,
+            fullAddress: formData.fullAddress,
+            gpsCoordinates: formData.gpsCoordinates,
+            availableDistricts: formData.availableDistricts,
+            availableDeliveryTypes: formData.availableDeliveryTypes,
+            category: formData.category,
+          }}
+          districts={districts}
+          onInputChange={onInputChange}
+          onDistrictToggle={onDistrictToggle}
+          onDeliveryTypeToggle={onDeliveryTypeToggle}
+        />
+      )}
 
       <OfferMediaSection
         images={images}

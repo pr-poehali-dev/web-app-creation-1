@@ -150,6 +150,11 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       isPremium: false,
       status: isDraft ? 'draft' : 'active',
       noNegotiation: formData.noNegotiation,
+      transportServiceType: formData.transportServiceType || undefined,
+      transportRoute: formData.transportRoute || undefined,
+      transportType: formData.transportType || undefined,
+      transportCapacity: formData.transportCapacity || undefined,
+      transportComment: formData.transportComment || undefined,
     };
 
     submitOffer(submitData, videoPreview, imagePreviews, isDraft);

@@ -177,6 +177,11 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         deliveryPeriodStart: formData.deliveryPeriodStart,
         deliveryPeriodEnd: formData.deliveryPeriodEnd,
         noNegotiation: formData.noNegotiation,
+        transportServiceType: formData.transportServiceType || undefined,
+        transportRoute: formData.transportRoute || undefined,
+        transportType: formData.transportType || undefined,
+        transportCapacity: formData.transportCapacity || undefined,
+        transportComment: formData.transportComment || undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
