@@ -139,8 +139,15 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 20 * 1024 * 1024) {
-      toast({ title: 'Файл слишком большой', description: 'Максимальный размер — 20 МБ', variant: 'destructive' });
+    const isVideo = file.type.startsWith('video/');
+    const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
+    if (file.size > maxSize) {
+      if (isVideo) {
+        toast({ title: 'Лимит загрузки видео исчерпан', description: 'Максимальный размер видео — 30 МБ (~30 сек в 720p)', variant: 'destructive' });
+      } else {
+        toast({ title: 'Файл слишком большой', description: 'Максимальный размер фото — 20 МБ', variant: 'destructive' });
+      }
+      if (e.target) e.target.value = '';
       return;
     }
     const preview = URL.createObjectURL(file);
@@ -151,6 +158,15 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const removePendingFile = () => {
     if (pendingFile) URL.revokeObjectURL(pendingFile.preview);
     setPendingFile(null);
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await ordersAPI.deleteMessage(messageId);
+      await loadMessages(true);
+    } catch (e) {
+      toast({ title: 'Не удалось удалить сообщение', variant: 'destructive' });
+    }
   };
 
   const handleSendMessage = async () => {
@@ -319,6 +335,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
           messagesContainerRef={messagesContainerRef}
           messagesEndRef={messagesEndRef}
           onScroll={handleMessagesScroll}
+          onDeleteMessage={handleDeleteMessage}
         />
 
         <ChatInputBar

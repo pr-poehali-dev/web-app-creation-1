@@ -44,6 +44,15 @@
       "expectedBody": {
         "error": "User ID required"
       }
+    },
+    {
+      "name": "Delete without params returns 400",
+      "method": "DELETE",
+      "path": "/",
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "Operation not specified"
+      }
     }
   ]
 }

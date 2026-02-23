@@ -14,6 +14,7 @@ interface ChatMessageListProps {
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   messagesEndRef: React.RefObject<HTMLDivElement>;
   onScroll: () => void;
+  onDeleteMessage?: (messageId: string) => void;
 }
 
 export default function ChatMessageList({
@@ -28,6 +29,7 @@ export default function ChatMessageList({
   messagesContainerRef,
   messagesEndRef,
   onScroll,
+  onDeleteMessage,
 }: ChatMessageListProps) {
   const isAtBottomRef = useRef(true);
 
@@ -71,9 +73,10 @@ export default function ChatMessageList({
       >
         {messages.map((msg) => {
           const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
+          const hasAttachment = msg.attachments && msg.attachments.length > 0;
           return (
-            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${isMe ? 'bg-muted' : isHistory ? 'bg-primary/10 text-foreground' : 'bg-primary text-primary-foreground'}`}>
+            <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
+              <div className={`max-w-[85%] rounded-lg px-3 py-2 text-sm relative ${isMe ? 'bg-muted' : isHistory ? 'bg-primary/10 text-foreground' : 'bg-primary text-primary-foreground'}`}>
                 <div className="mb-0.5">
                   {isMe ? (
                     <span className="text-[10px] opacity-60">Вы</span>
@@ -109,9 +112,20 @@ export default function ChatMessageList({
                     ))}
                   </div>
                 )}
-                <p className={`text-[10px] mt-1 ${isMe ? (isHistory ? 'text-muted-foreground' : 'text-primary-foreground/60') : 'text-muted-foreground'}`}>
-                  {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <div className="flex items-center justify-between gap-2 mt-1">
+                  <p className={`text-[10px] ${isMe ? (isHistory ? 'text-muted-foreground' : 'text-primary-foreground/60') : 'text-muted-foreground'}`}>
+                    {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {isMe && hasAttachment && !isHistory && onDeleteMessage && (
+                    <button
+                      onClick={() => onDeleteMessage(msg.id)}
+                      className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive/80 flex-shrink-0"
+                      title="Удалить сообщение"
+                    >
+                      <Icon name="Trash2" size={11} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           );

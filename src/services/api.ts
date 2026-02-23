@@ -938,6 +938,17 @@ export const ordersAPI = {
     
     return response.json();
   },
+
+  async deleteMessage(messageId: string): Promise<{ message: string }> {
+    const userId = getUserId();
+    if (!userId) throw new Error('User not authenticated');
+    const response = await fetchWithRetry(`${ORDERS_API}?messageId=${messageId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+    });
+    if (!response.ok) throw new Error('Failed to delete message');
+    return response.json();
+  },
 };
 
 export interface AuctionsListResponse {
