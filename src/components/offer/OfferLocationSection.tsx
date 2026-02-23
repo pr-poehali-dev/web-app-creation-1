@@ -41,7 +41,7 @@ export default function OfferLocationSection({
   onDistrictToggle,
   onDeliveryTypeToggle
 }: OfferLocationSectionProps) {
-  const isService = formData.category === 'utilities';
+  const isService = formData.category === 'utilities' || formData.category === 'transport';
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.fullAddress);
   const [showDistrictDelivery, setShowDistrictDelivery] = useState(true);

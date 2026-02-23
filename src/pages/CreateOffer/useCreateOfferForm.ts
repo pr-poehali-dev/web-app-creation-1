@@ -27,6 +27,13 @@ interface FormData {
   deliveryPeriodEnd: string;
   publicationDuration: string;
   publicationStartDate: string;
+  transportServiceType: string;
+  transportRoute: string;
+  transportType: string;
+  transportCapacity: string;
+  transportDateTime: string;
+  transportPrice: string;
+  transportPriceType: string;
 }
 
 export function useCreateOfferForm(editOffer?: Offer) {
@@ -57,6 +64,13 @@ export function useCreateOfferForm(editOffer?: Offer) {
     deliveryPeriodEnd: editOffer.deliveryPeriodEnd || '',
     publicationDuration: '',
     publicationStartDate: '',
+    transportServiceType: '',
+    transportRoute: '',
+    transportType: '',
+    transportCapacity: '',
+    transportDateTime: '',
+    transportPrice: '',
+    transportPriceType: '',
   } : {
     title: '',
     description: '',
@@ -82,6 +96,13 @@ export function useCreateOfferForm(editOffer?: Offer) {
     deliveryPeriodEnd: '',
     publicationDuration: '',
     publicationStartDate: '',
+    transportServiceType: '',
+    transportRoute: '',
+    transportType: '',
+    transportCapacity: '',
+    transportDateTime: '',
+    transportPrice: '',
+    transportPriceType: '',
   });
 
   const [images, setImages] = useState<File[]>([]);

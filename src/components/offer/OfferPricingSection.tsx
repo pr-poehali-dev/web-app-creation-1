@@ -24,7 +24,7 @@ interface OfferPricingSectionProps {
 }
 
 export default function OfferPricingSection({ formData, onInputChange }: OfferPricingSectionProps) {
-  const isService = formData.category === 'utilities';
+  const isService = formData.category === 'utilities' || formData.category === 'transport';
   const [isUnitOpen, setIsUnitOpen] = useState(false);
   const [minQuantityError, setMinQuantityError] = useState<string>('');
   

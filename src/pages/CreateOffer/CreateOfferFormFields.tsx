@@ -7,6 +7,7 @@ import OfferBasicInfoSection from '@/components/offer/OfferBasicInfoSection';
 import OfferPricingSection from '@/components/offer/OfferPricingSection';
 import OfferLocationSection from '@/components/offer/OfferLocationSection';
 import OfferMediaSection from '@/components/offer/OfferMediaSection';
+import OfferTransportSection from '@/components/offer/OfferTransportSection';
 import type { DeliveryType } from '@/types/offer';
 
 interface District {
@@ -39,6 +40,13 @@ interface FormData {
   deliveryPeriodEnd: string;
   publicationDuration: string;
   publicationStartDate: string;
+  transportServiceType: string;
+  transportRoute: string;
+  transportType: string;
+  transportCapacity: string;
+  transportDateTime: string;
+  transportPrice: string;
+  transportPriceType: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -87,6 +95,21 @@ export default function CreateOfferFormFields({
         }}
         onInputChange={onInputChange}
       />
+
+      {formData.category === 'transport' && (
+        <OfferTransportSection
+          formData={{
+            transportServiceType: formData.transportServiceType,
+            transportRoute: formData.transportRoute,
+            transportType: formData.transportType,
+            transportCapacity: formData.transportCapacity,
+            transportDateTime: formData.transportDateTime,
+            transportPrice: formData.transportPrice,
+            transportPriceType: formData.transportPriceType,
+          }}
+          onInputChange={onInputChange}
+        />
+      )}
 
       <OfferPricingSection
         formData={{
