@@ -112,21 +112,23 @@ export default function CreateOfferFormFields({
         />
       )}
 
-      <OfferPricingSection
-        formData={{
-          quantity: formData.quantity,
-          minOrderQuantity: formData.minOrderQuantity,
-          unit: formData.unit,
-          pricePerUnit: formData.pricePerUnit,
-          noNegotiation: formData.noNegotiation,
-          category: formData.category,
-          deadline: formData.deadline,
-          negotiableDeadline: formData.negotiableDeadline,
-          budget: formData.budget,
-          negotiableBudget: formData.negotiableBudget,
-        }}
-        onInputChange={onInputChange}
-      />
+      {formData.category !== 'transport' && (
+        <OfferPricingSection
+          formData={{
+            quantity: formData.quantity,
+            minOrderQuantity: formData.minOrderQuantity,
+            unit: formData.unit,
+            pricePerUnit: formData.pricePerUnit,
+            noNegotiation: formData.noNegotiation,
+            category: formData.category,
+            deadline: formData.deadline,
+            negotiableDeadline: formData.negotiableDeadline,
+            budget: formData.budget,
+            negotiableBudget: formData.negotiableBudget,
+          }}
+          onInputChange={onInputChange}
+        />
+      )}
 
       {formData.category !== 'transport' && (
         <OfferLocationSection
@@ -183,6 +185,7 @@ export default function CreateOfferFormFields({
           expiryDate: formData.expiryDate,
           publicationStartDate: formData.publicationStartDate,
           publicationDuration: formData.publicationDuration,
+          category: formData.category,
         }}
         onInputChange={onInputChange}
       />

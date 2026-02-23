@@ -12,99 +12,105 @@ interface OfferAdditionalSectionProps {
     expiryDate: string;
     publicationStartDate: string;
     publicationDuration: string;
+    category?: string;
   };
   onInputChange: (field: string, value: string | boolean) => void;
 }
 
 export default function OfferAdditionalSection({ formData, onInputChange }: OfferAdditionalSectionProps) {
+  const isTransport = formData.category === 'transport';
   return (
     <Card>
       <CardHeader>
         <CardTitle>Дополнительно</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="deliveryTime">Срок доставки/поставки (необязательно)</Label>
-          <Input
-            id="deliveryTime"
-            type="text"
-            placeholder="Например: 1-2 дня, 3-5 рабочих дней"
-            value={formData.deliveryTime}
-            onChange={(e) => onInputChange('deliveryTime', e.target.value)}
-          />
-        </div>
-        <div>
-          <Label htmlFor="deliveryPeriod">Период поставки (необязательно)</Label>
-          <div className="grid grid-cols-2 gap-3 mt-2">
+        {!isTransport && (
+          <>
             <div>
-              <Label htmlFor="deliveryPeriodStart" className="text-sm text-muted-foreground">Дата начала</Label>
-              <div className="flex gap-2">
+              <Label htmlFor="deliveryTime">Срок доставки/поставки (необязательно)</Label>
+              <Input
+                id="deliveryTime"
+                type="text"
+                placeholder="Например: 1-2 дня, 3-5 рабочих дней"
+                value={formData.deliveryTime}
+                onChange={(e) => onInputChange('deliveryTime', e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="deliveryPeriod">Период поставки (необязательно)</Label>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <Label htmlFor="deliveryPeriodStart" className="text-sm text-muted-foreground">Дата начала</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="deliveryPeriodStart"
+                      type="date"
+                      value={formData.deliveryPeriodStart}
+                      onChange={(e) => onInputChange('deliveryPeriodStart', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      max={formData.deliveryPeriodEnd || undefined}
+                    />
+                    {formData.deliveryPeriodStart && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onInputChange('deliveryPeriodStart', '')}
+                      >
+                        <Icon name="X" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="deliveryPeriodEnd" className="text-sm text-muted-foreground">Дата окончания</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="deliveryPeriodEnd"
+                      type="date"
+                      value={formData.deliveryPeriodEnd}
+                      onChange={(e) => onInputChange('deliveryPeriodEnd', e.target.value)}
+                      min={formData.deliveryPeriodStart || new Date().toISOString().split('T')[0]}
+                    />
+                    {formData.deliveryPeriodEnd && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onInputChange('deliveryPeriodEnd', '')}
+                      >
+                        <Icon name="X" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="expiryDate">Срок годности (необязательно)</Label>
+              <div className="flex gap-2 mt-2">
                 <Input
-                  id="deliveryPeriodStart"
+                  id="expiryDate"
                   type="date"
-                  value={formData.deliveryPeriodStart}
-                  onChange={(e) => onInputChange('deliveryPeriodStart', e.target.value)}
+                  value={formData.expiryDate}
+                  onChange={(e) => onInputChange('expiryDate', e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  max={formData.deliveryPeriodEnd || undefined}
                 />
-                {formData.deliveryPeriodStart && (
+                {formData.expiryDate && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => onInputChange('deliveryPeriodStart', '')}
+                    onClick={() => onInputChange('expiryDate', '')}
                   >
                     <Icon name="X" className="h-4 w-4" />
                   </Button>
                 )}
               </div>
             </div>
-            <div>
-              <Label htmlFor="deliveryPeriodEnd" className="text-sm text-muted-foreground">Дата окончания</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="deliveryPeriodEnd"
-                  type="date"
-                  value={formData.deliveryPeriodEnd}
-                  onChange={(e) => onInputChange('deliveryPeriodEnd', e.target.value)}
-                  min={formData.deliveryPeriodStart || new Date().toISOString().split('T')[0]}
-                />
-                {formData.deliveryPeriodEnd && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onInputChange('deliveryPeriodEnd', '')}
-                  >
-                    <Icon name="X" className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        <div>
-          <Label htmlFor="expiryDate">Срок годности (необязательно)</Label>
-          <div className="flex gap-2 mt-2">
-            <Input
-              id="expiryDate"
-              type="date"
-              value={formData.expiryDate}
-              onChange={(e) => onInputChange('expiryDate', e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-            />
-            {formData.expiryDate && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => onInputChange('expiryDate', '')}
-              >
-                <Icon name="X" className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
+          </>
+        )}
         <div className="space-y-4">
           <div>
             <Label>Период публикации *</Label>
