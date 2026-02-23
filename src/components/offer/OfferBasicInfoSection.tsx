@@ -57,6 +57,41 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
         <CardTitle>Основная информация</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!isTransport && (
+          <>
+            <div>
+              <Label htmlFor="title">Название предложения *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => onInputChange('title', e.target.value)}
+                placeholder="Например: Цемент М500, мешок 50 кг"
+                required
+                maxLength={100}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.title.length}/100 символов
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="description">Описание *</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => onInputChange('description', e.target.value)}
+                placeholder="Подробное описание товара или услуги..."
+                required
+                rows={6}
+                maxLength={1000}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.description.length}/1000 символов
+              </p>
+            </div>
+          </>
+        )}
+
         <div className="grid md:grid-cols-2 gap-4">
           <div className="relative">
             <Label htmlFor="category">Категория *</Label>
@@ -162,41 +197,6 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
             </div>
           )}
         </div>
-
-        {!isTransport && (
-          <>
-            <div>
-              <Label htmlFor="title">Название предложения *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => onInputChange('title', e.target.value)}
-                placeholder="Например: Цемент М500, мешок 50 кг"
-                required
-                maxLength={100}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                {formData.title.length}/100 символов
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="description">Описание *</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => onInputChange('description', e.target.value)}
-                placeholder="Подробное описание товара или услуги..."
-                required
-                rows={6}
-                maxLength={1000}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                {formData.description.length}/1000 символов
-              </p>
-            </div>
-          </>
-        )}
       </CardContent>
     </Card>
   );
