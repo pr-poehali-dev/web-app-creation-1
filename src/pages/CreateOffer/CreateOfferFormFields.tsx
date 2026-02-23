@@ -111,8 +111,8 @@ export default function CreateOfferFormFields({
             transportComment: formData.transportComment,
             availableDistricts: formData.availableDistricts,
             transportAllDistricts: formData.transportAllDistricts,
+            district: formData.district,
           }}
-          districts={districts}
           onInputChange={onInputChange}
           onDistrictToggle={onDistrictToggle}
         />

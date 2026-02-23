@@ -1,16 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-
-interface District {
-  id: string;
-  name: string;
-}
+import { useDistrict } from '@/contexts/DistrictContext';
+import { DISTRICTS } from '@/data/districts';
 
 interface RequestTransportSectionProps {
   formData: {
@@ -25,8 +21,8 @@ interface RequestTransportSectionProps {
     transportComment: string;
     availableDistricts: string[];
     transportAllDistricts: boolean;
+    district: string;
   };
-  districts: District[];
   onInputChange: (field: string, value: string | boolean) => void;
   onDistrictToggle: (districtId: string) => void;
 }
@@ -113,7 +109,40 @@ function CollapsibleSelectList({
   );
 }
 
-export default function RequestTransportSection({ formData, districts, onInputChange, onDistrictToggle }: RequestTransportSectionProps) {
+export default function RequestTransportSection({ formData, onInputChange, onDistrictToggle }: RequestTransportSectionProps) {
+  const { detectedDistrictId } = useDistrict();
+  const [districtInput, setDistrictInput] = useState('');
+
+  useEffect(() => {
+    const autoDistrict = formData.district || detectedDistrictId || '';
+    if (autoDistrict && !formData.district) {
+      onInputChange('district', autoDistrict);
+    }
+    const found = DISTRICTS.find(d => d.id === (formData.district || autoDistrict));
+    if (found) setDistrictInput(found.name);
+  }, [detectedDistrictId]);
+
+  useEffect(() => {
+    const found = DISTRICTS.find(d => d.id === formData.district);
+    if (found) setDistrictInput(found.name);
+  }, [formData.district]);
+
+  const filteredDistricts = useMemo(() => {
+    if (!districtInput || districtInput.length < 1) return [];
+    const current = DISTRICTS.find(d => d.id === formData.district);
+    if (current && districtInput === current.name) return [];
+    return DISTRICTS.filter(d =>
+      d.name.toLowerCase().includes(districtInput.toLowerCase()) && d.id !== 'all'
+    ).slice(0, 6);
+  }, [districtInput, formData.district]);
+
+  const additionalDistricts = useMemo(() => {
+    if (!formData.district) return [];
+    const current = DISTRICTS.find(d => d.id === formData.district);
+    if (!current) return [];
+    return DISTRICTS.filter(d => d.regionId === current.regionId && d.id !== 'all' && d.id !== formData.district);
+  }, [formData.district]);
+
   return (
     <Card>
       <CardHeader>
@@ -139,36 +168,70 @@ export default function RequestTransportSection({ formData, districts, onInputCh
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label>Районы обслуживания</Label>
-          <p className="text-xs text-muted-foreground">По умолчанию показывается только в вашем районе</p>
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex items-center space-x-2">
             <Checkbox
-              id="transportAllDistricts"
+              id="reqTransportAllDistricts"
               checked={formData.transportAllDistricts}
               onCheckedChange={(checked) => onInputChange('transportAllDistricts', checked as boolean)}
             />
-            <label htmlFor="transportAllDistricts" className="text-sm font-medium leading-none cursor-pointer">
-              Все районы
+            <label htmlFor="reqTransportAllDistricts" className="text-sm font-medium leading-none cursor-pointer">
+              Показывать во всех районах
             </label>
           </div>
           {!formData.transportAllDistricts && (
-            <div className="flex flex-wrap gap-2">
-              {districts.filter(d => d.id !== 'all').map((district) => {
-                const isSelected = formData.availableDistricts.includes(district.id);
-                return (
-                  <button
-                    key={district.id}
-                    type="button"
-                    onClick={() => onDistrictToggle(district.id)}
-                    className="focus:outline-none"
-                  >
-                    <Badge variant={isSelected ? 'default' : 'outline'} className="cursor-pointer">
-                      {district.name}
-                    </Badge>
-                  </button>
-                );
-              })}
+            <div className="space-y-2">
+              <div className="relative">
+                <Input
+                  value={districtInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setDistrictInput(value);
+                    const matched = DISTRICTS.find(d => d.name.toLowerCase() === value.toLowerCase() && d.id !== 'all');
+                    if (matched) onInputChange('district', matched.id);
+                  }}
+                  placeholder="Начните вводить название района..."
+                  className="text-sm"
+                />
+                {filteredDistricts.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
+                    {filteredDistricts.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          setDistrictInput(d.name);
+                          onInputChange('district', d.id);
+                        }}
+                      >
+                        <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                        {d.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {additionalDistricts.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2">Дополнительные районы в регионе:</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {additionalDistricts.map(d => (
+                      <div key={d.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`req-transport-district-${d.id}`}
+                          checked={formData.availableDistricts.includes(d.id)}
+                          onCheckedChange={() => onDistrictToggle(d.id)}
+                        />
+                        <label htmlFor={`req-transport-district-${d.id}`} className="text-xs leading-none cursor-pointer">
+                          {d.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
