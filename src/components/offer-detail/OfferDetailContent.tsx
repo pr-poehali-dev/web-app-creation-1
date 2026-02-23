@@ -183,6 +183,13 @@ export default function OfferDetailContent({
                 negotiableDeadline={offer.negotiableDeadline}
                 budget={offer.budget}
                 negotiableBudget={offer.negotiableBudget}
+                transportServiceType={offer.transportServiceType}
+                transportRoute={offer.transportRoute}
+                transportType={offer.transportType}
+                transportCapacity={offer.transportCapacity}
+                transportDateTime={offer.transportDateTime}
+                transportPrice={offer.transportPrice}
+                transportPriceType={offer.transportPriceType}
               />
             </div>
           </div>
@@ -264,6 +271,13 @@ export default function OfferDetailContent({
                 negotiableDeadline={offer.negotiableDeadline}
                 budget={offer.budget}
                 negotiableBudget={offer.negotiableBudget}
+                transportServiceType={offer.transportServiceType}
+                transportRoute={offer.transportRoute}
+                transportType={offer.transportType}
+                transportCapacity={offer.transportCapacity}
+                transportDateTime={offer.transportDateTime}
+                transportPrice={offer.transportPrice}
+                transportPriceType={offer.transportPriceType}
               />
             </div>
           </div>

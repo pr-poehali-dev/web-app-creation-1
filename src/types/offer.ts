@@ -88,6 +88,13 @@ export interface Offer {
   orderedQuantity?: number;
   responses?: number;
   status?: 'active' | 'draft' | 'pending' | 'moderation' | 'archived';
+  transportServiceType?: string;
+  transportRoute?: string;
+  transportType?: string;
+  transportCapacity?: string;
+  transportDateTime?: string;
+  transportPrice?: string;
+  transportPriceType?: string;
 }
 
 export interface Request {

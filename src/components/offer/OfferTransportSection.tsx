@@ -40,6 +40,7 @@ const PRICE_TYPES = [
   { value: 'per_km', label: 'За км' },
   { value: 'per_ton', label: 'За тонну' },
   { value: 'per_hour', label: 'За час' },
+  { value: 'per_seat', label: 'За место' },
   { value: 'negotiable', label: 'Договорная' },
 ];
 

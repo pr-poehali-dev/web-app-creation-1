@@ -38,6 +38,13 @@ interface OfferInfoCardProps {
   negotiableDeadline?: boolean;
   budget?: number;
   negotiableBudget?: boolean;
+  transportServiceType?: string;
+  transportRoute?: string;
+  transportType?: string;
+  transportCapacity?: string;
+  transportDateTime?: string;
+  transportPrice?: string;
+  transportPriceType?: string;
 }
 
 export default function OfferInfoCard({
@@ -70,8 +77,24 @@ export default function OfferInfoCard({
   negotiableDeadline,
   budget,
   negotiableBudget,
+  transportServiceType,
+  transportRoute,
+  transportType,
+  transportCapacity,
+  transportDateTime,
+  transportPrice,
+  transportPriceType,
 }: OfferInfoCardProps) {
-  const isService = category === 'utilities';
+  const isService = category === 'utilities' || category === 'transport';
+  const isTransport = category === 'transport';
+
+  const PRICE_TYPE_LABELS: Record<string, string> = {
+    per_km: 'За км',
+    per_ton: 'За тонну',
+    per_hour: 'За час',
+    per_seat: 'За место',
+    negotiable: 'Договорная',
+  };
   
   // Найти название категории
   const categoryData = CATEGORIES.find(c => c.id === category);
@@ -136,7 +159,38 @@ export default function OfferInfoCard({
         </div>
 
         {/* Основная информация - всегда видна */}
-        {isService ? (
+        {isTransport ? (
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {transportServiceType && (
+              <div>
+                <p className="text-xs text-muted-foreground">Тип услуги:</p>
+                <p className="font-semibold">{transportServiceType}</p>
+              </div>
+            )}
+            {transportType && (
+              <div>
+                <p className="text-xs text-muted-foreground">Транспорт:</p>
+                <p className="font-semibold">{transportType}</p>
+              </div>
+            )}
+            {transportRoute && (
+              <div>
+                <p className="text-xs text-muted-foreground">Маршрут:</p>
+                <p className="font-semibold">{transportRoute}</p>
+              </div>
+            )}
+            {transportPriceType && (
+              <div>
+                <p className="text-xs text-muted-foreground">Цена:</p>
+                <p className="font-semibold">
+                  {transportPriceType === 'negotiable'
+                    ? 'Договорная'
+                    : `${transportPrice ? Number(transportPrice).toLocaleString('ru-RU') + ' ₽' : '—'} ${PRICE_TYPE_LABELS[transportPriceType] || ''}`}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : isService ? (
           <div className="space-y-3">
             {deadlineStart && deadlineEnd && (
               <div>
@@ -210,7 +264,22 @@ export default function OfferInfoCard({
               Подробная информация
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pt-2">
-              {category !== 'utilities' && (
+              {isTransport ? (
+                <div className="space-y-2 text-sm">
+                  {transportCapacity && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Вместимость / Грузоподъёмность</p>
+                      <p className="font-medium">{transportCapacity}</p>
+                    </div>
+                  )}
+                  {transportDateTime && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Дата и время</p>
+                      <p className="font-medium">{new Date(transportDateTime).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                    </div>
+                  )}
+                </div>
+              ) : category !== 'utilities' && (
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <p className="text-xs text-muted-foreground">Осталось</p>
@@ -318,7 +387,22 @@ export default function OfferInfoCard({
           <p className="text-sm font-medium">Подробная информация</p>
           
           <div className="space-y-3">
-            {category !== 'utilities' && (
+            {isTransport ? (
+              <div className="space-y-2 text-sm">
+                {transportCapacity && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Вместимость / Грузоподъёмность</p>
+                    <p className="font-medium">{transportCapacity}</p>
+                  </div>
+                )}
+                {transportDateTime && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Дата и время</p>
+                    <p className="font-medium">{new Date(transportDateTime).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                  </div>
+                )}
+              </div>
+            ) : category !== 'utilities' && (
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-xs text-muted-foreground">Осталось</p>
