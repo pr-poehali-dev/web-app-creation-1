@@ -174,72 +174,82 @@ export default function OfferTransportSection({ formData, onInputChange, onDistr
 
         <div className="space-y-3">
           <Label>Районы обслуживания</Label>
-          <div className="space-y-2">
-            <Label htmlFor="district" className="text-xs text-muted-foreground font-normal">Основной район *</Label>
-            <div className="relative">
-              <Input
-                id="district"
-                value={districtInput}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setDistrictInput(value);
-                  const matched = DISTRICTS.find(d => d.name.toLowerCase() === value.toLowerCase() && d.id !== 'all');
-                  if (matched) onInputChange('district', matched.id);
-                }}
-                placeholder="Начните вводить название района..."
-                className="text-sm"
-              />
-              {filteredDistricts.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
-                  {filteredDistricts.map((d) => (
-                    <button
-                      key={d.id}
-                      type="button"
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2"
-                      onClick={() => {
-                        setDistrictInput(d.name);
-                        onInputChange('district', d.id);
-                      }}
-                    >
-                      <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
-                      {d.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            {additionalDistricts.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowAdditional(v => !v)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-                >
-                  <Icon name={showAdditional ? 'ChevronUp' : 'ChevronDown'} size={14} />
-                  {showAdditional ? 'Скрыть дополнительные районы' : 'Дополнительные районы в регионе'}
-                  {formData.availableDistricts.length > 0 && (
-                    <span className="ml-1 text-primary font-medium">({formData.availableDistricts.length} выбрано)</span>
-                  )}
-                </button>
-                {showAdditional && (
-                  <div className="grid grid-cols-2 gap-1.5 mt-2">
-                    {additionalDistricts.map(d => (
-                      <div key={d.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`transport-district-${d.id}`}
-                          checked={formData.availableDistricts.includes(d.id)}
-                          onCheckedChange={() => onDistrictToggle(d.id)}
-                        />
-                        <label htmlFor={`transport-district-${d.id}`} className="text-xs leading-none cursor-pointer">
-                          {d.name}
-                        </label>
-                      </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="transportAllDistricts"
+              checked={formData.transportAllDistricts}
+              onCheckedChange={(checked) => onInputChange('transportAllDistricts', checked as boolean)}
+            />
+            <label htmlFor="transportAllDistricts" className="text-sm font-medium leading-none cursor-pointer">
+              Показывать во всех районах
+            </label>
+          </div>
+          {!formData.transportAllDistricts && (
+            <div className="space-y-2">
+              <div className="relative">
+                <Input
+                  value={districtInput}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setDistrictInput(value);
+                    const matched = DISTRICTS.find(d => d.name.toLowerCase() === value.toLowerCase() && d.id !== 'all');
+                    if (matched) onInputChange('district', matched.id);
+                  }}
+                  placeholder="Начните вводить название района..."
+                  className="text-sm"
+                />
+                {filteredDistricts.length > 0 && (
+                  <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md">
+                    {filteredDistricts.map((d) => (
+                      <button
+                        key={d.id}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center gap-2"
+                        onClick={() => {
+                          setDistrictInput(d.name);
+                          onInputChange('district', d.id);
+                        }}
+                      >
+                        <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
+                        {d.name}
+                      </button>
                     ))}
                   </div>
                 )}
               </div>
-            )}
-          </div>
+              {additionalDistricts.length > 0 && (
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdditional(v => !v)}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Icon name={showAdditional ? 'ChevronUp' : 'ChevronDown'} size={14} />
+                    {showAdditional ? 'Скрыть' : 'Дополнительные районы в регионе'}
+                    {formData.availableDistricts.length > 0 && (
+                      <span className="ml-1 text-primary font-medium">({formData.availableDistricts.length} выбрано)</span>
+                    )}
+                  </button>
+                  {showAdditional && (
+                    <div className="grid grid-cols-2 gap-1.5 mt-2">
+                      {additionalDistricts.map(d => (
+                        <div key={d.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`transport-district-${d.id}`}
+                            checked={formData.availableDistricts.includes(d.id)}
+                            onCheckedChange={() => onDistrictToggle(d.id)}
+                          />
+                          <label htmlFor={`transport-district-${d.id}`} className="text-xs leading-none cursor-pointer">
+                            {d.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <CollapsibleSelectList
