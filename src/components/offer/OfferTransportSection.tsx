@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Icon from '@/components/ui/icon';
 
 interface OfferTransportSectionProps {
   formData: {
@@ -44,7 +45,7 @@ const PRICE_TYPES = [
   { value: 'negotiable', label: 'Договорная' },
 ];
 
-function SelectGroup({
+function SelectList({
   label,
   options,
   value,
@@ -58,19 +59,20 @@ function SelectGroup({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-1">
         {options.map((opt) => (
           <button
             key={opt}
             type="button"
             onClick={() => onChange(value === opt ? '' : opt)}
-            className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+            className={`flex items-center justify-between w-full px-3 py-2 rounded-md border text-sm text-left transition-colors ${
               value === opt
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-background border-input hover:bg-accent hover:text-accent-foreground'
             }`}
           >
-            {opt}
+            <span>{opt}</span>
+            {value === opt && <Icon name="Check" size={14} />}
           </button>
         ))}
       </div>
@@ -89,7 +91,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
         <CardDescription>Укажите детали перевозки</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <SelectGroup
+        <SelectList
           label="Тип услуги *"
           options={SERVICE_TYPES}
           value={formData.transportServiceType}
@@ -98,7 +100,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
 
         <div className="space-y-2">
           <Label>Маршрут *</Label>
-          <div className="flex gap-2 mb-2">
+          <div className="flex flex-col gap-1">
             {ROUTE_TYPES.map((rt) => (
               <button
                 key={rt}
@@ -107,13 +109,14 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
                   setRouteMode('preset');
                   onInputChange('transportRoute', rt);
                 }}
-                className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                className={`flex items-center justify-between w-full px-3 py-2 rounded-md border text-sm text-left transition-colors ${
                   formData.transportRoute === rt
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-background border-input hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
-                {rt}
+                <span>{rt}</span>
+                {formData.transportRoute === rt && <Icon name="Check" size={14} />}
               </button>
             ))}
             <button
@@ -122,13 +125,14 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
                 setRouteMode('custom');
                 onInputChange('transportRoute', '');
               }}
-              className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+              className={`flex items-center justify-between w-full px-3 py-2 rounded-md border text-sm text-left transition-colors ${
                 routeMode === 'custom' && !ROUTE_TYPES.includes(formData.transportRoute)
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'bg-background border-input hover:bg-accent hover:text-accent-foreground'
               }`}
             >
-              Указать маршрут
+              <span>Указать маршрут</span>
+              {routeMode === 'custom' && !ROUTE_TYPES.includes(formData.transportRoute) && <Icon name="Check" size={14} />}
             </button>
           </div>
           {(routeMode === 'custom' || (!ROUTE_TYPES.includes(formData.transportRoute) && formData.transportRoute)) && (
@@ -140,7 +144,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
           )}
         </div>
 
-        <SelectGroup
+        <SelectList
           label="Тип транспорта *"
           options={TRANSPORT_TYPES}
           value={formData.transportType}
@@ -170,7 +174,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
 
         <div className="space-y-2">
           <Label>Тип цены *</Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-1">
             {PRICE_TYPES.map((pt) => (
               <button
                 key={pt.value}
@@ -179,13 +183,14 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
                   onInputChange('transportPriceType', pt.value);
                   if (pt.value === 'negotiable') onInputChange('transportPrice', '');
                 }}
-                className={`px-3 py-1.5 rounded-md border text-sm transition-colors ${
+                className={`flex items-center justify-between w-full px-3 py-2 rounded-md border text-sm text-left transition-colors ${
                   formData.transportPriceType === pt.value
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-background border-input hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
-                {pt.label}
+                <span>{pt.label}</span>
+                {formData.transportPriceType === pt.value && <Icon name="Check" size={14} />}
               </button>
             ))}
           </div>
