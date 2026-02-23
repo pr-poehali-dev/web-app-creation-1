@@ -64,7 +64,7 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-            <Icon name="ShoppingBag" className="w-8 h-8 text-primary" />
+            <Icon name={isTransport ? 'Truck' : 'ShoppingBag'} className="w-8 h-8 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
