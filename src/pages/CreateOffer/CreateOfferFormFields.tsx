@@ -44,6 +44,7 @@ interface FormData {
   transportDateTime: string;
   transportPrice: string;
   transportPriceType: string;
+  transportNegotiable: boolean;
   transportComment: string;
 }
 
@@ -104,6 +105,7 @@ export default function CreateOfferFormFields({
             transportDateTime: formData.transportDateTime,
             transportPrice: formData.transportPrice,
             transportPriceType: formData.transportPriceType,
+            transportNegotiable: formData.transportNegotiable,
             transportComment: formData.transportComment,
           }}
           onInputChange={onInputChange}

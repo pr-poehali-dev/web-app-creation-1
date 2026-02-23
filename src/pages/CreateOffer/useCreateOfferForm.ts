@@ -34,6 +34,7 @@ interface FormData {
   transportDateTime: string;
   transportPrice: string;
   transportPriceType: string;
+  transportNegotiable: boolean;
   transportComment: string;
 }
 
@@ -72,6 +73,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportDateTime: '',
     transportPrice: '',
     transportPriceType: '',
+    transportNegotiable: false,
     transportComment: '',
   } : {
     title: '',
@@ -105,6 +107,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportDateTime: '',
     transportPrice: '',
     transportPriceType: '',
+    transportNegotiable: false,
     transportComment: '',
   });
 

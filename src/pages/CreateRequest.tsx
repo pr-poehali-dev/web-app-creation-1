@@ -19,6 +19,7 @@ import RequestBasicInfoSection from '@/components/request/RequestBasicInfoSectio
 import RequestPricingSection from '@/components/request/RequestPricingSection';
 import RequestDeliverySection from '@/components/request/RequestDeliverySection';
 import RequestMediaSection from '@/components/request/RequestMediaSection';
+import RequestTransportSection from '@/components/request/RequestTransportSection';
 import { requestsAPI } from '@/services/api';
 import { markDataAsUpdated } from '@/utils/smartCache';
 import { canCreateListing } from '@/utils/permissions';
@@ -78,6 +79,15 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
     startDate: '',
     expiryDate: '',
     publicationDuration: '',
+    transportServiceType: '',
+    transportRoute: '',
+    transportType: '',
+    transportCapacity: '',
+    transportDateTime: '',
+    transportPrice: '',
+    transportPriceType: '',
+    transportNegotiable: false,
+    transportComment: '',
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -240,6 +250,17 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
           negotiableDeadline: formData.negotiableDeadline,
           negotiableBudget: formData.negotiableBudget,
         }),
+        ...(formData.category === 'transport' && {
+          transportServiceType: formData.transportServiceType || undefined,
+          transportRoute: formData.transportRoute || undefined,
+          transportType: formData.transportType || undefined,
+          transportCapacity: formData.transportCapacity || undefined,
+          transportDateTime: formData.transportDateTime || undefined,
+          transportPrice: formData.transportPrice ? parseFloat(formData.transportPrice) : undefined,
+          transportPriceType: formData.transportPriceType || undefined,
+          transportNegotiable: formData.transportNegotiable,
+          transportComment: formData.transportComment || undefined,
+        }),
       };
 
       const result = await requestsAPI.createRequest(requestData);
@@ -297,38 +318,59 @@ export default function CreateRequest({ isAuthenticated, onLogout }: CreateReque
               onInputChange={handleInputChange}
             />
 
-            <RequestPricingSection
-              formData={{
-                quantity: formData.quantity,
-                unit: formData.unit,
-                pricePerUnit: formData.pricePerUnit,
-                hasVAT: formData.hasVAT,
-                vatRate: formData.vatRate,
-                negotiableQuantity: formData.negotiableQuantity,
-                negotiablePrice: formData.negotiablePrice,
-                category: formData.category,
-                deadline: formData.deadline,
-                deadlineStart: formData.deadlineStart,
-                deadlineEnd: formData.deadlineEnd,
-                negotiableDeadline: formData.negotiableDeadline,
-                budget: formData.budget,
-                negotiableBudget: formData.negotiableBudget,
-              }}
-              onInputChange={handleInputChange}
-            />
+            {formData.category === 'transport' && (
+              <RequestTransportSection
+                formData={{
+                  transportServiceType: formData.transportServiceType,
+                  transportRoute: formData.transportRoute,
+                  transportType: formData.transportType,
+                  transportCapacity: formData.transportCapacity,
+                  transportDateTime: formData.transportDateTime,
+                  transportPrice: formData.transportPrice,
+                  transportPriceType: formData.transportPriceType,
+                  transportNegotiable: formData.transportNegotiable,
+                  transportComment: formData.transportComment,
+                }}
+                onInputChange={handleInputChange}
+              />
+            )}
 
-            <RequestDeliverySection
-              formData={{
-                district: formData.district,
-                deliveryAddress: formData.deliveryAddress,
-                gpsCoordinates: formData.gpsCoordinates,
-                availableDistricts: formData.availableDistricts,
-                category: formData.category,
-              }}
-              districts={districts}
-              onInputChange={handleInputChange}
-              onDistrictToggle={handleDistrictToggle}
-            />
+            {formData.category !== 'transport' && (
+              <RequestPricingSection
+                formData={{
+                  quantity: formData.quantity,
+                  unit: formData.unit,
+                  pricePerUnit: formData.pricePerUnit,
+                  hasVAT: formData.hasVAT,
+                  vatRate: formData.vatRate,
+                  negotiableQuantity: formData.negotiableQuantity,
+                  negotiablePrice: formData.negotiablePrice,
+                  category: formData.category,
+                  deadline: formData.deadline,
+                  deadlineStart: formData.deadlineStart,
+                  deadlineEnd: formData.deadlineEnd,
+                  negotiableDeadline: formData.negotiableDeadline,
+                  budget: formData.budget,
+                  negotiableBudget: formData.negotiableBudget,
+                }}
+                onInputChange={handleInputChange}
+              />
+            )}
+
+            {formData.category !== 'transport' && (
+              <RequestDeliverySection
+                formData={{
+                  district: formData.district,
+                  deliveryAddress: formData.deliveryAddress,
+                  gpsCoordinates: formData.gpsCoordinates,
+                  availableDistricts: formData.availableDistricts,
+                  category: formData.category,
+                }}
+                districts={districts}
+                onInputChange={handleInputChange}
+                onDistrictToggle={handleDistrictToggle}
+              />
+            )}
 
             <RequestMediaSection
               images={images}

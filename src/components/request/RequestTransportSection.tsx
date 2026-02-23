@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import Icon from '@/components/ui/icon';
 
-interface OfferTransportSectionProps {
+interface RequestTransportSectionProps {
   formData: {
     transportServiceType: string;
     transportRoute: string;
@@ -15,8 +15,8 @@ interface OfferTransportSectionProps {
     transportDateTime: string;
     transportPrice: string;
     transportPriceType: string;
-    transportNegotiable?: boolean;
-    transportComment?: string;
+    transportNegotiable: boolean;
+    transportComment: string;
   };
   onInputChange: (field: string, value: string | boolean) => void;
 }
@@ -102,7 +102,7 @@ function CollapsibleSelectList({
   );
 }
 
-export default function OfferTransportSection({ formData, onInputChange }: OfferTransportSectionProps) {
+export default function RequestTransportSection({ formData, onInputChange }: RequestTransportSectionProps) {
   return (
     <Card>
       <CardHeader>
@@ -178,7 +178,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
           <div className="flex items-center space-x-2 mt-1">
             <Checkbox
               id="transportNegotiable"
-              checked={formData.transportNegotiable || false}
+              checked={formData.transportNegotiable}
               onCheckedChange={(checked) => {
                 onInputChange('transportNegotiable', checked as boolean);
                 if (checked) onInputChange('transportPrice', '');
@@ -197,7 +197,7 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
           <Label htmlFor="transportComment">Комментарий</Label>
           <Textarea
             id="transportComment"
-            value={formData.transportComment || ''}
+            value={formData.transportComment}
             onChange={(e) => onInputChange('transportComment', e.target.value)}
             placeholder="Дополнительная информация об услуге, условиях, особенностях..."
             rows={3}
