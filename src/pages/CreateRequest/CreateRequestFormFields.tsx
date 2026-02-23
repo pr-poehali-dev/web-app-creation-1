@@ -252,9 +252,10 @@ export default function CreateRequestFormFields({
           size="lg"
           disabled={
             isSubmitting ||
-            !formData.title ||
             !formData.category ||
-            !formData.district
+            (formData.category === 'transport'
+              ? !formData.transportServiceType || !formData.transportRoute || !formData.transportType || !formData.publicationDuration
+              : !formData.title || !formData.district)
           }
         >
           {isSubmitting ? (

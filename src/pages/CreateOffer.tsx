@@ -212,9 +212,10 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                 type="submit"
                 size="lg"
                 disabled={
-                  isSubmitting || 
-                  !formData.title || 
-                  !formData.district
+                  isSubmitting ||
+                  (formData.category === 'transport'
+                    ? !formData.transportServiceType || !formData.transportRoute || !formData.transportType || !formData.publicationStartDate || !formData.publicationDuration
+                    : !formData.title || !formData.district)
                 }
               >
                 {isSubmitting ? (
