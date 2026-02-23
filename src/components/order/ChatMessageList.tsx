@@ -1,5 +1,6 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect, useCallback, useState } from 'react';
 import Icon from '@/components/ui/icon';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { OrderMessage } from './chat-types';
 
 interface ChatMessageListProps {
@@ -32,6 +33,7 @@ export default function ChatMessageList({
   onDeleteMessage,
 }: ChatMessageListProps) {
   const isAtBottomRef = useRef(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (messages.length > 0 && messagesContainerRef.current) {
@@ -118,7 +120,7 @@ export default function ChatMessageList({
                   </p>
                   {isMe && hasAttachment && !isHistory && onDeleteMessage && (
                     <button
-                      onClick={() => onDeleteMessage(msg.id)}
+                      onClick={() => setConfirmDeleteId(msg.id)}
                       className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive/80 flex-shrink-0"
                       title="Удалить сообщение"
                     >
@@ -141,6 +143,26 @@ export default function ChatMessageList({
           Новые сообщения
         </button>
       )}
+
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить сообщение?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Сообщение и прикреплённый файл будут удалены безвозвратно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-white"
+              onClick={() => { if (confirmDeleteId && onDeleteMessage) { onDeleteMessage(confirmDeleteId); setConfirmDeleteId(null); } }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
