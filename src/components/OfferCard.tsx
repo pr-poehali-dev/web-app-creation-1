@@ -45,7 +45,6 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
   const districtName = DISTRICTS.find(d => d.id === offer.district)?.name;
   const expirationInfo = getExpirationStatus(offer);
   const isService = offer.category === 'utilities';
-  const isTransport = offer.category === 'transport';
   
   // Найти административный центр района (settlement)
   const getDistrictCenter = (districtId: string) => {
@@ -192,56 +191,25 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         </h3>
 
         <div className="space-y-1">
-          {isTransport ? (
-            <>
-              {offer.transportRoute && (
-                <div className="flex items-center gap-1.5">
-                  <Icon name="Route" className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                  <span className="text-xs font-medium truncate">{offer.transportRoute}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {offer.transportServiceType && (
-                  <Badge variant="secondary" className="text-xs h-5 px-2">{offer.transportServiceType}</Badge>
-                )}
-                {offer.transportType && (
-                  <Badge variant="outline" className="text-xs h-5 px-2">{offer.transportType}</Badge>
-                )}
-              </div>
-              {(offer.transportPrice || offer.transportNegotiable) && (
-                <div className="flex items-baseline gap-1">
-                  {offer.transportNegotiable ? (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">Договорная</Badge>
-                  ) : (
-                    <span className="font-bold text-primary text-lg">
-                      {Number(offer.transportPrice).toLocaleString('ru-RU')} ₽
-                      {offer.transportPriceType && <span className="text-xs text-muted-foreground ml-1">{offer.transportPriceType}</span>}
-                    </span>
-                  )}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex items-baseline gap-1">
-              {isService ? (
-                <>
-                  {offer.budget ? (
-                    <span className="font-bold text-primary text-lg">
-                      {offer.budget.toLocaleString('ru-RU')} ₽
-                    </span>
-                  ) : offer.negotiableBudget ? (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">
-                      По договоренности
-                    </Badge>
-                  ) : null}
-                </>
-              ) : offer.pricePerUnit != null ? (
-                <span className="font-bold text-primary text-lg">
-                  {offer.pricePerUnit.toLocaleString('ru-RU')} ₽<span className="text-sm text-muted-foreground">/{offer.unit}</span>
-                </span>
-              ) : null}
-            </div>
-          )}
+          <div className="flex items-baseline gap-1">
+            {isService ? (
+              <>
+                {offer.budget ? (
+                  <span className="font-bold text-primary text-lg">
+                    {offer.budget.toLocaleString('ru-RU')} ₽
+                  </span>
+                ) : offer.negotiableBudget ? (
+                  <Badge variant="secondary" className="text-xs h-5 px-2">
+                    По договоренности
+                  </Badge>
+                ) : null}
+              </>
+            ) : offer.pricePerUnit != null ? (
+              <span className="font-bold text-primary text-lg">
+                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽<span className="text-sm text-muted-foreground">/{offer.unit}</span>
+              </span>
+            ) : null}
+          </div>
           
           {districtName && (
             <div className="flex items-center gap-1.5">
