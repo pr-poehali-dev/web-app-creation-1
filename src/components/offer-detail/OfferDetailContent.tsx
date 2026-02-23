@@ -190,6 +190,8 @@ export default function OfferDetailContent({
                 transportDateTime={offer.transportDateTime}
                 transportPrice={offer.transportPrice}
                 transportPriceType={offer.transportPriceType}
+                transportNegotiable={offer.transportNegotiable}
+                transportComment={offer.transportComment}
               />
             </div>
           </div>
@@ -278,6 +280,8 @@ export default function OfferDetailContent({
                 transportDateTime={offer.transportDateTime}
                 transportPrice={offer.transportPrice}
                 transportPriceType={offer.transportPriceType}
+                transportNegotiable={offer.transportNegotiable}
+                transportComment={offer.transportComment}
               />
             </div>
           </div>

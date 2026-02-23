@@ -44,6 +44,8 @@ interface OfferInfoCardProps {
   transportDateTime?: string;
   transportPrice?: string;
   transportPriceType?: string;
+  transportNegotiable?: boolean;
+  transportComment?: string;
 }
 
 export default function OfferInfoCard({
@@ -83,6 +85,8 @@ export default function OfferInfoCard({
   transportDateTime,
   transportPrice,
   transportPriceType,
+  transportNegotiable,
+  transportComment,
 }: OfferInfoCardProps) {
   // Найти название категории
   const categoryData = CATEGORIES.find(c => c.id === category);
@@ -160,6 +164,8 @@ export default function OfferInfoCard({
           transportType={transportType}
           transportPriceType={transportPriceType}
           transportPrice={transportPrice}
+          transportNegotiable={transportNegotiable}
+          transportComment={transportComment}
         />
 
         {/* Дополнительная информация в аккордеоне (мобильные) */}

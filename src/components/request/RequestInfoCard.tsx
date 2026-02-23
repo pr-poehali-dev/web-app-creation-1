@@ -32,10 +32,28 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     negotiableDeadline,
     budget,
     negotiableBudget,
+    transportServiceType,
+    transportRoute,
+    transportType,
+    transportCapacity,
+    transportDateTime,
+    transportPrice,
+    transportPriceType,
+    transportNegotiable,
+    transportComment,
     author
   } = request;
   
+  const isTransport = category === 'transport';
   const isService = category === 'utilities';
+
+  const PRICE_TYPE_LABELS: Record<string, string> = {
+    'За рейс': 'За рейс',
+    'За час': 'За час',
+    'За км': 'За км',
+    'За тонну': 'За тонну',
+    'Договорная': 'Договорная',
+  };
   const totalAmount = pricePerUnit * quantity;
   
   const categoryName = CATEGORIES.find(c => c.id === category)?.name || category;
@@ -68,7 +86,61 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
 
       <CardContent className="space-y-3">
         {/* Основная информация - всегда видна */}
-        {isService ? (
+        {isTransport ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              {transportServiceType && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Тип услуги</p>
+                  <p className="font-semibold">{transportServiceType}</p>
+                </div>
+              )}
+              {transportType && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Транспорт</p>
+                  <p className="font-semibold">{transportType}</p>
+                </div>
+              )}
+              {transportRoute && (
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground">Маршрут</p>
+                  <p className="font-semibold">{transportRoute}</p>
+                </div>
+              )}
+              {transportCapacity && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Вместимость</p>
+                  <p className="font-semibold">{transportCapacity}</p>
+                </div>
+              )}
+              {transportDateTime && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Дата и время</p>
+                  <p className="font-semibold">
+                    {new Date(transportDateTime).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="bg-primary/5 p-3 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-0.5">Стоимость</p>
+              {transportNegotiable ? (
+                <Badge variant="secondary" className="text-sm">Ваша цена (Торг)</Badge>
+              ) : transportPrice ? (
+                <div>
+                  <p className="text-2xl font-bold text-primary">
+                    {Number(transportPrice).toLocaleString('ru-RU')} ₽
+                  </p>
+                  {transportPriceType && (
+                    <p className="text-xs text-muted-foreground">{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Не указана</p>
+              )}
+            </div>
+          </div>
+        ) : isService ? (
           <div className="space-y-3">
             {deadlineStart && deadlineEnd && (
               <div>
@@ -141,6 +213,16 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
                 <p className="text-sm font-medium mb-1">Описание запроса</p>
                 <p className="text-xs text-muted-foreground whitespace-pre-line">{description}</p>
               </div>
+
+              {transportComment && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm font-medium mb-1">Комментарий</p>
+                    <p className="text-xs text-muted-foreground whitespace-pre-line">{transportComment}</p>
+                  </div>
+                </>
+              )}
 
               <Separator />
 

@@ -27,6 +27,8 @@ interface OfferInfoSummaryProps {
   transportType?: string;
   transportPriceType?: string;
   transportPrice?: string;
+  transportNegotiable?: boolean;
+  transportComment?: string;
 }
 
 export default function OfferInfoSummary({
@@ -47,6 +49,8 @@ export default function OfferInfoSummary({
   transportType,
   transportPriceType,
   transportPrice,
+  transportNegotiable,
+  transportComment,
 }: OfferInfoSummaryProps) {
   const isTransport = category === 'transport';
   const isService = category === 'utilities' || isTransport;
@@ -73,14 +77,25 @@ export default function OfferInfoSummary({
               <p className="font-semibold">{transportRoute}</p>
             </div>
           )}
-          {transportPriceType && (
-            <div>
-              <p className="text-xs text-muted-foreground">Цена:</p>
+          <div className="col-span-2">
+            <p className="text-xs text-muted-foreground">Цена:</p>
+            {transportNegotiable ? (
+              <Badge variant="secondary" className="text-xs mt-0.5">Ваша цена (Торг)</Badge>
+            ) : transportPriceType ? (
               <p className="font-semibold">
-                {transportPriceType === 'negotiable'
-                  ? 'Договорная'
-                  : `${transportPrice ? Number(transportPrice).toLocaleString('ru-RU') + ' ₽' : '—'} ${PRICE_TYPE_LABELS[transportPriceType] || ''}`}
+                {transportPrice ? Number(transportPrice).toLocaleString('ru-RU') + ' ₽' : '—'}
+                {' '}{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}
               </p>
+            ) : transportPrice ? (
+              <p className="font-semibold">{Number(transportPrice).toLocaleString('ru-RU')} ₽</p>
+            ) : (
+              <p className="font-semibold text-muted-foreground">Не указана</p>
+            )}
+          </div>
+          {transportComment && (
+            <div className="col-span-2">
+              <p className="text-xs text-muted-foreground">Комментарий:</p>
+              <p className="font-medium text-sm">{transportComment}</p>
             </div>
           )}
         </div>

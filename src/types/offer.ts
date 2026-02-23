@@ -95,6 +95,8 @@ export interface Offer {
   transportDateTime?: string;
   transportPrice?: string;
   transportPriceType?: string;
+  transportNegotiable?: boolean;
+  transportComment?: string;
 }
 
 export interface Request {

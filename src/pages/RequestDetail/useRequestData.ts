@@ -67,6 +67,15 @@ export interface Request {
   negotiableDeadline?: boolean;
   budget?: number;
   negotiableBudget?: boolean;
+  transportServiceType?: string;
+  transportRoute?: string;
+  transportType?: string;
+  transportCapacity?: string;
+  transportDateTime?: string;
+  transportPrice?: string;
+  transportPriceType?: string;
+  transportNegotiable?: boolean;
+  transportComment?: string;
 }
 
 export function useRequestData(id: string | undefined) {
@@ -125,6 +134,15 @@ export function useRequestData(id: string | undefined) {
           negotiableDeadline: data.negotiableDeadline,
           budget: data.budget,
           negotiableBudget: data.negotiableBudget,
+          transportServiceType: data.transportServiceType,
+          transportRoute: data.transportRoute,
+          transportType: data.transportType,
+          transportCapacity: data.transportCapacity,
+          transportDateTime: data.transportDateTime,
+          transportPrice: data.transportPrice,
+          transportPriceType: data.transportPriceType,
+          transportNegotiable: data.transportNegotiable,
+          transportComment: data.transportComment,
         };
         setRequest(mappedRequest);
         
