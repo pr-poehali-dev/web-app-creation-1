@@ -91,6 +91,7 @@ export default function CreateOfferFormFields({
           description: formData.description,
           category: formData.category,
           subcategory: formData.subcategory,
+          transportServiceType: formData.transportServiceType,
         }}
         onInputChange={onInputChange}
       />

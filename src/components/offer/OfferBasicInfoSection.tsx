@@ -12,11 +12,13 @@ interface OfferBasicInfoSectionProps {
     description: string;
     category: string;
     subcategory: string;
+    transportServiceType?: string;
   };
   onInputChange: (field: string, value: string) => void;
 }
 
 export default function OfferBasicInfoSection({ formData, onInputChange }: OfferBasicInfoSectionProps) {
+  const isTransport = formData.category === 'transport';
   const selectedCategory = CATEGORIES.find(c => c.id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
   
@@ -55,36 +57,40 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
         <CardTitle>Основная информация</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="title">Название предложения *</Label>
-          <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => onInputChange('title', e.target.value)}
-            placeholder="Например: Цемент М500, мешок 50 кг"
-            required
-            maxLength={100}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            {formData.title.length}/100 символов
-          </p>
-        </div>
+        {!isTransport && (
+          <>
+            <div>
+              <Label htmlFor="title">Название предложения *</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => onInputChange('title', e.target.value)}
+                placeholder="Например: Цемент М500, мешок 50 кг"
+                required
+                maxLength={100}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.title.length}/100 символов
+              </p>
+            </div>
 
-        <div>
-          <Label htmlFor="description">Описание *</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => onInputChange('description', e.target.value)}
-            placeholder="Подробное описание товара или услуги..."
-            required
-            rows={6}
-            maxLength={1000}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            {formData.description.length}/1000 символов
-          </p>
-        </div>
+            <div>
+              <Label htmlFor="description">Описание *</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => onInputChange('description', e.target.value)}
+                placeholder="Подробное описание товара или услуги..."
+                required
+                rows={6}
+                maxLength={1000}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {formData.description.length}/1000 символов
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="relative">

@@ -116,7 +116,10 @@ export default function OfferTransportSection({ formData, onInputChange }: Offer
           placeholder="Выберите тип услуги"
           options={SERVICE_TYPES}
           value={formData.transportServiceType}
-          onChange={(v) => onInputChange('transportServiceType', v)}
+          onChange={(v) => {
+            onInputChange('transportServiceType', v);
+            onInputChange('title', v);
+          }}
         />
 
         <div className="space-y-2">
