@@ -32,6 +32,7 @@ interface FormData {
   transportPriceType: string;
   transportNegotiable: boolean;
   transportComment: string;
+  transportAllDistricts: boolean;
 }
 
 export function useCreateRequestSubmit(
@@ -82,6 +83,7 @@ export function useCreateRequestSubmit(
         transportPriceType: formData.transportPriceType || undefined,
         transportNegotiable: formData.transportNegotiable,
         transportComment: formData.transportComment || undefined,
+        transportAllDistricts: formData.transportAllDistricts,
       }),
     };
   };

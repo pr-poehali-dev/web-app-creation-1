@@ -36,6 +36,7 @@ interface FormData {
   transportPriceType: string;
   transportNegotiable: boolean;
   transportComment: string;
+  transportAllDistricts: boolean;
 }
 
 export function useCreateOfferForm(editOffer?: Offer) {
@@ -75,6 +76,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportPriceType: '',
     transportNegotiable: false,
     transportComment: '',
+    transportAllDistricts: false,
   } : {
     title: '',
     description: '',
@@ -109,6 +111,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportPriceType: '',
     transportNegotiable: false,
     transportComment: '',
+    transportAllDistricts: false,
   });
 
   const [images, setImages] = useState<File[]>([]);

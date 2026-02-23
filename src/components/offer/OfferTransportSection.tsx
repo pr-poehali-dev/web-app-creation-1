@@ -24,6 +24,7 @@ interface OfferTransportSectionProps {
     transportNegotiable?: boolean;
     transportComment?: string;
     availableDistricts: string[];
+    transportAllDistricts: boolean;
   };
   districts: District[];
   onInputChange: (field: string, value: string | boolean) => void;
@@ -143,24 +144,36 @@ export default function OfferTransportSection({ formData, districts, onInputChan
 
         <div className="space-y-2">
           <Label>Районы обслуживания</Label>
-          <p className="text-xs text-muted-foreground">Выберите районы, в которых доступна услуга (необязательно)</p>
-          <div className="flex flex-wrap gap-2">
-            {districts.filter(d => d.id !== 'all').map((district) => {
-              const isSelected = formData.availableDistricts.includes(district.id);
-              return (
-                <button
-                  key={district.id}
-                  type="button"
-                  onClick={() => onDistrictToggle(district.id)}
-                  className="focus:outline-none"
-                >
-                  <Badge variant={isSelected ? 'default' : 'outline'} className="cursor-pointer">
-                    {district.name}
-                  </Badge>
-                </button>
-              );
-            })}
+          <p className="text-xs text-muted-foreground">По умолчанию показывается только в вашем районе</p>
+          <div className="flex items-center space-x-2 mb-2">
+            <Checkbox
+              id="transportAllDistricts"
+              checked={formData.transportAllDistricts}
+              onCheckedChange={(checked) => onInputChange('transportAllDistricts', checked as boolean)}
+            />
+            <label htmlFor="transportAllDistricts" className="text-sm font-medium leading-none cursor-pointer">
+              Все районы
+            </label>
           </div>
+          {!formData.transportAllDistricts && (
+            <div className="flex flex-wrap gap-2">
+              {districts.filter(d => d.id !== 'all').map((district) => {
+                const isSelected = formData.availableDistricts.includes(district.id);
+                return (
+                  <button
+                    key={district.id}
+                    type="button"
+                    onClick={() => onDistrictToggle(district.id)}
+                    className="focus:outline-none"
+                  >
+                    <Badge variant={isSelected ? 'default' : 'outline'} className="cursor-pointer">
+                      {district.name}
+                    </Badge>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <CollapsibleSelectList

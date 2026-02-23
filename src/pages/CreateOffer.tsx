@@ -155,6 +155,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       transportType: formData.transportType || undefined,
       transportCapacity: formData.transportCapacity || undefined,
       transportComment: formData.transportComment || undefined,
+      transportAllDistricts: formData.transportAllDistricts,
     };
 
     submitOffer(submitData, videoPreview, imagePreviews, isDraft);

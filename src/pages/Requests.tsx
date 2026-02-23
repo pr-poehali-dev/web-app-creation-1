@@ -175,22 +175,33 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
 
     if (selectedRegion !== 'all') {
       const districtsInRegion = districts.map(d => d.id);
-      
+
+      const isTransportVisible = (offer: { category?: string; availableDistricts?: string[]; transportAllDistricts?: boolean }, targetDistricts: string[]) => {
+        if (offer.category !== 'transport') return false;
+        if (offer.transportAllDistricts) return true;
+        const offerDistricts = offer.availableDistricts || [];
+        if (offerDistricts.length === 0) return false;
+        return offerDistricts.some(d => targetDistricts.includes(d));
+      };
+
       if (selectedDistricts.length > 0) {
         result = result.filter(
           (offer) =>
+            isTransportVisible(offer, selectedDistricts) ||
             selectedDistricts.includes(offer.district) ||
             (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
       } else if (detectedDistrictId) {
         result = result.filter(
           (offer) =>
+            isTransportVisible(offer, [detectedDistrictId]) ||
             offer.district === detectedDistrictId ||
             (offer.availableDistricts || []).includes(detectedDistrictId)
         );
       } else {
         result = result.filter(
           (offer) =>
+            isTransportVisible(offer, districtsInRegion) ||
             districtsInRegion.includes(offer.district) ||
             (offer.availableDistricts || []).some(d => districtsInRegion.includes(d))
         );

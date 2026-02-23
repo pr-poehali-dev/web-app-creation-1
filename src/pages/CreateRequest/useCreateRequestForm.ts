@@ -38,6 +38,7 @@ export function useCreateRequestForm() {
     transportPriceType: '',
     transportNegotiable: false,
     transportComment: '',
+    transportAllDistricts: false,
   });
 
   const [images, setImages] = useState<File[]>([]);

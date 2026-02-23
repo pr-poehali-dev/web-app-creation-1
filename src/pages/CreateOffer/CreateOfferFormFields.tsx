@@ -46,6 +46,7 @@ interface FormData {
   transportPriceType: string;
   transportNegotiable: boolean;
   transportComment: string;
+  transportAllDistricts: boolean;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -109,6 +110,7 @@ export default function CreateOfferFormFields({
             transportNegotiable: formData.transportNegotiable,
             transportComment: formData.transportComment,
             availableDistricts: formData.availableDistricts,
+            transportAllDistricts: formData.transportAllDistricts,
           }}
           districts={districts}
           onInputChange={onInputChange}
