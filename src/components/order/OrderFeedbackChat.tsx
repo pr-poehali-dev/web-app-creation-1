@@ -177,6 +177,21 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     const user = getSession();
     if (!user?.id) return;
 
+    if (pendingFile) {
+      const isVideo = pendingFile.file.type.startsWith('video/');
+      const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
+      if (pendingFile.file.size > maxSize) {
+        toast({
+          title: 'Файл слишком большой для отправки',
+          description: isVideo
+            ? 'Лимит видео — 30 МБ (~30 сек). Попробуй отправить частями или сократи длительность.'
+            : 'Максимальный размер фото — 20 МБ.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     try {
       setIsSending(true);
       const payload: Record<string, unknown> = {
