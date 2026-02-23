@@ -226,21 +226,28 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     if (selectedRegion !== 'all') {
       const districtsInRegion = districts.map(d => d.id);
       
+      const isTransportVisible = (offer: { category?: string; availableDistricts?: string[] }, targetDistricts: string[]) => {
+        if (offer.category !== 'transport') return false;
+        const offerDistricts = offer.availableDistricts || [];
+        if (offerDistricts.length === 0) return true;
+        return offerDistricts.some(d => targetDistricts.includes(d));
+      };
+
       if (selectedDistricts.length > 0) {
         result = result.filter((offer) => 
-          offer.category === 'transport' ||
+          isTransportVisible(offer, selectedDistricts) ||
           selectedDistricts.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
       } else if (detectedDistrictId) {
         result = result.filter((offer) => 
-          offer.category === 'transport' ||
+          isTransportVisible(offer, [detectedDistrictId]) ||
           offer.district === detectedDistrictId || 
           (offer.availableDistricts || []).includes(detectedDistrictId)
         );
       } else {
         result = result.filter((offer) => 
-          offer.category === 'transport' ||
+          isTransportVisible(offer, districtsInRegion) ||
           districtsInRegion.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => districtsInRegion.includes(d))
         );

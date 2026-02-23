@@ -4,7 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+
+interface District {
+  id: string;
+  name: string;
+}
 
 interface RequestTransportSectionProps {
   formData: {
@@ -17,8 +23,11 @@ interface RequestTransportSectionProps {
     transportPriceType: string;
     transportNegotiable: boolean;
     transportComment: string;
+    availableDistricts: string[];
   };
+  districts: District[];
   onInputChange: (field: string, value: string | boolean) => void;
+  onDistrictToggle: (districtId: string) => void;
 }
 
 const SERVICE_TYPES = [
@@ -103,7 +112,7 @@ function CollapsibleSelectList({
   );
 }
 
-export default function RequestTransportSection({ formData, onInputChange }: RequestTransportSectionProps) {
+export default function RequestTransportSection({ formData, districts, onInputChange, onDistrictToggle }: RequestTransportSectionProps) {
   return (
     <Card>
       <CardHeader>
@@ -127,6 +136,28 @@ export default function RequestTransportSection({ formData, onInputChange }: Req
             onChange={(e) => onInputChange('transportRoute', e.target.value)}
             placeholder="Город отправления — Город назначения"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Районы обслуживания</Label>
+          <p className="text-xs text-muted-foreground">Выберите районы, в которых нужна услуга (необязательно)</p>
+          <div className="flex flex-wrap gap-2">
+            {districts.filter(d => d.id !== 'all').map((district) => {
+              const isSelected = formData.availableDistricts.includes(district.id);
+              return (
+                <button
+                  key={district.id}
+                  type="button"
+                  onClick={() => onDistrictToggle(district.id)}
+                  className="focus:outline-none"
+                >
+                  <Badge variant={isSelected ? 'default' : 'outline'} className="cursor-pointer">
+                    {district.name}
+                  </Badge>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <CollapsibleSelectList

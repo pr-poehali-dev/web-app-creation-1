@@ -109,8 +109,11 @@ export default function CreateRequestFormFields({
             transportPriceType: formData.transportPriceType,
             transportNegotiable: formData.transportNegotiable,
             transportComment: formData.transportComment,
+            availableDistricts: formData.availableDistricts,
           }}
+          districts={districts}
           onInputChange={onInputChange}
+          onDistrictToggle={onDistrictToggle}
         />
       )}
 
