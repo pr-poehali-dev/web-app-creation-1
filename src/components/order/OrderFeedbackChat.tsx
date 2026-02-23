@@ -253,6 +253,11 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       recorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(audioChunksRef.current, { type: mimeType });
+        const maxAudioSize = 20 * 1024 * 1024;
+        if (blob.size > maxAudioSize) {
+          toast({ title: 'Голосовое сообщение слишком длинное', description: 'Максимальный размер аудио — 20 МБ. Запиши более короткое сообщение.', variant: 'destructive' });
+          return;
+        }
         const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
         const file = new File([blob], `voice_${Date.now()}.${ext}`, { type: mimeType });
         const preview = URL.createObjectURL(blob);
