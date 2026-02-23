@@ -37,6 +37,11 @@ export const CATEGORIES: Category[] = [
     subcategories: [],
   },
   {
+    id: 'solid-fuel',
+    name: 'Твердое топливо',
+    subcategories: [],
+  },
+  {
     id: 'energy',
     name: 'ГСМ',
     subcategories: [],
