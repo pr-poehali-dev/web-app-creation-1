@@ -8,7 +8,7 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: 'raw-materials',
-    name: 'Сырье',
+    name: 'Строительные товары',
     subcategories: [],
   },
   {
@@ -53,12 +53,17 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: 'essentials',
-    name: 'Продукты и товары первой необходимости',
+    name: 'Товары',
     subcategories: [],
   },
   {
     id: 'energy',
-    name: 'Энергетика',
+    name: 'ГСМ',
+    subcategories: [],
+  },
+  {
+    id: 'lumber',
+    name: 'Пиломатериалы',
     subcategories: [],
   },
   {
