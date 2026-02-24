@@ -249,8 +249,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             SELECT 
                 o.id, o.user_id, o.seller_id, o.title, o.description, o.category, o.district, o.location,
                 o.price_per_unit, o.quantity, o.unit, o.sold_quantity, o.reserved_quantity, o.created_at,
-                o.available_delivery_types, o.available_districts, o.status, o.expiry_date, o.views_count,
-                o.transport_all_districts,
+                o.available_delivery_types, o.status, o.expiry_date, o.views_count,
                 COALESCE(u.rating, 100.0) as seller_rating
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
@@ -557,8 +556,6 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     budget = body.get('budget')
     negotiable_budget = body.get('negotiableBudget', False)
     
-    transport_all_districts = body.get('transportAllDistricts', False)
-
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
             user_id, title, description, category, subcategory,
@@ -566,8 +563,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             location, district, full_address, available_districts,
             available_delivery_types, is_premium, status, no_negotiation, delivery_time,
             delivery_period_start, delivery_period_end,
-            deadline_start, deadline_end, negotiable_deadline, budget, negotiable_budget,
-            transport_all_districts
+            deadline_start, deadline_end, negotiable_deadline, budget, negotiable_budget
         ) VALUES (
             '{user_id_esc}', 
             '{title_esc}', 
@@ -595,8 +591,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {'NULL' if not deadline_end else f"'{deadline_end}'"},
             {negotiable_deadline},
             {budget if budget else 'NULL'},
-            {negotiable_budget},
-            {transport_all_districts}
+            {negotiable_budget}
         )
         RETURNING id, created_at
     """
