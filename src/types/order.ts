@@ -43,6 +43,8 @@ export interface Order {
   attachments?: { url: string; name: string }[];
   hasUnreadCounterOffer?: boolean;
   unreadMessages?: number;
+  offerCategory?: string;
+  offerTransportRoute?: string;
 }
 
 export interface ChatMessage {

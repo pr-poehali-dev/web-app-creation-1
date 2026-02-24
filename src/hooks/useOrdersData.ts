@@ -105,6 +105,8 @@ export function useOrdersData(
       attachments: orderData.attachments,
       hasUnreadCounterOffer,
       unreadMessages: orderData.unreadMessages || 0,
+      offerCategory: orderData.offerCategory,
+      offerTransportRoute: orderData.offerTransportRoute,
     };
   };
 

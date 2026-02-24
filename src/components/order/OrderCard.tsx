@@ -105,10 +105,23 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           )}
           {!order.isRequest && (
           <div>
-            <p className="text-muted-foreground">Способ получения</p>
-            <p className="font-medium">
-              {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
-            </p>
+            {order.offerCategory === 'transport' ? (
+              <>
+                <p className="text-muted-foreground">Маршрут</p>
+                <p className="font-medium">
+                  {order.buyerComment?.includes('Маршрут:') 
+                    ? order.buyerComment.match(/Маршрут:\s*([^\n]*)/)?.[1]?.trim() || order.offerTransportRoute || '—'
+                    : order.offerTransportRoute || '—'}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground">Способ получения</p>
+                <p className="font-medium">
+                  {order.deliveryType === 'pickup' ? 'Самовывоз' : 'Доставка'}
+                </p>
+              </>
+            )}
           </div>
           )}
           <div>
