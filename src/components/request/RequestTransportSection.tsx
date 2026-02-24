@@ -71,16 +71,16 @@ function CollapsibleSelectList({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between w-full text-left"
+        className="flex items-center justify-between w-full px-3 py-2 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 transition-colors text-left"
       >
-        <Label className="cursor-pointer text-sm font-medium">{label}</Label>
+        <span className="text-sm font-medium text-amber-800">{label}</span>
         <div className="flex items-center gap-2">
           {value ? (
-            <span className="text-xs font-medium text-foreground">{value}</span>
+            <span className="text-xs font-medium text-amber-900">{value}</span>
           ) : placeholder ? (
-            <span className="text-xs text-muted-foreground">{placeholder}</span>
+            <span className="text-xs text-amber-500">{placeholder}</span>
           ) : null}
-          <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
+          <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-amber-500" />
         </div>
       </button>
       {open && (
@@ -95,8 +95,8 @@ function CollapsibleSelectList({
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
                 value === opt
-                  ? 'bg-amber-400 text-amber-950 border-amber-400 shadow-sm'
-                  : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  : 'bg-background text-foreground border-input hover:bg-accent'
               }`}
             >
               {value === opt && <Icon name="Check" size={13} />}
