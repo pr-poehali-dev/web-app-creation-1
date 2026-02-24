@@ -469,6 +469,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             o.*,
             of.price_per_unit as offer_price_per_unit,
             COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity,
+            of.category as offer_category,
+            of.transport_route as offer_transport_route,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
@@ -494,6 +496,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     
     order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
     order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity')) if order_dict.get('offer_available_quantity') is not None else 0
+    order_dict['offerCategory'] = order_dict.pop('offer_category', None)
+    order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
     order_dict['is_request'] = order_dict.get('is_request', False)
     
     order_dict['offer_title'] = order_dict.get('title', '')
