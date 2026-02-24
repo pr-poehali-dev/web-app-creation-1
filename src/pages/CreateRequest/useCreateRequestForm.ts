@@ -101,7 +101,7 @@ export function useCreateRequestForm() {
       setFormData(prev => ({
         ...prev,
         subcategory: '',
-        unit: value === 'solid-fuel' ? 'т' : prev.unit,
+        unit: value === 'solid-fuel' ? '' : prev.unit,
       }));
     }
   };

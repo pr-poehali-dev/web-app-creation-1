@@ -220,7 +220,7 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
                   id="unit"
                   value={selectedUnit?.label || ''}
                   onFocus={() => setIsUnitOpen(true)}
-                  placeholder="Выберите единицу..."
+                  placeholder="Выбери единицу измерения"
                   className="pr-8"
                   readOnly
                   required
