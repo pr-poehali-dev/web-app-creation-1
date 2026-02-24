@@ -84,7 +84,7 @@ function CollapsibleSelectList({
         </div>
       </button>
       {open && (
-        <div className="flex flex-col gap-1 pt-1">
+        <div className="flex flex-wrap gap-2 pt-2">
           {options.map((opt) => (
             <button
               key={opt}
@@ -93,14 +93,14 @@ function CollapsibleSelectList({
                 onChange(value === opt ? '' : opt);
                 setOpen(false);
               }}
-              className={`flex items-center justify-between w-full px-3 py-2 rounded-md border text-sm text-left transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
                 value === opt
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background border-input hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-amber-400 text-amber-950 border-amber-400 shadow-sm'
+                  : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300'
               }`}
             >
+              {value === opt && <Icon name="Check" size={13} />}
               <span>{opt}</span>
-              {value === opt && <Icon name="Check" size={14} />}
             </button>
           ))}
         </div>
