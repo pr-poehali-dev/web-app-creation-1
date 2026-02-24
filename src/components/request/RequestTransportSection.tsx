@@ -71,14 +71,14 @@ function CollapsibleSelectList({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={`flex items-center justify-between w-full px-3 py-2 rounded-lg border transition-colors text-left ${value ? 'border-amber-300 bg-amber-50 hover:bg-amber-100' : 'border-input bg-background hover:bg-accent'}`}
+        className="flex items-center justify-between w-full text-left"
       >
         <span className="text-sm font-medium">{label}</span>
         <div className="flex items-center gap-2">
           {value ? (
             <span className="text-xs font-medium">{value}</span>
           ) : placeholder ? (
-            <span className="text-xs text-muted-foreground">{placeholder}</span>
+            <span className="text-xs text-amber-500">{placeholder}</span>
           ) : null}
           <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
         </div>
