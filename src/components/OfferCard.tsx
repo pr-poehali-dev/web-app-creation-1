@@ -204,11 +204,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                   </Badge>
                 ) : null}
               </>
-            ) : offer.pricePerUnit != null ? (
+            ) : (
               <span className="font-bold text-primary text-lg">
                 {offer.pricePerUnit.toLocaleString('ru-RU')} ₽<span className="text-sm text-muted-foreground">/{offer.unit}</span>
               </span>
-            ) : null}
+            )}
           </div>
           
           {districtName && (
