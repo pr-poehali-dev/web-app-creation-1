@@ -59,39 +59,41 @@ export default function OfferInfoSummary({
     <>
       {isTransport ? (
         <div className="grid grid-cols-2 gap-2 text-sm">
-          {transportServiceType && (
-            <div>
-              <p className="text-xs text-muted-foreground">Тип услуги:</p>
-              <p className="font-semibold">{transportServiceType}</p>
+          {transportRoute && (
+            <div className="col-span-2">
+              <p className="text-xs text-muted-foreground">Маршрут:</p>
+              <p className="font-semibold">{transportRoute}</p>
             </div>
           )}
+          <div>
+            <p className="text-xs text-muted-foreground">Цена:</p>
+            {transportNegotiable ? (
+              <Badge variant="secondary" className="text-xs mt-0.5">Договорная</Badge>
+            ) : transportPrice ? (
+              <p className="font-semibold">
+                {Number(transportPrice).toLocaleString('ru-RU')} ₽
+                {transportPriceType && <span className="text-xs text-muted-foreground ml-1">{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}</span>}
+              </p>
+            ) : (
+              <p className="font-semibold text-muted-foreground">Не указана</p>
+            )}
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Доступно мест:</p>
+            <p className="font-semibold">{remainingQuantity > 0 ? `${remainingQuantity} ${unit}` : `${quantity} ${unit}`}</p>
+          </div>
           {transportType && (
             <div>
               <p className="text-xs text-muted-foreground">Транспорт:</p>
               <p className="font-semibold">{transportType}</p>
             </div>
           )}
-          {transportRoute && (
+          {transportServiceType && (
             <div>
-              <p className="text-xs text-muted-foreground">Маршрут:</p>
-              <p className="font-semibold">{transportRoute}</p>
+              <p className="text-xs text-muted-foreground">Тип услуги:</p>
+              <p className="font-semibold">{transportServiceType}</p>
             </div>
           )}
-          <div className="col-span-2">
-            <p className="text-xs text-muted-foreground">Цена:</p>
-            {transportNegotiable ? (
-              <Badge variant="secondary" className="text-xs mt-0.5">Ваша цена (Торг)</Badge>
-            ) : transportPriceType ? (
-              <p className="font-semibold">
-                {transportPrice ? Number(transportPrice).toLocaleString('ru-RU') + ' ₽' : '—'}
-                {' '}{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}
-              </p>
-            ) : transportPrice ? (
-              <p className="font-semibold">{Number(transportPrice).toLocaleString('ru-RU')} ₽</p>
-            ) : (
-              <p className="font-semibold text-muted-foreground">Не указана</p>
-            )}
-          </div>
           {transportComment && (
             <div className="col-span-2">
               <p className="text-xs text-muted-foreground">Комментарий:</p>
