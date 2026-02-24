@@ -489,6 +489,19 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     # Добавляем favorites к ответу
     offer_dict['favorites'] = favorites_count
+
+    # Маппинг транспортных полей
+    offer_dict['transportServiceType'] = offer_dict.pop('transport_service_type', None)
+    offer_dict['transportRoute'] = offer_dict.pop('transport_route', None)
+    offer_dict['transportType'] = offer_dict.pop('transport_type', None)
+    offer_dict['transportCapacity'] = offer_dict.pop('transport_capacity', None)
+    offer_dict['transportDateTime'] = offer_dict.pop('transport_date_time', None)
+    transport_price_raw = offer_dict.pop('transport_price', None)
+    offer_dict['transportPrice'] = str(transport_price_raw) if transport_price_raw is not None else None
+    offer_dict['transportPriceType'] = offer_dict.pop('transport_price_type', None)
+    offer_dict['transportNegotiable'] = offer_dict.pop('transport_negotiable', False)
+    offer_dict['transportComment'] = offer_dict.pop('transport_comment', None)
+    offer_dict['transportAllDistricts'] = offer_dict.pop('transport_all_districts', False)
     
     # ⚠️ НЕ кэшируем, чтобы views_count всегда был актуальным
     
@@ -559,6 +572,15 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     negotiable_budget = body.get('negotiableBudget', False)
     
     transport_all_districts = body.get('transportAllDistricts', False)
+    transport_service_type_esc = body.get('transportServiceType', '').replace("'", "''") if body.get('transportServiceType') else None
+    transport_route_esc = body.get('transportRoute', '').replace("'", "''") if body.get('transportRoute') else None
+    transport_type_esc = body.get('transportType', '').replace("'", "''") if body.get('transportType') else None
+    transport_capacity_esc = body.get('transportCapacity', '').replace("'", "''") if body.get('transportCapacity') else None
+    transport_date_time_esc = body.get('transportDateTime', '').replace("'", "''") if body.get('transportDateTime') else None
+    transport_price = body.get('transportPrice')
+    transport_price_type_esc = body.get('transportPriceType', '').replace("'", "''") if body.get('transportPriceType') else None
+    transport_negotiable = body.get('transportNegotiable', False)
+    transport_comment_esc = body.get('transportComment', '').replace("'", "''") if body.get('transportComment') else None
 
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
@@ -568,7 +590,9 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             available_delivery_types, is_premium, status, no_negotiation, delivery_time,
             delivery_period_start, delivery_period_end,
             deadline_start, deadline_end, negotiable_deadline, budget, negotiable_budget,
-            transport_all_districts
+            transport_all_districts,
+            transport_service_type, transport_route, transport_type, transport_capacity,
+            transport_date_time, transport_price, transport_price_type, transport_negotiable, transport_comment
         ) VALUES (
             '{user_id_esc}', 
             '{title_esc}', 
@@ -597,7 +621,16 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {negotiable_deadline},
             {budget if budget else 'NULL'},
             {negotiable_budget},
-            {transport_all_districts}
+            {transport_all_districts},
+            {'NULL' if transport_service_type_esc is None else f"'{transport_service_type_esc}'"},
+            {'NULL' if transport_route_esc is None else f"'{transport_route_esc}'"},
+            {'NULL' if transport_type_esc is None else f"'{transport_type_esc}'"},
+            {'NULL' if transport_capacity_esc is None else f"'{transport_capacity_esc}'"},
+            {'NULL' if transport_date_time_esc is None else f"'{transport_date_time_esc}'"},
+            {transport_price if transport_price else 'NULL'},
+            {'NULL' if transport_price_type_esc is None else f"'{transport_price_type_esc}'"},
+            {transport_negotiable},
+            {'NULL' if transport_comment_esc is None else f"'{transport_comment_esc}'"}
         )
         RETURNING id, created_at
     """
@@ -793,6 +826,35 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 updates.append(f"delivery_period_end = '{str(val).replace(chr(39), chr(39)+chr(39))}'")
             else:
                 updates.append("delivery_period_end = NULL")
+
+        if 'transportServiceType' in body:
+            val = body['transportServiceType']
+            updates.append(f"transport_service_type = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
+        if 'transportRoute' in body:
+            val = body['transportRoute']
+            updates.append(f"transport_route = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
+        if 'transportType' in body:
+            val = body['transportType']
+            updates.append(f"transport_type = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
+        if 'transportCapacity' in body:
+            val = body['transportCapacity']
+            updates.append(f"transport_capacity = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
+        if 'transportDateTime' in body:
+            val = body['transportDateTime']
+            updates.append(f"transport_date_time = {'NULL' if not val else repr(str(val).replace(chr(39), chr(39)+chr(39)))}")
+        if 'transportPrice' in body:
+            val = body['transportPrice']
+            updates.append(f"transport_price = {'NULL' if not val else val}")
+        if 'transportPriceType' in body:
+            val = body['transportPriceType']
+            updates.append(f"transport_price_type = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
+        if 'transportNegotiable' in body:
+            updates.append(f"transport_negotiable = {body['transportNegotiable']}")
+        if 'transportComment' in body:
+            val = body['transportComment']
+            updates.append(f"transport_comment = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
+        if 'transportAllDistricts' in body:
+            updates.append(f"transport_all_districts = {body['transportAllDistricts']}")
 
         # Обработка видео
         if 'video' in body:
