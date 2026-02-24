@@ -203,15 +203,15 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               <div className="flex items-center justify-between gap-2">
                 {offer.transportNegotiable ? (
                   <span className="font-bold text-primary text-base">Договорная</span>
-                ) : offer.transportPrice ? (
+                ) : (offer.transportPrice || offer.pricePerUnit) ? (
                   <span className="font-bold text-primary text-lg">
-                    {Number(offer.transportPrice).toLocaleString('ru-RU')} ₽
+                    {Number(offer.transportPrice || offer.pricePerUnit).toLocaleString('ru-RU')} ₽
                     {offer.transportPriceType && <span className="text-xs text-muted-foreground ml-1">{offer.transportPriceType}</span>}
                   </span>
                 ) : null}
                 {offer.quantity > 0 && (
                   <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
+                    {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} мест
                   </span>
                 )}
               </div>

@@ -70,12 +70,12 @@ export default function OfferInfoSummary({
             </div>
           )}
           <div>
-            <p className="text-xs text-muted-foreground">Цена:</p>
+            <p className="text-xs text-muted-foreground">Цена за место:</p>
             {transportNegotiable ? (
               <Badge variant="secondary" className="text-xs mt-0.5">Договорная</Badge>
-            ) : transportPrice ? (
+            ) : (transportPrice || pricePerUnit) ? (
               <p className="font-semibold">
-                {Number(transportPrice).toLocaleString('ru-RU')} ₽
+                {Number(transportPrice || pricePerUnit).toLocaleString('ru-RU')} ₽
                 {transportPriceType && <span className="text-xs text-muted-foreground ml-1">{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}</span>}
               </p>
             ) : (
@@ -84,7 +84,7 @@ export default function OfferInfoSummary({
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Доступно мест:</p>
-            <p className="font-semibold">{remainingQuantity > 0 ? `${remainingQuantity} ${unit}` : `${quantity} ${unit}`}</p>
+            <p className="font-semibold">{remainingQuantity > 0 ? `${remainingQuantity} мест` : `${quantity} мест`}</p>
           </div>
           {transportType && (
             <div>
