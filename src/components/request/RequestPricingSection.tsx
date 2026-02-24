@@ -38,16 +38,23 @@ export default function RequestPricingSection({
   const [isUnitOpen, setIsUnitOpen] = useState(false);
   const [isVatRateOpen, setIsVatRateOpen] = useState(false);
   
-  const unitOptions = [
-    { value: 'шт', label: 'шт' },
-    { value: 'кг', label: 'кг' },
-    { value: 'т', label: 'т' },
-    { value: 'м', label: 'м' },
-    { value: 'м²', label: 'м²' },
-    { value: 'м³', label: 'м³' },
-    { value: 'л', label: 'л' },
-    { value: 'упак', label: 'упак' }
-  ];
+  const isSolidFuel = formData.category === 'solid-fuel';
+
+  const unitOptions = isSolidFuel
+    ? [
+        { value: 'т', label: 'т' },
+        { value: 'м³', label: 'м³' },
+      ]
+    : [
+        { value: 'шт', label: 'шт' },
+        { value: 'кг', label: 'кг' },
+        { value: 'т', label: 'т' },
+        { value: 'м', label: 'м' },
+        { value: 'м²', label: 'м²' },
+        { value: 'м³', label: 'м³' },
+        { value: 'л', label: 'л' },
+        { value: 'упак', label: 'упак' },
+      ];
 
   const vatOptions = [
     { value: '0', label: '0%' },

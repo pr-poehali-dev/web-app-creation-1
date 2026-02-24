@@ -98,7 +98,11 @@ export function useCreateRequestForm() {
     setFormData(prev => ({ ...prev, [field]: value }));
 
     if (field === 'category') {
-      setFormData(prev => ({ ...prev, subcategory: '' }));
+      setFormData(prev => ({
+        ...prev,
+        subcategory: '',
+        unit: value === 'solid-fuel' ? 'т' : prev.unit,
+      }));
     }
   };
 
