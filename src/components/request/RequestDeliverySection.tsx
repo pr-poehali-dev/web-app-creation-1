@@ -36,13 +36,7 @@ export default function RequestDeliverySection({
 }: RequestDeliverySectionProps) {
   const isService = formData.category === 'utilities';
   const { detectedDistrictId } = useDistrict();
-  const [districtInput, setDistrictInput] = useState(() => {
-    if (formData.district) {
-      const found = DISTRICTS.find(d => d.id === formData.district);
-      return found ? found.name : '';
-    }
-    return '';
-  });
+  const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
   const [isDistrictsOpen, setIsDistrictsOpen] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);

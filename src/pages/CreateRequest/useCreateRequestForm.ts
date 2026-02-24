@@ -4,8 +4,6 @@ import { useToast } from '@/hooks/use-toast';
 export function useCreateRequestForm() {
   const { toast } = useToast();
 
-  const detectedDistrictId = localStorage.getItem('detectedDistrictId') || '';
-
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -24,10 +22,10 @@ export function useCreateRequestForm() {
     negotiableDeadline: false,
     budget: '',
     negotiableBudget: false,
-    district: detectedDistrictId,
+    district: '',
     deliveryAddress: '',
     gpsCoordinates: '',
-    availableDistricts: detectedDistrictId ? [detectedDistrictId] as string[] : [] as string[],
+    availableDistricts: [] as string[],
     startDate: '',
     expiryDate: '',
     publicationDuration: '',
