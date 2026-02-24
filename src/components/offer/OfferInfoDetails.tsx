@@ -54,9 +54,14 @@ export default function OfferInfoDetails({
           )}
           {transportDateTime && (
             <div>
-              <p className="text-xs text-muted-foreground">Дата и время</p>
+              <p className="text-xs text-muted-foreground">Дата выезда</p>
               <p className="font-medium">
-                {new Date(transportDateTime).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })}
+                {(() => {
+                  try {
+                    const d = new Date(transportDateTime);
+                    return isNaN(d.getTime()) ? transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  } catch { return transportDateTime; }
+                })()}
               </p>
             </div>
           )}
@@ -98,25 +103,27 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      <div>
-        <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
-        <div className="flex gap-2">
-          {availableDeliveryTypes.includes('pickup') && (
-            <Badge className="gap-1 text-xs px-1.5 py-0.5">
-              <Icon name="Store" className="h-3 w-3" />
-              Самовывоз
-            </Badge>
-          )}
-          {availableDeliveryTypes.includes('delivery') && (
-            <Badge className="gap-1 text-xs px-1.5 py-0.5">
-              <Icon name="Truck" className="h-3 w-3" />
-              Доставка
-            </Badge>
-          )}
+      {!isTransport && (
+        <div>
+          <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
+          <div className="flex gap-2">
+            {availableDeliveryTypes.includes('pickup') && (
+              <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                <Icon name="Store" className="h-3 w-3" />
+                Самовывоз
+              </Badge>
+            )}
+            {availableDeliveryTypes.includes('delivery') && (
+              <Badge className="gap-1 text-xs px-1.5 py-0.5">
+                <Icon name="Truck" className="h-3 w-3" />
+                Доставка
+              </Badge>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {availableDeliveryTypes.includes('pickup') && streetAddress && (
+      {!isTransport && availableDeliveryTypes.includes('pickup') && streetAddress && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
           <div className="flex items-center gap-1.5">
@@ -126,7 +133,7 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      {deliveryTime && (
+      {!isTransport && deliveryTime && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Срок доставки/поставки</p>
           <p className="text-sm font-medium">{deliveryTime}</p>
