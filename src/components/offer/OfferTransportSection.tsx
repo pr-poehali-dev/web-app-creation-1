@@ -208,37 +208,41 @@ export default function OfferTransportSection({ formData, onInputChange, onDistr
                 </div>
               )}
             </div>
-            {additionalDistricts.length > 0 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setShowAdditional(v => !v)}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
-                >
-                  <Icon name={showAdditional ? 'ChevronUp' : 'ChevronDown'} size={14} />
-                  {showAdditional ? 'Скрыть дополнительные районы' : 'Дополнительные районы в регионе'}
-                  {formData.availableDistricts.length > 0 && (
-                    <span className="ml-1 text-primary font-medium">({formData.availableDistricts.length} выбрано)</span>
-                  )}
-                </button>
-                {showAdditional && (
-                  <div className="grid grid-cols-2 gap-1.5 mt-2">
-                    {additionalDistricts.map(d => (
-                      <div key={d.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`transport-district-${d.id}`}
-                          checked={formData.availableDistricts.includes(d.id)}
-                          onCheckedChange={() => onDistrictToggle(d.id)}
-                        />
-                        <label htmlFor={`transport-district-${d.id}`} className="text-xs leading-none cursor-pointer">
-                          {d.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAdditional(v => !v)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+              >
+                <Icon name={showAdditional ? 'ChevronUp' : 'ChevronDown'} size={14} />
+                {showAdditional ? 'Скрыть дополнительные районы' : 'Дополнительные районы в регионе'}
+                {formData.availableDistricts.length > 0 && (
+                  <span className="ml-1 text-primary font-medium">({formData.availableDistricts.length} выбрано)</span>
                 )}
-              </div>
-            )}
+              </button>
+              {showAdditional && (
+                <div className="mt-2">
+                  {additionalDistricts.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">Сначала выберите основной район</p>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {additionalDistricts.map(d => (
+                        <div key={d.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`transport-district-${d.id}`}
+                            checked={formData.availableDistricts.includes(d.id)}
+                            onCheckedChange={() => onDistrictToggle(d.id)}
+                          />
+                          <label htmlFor={`transport-district-${d.id}`} className="text-xs leading-none cursor-pointer">
+                            {d.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
