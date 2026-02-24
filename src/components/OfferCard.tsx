@@ -217,34 +217,48 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                   </span>
                 )}
               </div>
+              {offer.transportDateTime && (
+                <div className="flex items-center gap-1.5">
+                  <Icon name="Calendar" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground">
+                    {(() => {
+                      try {
+                        const d = new Date(offer.transportDateTime);
+                        return isNaN(d.getTime()) ? offer.transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                      } catch { return offer.transportDateTime; }
+                    })()}
+                  </span>
+                </div>
+              )}
             </>
           ) : (
-            <div className="flex items-baseline gap-1">
-              {isService ? (
-                <>
-                  {offer.budget ? (
-                    <span className="font-bold text-primary text-lg">
-                      {offer.budget.toLocaleString('ru-RU')} ₽
-                    </span>
-                  ) : offer.negotiableBudget ? (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">
-                      По договоренности
-                    </Badge>
-                  ) : null}
-                </>
-              ) : offer.pricePerUnit != null ? (
-                <span className="font-bold text-primary text-lg">
-                  {offer.pricePerUnit.toLocaleString('ru-RU')} ₽<span className="text-sm text-muted-foreground">/{offer.unit}</span>
-                </span>
-              ) : null}
-            </div>
-          )}
-          
-          {districtName && (
-            <div className="flex items-center gap-1.5">
-              <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <span className="text-xs text-muted-foreground truncate">{districtName}</span>
-            </div>
+            <>
+              <div className="flex items-baseline gap-1">
+                {isService ? (
+                  <>
+                    {offer.budget ? (
+                      <span className="font-bold text-primary text-lg">
+                        {offer.budget.toLocaleString('ru-RU')} ₽
+                      </span>
+                    ) : offer.negotiableBudget ? (
+                      <Badge variant="secondary" className="text-xs h-5 px-2">
+                        По договоренности
+                      </Badge>
+                    ) : null}
+                  </>
+                ) : offer.pricePerUnit != null ? (
+                  <span className="font-bold text-primary text-lg">
+                    {offer.pricePerUnit.toLocaleString('ru-RU')} ₽<span className="text-sm text-muted-foreground">/{offer.unit}</span>
+                  </span>
+                ) : null}
+              </div>
+              {districtName && (
+                <div className="flex items-center gap-1.5">
+                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground truncate">{districtName}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       </CardContent>
