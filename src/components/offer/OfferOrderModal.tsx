@@ -7,6 +7,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import MapModal from '@/components/auction/MapModal';
@@ -42,6 +44,8 @@ interface OfferOrderModalProps {
   availableDeliveryTypes: ('pickup' | 'delivery')[];
   availableDistricts?: string[];
   offerDistrict?: string;
+  offerCategory?: string;
+  offerTransportRoute?: string;
 }
 
 export default function OfferOrderModal({
@@ -55,6 +59,8 @@ export default function OfferOrderModal({
   availableDeliveryTypes,
   availableDistricts = [],
   offerDistrict,
+  offerCategory,
+  offerTransportRoute,
 }: OfferOrderModalProps) {
   const currentUser = getSession();
   const { toast } = useToast();
@@ -62,6 +68,7 @@ export default function OfferOrderModal({
   const [quantity, setQuantity] = useState<string>(String(minOrderQuantity || 1));
   const [address, setAddress] = useState<string>('');
   const [comment, setComment] = useState<string>('');
+  const [passengerRoute, setPassengerRoute] = useState<string>('');
   const [quantityError, setQuantityError] = useState<string>('');
   const [counterPrice, setCounterPrice] = useState<string>('');
   const [counterComment, setCounterComment] = useState<string>('');
@@ -187,11 +194,15 @@ export default function OfferOrderModal({
       }
     }
     
+    const finalComment = offerCategory === 'transport' && passengerRoute
+      ? `Маршрут: ${passengerRoute}${comment ? `\n${comment}` : ''}`
+      : comment;
+
     onSubmit({
       quantity: Number(quantity),
       deliveryType: selectedDeliveryType,
       address: selectedDeliveryType === 'delivery' ? address : undefined,
-      comment,
+      comment: finalComment,
       counterPrice: showCounterPrice && counterPrice ? parseFloat(counterPrice) : undefined,
       counterComment: showCounterPrice && counterComment ? counterComment : undefined,
     });
@@ -233,6 +244,18 @@ export default function OfferOrderModal({
             quantityError={quantityError}
             showCounterPrice={showCounterPrice}
           />
+
+          {offerCategory === 'transport' && (
+            <div className="space-y-2">
+              <Label htmlFor="passenger-route">Ваш маршрут <span className="text-muted-foreground font-normal">(если отличается)</span></Label>
+              <Input
+                id="passenger-route"
+                value={passengerRoute}
+                onChange={(e) => setPassengerRoute(e.target.value)}
+                placeholder={offerTransportRoute || 'Например: Нюрба - Якутск'}
+              />
+            </div>
+          )}
 
           <DeliverySection
             availableDeliveryTypes={availableDeliveryTypes}

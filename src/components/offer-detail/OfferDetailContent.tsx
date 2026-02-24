@@ -323,6 +323,8 @@ export default function OfferDetailContent({
         availableDeliveryTypes={offer.availableDeliveryTypes}
         availableDistricts={offer.availableDistricts}
         offerDistrict={offer.district}
+        offerCategory={offer.category}
+        offerTransportRoute={offer.transportRoute}
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={onGalleryChange}>
