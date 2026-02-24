@@ -51,6 +51,8 @@ export default function OfferInfoFields({
     });
   };
 
+  const isTransport = offer.category === 'transport';
+
   return (
     <div className="space-y-3">
       <div>
@@ -76,98 +78,147 @@ export default function OfferInfoFields({
                 placeholder="Опишите ваше предложение"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="pricePerUnit">Цена за единицу (₽)</Label>
-              <Input
-                id="pricePerUnit"
-                type="number"
-                value={editData.pricePerUnit}
-                onChange={(e) => onEditDataChange({ ...editData, pricePerUnit: e.target.value })}
-                disabled={isSaving}
-                min="0"
-                step="0.01"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="quantity">Доступное количество ({offer.unit})</Label>
-              <Input
-                id="quantity"
-                type="number"
-                value={editData.quantity}
-                onChange={(e) => onEditDataChange({ ...editData, quantity: e.target.value })}
-                disabled={isSaving}
-                min="1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="minOrderQuantity">Минимальное количество для заказа ({offer.unit})</Label>
-              <Input
-                id="minOrderQuantity"
-                type="number"
-                value={editData.minOrderQuantity}
-                onChange={(e) => onEditDataChange({ ...editData, minOrderQuantity: e.target.value })}
-                disabled={isSaving}
-                min="0"
-                placeholder="Не задано"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Период поставки</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label htmlFor="deliveryPeriodStart" className="text-xs text-muted-foreground">Начало</Label>
+            {!isTransport && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="pricePerUnit">Цена за единицу (₽)</Label>
                   <Input
-                    id="deliveryPeriodStart"
-                    type="date"
-                    value={editData.deliveryPeriodStart}
-                    onChange={(e) => onEditDataChange({ ...editData, deliveryPeriodStart: e.target.value })}
+                    id="pricePerUnit"
+                    type="number"
+                    value={editData.pricePerUnit}
+                    onChange={(e) => onEditDataChange({ ...editData, pricePerUnit: e.target.value })}
                     disabled={isSaving}
-                    max={editData.deliveryPeriodEnd || undefined}
+                    min="0"
+                    step="0.01"
                   />
                 </div>
-                <div className="space-y-1">
-                  <Label htmlFor="deliveryPeriodEnd" className="text-xs text-muted-foreground">Окончание</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="quantity">Доступное количество ({offer.unit})</Label>
                   <Input
-                    id="deliveryPeriodEnd"
-                    type="date"
-                    value={editData.deliveryPeriodEnd}
-                    onChange={(e) => onEditDataChange({ ...editData, deliveryPeriodEnd: e.target.value })}
+                    id="quantity"
+                    type="number"
+                    value={editData.quantity}
+                    onChange={(e) => onEditDataChange({ ...editData, quantity: e.target.value })}
                     disabled={isSaving}
-                    min={editData.deliveryPeriodStart || undefined}
-                    max={offer.expiryDate ? new Date(offer.expiryDate).toISOString().split('T')[0] : undefined}
+                    min="1"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="minOrderQuantity">Минимальное количество для заказа ({offer.unit})</Label>
+                  <Input
+                    id="minOrderQuantity"
+                    type="number"
+                    value={editData.minOrderQuantity}
+                    onChange={(e) => onEditDataChange({ ...editData, minOrderQuantity: e.target.value })}
+                    disabled={isSaving}
+                    min="0"
+                    placeholder="Не задано"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Период поставки</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="deliveryPeriodStart" className="text-xs text-muted-foreground">Начало</Label>
+                      <Input
+                        id="deliveryPeriodStart"
+                        type="date"
+                        value={editData.deliveryPeriodStart}
+                        onChange={(e) => onEditDataChange({ ...editData, deliveryPeriodStart: e.target.value })}
+                        disabled={isSaving}
+                        max={editData.deliveryPeriodEnd || undefined}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="deliveryPeriodEnd" className="text-xs text-muted-foreground">Окончание</Label>
+                      <Input
+                        id="deliveryPeriodEnd"
+                        type="date"
+                        value={editData.deliveryPeriodEnd}
+                        onChange={(e) => onEditDataChange({ ...editData, deliveryPeriodEnd: e.target.value })}
+                        disabled={isSaving}
+                        min={editData.deliveryPeriodStart || undefined}
+                        max={offer.expiryDate ? new Date(offer.expiryDate).toISOString().split('T')[0] : undefined}
+                      />
+                    </div>
+                  </div>
+                  {offer.expiryDate && (
+                    <p className="text-xs text-muted-foreground">
+                      Срок публикации до: {new Date(offer.expiryDate).toLocaleDateString('ru-RU')}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+            {isTransport && (
+              <div className="text-sm text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
+                Транспортные параметры (маршрут, цена, дата) редактируются при создании предложения
               </div>
-              {offer.expiryDate && (
-                <p className="text-xs text-muted-foreground">
-                  Срок публикации до: {new Date(offer.expiryDate).toLocaleDateString('ru-RU')}
-                </p>
-              )}
-            </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-muted-foreground">Цена за единицу:</span>
-              <p className="font-bold text-lg text-primary">
-                {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-              </p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Количество:</span>
-              <p className="font-semibold">{offer.quantity} {offer.unit}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Доступно:</span>
-              <p className="font-semibold text-green-600">
-                {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
-              </p>
-            </div>
-            {offer.minOrderQuantity && (
-              <div>
-                <span className="text-muted-foreground">Мин. заказ:</span>
-                <p className="font-semibold">{offer.minOrderQuantity} {offer.unit}</p>
-              </div>
+            {isTransport ? (
+              <>
+                {offer.transportPrice && (
+                  <div>
+                    <span className="text-muted-foreground">Цена:</span>
+                    <p className="font-bold text-lg text-primary">
+                      {Number(offer.transportPrice).toLocaleString('ru-RU')} ₽
+                    </p>
+                  </div>
+                )}
+                {offer.transportNegotiable && (
+                  <div>
+                    <span className="text-muted-foreground">Цена:</span>
+                    <p className="font-semibold">Договорная</p>
+                  </div>
+                )}
+                {offer.quantity > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">Мест:</span>
+                    <p className="font-semibold">{offer.quantity} {offer.unit}</p>
+                  </div>
+                )}
+                {offer.transportDateTime && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Дата выезда:</span>
+                    <p className="font-semibold">
+                      {(() => {
+                        try {
+                          const d = new Date(offer.transportDateTime);
+                          return isNaN(d.getTime()) ? offer.transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        } catch { return offer.transportDateTime; }
+                      })()}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div>
+                  <span className="text-muted-foreground">Цена за единицу:</span>
+                  <p className="font-bold text-lg text-primary">
+                    {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
+                  </p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Количество:</span>
+                  <p className="font-semibold">{offer.quantity} {offer.unit}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Доступно:</span>
+                  <p className="font-semibold text-green-600">
+                    {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
+                  </p>
+                </div>
+                {offer.minOrderQuantity && (
+                  <div>
+                    <span className="text-muted-foreground">Мин. заказ:</span>
+                    <p className="font-semibold">{offer.minOrderQuantity} {offer.unit}</p>
+                  </div>
+                )}
+              </>
             )}
             <div>
               <span className="text-muted-foreground">Район:</span>

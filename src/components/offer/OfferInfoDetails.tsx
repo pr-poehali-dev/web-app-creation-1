@@ -140,7 +140,7 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      {(deliveryPeriodStart || deliveryPeriodEnd) && (
+      {!isTransport && (deliveryPeriodStart || deliveryPeriodEnd) && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Период поставки</p>
           <p className="text-sm font-medium">
