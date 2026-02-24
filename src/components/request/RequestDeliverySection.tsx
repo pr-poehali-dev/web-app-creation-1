@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { cn } from '@/lib/utils';
 import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
-import { useDistrict, type District } from '@/contexts/DistrictContext';
-import { DISTRICTS } from '@/data/districts';
+import type { District } from '@/contexts/DistrictContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const MapModal = lazy(() => import('@/components/auction/MapModal'));
@@ -35,23 +34,11 @@ export default function RequestDeliverySection({
   onDistrictToggle,
 }: RequestDeliverySectionProps) {
   const isService = formData.category === 'utilities';
-  const { detectedDistrictId } = useDistrict();
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
   const [isDistrictsOpen, setIsDistrictsOpen] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
   const [allDistrictsSelected, setAllDistrictsSelected] = useState(false);
-
-  // Автоопределение района по геолокации при первой загрузке
-  useEffect(() => {
-    if (!formData.district && detectedDistrictId) {
-      const found = DISTRICTS.find(d => d.id === detectedDistrictId);
-      if (found) {
-        setDistrictInput(found.name);
-        onInputChange('district', detectedDistrictId);
-      }
-    }
-  }, [detectedDistrictId]);
 
   useEffect(() => {
     const allSelected = districts.filter(d => d.id !== 'all').every(d => formData.availableDistricts.includes(d.id));

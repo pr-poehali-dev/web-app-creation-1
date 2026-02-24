@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import Icon from '@/components/ui/icon';
-import { useDistrict } from '@/contexts/DistrictContext';
 
 const MapModal = lazy(() => import('./MapModal'));
 
@@ -29,23 +28,12 @@ export default function AuctionLocationSection({
   onDistrictToggle, 
   onDeliveryTypeToggle 
 }: AuctionLocationSectionProps) {
-  const { detectedDistrictId } = useDistrict();
   const [districtSearch, setDistrictSearch] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDeliveryFilterEnabled, setIsDeliveryFilterEnabled] = useState(false);
   const [deliveryDistrictsFilter, setDeliveryDistrictsFilter] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
   const [showDistrictNotification, setShowDistrictNotification] = useState(false);
-
-  // Автоопределение района по геолокации при первой загрузке
-  useEffect(() => {
-    if (!formData.district && detectedDistrictId) {
-      const found = districts.find(d => d.id === detectedDistrictId);
-      if (found) {
-        onInputChange('district', detectedDistrictId);
-      }
-    }
-  }, [detectedDistrictId, districts]);
   const [soundEnabled, setSoundEnabled] = useState(() => {
     const saved = localStorage.getItem('districtSoundEnabled');
     return saved === null ? true : saved === 'true';
