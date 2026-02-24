@@ -91,7 +91,7 @@ export default function RequestBasicInfoSection({
                         key={cat.id}
                         type="button"
                         onClick={() => handleSelectCategory(cat.id)}
-                        className={`w-full text-left px-3 py-2 hover:bg-accent transition-colors ${
+                        className={`w-full text-left px-3 py-2 border-b border-input last:border-b-0 hover:bg-accent transition-colors ${
                           formData.category === cat.id ? 'bg-accent font-medium' : ''
                         }`}
                       >
