@@ -45,6 +45,7 @@ export interface Order {
   unreadMessages?: number;
   offerCategory?: string;
   offerTransportRoute?: string;
+  offerTransportServiceType?: string;
 }
 
 export interface ChatMessage {

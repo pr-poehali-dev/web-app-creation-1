@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
+import { getOrderRoles } from '@/utils/orderRoles';
 
 interface CounterOfferDisplayProps {
   order: Order;
@@ -20,6 +21,8 @@ export default function CounterOfferDisplay({
   onShowCounterForm,
   onCancelOrder,
 }: CounterOfferDisplayProps) {
+  const roles = getOrderRoles(order);
+
   if (!order.counterPricePerUnit || order.status !== 'negotiating' || order.buyerAcceptedCounter || order.status === 'accepted') {
     return null;
   }
@@ -40,11 +43,11 @@ export default function CounterOfferDisplay({
                     <span className="font-semibold text-foreground">
                       {order.counterOfferedBy === 'buyer' 
                         ? (isBuyer 
-                          ? 'Ваше встречное предложение покупки:' 
-                          : `Встречное предложение покупателя: ${order.buyerName}`)
+                          ? `Ваше встречное предложение:` 
+                          : `Встречное предложение ${roles.counterBuyer}: ${order.buyerName}`)
                         : (isSeller 
-                          ? 'Ваше встречное предложение продажи:' 
-                          : `Встречное предложение продавца: ${order.sellerName}`)}
+                          ? 'Ваше встречное предложение:' 
+                          : `Встречное предложение ${roles.counterSeller}: ${order.sellerName}`)}
                     </span>
                   </span>
                 </div>
@@ -134,7 +137,7 @@ export default function CounterOfferDisplay({
             {isBuyer && order.counterOfferedBy === 'buyer' && (
               <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm mt-3">
                 <Icon name="Clock" className="h-4 w-4" />
-                <span>Ожидание ответа {order.offerCategory === 'transport' ? 'исполнителя' : 'продавца'}: <span className="font-bold text-amber-800">{order.sellerName}</span></span>
+                <span>Ожидание ответа {roles.counterSeller}: <span className="font-bold text-amber-800">{order.sellerName}</span></span>
               </div>
             )}
           </div>

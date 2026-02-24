@@ -1,5 +1,6 @@
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
+import { getOrderRoles } from '@/utils/orderRoles';
 
 interface OrderInfoDetailsProps {
   order: Order;
@@ -7,6 +8,7 @@ interface OrderInfoDetailsProps {
 }
 
 export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsProps) {
+  const roles = getOrderRoles(order);
   return (
     <>
       <div className="flex items-start gap-3 mb-3">
@@ -23,9 +25,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
           {isBuyer && order.status === 'new' && (
             <div className="flex items-center gap-1.5 mt-1.5 text-amber-600">
               <Icon name="Clock" className="h-3.5 w-3.5" />
-              <p className="text-xs font-medium">
-                Ожидается отклик {order.offerCategory === 'transport' ? 'исполнителя' : 'продавца'}
-              </p>
+              <p className="text-xs font-medium">Ожидается отклик {roles.counterSeller}</p>
             </div>
           )}
         </div>

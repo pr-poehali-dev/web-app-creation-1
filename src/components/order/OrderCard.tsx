@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
+import { getOrderRoles } from '@/utils/orderRoles';
 
 interface OrderCardProps {
   order: Order;
@@ -16,6 +17,7 @@ interface OrderCardProps {
 }
 
 export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, onDeleteOrder, isExiting, isNew }: OrderCardProps) {
+  const roles = getOrderRoles(order);
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -93,7 +95,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           {order.status === 'negotiating' && order.counterPricePerUnit && (
             <div className="col-span-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded p-2">
               <p className="text-xs text-muted-foreground mb-1">
-                {order.counterOfferedBy === 'buyer' ? 'Предложение покупателя' : 'Встречная цена продавца'}
+                {order.counterOfferedBy === 'buyer' ? `Предложение ${roles.counterBuyer}` : `Встречная цена ${roles.counterSeller}`}
               </p>
               <p className="font-bold text-orange-700 dark:text-orange-400">
                 {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
@@ -126,16 +128,12 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           )}
           <div>
             <p className="text-muted-foreground">
-              {order.isRequest 
-                ? (isSeller ? 'Исполнитель' : 'Заказчик')
-                : order.offerCategory === 'transport'
-                  ? (isSeller ? 'Пассажир' : 'Исполнитель')
-                  : (isSeller ? 'Покупатель' : 'Продавец')}
+              {isSeller ? roles.buyer : roles.seller}
             </p>
             <p className="font-medium truncate">
               {isSeller 
                 ? order.buyerName 
-                : (order.sellerName || (order.isRequest ? 'Исполнитель' : 'Продавец'))}
+                : (order.sellerName || roles.seller)}
             </p>
           </div>
 

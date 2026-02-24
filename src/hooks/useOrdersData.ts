@@ -107,6 +107,7 @@ export function useOrdersData(
       unreadMessages: orderData.unreadMessages || 0,
       offerCategory: orderData.offerCategory,
       offerTransportRoute: orderData.offerTransportRoute,
+      offerTransportServiceType: orderData.offerTransportServiceType,
     };
   };
 

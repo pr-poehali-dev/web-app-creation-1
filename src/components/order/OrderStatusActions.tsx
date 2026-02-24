@@ -2,6 +2,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
+import { getOrderRoles } from '@/utils/orderRoles';
 
 interface OrderStatusActionsProps {
   order: Order;
@@ -18,6 +19,7 @@ interface OrderStatusActionsProps {
 }
 
 export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder }: OrderStatusActionsProps) {
+  const roles = getOrderRoles(order);
   return (
     <>
       {order.status === 'accepted' && (
@@ -30,7 +32,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
               <h3 className="font-semibold text-sm">
                 {order.isRequest
                   ? (isBuyer ? 'Заказчик' : 'Исполнитель')
-                  : (isBuyer ? (order.offerCategory === 'transport' ? 'Исполнитель' : 'Продавец') : 'Покупатель')
+                  : (isBuyer ? roles.seller : roles.buyer)
                 }
               </h3>
             </div>
@@ -118,8 +120,8 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
                 <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">{order.offerCategory === 'transport' ? 'Исполнитель' : 'Продавец'}: {contactPerson.name}</p>
-                  <p>Заказ ожидает подтверждения {order.offerCategory === 'transport' ? 'исполнителя' : 'продавца'}. После принятия статус изменится на "Принят"</p>
+                  <p className="font-medium mb-1">{roles.seller}: {contactPerson.name}</p>
+                  <p>Заказ ожидает подтверждения {roles.counterSeller}. После принятия статус изменится на "Принят"</p>
                 </div>
               </div>
               {onCancelOrder && (
