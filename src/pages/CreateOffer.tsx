@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
@@ -28,10 +28,20 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const accessCheck = canCreateListing(isAuthenticated);
-  const { districts: contextDistricts } = useDistrict();
+  const { districts: contextDistricts, selectedRegion } = useDistrict();
   
-  // Используем все районы для автозаполнения при выборе на карте
-  const allDistricts = DISTRICTS.map(d => ({ id: d.id, name: d.name }));
+  // Районы только текущего региона пользователя.
+  // contextDistricts заполняется асинхронно — фоллбэк: читаем регион из localStorage напрямую.
+  const allDistricts = useMemo(() => {
+    if (contextDistricts.length > 0) {
+      return contextDistricts.map(d => ({ id: d.id, name: d.name }));
+    }
+    const storedRegion = selectedRegion !== 'all' ? selectedRegion : localStorage.getItem('selectedRegion');
+    if (storedRegion && storedRegion !== 'all') {
+      return DISTRICTS.filter(d => d.regionId === storedRegion).map(d => ({ id: d.id, name: d.name }));
+    }
+    return DISTRICTS.map(d => ({ id: d.id, name: d.name }));
+  }, [contextDistricts, selectedRegion]);
   
   const [editOffer, setEditOffer] = useState<Offer | undefined>(location.state?.editOffer as Offer | undefined);
   const [isLoadingOffer, setIsLoadingOffer] = useState(false);

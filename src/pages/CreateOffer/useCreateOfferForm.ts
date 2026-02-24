@@ -42,6 +42,8 @@ interface FormData {
 export function useCreateOfferForm(editOffer?: Offer) {
   const { toast } = useToast();
   
+  const defaultDistrict = !editOffer ? (localStorage.getItem('detectedDistrictId') || '') : '';
+  
   const [formData, setFormData] = useState<FormData>(editOffer ? {
     title: editOffer.title || '',
     description: editOffer.description || '',
@@ -90,7 +92,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     negotiableDeadline: false,
     budget: '',
     negotiableBudget: false,
-    district: '',
+    district: defaultDistrict,
     fullAddress: '',
     gpsCoordinates: '',
     availableDistricts: [] as string[],
