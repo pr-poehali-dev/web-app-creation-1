@@ -29,10 +29,16 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
   const [minQuantityError, setMinQuantityError] = useState<string>('');
   
   const isSolidFuel = formData.category === 'solid-fuel';
+  const isEnergy = formData.category === 'energy';
 
   const unitOptions = isSolidFuel
     ? [
         { value: 'т', label: 'т' },
+        { value: 'м³', label: 'м³' },
+      ]
+    : isEnergy
+    ? [
+        { value: 'л', label: 'л' },
         { value: 'м³', label: 'м³' },
       ]
     : [

@@ -39,10 +39,16 @@ export default function RequestPricingSection({
   const [isVatRateOpen, setIsVatRateOpen] = useState(false);
   
   const isSolidFuel = formData.category === 'solid-fuel';
+  const isEnergy = formData.category === 'energy';
 
   const unitOptions = isSolidFuel
     ? [
         { value: 'т', label: 'т' },
+        { value: 'м³', label: 'м³' },
+      ]
+    : isEnergy
+    ? [
+        { value: 'л', label: 'л' },
         { value: 'м³', label: 'м³' },
       ]
     : [
