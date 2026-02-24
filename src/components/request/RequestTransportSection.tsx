@@ -78,7 +78,7 @@ function CollapsibleSelectList({
           {value ? (
             <span className="text-xs font-medium">{value}</span>
           ) : placeholder ? (
-            <span className="text-xs font-bold text-green-500">{placeholder}</span>
+            <span className="text-xs md:text-sm font-bold text-green-500">{placeholder}</span>
           ) : null}
           <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
         </div>
@@ -209,7 +209,7 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
               <button
                 type="button"
                 onClick={() => setShowAdditional(v => !v)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                className="flex items-center gap-1 text-xs md:text-sm font-bold text-green-500 hover:text-green-600 transition-colors mt-1"
               >
                 <Icon name={showAdditional ? 'ChevronUp' : 'ChevronDown'} size={14} />
                 {showAdditional ? 'Скрыть дополнительные районы' : 'Дополнительные районы в регионе'}
