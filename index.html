@@ -58,29 +58,15 @@
         (function() {
             const APP_VERSION = '1.0.2';
             const VERSION_KEY = 'app_version';
-            
             const currentVersion = localStorage.getItem(VERSION_KEY);
-            
             if (currentVersion !== APP_VERSION) {
-                console.log('New version detected, clearing caches...');
-                
-                // Clear all caches
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
-                        names.forEach(function(name) {
-                            caches.delete(name);
-                        });
+                        names.forEach(function(name) { caches.delete(name); });
                     });
                 }
-                
-                // Clear session storage flag
                 sessionStorage.removeItem('chunk-reload');
-                
-                // Update version
                 localStorage.setItem(VERSION_KEY, APP_VERSION);
-                
-                console.log('Cache cleared, reloading...');
-                window.location.reload(true);
             }
         })();
     </script>
