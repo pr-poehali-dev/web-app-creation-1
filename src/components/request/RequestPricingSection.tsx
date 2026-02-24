@@ -49,6 +49,7 @@ export default function RequestPricingSection({
     : isEnergy
     ? [
         { value: 'л', label: 'л' },
+        { value: 'т', label: 'т' },
         { value: 'м³', label: 'м³' },
       ]
     : [
