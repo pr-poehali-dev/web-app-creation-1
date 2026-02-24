@@ -100,6 +100,16 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         video: video || null,
         deliveryPeriodStart: editData.deliveryPeriodStart || null,
         deliveryPeriodEnd: editData.deliveryPeriodEnd || null,
+        transportServiceType: offer.transportServiceType,
+        transportRoute: offer.transportRoute,
+        transportType: offer.transportType,
+        transportCapacity: offer.transportCapacity,
+        transportPrice: offer.transportPrice,
+        transportPriceType: offer.transportPriceType,
+        transportNegotiable: offer.transportNegotiable,
+        transportDateTime: offer.transportDateTime,
+        transportComment: offer.transportComment,
+        transportAllDistricts: offer.transportAllDistricts,
       });
 
       localStorage.removeItem('cached_offers');

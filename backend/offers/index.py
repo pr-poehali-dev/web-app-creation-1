@@ -251,6 +251,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 o.price_per_unit, o.quantity, o.unit, o.sold_quantity, o.reserved_quantity, o.created_at,
                 o.available_delivery_types, o.available_districts, o.status, o.expiry_date, o.views_count,
                 o.transport_all_districts,
+                o.transport_service_type, o.transport_route, o.transport_type, o.transport_capacity,
+                o.transport_date_time, o.transport_price, o.transport_price_type,
+                o.transport_negotiable, o.transport_comment,
                 COALESCE(u.rating, 100.0) as seller_rating
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
@@ -315,6 +318,16 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'views': offer.get('views_count', 0) or 0,
                 'favorites': favorites_map.get(offer['id'], 0),
                 'images': images_map.get(offer['id'], []),
+                'transportServiceType': offer.get('transport_service_type'),
+                'transportRoute': offer.get('transport_route'),
+                'transportType': offer.get('transport_type'),
+                'transportCapacity': offer.get('transport_capacity'),
+                'transportDateTime': offer.get('transport_date_time'),
+                'transportPrice': str(offer['transport_price']) if offer.get('transport_price') is not None else None,
+                'transportPriceType': offer.get('transport_price_type'),
+                'transportNegotiable': offer.get('transport_negotiable', False),
+                'transportComment': offer.get('transport_comment'),
+                'transportAllDistricts': offer.get('transport_all_districts', False),
                 'seller': {
                     'rating': seller_rating
                 }
