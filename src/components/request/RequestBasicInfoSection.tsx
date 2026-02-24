@@ -20,6 +20,7 @@ export default function RequestBasicInfoSection({
   formData,
   onInputChange,
 }: RequestBasicInfoSectionProps) {
+  const isTransport = formData.category === 'transport';
   const selectedCategory = CATEGORIES.find(c => c.id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
   
@@ -163,36 +164,40 @@ export default function RequestBasicInfoSection({
           )}
         </div>
 
-        <div>
-          <Label htmlFor="title">Название запроса *</Label>
-          <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => onInputChange('title', e.target.value)}
-            placeholder="Например: Требуется песок строительный 50 тонн"
-            required
-            maxLength={100}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            {formData.title.length}/100 символов
-          </p>
-        </div>
+        {!isTransport && (
+          <div>
+            <Label htmlFor="title">Название запроса *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => onInputChange('title', e.target.value)}
+              placeholder="Например: Требуется песок строительный 50 тонн"
+              required
+              maxLength={100}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {formData.title.length}/100 символов
+            </p>
+          </div>
+        )}
 
-        <div>
-          <Label htmlFor="description">Описание запроса *</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => onInputChange('description', e.target.value)}
-            placeholder="Подробно опишите ваши требования к товару или услуге..."
-            required
-            rows={6}
-            maxLength={1000}
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            {formData.description.length}/1000 символов
-          </p>
-        </div>
+        {!isTransport && (
+          <div>
+            <Label htmlFor="description">Описание запроса *</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => onInputChange('description', e.target.value)}
+              placeholder="Подробно опишите ваши требования к товару или услуге..."
+              required
+              rows={6}
+              maxLength={1000}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {formData.description.length}/1000 символов
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
