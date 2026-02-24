@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -54,13 +54,7 @@ export default function RequestBasicInfoSection({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Основная информация</CardTitle>
-        <CardDescription>
-          Название и описание того, что вам нужно
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="relative">
             <Label htmlFor="category">Категория *</Label>
