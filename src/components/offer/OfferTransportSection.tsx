@@ -67,24 +67,28 @@ function CollapsibleSelectList({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between w-full text-left"
+        className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg border-2 transition-all ${
+          value
+            ? 'border-primary bg-primary/5 text-foreground'
+            : 'border-dashed border-muted-foreground/40 bg-muted/30 hover:border-primary/60 hover:bg-primary/5'
+        }`}
       >
-        <Label className="cursor-pointer text-sm font-medium">{label}</Label>
+        <span className="text-sm font-semibold">{label}</span>
         <div className="flex items-center gap-2">
           {value ? (
-            <span className="text-xs font-medium text-foreground">{value}</span>
+            <span className="text-xs font-bold text-primary">{value}</span>
           ) : placeholder ? (
             <span className="text-xs text-muted-foreground">{placeholder}</span>
           ) : null}
-          <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
+          <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className={value ? 'text-primary' : 'text-muted-foreground'} />
         </div>
       </button>
       {open && (
-        <div className="flex flex-col gap-1 pt-1">
+        <div className="flex flex-col gap-1.5 pt-1">
           {options.map((opt) => (
             <button
               key={opt}
@@ -93,10 +97,10 @@ function CollapsibleSelectList({
                 onChange(value === opt ? '' : opt);
                 setOpen(false);
               }}
-              className={`flex items-center justify-between w-full px-3 py-2 rounded-md border text-sm text-left transition-colors ${
+              className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg border-2 text-sm font-medium text-left transition-all ${
                 value === opt
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background border-input hover:bg-accent hover:text-accent-foreground'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  : 'bg-background border-input hover:border-primary/50 hover:bg-primary/5'
               }`}
             >
               <span>{opt}</span>
@@ -212,12 +216,16 @@ export default function OfferTransportSection({ formData, onInputChange, onDistr
               <button
                 type="button"
                 onClick={() => setShowAdditional(v => !v)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                className={`flex items-center gap-2 w-full px-3 py-2 mt-1 rounded-lg border-2 text-xs font-medium transition-all ${
+                  showAdditional
+                    ? 'border-primary/40 bg-primary/5 text-primary'
+                    : 'border-dashed border-muted-foreground/40 text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5'
+                }`}
               >
                 <Icon name={showAdditional ? 'ChevronUp' : 'ChevronDown'} size={14} />
                 {showAdditional ? 'Скрыть дополнительные районы' : 'Дополнительные районы в регионе'}
                 {formData.availableDistricts.length > 0 && (
-                  <span className="ml-1 text-primary font-medium">({formData.availableDistricts.length} выбрано)</span>
+                  <span className="ml-auto bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-xs font-bold">{formData.availableDistricts.length}</span>
                 )}
               </button>
               {showAdditional && (
