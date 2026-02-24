@@ -44,7 +44,11 @@ export default function OfferLocationSection({
 }: OfferLocationSectionProps) {
   const isService = formData.category === 'utilities' || formData.category === 'transport';
   const { detectedDistrictId } = useDistrict();
-  const [districtInput, setDistrictInput] = useState('');
+  const [districtInput, setDistrictInput] = useState(() => {
+    const id = formData.district || detectedDistrictId || '';
+    const found = DISTRICTS.find(d => d.id === id);
+    return found ? found.name : '';
+  });
   const [addressInput, setAddressInput] = useState(formData.fullAddress);
   const [showDistrictDelivery, setShowDistrictDelivery] = useState(true);
   const [showMapModal, setShowMapModal] = useState(false);
