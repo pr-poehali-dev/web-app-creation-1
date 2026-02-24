@@ -166,6 +166,8 @@ export default function OfferInfoCard({
           transportPrice={transportPrice}
           transportNegotiable={transportNegotiable}
           transportComment={transportComment}
+          transportDateTime={transportDateTime}
+          expiryDate={expiryDate}
         />
 
         {/* Дополнительная информация в аккордеоне (мобильные) */}

@@ -29,6 +29,8 @@ interface OfferInfoSummaryProps {
   transportPrice?: string;
   transportNegotiable?: boolean;
   transportComment?: string;
+  transportDateTime?: string;
+  expiryDate?: Date;
 }
 
 export default function OfferInfoSummary({
@@ -51,6 +53,8 @@ export default function OfferInfoSummary({
   transportPrice,
   transportNegotiable,
   transportComment,
+  transportDateTime,
+  expiryDate,
 }: OfferInfoSummaryProps) {
   const isTransport = category === 'transport';
   const isService = category === 'utilities' || isTransport;
@@ -94,10 +98,29 @@ export default function OfferInfoSummary({
               <p className="font-semibold">{transportServiceType}</p>
             </div>
           )}
+          {transportDateTime && (
+            <div className="col-span-2">
+              <p className="text-xs text-muted-foreground">Дата и время выезда:</p>
+              <p className="font-semibold">
+                {(() => {
+                  try {
+                    const d = new Date(transportDateTime);
+                    return isNaN(d.getTime()) ? transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  } catch { return transportDateTime; }
+                })()}
+              </p>
+            </div>
+          )}
           {transportComment && (
             <div className="col-span-2">
               <p className="text-xs text-muted-foreground">Комментарий:</p>
               <p className="font-medium text-sm">{transportComment}</p>
+            </div>
+          )}
+          {expiryDate && (
+            <div className="col-span-2">
+              <p className="text-xs text-muted-foreground">Период публикации до:</p>
+              <p className="font-semibold">{new Date(expiryDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
           )}
         </div>
