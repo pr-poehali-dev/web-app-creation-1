@@ -38,30 +38,30 @@ export default function RequestPricingSection({
   const [isUnitOpen, setIsUnitOpen] = useState(false);
   const [isVatRateOpen, setIsVatRateOpen] = useState(false);
   
-  const isSolidFuel = formData.category === 'solid-fuel';
-  const isEnergy = formData.category === 'energy';
+  const UNIT_OPTIONS_BY_CATEGORY: Record<string, { value: string; label: string }[]> = {
+    'dairy':                [{ value: 'упак', label: 'упак' }, { value: 'л', label: 'л' }, { value: 'кг', label: 'кг' }],
+    'meat':                 [{ value: 'кг', label: 'кг' }, { value: 'т', label: 'т' }, { value: 'упак', label: 'упак' }],
+    'semifinished':         [{ value: 'кг', label: 'кг' }, { value: 'т', label: 'т' }, { value: 'упак', label: 'упак' }],
+    'fruits-vegetables':    [{ value: 'кг', label: 'кг' }, { value: 'т', label: 'т' }, { value: 'тара', label: 'тара' }],
+    'animal-feed':          [{ value: 'т', label: 'т' }, { value: 'кг', label: 'кг' }, { value: 'тюк', label: 'тюк' }, { value: 'упак', label: 'упак' }],
+    'lumber':               [{ value: 'м³', label: 'м³' }, { value: 'шт', label: 'шт' }, { value: 'м', label: 'м' }],
+    'solid-fuel':           [{ value: 'т', label: 'т' }, { value: 'м³', label: 'м³' }],
+    'energy':               [{ value: 'л', label: 'л' }, { value: 'т', label: 'т' }, { value: 'м³', label: 'м³' }],
+    'equipment':            [{ value: 'шт', label: 'шт' }, { value: 'комплект', label: 'комплект' }, { value: 'набор', label: 'набор' }],
+    'household-appliances': [{ value: 'шт', label: 'шт' }, { value: 'комплект', label: 'комплект' }, { value: 'набор', label: 'набор' }],
+    'essentials':           [{ value: 'шт', label: 'шт' }, { value: 'комплект', label: 'комплект' }, { value: 'набор', label: 'набор' }, { value: 'упак', label: 'упак' }, { value: 'кг', label: 'кг' }],
+  };
 
-  const unitOptions = isSolidFuel
-    ? [
-        { value: 'т', label: 'т' },
-        { value: 'м³', label: 'м³' },
-      ]
-    : isEnergy
-    ? [
-        { value: 'л', label: 'л' },
-        { value: 'т', label: 'т' },
-        { value: 'м³', label: 'м³' },
-      ]
-    : [
-        { value: 'шт', label: 'шт' },
-        { value: 'кг', label: 'кг' },
-        { value: 'т', label: 'т' },
-        { value: 'м', label: 'м' },
-        { value: 'м²', label: 'м²' },
-        { value: 'м³', label: 'м³' },
-        { value: 'л', label: 'л' },
-        { value: 'упак', label: 'упак' },
-      ];
+  const ALL_UNITS = [
+    { value: 'шт', label: 'шт' }, { value: 'кг', label: 'кг' }, { value: 'т', label: 'т' },
+    { value: 'м', label: 'м' }, { value: 'м²', label: 'м²' }, { value: 'м³', label: 'м³' },
+    { value: 'л', label: 'л' }, { value: 'упак', label: 'упак' }, { value: 'тара', label: 'тара' },
+    { value: 'тюк', label: 'тюк' }, { value: 'комплект', label: 'комплект' }, { value: 'набор', label: 'набор' },
+  ];
+
+  const unitOptions = formData.category
+    ? (UNIT_OPTIONS_BY_CATEGORY[formData.category] ?? ALL_UNITS)
+    : ALL_UNITS;
 
   const vatOptions = [
     { value: '0', label: '0%' },

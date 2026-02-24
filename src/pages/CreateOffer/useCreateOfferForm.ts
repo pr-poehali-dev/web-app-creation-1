@@ -182,7 +182,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
       setFormData(prev => ({
         ...prev,
         subcategory: '',
-        unit: value === 'solid-fuel' ? '' : prev.unit,
+        unit: '',
       }));
     }
   };
