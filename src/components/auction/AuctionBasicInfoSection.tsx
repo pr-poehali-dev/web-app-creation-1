@@ -56,31 +56,6 @@ export default function AuctionBasicInfoSection({ formData, onInputChange }: Auc
         <CardTitle>Основная информация</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor="title">Название аукциона *</Label>
-          <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => onInputChange('title', e.target.value)}
-            placeholder="Краткое название лота"
-            maxLength={100}
-            required
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="description">Описание *</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => onInputChange('description', e.target.value)}
-            placeholder="Подробное описание лота, его характеристики и условия"
-            rows={5}
-            maxLength={2000}
-            required
-          />
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative">
             <Label htmlFor="category">Категория *</Label>
@@ -184,6 +159,31 @@ export default function AuctionBasicInfoSection({ formData, onInputChange }: Auc
               )}
             </div>
           )}
+        </div>
+
+        <div>
+          <Label htmlFor="title">Название аукциона *</Label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e) => onInputChange('title', e.target.value)}
+            placeholder="Краткое название лота"
+            maxLength={100}
+            required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="description">Описание *</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => onInputChange('description', e.target.value)}
+            placeholder="Подробное описание лота, его характеристики и условия"
+            rows={5}
+            maxLength={2000}
+            required
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
