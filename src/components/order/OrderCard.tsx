@@ -128,7 +128,9 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
             <p className="text-muted-foreground">
               {order.isRequest 
                 ? (isSeller ? 'Исполнитель' : 'Заказчик')
-                : (isSeller ? 'Покупатель' : 'Продавец')}
+                : order.offerCategory === 'transport'
+                  ? (isSeller ? 'Пассажир' : 'Исполнитель')
+                  : (isSeller ? 'Покупатель' : 'Продавец')}
             </p>
             <p className="font-medium truncate">
               {isSeller 
