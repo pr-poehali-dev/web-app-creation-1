@@ -78,7 +78,7 @@ function CollapsibleSelectList({
           {value ? (
             <span className="text-xs font-medium">{value}</span>
           ) : placeholder ? (
-            <span className="text-xs text-green-500">{placeholder}</span>
+            <span className="text-xs font-bold text-green-500">{placeholder}</span>
           ) : null}
           <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
         </div>
