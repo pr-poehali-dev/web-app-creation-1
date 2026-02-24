@@ -28,17 +28,24 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
   const [isUnitOpen, setIsUnitOpen] = useState(false);
   const [minQuantityError, setMinQuantityError] = useState<string>('');
   
-  const unitOptions = [
-    { value: 'шт', label: 'шт' },
-    { value: 'кг', label: 'кг' },
-    { value: 'т', label: 'т' },
-    { value: 'м', label: 'м' },
-    { value: 'м²', label: 'м²' },
-    { value: 'м³', label: 'м³' },
-    { value: 'л', label: 'л' },
-    { value: 'упак', label: 'упак' },
-    { value: 'кВт·ч', label: 'кВт·ч' }
-  ];
+  const isSolidFuel = formData.category === 'solid-fuel';
+
+  const unitOptions = isSolidFuel
+    ? [
+        { value: 'т', label: 'т' },
+        { value: 'м³', label: 'м³' },
+      ]
+    : [
+        { value: 'шт', label: 'шт' },
+        { value: 'кг', label: 'кг' },
+        { value: 'т', label: 'т' },
+        { value: 'м', label: 'м' },
+        { value: 'м²', label: 'м²' },
+        { value: 'м³', label: 'м³' },
+        { value: 'л', label: 'л' },
+        { value: 'упак', label: 'упак' },
+        { value: 'кВт·ч', label: 'кВт·ч' },
+      ];
 
   const selectedUnit = unitOptions.find(opt => opt.value === formData.unit);
 
