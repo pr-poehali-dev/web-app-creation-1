@@ -75,12 +75,15 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      <Separator />
-
-      <div>
-        <p className="text-sm font-medium mb-1">Описание</p>
-        <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
-      </div>
+      {!isTransport && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-sm font-medium mb-1">Описание</p>
+            <p className="text-xs text-muted-foreground whitespace-pre-line line-clamp-3">{description}</p>
+          </div>
+        </>
+      )}
 
       <Separator />
 

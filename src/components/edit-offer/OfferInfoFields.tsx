@@ -151,8 +151,16 @@ export default function OfferInfoFields({
               </>
             )}
             {isTransport && (
-              <div className="text-sm text-muted-foreground bg-muted/40 rounded-md px-3 py-2">
-                Транспортные параметры (маршрут, цена, дата) редактируются при создании предложения
+              <div className="space-y-2">
+                <Label>Период публикации</Label>
+                {offer.expiryDate ? (
+                  <p className="text-sm font-medium">
+                    {new Date(offer.createdAt).toLocaleDateString('ru-RU')} — {new Date(offer.expiryDate).toLocaleDateString('ru-RU')}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Не ограничен</p>
+                )}
+                <p className="text-xs text-muted-foreground">Транспортные параметры (маршрут, цена, дата) задаются при создании</p>
               </div>
             )}
           </div>
@@ -160,29 +168,23 @@ export default function OfferInfoFields({
           <div className="grid grid-cols-2 gap-3 text-sm">
             {isTransport ? (
               <>
-                {offer.transportPrice && (
-                  <div>
-                    <span className="text-muted-foreground">Цена:</span>
-                    <p className="font-bold text-lg text-primary">
-                      {Number(offer.transportPrice).toLocaleString('ru-RU')} ₽
-                    </p>
-                  </div>
-                )}
-                {offer.transportNegotiable && (
-                  <div>
-                    <span className="text-muted-foreground">Цена:</span>
+                <div>
+                  <span className="text-muted-foreground">Цена за место:</span>
+                  {offer.transportNegotiable ? (
                     <p className="font-semibold">Договорная</p>
-                  </div>
-                )}
-                {offer.quantity > 0 && (
-                  <div>
-                    <span className="text-muted-foreground">Мест:</span>
-                    <p className="font-semibold">{offer.quantity} {offer.unit}</p>
-                  </div>
-                )}
-                {offer.transportDateTime && (
-                  <div className="col-span-2">
-                    <span className="text-muted-foreground">Дата выезда:</span>
+                  ) : (
+                    <p className="font-bold text-lg text-primary">
+                      {Number(offer.transportPrice || offer.pricePerUnit).toLocaleString('ru-RU')} ₽
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Мест доступно:</span>
+                  <p className="font-semibold">{offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)}</p>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Дата выезда:</span>
+                  {offer.transportDateTime ? (
                     <p className="font-semibold">
                       {(() => {
                         try {
@@ -191,8 +193,10 @@ export default function OfferInfoFields({
                         } catch { return offer.transportDateTime; }
                       })()}
                     </p>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Не указана</p>
+                  )}
+                </div>
               </>
             ) : (
               <>
