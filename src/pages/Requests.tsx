@@ -176,11 +176,12 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     if (selectedRegion !== 'all') {
       const districtsInRegion = districts.map(d => d.id);
 
-      const isTransportVisible = (offer: { category?: string; availableDistricts?: string[]; transportAllDistricts?: boolean }, targetDistricts: string[]) => {
+      const isTransportVisible = (offer: { category?: string; district?: string; availableDistricts?: string[]; transportAllDistricts?: boolean }, targetDistricts: string[]) => {
         if (offer.category !== 'transport') return false;
         if (offer.transportAllDistricts) return true;
+        if (offer.district && targetDistricts.includes(offer.district)) return true;
         const offerDistricts = offer.availableDistricts || [];
-        if (offerDistricts.length === 0) return false;
+        if (offerDistricts.length === 0) return true;
         return offerDistricts.some(d => targetDistricts.includes(d));
       };
 
