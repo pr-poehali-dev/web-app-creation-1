@@ -30,7 +30,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
               <h3 className="font-semibold text-sm">
                 {order.isRequest
                   ? (isBuyer ? 'Заказчик' : 'Исполнитель')
-                  : (isBuyer ? 'Продавец' : 'Покупатель')
+                  : (isBuyer ? (order.offerCategory === 'transport' ? 'Исполнитель' : 'Продавец') : 'Покупатель')
                 }
               </h3>
             </div>
@@ -118,8 +118,8 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
                 <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Продавец: {contactPerson.name}</p>
-                  <p>Заказ ожидает подтверждения продавца. После принятия статус изменится на "Принят"</p>
+                  <p className="font-medium mb-1">{order.offerCategory === 'transport' ? 'Исполнитель' : 'Продавец'}: {contactPerson.name}</p>
+                  <p>Заказ ожидает подтверждения {order.offerCategory === 'transport' ? 'исполнителя' : 'продавца'}. После принятия статус изменится на "Принят"</p>
                 </div>
               </div>
               {onCancelOrder && (
