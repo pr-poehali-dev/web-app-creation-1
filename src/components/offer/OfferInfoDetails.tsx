@@ -46,15 +46,9 @@ export default function OfferInfoDetails({
     <div className="space-y-3">
       {isTransport ? (
         <div className="space-y-2 text-sm">
-          {transportCapacity && (
-            <div>
-              <p className="text-xs text-muted-foreground">Вместимость / Грузоподъёмность</p>
-              <p className="font-medium">{transportCapacity}</p>
-            </div>
-          )}
-          {transportDateTime && (
-            <div>
-              <p className="text-xs text-muted-foreground">Дата выезда</p>
+          <div>
+            <p className="text-xs text-muted-foreground">Дата и время выезда</p>
+            {transportDateTime ? (
               <p className="font-medium">
                 {(() => {
                   try {
@@ -63,6 +57,14 @@ export default function OfferInfoDetails({
                   } catch { return transportDateTime; }
                 })()}
               </p>
+            ) : (
+              <p className="font-medium text-muted-foreground">Не указана</p>
+            )}
+          </div>
+          {transportCapacity && (
+            <div>
+              <p className="text-xs text-muted-foreground">Вместимость / Грузоподъёмность</p>
+              <p className="font-medium">{transportCapacity}</p>
             </div>
           )}
         </div>
@@ -154,22 +156,24 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-        <div>
-          <p>Дата создания</p>
-          <p className="font-medium text-foreground">
-            {formatDateWithTimezone(createdAt)}
-          </p>
-        </div>
-        {expiryDate && (
+      {!isTransport && (
+        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
           <div>
-            <p>Срок годности</p>
+            <p>Дата создания</p>
             <p className="font-medium text-foreground">
-              {formatDateWithTimezone(expiryDate)}
+              {formatDateWithTimezone(createdAt)}
             </p>
           </div>
-        )}
-      </div>
+          {expiryDate && (
+            <div>
+              <p>Срок годности</p>
+              <p className="font-medium text-foreground">
+                {formatDateWithTimezone(expiryDate)}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

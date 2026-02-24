@@ -28,7 +28,7 @@ export default function QuantitySelector({
 }: QuantitySelectorProps) {
   return (
     <div>
-      <Label htmlFor="order-quantity">Количество ({unit})</Label>
+      <Label htmlFor="order-quantity">Количество ({unit || 'мест'})</Label>
       <div className="flex items-center gap-2">
         <Button
           type="button"
