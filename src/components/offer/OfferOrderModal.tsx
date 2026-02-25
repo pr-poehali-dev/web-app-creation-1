@@ -92,7 +92,6 @@ export default function OfferOrderModal({
   const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
   const [addressSetFromMap, setAddressSetFromMap] = useState<boolean>(false);
   const [pickupGpsCoordinates, setPickupGpsCoordinates] = useState<string>('');
-  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     if (availableDeliveryTypes.length === 1) {
@@ -156,41 +155,35 @@ export default function OfferOrderModal({
     }
   };
 
-  const handlePickupAddressFromMap = (fullAddress: string, _district: string, coords?: string) => {
-    setCustomPickupAddress(fullAddress);
-    setSelectedWaypoint('__custom__');
-    if (coords) setPickupGpsCoordinates(coords);
-    if (offerTransportRoute && !passengerRoute) {
-      const routeEnd = offerTransportRoute.split(/[-–—]/).pop()?.trim() || '';
-      if (routeEnd) {
-        const shortAddr = shortenAddress(fullAddress).split(',')[0].trim();
-        setPassengerRoute(`${shortAddr} — ${routeEnd}`);
-      }
+  const extractShortAddress = (fullAddress: string): string => {
+    const parts = fullAddress.split(',').map(p => p.trim());
+    const streetPart = parts.find(p => /улица|ул\.|проспект|пр\.|переулок|пер\.|шоссе|бульвар|набережная|площадь|алея/i.test(p));
+    const housePart = parts.find(p => /^\d[\dа-яёА-ЯЁ/]*$/.test(p) && parts.indexOf(p) > (streetPart ? parts.indexOf(streetPart) : -1));
+    if (streetPart) {
+      const streetClean = streetPart
+        .replace(/улица/i, 'ул.')
+        .replace(/проспект/i, 'пр.')
+        .replace(/переулок/i, 'пер.')
+        .replace(/бульвар/i, 'бул.')
+        .replace(/набережная/i, 'наб.')
+        .replace(/площадь/i, 'пл.');
+      return housePart ? `${streetClean} ${housePart}` : streetClean;
     }
+    return parts.slice(0, 2).join(', ');
   };
 
-  const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) return;
-    setIsLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const coords = `${latitude}, ${longitude}`;
-        setPickupGpsCoordinates(coords);
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`);
-          const data = await res.json();
-          const addr = data.display_name || coords;
-          handlePickupAddressFromMap(addr, '', coords);
-        } catch {
-          setCustomPickupAddress(coords);
-          setSelectedWaypoint('__custom__');
-        }
-        setIsLocating(false);
-      },
-      () => setIsLocating(false),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+  const handlePickupAddressFromMap = (fullAddress: string, _district: string, coords?: string) => {
+    const shortAddr = extractShortAddress(fullAddress);
+    setCustomPickupAddress(shortAddr);
+    setSelectedWaypoint('__custom__');
+    if (coords) setPickupGpsCoordinates(coords);
+    if (offerTransportRoute) {
+      const routeEnd = offerTransportRoute.split(/\s*[-–—]\s*/).pop()?.trim() || '';
+      if (routeEnd) {
+        const cityPart = shortAddr.split(',')[0].split(' ').slice(-1)[0] || shortAddr;
+        setPassengerRoute(`${cityPart} — ${routeEnd}`);
+      }
+    }
   };
 
   const handleAddressChange = (fullAddress: string, district: string, coords?: string) => {
@@ -355,23 +348,11 @@ export default function OfferOrderModal({
                       <div className="flex gap-2 mt-1">
                         <Input
                           value={customPickupAddress}
-                          onChange={(e) => setCustomPickupAddress(e.target.value)}
-                          placeholder="Введите или выберите на карте"
-                          className="flex-1"
+                          placeholder="Выберите на карте"
+                          className="flex-1 cursor-pointer"
+                          readOnly
+                          onClick={() => setIsPickupMapOpen(true)}
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={handleGetCurrentLocation}
-                          disabled={isLocating}
-                          title="Определить моё местоположение"
-                        >
-                          {isLocating
-                            ? <Icon name="Loader2" size={16} className="animate-spin" />
-                            : <Icon name="LocateFixed" size={16} />
-                          }
-                        </Button>
                         <Button
                           type="button"
                           variant="outline"
@@ -397,22 +378,11 @@ export default function OfferOrderModal({
                         setCustomPickupAddress(e.target.value);
                         setSelectedWaypoint('__custom__');
                       }}
-                      placeholder="Введите или выберите на карте"
+                      placeholder="Выберите на карте"
                       className="flex-1"
+                      readOnly
+                      onClick={() => setIsPickupMapOpen(true)}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={handleGetCurrentLocation}
-                      disabled={isLocating}
-                      title="Определить моё местоположение"
-                    >
-                      {isLocating
-                        ? <Icon name="Loader2" size={16} className="animate-spin" />
-                        : <Icon name="LocateFixed" size={16} />
-                      }
-                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -423,11 +393,6 @@ export default function OfferOrderModal({
                       <Icon name="Map" size={16} />
                     </Button>
                   </div>
-                  {customPickupAddress && offerTransportRoute && (
-                    <p className="text-xs text-muted-foreground">
-                      Маршрут будет обновлён автоматически
-                    </p>
-                  )}
                 </div>
               )}
               <div className="space-y-2">
