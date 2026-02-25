@@ -272,7 +272,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
           {/* Mobile buttons */}
           <div className="md:hidden flex items-center gap-1 flex-1 justify-end">
             <button
-              className={`h-9 px-2 text-[10px] font-bold text-primary uppercase rounded-md hover:bg-primary/10 transition-all shrink-0 ${
+              className={`h-9 px-2 text-[10px] font-bold text-primary uppercase rounded-md hover:bg-primary/10 transition-all flex-1 ${
                 mobileMenuOpen ? 'border-[3px] border-primary shadow-md' : 'border-[2.5px] border-primary/50'
               }`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

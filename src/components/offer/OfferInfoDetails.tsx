@@ -26,6 +26,7 @@ interface OfferInfoDetailsProps {
   transportServiceType?: string;
   transportWaypoints?: TransportWaypoint[];
   transportPriceType?: string;
+  transportComment?: string;
 }
 
 export default function OfferInfoDetails({
@@ -49,6 +50,7 @@ export default function OfferInfoDetails({
   transportServiceType,
   transportWaypoints = [],
   transportPriceType,
+  transportComment,
 }: OfferInfoDetailsProps) {
   const isTransport = category === 'transport';
 
@@ -60,25 +62,10 @@ export default function OfferInfoDetails({
     <div className="space-y-3">
       {isTransport ? (
         <div className="space-y-2 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Дата и время выезда</p>
-            {transportDateTime ? (
-              <p className="font-medium">
-                {(() => {
-                  try {
-                    const d = new Date(transportDateTime);
-                    return isNaN(d.getTime()) ? transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                  } catch { return transportDateTime; }
-                })()}
-              </p>
-            ) : (
-              <p className="font-medium text-muted-foreground">Не указана</p>
-            )}
-          </div>
-          {transportCapacity && (
+          {transportComment && (
             <div>
-              <p className="text-xs text-muted-foreground">{transportServiceType === 'Пассажирские перевозки' ? 'Количество мест' : 'Вместимость / Грузоподъёмность'}</p>
-              <p className="font-medium">{transportCapacity}</p>
+              <p className="text-xs text-muted-foreground">Комментарий</p>
+              <p className="font-medium">{transportComment}</p>
             </div>
           )}
 

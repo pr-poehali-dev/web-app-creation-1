@@ -111,12 +111,7 @@ export default function OfferInfoSummary({
               </p>
             </div>
           )}
-          {transportComment && (
-            <div className="col-span-2">
-              <p className="text-xs text-muted-foreground">Комментарий:</p>
-              <p className="font-medium text-sm">{transportComment}</p>
-            </div>
-          )}
+
           {expiryDate && (
             <div className="col-span-2">
               <p className="text-xs text-muted-foreground">Период публикации до:</p>
