@@ -8,6 +8,9 @@ import SplashScreen from "./components/SplashScreen";
 import PullToRefresh from "./components/PullToRefresh";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
+import Header from "./components/Header";
+import { DistrictProvider } from "./contexts/DistrictContext";
+import { OffersProvider } from "./contexts/OffersContext";
 
 // Ленивая загрузка второстепенных компонентов
 const NotificationPermissionBanner = lazy(() => import("./components/NotificationPermissionBanner"));
@@ -84,13 +87,10 @@ const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
     throw new Error('Failed to load module after retries');
   });
 
-// Критически важные страницы загружаем сразу (самые частые маршруты)
-import Login from "./pages/Login";
-import Offers from "./pages/Offers";
-import OfferDetail from "./pages/OfferDetail";
-import Header from "./components/Header";
-import { DistrictProvider } from "./contexts/DistrictContext";
-import { OffersProvider } from "./contexts/OffersContext";
+// Ленивая загрузка всех страниц
+const Login = lazyWithRetry(() => import("./pages/Login"));
+const Offers = lazyWithRetry(() => import("./pages/Offers"));
+const OfferDetail = lazyWithRetry(() => import("./pages/OfferDetail"));
 
 // Ленивая загрузка остальных страниц
 const Home = lazyWithRetry(() => import("./pages/Home"));
