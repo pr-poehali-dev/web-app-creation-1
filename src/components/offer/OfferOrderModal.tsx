@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import MapModal from '@/components/auction/MapModal';
+import Icon from '@/components/ui/icon';
 import QuantitySelector from './order-modal/QuantitySelector';
 import PriceDisplay from './order-modal/PriceDisplay';
 import DeliverySection from './order-modal/DeliverySection';
@@ -85,10 +86,13 @@ export default function OfferOrderModal({
   const [counterComment, setCounterComment] = useState<string>('');
   const [showCounterPrice, setShowCounterPrice] = useState<boolean>(false);
   const [isMapOpen, setIsMapOpen] = useState(false);
+  const [isPickupMapOpen, setIsPickupMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [addressError, setAddressError] = useState<string>('');
   const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
   const [addressSetFromMap, setAddressSetFromMap] = useState<boolean>(false);
+  const [pickupGpsCoordinates, setPickupGpsCoordinates] = useState<string>('');
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     if (availableDeliveryTypes.length === 1) {
@@ -150,6 +154,43 @@ export default function OfferOrderModal({
     if (!isNaN(lat) && !isNaN(lng)) {
       setSelectedLocation({ lat, lng });
     }
+  };
+
+  const handlePickupAddressFromMap = (fullAddress: string, _district: string, coords?: string) => {
+    setCustomPickupAddress(fullAddress);
+    setSelectedWaypoint('__custom__');
+    if (coords) setPickupGpsCoordinates(coords);
+    if (offerTransportRoute && !passengerRoute) {
+      const routeEnd = offerTransportRoute.split(/[-–—]/).pop()?.trim() || '';
+      if (routeEnd) {
+        const shortAddr = shortenAddress(fullAddress).split(',')[0].trim();
+        setPassengerRoute(`${shortAddr} — ${routeEnd}`);
+      }
+    }
+  };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const coords = `${latitude}, ${longitude}`;
+        setPickupGpsCoordinates(coords);
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`);
+          const data = await res.json();
+          const addr = data.display_name || coords;
+          handlePickupAddressFromMap(addr, '', coords);
+        } catch {
+          setCustomPickupAddress(coords);
+          setSelectedWaypoint('__custom__');
+        }
+        setIsLocating(false);
+      },
+      () => setIsLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const handleAddressChange = (fullAddress: string, district: string, coords?: string) => {
@@ -311,12 +352,36 @@ export default function OfferOrderModal({
                       <span className="text-sm font-medium">Другой адрес</span>
                     </label>
                     {selectedWaypoint === '__custom__' && (
-                      <Input
-                        value={customPickupAddress}
-                        onChange={(e) => setCustomPickupAddress(e.target.value)}
-                        placeholder="Укажите ваш адрес посадки"
-                        className="mt-1"
-                      />
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={customPickupAddress}
+                          onChange={(e) => setCustomPickupAddress(e.target.value)}
+                          placeholder="Введите или выберите на карте"
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={handleGetCurrentLocation}
+                          disabled={isLocating}
+                          title="Определить моё местоположение"
+                        >
+                          {isLocating
+                            ? <Icon name="Loader2" size={16} className="animate-spin" />
+                            : <Icon name="LocateFixed" size={16} />
+                          }
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setIsPickupMapOpen(true)}
+                          title="Выбрать на карте"
+                        >
+                          <Icon name="Map" size={16} />
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -324,12 +389,45 @@ export default function OfferOrderModal({
               {offerTransportWaypoints.filter(w => w.isActive).length === 0 && (
                 <div className="space-y-2">
                   <Label htmlFor="passenger-pickup">Адрес посадки</Label>
-                  <Input
-                    id="passenger-pickup"
-                    value={customPickupAddress}
-                    onChange={(e) => setCustomPickupAddress(e.target.value)}
-                    placeholder="Укажите ваш адрес посадки"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="passenger-pickup"
+                      value={customPickupAddress}
+                      onChange={(e) => {
+                        setCustomPickupAddress(e.target.value);
+                        setSelectedWaypoint('__custom__');
+                      }}
+                      placeholder="Введите или выберите на карте"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleGetCurrentLocation}
+                      disabled={isLocating}
+                      title="Определить моё местоположение"
+                    >
+                      {isLocating
+                        ? <Icon name="Loader2" size={16} className="animate-spin" />
+                        : <Icon name="LocateFixed" size={16} />
+                      }
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setIsPickupMapOpen(true)}
+                      title="Выбрать на карте"
+                    >
+                      <Icon name="Map" size={16} />
+                    </Button>
+                  </div>
+                  {customPickupAddress && offerTransportRoute && (
+                    <p className="text-xs text-muted-foreground">
+                      Маршрут будет обновлён автоматически
+                    </p>
+                  )}
                 </div>
               )}
               <div className="space-y-2">
@@ -399,6 +497,18 @@ export default function OfferOrderModal({
           coordinates={gpsCoordinates}
           onCoordinatesChange={handleCoordinatesChange}
           onAddressChange={handleAddressChange}
+        />
+      </div>
+    )}
+
+    {isPickupMapOpen && (
+      <div className="fixed inset-0 z-[100] bg-background">
+        <MapModal
+          isOpen={isPickupMapOpen}
+          onClose={() => setIsPickupMapOpen(false)}
+          coordinates={pickupGpsCoordinates}
+          onCoordinatesChange={setPickupGpsCoordinates}
+          onAddressChange={handlePickupAddressFromMap}
         />
       </div>
     )}
