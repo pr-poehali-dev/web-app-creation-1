@@ -5,7 +5,7 @@ import OfferLocationSection from '@/components/offer/OfferLocationSection';
 import OfferMediaSection from '@/components/offer/OfferMediaSection';
 import OfferTransportSection from '@/components/offer/OfferTransportSection';
 import OfferAdditionalSection from '@/components/offer/OfferAdditionalSection';
-import type { DeliveryType } from '@/types/offer';
+import type { DeliveryType, TransportWaypoint } from '@/types/offer';
 
 interface District {
   id: string;
@@ -56,6 +56,7 @@ interface CreateOfferFormFieldsProps {
   video: File | null;
   videoPreview: string;
   districts: District[];
+  transportWaypoints?: TransportWaypoint[];
   onInputChange: (field: string, value: string | boolean) => void;
   onDistrictToggle: (districtId: string) => void;
   onDeliveryTypeToggle: (type: DeliveryType) => void;
@@ -63,6 +64,9 @@ interface CreateOfferFormFieldsProps {
   onRemoveImage: (index: number) => void;
   onVideoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveVideo: () => void;
+  onAddWaypoint?: (districtId: string, districtName: string) => void;
+  onRemoveWaypoint?: (districtId: string) => void;
+  onWaypointPriceChange?: (districtId: string, price: string) => void;
   videoUploadProgress: number;
   isUploadingVideo: boolean;
 }
@@ -74,6 +78,7 @@ export default function CreateOfferFormFields({
   video,
   videoPreview,
   districts,
+  transportWaypoints = [],
   onInputChange,
   onDistrictToggle,
   onDeliveryTypeToggle,
@@ -81,6 +86,9 @@ export default function CreateOfferFormFields({
   onRemoveImage,
   onVideoUpload,
   onRemoveVideo,
+  onAddWaypoint,
+  onRemoveWaypoint,
+  onWaypointPriceChange,
   videoUploadProgress,
   isUploadingVideo,
 }: CreateOfferFormFieldsProps) {
@@ -113,8 +121,12 @@ export default function CreateOfferFormFields({
             transportAllDistricts: formData.transportAllDistricts,
             district: formData.district,
           }}
+          transportWaypoints={transportWaypoints}
           onInputChange={onInputChange}
           onDistrictToggle={onDistrictToggle}
+          onAddWaypoint={onAddWaypoint}
+          onRemoveWaypoint={onRemoveWaypoint}
+          onWaypointPriceChange={onWaypointPriceChange}
         />
       )}
 

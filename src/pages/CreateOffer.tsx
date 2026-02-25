@@ -91,6 +91,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     imagePreviews,
     video,
     videoPreview,
+    transportWaypoints,
     handleInputChange,
     handleDistrictToggle,
     handleDeliveryTypeToggle,
@@ -98,6 +99,9 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     handleRemoveImage,
     handleVideoUpload,
     handleRemoveVideo,
+    handleAddWaypoint,
+    handleRemoveWaypoint,
+    handleWaypointPriceChange,
   } = useCreateOfferForm(editOffer);
 
   const {
@@ -170,6 +174,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       transportDateTime: formData.transportDateTime || undefined,
       transportComment: formData.transportComment || undefined,
       transportAllDistricts: formData.transportAllDistricts,
+      transportWaypoints: transportWaypoints.length > 0 ? transportWaypoints : undefined,
     };
 
     submitOffer(submitData, videoPreview, imagePreviews, isDraft);
@@ -211,6 +216,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               video={video}
               videoPreview={videoPreview}
               districts={allDistricts}
+              transportWaypoints={transportWaypoints}
               onInputChange={handleInputChange}
               onDistrictToggle={handleDistrictToggle}
               onDeliveryTypeToggle={handleDeliveryTypeToggle}
@@ -218,6 +224,9 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               onRemoveImage={handleRemoveImage}
               onVideoUpload={handleVideoUpload}
               onRemoveVideo={handleRemoveVideo}
+              onAddWaypoint={handleAddWaypoint}
+              onRemoveWaypoint={handleRemoveWaypoint}
+              onWaypointPriceChange={handleWaypointPriceChange}
               videoUploadProgress={videoUploadProgress}
               isUploadingVideo={isUploadingVideo}
             />

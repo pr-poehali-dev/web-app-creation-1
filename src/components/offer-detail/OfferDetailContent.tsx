@@ -192,6 +192,7 @@ export default function OfferDetailContent({
                 transportPriceType={offer.transportPriceType}
                 transportNegotiable={offer.transportNegotiable}
                 transportComment={offer.transportComment}
+                transportWaypoints={offer.transportWaypoints}
               />
             </div>
           </div>
@@ -282,6 +283,7 @@ export default function OfferDetailContent({
                 transportPriceType={offer.transportPriceType}
                 transportNegotiable={offer.transportNegotiable}
                 transportComment={offer.transportComment}
+                transportWaypoints={offer.transportWaypoints}
               />
             </div>
           </div>
@@ -319,13 +321,15 @@ export default function OfferDetailContent({
         remainingQuantity={remainingQuantity}
         minOrderQuantity={offer.minOrderQuantity}
         unit={offer.unit}
-        pricePerUnit={offer.pricePerUnit}
+        pricePerUnit={offer.category === 'transport' ? Number(offer.transportPrice || 0) : offer.pricePerUnit}
         availableDeliveryTypes={offer.availableDeliveryTypes}
         availableDistricts={offer.availableDistricts}
         offerDistrict={offer.district}
         offerCategory={offer.category}
         offerTransportRoute={offer.transportRoute}
         offerTransportWaypoints={offer.transportWaypoints}
+        offerTransportPriceType={offer.transportPriceType}
+        offerTransportNegotiable={offer.transportNegotiable}
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={onGalleryChange}>

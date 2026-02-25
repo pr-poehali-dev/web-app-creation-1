@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Icon from '@/components/ui/icon';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { DISTRICTS } from '@/data/districts';
+import type { TransportWaypoint } from '@/types/offer';
 
 interface OfferTransportSectionProps {
   formData: {
@@ -23,8 +24,12 @@ interface OfferTransportSectionProps {
     transportAllDistricts: boolean;
     district: string;
   };
+  transportWaypoints?: TransportWaypoint[];
   onInputChange: (field: string, value: string | boolean) => void;
   onDistrictToggle: (districtId: string) => void;
+  onAddWaypoint?: (districtId: string, districtName: string) => void;
+  onRemoveWaypoint?: (districtId: string) => void;
+  onWaypointPriceChange?: (districtId: string, price: string) => void;
 }
 
 const SERVICE_TYPES = [
@@ -109,7 +114,7 @@ function CollapsibleSelectList({
   );
 }
 
-export default function OfferTransportSection({ formData, onInputChange, onDistrictToggle }: OfferTransportSectionProps) {
+export default function OfferTransportSection({ formData, transportWaypoints = [], onInputChange, onDistrictToggle, onAddWaypoint, onRemoveWaypoint, onWaypointPriceChange }: OfferTransportSectionProps) {
   const { detectedDistrictId } = useDistrict();
   const [districtInput, setDistrictInput] = useState('');
   const [showAdditional, setShowAdditional] = useState(false);
@@ -221,23 +226,49 @@ export default function OfferTransportSection({ formData, onInputChange, onDistr
                 )}
               </button>
               {showAdditional && (
-                <div className="mt-2">
+                <div className="mt-2 space-y-2">
                   {additionalDistricts.length === 0 ? (
                     <p className="text-xs text-muted-foreground">Сначала выберите основной район</p>
                   ) : (
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {additionalDistricts.map(d => (
-                        <div key={d.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`transport-district-${d.id}`}
-                            checked={formData.availableDistricts.includes(d.id)}
-                            onCheckedChange={() => onDistrictToggle(d.id)}
-                          />
-                          <label htmlFor={`transport-district-${d.id}`} className="text-xs leading-none cursor-pointer">
-                            {d.name}
-                          </label>
-                        </div>
-                      ))}
+                    <div className="space-y-1.5">
+                      {additionalDistricts.map(d => {
+                        const checked = formData.availableDistricts.includes(d.id);
+                        const waypoint = transportWaypoints.find(w => w.id === d.id);
+                        return (
+                          <div key={d.id} className="space-y-1">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`transport-district-${d.id}`}
+                                checked={checked}
+                                onCheckedChange={() => {
+                                  onDistrictToggle(d.id);
+                                  if (!checked) {
+                                    onAddWaypoint?.(d.id, d.name);
+                                  } else {
+                                    onRemoveWaypoint?.(d.id);
+                                  }
+                                }}
+                              />
+                              <label htmlFor={`transport-district-${d.id}`} className="text-xs leading-none cursor-pointer flex-1">
+                                {d.name}
+                              </label>
+                            </div>
+                            {checked && (
+                              <div className="ml-6 flex items-center gap-1.5">
+                                <Input
+                                  type="number"
+                                  placeholder="Цена ₽"
+                                  value={waypoint?.price ?? ''}
+                                  onChange={(e) => onWaypointPriceChange?.(d.id, e.target.value)}
+                                  className="h-7 text-xs w-28"
+                                  min="0"
+                                />
+                                <span className="text-xs text-muted-foreground">₽ / {formData.transportPriceType || 'место'}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

@@ -186,6 +186,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         transportNegotiable: formData.transportNegotiable || undefined,
         transportDateTime: formData.transportDateTime || undefined,
         transportComment: formData.transportComment || undefined,
+        transportWaypoints: (formData as { transportWaypoints?: unknown }).transportWaypoints || undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,

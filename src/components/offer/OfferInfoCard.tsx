@@ -6,6 +6,7 @@ import { NASLEGS } from '@/data/naslegs';
 import OfferInfoHeader from './OfferInfoHeader';
 import OfferInfoSummary from './OfferInfoSummary';
 import OfferInfoDetails from './OfferInfoDetails';
+import type { TransportWaypoint } from '@/types/offer';
 
 interface OfferInfoCardProps {
   title: string;
@@ -46,6 +47,7 @@ interface OfferInfoCardProps {
   transportPriceType?: string;
   transportNegotiable?: boolean;
   transportComment?: string;
+  transportWaypoints?: TransportWaypoint[];
 }
 
 export default function OfferInfoCard({
@@ -87,6 +89,7 @@ export default function OfferInfoCard({
   transportPriceType,
   transportNegotiable,
   transportComment,
+  transportWaypoints,
 }: OfferInfoCardProps) {
   // Найти название категории
   const categoryData = CATEGORIES.find(c => c.id === category);
@@ -136,6 +139,9 @@ export default function OfferInfoCard({
     transportCapacity,
     transportDateTime,
     transportServiceType,
+    transportWaypoints,
+    transportPriceType,
+    availableDistricts,
   };
 
   return (

@@ -55,6 +55,8 @@ interface OfferOrderModalProps {
   offerCategory?: string;
   offerTransportRoute?: string;
   offerTransportWaypoints?: TransportWaypoint[];
+  offerTransportPriceType?: string;
+  offerTransportNegotiable?: boolean;
 }
 
 export default function OfferOrderModal({
@@ -71,6 +73,8 @@ export default function OfferOrderModal({
   offerCategory,
   offerTransportRoute,
   offerTransportWaypoints = [],
+  offerTransportPriceType,
+  offerTransportNegotiable,
 }: OfferOrderModalProps) {
   const currentUser = getSession();
   const { toast } = useToast();
@@ -293,6 +297,9 @@ export default function OfferOrderModal({
             unit={unit}
             quantityError={quantityError}
             showCounterPrice={showCounterPrice}
+            priceType={offerTransportPriceType}
+            isNegotiable={offerTransportNegotiable}
+            isTransport={offerCategory === 'transport'}
           />
 
           {offerCategory === 'transport' && (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { DeliveryType, Offer } from '@/types/offer';
+import type { DeliveryType, Offer, TransportWaypoint } from '@/types/offer';
 import { useToast } from '@/hooks/use-toast';
 
 interface FormData {
@@ -124,6 +124,25 @@ export function useCreateOfferForm(editOffer?: Offer) {
   const [videoPreview, setVideoPreview] = useState<string>(
     editOffer?.video?.url || ''
   );
+  const [transportWaypoints, setTransportWaypoints] = useState<TransportWaypoint[]>(
+    editOffer?.transportWaypoints || []
+  );
+
+  const handleAddWaypoint = (districtId: string, districtName: string) => {
+    const exists = transportWaypoints.find(w => w.id === districtId);
+    if (exists) return;
+    setTransportWaypoints(prev => [...prev, { id: districtId, address: districtName, price: undefined, isActive: true }]);
+  };
+
+  const handleRemoveWaypoint = (districtId: string) => {
+    setTransportWaypoints(prev => prev.filter(w => w.id !== districtId));
+  };
+
+  const handleWaypointPriceChange = (districtId: string, price: string) => {
+    setTransportWaypoints(prev => prev.map(w =>
+      w.id === districtId ? { ...w, price: price === '' ? undefined : Number(price) } : w
+    ));
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     // Валидация дат периода поставки
@@ -297,6 +316,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     imagePreviews,
     video,
     videoPreview,
+    transportWaypoints,
     handleInputChange,
     handleDistrictToggle,
     handleDeliveryTypeToggle,
@@ -304,5 +324,8 @@ export function useCreateOfferForm(editOffer?: Offer) {
     handleRemoveImage,
     handleVideoUpload,
     handleRemoveVideo,
+    handleAddWaypoint,
+    handleRemoveWaypoint,
+    handleWaypointPriceChange,
   };
 }
