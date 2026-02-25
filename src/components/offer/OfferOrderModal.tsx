@@ -325,7 +325,8 @@ export default function OfferOrderModal({
                         className="h-4 w-4"
                       />
                       <div className="flex-1">
-                        <span className="text-sm font-bold text-foreground">{offerTransportRoute || 'Основной маршрут'}</span>
+                        <span className="text-xs text-muted-foreground block">Основной маршрут</span>
+                        <span className="text-sm font-bold text-foreground">{offerTransportRoute}</span>
                       </div>
                     </label>
                     {offerTransportWaypoints.filter(w => w.isActive).map(wp => (
