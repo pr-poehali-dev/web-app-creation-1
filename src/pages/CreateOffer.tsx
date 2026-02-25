@@ -164,6 +164,10 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       transportRoute: formData.transportRoute || undefined,
       transportType: formData.transportType || undefined,
       transportCapacity: formData.transportCapacity || undefined,
+      transportPrice: formData.transportPrice || undefined,
+      transportPriceType: formData.transportPriceType || undefined,
+      transportNegotiable: formData.transportNegotiable || undefined,
+      transportDateTime: formData.transportDateTime || undefined,
       transportComment: formData.transportComment || undefined,
       transportAllDistricts: formData.transportAllDistricts,
     };
