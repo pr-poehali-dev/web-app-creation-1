@@ -14,6 +14,11 @@ interface EditData {
   description: string;
   deliveryPeriodStart: string;
   deliveryPeriodEnd: string;
+  transportPrice: string;
+  transportCapacity: string;
+  transportDateTime: string;
+  transportPriceType: string;
+  transportNegotiable: boolean;
 }
 
 interface OfferInfoFieldsProps {
@@ -151,16 +156,78 @@ export default function OfferInfoFields({
               </>
             )}
             {isTransport && (
-              <div className="space-y-2">
-                <Label>Период публикации</Label>
-                {offer.expiryDate ? (
-                  <p className="text-sm font-medium">
-                    {new Date(offer.createdAt).toLocaleDateString('ru-RU')} — {new Date(offer.expiryDate).toLocaleDateString('ru-RU')}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="transportCapacity">Количество мест</Label>
+                  <Input
+                    id="transportCapacity"
+                    type="number"
+                    value={editData.transportCapacity}
+                    onChange={(e) => onEditDataChange({ ...editData, transportCapacity: e.target.value })}
+                    disabled={isSaving}
+                    min="1"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="transportDateTime">Дата и время выезда</Label>
+                  <Input
+                    id="transportDateTime"
+                    type="datetime-local"
+                    value={editData.transportDateTime}
+                    onChange={(e) => onEditDataChange({ ...editData, transportDateTime: e.target.value })}
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="transportPriceType">Тип цены</Label>
+                  <select
+                    id="transportPriceType"
+                    value={editData.transportPriceType}
+                    onChange={(e) => onEditDataChange({ ...editData, transportPriceType: e.target.value })}
+                    disabled={isSaving}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Выберите тип</option>
+                    <option value="За рейс">За рейс</option>
+                    <option value="За место">За место</option>
+                    <option value="За час">За час</option>
+                    <option value="За км">За км</option>
+                    <option value="Договорная">Договорная</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="transportNegotiable"
+                      type="checkbox"
+                      checked={editData.transportNegotiable}
+                      onChange={(e) => onEditDataChange({ ...editData, transportNegotiable: e.target.checked })}
+                      disabled={isSaving}
+                      className="h-4 w-4"
+                    />
+                    <Label htmlFor="transportNegotiable">Договорная цена</Label>
+                  </div>
+                  {!editData.transportNegotiable && (
+                    <div className="space-y-2">
+                      <Label htmlFor="transportPrice">Цена за место (₽)</Label>
+                      <Input
+                        id="transportPrice"
+                        type="number"
+                        value={editData.transportPrice}
+                        onChange={(e) => onEditDataChange({ ...editData, transportPrice: e.target.value })}
+                        disabled={isSaving}
+                        min="0"
+                        placeholder="0"
+                      />
+                    </div>
+                  )}
+                </div>
+                {offer.expiryDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Срок публикации до: {new Date(offer.expiryDate).toLocaleDateString('ru-RU')}
                   </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Не ограничен</p>
                 )}
-                <p className="text-xs text-muted-foreground">Транспортные параметры (маршрут, цена, дата) задаются при создании</p>
               </div>
             )}
           </div>

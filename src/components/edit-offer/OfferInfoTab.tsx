@@ -35,6 +35,13 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     return d.toISOString().split('T')[0];
   };
 
+  const toDateTimeInputValue = (val?: string | null) => {
+    if (!val) return '';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString().slice(0, 16);
+  };
+
   const [editData, setEditData] = useState({
     pricePerUnit: offer.pricePerUnit.toString(),
     quantity: offer.quantity.toString(),
@@ -42,6 +49,11 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     description: offer.description || '',
     deliveryPeriodStart: toDateInputValue(offer.deliveryPeriodStart),
     deliveryPeriodEnd: toDateInputValue(offer.deliveryPeriodEnd),
+    transportPrice: offer.transportPrice?.toString() || '',
+    transportCapacity: offer.transportCapacity || '',
+    transportDateTime: toDateTimeInputValue(offer.transportDateTime),
+    transportPriceType: offer.transportPriceType || '',
+    transportNegotiable: offer.transportNegotiable || false,
   });
   const [images, setImages] = useState<OfferImage[]>(offer.images || []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -52,15 +64,16 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
   // --- Handlers: Save / Cancel ---
 
   const handleSave = async () => {
-    const pricePerUnit = parseFloat(editData.pricePerUnit);
-    const quantity = parseInt(editData.quantity);
+    const isTransport = offer.category === 'transport';
+    const pricePerUnit = isTransport ? 0 : parseFloat(editData.pricePerUnit);
+    const quantity = isTransport ? parseInt(editData.transportCapacity) || 0 : parseInt(editData.quantity);
     const minOrderQuantity = editData.minOrderQuantity ? parseInt(editData.minOrderQuantity) : undefined;
 
-    if (isNaN(pricePerUnit) || pricePerUnit <= 0) {
+    if (!isTransport && (isNaN(pricePerUnit) || pricePerUnit <= 0)) {
       toast({ title: 'Ошибка', description: 'Укажите корректную цену', variant: 'destructive' });
       return;
     }
-    if (isNaN(quantity) || quantity <= 0) {
+    if (!isTransport && (isNaN(quantity) || quantity <= 0)) {
       toast({ title: 'Ошибка', description: 'Укажите корректное количество', variant: 'destructive' });
       return;
     }
@@ -103,11 +116,11 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         transportServiceType: offer.transportServiceType,
         transportRoute: offer.transportRoute,
         transportType: offer.transportType,
-        transportCapacity: offer.transportCapacity,
-        transportPrice: offer.transportPrice,
-        transportPriceType: offer.transportPriceType,
-        transportNegotiable: offer.transportNegotiable,
-        transportDateTime: offer.transportDateTime,
+        transportCapacity: editData.transportCapacity || offer.transportCapacity,
+        transportPrice: editData.transportNegotiable ? undefined : (parseFloat(editData.transportPrice) || undefined),
+        transportPriceType: editData.transportPriceType || offer.transportPriceType,
+        transportNegotiable: editData.transportNegotiable,
+        transportDateTime: editData.transportDateTime || undefined,
         transportComment: offer.transportComment,
         transportAllDistricts: offer.transportAllDistricts,
       });
@@ -136,6 +149,11 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       description: offer.description || '',
       deliveryPeriodStart: toDateInputValue(offer.deliveryPeriodStart),
       deliveryPeriodEnd: toDateInputValue(offer.deliveryPeriodEnd),
+      transportPrice: offer.transportPrice?.toString() || '',
+      transportCapacity: offer.transportCapacity || '',
+      transportDateTime: toDateTimeInputValue(offer.transportDateTime),
+      transportPriceType: offer.transportPriceType || '',
+      transportNegotiable: offer.transportNegotiable || false,
     });
     setImages(offer.images || []);
     setCurrentImageIndex(0);
