@@ -114,6 +114,30 @@ function CollapsibleSelectList({
   );
 }
 
+function AddDistrictRow({ district, priceType, onAdd }: { district: { id: string; name: string }; priceType: string; onAdd: (price: string) => void }) {
+  const [price, setPrice] = useState('');
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        type="number"
+        placeholder="Цена ₽"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+        className="h-7 text-xs w-28"
+        min="0"
+      />
+      <span className="text-xs text-muted-foreground flex-1">{district.name} / {priceType || 'место'}</span>
+      <button
+        type="button"
+        onClick={() => { if (price && Number(price) > 0) onAdd(price); }}
+        disabled={!price || Number(price) <= 0}
+        className="h-7 w-7 rounded border flex items-center justify-center text-sm font-bold text-primary border-primary hover:bg-primary/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        title="Добавить"
+      >+</button>
+    </div>
+  );
+}
+
 export default function OfferTransportSection({ formData, transportWaypoints = [], onInputChange, onDistrictToggle, onAddWaypoint, onRemoveWaypoint, onWaypointPriceChange }: OfferTransportSectionProps) {
   const { detectedDistrictId } = useDistrict();
   const [districtInput, setDistrictInput] = useState('');
@@ -236,25 +260,8 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                         const waypoint = transportWaypoints.find(w => w.id === d.id);
                         return (
                           <div key={d.id} className="space-y-1">
-                            <div className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`transport-district-${d.id}`}
-                                checked={checked}
-                                onCheckedChange={() => {
-                                  onDistrictToggle(d.id);
-                                  if (!checked) {
-                                    onAddWaypoint?.(d.id, d.name);
-                                  } else {
-                                    onRemoveWaypoint?.(d.id);
-                                  }
-                                }}
-                              />
-                              <label htmlFor={`transport-district-${d.id}`} className="text-xs leading-none cursor-pointer flex-1">
-                                {d.name}
-                              </label>
-                            </div>
-                            {checked && (
-                              <div className="ml-6 flex items-center gap-1.5">
+                            {checked ? (
+                              <div className="flex items-center gap-1.5">
                                 <Input
                                   type="number"
                                   placeholder="Цена ₽"
@@ -263,12 +270,29 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                                   className="h-7 text-xs w-28"
                                   min="0"
                                 />
-                                <span className="text-xs text-muted-foreground">₽ / {formData.transportPriceType || 'место'}</span>
+                                <span className="text-xs text-muted-foreground flex-1">{d.name} / {formData.transportPriceType || 'место'}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => { onDistrictToggle(d.id); onRemoveWaypoint?.(d.id); }}
+                                  className="text-xs text-destructive hover:text-destructive/80 px-1.5"
+                                  title="Удалить"
+                                >✕</button>
                               </div>
+                            ) : (
+                              <AddDistrictRow
+                                district={d}
+                                priceType={formData.transportPriceType}
+                                onAdd={(price) => {
+                                  onDistrictToggle(d.id);
+                                  onAddWaypoint?.(d.id, d.name);
+                                  setTimeout(() => onWaypointPriceChange?.(d.id, price), 0);
+                                }}
+                              />
                             )}
                           </div>
                         );
                       })}
+                      <p className="text-xs text-muted-foreground pt-1">Укажите цену и нажмите <span className="font-bold">+</span> для добавления пункта</p>
                     </div>
                   )}
                 </div>
