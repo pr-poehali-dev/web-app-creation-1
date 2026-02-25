@@ -225,12 +225,13 @@ export default function OfferInfoFields({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="transportPriceType">Тип цены</Label>
+                  <div className="relative">
                   <select
                     id="transportPriceType"
                     value={editData.transportPriceType}
                     onChange={(e) => onEditDataChange({ ...editData, transportPriceType: e.target.value })}
                     disabled={isSaving}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-9 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 appearance-none cursor-pointer"
                   >
                     <option value="">Выберите тип</option>
                     <option value="За рейс">За рейс</option>
@@ -239,19 +240,24 @@ export default function OfferInfoFields({
                     <option value="За км">За км</option>
                     <option value="Договорная">Договорная</option>
                   </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
+                    <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </div>
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="transportNegotiable"
-                      type="checkbox"
-                      checked={editData.transportNegotiable}
-                      onChange={(e) => onEditDataChange({ ...editData, transportNegotiable: e.target.checked })}
-                      disabled={isSaving}
-                      className="h-4 w-4"
-                    />
-                    <Label htmlFor="transportNegotiable">Договорная цена</Label>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => !isSaving && onEditDataChange({ ...editData, transportNegotiable: !editData.transportNegotiable })}
+                    disabled={isSaving}
+                    className={`h-10 w-full rounded-md border-2 px-3 text-sm font-medium transition-colors ${
+                      editData.transportNegotiable
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-input bg-background text-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    {editData.transportNegotiable ? '✓ Договорная цена' : 'Договорная цена'}
+                  </button>
                   {!editData.transportNegotiable && (
                     <div className="space-y-2">
                       <Label htmlFor="transportPrice">Цена за место (₽)</Label>
