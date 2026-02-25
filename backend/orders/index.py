@@ -732,7 +732,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             notification_message = f'Покупатель предложил {counter_price} ₽ за единицу товара "{body["title"]}"'
         else:
             notification_title = 'Новый заказ на ваше предложение'
-            notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽'
+            pickup = body.get('passengerPickupAddress', '')
+            pickup_info = f' | Посадка: {pickup}' if pickup else ''
+            notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽{pickup_info}'
         
         send_notification(seller_id, notification_title, notification_message, f'/my-orders?id={result["id"]}')
     except Exception as e:
