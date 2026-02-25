@@ -53,10 +53,11 @@ export default function OfferInfoFields({
 
   const addWaypoint = () => {
     if (!newWaypointAddress.trim()) return;
+    if (!newWaypointPrice || parseFloat(newWaypointPrice) <= 0) return;
     const waypoint: TransportWaypoint = {
       id: Date.now().toString(),
       address: newWaypointAddress.trim(),
-      price: newWaypointPrice ? parseFloat(newWaypointPrice) : undefined,
+      price: parseFloat(newWaypointPrice),
       isActive: true,
     };
     onEditDataChange({ ...editData, transportWaypoints: [...editData.transportWaypoints, waypoint] });
@@ -328,13 +329,13 @@ export default function OfferInfoFields({
                         size="sm"
                         variant="outline"
                         onClick={addWaypoint}
-                        disabled={isSaving || !newWaypointAddress.trim()}
+                        disabled={isSaving || !newWaypointAddress.trim() || !newWaypointPrice || parseFloat(newWaypointPrice) <= 0}
                         className="h-8 px-2"
                       >
                         <Icon name="Plus" className="w-4 h-4" />
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">Укажите пункты посадки по пути. Пассажир выберет нужный при заказе.</p>
+                    <p className="text-xs text-muted-foreground">Укажите адрес и цену, затем нажмите <span className="font-bold">+</span> для добавления пункта посадки.</p>
                   </div>
                 </div>
                 {offer.expiryDate && (
