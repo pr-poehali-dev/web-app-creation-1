@@ -221,6 +221,9 @@ const App = () => {
       import("./pages/Login");
       import("./pages/Requests");
       import("./pages/Profile");
+      import("./pages/Auctions");
+      import("./pages/CreateOffer");
+      import("./pages/CreateRequest");
     }, 2000);
 
     // Регистрируем Service Worker в фоне
