@@ -515,6 +515,11 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     offer_dict['transportNegotiable'] = offer_dict.pop('transport_negotiable', False)
     offer_dict['transportComment'] = offer_dict.pop('transport_comment', None)
     offer_dict['transportAllDistricts'] = offer_dict.pop('transport_all_districts', False)
+    raw_waypoints = offer_dict.pop('transport_waypoints', None)
+    if raw_waypoints:
+        offer_dict['transportWaypoints'] = raw_waypoints if isinstance(raw_waypoints, list) else json.loads(raw_waypoints)
+    else:
+        offer_dict['transportWaypoints'] = []
     
     # ⚠️ НЕ кэшируем, чтобы views_count всегда был актуальным
     
@@ -868,6 +873,11 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             updates.append(f"transport_comment = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
         if 'transportAllDistricts' in body:
             updates.append(f"transport_all_districts = {body['transportAllDistricts']}")
+        if 'transportWaypoints' in body:
+            waypoints_val = body['transportWaypoints']
+            waypoints_json = json.dumps(waypoints_val if waypoints_val is not None else [])
+            waypoints_escaped = waypoints_json.replace("'", "''")
+            updates.append(f"transport_waypoints = '{waypoints_escaped}'::jsonb")
 
         # Обработка видео
         if 'video' in body:

@@ -416,6 +416,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
         order_dict['offerTransportServiceType'] = order_dict.pop('offer_transport_service_type', None)
         order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
+        order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
         
         order_dict['is_request'] = order_dict.get('is_request', False)
         
@@ -502,6 +503,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['offerCategory'] = order_dict.pop('offer_category', None)
     order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
     order_dict['offerTransportServiceType'] = order_dict.pop('offer_transport_service_type', None)
+    order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
     order_dict['is_request'] = order_dict.get('is_request', False)
     
     order_dict['offer_title'] = order_dict.get('title', '')
@@ -649,6 +651,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     buyer_company_escaped = body.get('buyerCompany', '').replace("'", "''")
     buyer_inn_escaped = body.get('buyerInn', '').replace("'", "''")
     buyer_comment_escaped = body.get('buyerComment', '').replace("'", "''")
+    passenger_pickup_address = body.get('passengerPickupAddress', '') or ''
+    passenger_pickup_escaped = passenger_pickup_address.replace("'", "''")
     
     seller_name_escaped = seller_name.replace("'", "''")
     seller_phone_escaped = seller_phone.replace("'", "''")
@@ -687,7 +691,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             seller_name, seller_phone, seller_email,
             status,
             counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by,
-            attachments
+            attachments, passenger_pickup_address
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
             '{title_escaped}', {quantity}, {quantity}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
@@ -697,7 +701,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             '{seller_name_escaped}', '{seller_phone_escaped}', '{seller_email_escaped}',
             '{initial_status}',
             {counter_price_sql}, {counter_total_sql}, {counter_message_sql}, {counter_offered_at_sql}, {counter_offered_by_sql},
-            '{attachments_escaped}'::jsonb
+            '{attachments_escaped}'::jsonb, {f"'{passenger_pickup_escaped}'" if passenger_pickup_escaped else 'NULL'}
         )
         RETURNING id, order_number, order_date
     """

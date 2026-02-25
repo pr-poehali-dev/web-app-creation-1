@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { shareContent } from '@/utils/shareUtils';
-import type { Offer } from '@/types/offer';
+import type { Offer, TransportWaypoint } from '@/types/offer';
 
 interface EditData {
   pricePerUnit: string;
@@ -19,6 +20,7 @@ interface EditData {
   transportDateTime: string;
   transportPriceType: string;
   transportNegotiable: boolean;
+  transportWaypoints: TransportWaypoint[];
 }
 
 interface OfferInfoFieldsProps {
@@ -46,6 +48,47 @@ export default function OfferInfoFields({
   onStartEditing,
   onDelete,
 }: OfferInfoFieldsProps) {
+  const [newWaypointAddress, setNewWaypointAddress] = useState('');
+  const [newWaypointPrice, setNewWaypointPrice] = useState('');
+
+  const addWaypoint = () => {
+    if (!newWaypointAddress.trim()) return;
+    const waypoint: TransportWaypoint = {
+      id: Date.now().toString(),
+      address: newWaypointAddress.trim(),
+      price: newWaypointPrice ? parseFloat(newWaypointPrice) : undefined,
+      isActive: true,
+    };
+    onEditDataChange({ ...editData, transportWaypoints: [...editData.transportWaypoints, waypoint] });
+    setNewWaypointAddress('');
+    setNewWaypointPrice('');
+  };
+
+  const removeWaypoint = (id: string) => {
+    onEditDataChange({
+      ...editData,
+      transportWaypoints: editData.transportWaypoints.filter(w => w.id !== id),
+    });
+  };
+
+  const toggleWaypoint = (id: string) => {
+    onEditDataChange({
+      ...editData,
+      transportWaypoints: editData.transportWaypoints.map(w =>
+        w.id === id ? { ...w, isActive: !w.isActive } : w
+      ),
+    });
+  };
+
+  const updateWaypointPrice = (id: string, price: string) => {
+    onEditDataChange({
+      ...editData,
+      transportWaypoints: editData.transportWaypoints.map(w =>
+        w.id === id ? { ...w, price: price ? parseFloat(price) : undefined } : w
+      ),
+    });
+  };
+
   const handleShare = async () => {
     await shareContent({
       title: offer.title,
@@ -222,6 +265,77 @@ export default function OfferInfoFields({
                       />
                     </div>
                   )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Остановки по пути</Label>
+                  <div className="bg-muted/40 rounded-md p-3 space-y-2">
+                    <div className="text-xs text-muted-foreground border border-dashed border-muted-foreground/30 rounded px-2 py-1.5">
+                      Основной маршрут: <span className="font-medium text-foreground">{offer.transportRoute || 'Не указан'}</span>
+                    </div>
+                    {editData.transportWaypoints.map((wp) => (
+                      <div key={wp.id} className={`flex items-center gap-2 rounded-md p-2 border ${wp.isActive ? 'bg-background border-border' : 'bg-muted border-muted opacity-60'}`}>
+                        <button
+                          type="button"
+                          onClick={() => toggleWaypoint(wp.id)}
+                          disabled={isSaving}
+                          className="shrink-0"
+                          title={wp.isActive ? 'Отключить остановку' : 'Включить остановку'}
+                        >
+                          <Icon name={wp.isActive ? 'MapPin' : 'MapPinOff'} className={`w-4 h-4 ${wp.isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{wp.address}</p>
+                        </div>
+                        <Input
+                          type="number"
+                          value={wp.price?.toString() || ''}
+                          onChange={(e) => updateWaypointPrice(wp.id, e.target.value)}
+                          disabled={isSaving || !wp.isActive}
+                          placeholder="Цена ₽"
+                          className="w-24 h-7 text-xs"
+                          min="0"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeWaypoint(wp.id)}
+                          disabled={isSaving}
+                          className="shrink-0 text-destructive hover:text-destructive/80"
+                        >
+                          <Icon name="X" className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <div className="flex gap-2 pt-1">
+                      <Input
+                        value={newWaypointAddress}
+                        onChange={(e) => setNewWaypointAddress(e.target.value)}
+                        placeholder="Адрес остановки"
+                        disabled={isSaving}
+                        className="flex-1 h-8 text-sm"
+                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addWaypoint())}
+                      />
+                      <Input
+                        type="number"
+                        value={newWaypointPrice}
+                        onChange={(e) => setNewWaypointPrice(e.target.value)}
+                        placeholder="₽"
+                        disabled={isSaving}
+                        className="w-20 h-8 text-sm"
+                        min="0"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={addWaypoint}
+                        disabled={isSaving || !newWaypointAddress.trim()}
+                        className="h-8 px-2"
+                      >
+                        <Icon name="Plus" className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Укажите пункты посадки по пути. Пассажир выберет нужный при заказе.</p>
+                  </div>
                 </div>
                 {offer.expiryDate && (
                   <p className="text-xs text-muted-foreground">

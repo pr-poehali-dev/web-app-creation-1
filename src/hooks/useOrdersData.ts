@@ -108,6 +108,7 @@ export function useOrdersData(
       offerCategory: orderData.offerCategory,
       offerTransportRoute: orderData.offerTransportRoute,
       offerTransportServiceType: orderData.offerTransportServiceType,
+      passengerPickupAddress: orderData.passengerPickupAddress || orderData.passenger_pickup_address,
     };
   };
 

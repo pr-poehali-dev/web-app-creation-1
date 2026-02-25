@@ -115,6 +115,11 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                     ? order.buyerComment.match(/Маршрут:\s*([^\n]*)/)?.[1]?.trim() || order.offerTransportRoute || '—'
                     : order.offerTransportRoute || '—'}
                 </p>
+                {order.passengerPickupAddress && (
+                  <p className="text-xs text-primary mt-0.5">
+                    Посадка: {order.passengerPickupAddress}
+                  </p>
+                )}
               </>
             ) : (
               <>

@@ -33,6 +33,13 @@ function shortenAddress(fullAddress: string): string {
     .trim();
 }
 
+interface TransportWaypoint {
+  id: string;
+  address: string;
+  price?: number;
+  isActive: boolean;
+}
+
 interface OfferOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -46,6 +53,7 @@ interface OfferOrderModalProps {
   offerDistrict?: string;
   offerCategory?: string;
   offerTransportRoute?: string;
+  offerTransportWaypoints?: TransportWaypoint[];
 }
 
 export default function OfferOrderModal({
@@ -61,6 +69,7 @@ export default function OfferOrderModal({
   offerDistrict,
   offerCategory,
   offerTransportRoute,
+  offerTransportWaypoints = [],
 }: OfferOrderModalProps) {
   const currentUser = getSession();
   const { toast } = useToast();
@@ -69,6 +78,8 @@ export default function OfferOrderModal({
   const [address, setAddress] = useState<string>('');
   const [comment, setComment] = useState<string>('');
   const [passengerRoute, setPassengerRoute] = useState<string>('');
+  const [selectedWaypoint, setSelectedWaypoint] = useState<string>('');
+  const [customPickupAddress, setCustomPickupAddress] = useState<string>('');
   const [quantityError, setQuantityError] = useState<string>('');
   const [counterPrice, setCounterPrice] = useState<string>('');
   const [counterComment, setCounterComment] = useState<string>('');
@@ -198,6 +209,10 @@ export default function OfferOrderModal({
       ? `Маршрут: ${passengerRoute}${comment ? `\n${comment}` : ''}`
       : comment;
 
+    const pickupAddress = offerCategory === 'transport'
+      ? (selectedWaypoint === '__custom__' ? customPickupAddress : selectedWaypoint) || undefined
+      : undefined;
+
     onSubmit({
       quantity: Number(quantity),
       deliveryType: selectedDeliveryType,
@@ -205,6 +220,7 @@ export default function OfferOrderModal({
       comment: finalComment,
       counterPrice: showCounterPrice && counterPrice ? parseFloat(counterPrice) : undefined,
       counterComment: showCounterPrice && counterComment ? counterComment : undefined,
+      passengerPickupAddress: pickupAddress,
     });
   };
 
@@ -246,14 +262,85 @@ export default function OfferOrderModal({
           />
 
           {offerCategory === 'transport' && (
-            <div className="space-y-2">
-              <Label htmlFor="passenger-route">Ваш маршрут <span className="text-muted-foreground font-normal">(если отличается)</span></Label>
-              <Input
-                id="passenger-route"
-                value={passengerRoute}
-                onChange={(e) => setPassengerRoute(e.target.value)}
-                placeholder={offerTransportRoute || 'Например: Нюрба - Якутск'}
-              />
+            <div className="space-y-3">
+              {offerTransportWaypoints.filter(w => w.isActive).length > 0 && (
+                <div className="space-y-2">
+                  <Label>Пункт посадки</Label>
+                  <div className="space-y-1.5">
+                    <label className="flex items-center gap-2 cursor-pointer rounded-md border p-2.5 hover:bg-muted/40 transition-colors">
+                      <input
+                        type="radio"
+                        name="waypoint"
+                        value=""
+                        checked={selectedWaypoint === ''}
+                        onChange={() => setSelectedWaypoint('')}
+                        className="h-4 w-4"
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm font-medium">Основной маршрут</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{offerTransportRoute}</span>
+                      </div>
+                    </label>
+                    {offerTransportWaypoints.filter(w => w.isActive).map(wp => (
+                      <label key={wp.id} className="flex items-center gap-2 cursor-pointer rounded-md border p-2.5 hover:bg-muted/40 transition-colors">
+                        <input
+                          type="radio"
+                          name="waypoint"
+                          value={wp.address}
+                          checked={selectedWaypoint === wp.address}
+                          onChange={() => setSelectedWaypoint(wp.address)}
+                          className="h-4 w-4"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium">{wp.address}</span>
+                          {wp.price && (
+                            <span className="ml-2 text-xs text-primary font-semibold">{wp.price.toLocaleString('ru-RU')} ₽</span>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                    <label className="flex items-center gap-2 cursor-pointer rounded-md border p-2.5 hover:bg-muted/40 transition-colors">
+                      <input
+                        type="radio"
+                        name="waypoint"
+                        value="__custom__"
+                        checked={selectedWaypoint === '__custom__'}
+                        onChange={() => setSelectedWaypoint('__custom__')}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm font-medium">Другой адрес</span>
+                    </label>
+                    {selectedWaypoint === '__custom__' && (
+                      <Input
+                        value={customPickupAddress}
+                        onChange={(e) => setCustomPickupAddress(e.target.value)}
+                        placeholder="Укажите ваш адрес посадки"
+                        className="mt-1"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+              {offerTransportWaypoints.filter(w => w.isActive).length === 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="passenger-pickup">Адрес посадки</Label>
+                  <Input
+                    id="passenger-pickup"
+                    value={customPickupAddress}
+                    onChange={(e) => setCustomPickupAddress(e.target.value)}
+                    placeholder="Укажите ваш адрес посадки"
+                  />
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="passenger-route">Ваш маршрут <span className="text-muted-foreground font-normal">(если отличается)</span></Label>
+                <Input
+                  id="passenger-route"
+                  value={passengerRoute}
+                  onChange={(e) => setPassengerRoute(e.target.value)}
+                  placeholder={offerTransportRoute || 'Например: Нюрба - Якутск'}
+                />
+              </div>
             </div>
           )}
 

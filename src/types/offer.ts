@@ -97,6 +97,15 @@ export interface Offer {
   transportPriceType?: string;
   transportNegotiable?: boolean;
   transportComment?: string;
+  transportWaypoints?: TransportWaypoint[];
+  transportAllDistricts?: boolean;
+}
+
+export interface TransportWaypoint {
+  id: string;
+  address: string;
+  price?: number;
+  isActive: boolean;
 }
 
 export interface Request {

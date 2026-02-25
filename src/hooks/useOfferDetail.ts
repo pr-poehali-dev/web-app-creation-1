@@ -239,6 +239,7 @@ export function useOfferDetail(id: string | undefined) {
         vatRate: offer.vatRate || 0,
         counterPrice: orderFormData.counterPrice || undefined,
         counterMessage: orderFormData.counterComment || undefined,
+        passengerPickupAddress: orderFormData.passengerPickupAddress || undefined,
       };
 
       const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {
