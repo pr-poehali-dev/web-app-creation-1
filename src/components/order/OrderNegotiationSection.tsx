@@ -24,8 +24,8 @@ export default function OrderNegotiationSection({
   onCompleteOrder,
 }: OrderNegotiationSectionProps) {
   const [showCounterForm, setShowCounterForm] = useState(false);
-  const [counterPrice, setCounterPrice] = useState(order.pricePerUnit.toString());
-  const [counterQuantity, setCounterQuantity] = useState(order.quantity.toString());
+  const [counterPrice, setCounterPrice] = useState((order.pricePerUnit ?? 0).toString());
+  const [counterQuantity, setCounterQuantity] = useState((order.quantity ?? 1).toString());
   const [counterMessage, setCounterMessage] = useState('');
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [rating, setRating] = useState(5);
