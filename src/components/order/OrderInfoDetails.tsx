@@ -96,6 +96,15 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
           )}
         </div>
         )}
+        {!order.isRequest && order.offerCategory === 'transport' && order.passengerPickupAddress && (
+          <div className="col-span-2">
+            <p className="text-muted-foreground">Адрес посадки</p>
+            <p className="font-medium flex items-start gap-1.5">
+              <Icon name="MapPin" className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              {order.passengerPickupAddress}
+            </p>
+          </div>
+        )}
       </div>
 
       {order.buyerComment && (() => {

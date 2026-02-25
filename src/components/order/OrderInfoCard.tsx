@@ -51,6 +51,8 @@ interface OrderDetail {
   tracking_number?: string;
   seller_comment?: string;
   cancellation_reason?: string;
+  passenger_pickup_address?: string;
+  offer_category?: string;
   createdAt: string;
   updatedAt: string;
   offer_title?: string;
@@ -129,6 +131,12 @@ export default function OrderInfoCard({ order, formatDate, formatPrice }: OrderI
                 <div className="flex justify-between">
                   <span className="text-gray-600">Адрес:</span>
                   <span className="font-medium text-right">{order.delivery_address}</span>
+                </div>
+              )}
+              {order.offer_category === 'transport' && order.passenger_pickup_address && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Адрес посадки:</span>
+                  <span className="font-medium text-right text-primary">{order.passenger_pickup_address}</span>
                 </div>
               )}
               {order.tracking_number && (
