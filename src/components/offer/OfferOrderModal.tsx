@@ -292,7 +292,11 @@ export default function OfferOrderModal({
           />
 
           <PriceDisplay
-            pricePerUnit={pricePerUnit}
+            pricePerUnit={
+              offerCategory === 'transport' && selectedWaypoint && selectedWaypoint !== '__custom__'
+                ? (offerTransportWaypoints.find(w => w.address === selectedWaypoint)?.price ?? pricePerUnit)
+                : pricePerUnit
+            }
             quantity={quantity}
             unit={unit}
             quantityError={quantityError}
