@@ -57,22 +57,20 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
               : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽
           </p>
         </div>
-        {order.offerPricePerUnit && order.offerPricePerUnit > 0 && (
+        {order.offerPricePerUnit && (
           <div>
             <p className="text-muted-foreground">Начальная цена</p>
             <p className="font-medium">{order.offerPricePerUnit?.toLocaleString('ru-RU')} ₽/{order.unit}</p>
           </div>
         )}
-        {(order.pricePerUnit ?? 0) > 0 && (
-          <div>
-            <p className="text-muted-foreground">Конечная цена будет</p>
-            <p className="font-medium text-primary">
-              {(order.counterPricePerUnit !== undefined && order.counterPricePerUnit !== null 
-                ? order.counterPricePerUnit 
-                : order.pricePerUnit)?.toLocaleString('ru-RU')} ₽/{order.unit}
-            </p>
-          </div>
-        )}
+        <div>
+          <p className="text-muted-foreground">Конечная цена будет</p>
+          <p className="font-medium text-primary">
+            {(order.counterPricePerUnit !== undefined && order.counterPricePerUnit !== null 
+              ? order.counterPricePerUnit 
+              : (order.pricePerUnit || order.offerPricePerUnit))?.toLocaleString('ru-RU')} ₽/{order.unit}
+          </p>
+        </div>
         {!order.isRequest && order.status !== 'accepted' && order.status !== 'completed' && order.offerAvailableQuantity !== undefined && (
           <div>
             <p className="text-muted-foreground">Доступно</p>
