@@ -92,6 +92,7 @@ export default function OfferOrderModal({
   const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
   const [addressSetFromMap, setAddressSetFromMap] = useState<boolean>(false);
   const [pickupGpsCoordinates, setPickupGpsCoordinates] = useState<string>('');
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     if (availableDeliveryTypes.length === 1) {
@@ -170,6 +171,29 @@ export default function OfferOrderModal({
       return housePart ? `${streetClean} ${housePart}` : streetClean;
     }
     return parts.slice(0, 2).join(', ');
+  };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const coords = `${latitude}, ${longitude}`;
+        setPickupGpsCoordinates(coords);
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`);
+          const data = await res.json();
+          handlePickupAddressFromMap(data.display_name || coords, '', coords);
+        } catch {
+          setCustomPickupAddress(coords);
+          setSelectedWaypoint('__custom__');
+        }
+        setIsLocating(false);
+      },
+      () => setIsLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const handlePickupAddressFromMap = (fullAddress: string, _district: string, coords?: string) => {
@@ -260,7 +284,7 @@ export default function OfferOrderModal({
 
   return (
     <>
-    <Dialog open={isOpen && !isMapOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen && !isMapOpen && !isPickupMapOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between gap-4 pr-10">
@@ -353,13 +377,10 @@ export default function OfferOrderModal({
                           readOnly
                           onClick={() => setIsPickupMapOpen(true)}
                         />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setIsPickupMapOpen(true)}
-                          title="Выбрать на карте"
-                        >
+                        <Button type="button" variant="outline" size="icon" onClick={handleGetCurrentLocation} disabled={isLocating} title="Моё местоположение">
+                          {isLocating ? <Icon name="Loader2" size={16} className="animate-spin" /> : <Icon name="LocateFixed" size={16} />}
+                        </Button>
+                        <Button type="button" variant="outline" size="icon" onClick={() => setIsPickupMapOpen(true)} title="Выбрать на карте">
                           <Icon name="Map" size={16} />
                         </Button>
                       </div>
@@ -374,22 +395,15 @@ export default function OfferOrderModal({
                     <Input
                       id="passenger-pickup"
                       value={customPickupAddress}
-                      onChange={(e) => {
-                        setCustomPickupAddress(e.target.value);
-                        setSelectedWaypoint('__custom__');
-                      }}
                       placeholder="Выберите на карте"
-                      className="flex-1"
+                      className="flex-1 cursor-pointer"
                       readOnly
                       onClick={() => setIsPickupMapOpen(true)}
                     />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setIsPickupMapOpen(true)}
-                      title="Выбрать на карте"
-                    >
+                    <Button type="button" variant="outline" size="icon" onClick={handleGetCurrentLocation} disabled={isLocating} title="Моё местоположение">
+                      {isLocating ? <Icon name="Loader2" size={16} className="animate-spin" /> : <Icon name="LocateFixed" size={16} />}
+                    </Button>
+                    <Button type="button" variant="outline" size="icon" onClick={() => setIsPickupMapOpen(true)} title="Выбрать на карте">
                       <Icon name="Map" size={16} />
                     </Button>
                   </div>

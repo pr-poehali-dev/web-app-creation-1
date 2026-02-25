@@ -135,6 +135,7 @@ export default function OfferInfoCard({
     expiryDate,
     transportCapacity,
     transportDateTime,
+    transportServiceType,
   };
 
   return (

@@ -20,6 +20,7 @@ interface OfferInfoDetailsProps {
   expiryDate?: Date;
   transportCapacity?: string;
   transportDateTime?: string;
+  transportServiceType?: string;
 }
 
 export default function OfferInfoDetails({
@@ -39,6 +40,7 @@ export default function OfferInfoDetails({
   expiryDate,
   transportCapacity,
   transportDateTime,
+  transportServiceType,
 }: OfferInfoDetailsProps) {
   const isTransport = category === 'transport';
 
@@ -63,7 +65,7 @@ export default function OfferInfoDetails({
           </div>
           {transportCapacity && (
             <div>
-              <p className="text-xs text-muted-foreground">Вместимость / Грузоподъёмность</p>
+              <p className="text-xs text-muted-foreground">{transportServiceType === 'Пассажирские перевозки' ? 'Количество мест' : 'Вместимость / Грузоподъёмность'}</p>
               <p className="font-medium">{transportCapacity}</p>
             </div>
           )}
