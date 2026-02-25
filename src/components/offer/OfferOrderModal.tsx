@@ -314,12 +314,14 @@ export default function OfferOrderModal({
                         name="waypoint"
                         value=""
                         checked={selectedWaypoint === ''}
-                        onChange={() => setSelectedWaypoint('')}
+                        onChange={() => {
+                          setSelectedWaypoint('');
+                          if (offerTransportRoute) setPassengerRoute(offerTransportRoute);
+                        }}
                         className="h-4 w-4"
                       />
                       <div className="flex-1">
-                        <span className="text-sm font-medium">Основной маршрут</span>
-                        <span className="ml-2 text-xs text-muted-foreground">{offerTransportRoute}</span>
+                        <span className="text-sm font-bold text-foreground">{offerTransportRoute || 'Основной маршрут'}</span>
                       </div>
                     </label>
                     {offerTransportWaypoints.filter(w => w.isActive).map(wp => (
@@ -329,11 +331,15 @@ export default function OfferOrderModal({
                           name="waypoint"
                           value={wp.address}
                           checked={selectedWaypoint === wp.address}
-                          onChange={() => setSelectedWaypoint(wp.address)}
+                          onChange={() => {
+                            setSelectedWaypoint(wp.address);
+                            const routeEnd = offerTransportRoute?.split(/\s*[-–—]\s*/).pop()?.trim() || '';
+                            setPassengerRoute(routeEnd ? `${wp.address} — ${routeEnd}` : wp.address);
+                          }}
                           className="h-4 w-4"
                         />
                         <div className="flex-1">
-                          <span className="text-sm font-medium">{wp.address}</span>
+                          <span className="text-sm font-bold text-foreground">{wp.address}</span>
                           {wp.price && (
                             <span className="ml-2 text-xs text-primary font-semibold">{wp.price.toLocaleString('ru-RU')} ₽</span>
                           )}
