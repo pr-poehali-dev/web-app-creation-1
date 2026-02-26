@@ -269,7 +269,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <PullToRefresh onRefresh={handleGlobalRefresh}>
-          <Suspense fallback={<div style={{position:'fixed',inset:0,background:'#5b21b6',zIndex:99999}} />}>
+          <Suspense fallback={<div style={{position:'fixed',inset:0,background:'#5b21b6',zIndex:99999,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'clamp(24px,7vw,42px)',fontWeight:900,color:'rgba(255,255,255,0.95)',letterSpacing:'0.12em',textAlign:'center',padding:'0 24px'}}>С НАМИ УСПЕХ</span></div>}>
             <TimezoneProvider>
               <DistrictProvider>
                 <OffersProvider>
