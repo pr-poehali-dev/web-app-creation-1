@@ -1,21 +1,26 @@
 const SplashScreen = () => {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden">
-          <img 
-            src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
-            alt="ЕРТТП" 
-            className="w-full h-full object-contain scale-[1.8]"
-            style={{ transform: 'scaleX(-1)' }}
-          />
-        </div>
-        <div className="flex gap-1">
-          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-          <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-        </div>
-      </div>
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: '#5b21b6',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 99999,
+    }}>
+      <span style={{
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        fontSize: 'clamp(28px, 8vw, 52px)',
+        fontWeight: 900,
+        color: 'rgba(255,255,255,0.95)',
+        letterSpacing: '0.12em',
+        textAlign: 'center',
+        lineHeight: 1.2,
+        padding: '0 24px',
+      }}>
+        С НАМИ УСПЕХ
+      </span>
     </div>
   );
 };
