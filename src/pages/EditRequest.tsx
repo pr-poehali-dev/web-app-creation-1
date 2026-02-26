@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -13,6 +13,16 @@ import { useOffers } from '@/contexts/OffersContext';
 import EditRequestHeader from '@/components/edit-request/EditRequestHeader';
 import EditRequestTabs from '@/components/edit-request/EditRequestTabs';
 import EditRequestDeleteDialog from '@/components/edit-request/EditRequestDeleteDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface EditRequestProps {
   isAuthenticated: boolean;
@@ -23,6 +33,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const currentUser = getSession();
   
@@ -30,7 +41,11 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('info');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { deleteRequest } = useOffers();
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const { deleteRequest, updateRequest } = useOffers();
+  
+  const publishMode = searchParams.get('publish') === '1';
 
   useEffect(() => {
     if (!currentUser || !isAuthenticated) {
@@ -78,6 +93,29 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (publishMode && request && request.status === 'closed') {
+      setShowPublishDialog(true);
+    }
+  }, [publishMode, request]);
+
+  const confirmPublish = async () => {
+    if (!request) return;
+    setIsPublishing(true);
+    try {
+      await requestsAPI.updateRequest(request.id, { status: 'active' });
+      updateRequest(request.id, { status: 'active' });
+      setRequest(prev => prev ? { ...prev, status: 'active' } : prev);
+      setShowPublishDialog(false);
+      toast({ title: 'Опубликовано', description: 'Запрос снова активен и виден покупателям' });
+      navigate('/moi-zaprosy', { replace: true });
+    } catch {
+      toast({ title: 'Ошибка', description: 'Не удалось опубликовать запрос', variant: 'destructive' });
+    } finally {
+      setIsPublishing(false);
+    }
+  };
 
   const handleDelete = () => {
     setShowDeleteDialog(true);
@@ -170,6 +208,27 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={confirmDelete}
       />
+
+      <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Опубликовать запрос заново?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы можете отредактировать запрос прямо сейчас, а затем подтвердить публикацию. После публикации запрос снова станет виден всем поставщикам.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowPublishDialog(false)}>
+              Сначала отредактирую
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPublish} disabled={isPublishing}>
+              {isPublishing ? (
+                <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Публикуем...</>
+              ) : 'Опубликовать'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>

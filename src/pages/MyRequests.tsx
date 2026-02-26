@@ -282,6 +282,12 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
                   Опубликовать
                 </DropdownMenuItem>
               )}
+              {request.status === 'closed' && (
+                <DropdownMenuItem onClick={() => navigate(`/edit-request/${request.id}?publish=1`)}>
+                  <Icon name="ArchiveRestore" className="mr-2 h-4 w-4" />
+                  Открыть заново
+                </DropdownMenuItem>
+              )}
               {request.status === 'active' && (
                 <DropdownMenuItem onClick={() => handleCloseRequest(request.id)}>
                   <Icon name="XCircle" className="mr-2 h-4 w-4" />
