@@ -86,17 +86,28 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   const confirmDelete = async () => {
     if (!request) return;
     
-    deleteRequest(request.id);
-    setShowDeleteDialog(false);
-    
-    localStorage.setItem('requests_updated', 'true');
-    
-    toast({
-      title: 'Успешно',
-      description: 'Запрос удалён',
-    });
-    
-    navigate('/zaprosy', { replace: true });
+    try {
+      await requestsAPI.deleteRequest(request.id);
+      deleteRequest(request.id);
+      setShowDeleteDialog(false);
+      
+      localStorage.setItem('requests_updated', 'true');
+      
+      toast({
+        title: 'Успешно',
+        description: 'Запрос удалён',
+      });
+      
+      navigate('/zaprosy', { replace: true });
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      setShowDeleteDialog(false);
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить запрос',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (!currentUser) {
