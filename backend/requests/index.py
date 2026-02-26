@@ -242,7 +242,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         deadline_start = req_dict.pop('deadline_start', None)
         deadline_end = req_dict.pop('deadline_end', None)
         
-        req_dict['userId'] = req_dict.pop('user_id', None)
+        req_dict['userId'] = str(req_dict.pop('user_id', None))
         req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
         req_dict['fullAddress'] = req_dict.pop('full_address', None)
         req_dict['deliveryAddress'] = req_dict.pop('delivery_address', None)
@@ -342,7 +342,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     deadline_start = req_dict.pop('deadline_start', None)
     deadline_end = req_dict.pop('deadline_end', None)
     
-    req_dict['userId'] = req_dict.pop('user_id', None)
+    req_dict['userId'] = str(req_dict.pop('user_id', None))
     req_dict['authorName'] = req_dict.pop('author_name', None)
     req_dict['authorIsVerified'] = req_dict.pop('author_is_verified', False)
     req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
