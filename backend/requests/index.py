@@ -302,7 +302,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_videos v ON r.video_id = v.id
         LEFT JOIN t_p42562714_web_app_creation_1.users u ON r.user_id = u.id
-        WHERE r.id = %s::uuid AND r.status != 'deleted'
+        WHERE r.id::text = %s AND r.status != 'deleted'
         GROUP BY r.id, r.user_id, r.title, r.description, r.category, r.subcategory,
             r.quantity, r.unit, r.price_per_unit, r.has_vat, r.vat_rate,
             r.district, r.delivery_address, r.available_districts, r.video_id,
