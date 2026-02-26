@@ -29,6 +29,7 @@ import { CATEGORIES } from '@/data/categories';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
 import type { Request as RequestType } from '@/types/offer';
+import { requestsAPI } from '@/services/api';
 
 
 interface MyRequestsProps {
@@ -75,7 +76,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
   const navigate = useNavigate();
   const { toast } = useToast();
   const { districts } = useDistrict();
-  const { requests: allRequests, deleteRequest } = useOffers();
+  const { requests: allRequests, deleteRequest, updateRequest } = useOffers();
   const currentUser = getSession();
   
   const [filterStatus, setFilterStatus] = useState<'all' | RequestStatus>('all');
@@ -134,11 +135,21 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
     }
   };
 
-  const handleCloseRequest = (requestId: string) => {
-    toast({
-      title: 'Успешно',
-      description: 'Запрос закрыт',
-    });
+  const handleCloseRequest = async (requestId: string) => {
+    try {
+      await requestsAPI.updateRequest(requestId, { status: 'closed' });
+      updateRequest(requestId, { status: 'closed' });
+      toast({
+        title: 'Успешно',
+        description: 'Запрос закрыт',
+      });
+    } catch {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось закрыть запрос',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleActivateRequest = (requestId: string) => {
