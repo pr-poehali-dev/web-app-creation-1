@@ -87,7 +87,7 @@ export default function CounterOfferForm({
             <Button
               onClick={onSubmit}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-green-600 hover:bg-green-700"
             >
               Отправить предложение
             </Button>
@@ -203,7 +203,7 @@ export default function CounterOfferForm({
                 }
               }}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-green-600 hover:bg-green-700"
             >
               Отправить встречное
             </Button>

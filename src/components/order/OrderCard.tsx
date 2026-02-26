@@ -50,7 +50,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-lg line-clamp-1">{order.offerTitle}</h3>
               {(order.unreadMessages && order.unreadMessages > 0) ? (
-                <span className="animate-pulse inline-flex items-center gap-1 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                <span className="animate-pulse inline-flex items-center gap-1 bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
                   <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping inline-block"></span>
                   {order.unreadMessages === 1 ? 'Новое сообщение' : `${order.unreadMessages} новых`}
                 </span>
