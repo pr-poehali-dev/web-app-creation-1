@@ -12,11 +12,13 @@ def get_db_connection():
     """Подключение к базе данных"""
     return psycopg2.connect(os.environ['DATABASE_URL'])
 
-def decimal_default(obj):
-    """JSON serializer для Decimal"""
+def json_default(obj):
+    """JSON serializer для специальных типов"""
     if isinstance(obj, Decimal):
         return float(obj)
-    raise TypeError
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    return str(obj)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
@@ -264,7 +266,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({'requests': result, 'total': len(result)}),
+        'body': json.dumps({'requests': result, 'total': len(result)}, default=json_default),
         'isBase64Encoded': False
     }
 
@@ -361,7 +363,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps(req_dict),
+        'body': json.dumps(req_dict, default=json_default),
         'isBase64Encoded': False
     }
 
