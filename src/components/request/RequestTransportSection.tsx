@@ -249,7 +249,9 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
         <CollapsibleSelectList
           label="Желаемый тип транспорта *"
           placeholder="Выберите тип транспорта"
-          options={TRANSPORT_TYPES}
+          options={formData.transportServiceType === 'Пассажирские перевозки'
+            ? TRANSPORT_TYPES.filter(t => t !== 'Грузовик')
+            : TRANSPORT_TYPES}
           value={formData.transportType}
           onChange={(v) => onInputChange('transportType', v)}
         />
