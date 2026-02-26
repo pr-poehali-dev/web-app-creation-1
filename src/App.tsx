@@ -19,7 +19,7 @@ const InstallPrompt = lazy(() => import("./components/InstallPrompt"));
 const TimezoneProvider = lazy(() => import("./contexts/TimezoneContext").then(m => ({ default: m.TimezoneProvider })));
 
 // Компонент загрузки
-const LoadingScreen = () => <SplashScreen />;
+const LoadingScreen = () => null;
 
 // Функция для обработки ошибок динамического импорта
 const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
