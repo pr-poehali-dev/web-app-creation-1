@@ -117,13 +117,21 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
     ? myRequests 
     : myRequests.filter(request => request.status === filterStatus);
 
-  const handleDeleteRequest = (requestId: string) => {
-    deleteRequest(requestId);
-    setRequestToDelete(null);
-    toast({
-      title: 'Успешно',
-      description: 'Запрос удален',
-    });
+  const handleDeleteRequest = async (requestId: string) => {
+    try {
+      await deleteRequest(requestId);
+      setRequestToDelete(null);
+      toast({
+        title: 'Успешно',
+        description: 'Запрос удален',
+      });
+    } catch {
+      toast({
+        title: 'Ошибка',
+        description: 'Не удалось удалить запрос',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleCloseRequest = (requestId: string) => {

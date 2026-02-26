@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { Offer, Request } from '@/types/offer';
+import { requestsAPI } from '@/services/api';
 
 interface OffersContextType {
   offers: Offer[];
@@ -9,7 +10,7 @@ interface OffersContextType {
   updateOffer: (id: string, updates: Partial<Offer>) => void;
   updateRequest: (id: string, updates: Partial<Request>) => void;
   deleteOffer: (id: string) => void;
-  deleteRequest: (id: string) => void;
+  deleteRequest: (id: string) => Promise<void>;
   refreshOffers: () => void;
   setOffers: (offers: Offer[]) => void;
   setRequests: (requests: Request[]) => void;
@@ -81,7 +82,8 @@ export function OffersProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const deleteRequest = (id: string) => {
+  const deleteRequest = async (id: string) => {
+    await requestsAPI.deleteRequest(id);
     setRequests(prev => {
       const updated = prev.filter(request => request.id !== id);
       localStorage.setItem(STORAGE_KEY_REQUESTS, JSON.stringify(updated));
