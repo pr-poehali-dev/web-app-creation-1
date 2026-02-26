@@ -277,7 +277,8 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    sql = """
+    request_id_escaped = request_id.replace("'", "''")
+    sql = f"""
         SELECT 
             r.id, r.user_id, r.title, r.description, r.category, r.subcategory,
             r.quantity, r.unit, r.price_per_unit, r.has_vat, r.vat_rate,
@@ -290,7 +291,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
                     json_build_object('id', ri.id, 'url', ri.url, 'alt', ri.alt)
                     ORDER BY rir.sort_order
                 ) FILTER (WHERE ri.id IS NOT NULL),
-                '[]'::json
+                '[]'
             ) as images,
             v.id as video_db_id,
             v.url as video_url,
@@ -302,7 +303,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_videos v ON r.video_id = v.id
         LEFT JOIN t_p42562714_web_app_creation_1.users u ON r.user_id = u.id
-        WHERE r.id::text = %s AND r.status != 'deleted'
+        WHERE r.id = '{request_id_escaped}' AND r.status != 'deleted'
         GROUP BY r.id, r.user_id, r.title, r.description, r.category, r.subcategory,
             r.quantity, r.unit, r.price_per_unit, r.has_vat, r.vat_rate,
             r.district, r.delivery_address, r.available_districts, r.video_id,
@@ -313,14 +314,13 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     """
     
     print(f'[GET_REQUEST] Looking for id={request_id!r}')
-    cur.execute(sql, (request_id,))
+    cur.execute(sql)
     req = cur.fetchone()
     print(f'[GET_REQUEST] Found: {req is not None}')
     
     if req:
         cur.execute(
-            "UPDATE t_p42562714_web_app_creation_1.requests SET views = COALESCE(views, 0) + 1 WHERE id = %s",
-            (request_id,)
+            f"UPDATE t_p42562714_web_app_creation_1.requests SET views = COALESCE(views, 0) + 1 WHERE id = '{request_id_escaped}'"
         )
         conn.commit()
     
