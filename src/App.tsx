@@ -155,6 +155,7 @@ const DeleteTestData = lazyWithRetry(() => import("./pages/DeleteTestData"));
 const MigrateImages = lazyWithRetry(() => import("./pages/MigrateImages"));
 const TelegramSetup = lazyWithRetry(() => import("./pages/TelegramSetup"));
 const VerifyPhone = lazyWithRetry(() => import("./pages/VerifyPhone"));
+const ImageEditor = lazyWithRetry(() => import("./pages/ImageEditor"));
 
 // Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
@@ -347,6 +348,7 @@ const App = () => {
             <Route path="/offer-agreement" element={<OfferAgreement isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/telegram-setup" element={<TelegramSetup isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/telegram-connect" element={<TelegramConnect />} />
+            <Route path="/image-editor" element={<ImageEditor />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
