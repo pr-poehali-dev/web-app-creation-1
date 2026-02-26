@@ -99,6 +99,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
     
     except Exception as e:
+        import traceback
+        print(f'[ERROR] {str(e)}\n{traceback.format_exc()}')
         return {
             'statusCode': 500,
             'headers': headers,
@@ -277,20 +279,22 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     
     sql = """
         SELECT 
-            r.*,
+            r.id, r.user_id, r.title, r.description, r.category, r.subcategory,
+            r.quantity, r.unit, r.price_per_unit, r.has_vat, r.vat_rate,
+            r.district, r.delivery_address, r.available_districts, r.video_id,
+            r.is_premium, r.views, r.status, r.created_at, r.updated_at,
+            r.expiry_date, r.deadline_start, r.deadline_end, r.negotiable_deadline,
+            r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
             COALESCE(
                 json_agg(
                     json_build_object('id', ri.id, 'url', ri.url, 'alt', ri.alt)
                     ORDER BY rir.sort_order
                 ) FILTER (WHERE ri.id IS NOT NULL),
-                '[]'
+                '[]'::json
             ) as images,
             v.id as video_db_id,
             v.url as video_url,
             v.thumbnail as video_thumbnail,
-            (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders o 
-             WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
-            ) as responses,
             COALESCE(u.company_name, TRIM(CONCAT(u.first_name, ' ', u.last_name))) as author_name,
             u.is_verified as author_is_verified
         FROM t_p42562714_web_app_creation_1.requests r
@@ -298,12 +302,20 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_videos v ON r.video_id = v.id
         LEFT JOIN t_p42562714_web_app_creation_1.users u ON r.user_id = u.id
-        WHERE r.id = %s AND r.status != 'deleted'
-        GROUP BY r.id, v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.is_verified
+        WHERE r.id = %s::uuid AND r.status != 'deleted'
+        GROUP BY r.id, r.user_id, r.title, r.description, r.category, r.subcategory,
+            r.quantity, r.unit, r.price_per_unit, r.has_vat, r.vat_rate,
+            r.district, r.delivery_address, r.available_districts, r.video_id,
+            r.is_premium, r.views, r.status, r.created_at, r.updated_at,
+            r.expiry_date, r.deadline_start, r.deadline_end, r.negotiable_deadline,
+            r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
+            v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.is_verified
     """
     
+    print(f'[GET_REQUEST] Looking for id={request_id!r}')
     cur.execute(sql, (request_id,))
     req = cur.fetchone()
+    print(f'[GET_REQUEST] Found: {req is not None}')
     
     if req:
         cur.execute(
@@ -344,21 +356,26 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     deadline_start = req_dict.pop('deadline_start', None)
     deadline_end = req_dict.pop('deadline_end', None)
     
+    req_dict['id'] = str(req_dict.get('id', ''))
     req_dict['userId'] = str(req_dict.pop('user_id', None))
     req_dict['authorName'] = req_dict.pop('author_name', None)
     req_dict['authorIsVerified'] = req_dict.pop('author_is_verified', False)
-    req_dict['pricePerUnit'] = req_dict.pop('price_per_unit', None)
-    req_dict['fullAddress'] = req_dict.pop('full_address', None)
+    req_dict['pricePerUnit'] = float(req_dict.pop('price_per_unit', 0) or 0)
+    req_dict['hasVAT'] = req_dict.pop('has_vat', False)
+    req_dict['vatRate'] = req_dict.pop('vat_rate', None)
+    req_dict['isPremium'] = req_dict.pop('is_premium', False)
+    req_dict['availableDistricts'] = req_dict.pop('available_districts', []) or []
     req_dict['deliveryAddress'] = req_dict.pop('delivery_address', None)
     req_dict['negotiableDeadline'] = req_dict.pop('negotiable_deadline', None)
     req_dict['negotiableBudget'] = req_dict.pop('negotiable_budget', None)
     req_dict['negotiableQuantity'] = req_dict.pop('negotiable_quantity', None)
     req_dict['negotiablePrice'] = req_dict.pop('negotiable_price', None)
+    req_dict['deadlineStart'] = deadline_start.isoformat() if deadline_start else None
+    req_dict['deadlineEnd'] = deadline_end.isoformat() if deadline_end else None
     req_dict['createdAt'] = created_at.isoformat() if created_at else None
     req_dict['updatedAt'] = updated_at.isoformat() if updated_at else None
     req_dict['expiryDate'] = expiry_date.isoformat() if expiry_date else None
-    req_dict['deadlineStart'] = deadline_start.isoformat() if deadline_start else None
-    req_dict['deadlineEnd'] = deadline_end.isoformat() if deadline_end else None
+    req_dict.pop('video_id', None)
     
     return {
         'statusCode': 200,
