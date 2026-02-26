@@ -5,6 +5,14 @@
       "method": "GET",
       "path": "/",
       "expectedStatus": 200
+    },
+    {
+      "name": "Get request by ID",
+      "method": "GET",
+      "path": "/?id=e6f56928-de1f-4b6a-bdc9-a1fbb1e2d683",
+      "expectedStatus": 200,
+      "expectedBody": {"id": "string"},
+      "bodyMatcher": "partial"
     }
   ]
 }

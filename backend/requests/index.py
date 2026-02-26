@@ -286,18 +286,18 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.is_premium, r.views, r.status, r.created_at, r.updated_at,
             r.expiry_date, r.deadline_start, r.deadline_end, r.negotiable_deadline,
             r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
+            r.responses, r.deadline,
             COALESCE(
                 json_agg(
                     json_build_object('id', ri.id, 'url', ri.url, 'alt', ri.alt)
-                    ORDER BY rir.sort_order
                 ) FILTER (WHERE ri.id IS NOT NULL),
-                '[]'
+                '[]'::json
             ) as images,
             v.id as video_db_id,
             v.url as video_url,
             v.thumbnail as video_thumbnail,
             COALESCE(u.company_name, TRIM(CONCAT(u.first_name, ' ', u.last_name))) as author_name,
-            u.is_verified as author_is_verified
+            CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as author_is_verified
         FROM t_p42562714_web_app_creation_1.requests r
         LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
@@ -310,7 +310,8 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.is_premium, r.views, r.status, r.created_at, r.updated_at,
             r.expiry_date, r.deadline_start, r.deadline_end, r.negotiable_deadline,
             r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
-            v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.is_verified
+            r.responses, r.deadline,
+            v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.verification_status
     """
     
     print(f'[GET_REQUEST] Looking for id={request_id!r}')
@@ -319,10 +320,14 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     print(f'[GET_REQUEST] Found: {req is not None}')
     
     if req:
-        cur.execute(
-            f"UPDATE t_p42562714_web_app_creation_1.requests SET views = COALESCE(views, 0) + 1 WHERE id = '{request_id_escaped}'"
-        )
-        conn.commit()
+        try:
+            cur.execute(
+                f"UPDATE t_p42562714_web_app_creation_1.requests SET views = COALESCE(views, 0) + 1 WHERE id = '{request_id_escaped}'"
+            )
+            conn.commit()
+        except Exception as view_err:
+            print(f'[WARN] Could not increment views: {view_err}')
+            conn.rollback()
     
     cur.close()
     conn.close()
