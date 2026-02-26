@@ -29,7 +29,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const currentUser = getSession();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   
-  const isOwner = currentUser && request.userId === currentUser.id;
+  const isOwner = currentUser && String(request.userId) === String(currentUser.id);
   const districtName = DISTRICTS.find(d => d.id === request.district)?.name;
   const isService = request.category === 'utilities';
 

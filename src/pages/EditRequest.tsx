@@ -52,7 +52,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
           createdAt: new Date(requestData.createdAt || requestData.created_at),
         };
 
-        if (mappedRequest.userId !== currentUser.id) {
+        if (String(mappedRequest.userId) !== String(currentUser.id)) {
           toast({
             title: 'Ошибка доступа',
             description: 'Вы не можете редактировать чужой запрос',

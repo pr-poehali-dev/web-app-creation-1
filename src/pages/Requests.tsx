@@ -158,7 +158,7 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     result = filterActiveRequests(result);
 
     if (showOnlyMy && isAuthenticated && currentUser) {
-      result = result.filter(offer => offer.userId === currentUser.id);
+      result = result.filter(offer => String(offer.userId) === String(currentUser.id));
     }
 
     if (filters.query && filters.query.length >= 2) {
