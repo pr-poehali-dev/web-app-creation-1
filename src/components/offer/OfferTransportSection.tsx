@@ -40,8 +40,11 @@ const SERVICE_TYPES = [
 ];
 
 const TRANSPORT_TYPES = [
+  'По умолчанию',
   'Легковой автомобиль',
+  'Кроссовер',
   'Минивэн',
+  'Микроавтобус',
   'Автобус',
   'Грузовик',
   'Спецтехника',
@@ -304,7 +307,9 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
         <CollapsibleSelectList
           label="Тип транспорта *"
           placeholder="Выберите тип транспорта"
-          options={TRANSPORT_TYPES}
+          options={formData.transportServiceType === 'Пассажирские перевозки'
+            ? TRANSPORT_TYPES.filter(t => t !== 'Грузовик')
+            : TRANSPORT_TYPES}
           value={formData.transportType}
           onChange={(v) => onInputChange('transportType', v)}
         />
