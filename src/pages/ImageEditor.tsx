@@ -12,6 +12,10 @@ interface Settings {
   outputSize: number;
   // Отступ внутри
   padding: number;
+  // Масштаб иконки внутри рамки
+  iconScale: number;
+  // Режим вписывания
+  fitMode: "stretch" | "fit" | "fill";
   // Цвет фона
   bgColor: string;
   bgTransparent: boolean;
@@ -30,6 +34,8 @@ const DEFAULT: Settings = {
   borderRadius: 22,
   outputSize: 512,
   padding: 0,
+  iconScale: 100,
+  fitMode: "fit",
   bgColor: "#ffffff",
   bgTransparent: true,
   brightness: 100,
@@ -176,10 +182,34 @@ export default function ImageEditor() {
     const srcH = Math.max(1, img.height - s.cropTop - s.cropBottom);
 
     const pad = (s.padding / 100) * size;
-    const dstX = pad;
-    const dstY = pad;
-    const dstW = size - pad * 2;
-    const dstH = size - pad * 2;
+    const areaX = pad;
+    const areaY = pad;
+    const areaW = size - pad * 2;
+    const areaH = size - pad * 2;
+
+    // Режим вписывания
+    let dstX: number, dstY: number, dstW: number, dstH: number;
+    const scale = s.iconScale / 100;
+
+    if (s.fitMode === "stretch") {
+      dstW = areaW * scale;
+      dstH = areaH * scale;
+      dstX = areaX + (areaW - dstW) / 2;
+      dstY = areaY + (areaH - dstH) / 2;
+    } else if (s.fitMode === "fit") {
+      const ratio = Math.min(areaW / srcW, areaH / srcH) * scale;
+      dstW = srcW * ratio;
+      dstH = srcH * ratio;
+      dstX = areaX + (areaW - dstW) / 2;
+      dstY = areaY + (areaH - dstH) / 2;
+    } else {
+      // fill — заполнить всю область
+      const ratio = Math.max(areaW / srcW, areaH / srcH) * scale;
+      dstW = srcW * ratio;
+      dstH = srcH * ratio;
+      dstX = areaX + (areaW - dstW) / 2;
+      dstY = areaY + (areaH - dstH) / 2;
+    }
 
     // Яркость / контраст / насыщенность через CSS filter
     ctx.filter = `brightness(${s.brightness}%) contrast(${s.contrast}%) saturate(${s.saturation}%)`;
@@ -284,6 +314,24 @@ export default function ImageEditor() {
                 <Slider label="Снизу" value={settings.cropBottom} min={0} max={200} onChange={(v) => set("cropBottom", v)} unit="px" />
                 <Slider label="Слева" value={settings.cropLeft} min={0} max={200} onChange={(v) => set("cropLeft", v)} unit="px" />
                 <Slider label="Справа" value={settings.cropRight} min={0} max={200} onChange={(v) => set("cropRight", v)} unit="px" />
+              </Section>
+
+              <Section title="Масштаб и расположение">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-gray-500 mb-1">Режим вписывания</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["fit", "fill", "stretch"] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => set("fitMode", mode)}
+                        className={`py-1.5 rounded-lg text-xs font-medium transition-colors ${settings.fitMode === mode ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                      >
+                        {mode === "fit" ? "Вписать" : mode === "fill" ? "Заполнить" : "Растянуть"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <Slider label="Размер иконки" value={settings.iconScale} min={10} max={150} onChange={(v) => set("iconScale", v)} unit="%" />
               </Section>
 
               <Section title="Форма и отступы">
