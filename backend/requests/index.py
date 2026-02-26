@@ -198,7 +198,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
              WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
             ) as responses
         FROM t_p42562714_web_app_creation_1.requests r
-        WHERE r.status != 'deleted' AND r.status != 'archived' AND r.status != 'closed'
+        WHERE r.status != 'archived' AND r.status != 'closed' AND (r.is_removed IS NULL OR r.is_removed = FALSE)
     """
     
     query_params = []
@@ -682,14 +682,14 @@ def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, st
     }
 
 def delete_request(request_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
-    """Мягкое удаление запроса (меняем статус на deleted)"""
+    """Мягкое удаление запроса (флаг is_removed = TRUE)"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         
         sql = """
             UPDATE t_p42562714_web_app_creation_1.requests 
-            SET status = 'deleted', updated_at = CURRENT_TIMESTAMP
+            SET is_removed = TRUE, updated_at = CURRENT_TIMESTAMP
             WHERE id = %s
         """
         
