@@ -20,7 +20,7 @@ const SplashScreen = () => {
         flexShrink: 0,
       }}>
         <img
-          src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/e1c0f181-5b6f-416b-ae31-451c7283fb5a.png"
+          src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png"
           alt="ЕРТТП"
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
