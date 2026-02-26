@@ -126,7 +126,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     
     try {
       await requestsAPI.deleteRequest(request.id);
-      deleteRequest(request.id);
+      await deleteRequest(request.id);
       setShowDeleteDialog(false);
       
       localStorage.setItem('requests_updated', 'true');

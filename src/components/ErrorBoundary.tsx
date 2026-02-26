@@ -17,6 +17,8 @@ class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
+    // Сбрасываем флаг перезагрузки при успешном монтировании
+    sessionStorage.removeItem('eb_reloaded');
   }
 
   static getDerivedStateFromError(error: Error): State {
@@ -27,22 +29,29 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ error, errorInfo });
     
-    // Автоматическая перезагрузка при ошибках React (useState, useEffect и т.д.)
-    if (error.message && (
+    // Автоматическая перезагрузка при ошибках хуков React — только один раз
+    const isHookError = error.message && (
       error.message.includes('Cannot read properties of null') ||
       error.message.includes('Invalid hook call') ||
       error.message.includes('Hooks can only be called')
-    )) {
-      console.log('Обнаружена ошибка React хуков, выполняется автоматическая перезагрузка...');
-      this.setState({ isReloading: true });
-      setTimeout(() => {
-        if ('caches' in window) {
-          caches.keys().then(names => {
-            names.forEach(name => caches.delete(name));
-          });
-        }
-        window.location.reload();
-      }, 1500);
+    );
+    
+    if (isHookError) {
+      // Защита от бесконечного цикла перезагрузок
+      const hasAlreadyReloaded = sessionStorage.getItem('eb_reloaded') === '1';
+      if (!hasAlreadyReloaded) {
+        console.log('Обнаружена ошибка React хуков, выполняется однократная перезагрузка...');
+        sessionStorage.setItem('eb_reloaded', '1');
+        this.setState({ isReloading: true });
+        setTimeout(() => {
+          if ('caches' in window) {
+            caches.keys().then(names => {
+              names.forEach(name => caches.delete(name));
+            });
+          }
+          window.location.reload();
+        }, 1000);
+      }
     }
   }
 
