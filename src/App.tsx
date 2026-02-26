@@ -142,8 +142,7 @@ const TradingPlatform = lazyWithRetry(() => import("./pages/TradingPlatform"));
 const CreateContract = lazyWithRetry(() => import("./pages/CreateContract"));
 const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
 const OrderDetail = lazyWithRetry(() => import("./pages/OrderDetail"));
-const OrderDetailPage = lazyWithRetry(() => import("./pages/OrderDetailPage"));
-const ResponseDetailPage = lazyWithRetry(() => import("./pages/ResponseDetailPage"));
+
 
 const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
 const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
@@ -321,8 +320,7 @@ const App = () => {
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-contract" element={<CreateContract isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/order/:offerId" element={<OrderPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/order-detail/:id" element={<OrderDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/response-detail/:id" element={<ResponseDetailPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+
 
             <Route path="/my-listings" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

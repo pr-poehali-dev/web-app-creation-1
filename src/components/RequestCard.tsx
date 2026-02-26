@@ -34,11 +34,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const isService = request.category === 'utilities';
 
   const handleCardClick = () => {
-    if (isOwner) {
-      navigate(`/edit-request/${request.id}`);
-    } else {
-      navigate(`/request/${request.id}`);
-    }
+    navigate(`/request/${request.id}`);
   };
 
   const handleEdit = (e: React.MouseEvent) => {
