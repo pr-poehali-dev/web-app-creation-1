@@ -33,6 +33,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     return 'not_set';
   };
 
+  const isTransport = request.category === 'transport';
+
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState(request.title);
@@ -44,6 +46,9 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     (request.images || []).map(img => img.url)
   );
   const [videoUrl, setVideoUrl] = useState<string>(request.video?.url || '');
+  const [transportRoute, setTransportRoute] = useState(request.transportRoute || '');
+  const [transportType, setTransportType] = useState(request.transportType || '');
+  const [transportServiceType, setTransportServiceType] = useState(request.transportServiceType || '');
 
   const handlePricingTypeChange = (value: string) => {
     const pt = value as PricingType;
@@ -66,6 +71,9 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     setNegotiablePrice(request.negotiablePrice || false);
     setImages((request.images || []).map(img => img.url));
     setVideoUrl(request.video?.url || '');
+    setTransportRoute(request.transportRoute || '');
+    setTransportType(request.transportType || '');
+    setTransportServiceType(request.transportServiceType || '');
     setIsEditing(false);
   };
 
@@ -81,6 +89,12 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
         negotiablePrice,
         images: images.map((url, idx) => ({ url, alt: `${title} ${idx + 1}` })),
       };
+
+      if (isTransport) {
+        updateData.transportRoute = transportRoute;
+        updateData.transportType = transportType;
+        updateData.transportServiceType = transportServiceType;
+      }
 
       if (videoUrl) {
         updateData.video = { url: videoUrl };
@@ -101,6 +115,9 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
           negotiablePrice,
           images: images.map((url, idx) => ({ id: `img-${idx}`, url, alt: `${title} ${idx + 1}` })),
           video: videoUrl ? { id: 'vid', url: videoUrl } : undefined,
+          transportRoute,
+          transportType,
+          transportServiceType,
         });
       }
 
@@ -199,6 +216,38 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
               </div>
             )}
 
+            {isTransport && (
+              <div className="space-y-3 border-t pt-4">
+                <Label className="text-sm font-semibold">Транспортные данные</Label>
+                <div className="space-y-2">
+                  <Label>Маршрут</Label>
+                  <Input
+                    value={transportRoute}
+                    onChange={(e) => setTransportRoute(e.target.value)}
+                    placeholder="Город отправления — Город назначения"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Тип услуги</Label>
+                    <Input
+                      value={transportServiceType}
+                      onChange={(e) => setTransportServiceType(e.target.value)}
+                      placeholder="Тип услуги"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Тип транспорта</Label>
+                    <Input
+                      value={transportType}
+                      onChange={(e) => setTransportType(e.target.value)}
+                      placeholder="Тип транспорта"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="border-t pt-4">
               <ProductMediaUpload
                 productImages={images}
@@ -248,6 +297,38 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
               />
             )}
           </>
+        )}
+
+        {isTransport && (request.transportRoute || request.transportServiceType || request.transportType) && (
+          <div className="bg-muted/40 rounded-lg p-3 space-y-2">
+            {request.transportServiceType && (
+              <div className="flex items-center gap-2">
+                <Icon name="Truck" className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Тип услуги</p>
+                  <p className="font-medium text-sm">{request.transportServiceType}</p>
+                </div>
+              </div>
+            )}
+            {request.transportRoute && (
+              <div className="flex items-center gap-2">
+                <Icon name="Route" className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Маршрут</p>
+                  <p className="font-medium text-sm">{request.transportRoute}</p>
+                </div>
+              </div>
+            )}
+            {request.transportType && (
+              <div className="flex items-center gap-2">
+                <Icon name="Car" className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Тип транспорта</p>
+                  <p className="font-medium text-sm">{request.transportType}</p>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

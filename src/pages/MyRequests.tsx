@@ -52,6 +52,8 @@ interface Request {
   responsesCount: number;
   views: number;
   createdAt: Date;
+  transportRoute?: string;
+  transportServiceType?: string;
 }
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
@@ -107,6 +109,8 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
       responsesCount: request.responses || 0,
       views: request.views || 0,
       createdAt: request.createdAt,
+      transportRoute: request.transportRoute,
+      transportServiceType: request.transportServiceType,
     }));
 
   const filteredRequests = filterStatus === 'all' 
@@ -173,19 +177,30 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
             <Badge variant="secondary">{category.name}</Badge>
           )}
 
+          {request.transportRoute && (
+            <div className="flex items-center gap-1.5 text-sm">
+              <Icon name="Route" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <span className="text-muted-foreground">{request.transportRoute}</span>
+            </div>
+          )}
+
           <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Бюджет:</span>
-              <span className="font-bold text-primary">
-                {request.budget.toLocaleString()} ₽
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Объем:</span>
-              <span className="font-medium">
-                {request.quantity} {request.unit}
-              </span>
-            </div>
+            {request.category !== 'transport' && (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Бюджет:</span>
+                  <span className="font-bold text-primary">
+                    {request.budget.toLocaleString()} ₽
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Объем:</span>
+                  <span className="font-medium">
+                    {request.quantity} {request.unit}
+                  </span>
+                </div>
+              </>
+            )}
             {request.status === 'active' && daysLeft > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">До завершения:</span>
