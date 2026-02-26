@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
@@ -28,7 +27,6 @@ export default function OrdersContent({
   onCompleteOrder,
   onDeleteOrder,
 }: OrdersContentProps) {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [exitingOrderIds, setExitingOrderIds] = useState<Set<string>>(new Set());
   const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
@@ -186,7 +184,7 @@ export default function OrdersContent({
             key={order.id}
             order={order} 
             isSeller={isSeller}
-            onOpenChat={order.isRequest ? () => navigate(`/order/${order.id}`) : onOpenChat}
+            onOpenChat={onOpenChat}
             onAcceptOrder={isSeller ? onAcceptOrder : undefined}
             onCompleteOrder={onCompleteOrder}
             onDeleteOrder={onDeleteOrder}
