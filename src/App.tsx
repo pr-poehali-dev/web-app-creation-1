@@ -269,7 +269,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <PullToRefresh onRefresh={handleGlobalRefresh}>
-          <Suspense fallback={<LoadingScreen />}>
+          <Suspense fallback={<div style={{position:'fixed',inset:0,background:'#5b21b6',zIndex:99999}} />}>
             <TimezoneProvider>
               <DistrictProvider>
                 <OffersProvider>
