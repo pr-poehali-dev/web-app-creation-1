@@ -47,6 +47,7 @@ export interface Order {
   offerTransportRoute?: string;
   offerTransportServiceType?: string;
   passengerPickupAddress?: string;
+  completionRequested?: boolean;
 }
 
 export interface ChatMessage {

@@ -782,6 +782,7 @@ export const ordersAPI = {
     counterQuantity?: number;
     counterMessage?: string;
     acceptCounter?: boolean;
+    completionRequested?: boolean;
   }): Promise<{ message: string }> {
     const userId = getUserId();
     if (!userId) {

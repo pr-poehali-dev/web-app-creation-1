@@ -505,6 +505,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['offerTransportServiceType'] = order_dict.pop('offer_transport_service_type', None)
     order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
     order_dict['is_request'] = order_dict.get('is_request', False)
+    order_dict['completionRequested'] = order_dict.pop('completion_requested', False) or False
     
     order_dict['offer_title'] = order_dict.get('title', '')
     order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
@@ -970,6 +971,20 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         
         updates.append(f"status = 'accepted'")
     
+    # Запрос на завершение от исполнителя (продавца)
+    if body.get('completionRequested') is True and is_seller:
+        updates.append(f"completion_requested = TRUE")
+        # Уведомляем покупателя
+        try:
+            send_notification(
+                order['buyer_id'],
+                'Запрос на завершение заказа',
+                f'Исполнитель запрашивает подтверждение завершения заказа №{order.get("order_number", order_id[:8])}',
+                f'/my-orders?id={order_id}'
+            )
+        except Exception as e:
+            print(f'Notification error: {e}')
+
     # ПРОВЕРКА 2: Завершить заказ может только покупатель
     if 'status' in body and body['status'] == 'completed':
         if not is_buyer:
@@ -982,6 +997,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 'isBase64Encoded': False
             }
         updates.append(f"completed_date = CURRENT_TIMESTAMP")
+        updates.append(f"completion_requested = FALSE")
         updates.append(f"status = 'completed'")
     
     # Отмена заказа - записываем кто отменил

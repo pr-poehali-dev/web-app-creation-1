@@ -50,6 +50,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     handleAcceptCounter,
     handleCancelOrder,
     handleCompleteOrder,
+    handleRequestCompletion,
     handleDeleteOrder,
     handleOpenChat,
     handleCloseChat,
@@ -228,6 +229,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onAcceptCounter={handleAcceptCounter}
           onCancelOrder={handleCancelOrder}
           onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? handleCompleteOrder : undefined}
+          onRequestCompletion={currentUser?.id?.toString() === selectedOrder.sellerId ? handleRequestCompletion : undefined}
         />
       )}
 

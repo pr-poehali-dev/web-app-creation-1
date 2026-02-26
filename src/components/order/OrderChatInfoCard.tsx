@@ -21,10 +21,11 @@ interface OrderChatInfoCardProps {
   onCancelOrder?: (orderId: string, reason?: string) => void;
   onCompleteOrder?: (orderId: string) => void;
   onAcceptOrder?: (orderId: string) => void;
+  onRequestCompletion?: (orderId: string) => void;
   onLightboxOpen?: (url: string) => void;
 }
 
-export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder, onAcceptOrder, onLightboxOpen }: OrderChatInfoCardProps) {
+export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder, onAcceptOrder, onRequestCompletion, onLightboxOpen }: OrderChatInfoCardProps) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
@@ -53,6 +54,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           onCompleteOrder={onCompleteOrder}
           onAcceptOrder={onAcceptOrder}
           onCancelOrder={onCancelOrder}
+          onRequestCompletion={onRequestCompletion}
         />
 
         <OrderFeedbackChat

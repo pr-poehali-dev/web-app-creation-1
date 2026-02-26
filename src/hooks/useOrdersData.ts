@@ -109,6 +109,7 @@ export function useOrdersData(
       offerTransportRoute: orderData.offerTransportRoute,
       offerTransportServiceType: orderData.offerTransportServiceType,
       passengerPickupAddress: orderData.passengerPickupAddress || orderData.passenger_pickup_address,
+      completionRequested: orderData.completionRequested || orderData.completion_requested || false,
     };
   };
 
@@ -727,6 +728,36 @@ export function useOrdersData(
     await loadOrders(false);
   };
 
+  const handleRequestCompletion = async (orderId?: string) => {
+    const orderToUpdate = orderId || selectedOrder?.id;
+    if (!orderToUpdate) return;
+
+    const order = orders.find(o => o.id === orderToUpdate);
+    if (!order) return;
+
+    try {
+      const updatedOrder = { ...order, completionRequested: true };
+      setOrders(prev => prev.map(o => o.id === orderToUpdate ? updatedOrder : o));
+      if (selectedOrder?.id === orderToUpdate) setSelectedOrder(updatedOrder);
+
+      await ordersAPI.updateOrder(orderToUpdate, { completionRequested: true });
+
+      toast({
+        title: 'Запрос отправлен',
+        description: 'Заказчик получил уведомление о завершении работы',
+      });
+
+      notifyOrderUpdated(orderToUpdate);
+      localStorage.setItem('force_orders_reload', JSON.stringify({ timestamp: Date.now(), orderId: orderToUpdate, action: 'request_completion' }));
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error requesting completion:', error);
+      setOrders(prev => prev.map(o => o.id === orderToUpdate ? order : o));
+      if (selectedOrder?.id === orderToUpdate) setSelectedOrder(order);
+      toast({ title: 'Ошибка', description: 'Не удалось отправить запрос', variant: 'destructive' });
+    }
+  };
+
   const handleDeleteOrder = async (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
@@ -773,6 +804,7 @@ export function useOrdersData(
     handleAcceptCounter,
     handleCancelOrder,
     handleCompleteOrder,
+    handleRequestCompletion,
     handleDeleteOrder,
     handleOpenChat,
     handleCloseChat,

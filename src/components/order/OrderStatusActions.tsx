@@ -16,9 +16,10 @@ interface OrderStatusActionsProps {
   onCompleteOrder?: (orderId: string) => void;
   onAcceptOrder?: (orderId: string) => void;
   onCancelOrder?: (orderId: string, reason?: string) => void;
+  onRequestCompletion?: (orderId: string) => void;
 }
 
-export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder }: OrderStatusActionsProps) {
+export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder, onRequestCompletion }: OrderStatusActionsProps) {
   const roles = getOrderRoles(order);
   return (
     <>
@@ -209,12 +210,21 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             <>
               {isBuyer ? (
                 <div className="space-y-3">
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
-                    <Icon name="Info" className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                    <p className="text-sm text-blue-800 font-medium">
-                      Можете завершить заказ и оставить отзыв
-                    </p>
-                  </div>
+                  {order.completionRequested ? (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-center gap-2">
+                      <Icon name="Bell" className="h-5 w-5 text-orange-600 flex-shrink-0" />
+                      <p className="text-sm text-orange-800 font-medium">
+                        Исполнитель запрашивает подтверждение завершения заказа
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+                      <Icon name="Info" className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <p className="text-sm text-blue-800 font-medium">
+                        Можете завершить заказ и оставить отзыв
+                      </p>
+                    </div>
+                  )}
                   {onCompleteOrder && (
                     <Button
                       onClick={() => onCompleteOrder(order.id)}
@@ -228,11 +238,35 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   )}
                 </div>
               ) : (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
-                  <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <p className="text-sm text-green-800 font-medium">
-                    Заказ в работе
-                  </p>
+                <div className="space-y-3">
+                  {order.completionRequested ? (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
+                      <Icon name="Clock" className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+                      <p className="text-sm text-yellow-800 font-medium">
+                        Запрос на завершение отправлен — ожидаем подтверждения заказчика
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                        <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
+                        <p className="text-sm text-green-800 font-medium">
+                          Заказ в работе
+                        </p>
+                      </div>
+                      {onRequestCompletion && (
+                        <Button
+                          onClick={() => onRequestCompletion(order.id)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-green-500 text-green-700 hover:bg-green-50"
+                        >
+                          <Icon name="CheckSquare" className="mr-1.5 h-4 w-4" />
+                          Запросить завершение заказа
+                        </Button>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </>
