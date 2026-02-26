@@ -280,8 +280,7 @@ const App = () => {
                   <InstallPrompt />
                   <BrowserRouter>
                 <ErrorBoundary>
-                <Suspense fallback={<LoadingScreen />}>
-            <Routes>
+                <Routes>
             <Route path="/" element={<Navigate to="/predlozheniya" replace />} />
             <Route path="/home" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
@@ -352,7 +351,6 @@ const App = () => {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-                </Suspense>
                 </ErrorBoundary>
         </BrowserRouter>
             </OffersProvider>

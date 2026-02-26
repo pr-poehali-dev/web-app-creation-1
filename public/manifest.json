@@ -4,8 +4,8 @@
   "description": "B2B платформа для бизнеса",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1e40af",
+  "background_color": "#5b21b6",
+  "theme_color": "#5b21b6",
   "scope": "/",
   "orientation": "any",
   "icons": [
