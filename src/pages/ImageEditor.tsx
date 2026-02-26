@@ -74,6 +74,7 @@ export default function ImageEditor() {
   const [originalName, setOriginalName] = useState("image");
   const [settings, setSettings] = useState<Settings>(DEFAULT);
   const [autoDetected, setAutoDetected] = useState(false);
+  const [previewBg, setPreviewBg] = useState<"checker" | "dark" | "white" | "black">("dark");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
 
@@ -279,10 +280,33 @@ export default function ImageEditor() {
                 </div>
               )}
 
-              {/* Шахматный фон для прозрачности */}
+              {/* Переключатель фона превью */}
+              <div className="flex gap-1.5 items-center">
+                <span className="text-xs text-gray-400 mr-1">Фон:</span>
+                {([
+                  { key: "dark", label: "Серый", style: { background: "#374151" } },
+                  { key: "black", label: "Чёрный", style: { background: "#000" } },
+                  { key: "white", label: "Белый", style: { background: "#fff", border: "1px solid #e5e7eb" } },
+                  { key: "checker", label: "Сетка", style: { background: "repeating-conic-gradient(#bbb 0% 25%, #fff 0% 50%) 0 0 / 12px 12px" } },
+                ] as const).map(({ key, label, style }) => (
+                  <button
+                    key={key}
+                    title={label}
+                    onClick={() => setPreviewBg(key)}
+                    style={style}
+                    className={`w-7 h-7 rounded-lg transition-all ${previewBg === key ? "ring-2 ring-blue-500 ring-offset-1 scale-110" : "opacity-60 hover:opacity-100"}`}
+                  />
+                ))}
+              </div>
+
+              {/* Превью с выбранным фоном */}
               <div className="relative rounded-2xl overflow-hidden shadow-lg"
                 style={{
-                  background: "repeating-conic-gradient(#ddd 0% 25%, #fff 0% 50%) 0 0 / 16px 16px",
+                  background: previewBg === "checker"
+                    ? "repeating-conic-gradient(#bbb 0% 25%, #fff 0% 50%) 0 0 / 12px 12px"
+                    : previewBg === "dark" ? "#374151"
+                    : previewBg === "black" ? "#000"
+                    : "#fff",
                   width: 300, height: 300,
                 }}>
                 <canvas ref={previewRef} width={300} height={300} className="absolute inset-0" />
