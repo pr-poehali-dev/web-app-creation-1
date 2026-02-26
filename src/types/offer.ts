@@ -141,6 +141,16 @@ export interface Request {
   views?: number;
   responses?: number;
   status?: 'active' | 'draft' | 'pending' | 'closed' | 'archived';
+  transportServiceType?: string;
+  transportRoute?: string;
+  transportType?: string;
+  transportCapacity?: string;
+  transportDateTime?: string;
+  transportPrice?: number;
+  transportPriceType?: string;
+  transportNegotiable?: boolean;
+  transportComment?: string;
+  transportAllDistricts?: boolean;
 }
 
 export interface Category {

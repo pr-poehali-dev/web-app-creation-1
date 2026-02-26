@@ -123,6 +123,12 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               )}
             </div>
             
+            {request.transportRoute && (
+              <div className="flex items-center gap-1.5">
+                <Icon name="Route" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs text-muted-foreground truncate">{request.transportRoute}</span>
+              </div>
+            )}
             {districtName && (
               <div className="flex items-center gap-1.5">
                 <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
