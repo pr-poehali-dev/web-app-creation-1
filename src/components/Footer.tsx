@@ -56,7 +56,7 @@ export default function Footer() {
                   style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white) drop-shadow(0 0 8px rgba(255,255,255,0.7))', transform: 'scale(1.9) scaleX(-1)' }}
                 />
               </div>
-              <span className="font-bold text-primary">ЕРТТП</span>
+              <span className="font-bold text-[#1e3a5f]">ЕРТТП</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Единая Региональная Товарно-Торговая Площадка

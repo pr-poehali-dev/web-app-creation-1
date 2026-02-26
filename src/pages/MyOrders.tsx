@@ -127,7 +127,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Мои заказы</h1>
-            <p className="text-muted-foreground">Управление заказами и общение с контрагентами</p>
+            <p className="text-foreground">Управление заказами и общение с контрагентами</p>
           </div>
 
           {isLoading ? (
