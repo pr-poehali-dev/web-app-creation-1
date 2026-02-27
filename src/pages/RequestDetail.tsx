@@ -354,7 +354,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={setIsGalleryOpen}>
-        <DialogContent className="max-w-7xl w-full p-0 bg-black/95">
+        <DialogContent className="sm:max-w-7xl w-full max-w-full p-0 bg-black/95 inset-0 sm:inset-auto rounded-none sm:rounded-lg max-h-screen sm:max-h-[90vh]">
           <RequestMediaGallery
             images={request.images}
             currentIndex={galleryIndex}

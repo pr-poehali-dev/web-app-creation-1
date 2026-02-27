@@ -38,8 +38,8 @@ const DialogContent = React.forwardRef<
       onOpenAutoFocus={(e) => e.preventDefault()}
       className={cn(
         "fixed z-50 grid w-full gap-4 border bg-background p-6 shadow-lg duration-300",
-        // Мобильные: снизу на весь экран как шторка
-        "bottom-0 left-0 right-0 rounded-t-2xl max-h-[92vh] overflow-y-auto",
+        // Мобильные: снизу как шторка, строго в ширину экрана
+        "bottom-0 left-0 right-0 max-w-full rounded-t-2xl max-h-[92vh] overflow-x-hidden overflow-y-auto",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         // Десктоп: по центру экрана
