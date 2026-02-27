@@ -24,7 +24,7 @@
 
   <!-- Аукционы -->
   <url>
-    <loc>https://erttp.ru/auktsiony</loc>
+    <loc>https://erttp.ru/auction</loc>
     <changefreq>hourly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -38,14 +38,14 @@
 
   <!-- Пользовательское соглашение -->
   <url>
-    <loc>https://erttp.ru/terms-of-service</loc>
+    <loc>https://erttp.ru/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 
   <!-- Политика конфиденциальности -->
   <url>
-    <loc>https://erttp.ru/privacy-policy</loc>
+    <loc>https://erttp.ru/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
