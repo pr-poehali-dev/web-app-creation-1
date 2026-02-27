@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import type { Request } from '@/types/offer';
-import { requestsAPI } from '@/services/api';
+import { requestsAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useOffers } from '@/contexts/OffersContext';
@@ -44,6 +44,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [responseOrders, setResponseOrders] = useState<object[]>([]);
   const { deleteRequest, updateRequest } = useOffers();
   
   const publishMode = searchParams.get('publish') === '1';
@@ -59,7 +60,10 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
       
       setIsLoading(true);
       try {
-        const requestData = await requestsAPI.getRequestById(id);
+        const [requestData, ordersResponse] = await Promise.all([
+          requestsAPI.getRequestById(id),
+          ordersAPI.getAll('sale'),
+        ]);
         
         const mappedRequest: Request = {
           ...requestData,
@@ -79,6 +83,20 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
         }
         
         setRequest(mappedRequest);
+
+        const allOrders = ordersResponse.orders || [];
+        const related = allOrders.filter((o: Record<string, unknown>) =>
+          (o.request_id || o.requestId) === id
+        ).map((o: Record<string, unknown>) => ({
+          id: o.id,
+          sellerName: o.seller_name || o.sellerName || o.seller_full_name || 'Исполнитель',
+          buyerName: o.buyer_name || o.buyerName,
+          status: o.status || 'pending',
+          totalAmount: o.total_amount || o.totalAmount,
+          counterTotalAmount: o.counter_total_amount || o.counterTotalAmount,
+          transportPrice: o.transport_price || o.transportPrice,
+        }));
+        setResponseOrders(related);
       } catch (error) {
         console.error('Error loading data:', error);
         toast({
@@ -200,6 +218,7 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
           onTabChange={setActiveTab}
           onDelete={handleDelete}
           onUpdate={setRequest}
+          orders={responseOrders}
         />
       </main>
 

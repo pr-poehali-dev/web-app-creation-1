@@ -148,6 +148,21 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   };
 
   const renderPriceDisplay = () => {
+    if (isTransport) {
+      if (request.transportNegotiable) return 'Ваша цена (Торг)';
+      if (request.transportPrice) {
+        const priceNum = Number(request.transportPrice);
+        return (
+          <>
+            {priceNum.toLocaleString('ru-RU')} ₽
+            {request.transportPriceType && (
+              <span className="text-muted-foreground ml-1 text-sm">{request.transportPriceType}</span>
+            )}
+          </>
+        );
+      }
+      return 'Не указана';
+    }
     if (request.pricePerUnit > 0) {
       return (
         <>
@@ -380,6 +395,20 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {isTransport && (request.transportDepartureDateTime || request.transportDateTime) && (
+          <div className="flex items-center gap-2">
+            <Icon name="CalendarClock" className="w-5 h-5 text-muted-foreground" />
+            <div>
+              <p className="text-sm text-muted-foreground">Желаемая дата и время выезда</p>
+              <p className="font-medium">
+                {new Date(request.transportDepartureDateTime || request.transportDateTime!).toLocaleString('ru-RU', {
+                  day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                })}
+              </p>
+            </div>
           </div>
         )}
 
