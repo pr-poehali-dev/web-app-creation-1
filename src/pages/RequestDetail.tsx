@@ -115,7 +115,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
   const isVideoIndex = showVideo && request.video && currentImageIndex === 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <SEO
         title={request.title}
         description={`${request.description ? request.description.slice(0, 150) : ''} — бюджет ${request.pricePerUnit.toLocaleString('ru-RU')} ₽/${request.unit}. ${request.category}, ${request.district}.`}
@@ -129,7 +129,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
         <BackButton fallbackUrl="/my-orders?tab=my-responses" />
 
         <div className="grid gap-3 lg:grid-cols-3 mb-3 mt-1">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             {(request.images.length > 0 || (showVideo && request.video)) && (
             <div className="relative mb-4">
               {isVideoIndex && request.video ? (

@@ -10,6 +10,7 @@ import { requestsAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useOffers } from '@/contexts/OffersContext';
+import { notifyRequestUpdated } from '@/utils/dataSync';
 import EditRequestHeader from '@/components/edit-request/EditRequestHeader';
 import EditRequestTabs from '@/components/edit-request/EditRequestTabs';
 import EditRequestDeleteDialog from '@/components/edit-request/EditRequestDeleteDialog';
@@ -127,9 +128,8 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
     try {
       await requestsAPI.deleteRequest(request.id);
       await deleteRequest(request.id);
+      notifyRequestUpdated(request.id);
       setShowDeleteDialog(false);
-      
-      localStorage.setItem('requests_updated', 'true');
       
       toast({
         title: 'Успешно',
