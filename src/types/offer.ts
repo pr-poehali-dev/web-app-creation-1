@@ -87,7 +87,7 @@ export interface Offer {
   favorites?: number;
   orderedQuantity?: number;
   responses?: number;
-  status?: 'active' | 'draft' | 'pending' | 'moderation' | 'archived';
+  status?: 'active' | 'pending' | 'moderation' | 'archived';
   transportServiceType?: string;
   transportRoute?: string;
   transportType?: string;
@@ -140,7 +140,7 @@ export interface Request {
   expiryDate?: Date;
   views?: number;
   responses?: number;
-  status?: 'active' | 'draft' | 'pending' | 'closed' | 'archived';
+  status?: 'active' | 'pending' | 'closed' | 'archived';
   transportServiceType?: string;
   transportRoute?: string;
   transportType?: string;

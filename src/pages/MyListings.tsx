@@ -33,7 +33,7 @@ interface MyListingsProps {
 }
 
 type ListingType = 'offer' | 'request';
-type ListingStatus = 'active' | 'draft' | 'in_order' | 'completed' | 'archived';
+type ListingStatus = 'active' | 'in_order' | 'completed' | 'archived';
 
 interface ListingItem {
   id: string;
@@ -59,7 +59,6 @@ interface ListingItem {
 
 const STATUS_LABELS: Record<ListingStatus, string> = {
   active: 'Активно',
-  draft: 'Черновик',
   in_order: 'В заказе',
   completed: 'Завершено',
   archived: 'В архиве',
@@ -67,7 +66,6 @@ const STATUS_LABELS: Record<ListingStatus, string> = {
 
 const STATUS_COLORS: Record<ListingStatus, string> = {
   active: 'bg-green-500',
-  draft: 'bg-gray-500',
   in_order: 'bg-blue-500',
   completed: 'bg-purple-500',
   archived: 'bg-slate-500',

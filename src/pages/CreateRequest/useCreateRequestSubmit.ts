@@ -46,7 +46,6 @@ export function useCreateRequestSubmit(
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const buildRequestData = () => {
-    const isDraft = false;
     const isService = formData.category === 'utilities';
 
     return {
@@ -67,7 +66,7 @@ export function useCreateRequestSubmit(
         alt: `${formData.title} - изображение ${index + 1}`,
       })),
       isPremium: false,
-      status: isDraft ? 'draft' : 'active',
+      status: 'active',
       ...(isService && {
         deadlineStart: formData.deadlineStart || undefined,
         deadlineEnd: formData.deadlineEnd || undefined,

@@ -1,11 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 
-type OfferStatus = 'active' | 'draft' | 'moderation' | 'archived';
+type OfferStatus = 'active' | 'moderation' | 'archived';
 
 interface OffersStats {
   total: number;
   active: number;
-  draft: number;
   moderation: number;
   archived: number;
 }

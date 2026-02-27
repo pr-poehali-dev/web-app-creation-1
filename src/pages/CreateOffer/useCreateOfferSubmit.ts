@@ -45,7 +45,6 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
     videoPreview: string,
     imagePreviews: string[],
   ) => {
-    const isDraft = false;
     setIsSubmitting(true);
 
     try {
@@ -193,7 +192,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         })),
         videoUrl: videoUrl,
         isPremium: false,
-        status: isDraft ? 'draft' : 'active',
+        status: 'active',
       };
       
       const dataSize = new Blob([JSON.stringify(offerData)]).size;

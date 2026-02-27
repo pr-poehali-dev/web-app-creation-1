@@ -85,8 +85,7 @@ export default function MyOffersContent({ userId }: MyOffersContentProps) {
     switch (status) {
       case 'active':
         return <Badge className="bg-green-500">Активно</Badge>;
-      case 'draft':
-        return <Badge variant="secondary">Черновик</Badge>;
+
       case 'moderation':
         return <Badge className="bg-yellow-500">Модерация</Badge>;
       case 'rejected':

@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import type { Offer } from '@/types/offer';
 
-type OfferStatus = 'active' | 'draft' | 'moderation' | 'archived';
+type OfferStatus = 'active' | 'moderation' | 'archived';
 
 interface MyOffer extends Offer {
   status: OfferStatus;

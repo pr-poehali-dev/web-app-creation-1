@@ -15,7 +15,7 @@ import { DISTRICTS } from '@/data/districts';
 import { getExpirationStatus } from '@/utils/expirationFilter';
 import type { Offer } from '@/types/offer';
 
-type OfferStatus = 'active' | 'draft' | 'moderation' | 'archived';
+type OfferStatus = 'active' | 'moderation' | 'archived';
 
 interface MyOffer extends Offer {
   status: OfferStatus;
@@ -25,14 +25,12 @@ interface MyOffer extends Offer {
 
 const STATUS_LABELS: Record<OfferStatus, string> = {
   active: 'Активно',
-  draft: 'Черновик',
   moderation: 'На модерации',
   archived: 'В архиве',
 };
 
 const STATUS_COLORS: Record<OfferStatus, string> = {
   active: 'bg-green-500',
-  draft: 'bg-gray-500',
   moderation: 'bg-orange-500',
   archived: 'bg-slate-500',
 };

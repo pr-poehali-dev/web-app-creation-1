@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 
 type ListingType = 'offer' | 'request';
-type ListingStatus = 'active' | 'draft' | 'in_order' | 'completed' | 'archived';
+type ListingStatus = 'active' | 'in_order' | 'completed' | 'archived';
 
 interface ListingsFiltersProps {
   filterStatus: 'all' | ListingStatus;

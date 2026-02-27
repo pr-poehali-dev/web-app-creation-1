@@ -37,7 +37,7 @@ interface MyRequestsProps {
   onLogout: () => void;
 }
 
-type RequestStatus = 'active' | 'draft' | 'closed' | 'archived';
+type RequestStatus = 'active' | 'closed' | 'archived';
 
 interface Request {
   id: string;
@@ -59,14 +59,12 @@ interface Request {
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
   active: 'Активен',
-  draft: 'Черновик',
   closed: 'Закрыт',
   archived: 'В архиве',
 };
 
 const STATUS_COLORS: Record<RequestStatus, string> = {
   active: 'bg-green-500',
-  draft: 'bg-gray-500',
   closed: 'bg-blue-500',
   archived: 'bg-slate-500',
 };
@@ -163,7 +161,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
     return {
       total: myRequests.length,
       active: myRequests.filter(r => r.status === 'active').length,
-      draft: myRequests.filter(r => r.status === 'draft').length,
+
       closed: myRequests.filter(r => r.status === 'closed').length,
       archived: myRequests.filter(r => r.status === 'archived').length,
     };

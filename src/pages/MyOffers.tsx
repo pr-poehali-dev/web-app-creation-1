@@ -21,7 +21,7 @@ interface MyOffersProps {
   onLogout: () => void;
 }
 
-type OfferStatus = 'active' | 'draft' | 'moderation' | 'archived';
+type OfferStatus = 'active' | 'moderation' | 'archived';
 
 interface MyOffer extends Offer {
   status: OfferStatus;
@@ -31,7 +31,6 @@ interface MyOffer extends Offer {
 
 const STATUS_LABELS: Record<OfferStatus, string> = {
   active: 'Активно',
-  draft: 'Черновик',
   moderation: 'На модерации',
   archived: 'В архиве',
 };
@@ -93,7 +92,7 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
   const stats = useMemo(() => ({
     total: myOffers.length,
     active: myOffers.filter(o => o.status === 'active').length,
-    draft: myOffers.filter(o => o.status === 'draft').length,
+
     moderation: myOffers.filter(o => o.status === 'moderation').length,
     archived: myOffers.filter(o => o.status === 'archived').length,
   }), [myOffers]);

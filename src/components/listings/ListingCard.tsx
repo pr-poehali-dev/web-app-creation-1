@@ -12,7 +12,7 @@ import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
 
 type ListingType = 'offer' | 'request';
-type ListingStatus = 'active' | 'draft' | 'in_order' | 'completed' | 'archived';
+type ListingStatus = 'active' | 'in_order' | 'completed' | 'archived';
 
 interface ListingItem {
   id: string;
