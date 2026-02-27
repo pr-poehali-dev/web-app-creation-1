@@ -74,17 +74,22 @@ export default function TransportRequestDetail({
           )}
           {request.transportCapacity && (
             <div>
-              <p className="text-muted-foreground text-xs mb-0.5">Вместимость</p>
+              <p className="text-muted-foreground text-xs mb-0.5">
+                {isPassenger ? 'Количество пассажиров' : 'Вместимость'}
+              </p>
               <p className="font-semibold">{request.transportCapacity}</p>
             </div>
           )}
           {request.transportDepartureDateTime && (
             <div className="col-span-2">
-              <p className="text-muted-foreground text-xs mb-0.5">Желаемая дата выезда</p>
+              <p className="text-muted-foreground text-xs mb-0.5">Желаемая дата и время выезда</p>
               <p className="font-semibold">
                 {new Date(request.transportDepartureDateTime).toLocaleString('ru-RU', {
-                  dateStyle: 'long',
-                  timeStyle: 'short',
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
                 })}
               </p>
             </div>
@@ -94,8 +99,11 @@ export default function TransportRequestDetail({
               <p className="text-muted-foreground text-xs mb-0.5">Дата и время</p>
               <p className="font-semibold">
                 {new Date(request.transportDateTime).toLocaleString('ru-RU', {
-                  dateStyle: 'long',
-                  timeStyle: 'short',
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
                 })}
               </p>
             </div>
@@ -138,7 +146,7 @@ export default function TransportRequestDetail({
           )}
         </div>
 
-        {request.availableDistricts?.length > 0 && (
+        {!isPassenger && request.availableDistricts?.length > 0 && (
           <div>
             <p className="text-xs text-muted-foreground mb-1.5">Принимаются отклики из районов</p>
             <div className="flex flex-wrap gap-1">
