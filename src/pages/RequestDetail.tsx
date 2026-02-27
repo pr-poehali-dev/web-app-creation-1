@@ -14,6 +14,7 @@ import RequestInfoCard from '@/components/request/RequestInfoCard';
 import RequestAuthorCard from '@/components/request/RequestAuthorCard';
 import RequestResponseModal from '@/components/request/RequestResponseModal';
 import RequestResponseForm from '@/components/request/RequestResponseForm';
+import TransportRequestDetail from '@/components/request/TransportRequestDetail';
 import OrderFeedbackChat from '@/components/order/OrderFeedbackChat';
 import { useRequestData } from './RequestDetail/useRequestData';
 import { useRequestGallery } from './RequestDetail/useRequestGallery';
@@ -130,6 +131,21 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
 
         <div className="grid gap-3 lg:grid-cols-3 mb-3 mt-1">
           <div className="lg:col-span-2 min-w-0">
+            {request.category === 'transport' && request.images.length === 0 && !(showVideo && request.video) && (
+              <div className="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex flex-col items-center justify-center mb-4 opacity-60">
+                {(request.transportServiceType === 'cargo' || request.transportServiceType === 'Грузоперевозки') ? (
+                  <>
+                    <Icon name="Truck" className="h-20 w-20 text-primary" />
+                    <span className="text-sm font-bold text-primary tracking-widest mt-2">ГРУЗОВЫЕ</span>
+                  </>
+                ) : (
+                  <>
+                    <Icon name="Car" className="h-20 w-20 text-primary" />
+                    <span className="text-sm font-bold text-primary tracking-widest mt-2">ТАКСИ</span>
+                  </>
+                )}
+              </div>
+            )}
             {(request.images.length > 0 || (showVideo && request.video)) && (
             <div className="relative mb-4">
               {isVideoIndex && request.video ? (
@@ -260,89 +276,123 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
 
             {/* На мобильных показываем информацию сразу после медиа */}
             <div className="lg:hidden">
-              <RequestInfoCard request={request} />
+              {request.category === 'transport' ? (
+                <TransportRequestDetail
+                  request={request}
+                  onResponseClick={handleResponseClick}
+                  onShare={handleShare}
+                  existingResponse={existingResponse}
+                />
+              ) : (
+                <RequestInfoCard request={request} />
+              )}
             </div>
           </div>
 
           <div className="space-y-3">
-            {existingResponse && (
-              <Card>
-                <CardContent className="pt-4 space-y-2">
-                  <OrderFeedbackChat
-                    orderId={existingResponse.orderId}
-                    orderStatus={existingResponse.status}
-                    isBuyer={true}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {isEditFormOpen && existingResponse ? (
-              <RequestResponseForm
-                onSubmit={handleResponseSubmit}
-                onCancel={() => setIsEditFormOpen(false)}
-                quantity={request.quantity}
-                unit={request.unit}
-                pricePerUnit={request.pricePerUnit}
-                category={request.category}
-                budget={request.budget}
-                existingResponse={existingResponse}
-              />
+            {request.category === 'transport' ? (
+              <>
+                {existingResponse && (
+                  <Card>
+                    <CardContent className="pt-4 space-y-2">
+                      <OrderFeedbackChat
+                        orderId={existingResponse.orderId}
+                        orderStatus={existingResponse.status}
+                        isBuyer={true}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+                <TransportRequestDetail
+                  request={request}
+                  onResponseClick={handleResponseClick}
+                  onShare={handleShare}
+                  existingResponse={existingResponse}
+                />
+                <RequestAuthorCard author={request.author} />
+              </>
             ) : (
-              <Card>
-                <CardContent className="pt-6 space-y-3">
-                  {(() => {
-                    const currentUser = getSession();
-                    const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
-                    
-                    return isOwner ? (
+              <>
+                {existingResponse && (
+                  <Card>
+                    <CardContent className="pt-4 space-y-2">
+                      <OrderFeedbackChat
+                        orderId={existingResponse.orderId}
+                        orderStatus={existingResponse.status}
+                        isBuyer={true}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
+                {isEditFormOpen && existingResponse ? (
+                  <RequestResponseForm
+                    onSubmit={handleResponseSubmit}
+                    onCancel={() => setIsEditFormOpen(false)}
+                    quantity={request.quantity}
+                    unit={request.unit}
+                    pricePerUnit={request.pricePerUnit}
+                    category={request.category}
+                    budget={request.budget}
+                    existingResponse={existingResponse}
+                  />
+                ) : (
+                  <Card>
+                    <CardContent className="pt-6 space-y-3">
+                      {(() => {
+                        const currentUser = getSession();
+                        const isOwner = currentUser && currentUser.id?.toString() === request.author.id?.toString();
+                        
+                        return isOwner ? (
+                          <Button 
+                            className="w-full" 
+                            size="lg"
+                            onClick={() => navigate(`/edit-request/${request.id}`)}
+                          >
+                            <Icon name="Edit" className="mr-2 h-4 w-4" />
+                            Редактировать запрос
+                          </Button>
+                        ) : existingResponse ? (
+                          <Button 
+                            className="w-full" 
+                            size="lg"
+                            variant="outline"
+                            onClick={handleResponseClick}
+                          >
+                            <Icon name="Pencil" className="mr-2 h-4 w-4" />
+                            Редактировать отклик
+                          </Button>
+                        ) : (
+                          <Button 
+                            className="w-full" 
+                            size="lg"
+                            onClick={handleResponseClick}
+                          >
+                            <Icon name="Send" className="mr-2 h-4 w-4" />
+                            Отправить отклик
+                          </Button>
+                        );
+                      })()}
                       <Button 
-                        className="w-full" 
-                        size="lg"
-                        onClick={() => navigate(`/edit-request/${request.id}`)}
+                        variant="outline" 
+                        className="w-full"
+                        onClick={handleShare}
                       >
-                        <Icon name="Edit" className="mr-2 h-4 w-4" />
-                        Редактировать запрос
+                        <Icon name="Share2" className="mr-2 h-4 w-4" />
+                        Поделиться
                       </Button>
-                    ) : existingResponse ? (
-                      <Button 
-                        className="w-full" 
-                        size="lg"
-                        variant="outline"
-                        onClick={handleResponseClick}
-                      >
-                        <Icon name="Pencil" className="mr-2 h-4 w-4" />
-                        Редактировать отклик
-                      </Button>
-                    ) : (
-                      <Button 
-                        className="w-full" 
-                        size="lg"
-                        onClick={handleResponseClick}
-                      >
-                        <Icon name="Send" className="mr-2 h-4 w-4" />
-                        Отправить отклик
-                      </Button>
-                    );
-                  })()}
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={handleShare}
-                  >
-                    <Icon name="Share2" className="mr-2 h-4 w-4" />
-                    Поделиться
-                  </Button>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <RequestAuthorCard author={request.author} />
+
+                {/* На десктопе показываем информацию под кнопками */}
+                <div className="hidden lg:block">
+                  <RequestInfoCard request={request} />
+                </div>
+              </>
             )}
-
-            <RequestAuthorCard author={request.author} />
-
-            {/* На десктопе показываем информацию под кнопками */}
-            <div className="hidden lg:block">
-              <RequestInfoCard request={request} />
-            </div>
           </div>
         </div>
       </main>
