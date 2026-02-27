@@ -18,9 +18,19 @@ export function usePullToRefresh({
   const startY = useRef(0);
   const currentY = useRef(0);
   const isDragging = useRef(false);
-
   const startX = useRef(0);
   const isPullGesture = useRef(false);
+  // Храним текущее значение pullDistance в ref, чтобы избежать stale closure
+  const pullDistanceRef = useRef(0);
+  const isRefreshingRef = useRef(false);
+
+  useEffect(() => {
+    isRefreshingRef.current = isRefreshing;
+  }, [isRefreshing]);
+
+  useEffect(() => {
+    pullDistanceRef.current = pullDistance;
+  }, [pullDistance]);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -33,7 +43,7 @@ export function usePullToRefresh({
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current || isRefreshing) return;
+      if (!isDragging.current || isRefreshingRef.current) return;
 
       currentY.current = e.touches[0].clientY;
       const deltaY = currentY.current - startY.current;
@@ -52,6 +62,7 @@ export function usePullToRefresh({
       if (isPullGesture.current && deltaY > 0 && window.scrollY === 0) {
         e.preventDefault();
         const pullAmount = Math.min(deltaY * 0.5, maxPullDown);
+        pullDistanceRef.current = pullAmount;
         setPullDistance(pullAmount);
         setIsPulling(pullAmount >= threshold);
       }
@@ -60,12 +71,14 @@ export function usePullToRefresh({
     const handleTouchEnd = async () => {
       if (!isDragging.current) return;
 
-      const currentPull = pullDistance;
+      const currentPull = pullDistanceRef.current;
       isDragging.current = false;
       isPullGesture.current = false;
 
-      if (currentPull >= threshold && !isRefreshing) {
+      if (currentPull >= threshold && !isRefreshingRef.current) {
+        isRefreshingRef.current = true;
         setIsRefreshing(true);
+        pullDistanceRef.current = 0;
         setPullDistance(0);
         setIsPulling(false);
         try {
@@ -73,9 +86,11 @@ export function usePullToRefresh({
         } catch (error) {
           console.error('Refresh error:', error);
         } finally {
+          isRefreshingRef.current = false;
           setIsRefreshing(false);
         }
       } else {
+        pullDistanceRef.current = 0;
         setPullDistance(0);
         setIsPulling(false);
       }
@@ -90,8 +105,8 @@ export function usePullToRefresh({
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRefresh, threshold, maxPullDown, isRefreshing]);
+   
+  }, [onRefresh, threshold, maxPullDown]);
 
   return {
     isPulling,
