@@ -37,6 +37,7 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     transportType,
     transportCapacity,
     transportDateTime,
+    transportDepartureDateTime,
     transportPrice,
     transportPriceType,
     transportNegotiable,
@@ -113,7 +114,15 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
                   <p className="font-semibold">{transportCapacity}</p>
                 </div>
               )}
-              {transportDateTime && (
+              {transportDepartureDateTime && (
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground">Желаемая дата и время выезда</p>
+                  <p className="font-semibold text-primary">
+                    {new Date(transportDepartureDateTime).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'short' })}
+                  </p>
+                </div>
+              )}
+              {transportDateTime && !transportDepartureDateTime && (
                 <div>
                   <p className="text-xs text-muted-foreground">Дата и время</p>
                   <p className="font-semibold">

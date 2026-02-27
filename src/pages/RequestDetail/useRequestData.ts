@@ -72,6 +72,7 @@ export interface Request {
   transportType?: string;
   transportCapacity?: string;
   transportDateTime?: string;
+  transportDepartureDateTime?: string;
   transportPrice?: string;
   transportPriceType?: string;
   transportNegotiable?: boolean;
@@ -139,6 +140,7 @@ export function useRequestData(id: string | undefined) {
           transportType: data.transportType,
           transportCapacity: data.transportCapacity,
           transportDateTime: data.transportDateTime,
+          transportDepartureDateTime: data.transportDepartureDateTime,
           transportPrice: data.transportPrice,
           transportPriceType: data.transportPriceType,
           transportNegotiable: data.transportNegotiable,

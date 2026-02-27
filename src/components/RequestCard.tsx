@@ -129,6 +129,14 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
                 <span className="text-xs text-muted-foreground truncate">{request.transportRoute}</span>
               </div>
             )}
+            {request.transportDepartureDateTime && (
+              <div className="flex items-center gap-1.5">
+                <Icon name="CalendarClock" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <span className="text-xs text-muted-foreground truncate">
+                  Выезд: {new Date(request.transportDepartureDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            )}
             {districtName && (
               <div className="flex items-center gap-1.5">
                 <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
