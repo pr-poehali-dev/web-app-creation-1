@@ -64,10 +64,10 @@ export function useCreateRequestForm() {
     }
 
     if (field === 'transportDepartureDateTime' && typeof value === 'string') {
+      const depDate = value.split('T')[0];
       const pubDuration = formData.publicationDuration;
-      if (pubDuration && value) {
-        const depDate = value.split('T')[0];
-        if (pubDuration > depDate) {
+      if (value) {
+        if (!pubDuration || pubDuration > depDate) {
           setFormData(prev => ({ ...prev, publicationDuration: depDate, [field]: value }));
           return;
         }

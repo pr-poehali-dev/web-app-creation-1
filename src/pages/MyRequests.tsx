@@ -345,12 +345,7 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
               <p className="text-sm text-muted-foreground mt-1">Активных</p>
             </CardContent>
           </Card>
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('draft')}>
-            <CardContent className="pt-6 text-center">
-              <div className="text-3xl font-bold text-gray-500">{stats.draft}</div>
-              <p className="text-sm text-muted-foreground mt-1">Черновики</p>
-            </CardContent>
-          </Card>
+
           <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setFilterStatus('closed')}>
             <CardContent className="pt-6 text-center">
               <div className="text-3xl font-bold text-blue-500">{stats.closed}</div>

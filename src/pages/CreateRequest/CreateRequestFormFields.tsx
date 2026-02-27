@@ -289,17 +289,6 @@ export default function CreateRequestFormFields({
 
         <Button
           type="button"
-          variant="outline"
-          size="lg"
-          onClick={(e) => onSubmit(e as unknown as React.FormEvent, true)}
-          disabled={isSubmitting}
-        >
-          <Icon name="Save" className="mr-2 h-4 w-4" />
-          Сохранить черновик
-        </Button>
-
-        <Button
-          type="button"
           variant="ghost"
           size="lg"
           onClick={onCancel}

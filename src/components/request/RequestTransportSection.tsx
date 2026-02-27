@@ -248,6 +248,7 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
                 </div>
               )}
             </div>
+            {formData.transportServiceType !== 'Пассажирские перевозки' && (
             <div>
               <button
                 type="button"
@@ -283,6 +284,7 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
                 </div>
               )}
             </div>
+            )}
           </div>
         </div>
 
