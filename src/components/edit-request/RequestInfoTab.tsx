@@ -49,6 +49,15 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   const [transportRoute, setTransportRoute] = useState(request.transportRoute || '');
   const [transportType, setTransportType] = useState(request.transportType || '');
   const [transportServiceType, setTransportServiceType] = useState(request.transportServiceType || '');
+  const [transportPrice, setTransportPrice] = useState(request.transportPrice ? String(request.transportPrice) : '');
+  const [transportNegotiable, setTransportNegotiable] = useState(request.transportNegotiable || false);
+  const formatDateTimeLocal = (val?: string) => {
+    if (!val) return '';
+    try { return new Date(val).toISOString().slice(0, 16); } catch { return ''; }
+  };
+  const [transportDepartureDateTime, setTransportDepartureDateTime] = useState(
+    formatDateTimeLocal(request.transportDepartureDateTime || request.transportDateTime)
+  );
 
   const handlePricingTypeChange = (value: string) => {
     const pt = value as PricingType;
@@ -74,6 +83,9 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     setTransportRoute(request.transportRoute || '');
     setTransportType(request.transportType || '');
     setTransportServiceType(request.transportServiceType || '');
+    setTransportPrice(request.transportPrice ? String(request.transportPrice) : '');
+    setTransportNegotiable(request.transportNegotiable || false);
+    setTransportDepartureDateTime(formatDateTimeLocal(request.transportDepartureDateTime || request.transportDateTime));
     setIsEditing(false);
   };
 
@@ -94,6 +106,9 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
         updateData.transportRoute = transportRoute;
         updateData.transportType = transportType;
         updateData.transportServiceType = transportServiceType;
+        updateData.transportPrice = transportPrice ? parseFloat(transportPrice) : null;
+        updateData.transportNegotiable = transportNegotiable;
+        updateData.transportDepartureDateTime = transportDepartureDateTime || null;
       }
 
       if (videoUrl) {
@@ -118,6 +133,9 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
           transportRoute,
           transportType,
           transportServiceType,
+          transportPrice: transportPrice ? parseFloat(transportPrice) : undefined,
+          transportNegotiable,
+          transportDepartureDateTime: transportDepartureDateTime || undefined,
         });
       }
 
@@ -244,6 +262,35 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
                       placeholder="Тип транспорта"
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Желаемая дата и время выезда</Label>
+                  <Input
+                    type="datetime-local"
+                    value={transportDepartureDateTime}
+                    onChange={(e) => setTransportDepartureDateTime(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Стоимость, ₽</Label>
+                  <Input
+                    type="number"
+                    value={transportPrice}
+                    onChange={(e) => setTransportPrice(e.target.value)}
+                    placeholder="Укажите стоимость"
+                    min={0}
+                    disabled={transportNegotiable}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={transportNegotiable}
+                    onCheckedChange={(v) => { setTransportNegotiable(v); if (v) setTransportPrice(''); }}
+                    id="transport-negotiable"
+                  />
+                  <Label htmlFor="transport-negotiable" className="cursor-pointer text-sm">
+                    По договоренности
+                  </Label>
                 </div>
               </div>
             )}
