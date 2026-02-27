@@ -64,8 +64,15 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     <Card className="mb-3">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
-          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-            <Icon name={isTransport ? 'Truck' : 'ShoppingBag'} className="w-8 h-8 text-primary" />
+          <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0 flex-col">
+            {isTransport ? (
+              <>
+                <Icon name="Car" className="w-7 h-7 text-primary" />
+                <span className="text-[9px] font-bold text-primary leading-tight mt-0.5">ТАКСИ</span>
+              </>
+            ) : (
+              <Icon name="ShoppingBag" className="w-8 h-8 text-primary" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -218,12 +225,23 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
 
               <Separator />
 
-              <div>
-                <p className="text-sm font-medium mb-1">Описание запроса</p>
-                <p className="text-xs text-muted-foreground whitespace-pre-line">{description}</p>
-              </div>
+              {!isTransport && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Описание запроса</p>
+                  <p className="text-xs text-muted-foreground whitespace-pre-line">{description}</p>
+                </div>
+              )}
 
-              {transportComment && (
+              {isTransport && (transportComment || description) && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-sm font-medium mb-1">Комментарий</p>
+                    <p className="text-xs text-muted-foreground whitespace-pre-line">{transportComment || description}</p>
+                  </div>
+                </>
+              )}
+              {!isTransport && transportComment && (
                 <>
                   <Separator />
                   <div>
