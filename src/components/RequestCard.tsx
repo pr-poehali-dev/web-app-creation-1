@@ -32,6 +32,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const isOwner = currentUser && String(request.userId) === String(currentUser.id);
   const districtName = DISTRICTS.find(d => d.id === request.district)?.name;
   const isService = request.category === 'utilities';
+  const isTransport = request.category === 'transport';
 
   const handleCardClick = () => {
     navigate(`/request/${request.id}`);
@@ -94,7 +95,23 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
 
           <div className="space-y-1">
             <div className="flex items-baseline gap-1">
-              {isService ? (
+              {isTransport ? (
+                <>
+                  {request.transportPrice ? (
+                    <span className="font-bold text-primary text-lg">
+                      {Number(request.transportPrice).toLocaleString('ru-RU')} ₽
+                    </span>
+                  ) : request.transportNegotiable ? (
+                    <Badge variant="secondary" className="text-xs h-5 px-2">
+                      По договоренности
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="text-xs h-5 px-2">
+                      Цена не указана
+                    </Badge>
+                  )}
+                </>
+              ) : isService ? (
                 <>
                   {request.budget ? (
                     <span className="font-bold text-primary text-lg">
