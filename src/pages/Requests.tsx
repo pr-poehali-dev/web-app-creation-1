@@ -299,8 +299,8 @@ export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <SEO 
         title="Запросы на товары и услуги"
-        description="Запросы на поставку товаров и услуг от компаний Якутии. Откликайтесь на запросы и находите новых клиентов на ЕРТТП."
-        keywords="запросы на поставку Якутия, тендеры Якутск, закупки товаров Якутия, заявки на услуги"
+        description="Запросы на поставку товаров и услуг. Откликайтесь на запросы покупателей и находите новых клиентов на ЕРТТП."
+        keywords="запросы на поставку, закупки товаров, заявки на услуги, найти поставщика, ЕРТТП"
         canonical="/zaprosy"
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />

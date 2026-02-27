@@ -21,7 +21,7 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
       <SEO 
         title="Поддержка"
         description="Служба поддержки ЕРТТП. Задайте вопрос, сообщите о проблеме или получите помощь по работе с платформой."
-        keywords="поддержка ЕРТТП, помощь торговая площадка Якутия"
+        keywords="поддержка ЕРТТП, помощь торговая площадка, связаться с поддержкой"
         canonical="/support"
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />

@@ -309,8 +309,8 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <SEO 
         title="Аукционы и торги"
-        description="Участвуйте в аукционах и электронных торгах Якутии. Покупайте товары по лучшим ценам или выставляйте лоты на ЕРТТП."
-        keywords="аукционы Якутия, электронные торги Якутск, тендеры онлайн, закупки аукцион"
+        description="Участвуйте в аукционах и электронных торгах. Покупайте товары по лучшим ценам или выставляйте свои лоты на ЕРТТП."
+        keywords="аукционы онлайн, электронные торги, купить на аукционе, выставить лот, ЕРТТП"
         canonical="/auktsiony"
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />

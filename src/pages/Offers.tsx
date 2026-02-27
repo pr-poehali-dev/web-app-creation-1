@@ -369,8 +369,8 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     <div className="min-h-screen bg-background flex flex-col">
       <SEO 
         title="Предложения товаров и услуг"
-        description="Актуальные предложения товаров и услуг от компаний Якутии. Найдите поставщика, сравните цены и оформите сделку на ЕРТТП."
-        keywords="предложения товаров Якутия, поставщики Якутск, купить товары Якутия, услуги Якутия"
+        description="Актуальные предложения товаров и услуг от компаний России. Найдите поставщика, сравните цены и оформите сделку на ЕРТТП."
+        keywords="предложения товаров, купить товары оптом, поставщики, услуги, ЕРТТП"
         canonical="/predlozheniya"
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
