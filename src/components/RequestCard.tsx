@@ -33,8 +33,8 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const districtName = DISTRICTS.find(d => d.id === request.district)?.name;
   const isService = request.category === 'utilities';
   const isTransport = request.category === 'transport';
-  const isCargo = isTransport && request.transportServiceType === 'cargo';
-  const isPassenger = isTransport && request.transportServiceType === 'passenger';
+  const isCargo = isTransport && (request.transportServiceType === 'cargo' || request.transportServiceType === 'Грузоперевозки');
+  const isPassenger = isTransport && (request.transportServiceType === 'passenger' || request.transportServiceType === 'Пассажирские перевозки');
   
   const transportTitle = isCargo ? 'Грузоперевозки' : isPassenger ? 'Пассажирские перевозки' : request.title;
 
