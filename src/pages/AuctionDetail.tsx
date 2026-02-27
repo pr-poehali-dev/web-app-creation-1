@@ -64,7 +64,7 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
       <SEO
         title={auction.title}
         description={`${auction.description ? auction.description.slice(0, 150) : ''} — стартовая цена ${(auction.startingPrice || auction.currentPrice || 0).toLocaleString('ru-RU')} ₽. ${auction.category}, ${districtName || auction.district}.`}
-        keywords={`${auction.title}, аукцион ${auction.category}, торги ${districtName || auction.district}, ЕРТТП`}
+        keywords={`${auction.title}, аукцион ${auction.category}, торги онлайн, ЕРТТП`}
         canonical={`/auction/${auction.id}`}
         image={auction.images?.[0]?.url}
       />

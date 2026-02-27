@@ -119,7 +119,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       <SEO
         title={request.title}
         description={`${request.description ? request.description.slice(0, 150) : ''} — бюджет ${request.pricePerUnit.toLocaleString('ru-RU')} ₽/${request.unit}. ${request.category}, ${request.district}.`}
-        keywords={`${request.title}, ${request.category}, запрос ${request.district}, ЕРТТП`}
+        keywords={`${request.title}, ${request.category}, запрос на поставку, ЕРТТП`}
         canonical={`/request/${request.id}`}
         image={request.images?.[0]?.url}
       />
