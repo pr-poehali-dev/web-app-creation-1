@@ -13,5 +13,6 @@ Allow: /
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: /*?reload*
 
 Sitemap: https://erttp.ru/sitemap.xml
