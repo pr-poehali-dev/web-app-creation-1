@@ -33,6 +33,10 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const districtName = DISTRICTS.find(d => d.id === request.district)?.name;
   const isService = request.category === 'utilities';
   const isTransport = request.category === 'transport';
+  const isCargo = isTransport && request.transportServiceType === 'cargo';
+  const isPassenger = isTransport && request.transportServiceType === 'passenger';
+  
+  const transportTitle = isCargo ? 'Грузоперевозки' : isPassenger ? 'Пассажирские перевозки' : request.title;
 
   const handleCardClick = () => {
     navigate(`/request/${request.id}`);
@@ -74,23 +78,39 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
         <CardHeader className="p-0">
           <div className="relative aspect-[16/9] bg-muted overflow-hidden">
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex items-center gap-2 opacity-30">
-                <div className="h-16 w-16 overflow-hidden rounded-md flex items-center justify-center">
-                  <img 
-                    src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
-                    alt="ЕРТТП" 
-                    className="h-full w-full scale-[2.5] brightness-125 contrast-125"
-                    style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)', transform: 'scaleX(-1)' }}
-                  />
+              {isTransport ? (
+                <div className="flex flex-col items-center gap-1 opacity-40">
+                  {isCargo ? (
+                    <>
+                      <Icon name="Truck" className="h-12 w-12 text-primary" />
+                      <span className="text-[11px] font-bold text-primary tracking-wider">ГРУЗОВЫЕ</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon name="Car" className="h-12 w-12 text-primary" />
+                      <span className="text-[11px] font-bold text-primary tracking-wider">ТАКСИ</span>
+                    </>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-2 opacity-30">
+                  <div className="h-16 w-16 overflow-hidden rounded-md flex items-center justify-center">
+                    <img 
+                      src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
+                      alt="ЕРТТП" 
+                      className="h-full w-full scale-[2.5] brightness-125 contrast-125"
+                      style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)', transform: 'scaleX(-1)' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="p-2.5 space-y-1.5">
           <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-snug">
-            {request.title}
+            {isTransport ? transportTitle : request.title}
           </h3>
 
           <div className="space-y-1">
