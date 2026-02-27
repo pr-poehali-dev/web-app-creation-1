@@ -267,6 +267,8 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         req_dict['transportCapacity'] = req_dict.pop('transport_capacity', None)
         transport_dt = req_dict.pop('transport_date_time', None)
         req_dict['transportDateTime'] = transport_dt.isoformat() if transport_dt else None
+        transport_dep_dt = req_dict.pop('transport_departure_date_time', None)
+        req_dict['transportDepartureDateTime'] = transport_dep_dt.isoformat() if transport_dep_dt else None
         transport_price = req_dict.pop('transport_price', None)
         req_dict['transportPrice'] = float(transport_price) if transport_price is not None else None
         req_dict['transportPriceType'] = req_dict.pop('transport_price_type', None)
@@ -302,7 +304,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
             r.responses, r.deadline,
             r.transport_service_type, r.transport_route, r.transport_type, r.transport_capacity,
-            r.transport_date_time, r.transport_price, r.transport_price_type,
+            r.transport_date_time, r.transport_departure_date_time, r.transport_price, r.transport_price_type,
             r.transport_negotiable, r.transport_comment, r.transport_all_districts,
             COALESCE(
                 json_agg(
@@ -329,7 +331,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
             r.responses, r.deadline,
             r.transport_service_type, r.transport_route, r.transport_type, r.transport_capacity,
-            r.transport_date_time, r.transport_price, r.transport_price_type,
+            r.transport_date_time, r.transport_departure_date_time, r.transport_price, r.transport_price_type,
             r.transport_negotiable, r.transport_comment, r.transport_all_districts,
             v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.verification_status
     """
@@ -409,6 +411,8 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     req_dict['transportCapacity'] = req_dict.pop('transport_capacity', None)
     transport_dt = req_dict.pop('transport_date_time', None)
     req_dict['transportDateTime'] = transport_dt.isoformat() if transport_dt else None
+    transport_dep_dt = req_dict.pop('transport_departure_date_time', None)
+    req_dict['transportDepartureDateTime'] = transport_dep_dt.isoformat() if transport_dep_dt else None
     transport_price = req_dict.pop('transport_price', None)
     req_dict['transportPrice'] = float(transport_price) if transport_price is not None else None
     req_dict['transportPriceType'] = req_dict.pop('transport_price_type', None)
@@ -449,14 +453,15 @@ def create_request(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
             deadline_start, deadline_end, negotiable_deadline, budget, negotiable_budget,
             negotiable_quantity, negotiable_price,
             transport_service_type, transport_route, transport_type, transport_capacity,
-            transport_date_time, transport_price, transport_price_type,
+            transport_date_time, transport_departure_date_time, transport_price, transport_price_type,
             transport_negotiable, transport_comment, transport_all_districts
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                  %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                  %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         RETURNING id, created_at
     """
     
     transport_dt = body.get('transportDateTime')
+    transport_dep_dt = body.get('transportDepartureDateTime')
     transport_price_val = body.get('transportPrice')
     
     cur.execute(sql, (
@@ -487,6 +492,7 @@ def create_request(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
         body.get('transportType'),
         body.get('transportCapacity'),
         transport_dt if transport_dt else None,
+        transport_dep_dt if transport_dep_dt else None,
         float(transport_price_val) if transport_price_val else None,
         body.get('transportPriceType'),
         body.get('transportNegotiable', False),
@@ -582,6 +588,7 @@ def update_request(request_id: str, event: Dict[str, Any], headers: Dict[str, st
         'transportType': 'transport_type',
         'transportCapacity': 'transport_capacity',
         'transportDateTime': 'transport_date_time',
+        'transportDepartureDateTime': 'transport_departure_date_time',
         'transportPrice': 'transport_price',
         'transportPriceType': 'transport_price_type',
         'transportNegotiable': 'transport_negotiable',

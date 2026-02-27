@@ -167,7 +167,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     <Card>
       <CardContent className="pt-6 space-y-6">
         <div className="flex items-start justify-between">
-          <h2 className="text-2xl font-bold">{request.title}</h2>
+          {!isTransport && <h2 className="text-2xl font-bold">{request.title}</h2>}
+          {isTransport && <div />}
           {!isEditing && (
             <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
               <Icon name="Pencil" className="w-4 h-4 mr-2" />
@@ -178,14 +179,16 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
 
         {isEditing ? (
           <div className="space-y-5">
-            <div className="space-y-2">
-              <Label>Название</Label>
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Название запроса"
-              />
-            </div>
+            {!isTransport && (
+              <div className="space-y-2">
+                <Label>Название</Label>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Название запроса"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Описание</Label>
@@ -197,21 +200,23 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Ценовая политика</Label>
-              <Select value={pricingType} onValueChange={handlePricingTypeChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите тип цены" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fixed">Фиксированная цена</SelectItem>
-                  <SelectItem value="negotiable">Ваши предложения (торг)</SelectItem>
-                  <SelectItem value="not_set">Не указана</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {!isTransport && (
+              <div className="space-y-2">
+                <Label>Ценовая политика</Label>
+                <Select value={pricingType} onValueChange={handlePricingTypeChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите тип цены" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Фиксированная цена</SelectItem>
+                    <SelectItem value="negotiable">Ваши предложения (торг)</SelectItem>
+                    <SelectItem value="not_set">Не указана</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-            {pricingType === 'fixed' && (
+            {!isTransport && pricingType === 'fixed' && (
               <div className="space-y-2">
                 <Label>Цена, ₽</Label>
                 <Input
