@@ -125,10 +125,10 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       />
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
-      <main className="container mx-auto px-4 py-8 flex-1">
+      <main className="container mx-auto px-4 py-3 flex-1">
         <BackButton fallbackUrl="/my-orders?tab=my-responses" />
 
-        <div className="grid gap-8 lg:grid-cols-3 mb-8">
+        <div className="grid gap-3 lg:grid-cols-3 mb-3 mt-1">
           <div className="lg:col-span-2">
             {(request.images.length > 0 || (showVideo && request.video)) && (
             <div className="relative mb-4">
@@ -258,10 +258,13 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
               </div>
             )}
 
-            <RequestInfoCard request={request} />
+            {/* На мобильных показываем информацию сразу после медиа */}
+            <div className="lg:hidden">
+              <RequestInfoCard request={request} />
+            </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-3">
             {existingResponse && (
               <Card>
                 <CardContent className="pt-4 space-y-2">
@@ -335,6 +338,11 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
             )}
 
             <RequestAuthorCard author={request.author} />
+
+            {/* На десктопе показываем информацию под кнопками */}
+            <div className="hidden lg:block">
+              <RequestInfoCard request={request} />
+            </div>
           </div>
         </div>
       </main>
