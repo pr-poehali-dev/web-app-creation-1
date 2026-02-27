@@ -70,9 +70,9 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
               <h1 className="text-lg md:text-xl font-bold line-clamp-2">{title}</h1>
               {author?.name && (
-                <span className="flex items-center gap-1 text-sm text-muted-foreground whitespace-nowrap">
-                  <Icon name="User" className="w-3.5 h-3.5" />
-                  {author.name}
+                <span className="flex items-center gap-1 text-sm text-muted-foreground min-w-0">
+                  <Icon name="User" className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">{author.name}</span>
                 </span>
               )}
             </div>
