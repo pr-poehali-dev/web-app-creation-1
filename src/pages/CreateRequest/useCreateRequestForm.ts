@@ -34,6 +34,7 @@ export function useCreateRequestForm() {
     transportType: '',
     transportCapacity: '',
     transportDateTime: '',
+    transportDepartureDateTime: '',
     transportPrice: '',
     transportPriceType: '',
     transportNegotiable: false,
@@ -47,6 +48,32 @@ export function useCreateRequestForm() {
   const [videoPreview, setVideoPreview] = useState<string>('');
 
   const handleInputChange = (field: string, value: string | boolean) => {
+    if (field === 'publicationDuration' && typeof value === 'string') {
+      const departure = formData.transportDepartureDateTime;
+      if (departure && value) {
+        const depDate = departure.split('T')[0];
+        if (value > depDate) {
+          toast({
+            title: 'Некорректная дата',
+            description: 'Срок публикации не может быть позже даты выезда',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+    }
+
+    if (field === 'transportDepartureDateTime' && typeof value === 'string') {
+      const pubDuration = formData.publicationDuration;
+      if (pubDuration && value) {
+        const depDate = value.split('T')[0];
+        if (pubDuration > depDate) {
+          setFormData(prev => ({ ...prev, publicationDuration: depDate, [field]: value }));
+          return;
+        }
+      }
+    }
+
     if (field === 'expiryDate' && typeof value === 'string') {
       const startDate = formData.startDate;
       if (startDate && value && new Date(value) < new Date(startDate)) {

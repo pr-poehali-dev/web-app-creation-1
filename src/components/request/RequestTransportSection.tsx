@@ -15,6 +15,7 @@ interface RequestTransportSectionProps {
     transportType: string;
     transportCapacity: string;
     transportDateTime: string;
+    transportDepartureDateTime: string;
     transportPrice: string;
     transportPriceType: string;
     transportNegotiable: boolean;
@@ -27,6 +28,15 @@ interface RequestTransportSectionProps {
   onDistrictToggle: (districtId: string) => void;
 }
 
+function formatRoute(raw: string): string {
+  return raw
+    .trim()
+    .split(/[\s\-–—]+/)
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join('-');
+}
+
 const SERVICE_TYPES = [
   'Пассажирские перевозки',
   'Грузоперевозки',
@@ -34,7 +44,25 @@ const SERVICE_TYPES = [
   'Доставка',
 ];
 
-const TRANSPORT_TYPES = [
+const TRANSPORT_TYPES_CARGO = [
+  'Микроавтобус',
+  'Грузовик',
+  'Теплый/Холодный рефрижератор',
+  'Открытый фургон',
+  'Спецтехника',
+];
+
+const TRANSPORT_TYPES_PASSENGER = [
+  'По умолчанию',
+  'Легковой автомобиль',
+  'Кроссовер',
+  'Минивэн',
+  'Микроавтобус',
+  'Автобус',
+  'Спецтехника',
+];
+
+const TRANSPORT_TYPES_DEFAULT = [
   'По умолчанию',
   'Легковой автомобиль',
   'Кроссовер',
@@ -45,11 +73,19 @@ const TRANSPORT_TYPES = [
   'Спецтехника',
 ];
 
-const PRICE_TYPES = [
+const PRICE_TYPES_ALL = [
   'За рейс',
   'За час',
   'За км',
   'За тонну',
+  'За место',
+  'Договорная',
+];
+
+const PRICE_TYPES_PASSENGER = [
+  'За рейс',
+  'За час',
+  'За км',
   'За место',
   'Договорная',
 ];
@@ -168,7 +204,11 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
             id="transportRoute"
             value={formData.transportRoute}
             onChange={(e) => onInputChange('transportRoute', e.target.value)}
-            placeholder="Город отправления — Город назначения"
+            onBlur={(e) => {
+              const formatted = formatRoute(e.target.value);
+              if (formatted) onInputChange('transportRoute', formatted);
+            }}
+            placeholder="Нюрба-Якутск"
           />
         </div>
 
@@ -249,9 +289,13 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
         <CollapsibleSelectList
           label="Желаемый тип транспорта *"
           placeholder="Выберите тип транспорта"
-          options={formData.transportServiceType === 'Пассажирские перевозки'
-            ? TRANSPORT_TYPES.filter(t => t !== 'Грузовик')
-            : TRANSPORT_TYPES}
+          options={
+            formData.transportServiceType === 'Грузоперевозки'
+              ? TRANSPORT_TYPES_CARGO
+              : formData.transportServiceType === 'Пассажирские перевозки'
+              ? TRANSPORT_TYPES_PASSENGER
+              : TRANSPORT_TYPES_DEFAULT
+          }
           value={formData.transportType}
           onChange={(v) => onInputChange('transportType', v)}
         />
@@ -266,20 +310,36 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="transportDateTime">Дата и время</Label>
-          <Input
-            id="transportDateTime"
-            type="datetime-local"
-            value={formData.transportDateTime}
-            onChange={(e) => onInputChange('transportDateTime', e.target.value)}
-          />
-        </div>
+        {formData.transportServiceType === 'Пассажирские перевозки' ? (
+          <div className="space-y-2">
+            <Label htmlFor="transportDepartureDateTime">Желаемая дата и время выезда</Label>
+            <Input
+              id="transportDepartureDateTime"
+              type="datetime-local"
+              value={formData.transportDepartureDateTime}
+              onChange={(e) => onInputChange('transportDepartureDateTime', e.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="transportDateTime">Дата и время</Label>
+            <Input
+              id="transportDateTime"
+              type="datetime-local"
+              value={formData.transportDateTime}
+              onChange={(e) => onInputChange('transportDateTime', e.target.value)}
+            />
+          </div>
+        )}
 
         <CollapsibleSelectList
           label="Тип цены"
           placeholder="Выберите тип цены"
-          options={PRICE_TYPES}
+          options={
+            formData.transportServiceType === 'Пассажирские перевозки'
+              ? PRICE_TYPES_PASSENGER
+              : PRICE_TYPES_ALL
+          }
           value={formData.transportPriceType}
           onChange={(v) => onInputChange('transportPriceType', v)}
         />

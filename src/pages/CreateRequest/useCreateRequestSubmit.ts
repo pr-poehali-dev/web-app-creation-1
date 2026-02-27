@@ -28,6 +28,7 @@ interface FormData {
   transportType: string;
   transportCapacity: string;
   transportDateTime: string;
+  transportDepartureDateTime: string;
   transportPrice: string;
   transportPriceType: string;
   transportNegotiable: boolean;
@@ -79,6 +80,7 @@ export function useCreateRequestSubmit(
         transportType: formData.transportType || undefined,
         transportCapacity: formData.transportCapacity || undefined,
         transportDateTime: formData.transportDateTime || undefined,
+        transportDepartureDateTime: formData.transportDepartureDateTime || undefined,
         transportPrice: formData.transportPrice ? parseFloat(formData.transportPrice) : undefined,
         transportPriceType: formData.transportPriceType || undefined,
         transportNegotiable: formData.transportNegotiable,

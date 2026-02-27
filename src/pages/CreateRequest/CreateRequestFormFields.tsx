@@ -44,6 +44,7 @@ interface FormData {
   transportType: string;
   transportCapacity: string;
   transportDateTime: string;
+  transportDepartureDateTime: string;
   transportPrice: string;
   transportPriceType: string;
   transportNegotiable: boolean;
@@ -106,6 +107,7 @@ export default function CreateRequestFormFields({
             transportType: formData.transportType,
             transportCapacity: formData.transportCapacity,
             transportDateTime: formData.transportDateTime,
+            transportDepartureDateTime: formData.transportDepartureDateTime,
             transportPrice: formData.transportPrice,
             transportPriceType: formData.transportPriceType,
             transportNegotiable: formData.transportNegotiable,
@@ -172,56 +174,58 @@ export default function CreateRequestFormFields({
           <CardTitle>Дополнительно</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label>Срок актуальности запроса (необязательно)</Label>
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              <div>
-                <Label htmlFor="startDate" className="text-sm text-muted-foreground">Дата начала</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="startDate"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => onInputChange('startDate', e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    max={formData.expiryDate || undefined}
-                  />
-                  {formData.startDate && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onInputChange('startDate', '')}
-                    >
-                      <Icon name="X" className="h-4 w-4" />
-                    </Button>
-                  )}
+          {formData.category !== 'transport' && (
+            <div>
+              <Label>Срок актуальности запроса (необязательно)</Label>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <Label htmlFor="startDate" className="text-sm text-muted-foreground">Дата начала</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => onInputChange('startDate', e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      max={formData.expiryDate || undefined}
+                    />
+                    {formData.startDate && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onInputChange('startDate', '')}
+                      >
+                        <Icon name="X" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="expiryDate" className="text-sm text-muted-foreground">Дата окончания</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="expiryDate"
-                    type="date"
-                    value={formData.expiryDate}
-                    onChange={(e) => onInputChange('expiryDate', e.target.value)}
-                    min={formData.startDate || new Date().toISOString().split('T')[0]}
-                  />
-                  {formData.expiryDate && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onInputChange('expiryDate', '')}
-                    >
-                      <Icon name="X" className="h-4 w-4" />
-                    </Button>
-                  )}
+                <div>
+                  <Label htmlFor="expiryDate" className="text-sm text-muted-foreground">Дата окончания</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="expiryDate"
+                      type="date"
+                      value={formData.expiryDate}
+                      onChange={(e) => onInputChange('expiryDate', e.target.value)}
+                      min={formData.startDate || new Date().toISOString().split('T')[0]}
+                    />
+                    {formData.expiryDate && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onInputChange('expiryDate', '')}
+                      >
+                        <Icon name="X" className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
           <div>
             <Label htmlFor="publicationDuration">Срок публикации *</Label>
             <div className="flex gap-2 mt-2">
@@ -231,6 +235,11 @@ export default function CreateRequestFormFields({
                 value={formData.publicationDuration}
                 onChange={(e) => onInputChange('publicationDuration', e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
+                max={
+                  formData.transportServiceType === 'Пассажирские перевозки' && formData.transportDepartureDateTime
+                    ? formData.transportDepartureDateTime.split('T')[0]
+                    : undefined
+                }
                 required
               />
               {formData.publicationDuration && (
@@ -245,7 +254,9 @@ export default function CreateRequestFormFields({
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Дата, до которой запрос будет активен
+              {formData.transportServiceType === 'Пассажирские перевозки' && formData.transportDepartureDateTime
+                ? `Не позже даты выезда: ${formData.transportDepartureDateTime.split('T')[0]}`
+                : 'Дата, до которой запрос будет активен'}
             </p>
           </div>
         </CardContent>

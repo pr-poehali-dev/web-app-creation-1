@@ -146,6 +146,7 @@ export interface Request {
   transportType?: string;
   transportCapacity?: string;
   transportDateTime?: string;
+  transportDepartureDateTime?: string;
   transportPrice?: number;
   transportPriceType?: string;
   transportNegotiable?: boolean;
