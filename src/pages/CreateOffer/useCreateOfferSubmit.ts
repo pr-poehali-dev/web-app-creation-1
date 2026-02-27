@@ -44,8 +44,8 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
     formData: SubmitData,
     videoPreview: string,
     imagePreviews: string[],
-    isDraft: boolean = false
   ) => {
+    const isDraft = false;
     setIsSubmitting(true);
 
     try {
@@ -275,9 +275,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         addOffer(newOffer);
         toast({
           title: 'Успешно',
-          description: isDraft 
-            ? 'Предложение сохранено как черновик'
-            : 'Предложение опубликовано',
+          description: 'Предложение опубликовано',
         });
       }
       

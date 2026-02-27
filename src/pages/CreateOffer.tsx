@@ -257,17 +257,6 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               
               <Button
                 type="button"
-                variant="outline"
-                size="lg"
-                onClick={(e) => handleSubmit(e as unknown as React.FormEvent, true)}
-                disabled={isSubmitting}
-              >
-                <Icon name="Save" className="mr-2 h-4 w-4" />
-                Сохранить черновик
-              </Button>
-              
-              <Button
-                type="button"
                 variant="ghost"
                 size="lg"
                 onClick={() => navigate('/my-offers')}

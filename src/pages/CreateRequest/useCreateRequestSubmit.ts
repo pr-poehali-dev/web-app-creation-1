@@ -45,7 +45,8 @@ export function useCreateRequestSubmit(
   const { addRequest } = useOffers();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const buildRequestData = (isDraft: boolean) => {
+  const buildRequestData = () => {
+    const isDraft = false;
     const isService = formData.category === 'utilities';
 
     return {
@@ -90,12 +91,12 @@ export function useCreateRequestSubmit(
     };
   };
 
-  const handleSubmit = async (e: React.FormEvent, isDraft: boolean = false) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const requestData = buildRequestData(isDraft);
+      const requestData = buildRequestData();
       const result = await requestsAPI.createRequest(requestData);
 
       markDataAsUpdated('requests');
@@ -108,7 +109,7 @@ export function useCreateRequestSubmit(
 
       toast({
         title: 'Успешно',
-        description: isDraft ? 'Запрос сохранен как черновик' : 'Запрос опубликован',
+        description: 'Запрос опубликован',
       });
 
       navigate('/zaprosy');

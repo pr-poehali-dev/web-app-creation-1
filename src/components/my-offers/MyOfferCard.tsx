@@ -184,12 +184,6 @@ export default function MyOfferCard({
               <Icon name="Clock" className="mr-2 h-4 w-4" />
               Продлить публикацию
             </DropdownMenuItem>
-            {offer.status === 'draft' && (
-              <DropdownMenuItem onClick={() => onActivate(offer.id)}>
-                <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-                Опубликовать
-              </DropdownMenuItem>
-            )}
             {offer.status === 'active' && (
               <DropdownMenuItem onClick={() => onArchive(offer.id)}>
                 <Icon name="Archive" className="mr-2 h-4 w-4" />

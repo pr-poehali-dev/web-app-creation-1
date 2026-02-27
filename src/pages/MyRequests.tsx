@@ -276,12 +276,6 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
                 <Icon name="Pencil" className="mr-2 h-4 w-4" />
                 Редактировать
               </DropdownMenuItem>
-              {request.status === 'draft' && (
-                <DropdownMenuItem onClick={() => handleActivateRequest(request.id)}>
-                  <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-                  Опубликовать
-                </DropdownMenuItem>
-              )}
               {request.status === 'closed' && (
                 <DropdownMenuItem onClick={() => navigate(`/edit-request/${request.id}?publish=1`)}>
                   <Icon name="ArchiveRestore" className="mr-2 h-4 w-4" />

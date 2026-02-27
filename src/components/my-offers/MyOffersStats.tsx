@@ -17,7 +17,7 @@ interface MyOffersStatsProps {
 
 export default function MyOffersStats({ stats, onFilterChange }: MyOffersStatsProps) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onFilterChange('all')}>
         <CardContent className="pt-6 text-center">
           <div className="text-3xl font-bold text-primary">{stats.total}</div>
@@ -28,12 +28,6 @@ export default function MyOffersStats({ stats, onFilterChange }: MyOffersStatsPr
         <CardContent className="pt-6 text-center">
           <div className="text-3xl font-bold text-green-500">{stats.active}</div>
           <p className="text-sm text-muted-foreground mt-1">Активных</p>
-        </CardContent>
-      </Card>
-      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onFilterChange('draft')}>
-        <CardContent className="pt-6 text-center">
-          <div className="text-3xl font-bold text-gray-500">{stats.draft}</div>
-          <p className="text-sm text-muted-foreground mt-1">Черновики</p>
         </CardContent>
       </Card>
       <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onFilterChange('moderation')}>
