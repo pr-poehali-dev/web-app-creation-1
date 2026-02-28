@@ -266,7 +266,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 o.transport_all_districts,
                 o.transport_service_type, o.transport_route, o.transport_type, o.transport_capacity,
                 o.transport_date_time, o.transport_price, o.transport_price_type,
-                o.transport_negotiable, o.transport_comment,
+                o.transport_negotiable, o.transport_comment, o.transport_waypoints,
                 COALESCE(u.rating, 100.0) as seller_rating
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
@@ -341,6 +341,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'transportNegotiable': offer.get('transport_negotiable', False),
                 'transportComment': offer.get('transport_comment'),
                 'transportAllDistricts': offer.get('transport_all_districts', False),
+                'transportWaypoints': (offer.get('transport_waypoints') or []),
                 'seller': {
                     'rating': seller_rating
                 }

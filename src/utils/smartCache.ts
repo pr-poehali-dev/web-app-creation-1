@@ -8,7 +8,7 @@ interface CacheEntry<T> {
   version: number;
 }
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE_DURATION = 2 * 60 * 1000; // 2 минуты
 
 export class SmartCache {
