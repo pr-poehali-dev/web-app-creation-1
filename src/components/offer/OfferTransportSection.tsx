@@ -141,6 +141,27 @@ function AddDistrictRow({ district, priceType, originName, onAdd }: { district: 
   );
 }
 
+function formatCityName(str: string): string {
+  return str.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+}
+
+function formatRoute(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return trimmed;
+  const parts = trimmed.split(/\s*[-–—]+\s*/);
+  if (parts.length >= 2) {
+    return parts.map(formatCityName).filter(Boolean).join(' - ');
+  }
+  const words = trimmed.split(/\s+/);
+  if (words.length >= 2) {
+    const mid = Math.ceil(words.length / 2);
+    const from = words.slice(0, mid).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    const to = words.slice(mid).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    return `${from} - ${to}`;
+  }
+  return formatCityName(trimmed);
+}
+
 export default function OfferTransportSection({ formData, transportWaypoints = [], onInputChange, onDistrictToggle, onAddWaypoint, onRemoveWaypoint, onWaypointPriceChange }: OfferTransportSectionProps) {
   const { detectedDistrictId } = useDistrict();
   const [districtInput, setDistrictInput] = useState('');
@@ -205,14 +226,9 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
             value={formData.transportRoute}
             onChange={(e) => onInputChange('transportRoute', e.target.value)}
             onBlur={(e) => {
-              const raw = e.target.value.trim();
-              if (!raw) return;
-              const formatted = raw
-                .split(/\s*[-–—]+\s*/)
-                .map(part => part.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '))
-                .filter(Boolean)
-                .join(' - ');
-              onInputChange('transportRoute', formatted);
+              const raw = e.target.value;
+              if (!raw.trim()) return;
+              onInputChange('transportRoute', formatRoute(raw));
             }}
             placeholder="Город отправления — Город назначения"
           />
@@ -336,6 +352,7 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                   placeholder="Откуда"
                   value={newWaypointFrom}
                   onChange={(e) => setNewWaypointFrom(e.target.value)}
+                  onBlur={(e) => setNewWaypointFrom(formatCityName(e.target.value))}
                   className="h-8 text-xs"
                 />
                 <span className="text-muted-foreground text-xs">→</span>
@@ -343,6 +360,7 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                   placeholder="Куда"
                   value={newWaypointTo}
                   onChange={(e) => setNewWaypointTo(e.target.value)}
+                  onBlur={(e) => setNewWaypointTo(formatCityName(e.target.value))}
                   className="h-8 text-xs"
                 />
                 <Input
@@ -357,7 +375,7 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                   type="button"
                   disabled={!newWaypointFrom || !newWaypointTo || !newWaypointPrice}
                   onClick={() => {
-                    const label = `${newWaypointFrom.trim()} - ${newWaypointTo.trim()}`;
+                    const label = `${formatCityName(newWaypointFrom)} - ${formatCityName(newWaypointTo)}`;
                     const id = `wp-${Date.now()}`;
                     onAddWaypoint?.(id, label);
                     setTimeout(() => {
