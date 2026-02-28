@@ -86,7 +86,7 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
     # Email-уведомление
     try:
         conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
-        conn.request('POST', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43',  # email-notify
+        conn.request('POST', '/dd3295a9-ffa3-4842-8c95-de00a018ecf0',  # email-notify
                     notification_data, headers)
         response = conn.getresponse()
         response.read()
