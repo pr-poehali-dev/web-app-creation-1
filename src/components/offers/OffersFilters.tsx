@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { SearchFilters } from '@/types/offer';
-import type { District } from '@/types/district';
+import type { District } from '@/contexts/DistrictContext';
 
 interface OffersFiltersProps {
   filters: SearchFilters;
