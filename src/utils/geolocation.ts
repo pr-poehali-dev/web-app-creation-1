@@ -25,7 +25,10 @@ export interface IPLocationResponse {
 
 export const detectLocationByIP = async (): Promise<LocationData> => {
   try {
-    const response = await fetch('https://ipapi.co/json/');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+    clearTimeout(timeoutId);
     const data: IPLocationResponse = await response.json();
     
     const coordinates = data.loc ? {

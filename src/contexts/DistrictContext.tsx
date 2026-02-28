@@ -116,7 +116,10 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       if (isFirstVisit()) {
         setIsDetecting(true);
         try {
-          const location = await detectLocationByIP();
+          const location = await Promise.race([
+            detectLocationByIP(),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+          ]);
           console.log('🌍 Определено местоположение:', {
             city: location.city,
             district: location.district,
