@@ -117,8 +117,9 @@ function CollapsibleSelectList({
   );
 }
 
-function AddDistrictRow({ district, priceType, onAdd }: { district: { id: string; name: string }; priceType: string; onAdd: (price: string) => void }) {
+function AddDistrictRow({ district, priceType, originName, onAdd }: { district: { id: string; name: string }; priceType: string; originName?: string; onAdd: (price: string) => void }) {
   const [price, setPrice] = useState('');
+  const routeLabel = originName ? `${originName} — ${district.name}` : district.name;
   return (
     <div className="flex items-center gap-1.5">
       <Input
@@ -129,7 +130,7 @@ function AddDistrictRow({ district, priceType, onAdd }: { district: { id: string
         className="h-7 text-xs w-28"
         min="0"
       />
-      <span className="text-xs text-muted-foreground flex-1">{district.name} / {priceType || 'место'}</span>
+      <span className="text-xs text-muted-foreground flex-1">{routeLabel} / {priceType || 'место'}</span>
       <button
         type="button"
         onClick={() => { if (price && Number(price) > 0) onAdd(price); }}
@@ -261,6 +262,9 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                       {additionalDistricts.map(d => {
                         const checked = formData.availableDistricts.includes(d.id);
                         const waypoint = transportWaypoints.find(w => w.id === d.id);
+                        const originDistrict = DISTRICTS.find(dist => dist.id === formData.district);
+                        const originName = originDistrict?.name;
+                        const routeLabel = originName ? `${originName} — ${d.name}` : d.name;
                         return (
                           <div key={d.id} className="space-y-1">
                             {checked ? (
@@ -273,7 +277,7 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                                   className="h-7 text-xs w-28"
                                   min="0"
                                 />
-                                <span className="text-xs text-muted-foreground flex-1">{d.name} / {formData.transportPriceType || 'место'}</span>
+                                <span className="text-xs text-muted-foreground flex-1">{routeLabel} / {formData.transportPriceType || 'место'}</span>
                                 <button
                                   type="button"
                                   onClick={() => { onDistrictToggle(d.id); onRemoveWaypoint?.(d.id); }}
@@ -285,6 +289,7 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                               <AddDistrictRow
                                 district={d}
                                 priceType={formData.transportPriceType}
+                                originName={originName}
                                 onAdd={(price) => {
                                   onDistrictToggle(d.id);
                                   onAddWaypoint?.(d.id, d.name);

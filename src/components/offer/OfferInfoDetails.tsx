@@ -27,6 +27,7 @@ interface OfferInfoDetailsProps {
   transportWaypoints?: TransportWaypoint[];
   transportPriceType?: string;
   transportComment?: string;
+  transportRoute?: string;
 }
 
 export default function OfferInfoDetails({
@@ -51,10 +52,13 @@ export default function OfferInfoDetails({
   transportWaypoints = [],
   transportPriceType,
   transportComment,
+  transportRoute,
 }: OfferInfoDetailsProps) {
   const isTransport = category === 'transport';
 
   const activeWaypoints = transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0);
+
+  const routeOrigin = transportRoute ? transportRoute.split(/\s*[—–-]\s*/)[0].trim() : '';
 
   const getDistrictName = (id: string) => DISTRICTS.find(d => d.id === id)?.name || id;
 
@@ -80,7 +84,9 @@ export default function OfferInfoDetails({
                     <div key={wp.id} className="flex items-center justify-between rounded-md bg-muted/40 px-2.5 py-1.5">
                       <div className="flex items-center gap-1.5">
                         <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                        <span className="text-sm">{wp.address}</span>
+                        <span className="text-sm">
+                          {routeOrigin ? `${routeOrigin} — ${wp.address}` : wp.address}
+                        </span>
                       </div>
                       <span className="text-sm font-semibold text-primary ml-2 whitespace-nowrap">
                         {wp.price!.toLocaleString('ru-RU')} ₽

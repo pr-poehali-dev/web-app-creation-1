@@ -142,6 +142,7 @@ export default function OfferInfoCard({
     transportWaypoints,
     transportPriceType,
     transportComment,
+    transportRoute,
     availableDistricts,
   };
 
