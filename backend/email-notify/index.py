@@ -119,7 +119,7 @@ def handler(event: dict, context) -> dict:
                                     <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: -0.5px;">
                                         🚀 ЕРТТП
                                     </h1>
-                                    <p style="margin: 8px 0 0 0; color: #dbeafe; font-size: 14px;">Единый Реестр Транспортно-Технологического Присоединения</p>
+                                    <p style="margin: 8px 0 0 0; color: #dbeafe; font-size: 14px;">Единая Региональная Товарная Торговая Площадка</p>
                                 </td>
                             </tr>
                             

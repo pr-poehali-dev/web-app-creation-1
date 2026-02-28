@@ -135,14 +135,15 @@ self.addEventListener('push', (event) => {
 // Обработка клика по уведомлению
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const urlToOpen = event.notification.data?.url || '/';
+  const relativeUrl = event.notification.data?.url || '/';
+  const urlToOpen = relativeUrl.startsWith('http') ? relativeUrl : (self.location.origin + relativeUrl);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus().then(() => {
-            return client.postMessage({ type: 'NOTIFICATION_CLICK', url: urlToOpen });
+            return client.postMessage({ type: 'NOTIFICATION_CLICK', url: relativeUrl });
           });
         }
       }
