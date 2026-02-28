@@ -204,6 +204,19 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             RETURNING user_id, title
         """)
         expired_offers = cur.fetchall()
+
+        # Авто-архивация пассажирских перевозок с истёкшей датой выезда
+        cur.execute("""
+            UPDATE t_p42562714_web_app_creation_1.offers
+            SET status = 'archived', updated_at = NOW()
+            WHERE status = 'active'
+              AND transport_service_type = 'Пассажирские перевозки'
+              AND transport_date_time IS NOT NULL
+              AND transport_date_time != ''
+              AND CAST(transport_date_time AS timestamp) < NOW()
+            RETURNING user_id, title
+        """)
+        expired_offers += cur.fetchall()
         conn.commit()
 
         # Сбрасываем кеш если были архивированы записи

@@ -34,7 +34,7 @@ def handler(event: dict, context) -> dict:
 
     # 1. Архивируем запросы с истёкшим expiry_date
     cur.execute("""
-        UPDATE requests
+        UPDATE t_p42562714_web_app_creation_1.requests
         SET status = 'archived', archived_at = %s, updated_at = %s
         WHERE status = 'active'
           AND expiry_date IS NOT NULL
@@ -45,7 +45,7 @@ def handler(event: dict, context) -> dict:
 
     # 2. Архивируем предложения с истёкшим expiry_date
     cur.execute("""
-        UPDATE offers
+        UPDATE t_p42562714_web_app_creation_1.offers
         SET status = 'archived', archived_at = %s, updated_at = %s
         WHERE status = 'active'
           AND expiry_date IS NOT NULL
@@ -53,6 +53,19 @@ def handler(event: dict, context) -> dict:
         RETURNING id
     """, (now, now, now))
     archived_offers = [row['id'] for row in cur.fetchall()]
+
+    # 2b. Архивируем пассажирские перевозки с истёкшей датой выезда
+    cur.execute("""
+        UPDATE t_p42562714_web_app_creation_1.offers
+        SET status = 'archived', archived_at = %s, updated_at = %s
+        WHERE status = 'active'
+          AND transport_service_type = 'Пассажирские перевозки'
+          AND transport_date_time IS NOT NULL
+          AND transport_date_time != ''
+          AND CAST(transport_date_time AS timestamp) < %s
+        RETURNING id
+    """, (now, now, now))
+    archived_offers += [row['id'] for row in cur.fetchall()]
 
     # 3. Архивируем отклики (orders) для архивированных запросов и предложений
     # — статусы не принятых/не завершённых: new, counter_offer, accepted -> archived
@@ -64,8 +77,8 @@ def handler(event: dict, context) -> dict:
     if archived_offer_ids:
         placeholders = ','.join(['%s'] * len(archived_offer_ids))
         cur.execute(f"""
-            UPDATE orders
-            SET status = 'archived', archived_at = %s, updated_at = %s
+            UPDATE t_p42562714_web_app_creation_1.orders
+            SET status = 'cancelled', archived_at = %s, updated_at = %s, cancellation_reason = 'Предложение истекло'
             WHERE offer_id IN ({placeholders})
               AND status IN ('new', 'counter_offer', 'accepted')
             RETURNING id
