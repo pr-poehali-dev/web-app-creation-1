@@ -101,12 +101,13 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
   }, [orders, activeTab]);
 
-  const activeFilter = (order: { status: string }) => order.status !== 'completed' && order.status !== 'cancelled';
+  const isArchived = (s: string) => s === 'completed' || s === 'cancelled' || s === 'archived' || s === 'rejected';
+  const activeFilter = (order: { status: string }) => !isArchived(order.status);
   const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && activeFilter(order)).length;
   const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length;
   const myRequestsCount = orders.filter(order => order.isRequest && order.type === 'sale' && activeFilter(order)).length;
   const myResponsesCount = orders.filter(order => order.isRequest && order.type === 'purchase' && activeFilter(order)).length;
-  const archiveOrdersCount = orders.filter(order => order.status === 'completed' || order.status === 'cancelled').length;
+  const archiveOrdersCount = orders.filter(order => isArchived(order.status)).length;
 
   if (!isAuthenticated) {
     return null;

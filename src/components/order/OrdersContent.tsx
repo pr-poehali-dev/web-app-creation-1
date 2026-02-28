@@ -44,18 +44,21 @@ export default function OrdersContent({
     }
   }, [isLoading]);
 
+  const isArchivedStatus = (status: string) =>
+    status === 'completed' || status === 'cancelled' || status === 'archived' || status === 'rejected';
+
   const isOrderVisible = (order: Order) => {
     if (activeTab === 'archive') {
-      return order.status === 'completed' || order.status === 'cancelled';
+      return isArchivedStatus(order.status as string);
     }
     if (activeTab === 'my-requests') {
-      return order.isRequest && order.type === 'sale' && order.status !== 'completed' && order.status !== 'cancelled';
+      return order.isRequest && order.type === 'sale' && !isArchivedStatus(order.status as string);
     }
     if (activeTab === 'my-responses') {
-      return order.isRequest && order.type === 'purchase' && order.status !== 'completed' && order.status !== 'cancelled';
+      return order.isRequest && order.type === 'purchase' && !isArchivedStatus(order.status as string);
     }
     const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-    return typeMatch && !order.isRequest && order.status !== 'completed' && order.status !== 'cancelled';
+    return typeMatch && !order.isRequest && !isArchivedStatus(order.status as string);
   };
 
   const visibleOrders = orders.filter(order => {
@@ -153,7 +156,7 @@ export default function OrdersContent({
                 : isSeller 
                   ? 'У вас пока нет заказов на ваши товары' 
                   : activeTab === 'archive' 
-                    ? 'У вас пока нет завершенных заказов'
+                    ? 'Архив пуст — здесь появятся завершённые, отменённые и истёкшие записи'
                     : 'У вас пока нет заказов'}
           </p>
         </CardContent>

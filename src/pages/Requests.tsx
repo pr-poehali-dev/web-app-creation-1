@@ -17,7 +17,7 @@ import { searchOffers } from '@/utils/searchUtils';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { useOffers } from '@/contexts/OffersContext';
 import { getSession } from '@/utils/auth';
-import { requestsAPI, ordersAPI } from '@/services/api';
+import { requestsAPI, ordersAPI, triggerArchiveExpired } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
@@ -34,6 +34,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function Requests({ isAuthenticated, onLogout }: RequestsProps) {
   useScrollToTop();
+  triggerArchiveExpired();
   const navigate = useNavigate();
   const { selectedRegion, selectedDistricts, districts, detectedDistrictId } = useDistrict();
   const { deleteRequest, setRequests: setGlobalRequests } = useOffers();

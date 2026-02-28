@@ -13,6 +13,16 @@ const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
 const CONTENT_MANAGEMENT_API = func2url['content-management'];
 const REVIEWS_API = func2url.reviews;
+const ARCHIVE_EXPIRED_API = func2url['archive-expired'];
+
+// Фоновое архивирование истёкших записей (раз в сессию)
+let archiveCalledAt = 0;
+export function triggerArchiveExpired() {
+  const now = Date.now();
+  if (now - archiveCalledAt < 10 * 60 * 1000) return;
+  archiveCalledAt = now;
+  fetch(ARCHIVE_EXPIRED_API).catch(() => {});
+}
 
 // Продвинутое кэширование с разными TTL для разных типов данных
 interface CacheEntry {

@@ -274,19 +274,19 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
               </div>
             )}
 
-            {/* На мобильных показываем информацию сразу после медиа */}
-            <div className="lg:hidden">
-              {request.category === 'transport' ? (
-                <TransportRequestDetail
-                  request={request}
-                  onResponseClick={handleResponseClick}
-                  onShare={handleShare}
-                  existingResponse={existingResponse}
-                />
-              ) : (
+            {/* Информация о запросе — всегда в левой колонке */}
+            {request.category === 'transport' ? (
+              <TransportRequestDetail
+                request={request}
+                onResponseClick={handleResponseClick}
+                onShare={handleShare}
+                existingResponse={existingResponse}
+              />
+            ) : (
+              <div className="lg:hidden">
                 <RequestInfoCard request={request} />
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
@@ -303,12 +303,6 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                     </CardContent>
                   </Card>
                 )}
-                <TransportRequestDetail
-                  request={request}
-                  onResponseClick={handleResponseClick}
-                  onShare={handleShare}
-                  existingResponse={existingResponse}
-                />
                 <RequestAuthorCard author={request.author} />
               </>
             ) : (
