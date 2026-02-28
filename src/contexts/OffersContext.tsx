@@ -23,19 +23,29 @@ const STORAGE_KEY_REQUESTS = 'marketplace_requests';
 
 export function OffersProvider({ children }: { children: ReactNode }) {
   const [offers, setOffers] = useState<Offer[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_OFFERS);
-    return saved ? JSON.parse(saved).map((o: any) => ({
-      ...o,
-      createdAt: new Date(o.createdAt)
-    })) : [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_OFFERS);
+      return saved ? JSON.parse(saved).map((o: any) => ({
+        ...o,
+        createdAt: new Date(o.createdAt)
+      })) : [];
+    } catch {
+      localStorage.removeItem(STORAGE_KEY_OFFERS);
+      return [];
+    }
   });
   
   const [requests, setRequests] = useState<Request[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_REQUESTS);
-    return saved ? JSON.parse(saved).map((r: any) => ({
-      ...r,
-      createdAt: new Date(r.createdAt)
-    })) : [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_REQUESTS);
+      return saved ? JSON.parse(saved).map((r: any) => ({
+        ...r,
+        createdAt: new Date(r.createdAt)
+      })) : [];
+    } catch {
+      localStorage.removeItem(STORAGE_KEY_REQUESTS);
+      return [];
+    }
   });
 
   useEffect(() => {
