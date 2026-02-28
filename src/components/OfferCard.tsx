@@ -197,7 +197,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
               {offer.transportRoute && (
                 <div className="flex items-center gap-1.5">
                   <Icon name="ArrowRight" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-xs text-foreground truncate">{offer.transportRoute}</span>
+                  <span className="text-xs font-bold text-foreground truncate">{offer.transportRoute}</span>
                 </div>
               )}
               <div className="flex items-center justify-between gap-2">
