@@ -312,7 +312,7 @@ export default function OfferOrderModal({
                 <div className="space-y-2">
                   <Label>Пункт посадки</Label>
                   <div className="space-y-1.5">
-                    <label className="flex items-center gap-2 cursor-pointer rounded-md border p-2.5 hover:bg-muted/40 transition-colors">
+                    <label className={`flex items-center gap-2 cursor-pointer rounded-md border p-2.5 transition-colors ${selectedWaypoint === '' ? 'border-2 border-green-500 bg-green-50 dark:bg-green-950/20' : 'hover:bg-muted/40'}`}>
                       <input
                         type="radio"
                         name="waypoint"
@@ -330,7 +330,7 @@ export default function OfferOrderModal({
                       </div>
                     </label>
                     {offerTransportWaypoints.filter(w => w.isActive).map(wp => (
-                      <label key={wp.id} className="flex items-center gap-2 cursor-pointer rounded-md border p-2.5 hover:bg-muted/40 transition-colors">
+                      <label key={wp.id} className={`flex items-center gap-2 cursor-pointer rounded-md border p-2.5 transition-colors ${selectedWaypoint === wp.address ? 'border-2 border-green-500 bg-green-50 dark:bg-green-950/20' : 'hover:bg-muted/40'}`}>
                         <input
                           type="radio"
                           name="waypoint"
