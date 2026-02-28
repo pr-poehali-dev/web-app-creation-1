@@ -209,16 +209,21 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                     {offer.transportPriceType && <span className="text-xs text-muted-foreground ml-1">{offer.transportPriceType}</span>}
                   </span>
                 ) : null}
-                {offer.quantity > 0 && (
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} мест
-                  </span>
-                )}
+                {offer.quantity > 0 && (() => {
+                  const available = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
+                  return available > 0 ? (
+                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
+                      {available} мест
+                    </span>
+                  ) : (
+                    <span className="text-xs font-semibold text-red-500 whitespace-nowrap">Мест нет</span>
+                  );
+                })()}
               </div>
               {offer.transportDateTime && (
                 <div className="flex items-center gap-1.5">
-                  <Icon name="Calendar" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-xs text-muted-foreground">
+                  <Icon name="Calendar" className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                  <span className="text-xs font-medium text-foreground">
                     {(() => {
                       try {
                         const d = new Date(offer.transportDateTime);
