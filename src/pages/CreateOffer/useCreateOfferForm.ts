@@ -32,6 +32,7 @@ interface FormData {
   transportType: string;
   transportCapacity: string;
   transportDateTime: string;
+  transportDepartureDateTime: string;
   transportPrice: string;
   transportPriceType: string;
   transportNegotiable: boolean;
@@ -74,6 +75,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportType: editOffer.transportType || '',
     transportCapacity: editOffer.transportCapacity || '',
     transportDateTime: editOffer.transportDateTime || '',
+    transportDepartureDateTime: '',
     transportPrice: editOffer.transportPrice || '',
     transportPriceType: editOffer.transportPriceType || '',
     transportNegotiable: editOffer.transportNegotiable || false,
@@ -109,6 +111,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportType: '',
     transportCapacity: '',
     transportDateTime: '',
+    transportDepartureDateTime: '',
     transportPrice: '',
     transportPriceType: '',
     transportNegotiable: false,
@@ -170,6 +173,30 @@ export function useCreateOfferForm(editOffer?: Offer) {
       }
     }
     
+    // Валидация: срок публикации не может быть позже даты выезда (пассажирские)
+    if (field === 'publicationDuration' && typeof value === 'string') {
+      if (formData.transportServiceType === 'Пассажирские перевозки' && formData.transportDepartureDateTime) {
+        const depDate = formData.transportDepartureDateTime.split('T')[0];
+        if (value && value > depDate) {
+          toast({
+            title: 'Некорректная дата',
+            description: 'Срок публикации не может быть позже даты выезда',
+            variant: 'destructive',
+          });
+          return;
+        }
+      }
+    }
+
+    if (field === 'transportDepartureDateTime' && typeof value === 'string' && formData.transportServiceType === 'Пассажирские перевозки') {
+      const depDate = value.split('T')[0];
+      const pubDuration = formData.publicationDuration;
+      if (value && (!pubDuration || pubDuration > depDate)) {
+        setFormData(prev => ({ ...prev, publicationDuration: depDate, [field]: value }));
+        return;
+      }
+    }
+
     // Валидация дат периода публикации
     if (field === 'publicationDuration' && typeof value === 'string') {
       const startDate = formData.publicationStartDate;

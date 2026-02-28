@@ -16,6 +16,7 @@ interface OfferTransportSectionProps {
     transportType: string;
     transportCapacity: string;
     transportDateTime: string;
+    transportDepartureDateTime?: string;
     transportPrice: string;
     transportPriceType: string;
     transportNegotiable?: boolean;
@@ -83,9 +84,9 @@ function CollapsibleSelectList({
         <Label className="cursor-pointer text-sm font-medium">{label}</Label>
         <div className="flex items-center gap-2">
           {value ? (
-            <span className="text-xs font-medium text-foreground">{value}</span>
+            <span className="text-sm font-bold text-green-600">{value}</span>
           ) : placeholder ? (
-            <span className="text-xs md:text-sm font-bold text-green-500">{placeholder}</span>
+            <span className="text-xs md:text-sm font-medium text-red-500">{placeholder}</span>
           ) : null}
           <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={16} className="text-muted-foreground" />
         </div>
@@ -443,15 +444,27 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="transportDateTime">Дата и время</Label>
-          <Input
-            id="transportDateTime"
-            type="datetime-local"
-            value={formData.transportDateTime}
-            onChange={(e) => onInputChange('transportDateTime', e.target.value)}
-          />
-        </div>
+        {formData.transportServiceType === 'Пассажирские перевозки' ? (
+          <div className="space-y-2">
+            <Label htmlFor="transportDepartureDateTime">Дата и время выезда</Label>
+            <Input
+              id="transportDepartureDateTime"
+              type="datetime-local"
+              value={formData.transportDepartureDateTime || ''}
+              onChange={(e) => onInputChange('transportDepartureDateTime', e.target.value)}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="transportDateTime">Дата и время</Label>
+            <Input
+              id="transportDateTime"
+              type="datetime-local"
+              value={formData.transportDateTime}
+              onChange={(e) => onInputChange('transportDateTime', e.target.value)}
+            />
+          </div>
+        )}
 
         <CollapsibleSelectList
           label="Тип цены"

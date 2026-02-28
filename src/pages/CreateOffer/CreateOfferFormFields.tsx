@@ -47,6 +47,7 @@ interface FormData {
   transportNegotiable: boolean;
   transportComment: string;
   transportAllDistricts: boolean;
+  transportDepartureDateTime?: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -113,6 +114,7 @@ export default function CreateOfferFormFields({
             transportType: formData.transportType,
             transportCapacity: formData.transportCapacity,
             transportDateTime: formData.transportDateTime,
+            transportDepartureDateTime: formData.transportDepartureDateTime || '',
             transportPrice: formData.transportPrice,
             transportPriceType: formData.transportPriceType,
             transportNegotiable: formData.transportNegotiable,
@@ -204,6 +206,8 @@ export default function CreateOfferFormFields({
           publicationStartDate: formData.publicationStartDate,
           publicationDuration: formData.publicationDuration,
           category: formData.category,
+          transportServiceType: formData.transportServiceType,
+          transportDepartureDateTime: formData.transportDepartureDateTime || '',
         }}
         onInputChange={onInputChange}
       />

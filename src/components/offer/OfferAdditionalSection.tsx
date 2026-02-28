@@ -13,12 +13,18 @@ interface OfferAdditionalSectionProps {
     publicationStartDate: string;
     publicationDuration: string;
     category?: string;
+    transportServiceType?: string;
+    transportDepartureDateTime?: string;
   };
   onInputChange: (field: string, value: string | boolean) => void;
 }
 
 export default function OfferAdditionalSection({ formData, onInputChange }: OfferAdditionalSectionProps) {
   const isTransport = formData.category === 'transport';
+  const isPassenger = formData.transportServiceType === 'Пассажирские перевозки';
+  const departureDateMax = isPassenger && formData.transportDepartureDateTime
+    ? formData.transportDepartureDateTime.split('T')[0]
+    : undefined;
   return (
     <Card>
       <CardHeader>
@@ -156,6 +162,7 @@ export default function OfferAdditionalSection({ formData, onInputChange }: Offe
                   value={formData.publicationDuration}
                   onChange={(e) => onInputChange('publicationDuration', e.target.value)}
                   min={formData.publicationStartDate || new Date().toISOString().split('T')[0]}
+                  max={departureDateMax}
                   className="text-sm"
                   required
                 />
