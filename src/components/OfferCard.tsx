@@ -236,6 +236,31 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                   </span>
                 </div>
               )}
+              {offer.transportWaypoints && offer.transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0).length > 0 && (
+                <div className="pt-0.5 space-y-1">
+                  {offer.transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0).map(wp => (
+                    <div key={wp.id} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1">
+                      <div className="flex items-center gap-1">
+                        <Icon name="MapPin" className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate">
+                          {offer.transportRoute ? `${offer.transportRoute.split(/\s*[—–-]\s*/)[0].trim()} — ${wp.address}` : wp.address}
+                        </span>
+                      </div>
+                      <span className="text-xs font-semibold text-primary whitespace-nowrap ml-1">
+                        {wp.price!.toLocaleString('ru-RU')} ₽
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {offer.expiryDate && (
+                <div className="flex items-center gap-1.5">
+                  <Icon name="Clock" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground">
+                    до {new Date(offer.expiryDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                  </span>
+                </div>
+              )}
             </>
           ) : (
             <>
