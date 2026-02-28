@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { Offer, Request } from '@/types/offer';
 import { requestsAPI } from '@/services/api';
 
@@ -46,57 +46,63 @@ export function OffersProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY_REQUESTS, JSON.stringify(requests));
   }, [requests]);
 
-  const addOffer = (offer: Offer) => {
+  const addOffer = useCallback((offer: Offer) => {
     setOffers(prev => {
       const updated = [offer, ...prev];
       localStorage.setItem(STORAGE_KEY_OFFERS, JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
-  const addRequest = (request: Request) => {
+  const addRequest = useCallback((request: Request) => {
     setRequests(prev => {
       const updated = [request, ...prev];
       localStorage.setItem(STORAGE_KEY_REQUESTS, JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
-  const updateOffer = (id: string, updates: Partial<Offer>) => {
+  const updateOffer = useCallback((id: string, updates: Partial<Offer>) => {
     setOffers(prev => prev.map(offer => 
       offer.id === id ? { ...offer, ...updates } : offer
     ));
-  };
+  }, []);
 
-  const updateRequest = (id: string, updates: Partial<Request>) => {
+  const updateRequest = useCallback((id: string, updates: Partial<Request>) => {
     setRequests(prev => prev.map(request => 
       request.id === id ? { ...request, ...updates } : request
     ));
-  };
+  }, []);
 
-  const deleteOffer = (id: string) => {
+  const deleteOffer = useCallback((id: string) => {
     setOffers(prev => {
       const updated = prev.filter(offer => offer.id !== id);
       localStorage.setItem(STORAGE_KEY_OFFERS, JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
-  const deleteRequest = async (id: string) => {
+  const deleteRequest = useCallback(async (id: string) => {
     await requestsAPI.deleteRequest(id);
     setRequests(prev => {
       const updated = prev.filter(request => request.id !== id);
       localStorage.setItem(STORAGE_KEY_REQUESTS, JSON.stringify(updated));
       return updated;
     });
-  };
+  }, []);
 
-  const refreshOffers = () => {
-    // Очищаем кэш для принудительной перезагрузки
+  const refreshOffers = useCallback(() => {
     localStorage.removeItem('cached_offers');
-    // Триггерим событие для других компонентов
     window.dispatchEvent(new Event('offers-updated'));
-  };
+  }, []);
+
+  const setOffersCb = useCallback((newOffers: Offer[]) => {
+    setOffers(newOffers);
+  }, []);
+
+  const setRequestsCb = useCallback((newRequests: Request[]) => {
+    setRequests(newRequests);
+  }, []);
 
   return (
     <OffersContext.Provider
@@ -110,8 +116,8 @@ export function OffersProvider({ children }: { children: ReactNode }) {
         deleteOffer,
         deleteRequest,
         refreshOffers,
-        setOffers,
-        setRequests,
+        setOffers: setOffersCb,
+        setRequests: setRequestsCb,
       }}
     >
       {children}

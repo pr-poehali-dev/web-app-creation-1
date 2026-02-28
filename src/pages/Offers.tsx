@@ -184,7 +184,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       unsubscribeOrders();
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [setGlobalOffers, toast]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const userIdStr = currentUser?.id;
   const selectedDistrictsKey = selectedDistricts.join(',');
