@@ -385,6 +385,24 @@ export default function OfferInfoFields({
                     <p className="text-sm text-muted-foreground">Не указана</p>
                   )}
                 </div>
+                {offer.transportWaypoints && offer.transportWaypoints.length > 0 && (
+                  <div className="col-span-2">
+                    <span className="text-muted-foreground">Остановки по пути:</span>
+                    <div className="mt-1 space-y-1">
+                      {offer.transportWaypoints.filter(wp => wp.isActive).map(wp => (
+                        <div key={wp.id} className="flex items-center justify-between bg-muted/40 rounded px-2 py-1.5 text-sm">
+                          <div className="flex items-center gap-1.5">
+                            <Icon name="MapPin" className="w-3.5 h-3.5 text-primary shrink-0" />
+                            <span className="font-medium">{wp.address}</span>
+                          </div>
+                          {wp.price !== undefined && (
+                            <span className="font-semibold text-primary">{Number(wp.price).toLocaleString('ru-RU')} ₽</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <>
