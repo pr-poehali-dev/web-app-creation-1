@@ -234,6 +234,36 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
           />
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="transportPrice">Стоимость (₽)</Label>
+          <Input
+            id="transportPrice"
+            type="number"
+            value={formData.transportPrice}
+            onChange={(e) => onInputChange('transportPrice', e.target.value)}
+            placeholder="0"
+            min="0"
+            step="100"
+            disabled={formData.transportNegotiable}
+          />
+          <div className="flex items-center space-x-2 mt-1">
+            <Checkbox
+              id="transportNegotiable"
+              checked={formData.transportNegotiable || false}
+              onCheckedChange={(checked) => {
+                onInputChange('transportNegotiable', checked as boolean);
+                if (checked) onInputChange('transportPrice', '');
+              }}
+            />
+            <label
+              htmlFor="transportNegotiable"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Ваша цена (Торг)
+            </label>
+          </div>
+        </div>
+
         <div className="space-y-3">
           <Label>Районы обслуживания</Label>
           <div className="space-y-2">
@@ -433,34 +463,7 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
           onChange={(v) => onInputChange('transportPriceType', v)}
         />
 
-        <div className="space-y-2">
-          <Label htmlFor="transportPrice">Стоимость (₽)</Label>
-          <Input
-            id="transportPrice"
-            type="number"
-            value={formData.transportPrice}
-            onChange={(e) => onInputChange('transportPrice', e.target.value)}
-            placeholder="0"
-            min="0"
-            disabled={formData.transportNegotiable}
-          />
-          <div className="flex items-center space-x-2 mt-1">
-            <Checkbox
-              id="transportNegotiable"
-              checked={formData.transportNegotiable || false}
-              onCheckedChange={(checked) => {
-                onInputChange('transportNegotiable', checked as boolean);
-                if (checked) onInputChange('transportPrice', '');
-              }}
-            />
-            <label
-              htmlFor="transportNegotiable"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              Ваша цена (Торг)
-            </label>
-          </div>
-        </div>
+
 
         <div className="space-y-2">
           <Label htmlFor="transportComment">Комментарий</Label>
