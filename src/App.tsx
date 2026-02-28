@@ -252,21 +252,23 @@ const App = () => {
     window.location.reload();
   };
 
+  const pageFallback = <div style={{position:'fixed',inset:0,background:'#f1f4f8',zIndex:99999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'28px'}}><div style={{width:96,height:96,borderRadius:24,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.12)'}}><img src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" alt="ЕРТТП" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} /></div><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'clamp(24px,7vw,42px)',fontWeight:900,color:'#1e293b',letterSpacing:'0.12em',textAlign:'center',padding:'0 24px'}}>С НАМИ УСПЕХ</span></div>;
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <PullToRefresh onRefresh={handleGlobalRefresh}>
-          <Suspense fallback={<div style={{position:'fixed',inset:0,background:'#f1f4f8',zIndex:99999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'28px'}}><div style={{width:96,height:96,borderRadius:24,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.12)'}}><img src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" alt="ЕРТТП" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} /></div><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'clamp(24px,7vw,42px)',fontWeight:900,color:'#1e293b',letterSpacing:'0.12em',textAlign:'center',padding:'0 24px'}}>С НАМИ УСПЕХ</span></div>}>
-            <TimezoneProvider>
-              <DistrictProvider>
-                <OffersProvider>
+        <BrowserRouter>
+          <TimezoneProvider>
+            <DistrictProvider>
+              <OffersProvider>
+                <PullToRefresh onRefresh={handleGlobalRefresh}>
                   <Toaster />
                   <Sonner />
-                  <TechnicalIssuesBanner />
-                  {isAuthenticated && <NotificationPermissionBanner />}
-                  <InstallPrompt />
-                  <BrowserRouter>
-                <ErrorBoundary>
+                  <Suspense fallback={null}><TechnicalIssuesBanner /></Suspense>
+                  {isAuthenticated && <Suspense fallback={null}><NotificationPermissionBanner /></Suspense>}
+                  <Suspense fallback={null}><InstallPrompt /></Suspense>
+                  <ErrorBoundary>
+                  <Suspense fallback={pageFallback}>
                 <Routes>
             <Route path="/" element={<Navigate to="/predlozheniya" replace />} />
             <Route path="/home" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
@@ -337,13 +339,13 @@ const App = () => {
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-                </ErrorBoundary>
+          </Suspense>
+          </ErrorBoundary>
+                </PullToRefresh>
+              </OffersProvider>
+            </DistrictProvider>
+          </TimezoneProvider>
         </BrowserRouter>
-            </OffersProvider>
-          </DistrictProvider>
-        </TimezoneProvider>
-        </Suspense>
-        </PullToRefresh>
       </TooltipProvider>
     </QueryClientProvider>
   );
