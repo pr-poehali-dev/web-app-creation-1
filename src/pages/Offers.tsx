@@ -197,7 +197,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     if (!showOnlyMy) {
       result = result.filter((offer) => {
-        if (offer.category === 'utilities' || offer.category === 'transport') return true;
+        if (offer.category === 'utilities') return true;
         const availableQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
         return availableQuantity > 0;
       });
