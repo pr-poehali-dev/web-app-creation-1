@@ -110,7 +110,7 @@ export default function MyOfferCard({
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Цена:</span>
           <span className="font-bold text-lg text-primary">
-            {offer.pricePerUnit.toLocaleString()} ₽
+            {offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString() : '—'} ₽
           </span>
         </div>
 

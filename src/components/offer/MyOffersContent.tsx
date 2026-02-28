@@ -157,7 +157,7 @@ export default function MyOffersContent({ userId }: MyOffersContentProps) {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Цена:</span>
                   <span className="font-semibold">
-                    {offer.pricePerUnit.toLocaleString('ru-RU')} ₽/{offer.unit}
+                    {offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/{offer.unit}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">

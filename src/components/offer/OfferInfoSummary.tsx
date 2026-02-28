@@ -165,7 +165,7 @@ export default function OfferInfoSummary({
           <div>
             <p className="text-xs text-muted-foreground">Цена за единицу:</p>
             <div className="flex items-center gap-2">
-              <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+              <p className="font-semibold">{pricePerUnit != null ? Number(pricePerUnit).toLocaleString('ru-RU') : '—'} ₽</p>
               {noNegotiation && (
                 <Badge variant="secondary" className="text-[10px] h-5">
                   Без торга

@@ -146,8 +146,8 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               ) : (
                 <>
                   <span className="font-bold text-primary text-lg">
-                    {request.pricePerUnit 
-                      ? `${(request.pricePerUnit * request.quantity).toLocaleString('ru-RU')} ₽`
+                    {request.pricePerUnit != null && request.pricePerUnit > 0
+                      ? `${Number(request.pricePerUnit * request.quantity).toLocaleString('ru-RU')} ₽`
                       : 'Цена не указана'
                     }
                   </span>

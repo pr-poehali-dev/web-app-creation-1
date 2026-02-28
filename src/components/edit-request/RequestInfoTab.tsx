@@ -166,7 +166,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     if (request.pricePerUnit > 0) {
       return (
         <>
-          {request.pricePerUnit.toLocaleString()} ₽
+          {Number(request.pricePerUnit).toLocaleString()} ₽
           {request.negotiablePrice && <span className="text-muted-foreground ml-1">(Торг)</span>}
         </>
       );

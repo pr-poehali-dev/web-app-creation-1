@@ -28,8 +28,8 @@ export function useRequestGallery(request: Request | null, showVideo: boolean) {
 
   const handleShare = async () => {
     if (!request) return;
-    const price = request.pricePerUnit
-      ? `${request.pricePerUnit.toLocaleString('ru-RU')} ₽/${request.unit}`
+    const price = request.pricePerUnit != null && request.pricePerUnit > 0
+      ? `${Number(request.pricePerUnit).toLocaleString('ru-RU')} ₽/${request.unit}`
       : '';
     await shareContent({
       title: request.title,
