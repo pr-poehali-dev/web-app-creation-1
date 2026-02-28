@@ -189,6 +189,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         transportDepartureDateTime: (formData as unknown as Record<string, string>).transportDepartureDateTime || undefined,
         transportComment: formData.transportComment || undefined,
         transportWaypoints: (formData as { transportWaypoints?: unknown }).transportWaypoints || undefined,
+        expiryDate: (formData as unknown as Record<string, string>).expiryDate || undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,

@@ -613,6 +613,11 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     transport_price_type_esc = body.get('transportPriceType', '').replace("'", "''") if body.get('transportPriceType') else None
     transport_negotiable = body.get('transportNegotiable', False)
     transport_comment_esc = body.get('transportComment', '').replace("'", "''") if body.get('transportComment') else None
+    
+    expiry_date = body.get('expiryDate')
+    
+    transport_waypoints = body.get('transportWaypoints', [])
+    transport_waypoints_json = json.dumps(transport_waypoints if transport_waypoints else []).replace("'", "''")
 
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
@@ -624,7 +629,8 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             deadline_start, deadline_end, negotiable_deadline, budget, negotiable_budget,
             transport_all_districts,
             transport_service_type, transport_route, transport_type, transport_capacity,
-            transport_date_time, transport_price, transport_price_type, transport_negotiable, transport_comment
+            transport_date_time, transport_price, transport_price_type, transport_negotiable, transport_comment,
+            expiry_date, transport_waypoints
         ) VALUES (
             '{user_id_esc}', 
             '{title_esc}', 
@@ -662,7 +668,9 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {transport_price if transport_price else 'NULL'},
             {'NULL' if transport_price_type_esc is None else f"'{transport_price_type_esc}'"},
             {transport_negotiable},
-            {'NULL' if transport_comment_esc is None else f"'{transport_comment_esc}'"}
+            {'NULL' if transport_comment_esc is None else f"'{transport_comment_esc}'"},
+            {'NULL' if not expiry_date else f"'{expiry_date}'"},
+            '{transport_waypoints_json}'::jsonb
         )
         RETURNING id, created_at
     """
