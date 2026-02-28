@@ -163,7 +163,9 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         description: formData.description,
         category: formData.category,
         subcategory: formData.subcategory,
-        quantity: Number(formData.quantity),
+        quantity: formData.category === 'transport'
+          ? (Number(formData.transportCapacity) || 0)
+          : Number(formData.quantity),
         minOrderQuantity: formData.minOrderQuantity ? Number(formData.minOrderQuantity) : undefined,
         unit: formData.unit,
         pricePerUnit: Number(formData.pricePerUnit),

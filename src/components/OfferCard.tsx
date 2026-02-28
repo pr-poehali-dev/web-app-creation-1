@@ -209,8 +209,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                     {offer.transportPriceType && <span className="text-xs text-muted-foreground ml-1">{offer.transportPriceType}</span>}
                   </span>
                 ) : null}
-                {offer.quantity > 0 && (() => {
-                  const available = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
+                {(() => {
+                  const capacity = Number(offer.transportCapacity);
+                  const effectiveTotal = offer.quantity > 0 ? offer.quantity : (!isNaN(capacity) && capacity > 0 ? capacity : 0);
+                  if (effectiveTotal <= 0) return null;
+                  const available = effectiveTotal - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
                   return available > 0 ? (
                     <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
                       {available} мест

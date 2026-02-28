@@ -198,6 +198,14 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     if (!showOnlyMy) {
       result = result.filter((offer) => {
         if (offer.category === 'utilities') return true;
+        if (offer.category === 'transport') {
+          // Для транспорта: скрываем только если capacity числовое и все места заняты
+          const capacity = Number(offer.transportCapacity);
+          if (!offer.transportCapacity || isNaN(capacity) || capacity <= 0) return true;
+          const effectiveQuantity = offer.quantity > 0 ? offer.quantity : capacity;
+          const available = effectiveQuantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
+          return available > 0;
+        }
         const availableQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
         return availableQuantity > 0;
       });
