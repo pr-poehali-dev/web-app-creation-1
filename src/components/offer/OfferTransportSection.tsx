@@ -146,6 +146,10 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
   const { detectedDistrictId } = useDistrict();
   const [districtInput, setDistrictInput] = useState('');
   const [showAdditional, setShowAdditional] = useState(false);
+  const [showWaypoints, setShowWaypoints] = useState(false);
+  const [newWaypointFrom, setNewWaypointFrom] = useState('');
+  const [newWaypointTo, setNewWaypointTo] = useState('');
+  const [newWaypointPrice, setNewWaypointPrice] = useState('');
 
   useEffect(() => {
     const autoDistrict = formData.district || detectedDistrictId || '';
@@ -200,7 +204,19 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
           <Input
             id="transportRoute"
             value={formData.transportRoute}
-            onChange={(e) => onInputChange('transportRoute', e.target.value)}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const formatted = raw
+                .split(/[\s\-–—]+/)
+                .filter(Boolean)
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+                .join(' - ');
+              onInputChange('transportRoute', formatted || raw);
+            }}
+            onBlur={(e) => {
+              const val = e.target.value.trim();
+              if (val) onInputChange('transportRoute', val);
+            }}
             placeholder="Город отправления — Город назначения"
           />
         </div>
@@ -261,52 +277,105 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
                     <div className="space-y-1.5">
                       {additionalDistricts.map(d => {
                         const checked = formData.availableDistricts.includes(d.id);
-                        const waypoint = transportWaypoints.find(w => w.id === d.id);
-                        const originDistrict = DISTRICTS.find(dist => dist.id === formData.district);
-                        const originName = originDistrict?.name;
-                        const routeLabel = originName ? `${originName} — ${d.name}` : d.name;
                         return (
-                          <div key={d.id} className="space-y-1">
-                            {checked ? (
-                              <div className="flex items-center gap-1.5">
-                                <Input
-                                  type="number"
-                                  placeholder="Цена ₽"
-                                  value={waypoint?.price ?? ''}
-                                  onChange={(e) => onWaypointPriceChange?.(d.id, e.target.value)}
-                                  className="h-7 text-xs w-28"
-                                  min="0"
-                                />
-                                <span className="text-xs text-muted-foreground flex-1">{routeLabel} / {formData.transportPriceType || 'место'}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => { onDistrictToggle(d.id); onRemoveWaypoint?.(d.id); }}
-                                  className="text-xs text-destructive hover:text-destructive/80 px-1.5"
-                                  title="Удалить"
-                                >✕</button>
-                              </div>
-                            ) : (
-                              <AddDistrictRow
-                                district={d}
-                                priceType={formData.transportPriceType}
-                                originName={originName}
-                                onAdd={(price) => {
-                                  onDistrictToggle(d.id);
-                                  onAddWaypoint?.(d.id, d.name);
-                                  setTimeout(() => onWaypointPriceChange?.(d.id, price), 0);
-                                }}
-                              />
-                            )}
+                          <div key={d.id} className="flex items-center gap-2">
+                            <Checkbox
+                              id={`district-${d.id}`}
+                              checked={checked}
+                              onCheckedChange={() => onDistrictToggle(d.id)}
+                            />
+                            <label htmlFor={`district-${d.id}`} className="text-sm cursor-pointer">{d.name}</label>
                           </div>
                         );
                       })}
-                      <p className="text-xs text-muted-foreground pt-1">Укажите цену и нажмите <span className="font-bold">+</span> для добавления пункта</p>
                     </div>
                   )}
                 </div>
               )}
             </div>
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setShowWaypoints(v => !v)}
+            className="flex items-center gap-1 text-xs md:text-sm font-bold text-green-500 hover:text-green-600 transition-colors"
+          >
+            <Icon name={showWaypoints ? 'ChevronUp' : 'ChevronDown'} size={14} />
+            {showWaypoints ? 'Скрыть промежуточные маршруты' : 'Дополнительные маршруты по пути'}
+            {transportWaypoints.length > 0 && (
+              <span className="ml-1 text-primary font-medium">({transportWaypoints.length})</span>
+            )}
+          </button>
+          {showWaypoints && (
+            <div className="space-y-2 pt-1">
+              {transportWaypoints.length > 0 && (
+                <div className="space-y-1.5">
+                  {transportWaypoints.map((wp) => (
+                    <div key={wp.id} className="flex items-center gap-1.5 bg-muted/40 rounded-md px-2 py-1.5">
+                      <span className="text-xs flex-1 font-medium">{wp.address}</span>
+                      <Input
+                        type="number"
+                        placeholder="Цена ₽"
+                        value={wp.price ?? ''}
+                        onChange={(e) => onWaypointPriceChange?.(wp.id, e.target.value)}
+                        className="h-7 text-xs w-24"
+                        min="0"
+                      />
+                      <span className="text-xs text-muted-foreground">₽</span>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveWaypoint?.(wp.id)}
+                        className="text-xs text-destructive hover:text-destructive/80 px-1"
+                        title="Удалить"
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-1.5">
+                <Input
+                  placeholder="Откуда"
+                  value={newWaypointFrom}
+                  onChange={(e) => setNewWaypointFrom(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                <span className="text-muted-foreground text-xs">→</span>
+                <Input
+                  placeholder="Куда"
+                  value={newWaypointTo}
+                  onChange={(e) => setNewWaypointTo(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                <Input
+                  type="number"
+                  placeholder="Цена ₽"
+                  value={newWaypointPrice}
+                  onChange={(e) => setNewWaypointPrice(e.target.value)}
+                  className="h-8 text-xs w-24"
+                  min="0"
+                />
+                <button
+                  type="button"
+                  disabled={!newWaypointFrom || !newWaypointTo || !newWaypointPrice}
+                  onClick={() => {
+                    const label = `${newWaypointFrom.trim()} - ${newWaypointTo.trim()}`;
+                    const id = `wp-${Date.now()}`;
+                    onAddWaypoint?.(id, label);
+                    setTimeout(() => {
+                      onWaypointPriceChange?.(id, newWaypointPrice);
+                    }, 0);
+                    setNewWaypointFrom('');
+                    setNewWaypointTo('');
+                    setNewWaypointPrice('');
+                  }}
+                  className="h-8 w-8 rounded border flex items-center justify-center text-sm font-bold text-primary border-primary hover:bg-primary/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >+</button>
+              </div>
+              <p className="text-xs text-muted-foreground">Например: Нюрба → Вилюйск, 3000 ₽</p>
+            </div>
+          )}
         </div>
 
         <CollapsibleSelectList
