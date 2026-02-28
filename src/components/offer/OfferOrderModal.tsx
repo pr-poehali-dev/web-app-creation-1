@@ -344,7 +344,11 @@ export default function OfferOrderModal({
                           className="h-4 w-4"
                         />
                         <div className="flex-1">
-                          <span className="text-sm font-bold text-foreground">{wp.address}</span>
+                          <span className="text-sm font-bold text-foreground">
+                            {offerTransportRoute
+                              ? `${offerTransportRoute.split(/\s*[-–—]\s*/)[0].trim()} — ${wp.address}`
+                              : wp.address}
+                          </span>
                           {wp.price && (
                             <span className="ml-2 text-xs text-primary font-semibold">{wp.price.toLocaleString('ru-RU')} ₽</span>
                           )}
