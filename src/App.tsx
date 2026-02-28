@@ -4,87 +4,40 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import SplashScreen from "./components/SplashScreen";
 import PullToRefresh from "./components/PullToRefresh";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
-import Header from "./components/Header";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
+import { TimezoneProvider } from "./contexts/TimezoneContext";
+import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
+import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
+import InstallPrompt from "./components/InstallPrompt";
 
-// Ленивая загрузка второстепенных компонентов
-const NotificationPermissionBanner = lazy(() => import("./components/NotificationPermissionBanner"));
-const TechnicalIssuesBanner = lazy(() => import("./components/TechnicalIssuesBanner"));
-const InstallPrompt = lazy(() => import("./components/InstallPrompt"));
-const TimezoneProvider = lazy(() => import("./contexts/TimezoneContext").then(m => ({ default: m.TimezoneProvider })));
-
-// Компонент загрузки
-const LoadingScreen = () => null;
-
-// Функция для обработки ошибок динамического импорта
+// Ленивая загрузка страниц
 const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
   lazy(async () => {
-    const maxRetries = 3;
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        const component = await componentImport();
-        return component as { default: React.ComponentType };
-      } catch (error) {
-        console.warn(`Attempt ${i + 1}/${maxRetries} failed:`, error);
-        
-        // На последней попытке очищаем кэш и перезагружаем
-        if (i === maxRetries - 1) {
-          console.error('Failed to load module after retries:', error);
-          
-          // Очищаем все кэши
-          if ('caches' in window) {
-            try {
-              const names = await caches.keys();
-              await Promise.all(names.map(name => caches.delete(name)));
-            } catch (e) {
-              console.error('Failed to clear cache:', e);
-            }
-          }
-          
-          // Автоматически перезагружаем страницу один раз (с ?reload чтобы сбросить кэш)
-          const hasReloaded = new URLSearchParams(window.location.search).has('reload');
-          if (!hasReloaded) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('reload', '1');
-            window.location.replace(url.toString());
-            return {
-              default: () => <div className="flex items-center justify-center min-h-screen">Загрузка...</div>
-            } as { default: React.ComponentType };
-          }
-          
-          // Если уже перезагружали, показываем ошибку
-          return { 
-            default: () => (
-              <div className="flex items-center justify-center min-h-screen p-4">
-                <div className="text-center max-w-md">
-                  <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
-                  <p className="text-muted-foreground mb-4">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
-                  <button 
-                    onClick={() => {
-                      const url = new URL(window.location.href);
-                      url.searchParams.delete('reload');
-                      window.location.replace(url.toString());
-                    }} 
-                    className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-                  >
-                    Попробовать снова
-                  </button>
-                </div>
-              </div>
-            )
-          } as { default: React.ComponentType };
-        }
-        
-        // Ждём перед следующей попыткой
-        await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, i)));
-      }
+    try {
+      const component = await componentImport();
+      return component as { default: React.ComponentType };
+    } catch (error) {
+      return { 
+        default: () => (
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="text-center max-w-md">
+              <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
+              <p className="text-muted-foreground mb-4">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+              >
+                Попробовать снова
+              </button>
+            </div>
+          </div>
+        )
+      } as { default: React.ComponentType };
     }
-    throw new Error('Failed to load module after retries');
   });
 
 // Ленивая загрузка всех страниц
@@ -141,8 +94,6 @@ const AdminContentManagement = lazyWithRetry(() => import("./pages/AdminContentM
 const TradingPlatform = lazyWithRetry(() => import("./pages/TradingPlatform"));
 const CreateContract = lazyWithRetry(() => import("./pages/CreateContract"));
 const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
-const OrderDetail = lazyWithRetry(() => import("./pages/OrderDetail"));
-
 
 const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
 const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
@@ -264,9 +215,9 @@ const App = () => {
                 <PullToRefresh onRefresh={handleGlobalRefresh}>
                   <Toaster />
                   <Sonner />
-                  <Suspense fallback={null}><TechnicalIssuesBanner /></Suspense>
-                  {isAuthenticated && <Suspense fallback={null}><NotificationPermissionBanner /></Suspense>}
-                  <Suspense fallback={null}><InstallPrompt /></Suspense>
+                  <TechnicalIssuesBanner />
+                  {isAuthenticated && <NotificationPermissionBanner />}
+                  <InstallPrompt />
                   <ErrorBoundary>
                   <Suspense fallback={pageFallback}>
                 <Routes>
