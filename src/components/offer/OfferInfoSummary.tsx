@@ -64,24 +64,25 @@ export default function OfferInfoSummary({
       {isTransport ? (
         <div className="grid grid-cols-2 gap-2 text-sm">
           {transportRoute && (
-            <div className="col-span-2">
-              <p className="text-xs text-muted-foreground">Маршрут:</p>
-              <p className="font-semibold">{transportRoute}</p>
+            <div className="col-span-2 rounded-lg bg-primary/10 border border-primary/30 px-3 py-2 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs text-muted-foreground">Основной маршрут</p>
+                <p className="font-bold text-foreground">{transportRoute}</p>
+              </div>
+              <div className="text-right shrink-0">
+                {transportNegotiable ? (
+                  <Badge variant="secondary" className="text-xs">Договорная</Badge>
+                ) : (transportPrice || pricePerUnit) ? (
+                  <>
+                    <p className="font-bold text-primary text-base leading-tight">
+                      {Number(transportPrice || pricePerUnit).toLocaleString('ru-RU')} ₽
+                    </p>
+                    {transportPriceType && <p className="text-xs text-muted-foreground">{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}</p>}
+                  </>
+                ) : null}
+              </div>
             </div>
           )}
-          <div>
-            <p className="text-xs text-muted-foreground">Цена за место:</p>
-            {transportNegotiable ? (
-              <Badge variant="secondary" className="text-xs mt-0.5">Договорная</Badge>
-            ) : (transportPrice || pricePerUnit) ? (
-              <p className="font-semibold">
-                {Number(transportPrice || pricePerUnit).toLocaleString('ru-RU')} ₽
-                {transportPriceType && <span className="text-xs text-muted-foreground ml-1">{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}</span>}
-              </p>
-            ) : (
-              <p className="font-semibold text-muted-foreground">Не указана</p>
-            )}
-          </div>
           <div>
             <p className="text-xs text-muted-foreground">Доступно мест:</p>
             <p className="font-semibold">{remainingQuantity > 0 ? `${remainingQuantity} мест` : `${quantity} мест`}</p>
