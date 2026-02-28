@@ -87,9 +87,11 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           <div>
             <p className="text-muted-foreground">Сумма</p>
             <p className="font-bold text-primary">
-              {(order.counterTotalAmount !== undefined && order.counterTotalAmount !== null 
-                ? order.counterTotalAmount 
-                : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽
+              {order.offerTransportNegotiable && order.offerCategory === 'transport' && !order.totalAmount
+                ? 'Договорная'
+                : `${(order.counterTotalAmount !== undefined && order.counterTotalAmount !== null 
+                    ? order.counterTotalAmount 
+                    : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽`}
             </p>
           </div>
           {order.status === 'negotiating' && order.counterPricePerUnit && (
@@ -118,6 +120,11 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                 {order.passengerPickupAddress && (
                   <p className="text-xs text-primary mt-0.5">
                     Посадка: {order.passengerPickupAddress}
+                  </p>
+                )}
+                {order.offerTransportDateTime && (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {new Date(order.offerTransportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
                 )}
               </>

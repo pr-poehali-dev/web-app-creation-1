@@ -52,17 +52,28 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
         <div>
           <p className="text-muted-foreground">Сумма</p>
           <p className="font-bold text-primary">
-            {(order.counterTotalAmount !== undefined && order.counterTotalAmount !== null 
-              ? order.counterTotalAmount 
-              : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽
+            {order.offerTransportNegotiable && order.offerCategory === 'transport' && !order.totalAmount
+              ? 'Договорная'
+              : `${(order.counterTotalAmount !== undefined && order.counterTotalAmount !== null 
+                  ? order.counterTotalAmount 
+                  : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽`}
           </p>
         </div>
-        {order.offerPricePerUnit && (
-          <div>
-            <p className="text-muted-foreground">Начальная цена</p>
-            <p className="font-medium">{order.offerPricePerUnit?.toLocaleString('ru-RU')} ₽/{order.unit}</p>
+        {order.offerCategory === 'transport' && order.offerTransportDateTime && (
+          <div className="col-span-2">
+            <p className="text-muted-foreground">Дата и время рейса</p>
+            <p className="font-medium">
+              {new Date(order.offerTransportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
         )}
+        {order.offerPricePerUnit != null && order.offerPricePerUnit > 0 && order.offerCategory !== 'transport' && (
+          <div>
+            <p className="text-muted-foreground">Начальная цена</p>
+            <p className="font-medium">{Number(order.offerPricePerUnit).toLocaleString('ru-RU')} ₽/{order.unit}</p>
+          </div>
+        )}
+        {order.offerCategory !== 'transport' && (
         <div>
           <p className="text-muted-foreground">Конечная цена будет</p>
           <p className="font-medium text-primary">
@@ -71,6 +82,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
               : (order.pricePerUnit || order.offerPricePerUnit))?.toLocaleString('ru-RU')} ₽/{order.unit}
           </p>
         </div>
+        )}
         {!order.isRequest && order.status !== 'accepted' && order.status !== 'completed' && order.offerAvailableQuantity !== undefined && (
           <div>
             <p className="text-muted-foreground">Доступно</p>
@@ -139,7 +151,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
             )}
             {cleanComment && (
               <div className="text-sm">
-                <p className="text-muted-foreground mb-1">{order.isRequest ? 'Комментарий к отклику' : 'Комментарий покупателя'}</p>
+                <p className="text-muted-foreground mb-1">{order.isRequest ? 'Комментарий к отклику' : `Комментарий ${roles.counterBuyer}`}</p>
                 <p className="font-medium whitespace-pre-line">{cleanComment}</p>
               </div>
             )}

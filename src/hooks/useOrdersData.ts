@@ -108,6 +108,8 @@ export function useOrdersData(
       offerCategory: orderData.offerCategory,
       offerTransportRoute: orderData.offerTransportRoute,
       offerTransportServiceType: orderData.offerTransportServiceType,
+      offerTransportDateTime: orderData.offerTransportDateTime,
+      offerTransportNegotiable: orderData.offerTransportNegotiable,
       passengerPickupAddress: orderData.passengerPickupAddress || orderData.passenger_pickup_address,
       completionRequested: orderData.completionRequested || orderData.completion_requested || false,
     };

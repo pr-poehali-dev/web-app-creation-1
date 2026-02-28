@@ -373,6 +373,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             of.category as offer_category,
             of.transport_route as offer_transport_route,
             of.transport_service_type as offer_transport_service_type,
+            of.transport_date_time as offer_transport_date_time,
+            of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             COALESCE((
                 SELECT COUNT(*) FROM {schema}.order_messages om 
@@ -415,6 +417,9 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerCategory'] = order_dict.pop('offer_category', None)
         order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
         order_dict['offerTransportServiceType'] = order_dict.pop('offer_transport_service_type', None)
+        dt = order_dict.pop('offer_transport_date_time', None)
+        order_dict['offerTransportDateTime'] = dt.isoformat() if dt else None
+        order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
         order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
         order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
         
@@ -475,6 +480,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             of.category as offer_category,
             of.transport_route as offer_transport_route,
             of.transport_service_type as offer_transport_service_type,
+            of.transport_date_time as offer_transport_date_time,
+            of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
@@ -503,6 +510,9 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['offerCategory'] = order_dict.pop('offer_category', None)
     order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
     order_dict['offerTransportServiceType'] = order_dict.pop('offer_transport_service_type', None)
+    dt2 = order_dict.pop('offer_transport_date_time', None)
+    order_dict['offerTransportDateTime'] = dt2.isoformat() if dt2 else None
+    order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
     order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
     order_dict['is_request'] = order_dict.get('is_request', False)
     order_dict['completionRequested'] = order_dict.pop('completion_requested', False) or False

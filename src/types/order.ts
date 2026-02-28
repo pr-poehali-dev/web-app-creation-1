@@ -46,6 +46,8 @@ export interface Order {
   offerCategory?: string;
   offerTransportRoute?: string;
   offerTransportServiceType?: string;
+  offerTransportDateTime?: string;
+  offerTransportNegotiable?: boolean;
   passengerPickupAddress?: string;
   completionRequested?: boolean;
 }

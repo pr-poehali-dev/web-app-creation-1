@@ -144,7 +144,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
                 <Icon name="UserCheck" className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-orange-800">
-                  <p className="font-medium mb-1">Покупатель: {contactPerson.name}</p>
+                  <p className="font-medium mb-1">{roles.buyer}: {contactPerson.name}</p>
                   <p>Новый заказ ожидает вашего подтверждения</p>
                 </div>
               </div>

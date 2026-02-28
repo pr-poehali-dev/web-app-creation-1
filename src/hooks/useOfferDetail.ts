@@ -225,7 +225,9 @@ export function useOfferDetail(id: string | undefined) {
         title: offer.title,
         quantity: orderFormData.quantity,
         unit: offer.unit,
-        pricePerUnit: offer.pricePerUnit,
+        pricePerUnit: offer.category === 'transport'
+          ? (offer.transportNegotiable ? 0 : Number(offer.transportPrice || offer.pricePerUnit || 0))
+          : offer.pricePerUnit,
         deliveryType: orderFormData.deliveryType,
         deliveryAddress: orderFormData.address || '',
         district: offer.district,
