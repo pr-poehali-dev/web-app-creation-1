@@ -214,18 +214,6 @@ const App = () => {
       }
     }
 
-    // Prefetch самых частых страниц после загрузки
-    const prefetchTimer = setTimeout(() => {
-      import("./pages/OfferDetail");
-      import("./pages/Offers");
-      import("./pages/Login");
-      import("./pages/Requests");
-      import("./pages/Profile");
-      import("./pages/Auctions");
-      import("./pages/CreateOffer");
-      import("./pages/CreateRequest");
-    }, 2000);
-
     // Регистрируем Service Worker в фоне
     if ('serviceWorker' in navigator) {
       setTimeout(() => {
@@ -242,7 +230,7 @@ const App = () => {
       });
     }
 
-    return () => clearTimeout(prefetchTimer);
+    return () => {};
   }, []);
 
   const handleLogin = () => {
