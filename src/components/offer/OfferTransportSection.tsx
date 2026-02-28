@@ -40,7 +40,6 @@ const SERVICE_TYPES = [
 ];
 
 const TRANSPORT_TYPES = [
-  'По умолчанию',
   'Легковой автомобиль',
   'Кроссовер',
   'Минивэн',
@@ -204,18 +203,16 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
           <Input
             id="transportRoute"
             value={formData.transportRoute}
-            onChange={(e) => {
-              const raw = e.target.value;
-              const formatted = raw
-                .split(/[\s\-–—]+/)
-                .filter(Boolean)
-                .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-                .join(' - ');
-              onInputChange('transportRoute', formatted || raw);
-            }}
+            onChange={(e) => onInputChange('transportRoute', e.target.value)}
             onBlur={(e) => {
-              const val = e.target.value.trim();
-              if (val) onInputChange('transportRoute', val);
+              const raw = e.target.value.trim();
+              if (!raw) return;
+              const formatted = raw
+                .split(/\s*[-–—]+\s*/)
+                .map(part => part.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '))
+                .filter(Boolean)
+                .join(' - ');
+              onInputChange('transportRoute', formatted);
             }}
             placeholder="Город отправления — Город назначения"
           />
@@ -411,7 +408,9 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
         <CollapsibleSelectList
           label="Тип цены"
           placeholder="Выберите тип цены"
-          options={PRICE_TYPES}
+          options={formData.transportServiceType === 'Пассажирские перевозки'
+            ? PRICE_TYPES.filter(p => p !== 'За тонну')
+            : PRICE_TYPES}
           value={formData.transportPriceType}
           onChange={(v) => onInputChange('transportPriceType', v)}
         />
