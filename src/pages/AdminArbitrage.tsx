@@ -196,7 +196,7 @@ export default function AdminArbitrage({ isAuthenticated, onLogout }: AdminArbit
   };
 
   const searchOrder = async () => {
-    const query = searchInput.trim();
+    const query = searchInput.trim().replace(/^[№#\s]+/, '');
     if (!query) return;
     setSearchedNumber(query);
     setOrder(null);
