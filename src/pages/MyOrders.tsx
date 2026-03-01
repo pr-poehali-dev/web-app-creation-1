@@ -10,6 +10,7 @@ import OrdersContent from '@/components/order/OrdersContent';
 import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData, type OrderTab } from '@/hooks/useOrdersData';
+import type { Order } from '@/types/offer';
 
 interface MyOrdersProps {
   isAuthenticated: boolean;
@@ -102,12 +103,17 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [orders, activeTab]);
 
   const isArchived = (s: string) => s === 'completed' || s === 'cancelled' || s === 'archived' || s === 'rejected';
-  const activeFilter = (order: { status: string }) => !isArchived(order.status);
+  const isTransportExpired = (order: Order) => {
+    const dt = (order as unknown as Record<string, unknown>).offerTransportDateTime as string | undefined;
+    return !!dt && new Date(dt) < new Date();
+  };
+  const isEffectivelyArchived = (order: Order) => isArchived(order.status) || isTransportExpired(order);
+  const activeFilter = (order: Order) => !isEffectivelyArchived(order);
   const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && activeFilter(order)).length;
   const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length;
   const myRequestsCount = orders.filter(order => order.isRequest && order.type === 'sale' && activeFilter(order)).length;
   const myResponsesCount = orders.filter(order => order.isRequest && order.type === 'purchase' && activeFilter(order)).length;
-  const archiveOrdersCount = orders.filter(order => isArchived(order.status)).length;
+  const archiveOrdersCount = orders.filter(order => isEffectivelyArchived(order)).length;
 
   if (!isAuthenticated) {
     return null;

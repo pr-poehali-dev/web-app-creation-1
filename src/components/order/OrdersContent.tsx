@@ -47,18 +47,27 @@ export default function OrdersContent({
   const isArchivedStatus = (status: string) =>
     status === 'completed' || status === 'cancelled' || status === 'archived' || status === 'rejected';
 
+  const isTransportExpired = (order: Order) => {
+    const dt = (order as unknown as Record<string, unknown>).offerTransportDateTime as string | undefined;
+    if (!dt) return false;
+    return new Date(dt) < new Date();
+  };
+
+  const isEffectivelyArchived = (order: Order) =>
+    isArchivedStatus(order.status as string) || isTransportExpired(order);
+
   const isOrderVisible = (order: Order) => {
     if (activeTab === 'archive') {
-      return isArchivedStatus(order.status as string);
+      return isEffectivelyArchived(order);
     }
     if (activeTab === 'my-requests') {
-      return order.isRequest && order.type === 'sale' && !isArchivedStatus(order.status as string);
+      return order.isRequest && order.type === 'sale' && !isEffectivelyArchived(order);
     }
     if (activeTab === 'my-responses') {
-      return order.isRequest && order.type === 'purchase' && !isArchivedStatus(order.status as string);
+      return order.isRequest && order.type === 'purchase' && !isEffectivelyArchived(order);
     }
     const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-    return typeMatch && !order.isRequest && !isArchivedStatus(order.status as string);
+    return typeMatch && !order.isRequest && !isEffectivelyArchived(order);
   };
 
   const visibleOrders = orders.filter(order => {
