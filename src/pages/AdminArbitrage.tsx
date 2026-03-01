@@ -130,6 +130,10 @@ export default function AdminArbitrage({ isAuthenticated, onLogout }: AdminArbit
   const [adminDecision, setAdminDecision] = useState('');
   const [decisionDialog, setDecisionDialog] = useState(false);
   const [isSendingDecision, setIsSendingDecision] = useState(false);
+  const [statusDialog, setStatusDialog] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [statusReason, setStatusReason] = useState('');
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
 
   const ORDERS_API = func2url.orders;
 
@@ -195,6 +199,43 @@ export default function AdminArbitrage({ isAuthenticated, onLogout }: AdminArbit
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  const changeOrderStatus = async () => {
+    if (!order || !newStatus) return;
+    setIsChangingStatus(true);
+    try {
+      const userId = getUserId();
+      const headers: HeadersInit = { 'Content-Type': 'application/json', 'X-User-Id': String(userId || '') };
+
+      const body: Record<string, string> = { status: newStatus };
+      if (statusReason.trim()) body.cancellationReason = statusReason.trim();
+
+      const response = await fetch(`${ORDERS_API}?id=${order.id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error('Ошибка');
+
+      const noticeText = `⚖️ АРБИТР изменил статус заказа на «${STATUS_MAP[newStatus]?.label || newStatus}»${statusReason.trim() ? `.\nПричина: ${statusReason.trim()}` : ''}`;
+      await fetch(`${ORDERS_API}?message=true`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ orderId: order.id, message: noticeText }),
+      });
+
+      setOrder(prev => prev ? { ...prev, status: newStatus } : prev);
+      toast({ title: 'Статус изменён', description: `Новый статус: ${STATUS_MAP[newStatus]?.label || newStatus}` });
+      setStatusDialog(false);
+      setStatusReason('');
+      await loadMessages(order.id);
+    } catch {
+      toast({ title: 'Ошибка', description: 'Не удалось изменить статус', variant: 'destructive' });
+    } finally {
+      setIsChangingStatus(false);
+    }
+  };
 
   const sendAdminDecision = async () => {
     if (!order || !adminDecision.trim()) return;
@@ -516,8 +557,8 @@ export default function AdminArbitrage({ isAuthenticated, onLogout }: AdminArbit
               </Card>
             )}
 
-            {/* Кнопка решения арбитра */}
-            <div className="flex gap-3">
+            {/* Кнопки арбитра */}
+            <div className="flex flex-wrap gap-3">
               <Button
                 onClick={() => setDecisionDialog(true)}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
@@ -525,6 +566,15 @@ export default function AdminArbitrage({ isAuthenticated, onLogout }: AdminArbit
               >
                 <Icon name="Scale" className="w-5 h-5 mr-2" />
                 Вынести решение арбитра
+              </Button>
+              <Button
+                onClick={() => { setNewStatus(''); setStatusReason(''); setStatusDialog(true); }}
+                variant="outline"
+                size="lg"
+                className="border-blue-400 text-blue-700 hover:bg-blue-50"
+              >
+                <Icon name="RefreshCcw" className="w-4 h-4 mr-2" />
+                Изменить статус
               </Button>
               <Button variant="outline" size="lg" onClick={() => loadMessages(order.id)}>
                 <Icon name="RefreshCw" className="w-4 h-4 mr-2" />
@@ -567,6 +617,66 @@ export default function AdminArbitrage({ isAuthenticated, onLogout }: AdminArbit
                 ? <Icon name="Loader2" className="w-4 h-4 animate-spin mr-2" />
                 : <Icon name="Send" className="w-4 h-4 mr-2" />}
               Отправить решение
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог смены статуса */}
+      <Dialog open={statusDialog} onOpenChange={setStatusDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="RefreshCcw" className="w-5 h-5 text-blue-600" />
+              Изменить статус заказа №{orderNumber}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Текущий статус: <span className={`font-semibold px-2 py-0.5 rounded text-xs ${STATUS_MAP[status]?.color}`}>{STATUS_MAP[status]?.label || status}</span></p>
+              <p className="text-sm font-medium">Новый статус:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'accepted', label: 'В работе', color: 'border-green-400 text-green-700 hover:bg-green-50' },
+                  { value: 'completed', label: 'Завершён', color: 'border-blue-400 text-blue-700 hover:bg-blue-50' },
+                  { value: 'cancelled', label: 'Отменён', color: 'border-red-400 text-red-700 hover:bg-red-50' },
+                  { value: 'rejected', label: 'Отклонён', color: 'border-red-300 text-red-600 hover:bg-red-50' },
+                  { value: 'archived', label: 'В архив', color: 'border-gray-400 text-gray-600 hover:bg-gray-50' },
+                  { value: 'new', label: 'Новый', color: 'border-blue-300 text-blue-600 hover:bg-blue-50' },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setNewStatus(opt.value)}
+                    className={`border-2 rounded-lg px-3 py-2 text-sm font-medium transition ${opt.color} ${newStatus === opt.value ? 'ring-2 ring-offset-1 ring-current' : ''}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Причина (необязательно)</p>
+              <textarea
+                className="w-full border rounded-md p-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                rows={3}
+                placeholder="Укажите причину изменения статуса..."
+                value={statusReason}
+                onChange={e => setStatusReason(e.target.value)}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Изменение статуса будет автоматически зафиксировано в чате заказа.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusDialog(false)}>Отмена</Button>
+            <Button
+              onClick={changeOrderStatus}
+              disabled={!newStatus || isChangingStatus || newStatus === status}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isChangingStatus
+                ? <Icon name="Loader2" className="w-4 h-4 animate-spin mr-2" />
+                : <Icon name="Check" className="w-4 h-4 mr-2" />}
+              Применить
             </Button>
           </DialogFooter>
         </DialogContent>
