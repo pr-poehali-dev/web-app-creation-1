@@ -59,16 +59,11 @@ export default function RequestsGrid({
 
   if (isLoading) {
     return (
-      <>
-        <div className="mb-6">
-          <div className="h-5 w-48 bg-muted animate-pulse rounded" />
-        </div>
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {Array.from({ length: 10 }).map((_, index) => (
-            <OfferCardSkeleton key={index} />
-          ))}
-        </div>
-      </>
+      <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <div style={{width:44,height:44,border:'4px solid #e2e8f0',borderTopColor:'#16a34a',borderRadius:'50%',animation:'spin 0.8s linear infinite'}} />
+        <span className="text-muted-foreground font-medium">Данные загружаются</span>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
     );
   }
 
