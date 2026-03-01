@@ -46,7 +46,7 @@ export function useAuctionData(id: string | undefined) {
             });
             
             if (data.bids && Array.isArray(data.bids)) {
-              setBids(data.bids.map((bid: any) => ({
+              setBids(data.bids.map((bid: Record<string, unknown>) => ({
                 ...bid,
                 timestamp: new Date(bid.timestamp)
               })));
@@ -125,7 +125,7 @@ export function useAuctionData(id: string | undefined) {
           if (data && data.bids && Array.isArray(data.bids)) {
             const previousBidsCount = bids.length;
             const previousStatus = auction?.status;
-            const newBids = data.bids.map((bid: any) => ({
+            const newBids = data.bids.map((bid: Record<string, unknown>) => ({
               ...bid,
               timestamp: new Date(bid.timestamp)
             }));
@@ -201,20 +201,17 @@ export function useAuctionData(id: string | undefined) {
     if (!auction?.endDate) return;
 
     const getTimeRemaining = (endTime: Date) => {
-      const now = new Date();
-      const diff = endTime.getTime() - now.getTime();
-
+      const diff = endTime.getTime() - Date.now();
       if (diff <= 0) return 'Завершен';
-
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
-      if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
-      if (minutes > 0) return `${minutes}м ${seconds}с`;
-      return `${seconds}с`;
+      const hh = String(hours).padStart(2, '0');
+      const mm = String(minutes).padStart(2, '0');
+      const ss = String(seconds).padStart(2, '0');
+      if (days > 0) return `${days}д. ${hh}:${mm}:${ss}`;
+      return `${hh}:${mm}:${ss}`;
     };
 
     const updateTimer = () => {
@@ -231,20 +228,17 @@ export function useAuctionData(id: string | undefined) {
     if (!auction?.startDate || auction.status !== 'upcoming') return;
 
     const getTimeUntilStart = (startTime: Date) => {
-      const now = new Date();
-      const diff = startTime.getTime() - now.getTime();
-
+      const diff = startTime.getTime() - Date.now();
       if (diff <= 0) return 'Начался';
-
       const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      if (days > 0) return `${days}д ${hours}ч ${minutes}м`;
-      if (hours > 0) return `${hours}ч ${minutes}м ${seconds}с`;
-      if (minutes > 0) return `${minutes}м ${seconds}с`;
-      return `${seconds}с`;
+      const hh = String(hours).padStart(2, '0');
+      const mm = String(minutes).padStart(2, '0');
+      const ss = String(seconds).padStart(2, '0');
+      if (days > 0) return `${days}д. ${hh}:${mm}:${ss}`;
+      return `${hh}:${mm}:${ss}`;
     };
 
     const updateTimer = () => {
