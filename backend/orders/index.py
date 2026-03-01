@@ -418,7 +418,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
         order_dict['offerTransportServiceType'] = order_dict.pop('offer_transport_service_type', None)
         dt = order_dict.pop('offer_transport_date_time', None)
-        order_dict['offerTransportDateTime'] = dt.isoformat() if dt else None
+        order_dict['offerTransportDateTime'] = dt.isoformat() if dt and hasattr(dt, 'isoformat') else (str(dt) if dt else None)
         order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
         order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
         order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
