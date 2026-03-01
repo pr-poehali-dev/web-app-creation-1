@@ -1012,6 +1012,21 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"completed_date = CURRENT_TIMESTAMP")
         updates.append(f"completion_requested = FALSE")
         updates.append(f"status = 'completed'")
+        
+        # Автоматически переводим предложение в completed если всё продано
+        offer_id_for_complete = str(order['offer_id']).replace("'", "''")
+        cur.execute(f"""
+            UPDATE {schema}.offers
+            SET status = 'completed', updated_at = NOW()
+            WHERE id = '{offer_id_for_complete}'
+              AND status = 'active'
+              AND quantity > 0
+              AND sold_quantity >= quantity
+        """)
+        rows_updated = cur.rowcount
+        if rows_updated > 0:
+            offers_cache.clear()
+            print(f"[COMPLETE_ORDER] Offer {offer_id_for_complete} auto-completed (sold_quantity >= quantity)")
     
     # Отмена заказа - записываем кто отменил
     elif 'status' in body and body['status'] == 'cancelled':

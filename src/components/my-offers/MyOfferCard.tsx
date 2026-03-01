@@ -15,25 +15,42 @@ import { DISTRICTS } from '@/data/districts';
 import { getExpirationStatus } from '@/utils/expirationFilter';
 import type { Offer } from '@/types/offer';
 
-type OfferStatus = 'active' | 'moderation' | 'archived';
+type OfferStatus = 'active' | 'moderation' | 'archived' | 'completed' | string;
 
 interface MyOffer extends Offer {
   status: OfferStatus;
   views: number;
   favorites: number;
+  soldQuantity?: number;
 }
 
-const STATUS_LABELS: Record<OfferStatus, string> = {
-  active: 'Активно',
-  moderation: 'На модерации',
-  archived: 'В архиве',
-};
+function getStatusLabel(status: OfferStatus, quantity?: number, soldQuantity?: number): string {
+  if (status === 'active' && quantity && soldQuantity !== undefined && soldQuantity >= quantity && quantity > 0) {
+    return 'Завершено';
+  }
+  const labels: Record<string, string> = {
+    active: 'Активно',
+    moderation: 'На модерации',
+    archived: 'В архиве',
+    completed: 'Завершено',
+    rejected: 'Отклонено',
+  };
+  return labels[status] || status;
+}
 
-const STATUS_COLORS: Record<OfferStatus, string> = {
-  active: 'bg-green-500',
-  moderation: 'bg-orange-500',
-  archived: 'bg-slate-500',
-};
+function getStatusColor(status: OfferStatus, quantity?: number, soldQuantity?: number): string {
+  if (status === 'active' && quantity && soldQuantity !== undefined && soldQuantity >= quantity && quantity > 0) {
+    return 'bg-blue-500';
+  }
+  const colors: Record<string, string> = {
+    active: 'bg-green-500',
+    moderation: 'bg-orange-500',
+    archived: 'bg-slate-500',
+    completed: 'bg-blue-500',
+    rejected: 'bg-red-500',
+  };
+  return colors[status] || 'bg-slate-500';
+}
 
 interface MyOfferCardProps {
   offer: MyOffer;
@@ -83,8 +100,8 @@ export default function MyOfferCard({
             </div>
           )}
           <div className="absolute top-2 left-2">
-            <Badge className={STATUS_COLORS[offer.status]}>
-              {STATUS_LABELS[offer.status]}
+            <Badge className={getStatusColor(offer.status, offer.quantity, offer.soldQuantity)}>
+              {getStatusLabel(offer.status, offer.quantity, offer.soldQuantity)}
             </Badge>
           </div>
           {offer.isPremium && (

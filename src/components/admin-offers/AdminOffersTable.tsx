@@ -40,7 +40,11 @@ interface AdminOffersTableProps {
   onDelete: (offer: AdminOffer) => void;
 }
 
-function getStatusBadge(status: string) {
+function getStatusBadge(status: string, quantity?: number, soldQuantity?: number) {
+  // Если всё продано — показываем "Завершено" независимо от технического статуса
+  if (status === 'active' && quantity !== undefined && soldQuantity !== undefined && soldQuantity >= quantity && quantity > 0) {
+    return <Badge className="bg-blue-500 text-white">Завершено</Badge>;
+  }
   switch (status) {
     case 'active':
       return <Badge className="bg-green-500 text-white">Активно</Badge>;
@@ -173,7 +177,7 @@ export default function AdminOffersTable({
                   )}
                 </div>
               </TableCell>
-              <TableCell>{getStatusBadge(offer.status)}</TableCell>
+              <TableCell>{getStatusBadge(offer.status, offer.quantity, offer.soldQuantity)}</TableCell>
               <TableCell>{new Date(offer.createdAt).toLocaleDateString('ru-RU')}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
