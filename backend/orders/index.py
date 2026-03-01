@@ -1558,7 +1558,7 @@ def cleanup_orphaned_orders(event: Dict[str, Any], headers: Dict[str, str]) -> D
     }
 
 def admin_archive_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    """Архивирование заказа администратором с указанием причины"""
+    """Архивирование заказа администратором с указанием причины + уведомления покупателю и продавцу"""
     user_headers = event.get('headers', {})
     user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
 
@@ -1578,8 +1578,9 @@ def admin_archive_order(order_id: str, event: Dict[str, Any], headers: Dict[str,
     reason_escaped = reason.replace("'", "''")
     now = datetime.utcnow()
 
-    cur.execute(f"SELECT id FROM {schema}.orders WHERE id = '{order_id_escaped}'")
-    if not cur.fetchone():
+    cur.execute(f"SELECT id, buyer_id, seller_id, order_number, title FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    order = cur.fetchone()
+    if not order:
         cur.close()
         conn.close()
         return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Order not found'}), 'isBase64Encoded': False}
@@ -1597,6 +1598,22 @@ def admin_archive_order(order_id: str, event: Dict[str, Any], headers: Dict[str,
     conn.commit()
     cur.close()
     conn.close()
+
+    order_number = order.get('order_number', order_id[:8])
+    order_title = order.get('title', 'заказ')
+    archive_url = '/my-orders?tab=archived'
+    notif_title = f'Заказ №{order_number} перемещён в архив'
+    notif_message = f'Администратор переместил заказ «{order_title}» в архив. Причина: {reason}'
+
+    try:
+        send_notification(order['buyer_id'], notif_title, notif_message, archive_url)
+    except Exception as e:
+        print(f'[ADMIN_ARCHIVE] Buyer notification error: {e}')
+
+    try:
+        send_notification(order['seller_id'], notif_title, notif_message, archive_url)
+    except Exception as e:
+        print(f'[ADMIN_ARCHIVE] Seller notification error: {e}')
 
     return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'message': 'Order archived by admin'}), 'isBase64Encoded': False}
 

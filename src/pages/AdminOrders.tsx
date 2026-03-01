@@ -16,6 +16,7 @@ import { ordersAPI } from '@/services/api';
 import func2url from '../../backend/func2url.json';
 import type { Order } from '@/types/order';
 import { dataSync } from '@/utils/dataSync';
+import { addNotification } from '@/utils/notifications';
 
 interface AdminOrdersProps {
   isAuthenticated: boolean;
@@ -51,7 +52,7 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
       setIsLoading(true);
       const response = await ordersAPI.getAll('all');
       
-      const mappedOrders = response.orders.map((order: any) => ({
+      const mappedOrders = response.orders.map((order: Record<string, unknown>) => ({
         id: order.id,
         offerId: order.offer_id || order.offerId,
         offerTitle: order.offer_title || order.title,
@@ -190,6 +191,13 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
         body: JSON.stringify({ reason: archiveReason.trim() }),
       });
       if (!response.ok) throw new Error('Ошибка архивирования');
+
+      const order = archiveDialogOrder;
+      const notifTitle = `Заказ №${order.id.slice(0, 8)} перемещён в архив`;
+      const notifMessage = `Администратор переместил заказ «${order.offerTitle}» в архив. Причина: ${archiveReason.trim()}`;
+      if (order.buyerId) addNotification(order.buyerId, 'system', notifTitle, notifMessage, '/my-orders?tab=archived');
+      if (order.sellerId) addNotification(order.sellerId, 'system', notifTitle, notifMessage, '/my-orders?tab=archived');
+
       toast({ title: 'Заказ перемещён в архив', description: `Причина: ${archiveReason.trim()}` });
       setArchiveDialogOrder(null);
       setArchiveReason('');
