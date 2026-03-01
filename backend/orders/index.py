@@ -171,8 +171,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if method == 'GET':
             query_params = event.get('queryStringParameters', {}) or {}
             order_id = query_params.get('id') or query_params.get('orderId')
+            order_number_param = query_params.get('orderNumber')
             offer_id = query_params.get('offerId')
             messages_flag = query_params.get('messages')
+            
+            # Поиск по номеру заказа — находим id и подставляем
+            if order_number_param and not order_id:
+                schema = get_schema()
+                try:
+                    conn_tmp = get_db_connection()
+                    cur_tmp = conn_tmp.cursor()
+                    num_escaped = order_number_param.replace("'", "''")
+                    cur_tmp.execute(f"SELECT id FROM {schema}.orders WHERE order_number = '{num_escaped}' LIMIT 1")
+                    row = cur_tmp.fetchone()
+                    cur_tmp.close()
+                    conn_tmp.close()
+                    if row:
+                        order_id = str(row['id'])
+                    else:
+                        return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Order not found', 'orders': []}), 'isBase64Encoded': False}
+                except Exception as e:
+                    print(f"[ORDER_NUMBER_SEARCH] Error: {e}")
+                    return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': str(e)}), 'isBase64Encoded': False}
             
             print(f"[GET] order_id={order_id}, offer_id={offer_id}, messages={messages_flag}")
             

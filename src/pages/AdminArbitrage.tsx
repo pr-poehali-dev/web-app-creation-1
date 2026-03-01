@@ -93,6 +93,57 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   archived: { label: 'Архив', color: 'bg-gray-100 text-gray-600' },
 };
 
+function normalizeOrder(o: Record<string, unknown>): OrderDetail {
+  return {
+    id: o.id as string,
+    order_number: (o.order_number || o.orderNumber) as string,
+    orderNumber: (o.orderNumber || o.order_number) as string,
+    title: (o.title || o.offer_title) as string,
+    status: o.status as string,
+    buyer_name: (o.buyer_name || o.buyerName || o.buyer_full_name) as string,
+    buyerName: (o.buyerName || o.buyer_name || o.buyer_full_name) as string,
+    buyer_phone: (o.buyer_phone || o.buyerPhone) as string,
+    buyerPhone: (o.buyerPhone || o.buyer_phone) as string,
+    buyer_email: (o.buyer_email || o.buyerEmail) as string,
+    buyerEmail: (o.buyerEmail || o.buyer_email) as string,
+    buyer_company: (o.buyer_company || o.buyerCompany) as string,
+    buyerCompany: (o.buyerCompany || o.buyer_company) as string,
+    seller_name: (o.seller_name || o.sellerName || o.seller_full_name) as string,
+    sellerName: (o.sellerName || o.seller_name || o.seller_full_name) as string,
+    seller_phone: (o.seller_phone || o.sellerPhone) as string,
+    sellerPhone: (o.sellerPhone || o.seller_phone) as string,
+    seller_email: (o.seller_email || o.sellerEmail) as string,
+    sellerEmail: (o.sellerEmail || o.seller_email) as string,
+    quantity: o.quantity as number,
+    unit: o.unit as string,
+    price_per_unit: (o.price_per_unit ?? o.pricePerUnit) as number,
+    pricePerUnit: (o.pricePerUnit ?? o.price_per_unit) as number,
+    total_amount: (o.total_amount ?? o.totalAmount) as number,
+    totalAmount: (o.totalAmount ?? o.total_amount) as number,
+    counter_price_per_unit: (o.counter_price_per_unit ?? o.counterPricePerUnit) as number,
+    counterPricePerUnit: (o.counterPricePerUnit ?? o.counter_price_per_unit) as number,
+    counter_total_amount: (o.counter_total_amount ?? o.counterTotalAmount) as number,
+    counterTotalAmount: (o.counterTotalAmount ?? o.counter_total_amount) as number,
+    counter_offer_message: (o.counter_offer_message || o.counterOfferMessage) as string,
+    counterOfferMessage: (o.counterOfferMessage || o.counter_offer_message) as string,
+    delivery_type: (o.delivery_type || o.deliveryType) as string,
+    deliveryType: (o.deliveryType || o.delivery_type) as string,
+    delivery_address: (o.delivery_address || o.deliveryAddress) as string,
+    deliveryAddress: (o.deliveryAddress || o.delivery_address) as string,
+    buyer_comment: (o.buyer_comment || o.buyerComment) as string,
+    buyerComment: (o.buyerComment || o.buyer_comment) as string,
+    cancellation_reason: (o.cancellation_reason || o.cancellationReason) as string,
+    cancellationReason: (o.cancellationReason || o.cancellation_reason) as string,
+    created_at: (o.created_at || o.createdAt) as string,
+    createdAt: (o.createdAt || o.created_at) as string,
+    updated_at: (o.updated_at || o.updatedAt) as string,
+    updatedAt: (o.updatedAt || o.updated_at) as string,
+    completed_date: (o.completed_date || o.completedDate) as string,
+    completedDate: (o.completedDate || o.completed_date) as string,
+    attachments: o.attachments as { url: string; name: string }[],
+  };
+}
+
 function formatDate(val?: string | null) {
   if (!val) return '—';
   try {
@@ -161,12 +212,15 @@ export default function AdminArbitrage({ isAuthenticated, onLogout }: AdminArbit
       if (!response.ok) throw new Error('not found');
       const data = await response.json();
 
-      if (data.orders && data.orders.length > 0) {
-        setOrder(data.orders[0]);
-        await loadMessages(data.orders[0].id);
-      } else if (data.id) {
-        setOrder(data);
+      if (data.id) {
+        // get_order_by_id возвращает объект напрямую — нормализуем поля
+        const normalized = normalizeOrder(data);
+        setOrder(normalized);
         await loadMessages(data.id);
+      } else if (data.orders && data.orders.length > 0) {
+        const normalized = normalizeOrder(data.orders[0]);
+        setOrder(normalized);
+        await loadMessages(data.orders[0].id);
       } else {
         toast({ title: 'Заказ не найден', description: `По номеру "${query}" ничего не найдено`, variant: 'destructive' });
       }
