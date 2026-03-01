@@ -195,6 +195,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'high'
     },
     {
+      id: 'arbitrage',
+      title: 'Арбитраж споров',
+      description: 'Просмотр заказа, переписки и файлов для разрешения споров',
+      icon: 'Scale',
+      color: 'bg-purple-700',
+      count: null,
+      path: '/admin/arbitrage',
+      priority: 'high'
+    },
+    {
       id: 'reviews',
       title: 'Модерация отзывов',
       description: 'Проверка отзывов и управление рейтингами',
