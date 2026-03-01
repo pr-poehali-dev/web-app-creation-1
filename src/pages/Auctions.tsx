@@ -190,6 +190,19 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
 
     if (statusFilter !== 'all') {
       result = result.filter((auction) => auction.status === statusFilter);
+    } else {
+      // Скрываем завершённые аукционы старше 1 дня — они уходят в архив
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      result = result.filter((auction) => {
+        if (auction.status !== 'ended') return true;
+        const endedAt = auction.endTime
+          ? new Date(auction.endTime).getTime()
+          : auction.endDate
+            ? new Date(auction.endDate).getTime()
+            : null;
+        if (!endedAt) return false;
+        return endedAt > oneDayAgo;
+      });
     }
 
     if (filters.query && filters.query.length >= 2) {

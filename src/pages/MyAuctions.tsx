@@ -74,11 +74,22 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     };
   }, []);
 
-  const activeAuctions = myAuctions.filter(a => 
-    a.status === 'active' || a.status === 'upcoming' || a.status === 'pending'
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const getEndedAt = (a: (typeof myAuctions)[0]) => {
+    if (a.endTime) return new Date(a.endTime).getTime();
+    if (a.endDate) return new Date(a.endDate as string).getTime();
+    return 0;
+  };
+
+  const activeAuctions = myAuctions.filter(a =>
+    a.status === 'active' || a.status === 'upcoming' || a.status === 'pending' || a.status === 'ending-soon'
   );
-  const completedAuctions = myAuctions.filter(a => a.status === 'ended');
-  const archivedAuctions = myAuctions.filter(a => a.status === 'ended');
+  const completedAuctions = myAuctions.filter(a =>
+    a.status === 'ended' && getEndedAt(a) > oneDayAgo
+  );
+  const archivedAuctions = myAuctions.filter(a =>
+    a.status === 'ended' && getEndedAt(a) <= oneDayAgo
+  );
 
   const handleDeleteAuction = async (auctionId: string) => {
     try {
@@ -109,10 +120,10 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
         title: 'Успешно',
         description: 'Аукцион остановлен',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Ошибка',
-        description: error.message || 'Не удалось остановить аукцион',
+        description: (error as Error).message || 'Не удалось остановить аукцион',
         variant: 'destructive',
       });
     }
@@ -154,10 +165,10 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
         title: 'Успешно',
         description: 'Цена снижена',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: 'Ошибка',
-        description: error.message || 'Не удалось снизить цену',
+        description: (error as Error).message || 'Не удалось снизить цену',
         variant: 'destructive',
       });
     }
