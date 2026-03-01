@@ -29,10 +29,42 @@ export default function RequestMediaSection({
       <CardHeader>
         <CardTitle>Медиа</CardTitle>
         <CardDescription>
-          Можете загрузить видеокомментарий к вашему запросу
+          Загрузите фото и/или видео к вашему запросу
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        <div>
+          <Label htmlFor="images">Фото (до 10 файлов)</Label>
+          <div className="mt-2">
+            <Input
+              id="images"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={onImageUpload}
+              disabled={images.length >= 10}
+            />
+            <p className="text-xs text-muted-foreground mt-1">{images.length}/10 фото</p>
+          </div>
+
+          {imagePreviews.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-3">
+              {imagePreviews.map((src, index) => (
+                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
+                  <img src={src} alt={`Фото ${index + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => onRemoveImage(index)}
+                    className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+                  >
+                    <Icon name="X" className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div>
           <Label htmlFor="video">Видео (1 файл)</Label>
           <div className="mt-2">
@@ -44,7 +76,7 @@ export default function RequestMediaSection({
               disabled={!!video}
             />
           </div>
-          
+
           {videoPreview && (
             <div className="relative aspect-video rounded-lg overflow-hidden border mt-4 max-w-md">
               <video

@@ -84,6 +84,10 @@ export function useCreateRequestForm() {
         });
         return;
       }
+      if (value) {
+        setFormData(prev => ({ ...prev, [field]: value, publicationDuration: value }));
+        return;
+      }
     }
 
     if (field === 'startDate' && typeof value === 'string') {

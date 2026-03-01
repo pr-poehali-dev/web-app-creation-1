@@ -21,6 +21,7 @@ export default function RequestBasicInfoSection({
   onInputChange,
 }: RequestBasicInfoSectionProps) {
   const isTransport = formData.category === 'transport';
+  const isDescriptionRequired = formData.category === 'transport' || formData.category === 'utilities';
   const selectedCategory = CATEGORIES.find(c => c.id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
   
@@ -183,13 +184,15 @@ export default function RequestBasicInfoSection({
 
         {!isTransport && (
           <div>
-            <Label htmlFor="description">Описание запроса *</Label>
+            <Label htmlFor="description">
+              Описание запроса {isDescriptionRequired ? '*' : '(необязательно)'}
+            </Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) => onInputChange('description', e.target.value)}
               placeholder="Подробно опишите ваши требования к товару или услуге..."
-              required
+              required={isDescriptionRequired}
               rows={6}
               maxLength={1000}
             />
