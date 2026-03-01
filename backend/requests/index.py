@@ -376,7 +376,9 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             v.url as video_url,
             v.thumbnail as video_thumbnail,
             COALESCE(u.company_name, TRIM(CONCAT(u.first_name, ' ', u.last_name))) as author_name,
-            CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as author_is_verified
+            CASE WHEN u.verification_status = 'approved' THEN TRUE ELSE FALSE END as author_is_verified,
+            COALESCE(u.rating, 0) as author_rating,
+            (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.reviews rv WHERE rv.reviewed_user_id = u.id) as author_reviews_count
         FROM t_p42562714_web_app_creation_1.requests r
         LEFT JOIN t_p42562714_web_app_creation_1.request_image_relations rir ON r.id = rir.request_id
         LEFT JOIN t_p42562714_web_app_creation_1.offer_images ri ON rir.image_id = ri.id
@@ -393,7 +395,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.transport_service_type, r.transport_route, r.transport_type, r.transport_capacity,
             r.transport_date_time, r.transport_departure_date_time, r.transport_price, r.transport_price_type,
             r.transport_negotiable, r.transport_comment, r.transport_all_districts,
-            v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.verification_status
+            v.id, v.url, v.thumbnail, u.company_name, u.first_name, u.last_name, u.verification_status, u.rating, u.id
     """
     
     print(f'[GET_REQUEST] Looking for id={request_id!r}')
@@ -447,6 +449,8 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     req_dict['userId'] = str(req_dict.pop('user_id', None))
     req_dict['authorName'] = req_dict.pop('author_name', None)
     req_dict['authorIsVerified'] = req_dict.pop('author_is_verified', False)
+    req_dict['authorRating'] = float(req_dict.pop('author_rating', 0) or 0)
+    req_dict['authorReviewsCount'] = int(req_dict.pop('author_reviews_count', 0) or 0)
     req_dict['pricePerUnit'] = float(req_dict.pop('price_per_unit', 0) or 0)
     req_dict['hasVAT'] = req_dict.pop('has_vat', False)
     req_dict['vatRate'] = req_dict.pop('vat_rate', None)

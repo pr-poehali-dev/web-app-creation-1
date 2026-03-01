@@ -192,17 +192,18 @@ export default function OrdersContent({
       
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {displayOrders.map(order => (
-          <OrderCard 
-            key={order.id}
-            order={order} 
-            isSeller={isSeller}
-            onOpenChat={onOpenChat}
-            onAcceptOrder={isSeller ? onAcceptOrder : undefined}
-            onCompleteOrder={onCompleteOrder}
-            onDeleteOrder={onDeleteOrder}
-            isExiting={exitingOrderIds.has(order.id as string)}
-            isNew={newOrderIds.has(order.id as string)}
-          />
+          <div key={order.id} id={`order-card-${order.id}`} className="transition-all duration-700">
+            <OrderCard 
+              order={order} 
+              isSeller={isSeller}
+              onOpenChat={onOpenChat}
+              onAcceptOrder={isSeller ? onAcceptOrder : undefined}
+              onCompleteOrder={onCompleteOrder}
+              onDeleteOrder={onDeleteOrder}
+              isExiting={exitingOrderIds.has(order.id as string)}
+              isNew={newOrderIds.has(order.id as string)}
+            />
+          </div>
         ))}
       </div>
     </div>

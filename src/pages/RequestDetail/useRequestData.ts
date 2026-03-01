@@ -115,8 +115,8 @@ export function useRequestData(id: string | undefined) {
             type: 'individual',
             phone: '',
             email: '',
-            rating: 0,
-            reviewsCount: 0,
+            rating: data.authorRating || 0,
+            reviewsCount: data.authorReviewsCount || 0,
             isVerified: data.authorIsVerified || false,
             statistics: {
               totalRequests: 0,

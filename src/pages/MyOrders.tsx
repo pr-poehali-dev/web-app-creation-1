@@ -22,6 +22,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as OrderTab | null;
+  const orderIdParam = searchParams.get('orderId');
   const [activeTab, setActiveTab] = useState<OrderTab>(tabParam || 'buyer');
 
   useEffect(() => {
@@ -75,6 +76,19 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.refresh, location.state?.newOrderId]);
+
+  useEffect(() => {
+    if (!orderIdParam || isLoading) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`order-card-${orderIdParam}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2'), 3000);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [orderIdParam, isLoading]);
 
   useEffect(() => {
     const handleOpenOrderChat = async (event: CustomEvent) => {

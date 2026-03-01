@@ -71,7 +71,10 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
     }
     
     if (existingResponse) {
-      setIsEditFormOpen(true);
+      toast.info('У вас уже есть отклик', {
+        description: 'Переходим к вашей карточке отклика'
+      });
+      navigate(`/my-orders?tab=my-responses&orderId=${existingResponse.orderId}`);
     } else {
       setIsResponseModalOpen(true);
     }
