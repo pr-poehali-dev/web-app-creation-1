@@ -16,14 +16,26 @@ interface AuctionInfoPanelProps {
   onMakeBidClick: () => void;
 }
 
-const getStatusBadge = (status: Auction['status']) => {
+function fmtDate(d?: Date | string | null): string {
+  if (!d) return '';
+  const dt = typeof d === 'string' ? new Date(d) : d;
+  if (isNaN(dt.getTime())) return '';
+  return dt.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+const getStatusBadge = (status: Auction['status'], auction?: Auction) => {
   switch (status) {
     case 'pending':
       return <Badge className="bg-yellow-500"><Icon name="Clock" className="h-3 w-3 mr-1" />Ожидает публикации</Badge>;
     case 'active':
       return <Badge className="bg-green-500"><Icon name="Play" className="h-3 w-3 mr-1" />Активен</Badge>;
     case 'ending-soon':
-      return <Badge className="bg-orange-500"><Icon name="Clock" className="h-3 w-3 mr-1" />Скоро завершится</Badge>;
+      return (
+        <Badge className="bg-orange-500 text-xs leading-tight py-1 px-2 flex flex-col items-start gap-0.5 h-auto">
+          <span className="flex items-center gap-1"><Icon name="Play" className="h-2.5 w-2.5" />Нач.: {fmtDate(auction?.startDate)}</span>
+          <span className="flex items-center gap-1"><Icon name="Clock" className="h-2.5 w-2.5" />Оконч.: {fmtDate(auction?.endDate)}</span>
+        </Badge>
+      );
     case 'upcoming':
       return <Badge className="bg-blue-500"><Icon name="Calendar" className="h-3 w-3 mr-1" />Предстоящий</Badge>;
     case 'ended':
@@ -58,7 +70,7 @@ export default function AuctionInfoPanel({
       <div>
         <div className="flex items-start justify-between gap-2 mb-1.5">
           <h1 className="text-lg md:text-xl lg:text-2xl font-bold">{auction.title}</h1>
-          {getStatusBadge(auction.status)}
+          {getStatusBadge(auction.status, auction)}
         </div>
         {categoryName && (
           <Badge variant="secondary">{categoryName}</Badge>
