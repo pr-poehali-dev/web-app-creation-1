@@ -76,7 +76,10 @@ export default function RequestResponsesTab({ orders }: RequestResponsesTabProps
                   </div>
                   <p className="text-sm text-muted-foreground">
                     <Icon name="User" className="inline w-3 h-3 mr-1" />
-                    {order.sellerName || order.buyerName || 'Исполнитель'}
+                    {['accepted', 'completed'].includes(order.status)
+                      ? (order.sellerName || order.buyerName || '—')
+                      : <span className="italic">Скрыто до принятия</span>
+                    }
                   </p>
                   {amount != null && (
                     <p className="text-sm font-semibold text-primary">

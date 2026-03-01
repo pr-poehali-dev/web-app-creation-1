@@ -145,9 +145,10 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               {isSeller ? roles.buyer : roles.seller}
             </p>
             <p className="font-medium truncate">
-              {isSeller 
-                ? order.buyerName 
-                : (order.sellerName || roles.seller)}
+              {['accepted', 'completed', 'cancelled'].includes(order.status)
+                ? (isSeller ? order.buyerName : (order.sellerName || '—'))
+                : <span className="text-muted-foreground italic text-sm">Скрыто до принятия</span>
+              }
             </p>
           </div>
 
