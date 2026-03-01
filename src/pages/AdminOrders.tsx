@@ -212,17 +212,25 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
-        return <Badge variant="outline" className="bg-blue-50">Новый</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Новый</Badge>;
       case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50">Ожидает</Badge>;
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Ожидает</Badge>;
+      case 'negotiating':
+        return <Badge variant="outline" className="bg-orange-50 text-orange-700">Переговоры</Badge>;
       case 'accepted':
-        return <Badge variant="outline" className="bg-green-50">Принят</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-50">Отклонен</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700">В работе</Badge>;
+      case 'awaiting_payment':
+        return <Badge variant="outline" className="bg-purple-50 text-purple-700">В работе (ожидает оплаты)</Badge>;
       case 'completed':
-        return <Badge variant="outline" className="bg-blue-50">Завершен</Badge>;
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Завершен</Badge>;
+      case 'rejected':
+        return <Badge variant="outline" className="bg-red-50 text-red-700">Отклонен</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-red-50 text-red-600">Отменен</Badge>;
+      case 'archived':
+        return <Badge variant="outline" className="text-slate-500">Архив</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -345,9 +353,13 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
                   <SelectItem value="all">Все статусы</SelectItem>
                   <SelectItem value="new">Новые</SelectItem>
                   <SelectItem value="pending">Ожидают</SelectItem>
-                  <SelectItem value="accepted">Приняты</SelectItem>
+                  <SelectItem value="negotiating">Переговоры</SelectItem>
+                  <SelectItem value="accepted">В работе</SelectItem>
+                  <SelectItem value="awaiting_payment">В работе (ожидает оплаты)</SelectItem>
                   <SelectItem value="completed">Завершены</SelectItem>
                   <SelectItem value="rejected">Отклонены</SelectItem>
+                  <SelectItem value="cancelled">Отменены</SelectItem>
+                  <SelectItem value="archived">Архивированы</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={loadOrders} variant="outline">
