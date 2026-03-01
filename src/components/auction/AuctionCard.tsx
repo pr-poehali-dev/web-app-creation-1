@@ -17,7 +17,7 @@ import Icon from '@/components/ui/icon';
 import OptimizedImage from '@/components/ui/optimized-image';
 import type { Auction } from '@/types/auction';
 import { CATEGORIES } from '@/data/categories';
-import { getTimeRemaining, getTimeUntilStart, getStatusBadge } from './AuctionHelpers';
+import { getTimeRemaining, getTimeUntilStart } from './AuctionHelpers';
 import { getSession } from '@/utils/auth';
 import { sharedTimer } from '@/utils/sharedTimer';
 
@@ -29,12 +29,45 @@ interface AuctionCardProps {
   onDelete?: (id: string) => void;
 }
 
+function StatusBadge({ status, liveTime }: { status: Auction['status']; liveTime: string }) {
+  switch (status) {
+    case 'active':
+      return (
+        <Badge className="bg-green-500 text-xs px-1.5 py-0.5">
+          <Icon name="Play" className="h-2.5 w-2.5 mr-1" />
+          Активен
+        </Badge>
+      );
+    case 'ending-soon':
+      return (
+        <Badge className="bg-orange-500 text-xs px-1.5 py-0.5 tabular-nums">
+          <Icon name="Clock" className="h-2.5 w-2.5 mr-1" />
+          {liveTime || 'Скоро'}
+        </Badge>
+      );
+    case 'upcoming':
+      return (
+        <Badge className="bg-blue-500 text-xs px-1.5 py-0.5">
+          <Icon name="Calendar" className="h-2.5 w-2.5 mr-1" />
+          Предстоящий
+        </Badge>
+      );
+    case 'ended':
+      return (
+        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+          <Icon name="CheckCircle" className="h-2.5 w-2.5 mr-1" />
+          Завершен
+        </Badge>
+      );
+  }
+}
+
 export default function AuctionCard({ auction, districts, isAuthenticated, isHighlighted = false, onDelete }: AuctionCardProps) {
   const navigate = useNavigate();
   const currentUser = getSession();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [liveTime, setLiveTime] = useState('');
-  
+
   const isOwner = currentUser && auction.userId === currentUser.id;
   const category = CATEGORIES.find(c => c.id === auction.category);
   const districtName = districts.find(d => d.id === auction.district)?.name;
@@ -67,186 +100,155 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
   };
 
   const confirmDelete = () => {
-    if (onDelete) {
-      onDelete(auction.id);
-    }
+    if (onDelete) onDelete(auction.id);
     setShowDeleteDialog(false);
   };
 
   return (
     <Card
-      className={`transition-all hover:shadow-xl group ${
-        auction.isPremium && auction.status !== 'ended' ? 'border-2 border-primary shadow-lg' : ''
-      } ${
-        isHighlighted ? 'ring-2 ring-primary ring-offset-2 shadow-2xl' : ''
-      }`}
+      className={`transition-all hover:shadow-lg group ${
+        auction.isPremium && auction.status !== 'ended' ? 'border-2 border-primary shadow-md' : ''
+      } ${isHighlighted ? 'ring-2 ring-primary ring-offset-2 shadow-xl' : ''}`}
     >
       {auction.isPremium && auction.status !== 'ended' && (
-        <div className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 text-center">
-          Премиум аукцион
+        <div className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 text-center">
+          Премиум
         </div>
       )}
 
       <CardHeader className="p-0 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
-        <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+        <div className="relative aspect-[16/9] bg-muted overflow-hidden">
           {auction.images.length > 0 ? (
             <OptimizedImage
               src={auction.images[0].url}
               alt={auction.images[0].alt}
-              width={600}
-              quality={75}
+              width={400}
+              quality={70}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex items-center space-x-2 opacity-30">
-                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-primary">
-                  <Icon name="Building2" className="h-10 w-10 text-white" />
+              <div className="flex items-center space-x-1.5 opacity-20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                  <Icon name="Building2" className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-4xl font-bold text-primary">ЕРТТП</span>
+                <span className="text-2xl font-bold text-primary">ЕРТТП</span>
               </div>
             </div>
           )}
-          <div className="absolute top-2 right-2">
-            {getStatusBadge(auction.status)}
+          <div className="absolute top-1.5 right-1.5">
+            <StatusBadge status={auction.status} liveTime={liveTime} />
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-3 pb-3 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
-        <div className="space-y-2">
+      <CardContent className="px-3 pt-2.5 pb-2 cursor-pointer" onClick={() => navigate(`/auction/${auction.id}`)}>
+        <div className="space-y-1.5">
           <div>
-            <div className="flex items-start justify-between gap-2 mb-1.5">
-              <h3 className="font-semibold text-base md:text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                {auction.title}
-              </h3>
-            </div>
+            <h3 className="font-semibold text-sm leading-tight group-hover:text-primary transition-colors line-clamp-1 mb-1">
+              {auction.title}
+            </h3>
             {category && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs py-0 px-1.5 h-5">
                 {category.name}
               </Badge>
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs md:text-sm">
-              <span className="text-muted-foreground">Текущая:</span>
-              <span className="font-bold text-base md:text-lg text-primary transition-all duration-300">
-                {auction.currentBid.toLocaleString('ru-RU')} ₽
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs md:text-sm">
-              <span className="text-muted-foreground">Начальная:</span>
-              <span className="font-semibold text-sm md:text-base">
-                {auction.startingPrice.toLocaleString('ru-RU')} ₽
-              </span>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-xs">
+                <span className="text-muted-foreground">Текущая:</span>
+                <span className="font-bold text-sm text-primary">
+                  {auction.currentBid.toLocaleString('ru-RU')} ₽
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span>Нач.:</span>
+                <span>{auction.startingPrice.toLocaleString('ru-RU')} ₽</span>
+              </div>
             </div>
             {auction.buyNowPrice && (
-              <div className="flex items-center justify-between text-xs md:text-sm">
-                <span className="text-muted-foreground">Купить:</span>
-                <span className="font-semibold text-sm md:text-base text-green-600">
-                  {auction.buyNowPrice.toLocaleString('ru-RU')} ₽
-                </span>
+              <div className="text-right text-xs">
+                <span className="text-muted-foreground block">Купить:</span>
+                <span className="font-semibold text-green-600">{auction.buyNowPrice.toLocaleString('ru-RU')} ₽</span>
               </div>
             )}
           </div>
 
-          <div className="pt-2 border-t space-y-1.5">
-            <div className="flex items-center gap-1.5 text-xs md:text-sm">
-              <Icon name="Users" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">
-                {auction.bidsCount} {auction.bidsCount === 1 ? 'ставка' : 'ставок'}
+          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1">
+                <Icon name="Users" className="h-3 w-3" />
+                {auction.bidsCount}
+              </span>
+              <span className="flex items-center gap-1 truncate max-w-[100px]">
+                <Icon name="MapPin" className="h-3 w-3 shrink-0" />
+                <span className="truncate">{districtName}</span>
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs md:text-sm">
-              <Icon name="MapPin" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-              <span className="text-muted-foreground truncate">{districtName}</span>
-            </div>
-            {auction.gpsCoordinates && (
-              <div className="flex items-center gap-1.5 text-xs md:text-sm">
+            <div className="flex items-center gap-1 shrink-0">
+              {auction.gpsCoordinates && (
                 <a
                   href={`https://www.google.com/maps?q=${auction.gpsCoordinates}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1.5 text-primary hover:underline"
+                  onClick={e => e.stopPropagation()}
+                  className="flex items-center gap-0.5 text-primary hover:underline"
                 >
-                  <Icon name="Map" className="h-3 w-3 md:h-4 md:w-4" />
-                  <span>Карта</span>
+                  <Icon name="Map" className="h-3 w-3" />
+                  Карта
                 </a>
-              </div>
-            )}
-            {auction.status === 'upcoming' && auction.startTime && (
-              <div className="flex items-center gap-1.5 text-xs md:text-sm">
-                <Icon name="Clock" className="h-3 w-3 md:h-4 md:w-4 text-blue-600" />
-                <span className="font-semibold text-blue-600">
-                  До старта: {liveTime}
-                </span>
-              </div>
-            )}
-            {auction.status !== 'ended' && auction.status !== 'upcoming' && (
-              <div className="flex items-center gap-1.5 text-xs md:text-sm">
-                <Icon name="Clock" className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-                <span className={`font-semibold ${
-                  auction.status === 'ending-soon' ? 'text-orange-600' : 'text-muted-foreground'
-                }`}>
+              )}
+              {auction.status === 'upcoming' && auction.startTime && (
+                <span className="flex items-center gap-1 text-blue-600 font-semibold tabular-nums">
+                  <Icon name="Clock" className="h-3 w-3" />
                   {liveTime}
                 </span>
-              </div>
-            )}
+              )}
+              {auction.status === 'active' && (
+                <span className="flex items-center gap-1 text-muted-foreground font-medium tabular-nums">
+                  <Icon name="Clock" className="h-3 w-3" />
+                  {liveTime}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
 
-      <CardFooter className="pt-0 pb-3">
+      <CardFooter className="px-3 pt-0 pb-2.5">
         {isOwner ? (
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-1.5 w-full">
             {auction.status === 'ended' && (
               <Button
                 variant="default"
                 size="sm"
-                className="w-full h-9 text-sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/auction/${auction.id}`);
-                }}
+                className="w-full h-8 text-xs"
+                onClick={(e) => { e.stopPropagation(); navigate(`/auction/${auction.id}`); }}
               >
-                <Icon name="MessageCircle" className="mr-1.5 h-3.5 w-3.5" />
+                <Icon name="MessageCircle" className="mr-1 h-3 w-3" />
                 Контакты победителя
               </Button>
             )}
-            <div className="flex gap-2 w-full">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 h-9 text-sm"
-                onClick={handleEdit}
-              >
-                <Icon name="Pencil" className="mr-1.5 h-3.5 w-3.5" />
+            <div className="flex gap-1.5 w-full">
+              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" onClick={handleEdit}>
+                <Icon name="Pencil" className="mr-1 h-3 w-3" />
                 Редактировать
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex-1 h-9 text-sm"
-                onClick={handleDelete}
-              >
-                <Icon name="Trash2" className="mr-1.5 h-3.5 w-3.5" />
+              <Button variant="destructive" size="sm" className="flex-1 h-8 text-xs" onClick={handleDelete}>
+                <Icon name="Trash2" className="mr-1 h-3 w-3" />
                 Удалить
               </Button>
             </div>
           </div>
         ) : (
           <Button
-            className="w-full h-9 text-sm"
+            className="w-full h-8 text-xs"
             size="sm"
-            variant={auction.status === 'ended' ? 'default' : 'default'}
             disabled={auction.status === 'upcoming'}
             onClick={() => {
-              if (!isAuthenticated) {
-                navigate('/login');
-                return;
-              }
+              if (!isAuthenticated) { navigate('/login'); return; }
               if (auction.status === 'ended') {
                 navigate(`/auction/${auction.id}`);
               } else if (auction.status === 'active') {
@@ -257,20 +259,11 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
             }}
           >
             {auction.status === 'ended' ? (
-              <>
-                <Icon name="MessageCircle" className="mr-1.5 h-3.5 w-3.5" />
-                Контакты продавца
-              </>
+              <><Icon name="MessageCircle" className="mr-1 h-3 w-3" />Контакты продавца</>
             ) : !isAuthenticated ? (
-              <>
-                <Icon name="Lock" className="mr-1.5 h-3.5 w-3.5" />
-                Войти
-              </>
+              <><Icon name="Lock" className="mr-1 h-3 w-3" />Войти</>
             ) : (
-              <>
-                <Icon name="Gavel" className="mr-1.5 h-3.5 w-3.5" />
-                Сделать ставку
-              </>
+              <><Icon name="Gavel" className="mr-1 h-3 w-3" />Сделать ставку</>
             )}
           </Button>
         )}
