@@ -62,7 +62,6 @@ export default function RequestsGrid({
       <div className="flex flex-col items-center justify-center py-32 gap-4">
         <div style={{width:44,height:44,border:'4px solid #e2e8f0',borderTopColor:'#16a34a',borderRadius:'50%',animation:'spin 0.8s linear infinite'}} />
         <span className="text-muted-foreground font-medium">Данные загружаются</span>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     );
   }
