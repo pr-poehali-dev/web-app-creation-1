@@ -198,15 +198,19 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Цена за {unit}</p>
-                <p className="font-semibold">{pricePerUnit?.toLocaleString('ru-RU') || '0'} ₽</p>
+                {pricePerUnit > 0
+                  ? <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+                  : <p className="font-semibold text-primary">Ваша цена</p>
+                }
               </div>
             </div>
 
             <div className="bg-primary/5 p-3 rounded-lg">
               <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
-              <p className="text-2xl font-bold text-primary">
-                {totalAmount?.toLocaleString('ru-RU') || '0'} ₽
-              </p>
+              {totalAmount > 0
+                ? <p className="text-2xl font-bold text-primary">{totalAmount.toLocaleString('ru-RU')} ₽</p>
+                : <p className="text-lg font-bold text-primary">Предложите свою цену</p>
+              }
             </div>
           </>
         )}
