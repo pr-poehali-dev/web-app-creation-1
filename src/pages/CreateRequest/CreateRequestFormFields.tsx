@@ -36,6 +36,8 @@ interface FormData {
   deliveryAddress: string;
   gpsCoordinates: string;
   availableDistricts: string[];
+  deliveryAvailable: boolean;
+  pickupAvailable: boolean;
   startDate: string;
   expiryDate: string;
   publicationDuration: string;
@@ -151,6 +153,8 @@ export default function CreateRequestFormFields({
             gpsCoordinates: formData.gpsCoordinates,
             availableDistricts: formData.availableDistricts,
             category: formData.category,
+            deliveryAvailable: formData.deliveryAvailable,
+            pickupAvailable: formData.pickupAvailable,
           }}
           districts={districts}
           onInputChange={onInputChange}

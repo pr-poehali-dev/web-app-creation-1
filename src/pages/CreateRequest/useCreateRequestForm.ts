@@ -26,6 +26,8 @@ export function useCreateRequestForm() {
     deliveryAddress: '',
     gpsCoordinates: '',
     availableDistricts: [] as string[],
+    deliveryAvailable: false,
+    pickupAvailable: false,
     startDate: '',
     expiryDate: '',
     publicationDuration: '',

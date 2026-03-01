@@ -22,9 +22,11 @@ interface RequestDeliverySectionProps {
     gpsCoordinates: string;
     availableDistricts: string[];
     category?: string;
+    deliveryAvailable: boolean;
+    pickupAvailable: boolean;
   };
   districts: District[];
-  onInputChange: (field: string, value: string) => void;
+  onInputChange: (field: string, value: string | boolean) => void;
   onDistrictToggle: (districtId: string) => void;
 }
 
@@ -35,6 +37,7 @@ export default function RequestDeliverySection({
   onDistrictToggle,
 }: RequestDeliverySectionProps) {
   const isService = formData.category === 'utilities';
+  const isAddressRequired = formData.deliveryAvailable;
   const { detectedDistrictId } = useDistrict();
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
@@ -110,6 +113,31 @@ export default function RequestDeliverySection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!isService && (
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="deliveryAvailable"
+                checked={formData.deliveryAvailable}
+                onCheckedChange={(checked) => onInputChange('deliveryAvailable', !!checked)}
+              />
+              <label htmlFor="deliveryAvailable" className="text-sm font-medium cursor-pointer">
+                Доставка
+              </label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="pickupAvailable"
+                checked={formData.pickupAvailable}
+                onCheckedChange={(checked) => onInputChange('pickupAvailable', !!checked)}
+              />
+              <label htmlFor="pickupAvailable" className="text-sm font-medium cursor-pointer">
+                Самовывоз
+              </label>
+            </div>
+          </div>
+        )}
+
         <div className="relative">
           <Label htmlFor="district">Выбери район местоположения *</Label>
           <Input
@@ -151,7 +179,9 @@ export default function RequestDeliverySection({
 
         <div className="relative">
           <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
-            <Label htmlFor="deliveryAddress">{isService ? 'Точный адрес (необязательно)' : 'Точный адрес доставки *'}</Label>
+            <Label htmlFor="deliveryAddress">
+              {isService ? 'Точный адрес (необязательно)' : isAddressRequired ? 'Точный адрес доставки *' : 'Точный адрес (необязательно)'}
+            </Label>
             <Button
               type="button"
               variant="outline"
@@ -171,7 +201,7 @@ export default function RequestDeliverySection({
               onInputChange('deliveryAddress', e.target.value);
             }}
             placeholder="Населенный пункт, улица, дом, офис, подъезд"
-            required={!isService}
+            required={isAddressRequired}
             className="text-xs"
           />
           {filteredSettlements.length > 0 && (
