@@ -436,9 +436,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
                   </span>
                 )}
               </p>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <div className={`h-1.5 w-1.5 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
-              </div>
+
             </div>
 
             <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
