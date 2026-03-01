@@ -91,6 +91,38 @@ def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, An
             contacts = {'phone': contact_row[0], 'email': contact_row[1], 'address': contact_row[2], 'preferredTime': contact_row[3], 'notes': contact_row[4], 'submittedAt': contact_row[5].isoformat() if contact_row[5] else None}
             return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': contacts}), 'isBase64Encoded': False}
         
+        elif action == 'send_message':
+            message_text = body_data.get('message', '').strip()
+            if not message_text:
+                return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Сообщение не может быть пустым'}), 'isBase64Encoded': False}
+
+            # Получаем имя отправителя
+            cur.execute("SELECT COALESCE(company_name, CONCAT(first_name, ' ', last_name)) FROM t_p42562714_web_app_creation_1.users WHERE id = %s", (int(user_id),))
+            name_row = cur.fetchone()
+            sender_name = name_row[0] if name_row else 'Участник'
+
+            cur.execute("""
+                INSERT INTO t_p42562714_web_app_creation_1.auction_messages
+                (auction_id, sender_id, sender_name, message)
+                VALUES (%s, %s, %s, %s)
+                RETURNING id, created_at
+            """, (auction_id, int(user_id), sender_name, message_text))
+            row = cur.fetchone()
+            conn.commit()
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'id': row[0], 'created_at': row[1].isoformat()}), 'isBase64Encoded': False}
+
+        elif action == 'get_messages':
+            cur.execute("""
+                SELECT id, sender_id, sender_name, message, created_at
+                FROM t_p42562714_web_app_creation_1.auction_messages
+                WHERE auction_id = %s
+                ORDER BY created_at ASC
+            """, (auction_id,))
+            msgs = []
+            for r in cur.fetchall():
+                msgs.append({'id': r[0], 'senderId': r[1], 'senderName': r[2] or 'Участник', 'message': r[3], 'createdAt': r[4].isoformat()})
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'messages': msgs, 'sellerId': seller_id, 'winnerId': winner_id}), 'isBase64Encoded': False}
+
         else:
             return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Неизвестное действие'}), 'isBase64Encoded': False}
     
@@ -148,6 +180,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             SET status = 'ended' 
             WHERE status IN ('active', 'ending-soon') AND end_date <= %s
         """, (now,))
+
+        # Архивируем завершённые аукционы без ставок
+        cur.execute("""
+            UPDATE t_p42562714_web_app_creation_1.auctions 
+            SET status = 'archived'
+            WHERE status = 'ended' AND bid_count = 0
+        """)
         
         # Помечаем аукционы как "скоро завершится" (меньше 24 часов)
         cur.execute("""
@@ -184,16 +223,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         """
         
         if auction_id:
-            query += " WHERE a.id = %s AND a.status != 'cancelled' AND a.status != 'deleted'"
+            query += " WHERE a.id = %s AND a.status NOT IN ('cancelled', 'deleted', 'archived')"
             query += " GROUP BY a.id"
             cur.execute(query, (auction_id,))
         else:
-            if status_filter and status_filter != 'cancelled' and status_filter != 'deleted':
+            if status_filter and status_filter not in ('cancelled', 'deleted', 'archived'):
                 query += " WHERE a.status = %s"
                 query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
                 cur.execute(query, (status_filter,))
             else:
-                query += " WHERE a.status != 'cancelled' AND a.status != 'deleted'"
+                query += " WHERE a.status NOT IN ('cancelled', 'deleted', 'archived')"
                 query += " GROUP BY a.id ORDER BY a.is_premium DESC, a.created_at DESC"
                 cur.execute(query)
         rows = cur.fetchall()

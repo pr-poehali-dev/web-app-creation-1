@@ -106,6 +106,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             SET status = 'ended' 
             WHERE status IN ('active', 'ending-soon') AND end_date <= %s
         """, (now,))
+
+        # Архивируем завершённые аукционы без ставок (bid_count = 0)
+        cur.execute(f"""
+            UPDATE t_p42562714_web_app_creation_1.auctions 
+            SET status = 'archived'
+            WHERE status = 'ended' AND bid_count = 0
+        """, ())
         
         # Помечаем аукционы как "скоро завершится" (меньше 24 часов)
         cur.execute(f"""

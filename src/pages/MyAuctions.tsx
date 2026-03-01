@@ -88,7 +88,7 @@ export default function MyAuctions({ isAuthenticated, onLogout }: MyAuctionsProp
     a.status === 'ended' && getEndedAt(a) > oneDayAgo
   );
   const archivedAuctions = myAuctions.filter(a =>
-    a.status === 'ended' && getEndedAt(a) <= oneDayAgo
+    a.status === 'archived' || (a.status === 'ended' && getEndedAt(a) <= oneDayAgo)
   );
 
   const handleDeleteAuction = async (auctionId: string) => {
