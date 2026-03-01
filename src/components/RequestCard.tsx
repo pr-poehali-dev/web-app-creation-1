@@ -153,16 +153,24 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
                 </>
               ) : (
                 <>
-                  <span className="font-bold text-primary text-lg">
-                    {request.pricePerUnit != null && request.pricePerUnit > 0
-                      ? `${Number(request.pricePerUnit * request.quantity).toLocaleString('ru-RU')} ₽`
-                      : 'Цена не указана'
-                    }
-                  </span>
-                  {request.negotiablePrice && (
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
-                      Торг
+                  {request.negotiablePrice && !(request.pricePerUnit > 0) ? (
+                    <Badge variant="secondary" className="text-xs h-5 px-2">
+                      Предлагайте вашу цену
                     </Badge>
+                  ) : (
+                    <>
+                      <span className="font-bold text-primary text-lg">
+                        {request.pricePerUnit != null && request.pricePerUnit > 0
+                          ? `${Number(request.pricePerUnit * request.quantity).toLocaleString('ru-RU')} ₽`
+                          : 'Цена не указана'
+                        }
+                      </span>
+                      {request.negotiablePrice && (
+                        <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                          Торг
+                        </Badge>
+                      )}
+                    </>
                   )}
                 </>
               )}
