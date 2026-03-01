@@ -273,17 +273,19 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
                 </div>
               </div>
 
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Принимаются отклики из районов</p>
-                <div className="flex flex-wrap gap-1">
-                  {availableDistricts.map((districtId) => {
-                    const districtName = DISTRICTS.find(d => d.id === districtId)?.name || districtId;
-                    return (
-                      <Badge key={districtId} variant="outline" className="text-xs px-1.5 py-0">{districtName}</Badge>
-                    );
-                  })}
+              {availableDistricts && availableDistricts.length > 0 && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Принимаются отклики из районов</p>
+                  <div className="flex flex-wrap gap-1">
+                    {availableDistricts.map((districtId) => {
+                      const districtName = DISTRICTS.find(d => d.id === districtId)?.name || districtId;
+                      return (
+                        <Badge key={districtId} variant="outline" className="text-xs px-1.5 py-0">{districtName}</Badge>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div>
