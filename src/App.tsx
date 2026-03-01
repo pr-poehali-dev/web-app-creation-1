@@ -203,7 +203,12 @@ const App = () => {
     window.location.reload();
   };
 
-  const pageFallback = <div style={{position:'fixed',inset:0,background:'#f1f4f8',zIndex:99999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'28px'}}><div style={{width:96,height:96,borderRadius:24,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.12)'}}><img src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" alt="ЕРТТП" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} /></div><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'clamp(24px,7vw,42px)',fontWeight:900,color:'#1e293b',letterSpacing:'0.12em',textAlign:'center',padding:'0 24px'}}>С НАМИ УСПЕХ</span></div>;
+  const isFirstVisit = !sessionStorage.getItem('app_visited');
+  if (isFirstVisit) sessionStorage.setItem('app_visited', '1');
+
+  const pageFallback = isFirstVisit
+    ? <div style={{position:'fixed',inset:0,background:'#f1f4f8',zIndex:99999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'28px'}}><div style={{width:96,height:96,borderRadius:24,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.12)'}}><img src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" alt="ЕРТТП" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} /></div><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'clamp(24px,7vw,42px)',fontWeight:900,color:'#1e293b',letterSpacing:'0.12em',textAlign:'center',padding:'0 24px'}}>С НАМИ УСПЕХ</span></div>
+    : <div style={{position:'fixed',inset:0,background:'rgba(241,244,248,0.85)',backdropFilter:'blur(4px)',zIndex:99999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'16px'}}><div style={{width:40,height:40,border:'4px solid #e2e8f0',borderTopColor:'#3b82f6',borderRadius:'50%',animation:'spin 0.8s linear infinite'}} /><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'16px',fontWeight:600,color:'#475569'}}>Данные загружаются</span><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>;
 
   return (
     <QueryClientProvider client={queryClient}>
