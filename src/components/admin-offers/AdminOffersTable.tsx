@@ -52,14 +52,18 @@ function getStatusBadge(status: string) {
       return <Badge variant="destructive">Отклонено</Badge>;
     case 'completed':
       return <Badge className="bg-blue-500 text-white">Завершено</Badge>;
+    case 'cancelled':
+      return <Badge variant="outline" className="border-red-300 text-red-600">Отменено</Badge>;
+    case 'awaiting_payment':
+      return <Badge className="bg-purple-500 text-white">В работе (ждет оплаты)</Badge>;
     case 'deleted':
-      return <Badge variant="outline" className="bg-gray-100">Удалено</Badge>;
+      return <Badge variant="outline" className="border-gray-400 text-gray-600">Удалено</Badge>;
     case 'archived':
-      return <Badge variant="outline" className="text-slate-500">Архив</Badge>;
+      return <Badge variant="outline" className="border-gray-400 text-gray-600">В архиве</Badge>;
     case 'inactive':
-      return <Badge variant="outline" className="bg-gray-50 text-gray-500">Неактивно</Badge>;
+      return <Badge variant="outline" className="text-gray-500">Неактивно</Badge>;
     default:
-      return <Badge variant="outline" className="bg-gray-50 text-gray-500">{status}</Badge>;
+      return <Badge variant="outline" className="text-gray-500">{status}</Badge>;
   }
 }
 

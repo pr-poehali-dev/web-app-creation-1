@@ -54,9 +54,12 @@ export default function AdminOffersFilters({
             <SelectItem value="all">Все статусы</SelectItem>
             <SelectItem value="active">Активные</SelectItem>
             <SelectItem value="moderation">На модерации</SelectItem>
-            <SelectItem value="rejected">Отклоненные</SelectItem>
+            <SelectItem value="pending">Ожидают</SelectItem>
+            <SelectItem value="awaiting_payment">В работе (ждет оплаты)</SelectItem>
             <SelectItem value="completed">Завершенные</SelectItem>
-            <SelectItem value="archived">Архивированные</SelectItem>
+            <SelectItem value="rejected">Отклоненные</SelectItem>
+            <SelectItem value="cancelled">Отмененные</SelectItem>
+            <SelectItem value="archived">В архиве</SelectItem>
             <SelectItem value="deleted">Удаленные</SelectItem>
           </SelectContent>
         </Select>
