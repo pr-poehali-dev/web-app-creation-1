@@ -204,7 +204,13 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     sql = """
         SELECT 
             r.*,
-            '[]'::json as images,
+            COALESCE(
+                (SELECT json_agg(json_build_object('id', oi.id, 'url', oi.url, 'alt', oi.alt))
+                 FROM t_p42562714_web_app_creation_1.request_image_relations rir
+                 JOIN t_p42562714_web_app_creation_1.offer_images oi ON rir.image_id = oi.id
+                 WHERE rir.request_id = r.id),
+                '[]'::json
+            ) as images,
             (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders o 
              WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
             ) as responses
