@@ -438,7 +438,6 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
               </p>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <div className={`h-1.5 w-1.5 rounded-full ${isRefreshing ? 'bg-green-500 animate-pulse' : 'bg-green-500'}`} />
-                <span className="hidden sm:inline">Обновление каждые 3 сек</span>
               </div>
             </div>
 
