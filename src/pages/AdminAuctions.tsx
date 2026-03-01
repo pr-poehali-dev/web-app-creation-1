@@ -47,7 +47,7 @@ interface AdminAuction {
   startingPrice: number;
   currentBid: number;
   bidsCount: number;
-  status: 'active' | 'upcoming' | 'closed' | 'cancelled';
+  status: 'active' | 'upcoming' | 'closed' | 'cancelled' | 'ended' | 'archived';
   endDate: string;
   createdAt: string;
 }
@@ -86,7 +86,7 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
         startingPrice: a.startingPrice,
         currentBid: a.currentBid,
         bidsCount: a.bidCount,
-        status: a.status as 'active' | 'upcoming' | 'closed' | 'cancelled',
+        status: a.status as AdminAuction['status'],
         endDate: a.endDate.toISOString(),
         createdAt: a.createdAt.toISOString(),
       }));
@@ -106,6 +106,12 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
     { id: '3', bidder: 'ПАО "ГорСтрой"', amount: 530000, time: '2024-12-04 10:00' },
   ];
 
+  const filteredAuctions = auctions.filter(a => {
+    const matchesSearch = !searchQuery || a.title.toLowerCase().includes(searchQuery.toLowerCase()) || a.seller.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || a.status === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -113,11 +119,14 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
       case 'upcoming':
         return <Badge variant="secondary">Предстоящий</Badge>;
       case 'closed':
+      case 'ended':
         return <Badge>Завершен</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">Отменен</Badge>;
+      case 'archived':
+        return <Badge variant="outline" className="text-slate-500">Архив</Badge>;
       default:
-        return null;
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -165,7 +174,7 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
           <Card>
             <CardHeader>
               <CardTitle>Список аукционов</CardTitle>
-              <CardDescription>Всего аукционов: {auctions.length}</CardDescription>
+              <CardDescription>Всего аукционов: {filteredAuctions.length}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
@@ -186,7 +195,9 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
                     <SelectItem value="active">Активные</SelectItem>
                     <SelectItem value="upcoming">Предстоящие</SelectItem>
                     <SelectItem value="closed">Завершенные</SelectItem>
+                    <SelectItem value="ended">Завершённые (ended)</SelectItem>
                     <SelectItem value="cancelled">Отмененные</SelectItem>
+                    <SelectItem value="archived">Архивированные</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -212,14 +223,14 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
                           Загрузка...
                         </TableCell>
                       </TableRow>
-                    ) : auctions.length === 0 ? (
+                    ) : filteredAuctions.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                           Аукционы не найдены
                         </TableCell>
                       </TableRow>
                     ) : (
-                      auctions.map((auction) => (
+                      filteredAuctions.map((auction) => (
                       <TableRow key={auction.id}>
                         <TableCell className="font-medium">{auction.title}</TableCell>
                         <TableCell>{auction.seller}</TableCell>

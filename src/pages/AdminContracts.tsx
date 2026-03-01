@@ -104,6 +104,8 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
         return <Badge>Завершен</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">Отменен</Badge>;
+      case 'archived':
+        return <Badge variant="outline" className="text-slate-500">Архив</Badge>;
       default:
         return null;
     }
@@ -129,6 +131,13 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
     }
   };
 
+  const filteredContracts = mockContracts.filter(c => {
+    const matchesSearch = !searchQuery || c.title.toLowerCase().includes(searchQuery.toLowerCase()) || c.seller.toLowerCase().includes(searchQuery.toLowerCase()) || (c.buyer || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
+    const matchesType = filterType === 'all' || c.contractType === filterType;
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -149,7 +158,7 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
           <Card>
             <CardHeader>
               <CardTitle>Список контрактов</CardTitle>
-              <CardDescription>Всего контрактов: {mockContracts.length}</CardDescription>
+              <CardDescription>Всего контрактов: {filteredContracts.length}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
@@ -181,6 +190,7 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
                     <SelectItem value="in_progress">В работе</SelectItem>
                     <SelectItem value="completed">Завершенные</SelectItem>
                     <SelectItem value="cancelled">Отмененные</SelectItem>
+                    <SelectItem value="archived">Архивированные</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -200,7 +210,13 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockContracts.map((contract) => (
+                    {filteredContracts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                          Контракты не найдены
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredContracts.map((contract) => (
                       <TableRow key={contract.id}>
                         <TableCell className="font-medium">{contract.title}</TableCell>
                         <TableCell>{getTypeBadge(contract.contractType)}</TableCell>

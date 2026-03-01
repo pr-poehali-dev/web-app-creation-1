@@ -56,6 +56,7 @@ export default function AdminOffersFilters({
             <SelectItem value="moderation">На модерации</SelectItem>
             <SelectItem value="rejected">Отклоненные</SelectItem>
             <SelectItem value="completed">Завершенные</SelectItem>
+            <SelectItem value="archived">Архивированные</SelectItem>
             <SelectItem value="deleted">Удаленные</SelectItem>
           </SelectContent>
         </Select>
