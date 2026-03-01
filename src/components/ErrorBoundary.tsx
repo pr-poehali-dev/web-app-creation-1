@@ -1,4 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -124,4 +125,21 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary;
+function ErrorBoundaryWrapper({ children, fallback }: Props) {
+  const location = useLocation();
+  const boundaryRef = useRef<ErrorBoundary>(null);
+
+  useEffect(() => {
+    if (boundaryRef.current?.state.hasError) {
+      boundaryRef.current.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    }
+  }, [location.pathname]);
+
+  return (
+    <ErrorBoundary ref={boundaryRef} fallback={fallback}>
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+export default ErrorBoundaryWrapper;
