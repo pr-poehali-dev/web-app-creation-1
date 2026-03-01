@@ -154,9 +154,9 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               ) : (
                 <>
                   {request.negotiablePrice && !(request.pricePerUnit > 0) ? (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">
-                      Предлагайте вашу цену
-                    </Badge>
+                    <span className="font-bold text-primary text-lg">
+                      Ваша цена
+                    </span>
                   ) : (
                     <>
                       <span className="font-bold text-primary text-lg">
