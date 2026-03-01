@@ -260,6 +260,13 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             where_conditions.append(f"o.status = '{status_filter}'")
         if user_id_filter:
             where_conditions.append(f"o.user_id = {user_id_filter}")
+        else:
+            # На публичной странице скрываем предложения с нулевым остатком
+            # (quantity > 0 AND sold_quantity + reserved_quantity >= quantity)
+            # Исключение: quantity = 0 означает неограниченное количество (услуги)
+            where_conditions.append(
+                "(o.quantity = 0 OR (o.sold_quantity + COALESCE(o.reserved_quantity, 0)) < o.quantity)"
+            )
         
         where_clause = "WHERE " + " AND ".join(where_conditions) if where_conditions else ""
         
