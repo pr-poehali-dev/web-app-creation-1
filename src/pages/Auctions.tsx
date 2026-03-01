@@ -361,7 +361,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
         )}
 
         {isLoading ? (
-          <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 6 }).map((_, index) => (
               <div
                 key={index}
@@ -400,7 +400,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
               </div>
             </div>
 
-            <div className="grid gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {currentAuctions.map((auction, index) => (
                 <div
                   key={`${auction.id}-${auction.currentBid}-${auction.bidCount}`}
