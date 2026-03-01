@@ -2,14 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { ordersAPI } from '@/services/api';
@@ -17,6 +10,10 @@ import func2url from '../../backend/func2url.json';
 import type { Order } from '@/types/order';
 import { dataSync } from '@/utils/dataSync';
 import { addNotification } from '@/utils/notifications';
+import AdminOrdersStats from '@/components/admin-orders/AdminOrdersStats';
+import AdminOrdersFilters from '@/components/admin-orders/AdminOrdersFilters';
+import AdminOrdersList from '@/components/admin-orders/AdminOrdersList';
+import AdminOrdersArchiveDialog from '@/components/admin-orders/AdminOrdersArchiveDialog';
 
 interface AdminOrdersProps {
   isAuthenticated: boolean;
@@ -36,12 +33,12 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
 
   useEffect(() => {
     loadOrders();
-    
+
     const unsubscribe = dataSync.subscribe('order_updated', () => {
       console.log('Order updated, reloading admin orders...');
       loadOrders();
     });
-    
+
     return () => {
       unsubscribe();
     };
@@ -51,13 +48,13 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
     try {
       setIsLoading(true);
       const response = await ordersAPI.getAll('all');
-      
+
       const mappedOrders = response.orders.map((order: Record<string, unknown>) => ({
         id: order.id,
         offerId: order.offer_id || order.offerId,
         offerTitle: order.offer_title || order.title,
-        offerImage: order.offer_image 
-          ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : order.offer_image[0]?.url) 
+        offerImage: order.offer_image
+          ? (typeof order.offer_image === 'string' ? JSON.parse(order.offer_image)[0]?.url : (order.offer_image as { url: string }[])[0]?.url)
           : undefined,
         quantity: order.quantity,
         unit: order.unit,
@@ -76,12 +73,12 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
         status: order.status,
         deliveryType: order.delivery_type || order.deliveryType || 'delivery',
         comment: order.comment,
-        createdAt: new Date(order.createdAt || order.created_at),
-        acceptedAt: order.acceptedAt || order.accepted_at 
-          ? new Date(order.acceptedAt || order.accepted_at) 
+        createdAt: new Date((order.createdAt || order.created_at) as string),
+        acceptedAt: order.acceptedAt || order.accepted_at
+          ? new Date((order.acceptedAt || order.accepted_at) as string)
           : undefined,
       }));
-      
+
       setOrders(mappedOrders);
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -118,7 +115,7 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
       }
 
       const data = await response.json();
-      
+
       toast({
         title: 'Успешно',
         description: `Удалено заказов: ${data.deleted}`,
@@ -162,7 +159,7 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
       }
 
       const data = await response.json();
-      
+
       toast({
         title: 'Очистка завершена',
         description: `Удалено: ${data.deleted_orders} заказов и ${data.deleted_messages} сообщений`,
@@ -209,56 +206,22 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
     }
   };
 
-  const getStatusBadge = (status: Order['status']) => {
-    switch (status) {
-      case 'new':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Новый</Badge>;
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700">Ожидает</Badge>;
-      case 'negotiating':
-        return <Badge variant="outline" className="bg-orange-50 text-orange-700">Переговоры</Badge>;
-      case 'accepted':
-        return <Badge variant="outline" className="bg-green-50 text-green-700">В работе</Badge>;
-      case 'awaiting_payment':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-700">В работе (ожидает оплаты)</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Завершен</Badge>;
-      case 'rejected':
-        return <Badge variant="outline" className="bg-red-50 text-red-700">Отклонен</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline" className="bg-red-50 text-red-600">Отменен</Badge>;
-      case 'archived':
-        return <Badge variant="outline" className="text-slate-500">Архив</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.offerTitle?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.buyerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.sellerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.id.includes(searchQuery);
-    
+
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
+
     return matchesSearch && matchesStatus;
   });
-
-  const stats = {
-    total: orders.length,
-    new: orders.filter(o => o.status === 'new').length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    accepted: orders.filter(o => o.status === 'accepted').length,
-    completed: orders.filter(o => o.status === 'completed').length,
-    totalAmount: orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
-      
+
       <main className="flex-1 container mx-auto px-4 py-8 max-w-7xl">
         <Button
           variant="ghost"
@@ -274,252 +237,35 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
           <p className="text-muted-foreground">Мониторинг и управление заказами</p>
         </div>
 
-        {/* Статистика */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Всего заказов</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
+        <AdminOrdersStats orders={orders} />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Новые</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.new}</div>
-            </CardContent>
-          </Card>
+        <AdminOrdersFilters
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+          onSearchChange={setSearchQuery}
+          onStatusChange={setStatusFilter}
+          onRefresh={loadOrders}
+          onCleanupOrphaned={handleCleanupOrphaned}
+          onCleanupAll={handleCleanupAll}
+        />
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Ожидают</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Приняты</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.accepted}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Завершены</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.completed}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Общая сумма</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">
-                {stats.totalAmount.toLocaleString('ru-RU')} ₽
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Фильтры */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex gap-4 flex-wrap items-center">
-              <div className="flex-1 min-w-[200px]">
-                <Input
-                  placeholder="Поиск по названию, ID, имени..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Статус" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Все статусы</SelectItem>
-                  <SelectItem value="new">Новые</SelectItem>
-                  <SelectItem value="pending">Ожидают</SelectItem>
-                  <SelectItem value="negotiating">Переговоры</SelectItem>
-                  <SelectItem value="accepted">В работе</SelectItem>
-                  <SelectItem value="awaiting_payment">В работе (ожидает оплаты)</SelectItem>
-                  <SelectItem value="completed">Завершены</SelectItem>
-                  <SelectItem value="rejected">Отклонены</SelectItem>
-                  <SelectItem value="cancelled">Отменены</SelectItem>
-                  <SelectItem value="archived">Архивированы</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button onClick={loadOrders} variant="outline">
-                <Icon name="RefreshCw" className="w-4 h-4 mr-2" />
-                Обновить
-              </Button>
-              <Button onClick={handleCleanupOrphaned} variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
-                <Icon name="Trash2" className="w-4 h-4 mr-2" />
-                Очистить неактуальные
-              </Button>
-              <Button onClick={handleCleanupAll} variant="destructive">
-                <Icon name="Trash2" className="w-4 h-4 mr-2" />
-                Удалить ВСЕ заказы
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Список заказов */}
-        {isLoading ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Icon name="Loader2" className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-              <p className="text-muted-foreground">Загрузка заказов...</p>
-            </CardContent>
-          </Card>
-        ) : filteredOrders.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Icon name="ShoppingCart" className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">
-                {searchQuery || statusFilter !== 'all' 
-                  ? 'Заказы не найдены' 
-                  : 'Заказов пока нет'}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {filteredOrders.map((order) => (
-              <Card key={order.id} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex gap-4">
-                    {order.offerImage && (
-                      <img
-                        src={order.offerImage}
-                        alt={order.offerTitle}
-                        className="w-24 h-24 object-cover rounded-md flex-shrink-0"
-                      />
-                    )}
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div>
-                          <h3 className="font-semibold text-lg mb-1">{order.offerTitle}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            ID: {order.id.slice(0, 8)} • {order.createdAt.toLocaleDateString('ru-RU')}
-                          </p>
-                        </div>
-                        {getStatusBadge(order.status)}
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <p className="text-muted-foreground">Количество</p>
-                          <p className="font-medium">{order.quantity} {order.unit}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Сумма</p>
-                          <p className="font-bold text-primary">
-                            {order.totalAmount?.toLocaleString('ru-RU') || '0'} ₽
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Покупатель</p>
-                          <p className="font-medium truncate">{order.buyerName}</p>
-                          <p className="text-xs text-muted-foreground">{order.buyerPhone}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground">Продавец</p>
-                          <p className="font-medium truncate">{order.sellerName}</p>
-                          <p className="text-xs text-muted-foreground">{order.sellerPhone}</p>
-                        </div>
-                      </div>
-
-                      {order.buyerCompany && (
-                        <div className="mt-2 text-sm">
-                          <p className="text-muted-foreground">Компания покупателя</p>
-                          <p className="font-medium">{order.buyerCompany} {order.buyerInn && `(ИНН: ${order.buyerInn})`}</p>
-                        </div>
-                      )}
-
-                      {order.comment && (
-                        <div className="mt-2 text-sm">
-                          <p className="text-muted-foreground">Комментарий</p>
-                          <p className="mt-1">{order.comment}</p>
-                        </div>
-                      )}
-                      {(order as unknown as Record<string, unknown>).admin_archive_reason && (
-                        <div className="mt-2 text-sm p-2 bg-orange-50 border border-orange-200 rounded">
-                          <p className="text-orange-700 font-medium">Архивирован администратором</p>
-                          <p className="text-orange-600 mt-1">{(order as unknown as Record<string, unknown>).admin_archive_reason as string}</p>
-                        </div>
-                      )}
-                      {order.status !== 'archived' && order.status !== 'completed' && (
-                        <div className="mt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-orange-300 text-orange-600 hover:bg-orange-50"
-                            onClick={() => { setArchiveDialogOrder(order); setArchiveReason(''); }}
-                          >
-                            <Icon name="Archive" className="w-4 h-4 mr-1" />
-                            В архив
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        <AdminOrdersList
+          orders={filteredOrders}
+          isLoading={isLoading}
+          searchQuery={searchQuery}
+          statusFilter={statusFilter}
+          onArchiveClick={(order) => { setArchiveDialogOrder(order); setArchiveReason(''); }}
+        />
       </main>
 
-      <Dialog open={!!archiveDialogOrder} onOpenChange={(open) => { if (!open) { setArchiveDialogOrder(null); setArchiveReason(''); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Перевести заказ в архив</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              Заказ: <span className="font-medium text-foreground">{archiveDialogOrder?.offerTitle}</span>
-            </p>
-            <div className="space-y-2">
-              <Label htmlFor="archiveReason">Причина архивирования (обязательно)</Label>
-              <Textarea
-                id="archiveReason"
-                placeholder="Укажите причину, по которой заказ переводится в архив..."
-                value={archiveReason}
-                onChange={(e) => setArchiveReason(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setArchiveDialogOrder(null); setArchiveReason(''); }}>
-              Отмена
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleAdminArchive}
-              disabled={!archiveReason.trim() || isArchiving}
-            >
-              {isArchiving ? 'Архивирование...' : 'Перевести в архив'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AdminOrdersArchiveDialog
+        order={archiveDialogOrder}
+        reason={archiveReason}
+        isArchiving={isArchiving}
+        onReasonChange={setArchiveReason}
+        onConfirm={handleAdminArchive}
+        onCancel={() => { setArchiveDialogOrder(null); setArchiveReason(''); }}
+      />
 
       <Footer />
     </div>
