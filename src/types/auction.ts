@@ -59,7 +59,7 @@ export interface Auction {
   endDate?: string;
   startTime?: Date;
   endTime?: Date;
-  status: 'pending' | 'active' | 'ending-soon' | 'ended' | 'upcoming';
+  status: 'pending' | 'active' | 'ending-soon' | 'ended' | 'upcoming' | 'archived';
   bidsCount?: number;
   bidCount?: number;
   bids?: AuctionBid[];
