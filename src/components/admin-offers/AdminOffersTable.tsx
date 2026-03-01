@@ -22,7 +22,7 @@ export interface AdminOffer {
   soldQuantity: number;
   reservedQuantity: number;
   unit: string;
-  status: 'active' | 'moderation' | 'rejected' | 'completed' | 'deleted';
+  status: 'active' | 'moderation' | 'pending' | 'rejected' | 'completed' | 'deleted' | 'archived' | 'inactive' | string;
   createdAt: string;
 }
 
@@ -43,17 +43,23 @@ interface AdminOffersTableProps {
 function getStatusBadge(status: string) {
   switch (status) {
     case 'active':
-      return <Badge className="bg-green-500">Активно</Badge>;
+      return <Badge className="bg-green-500 text-white">Активно</Badge>;
     case 'moderation':
       return <Badge variant="secondary">На модерации</Badge>;
+    case 'pending':
+      return <Badge className="bg-yellow-400 text-white">Ожидает</Badge>;
     case 'rejected':
       return <Badge variant="destructive">Отклонено</Badge>;
     case 'completed':
-      return <Badge>Завершено</Badge>;
+      return <Badge className="bg-blue-500 text-white">Завершено</Badge>;
     case 'deleted':
       return <Badge variant="outline" className="bg-gray-100">Удалено</Badge>;
+    case 'archived':
+      return <Badge variant="outline" className="text-slate-500">Архив</Badge>;
+    case 'inactive':
+      return <Badge variant="outline" className="bg-gray-50 text-gray-500">Неактивно</Badge>;
     default:
-      return null;
+      return <Badge variant="outline" className="bg-gray-50 text-gray-500">{status}</Badge>;
   }
 }
 
