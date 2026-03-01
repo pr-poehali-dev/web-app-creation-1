@@ -112,6 +112,8 @@ export function useOrdersData(
       offerTransportNegotiable: orderData.offerTransportNegotiable,
       passengerPickupAddress: orderData.passengerPickupAddress || orderData.passenger_pickup_address,
       completionRequested: orderData.completionRequested || orderData.completion_requested || false,
+      archivedByAdmin: orderData.archived_by_admin || orderData.archivedByAdmin || false,
+      adminArchiveReason: orderData.admin_archive_reason || orderData.adminArchiveReason,
     };
   };
 

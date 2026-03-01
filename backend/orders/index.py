@@ -236,6 +236,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             query_params = event.get('queryStringParameters', {}) or {}
             cleanup_orphaned = query_params.get('cleanupOrphaned') == 'true'
             cleanup_all = query_params.get('cleanupAll') == 'true'
+            admin_archive = query_params.get('adminArchive') == 'true'
             order_id = query_params.get('id')
             message_id = query_params.get('messageId')
             
@@ -243,6 +244,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return cleanup_all_orders(event, headers)
             elif cleanup_orphaned:
                 return cleanup_orphaned_orders(event, headers)
+            elif admin_archive and order_id:
+                return admin_archive_order(order_id, event, headers)
             elif message_id:
                 return delete_message(message_id, event, headers)
             elif order_id:
@@ -1553,6 +1556,50 @@ def cleanup_orphaned_orders(event: Dict[str, Any], headers: Dict[str, str]) -> D
         }),
         'isBase64Encoded': False
     }
+
+def admin_archive_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    """Архивирование заказа администратором с указанием причины"""
+    user_headers = event.get('headers', {})
+    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+
+    if not user_id:
+        return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Authentication required'}), 'isBase64Encoded': False}
+
+    body = json.loads(event.get('body') or '{}')
+    reason = body.get('reason', '').strip()
+
+    if not reason:
+        return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Укажите причину архивирования'}), 'isBase64Encoded': False}
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    schema = get_schema()
+    order_id_escaped = order_id.replace("'", "''")
+    reason_escaped = reason.replace("'", "''")
+    now = datetime.utcnow()
+
+    cur.execute(f"SELECT id FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
+        return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Order not found'}), 'isBase64Encoded': False}
+
+    cur.execute(f"""
+        UPDATE {schema}.orders
+        SET status = 'archived',
+            archived_at = %s,
+            archived_by_admin = TRUE,
+            admin_archive_reason = '{reason_escaped}',
+            updated_at = %s
+        WHERE id = '{order_id_escaped}'
+    """, (now, now))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'message': 'Order archived by admin'}), 'isBase64Encoded': False}
+
 
 def delete_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Удаление конкретного заказа по ID"""

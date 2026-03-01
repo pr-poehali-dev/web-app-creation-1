@@ -34,6 +34,8 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
         return <Badge variant="outline" className="bg-gray-200 text-gray-700 border-gray-400">Отменён</Badge>;
       case 'completed':
         return <Badge variant="outline" className="bg-green-100 text-green-700 border-green-400">Завершён</Badge>;
+      case 'archived':
+        return <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">В архиве</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -169,6 +171,14 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               </p>
               {order.cancellationReason && (
                 <p className="text-sm text-muted-foreground mt-1">{order.cancellationReason}</p>
+              )}
+            </div>
+          )}
+          {(order as unknown as Record<string, unknown>).archivedByAdmin && (
+            <div className="col-span-2 p-2 bg-orange-50 border border-orange-200 rounded">
+              <p className="text-orange-700 font-medium text-sm">🔒 Перемещён в архив администратором</p>
+              {(order as unknown as Record<string, unknown>).adminArchiveReason && (
+                <p className="text-sm text-orange-600 mt-1">{(order as unknown as Record<string, unknown>).adminArchiveReason as string}</p>
               )}
             </div>
           )}

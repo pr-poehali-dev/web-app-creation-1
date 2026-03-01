@@ -6,10 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { ordersAPI } from '@/services/api';
+import func2url from '../../backend/func2url.json';
 import type { Order } from '@/types/order';
 import { dataSync } from '@/utils/dataSync';
 
@@ -25,6 +29,9 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [archiveDialogOrder, setArchiveDialogOrder] = useState<Order | null>(null);
+  const [archiveReason, setArchiveReason] = useState('');
+  const [isArchiving, setIsArchiving] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -168,6 +175,29 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
         description: 'Не удалось очистить данные',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleAdminArchive = async () => {
+    if (!archiveDialogOrder || !archiveReason.trim()) return;
+    setIsArchiving(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      const url = `${func2url.orders}?adminArchive=true&id=${archiveDialogOrder.id}`;
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'X-User-Id': userId || '', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: archiveReason.trim() }),
+      });
+      if (!response.ok) throw new Error('Ошибка архивирования');
+      toast({ title: 'Заказ перемещён в архив', description: `Причина: ${archiveReason.trim()}` });
+      setArchiveDialogOrder(null);
+      setArchiveReason('');
+      await loadOrders();
+    } catch {
+      toast({ title: 'Ошибка', description: 'Не удалось архивировать заказ', variant: 'destructive' });
+    } finally {
+      setIsArchiving(false);
     }
   };
 
@@ -408,6 +438,25 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
                           <p className="mt-1">{order.comment}</p>
                         </div>
                       )}
+                      {(order as unknown as Record<string, unknown>).admin_archive_reason && (
+                        <div className="mt-2 text-sm p-2 bg-orange-50 border border-orange-200 rounded">
+                          <p className="text-orange-700 font-medium">Архивирован администратором</p>
+                          <p className="text-orange-600 mt-1">{(order as unknown as Record<string, unknown>).admin_archive_reason as string}</p>
+                        </div>
+                      )}
+                      {order.status !== 'archived' && order.status !== 'completed' && (
+                        <div className="mt-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-orange-300 text-orange-600 hover:bg-orange-50"
+                            onClick={() => { setArchiveDialogOrder(order); setArchiveReason(''); }}
+                          >
+                            <Icon name="Archive" className="w-4 h-4 mr-1" />
+                            В архив
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -416,6 +465,41 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
           </div>
         )}
       </main>
+
+      <Dialog open={!!archiveDialogOrder} onOpenChange={(open) => { if (!open) { setArchiveDialogOrder(null); setArchiveReason(''); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Перевести заказ в архив</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">
+              Заказ: <span className="font-medium text-foreground">{archiveDialogOrder?.offerTitle}</span>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="archiveReason">Причина архивирования (обязательно)</Label>
+              <Textarea
+                id="archiveReason"
+                placeholder="Укажите причину, по которой заказ переводится в архив..."
+                value={archiveReason}
+                onChange={(e) => setArchiveReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setArchiveDialogOrder(null); setArchiveReason(''); }}>
+              Отмена
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleAdminArchive}
+              disabled={!archiveReason.trim() || isArchiving}
+            >
+              {isArchiving ? 'Архивирование...' : 'Перевести в архив'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
