@@ -51,6 +51,7 @@ export function useRequestsData() {
     const loadRequests = async () => {
       if (isLoadingFlag) return;
       isLoadingFlag = true;
+      SmartCache.invalidate('requests_list');
       const hasUpdates = checkForUpdates('requests');
 
       if (!hasUpdates) {

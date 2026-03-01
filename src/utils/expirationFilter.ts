@@ -8,6 +8,11 @@ export function isExpired(item: Offer | Request): boolean {
     if (deliveryEnd < now) return true;
   }
 
+  if ('transportDepartureDateTime' in item && item.transportDepartureDateTime) {
+    const departureTime = new Date(item.transportDepartureDateTime as string);
+    if (departureTime < now) return true;
+  }
+
   if ('transportDateTime' in item && item.transportDateTime && 'transportServiceType' in item && item.transportServiceType === 'Пассажирские перевозки') {
     const departureTime = new Date(item.transportDateTime);
     if (departureTime < now) return true;
