@@ -104,6 +104,15 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'ending-soon' | 'upcoming' | 'ended'>('all');
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const prevBidsRef = useRef<Record<string, number>>({});
+
+  const playBidSound = () => {
+    try {
+      const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyAzvLZiTYIG2m98OScTgwNUrDo7beHHwU0j9zvyoEuBiV5yPLajkILEmG56+qnVxEKQ5zf8sFuJAUqfsvy14w6BxpnvfDtnjELDlCx6O+8hSMFMpDe7s+FOAYjdsjw3I9BCRFft+jrp1YRCkSc4PKzbSQFKXzM8teNOgcZZr7w7p4yCw5Psejtu4QkBTGQ3u/PhToGInXI8NyPQQkQX7bn7KlYEglEnN/ys2wlBSl8zPLXjToHGGa+8O6dMQwOT7Ho7buEJAUykN7uz4U6BiJ1yPDcj0EJD1+36+uoWBIJQ53g8rNsJQUpfM3y1404Bhlmv/DvnTEMDk+y6O27gyMFMpHe78+FOQYidc3w3I9BCQ9ftuvqqFYSCUOd4PKzbCUFKX3M8teNOQYZZr/w7pwxCw5Psuvrvo4iBS+Q3u/PhTkGInXO8NyQQQkPXrjr6qhVFAlEnuDys2wlBSh8zfLXjDkGGWe/8O+cMgsOTrPr7L+OIgUukN7wz4U6BiJ1zvDckEEJD1647OqnVRQJRJ7g8rNtJQUofM7y1404BhlozfHvmzALDk6068+/jSIFLZHe8c+FOgcjd87w3ZFBCg9eue3qplURCUSe4fK0bCQEJ33N8teMOAYZaM/x7pswCw5Oteve0LyQIgQrj9/xz4Y6ByR31PDelUEKEF+57OmmUxIIRKDh8rVsJAQnfs3y14o4BRZpz/HtmC4KDU607tCzjh8DHpDf8c+FOwgkedfx35ZACxFgsO3qpFIRB0Oh4vKybSMEJn7N89aLOAUVaM/x75gvCg1NvO7Rro8dAxyP3/LPhjsIJHnV8t+WQQsQYbDv66VUEgdDo+Lzs20kBCV+z/PXizcFFWfQ8u+ZMAoOTr/u07eQHwMbj+Dyz4c6CSN419TemkILEGKw8OylVBMHQ6Th8rJvJQQkftHy14s2BRRo0fPvmzIKDk+/7tO5kR8CGY/h89CIOggid9bz3ptCDBBjsvHtplQTB0Ol4/O0bSQEJH/S8tiMNgURZ9Hy8JwyDA9OwO7Uv5EhAxmP4fTRiTsIIXfY89+cQwwQY7Py7qZWEwZBp+TztW4lAyJ/0/LZjDYFEGfS8vGcMw0OT8Hu1cGSIgMYj+P00Io7CSB21/TfnEQNDmO08u6mVxMGQKnl87ZuJgIhftXz2Y0zBQ5m0/LynDUMDlDB79XBkiIDFo/j9dCLOwkhd9f035xGDQ1jtvPvp1gTBj+p5/O3cCcCH33W89qOMwcNZdPy8p02DA9Qw+/Ww5IkAxSN5PXRjDwJIXfZ8+CdRg0MZLb08KdZEwU+qun0uHEoAh191/Tbjjsj6sD5+GfJMKAAAAASUVORK5CYII=');
+      audio.volume = 0.4;
+      audio.play().catch(() => {});
+    } catch (_e) { /* ignore */ }
+  };
 
   const loadAuctions = async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -111,6 +120,26 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
     
     try {
       const loadedAuctions = await auctionsAPI.getAllAuctions();
+
+      // Проверяем новые ставки на активных аукционах
+      if (silent) {
+        loadedAuctions.forEach((auction) => {
+          if (auction.status === 'active' || auction.status === 'ending-soon') {
+            const prevCount = prevBidsRef.current[auction.id];
+            const currCount = auction.bidsCount ?? auction.bidCount ?? 0;
+            if (prevCount !== undefined && currCount > prevCount) {
+              playBidSound();
+            }
+            prevBidsRef.current[auction.id] = currCount;
+          }
+        });
+      } else {
+        // Первая загрузка — запоминаем текущие ставки без звука
+        loadedAuctions.forEach((auction) => {
+          prevBidsRef.current[auction.id] = auction.bidsCount ?? auction.bidCount ?? 0;
+        });
+      }
+
       setAuctions(loadedAuctions);
     } catch (error) {
       console.error('Error loading auctions:', error);
@@ -144,12 +173,12 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
   useEffect(() => {
     loadAuctions(false);
     
-    // ⚡ ОПТИМИЗАЦИЯ: Автообновление ТОЛЬКО если на странице активно + увеличили до 60 сек
+    // Обновление каждые 5 сек для отслеживания новых ставок в реальном времени
     const refreshInterval = setInterval(() => {
       if (!document.hidden) {
         loadAuctions(true);
       }
-    }, 60000); // Было 30000 (30 сек), стало 60000 (60 сек) = экономия 50%
+    }, 5000);
 
     // Подписываемся на обновления аукционов
     const unsubscribe = dataSync.subscribe('auction_updated', () => {
