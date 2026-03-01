@@ -43,6 +43,17 @@ def handler(event: dict, context) -> dict:
     """, (now, now, now))
     archived_requests = [row['id'] for row in cur.fetchall()]
 
+    # 1b. Архивируем запросы с истёкшим сроком поставки (deadline_end)
+    cur.execute("""
+        UPDATE t_p42562714_web_app_creation_1.requests
+        SET status = 'archived', archived_at = %s, updated_at = %s
+        WHERE status = 'active'
+          AND deadline_end IS NOT NULL
+          AND deadline_end < CURRENT_DATE
+        RETURNING id
+    """, (now, now))
+    archived_requests += [row['id'] for row in cur.fetchall()]
+
     # 2. Архивируем предложения с истёкшим expiry_date
     cur.execute("""
         UPDATE t_p42562714_web_app_creation_1.offers
@@ -54,7 +65,18 @@ def handler(event: dict, context) -> dict:
     """, (now, now, now))
     archived_offers = [row['id'] for row in cur.fetchall()]
 
-    # 2b. Архивируем пассажирские перевозки с истёкшей датой выезда
+    # 2b. Архивируем предложения с истёкшим периодом поставки (delivery_period_end)
+    cur.execute("""
+        UPDATE t_p42562714_web_app_creation_1.offers
+        SET status = 'archived', archived_at = %s, updated_at = %s
+        WHERE status = 'active'
+          AND delivery_period_end IS NOT NULL
+          AND delivery_period_end < CURRENT_DATE
+        RETURNING id
+    """, (now, now))
+    archived_offers += [row['id'] for row in cur.fetchall()]
+
+    # 2c. Архивируем пассажирские перевозки с истёкшей датой выезда
     cur.execute("""
         UPDATE t_p42562714_web_app_creation_1.offers
         SET status = 'archived', archived_at = %s, updated_at = %s

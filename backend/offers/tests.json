@@ -3,7 +3,7 @@
     {
       "name": "Get offer by UUID",
       "method": "GET",
-      "path": "/?id=316dfa87-eaa3-464a-a344-ddf6640d448f",
+      "path": "/?id=595b8657-ae7a-4777-bf1e-827a29f14b02",
       "expectedStatus": 200
     },
     {

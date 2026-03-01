@@ -123,7 +123,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Авто-архивация истёкших запросов
+    # Авто-архивация истёкших запросов по expiry_date
     cur.execute("""
         UPDATE t_p42562714_web_app_creation_1.requests
         SET status = 'archived', updated_at = NOW()
@@ -133,6 +133,17 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         RETURNING user_id, title
     """)
     expired_requests = cur.fetchall()
+
+    # Авто-архивация запросов с истёкшим сроком поставки (deadline_end)
+    cur.execute("""
+        UPDATE t_p42562714_web_app_creation_1.requests
+        SET status = 'archived', updated_at = NOW()
+        WHERE status = 'active'
+          AND deadline_end IS NOT NULL
+          AND deadline_end < CURRENT_DATE
+        RETURNING user_id, title
+    """)
+    expired_requests += cur.fetchall()
     conn.commit()
 
     # Авто-закрытие запросов принятых в работу
