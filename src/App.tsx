@@ -15,6 +15,7 @@ import { TimezoneProvider } from "./contexts/TimezoneContext";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
+import TopLoadingBar from "./components/TopLoadingBar";
 
 // Ленивая загрузка страниц
 const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
@@ -225,6 +226,7 @@ const App = () => {
             <DistrictProvider>
               <OffersProvider>
                 <PullToRefresh onRefresh={handleGlobalRefresh}>
+                  <TopLoadingBar />
                   <Toaster />
                   <Sonner />
                   <TechnicalIssuesBanner />

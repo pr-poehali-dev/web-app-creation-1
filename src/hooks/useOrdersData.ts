@@ -5,6 +5,7 @@ import { getSession } from '@/utils/auth';
 import { notifyOrderAccepted } from '@/utils/notifications';
 import type { Order } from '@/types/order';
 import { ordersAPI, reviewsAPI } from '@/services/api';
+import { showLoading, hideLoading } from '@/components/TopLoadingBar';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
 import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
 
@@ -118,6 +119,7 @@ export function useOrdersData(
   };
 
   const loadOrders = useCallback(async (showLoader = false) => {
+    showLoading();
     try {
       if (showLoader) {
         setIsLoading(true);
@@ -125,12 +127,10 @@ export function useOrdersData(
         setIsSyncing(true);
       }
       
-      // Таймаут для предотвращения вечной загрузки
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error('Превышено время ожидания')), 15000)
       );
       
-      // Загружаем ВСЕ заказы сразу для правильного подсчета
       const response = await Promise.race([
         ordersAPI.getAll('all'),
         timeoutPromise
@@ -166,9 +166,9 @@ export function useOrdersData(
         });
       }
       
-      // Устанавливаем пустой массив, чтобы не было белого экрана
       setOrders([]);
     } finally {
+      hideLoading();
       if (showLoader) {
         setIsLoading(false);
       } else {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Request } from '@/types/offer';
 import { requestsAPI, ordersAPI } from '@/services/api';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
+import { showLoading, hideLoading } from '@/components/TopLoadingBar';
 import { dataSync } from '@/utils/dataSync';
 import { filterActiveRequests } from '@/utils/expirationFilter';
 import { useOffers } from '@/contexts/OffersContext';
@@ -18,8 +19,9 @@ export function useRequestsData() {
   useEffect(() => {
     let isLoadingFlag = false;
 
-    const loadFreshRequests = async (showLoading = true) => {
-      if (showLoading) {
+    const loadFreshRequests = async (showSpinner = true) => {
+      showLoading();
+      if (showSpinner) {
         setIsLoading(true);
       } else {
         setIsSyncing(true);
@@ -40,7 +42,8 @@ export function useRequestsData() {
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
       } finally {
-        if (showLoading) {
+        hideLoading();
+        if (showSpinner) {
           setIsLoading(false);
         } else {
           setIsSyncing(false);

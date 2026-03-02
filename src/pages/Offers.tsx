@@ -15,6 +15,7 @@ import { getSession } from '@/utils/auth';
 import { offersAPI, ordersAPI } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
 import { SmartCache, checkForUpdates } from '@/utils/smartCache';
+import { showLoading, hideLoading } from '@/components/TopLoadingBar';
 import { dataSync } from '@/utils/dataSync';
 import { filterActiveOffers } from '@/utils/expirationFilter';
 import { useOffers } from '@/contexts/OffersContext';
@@ -86,15 +87,15 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       await loadFreshData(true);
     };
 
-    const loadFreshData = async (showLoading = true) => {
-      if (showLoading) {
+    const loadFreshData = async (showSpinner = true) => {
+      showLoading();
+      if (showSpinner) {
         setIsLoading(true);
       } else {
         setIsSyncing(true);
       }
       
       try {
-        // Таймаут для предотвращения вечной загрузки
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Превышено время ожидания загрузки')), 15000)
         );
@@ -118,7 +119,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         
         SmartCache.set('offers_list', loadedOffers);
         
-        if (showLoading) {
+        if (showSpinner) {
           setIsLoading(false);
         } else {
           setIsSyncing(false);
@@ -134,14 +135,13 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
         
-        // Устанавливаем пустой массив, чтобы не было белого экрана
         if (isMounted) {
           setOffers([]);
         }
         
         const errorMessage = error instanceof Error ? error.message : 'Ошибка загрузки';
         
-        if (showLoading && isMounted) {
+        if (showSpinner && isMounted) {
           toast({
             title: 'Не удалось загрузить предложения',
             description: errorMessage,
@@ -149,11 +149,13 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           });
         }
         
-        if (showLoading) {
+        if (showSpinner) {
           setIsLoading(false);
         } else {
           setIsSyncing(false);
         }
+      } finally {
+        hideLoading();
       }
     };
 
