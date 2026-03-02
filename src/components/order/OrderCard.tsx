@@ -152,15 +152,15 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                     {!isSeller && order.sellerRating != null && (
                       <span className="flex items-center gap-1 text-xs">
                         <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="font-semibold text-foreground">{Math.round(order.sellerRating)}%</span>
-                        <span className="text-muted-foreground">рейтинг</span>
+                        <span className="font-semibold text-foreground">{(order.sellerRating / 100 * 5).toFixed(1)}</span>
+                        <span className="text-muted-foreground">— рейтинг</span>
                       </span>
                     )}
                     {isSeller && order.buyerRating != null && (
                       <span className="flex items-center gap-1 text-xs">
                         <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="font-semibold text-foreground">{Math.round(order.buyerRating)}%</span>
-                        <span className="text-muted-foreground">рейтинг</span>
+                        <span className="font-semibold text-foreground">{(order.buyerRating / 100 * 5).toFixed(1)}</span>
+                        <span className="text-muted-foreground">— рейтинг</span>
                       </span>
                     )}
                   </span>
@@ -171,8 +171,8 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                     {!isSeller && order.sellerRating != null && (
                       <span className="flex items-center gap-1 text-xs not-italic">
                         <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="font-semibold text-foreground">{Math.round(order.sellerRating)}%</span>
-                        <span className="text-muted-foreground">рейтинг</span>
+                        <span className="font-semibold text-foreground">{(order.sellerRating / 100 * 5).toFixed(1)}</span>
+                        <span className="text-muted-foreground">— рейтинг</span>
                       </span>
                     )}
                   </span>
