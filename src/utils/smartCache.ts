@@ -59,6 +59,21 @@ export class SmartCache {
   }
 
   /**
+   * Stale-while-revalidate: вернуть данные из кэша даже если устарели
+   */
+  static getStale<T>(key: string): T | null {
+    try {
+      const cached = localStorage.getItem(`cache_${key}`);
+      if (!cached) return null;
+      const entry: CacheEntry<T> = JSON.parse(cached);
+      if (entry.version !== CACHE_VERSION) return null;
+      return entry.data;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Инвалидировать кэш (пометить как устаревший)
    */
   static invalidate(key: string): void {

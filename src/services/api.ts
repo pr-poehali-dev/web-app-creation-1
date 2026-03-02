@@ -69,6 +69,13 @@ function getFromCache(key: string): any | null {
   return null;
 }
 
+// Возвращает stale данные (даже устаревшие) для stale-while-revalidate паттерна
+function getStaleFromCache(key: string): unknown | null {
+  const cached = fetchCache.get(key);
+  if (cached) return cached.data;
+  return null;
+}
+
 function setCache(key: string, data: any, ttl: number): void {
   fetchCache.set(key, { data, timestamp: Date.now(), ttl });
   
@@ -105,14 +112,36 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2
   // НЕ кэшируем запросы сообщений чата и заказов (они должны обновляться в реальном времени)
   const isMessageRequest = url.includes('messages=true');
   const isOrdersRequest = url.includes('orders') || url.startsWith(ORDERS_API);
+  const isCacheable = method === 'GET' && !isMessageRequest && !isOrdersRequest;
   
-  if (method === 'GET' && !isMessageRequest && !isOrdersRequest) {
+  if (isCacheable) {
     const cacheKey = getCacheKey(url, options);
-    const cached = getFromCache(cacheKey);
-    if (cached) {
-      return new Response(JSON.stringify(cached), {
+    const fresh = getFromCache(cacheKey);
+    
+    if (fresh) {
+      // Свежий кэш — возвращаем мгновенно
+      return new Response(JSON.stringify(fresh), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Stale-while-revalidate: если есть устаревший кэш — показываем его,
+    // а сетевой запрос делаем в фоне
+    const stale = getStaleFromCache(cacheKey);
+    if (stale) {
+      // Фоновое обновление без await
+      fetch(url, options).then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          setCache(cacheKey, data, getTTLForUrl(url));
+          window.dispatchEvent(new CustomEvent('cacheUpdated', { detail: { url } }));
+        }
+      }).catch(() => {});
+      
+      return new Response(JSON.stringify(stale), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'X-From-Stale-Cache': 'true' }
       });
     }
   }
@@ -124,7 +153,7 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2
       const response = await fetch(url, options);
       
       // Кэшируем только GET запросы (кроме сообщений чата и заказов)
-      if (response.ok && method === 'GET' && !isMessageRequest && !isOrdersRequest) {
+      if (response.ok && isCacheable) {
         const clonedResponse = response.clone();
         const data = await clonedResponse.json();
         const cacheKey = getCacheKey(url, options);

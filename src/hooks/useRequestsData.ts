@@ -51,20 +51,28 @@ export function useRequestsData() {
     const loadRequests = async () => {
       if (isLoadingFlag) return;
       isLoadingFlag = true;
-      SmartCache.invalidate('requests_list');
       const hasUpdates = checkForUpdates('requests');
 
+      // Сначала пробуем показать свежий кэш
       if (!hasUpdates) {
         const cached = SmartCache.get<Request[]>('requests_list');
         if (cached && cached.length > 0) {
           setRequests(cached);
           setIsLoading(false);
-
           if (SmartCache.shouldRefresh('requests_list')) {
             loadFreshRequests(false);
           }
           return;
         }
+      }
+
+      // Если нет свежего — показываем stale мгновенно, грузим в фоне
+      const stale = SmartCache.getStale<Request[]>('requests_list');
+      if (stale && stale.length > 0) {
+        setRequests(stale);
+        setIsLoading(false);
+        loadFreshRequests(false);
+        return;
       }
 
       await loadFreshRequests(true);
@@ -98,11 +106,15 @@ export function useRequestsData() {
 
     window.addEventListener('storage', handleStorageChange);
 
+    const handleGlobalRefresh = () => loadFreshRequests(false);
+    window.addEventListener('globalRefresh', handleGlobalRefresh);
+
     return () => {
       isLoadingFlag = false;
       unsubscribeRequests();
       unsubscribeOrders();
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('globalRefresh', handleGlobalRefresh);
     };
   }, []);
 

@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import PullToRefresh from "./components/PullToRefresh";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
+import { clearCache } from "./services/api";
+import { SmartCache } from "./utils/smartCache";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
@@ -131,7 +133,7 @@ const App = () => {
     if (session) {
       setIsAuthenticated(true);
       
-      // Синхронизируем профиль с сервером в фоне
+      // Синхронизируем профиль с сервером в фоне (откладываем чтобы не блокировать UI)
       if (session.id) {
         setTimeout(async () => {
           try {
@@ -163,17 +165,17 @@ const App = () => {
             // Игнорируем ошибки синхронизации
             console.log('Background profile sync failed:', error);
           }
-        }, 1000);
+        }, 3000);
       }
     }
 
-    // Регистрируем Service Worker в фоне
+    // Регистрируем Service Worker в фоне (позже чтобы не замедлять старт)
     if ('serviceWorker' in navigator) {
       setTimeout(() => {
         navigator.serviceWorker.register('/sw.js').catch(() => {
           // Игнорируем ошибки
         });
-      }, 1000);
+      }, 4000);
 
       // Слушаем сообщения от Service Worker (клики по уведомлениям)
       navigator.serviceWorker.addEventListener('message', (event) => {
@@ -198,11 +200,14 @@ const App = () => {
   };
 
   const handleGlobalRefresh = async () => {
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map(name => caches.delete(name)));
-    }
-    window.location.reload();
+    // Инвалидируем in-memory кэш API без перезагрузки страницы
+    clearCache();
+    SmartCache.invalidateAll('orders');
+    SmartCache.invalidateAll('requests');
+    SmartCache.invalidateAll('offers');
+    SmartCache.invalidateAll('auctions');
+    // Сигнализируем компонентам о необходимости перезагрузить данные
+    window.dispatchEvent(new CustomEvent('globalRefresh'));
   };
 
   const isFirstVisit = !sessionStorage.getItem('app_visited');

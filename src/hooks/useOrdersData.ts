@@ -251,9 +251,13 @@ export function useOrdersData(
     
     window.addEventListener('storage', handleStorageChange);
 
+    const handleGlobalRefresh = () => loadOrders(false);
+    window.addEventListener('globalRefresh', handleGlobalRefresh);
+
     return () => {
       unsubscribe();
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('globalRefresh', handleGlobalRefresh);
     };
   }, [isAuthenticated, navigate, currentUser?.id, loadOrders]);
 

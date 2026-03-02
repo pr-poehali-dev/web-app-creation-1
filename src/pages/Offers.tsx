@@ -67,12 +67,20 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         if (cached && cached.length > 0) {
           setOffers(cached);
           setIsLoading(false);
-          
           if (SmartCache.shouldRefresh('offers_list')) {
             loadFreshData(false);
           }
           return;
         }
+      }
+
+      // Stale-while-revalidate: показать устаревшие данные мгновенно
+      const stale = SmartCache.getStale<Offer[]>('offers_list');
+      if (stale && stale.length > 0) {
+        setOffers(stale);
+        setIsLoading(false);
+        loadFreshData(false);
+        return;
       }
       
       await loadFreshData(true);
@@ -177,12 +185,16 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     
     window.addEventListener('storage', handleStorageChange);
 
+    const handleGlobalRefresh = () => { if (isMounted) loadFreshData(false); };
+    window.addEventListener('globalRefresh', handleGlobalRefresh);
+
     return () => {
       isMounted = false;
       isLoading = false;
       unsubscribeOffers();
       unsubscribeOrders();
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('globalRefresh', handleGlobalRefresh);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
