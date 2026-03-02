@@ -4,8 +4,9 @@ import func2url from '../../backend/func2url.json';
 interface ShareOptions {
   title: string;
   text: string;
-  url: string;
+  url: string;        // прямая ссылка на страницу (erttp.ru/offer/UUID)
   imageUrl?: string;
+  ogProxyUrl?: string; // URL og-proxy для превью в мессенджерах (необязательно)
 }
 
 async function copyToClipboard(text: string): Promise<void> {
@@ -41,9 +42,29 @@ async function shortenUrl(url: string): Promise<string> {
   }
 }
 
+/** Строим URL og-proxy для оффера — он отдаёт HTML с OG-тегами для мессенджеров */
+function buildOgProxyUrl(pageUrl: string): string | null {
+  const ogProxyBase = (func2url as Record<string, string>)['og-proxy'];
+  if (!ogProxyBase) return null;
+
+  const offerMatch = pageUrl.match(/\/offer\/([0-9a-f-]{36})/);
+  if (offerMatch) return `${ogProxyBase}?type=offer&id=${offerMatch[1]}`;
+
+  const requestMatch = pageUrl.match(/\/request\/([0-9a-f-]{36})/);
+  if (requestMatch) return `${ogProxyBase}?type=request&id=${requestMatch[1]}`;
+
+  const auctionMatch = pageUrl.match(/\/auction\/([0-9a-f-]{36})/);
+  if (auctionMatch) return `${ogProxyBase}?type=auction&id=${auctionMatch[1]}`;
+
+  return null;
+}
+
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
-  const shortUrl = await shortenUrl(url);
-  const fullText = `${text}\n\n🔗 ${shortUrl}`;
+  // Для мессенджеров шарим og-proxy URL (с фото + OG-тегами), укороченный через short-url
+  const ogUrl = buildOgProxyUrl(url);
+  const shareUrl = ogUrl ? await shortenUrl(ogUrl) : await shortenUrl(url);
+
+  const fullText = `${text}\n\n🔗 ${shareUrl}`;
 
   if (navigator.share) {
     try {

@@ -81,6 +81,9 @@ def handler(event: dict, context) -> dict:
         if item_type == 'offer':
             cur.execute(f"""
                 SELECT o.title, o.description, o.price_per_unit, o.unit,
+                       o.category, o.transport_route, o.transport_price,
+                       o.transport_negotiable, o.transport_date_time,
+                       o.quantity, o.sold_quantity,
                        (SELECT oi.url FROM {schema}.offer_images oi
                         JOIN {schema}.offer_image_relations oir ON oi.id = oir.image_id
                         WHERE oir.offer_id = o.id ORDER BY oir.sort_order LIMIT 1) as image_url
@@ -89,9 +92,41 @@ def handler(event: dict, context) -> dict:
             row = cur.fetchone()
             if not row:
                 return {'statusCode': 302, 'headers': {'Location': f'{frontend_url}/offer/{item_id}', 'Access-Control-Allow-Origin': '*'}, 'body': ''}
-            price = f"{float(row['price_per_unit']):,.0f} ₽/{row['unit']}".replace(',', ' ') if row.get('price_per_unit') else ''
-            title = row['title']
-            desc = f"{price}. {row['description'][:200] if row.get('description') else ''}".strip('. ')
+
+            if row.get('category') == 'transport' and row.get('transport_route'):
+                t_price = float(row['transport_price'] or 0)
+                p_price = float(row['price_per_unit'] or 0)
+                if row.get('transport_negotiable'):
+                    price = 'Цена договорная'
+                elif t_price > 0:
+                    price = f"{t_price:,.0f} ₽".replace(',', '\u00a0')
+                elif p_price > 0:
+                    price = f"{p_price:,.0f} ₽".replace(',', '\u00a0')
+                else:
+                    price = ''
+
+                date_str = ''
+                if row.get('transport_date_time'):
+                    try:
+                        from datetime import datetime
+                        d = datetime.fromisoformat(str(row['transport_date_time']).replace('Z', '+00:00'))
+                        months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек']
+                        date_str = f"{d.day} {months[d.month-1]}, {d.strftime('%H:%M')}"
+                    except Exception:
+                        date_str = str(row['transport_date_time'])
+
+                remaining = (row.get('quantity') or 0) - (row.get('sold_quantity') or 0)
+                seats = f"{remaining} мест" if remaining > 0 else ''
+
+                title = f"Пассажирские перевозки {row['transport_route']}"
+                parts = [p for p in [price, date_str, seats] if p]
+                desc = ' • '.join(parts)
+            else:
+                p_price = float(row['price_per_unit'] or 0)
+                price = f"{p_price:,.0f} ₽/{row['unit']}".replace(',', '\u00a0') if p_price > 0 else ''
+                title = row['title']
+                desc = f"{price}. {row['description'][:200] if row.get('description') else ''}".strip('. ')
+
             image = row.get('image_url') or default_image
             redirect = f'{frontend_url}/offer/{item_id}'
 
