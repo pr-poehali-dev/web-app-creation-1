@@ -191,6 +191,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const districtsLength = districts.length;
 
   const filteredOffers = useMemo(() => {
+    try {
     let result = [...offers];
 
     result = filterActiveOffers(result);
@@ -279,6 +280,9 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     });
 
     return [...premiumOffers, ...regularOffers];
+    } catch {
+      return [];
+    }
   }, [offers, filters.query, filters.category, filters.subcategory, selectedDistrictsKey, districtsLength, showOnlyMy, isAuthenticated, userIdStr, selectedRegion, detectedDistrictId]);
 
   const currentOffers = filteredOffers.slice(0, displayedCount);
