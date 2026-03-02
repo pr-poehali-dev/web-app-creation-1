@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Offer, OfferImage, OfferVideo } from '@/types/offer';
 import { offersAPI } from '@/services/api';
+import { DISTRICTS } from '@/data/districts';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { notifyOfferUpdated } from '@/utils/dataSync';
@@ -23,7 +24,7 @@ interface OfferInfoTabProps {
 
 export default function OfferInfoTab({ offer, districtName: propDistrictName, onEdit, onDelete, onUpdate, onDataChanged, initialEditMode = false }: OfferInfoTabProps) {
   const { districts } = useDistrict();
-  const districtName = propDistrictName || districts.find(d => d.id === offer.district)?.name || offer.district;
+  const districtName = propDistrictName || districts.find(d => d.id === offer.district)?.name || DISTRICTS.find(d => d.id === offer.district)?.name || offer.district;
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(initialEditMode);
