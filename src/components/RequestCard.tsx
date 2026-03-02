@@ -122,24 +122,31 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
           </h3>
 
           <div className="space-y-1">
+            {isTransport ? (
+              <>
+                {/* Маршрут + цена в одну строку */}
+                <div className="flex items-start justify-between gap-1">
+                  <span className="text-sm font-bold text-foreground leading-tight min-w-0 truncate">
+                    {request.transportRoute || '—'}
+                  </span>
+                  <span className="font-bold text-primary text-sm whitespace-nowrap flex-shrink-0">
+                    {request.transportNegotiable
+                      ? 'Договор.'
+                      : request.transportPrice
+                      ? `${Number(request.transportPrice).toLocaleString('ru-RU')} ₽`
+                      : ''}
+                  </span>
+                </div>
+                {/* Дата */}
+                {request.transportDepartureDateTime && (
+                  <span className="text-xs text-muted-foreground block">
+                    {new Date(request.transportDepartureDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </>
+            ) : null}
             <div className="flex items-baseline gap-1">
-              {isTransport ? (
-                <>
-                  {request.transportPrice ? (
-                    <span className="font-bold text-primary text-lg">
-                      {Number(request.transportPrice).toLocaleString('ru-RU')} ₽
-                    </span>
-                  ) : request.transportNegotiable ? (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">
-                      По договоренности
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-xs h-5 px-2">
-                      Цена не указана
-                    </Badge>
-                  )}
-                </>
-              ) : isService ? (
+              {isTransport ? null : isService ? (
                 <>
                   {request.budget ? (
                     <span className="font-bold text-primary text-lg">
@@ -176,21 +183,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               )}
             </div>
             
-            {request.transportRoute && (
-              <div className="flex items-center gap-1.5">
-                <Icon name="Route" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-xs text-muted-foreground truncate">{request.transportRoute}</span>
-              </div>
-            )}
-            {request.transportDepartureDateTime && (
-              <div className="flex items-center gap-1.5">
-                <Icon name="CalendarClock" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <span className="text-xs text-muted-foreground truncate">
-                  Выезд: {new Date(request.transportDepartureDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                </span>
-              </div>
-            )}
-            {districtName && (
+            {!isTransport && districtName && (
               <div className="flex items-center gap-1.5">
                 <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className="text-xs text-muted-foreground truncate">{districtName}</span>
