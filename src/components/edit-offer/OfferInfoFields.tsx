@@ -473,29 +473,27 @@ export default function OfferInfoFields({
             </Button>
           </>
         ) : (
-          <>
-            <Button className="flex-1 sm:flex-none" onClick={onStartEditing}>
-              <Icon name="Pencil" className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Редактировать</span>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex gap-2">
+              <Button className="flex-1" onClick={onStartEditing}>
+                <Icon name="Pencil" className="w-4 h-4 mr-2" />
+                Редактировать
+              </Button>
+              <Button
+                variant="destructive"
+                size="icon"
+                className="shrink-0"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
+                type="button"
+              >
+                <Icon name="Trash2" className="w-4 h-4" />
+              </Button>
+            </div>
+            <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground" onClick={handleShare} type="button">
+              <Icon name="Share2" className="w-4 h-4 mr-2" />
+              Поделиться
             </Button>
-            <Button variant="outline" className="flex-1 sm:flex-none" onClick={handleShare} type="button">
-              <Icon name="Share2" className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Поделиться</span>
-            </Button>
-            <Button
-              variant="destructive"
-              className="flex-1 sm:flex-none"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete();
-              }}
-              type="button"
-            >
-              <Icon name="Trash2" className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Удалить</span>
-            </Button>
-          </>
+          </div>
         )}
       </div>
     </div>
