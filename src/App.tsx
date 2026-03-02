@@ -211,19 +211,7 @@ const App = () => {
     window.dispatchEvent(new CustomEvent('globalRefresh'));
   };
 
-  // Автообновление данных каждые 60 сек — только когда вкладка активна
-  useEffect(() => {
-    const silentRefresh = () => {
-      if (document.hidden) return; // не тратим ресурсы если вкладка свёрнута
-      SmartCache.invalidateAll('offers');
-      SmartCache.invalidateAll('requests');
-      SmartCache.invalidateAll('auctions');
-      window.dispatchEvent(new CustomEvent('globalRefresh'));
-    };
 
-    const interval = setInterval(silentRefresh, 60_000);
-    return () => clearInterval(interval);
-  }, []);
 
   const isFirstVisit = !sessionStorage.getItem('app_visited');
   if (isFirstVisit) sessionStorage.setItem('app_visited', '1');
