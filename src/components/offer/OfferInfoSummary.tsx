@@ -93,12 +93,7 @@ export default function OfferInfoSummary({
               <p className="font-semibold">{transportType}</p>
             </div>
           )}
-          {transportServiceType && (
-            <div>
-              <p className="text-xs text-muted-foreground">Тип услуги:</p>
-              <p className="font-semibold">{transportServiceType}</p>
-            </div>
-          )}
+
           {transportDateTime && (
             <div className="col-span-2">
               <p className="text-xs text-muted-foreground">Дата и время выезда:</p>

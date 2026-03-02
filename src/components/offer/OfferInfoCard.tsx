@@ -193,7 +193,6 @@ export default function OfferInfoCard({
 
         {/* Для десктопа - всегда открыто */}
         <div className="hidden md:block space-y-3">
-          <p className="text-sm font-medium">Подробная информация</p>
           <OfferInfoDetails {...detailsProps} />
         </div>
       </CardContent>

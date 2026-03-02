@@ -140,7 +140,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       notifyOfferUpdated(offer.id);
       if (onDataChanged) onDataChanged();
 
-      toast({ title: 'Успешно', description: 'Объявление обновлено' });
+      toast({ title: 'Успешно', description: 'Обновление сохранено' });
       setIsEditing(false);
       onUpdate();
     } catch (error) {
