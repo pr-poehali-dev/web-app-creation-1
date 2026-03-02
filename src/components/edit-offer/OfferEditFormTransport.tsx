@@ -190,7 +190,10 @@ export default function OfferEditFormTransport({ offer, editData, isSaving, onEd
           <div className="flex gap-2 pt-1">
             <Input
               value={newWaypointAddress}
-              onChange={(e) => setNewWaypointAddress(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setNewWaypointAddress(val ? val.charAt(0).toUpperCase() + val.slice(1) : val);
+              }}
               placeholder="Адрес остановки"
               disabled={isSaving}
               className="flex-1 h-8 text-sm"
