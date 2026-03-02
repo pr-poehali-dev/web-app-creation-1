@@ -23,7 +23,7 @@ interface MyOrdersProps {
   onLogout: () => void;
 }
 
-type AllTab = OrderTab | 'my-offers';
+type AllTab = Exclude<OrderTab, 'seller'> | 'my-offers';
 
 export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    const validTabs: AllTab[] = ['buyer', 'seller', 'my-requests', 'my-responses', 'archive', 'my-offers'];
+    const validTabs: AllTab[] = ['buyer', 'my-offers', 'my-requests', 'my-responses', 'archive'];
     if (tabParam && validTabs.includes(tabParam as AllTab)) {
       setActiveTab(tabParam as AllTab);
     }
@@ -144,7 +144,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const isEffectivelyArchived = (order: Order) => isArchived(order.status) || isTransportExpired(order);
   const activeFilter = (order: Order) => !isEffectivelyArchived(order);
   const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && activeFilter(order)).length;
-  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length;
+
   const myRequestsCount = orders.filter(order => order.isRequest && order.type === 'sale' && activeFilter(order)).length;
   const myResponsesCount = orders.filter(order => order.isRequest && order.type === 'purchase' && activeFilter(order)).length;
   const archiveOrdersCount = orders.filter(order => isEffectivelyArchived(order)).length;
@@ -178,24 +178,26 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
             </div>
           ) : (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AllTab)} className="mb-6" defaultValue="buyer">
-            <TabsList className="grid w-full max-w-4xl grid-cols-6 gap-1 mb-6 h-auto p-1">
-              <TabsTrigger value="buyer" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
-                Покупки{buyerOrdersCount > 0 ? ` (${buyerOrdersCount})` : ''}
+            <TabsList className="grid w-full grid-cols-5 gap-0.5 mb-6 h-auto p-1">
+              <TabsTrigger value="buyer" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-col sm:flex-row gap-0.5 sm:gap-1">
+                <span>Покупки</span>
+                {buyerOrdersCount > 0 && <span className="text-[10px] font-bold text-primary">({buyerOrdersCount})</span>}
               </TabsTrigger>
-              <TabsTrigger value="seller" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
-                Продажи{sellerOrdersCount > 0 ? ` (${sellerOrdersCount})` : ''}
+              <TabsTrigger value="my-offers" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-col sm:flex-row gap-0.5 sm:gap-1">
+                <span>Предложения</span>
+                {myOffersCount > 0 && <span className="text-[10px] font-bold text-primary">({myOffersCount})</span>}
               </TabsTrigger>
-              <TabsTrigger value="my-offers" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
-                Предложения{myOffersCount > 0 ? ` (${myOffersCount})` : ''}
+              <TabsTrigger value="my-requests" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-col sm:flex-row gap-0.5 sm:gap-1">
+                <span>Запросы</span>
+                {myRequestsCount > 0 && <span className="text-[10px] font-bold text-primary">({myRequestsCount})</span>}
               </TabsTrigger>
-              <TabsTrigger value="my-requests" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
-                Запросы{myRequestsCount > 0 ? ` (${myRequestsCount})` : ''}
+              <TabsTrigger value="my-responses" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-col sm:flex-row gap-0.5 sm:gap-1">
+                <span>Отклики</span>
+                {myResponsesCount > 0 && <span className="text-[10px] font-bold text-primary">({myResponsesCount})</span>}
               </TabsTrigger>
-              <TabsTrigger value="my-responses" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
-                Отклики{myResponsesCount > 0 ? ` (${myResponsesCount})` : ''}
-              </TabsTrigger>
-              <TabsTrigger value="archive" className="py-2.5 px-1 text-[11px] sm:text-sm leading-tight">
-                Архив{archiveOrdersCount > 0 ? ` (${archiveOrdersCount})` : ''}
+              <TabsTrigger value="archive" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-col sm:flex-row gap-0.5 sm:gap-1">
+                <span>Архив</span>
+                {archiveOrdersCount > 0 && <span className="text-[10px] font-bold text-primary">({archiveOrdersCount})</span>}
               </TabsTrigger>
             </TabsList>
 
@@ -208,17 +210,6 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               onOpenChat={handleOpenChat}
               onAcceptOrder={handleAcceptOrder}
               onCompleteOrder={handleCompleteOrder}
-            />
-          </TabsContent>
-
-          <TabsContent value="seller">
-            <OrdersContent
-              activeTab="seller"
-              onTabChange={setActiveTab}
-              orders={orders}
-              isLoading={isLoading}
-              onOpenChat={handleOpenChat}
-              onAcceptOrder={handleAcceptOrder}
             />
           </TabsContent>
 
