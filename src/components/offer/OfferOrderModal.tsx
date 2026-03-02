@@ -326,11 +326,17 @@ export default function OfferOrderModal({
 
           {offerCategory === 'transport' && (
             <div className="space-y-3">
+              {passengerRoute && passengerRoute !== offerTransportRoute && (
+                <div className="rounded-md bg-green-50 dark:bg-green-950/30 border-2 border-green-500 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">Ваш маршрут</p>
+                  <p className="text-base font-bold text-foreground">{passengerRoute}</p>
+                </div>
+              )}
               {offerTransportWaypoints.filter(w => w.isActive).length > 0 && (
                 <div className="space-y-2">
                   <Label>Пункт посадки</Label>
                   <div className="space-y-1.5">
-                    <label className={`flex items-center gap-2 cursor-pointer rounded-md border p-2.5 transition-colors ${selectedWaypoint === '' ? 'border-2 border-green-500 bg-green-50 dark:bg-green-950/20' : 'hover:bg-muted/40'}`}>
+                    <label className={`flex items-center gap-2 cursor-pointer rounded-md border p-2.5 transition-colors ${selectedWaypoint === '' ? 'border-2 border-green-500 bg-green-50 dark:bg-green-950/20' : 'hover:bg-muted/40 opacity-60'}`}>
                       <input
                         type="radio"
                         name="waypoint"
@@ -344,7 +350,7 @@ export default function OfferOrderModal({
                       />
                       <div className="flex-1">
                         <span className="text-xs text-muted-foreground block">Основной маршрут</span>
-                        <span className="text-sm font-bold text-foreground">{offerTransportRoute}</span>
+                        <span className={`text-sm font-bold ${selectedWaypoint !== '' ? 'text-muted-foreground' : 'text-foreground'}`}>{offerTransportRoute}</span>
                       </div>
                     </label>
                     {offerTransportWaypoints.filter(w => w.isActive).map(wp => (
@@ -406,9 +412,7 @@ export default function OfferOrderModal({
                     ? 'border-2 border-green-500 bg-green-50 dark:bg-green-950/20 font-medium'
                     : ''}
                 />
-                {passengerRoute && passengerRoute !== offerTransportRoute && (
-                  <p className="text-xs text-green-600 font-medium">Выбранный маршрут: {passengerRoute}</p>
-                )}
+
               </div>
             </div>
           )}
