@@ -215,98 +215,15 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           </TabsContent>
 
           <TabsContent value="my-offers">
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3">Входящие заказы</h2>
-              <OrdersContent
-                activeTab="seller"
-                onTabChange={(tab) => setActiveTab(tab as AllTab)}
-                orders={orders}
-                isLoading={isLoading}
-                onOpenChat={handleOpenChat}
-                onAcceptOrder={handleAcceptOrder}
-                onCompleteOrder={handleCompleteOrder}
-              />
-            </div>
-            <h2 className="text-lg font-semibold mb-3">Мои предложения</h2>
-            {offersLoading ? (
-              <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">Загрузка предложений...</p></CardContent></Card>
-            ) : myOffers.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Icon name="Package" className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground mb-4">У вас пока нет предложений</p>
-                  <Button onClick={() => navigate('/create-offer')} size="sm">
-                    <Icon name="Plus" className="h-4 w-4 mr-2" />
-                    Создать предложение
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex justify-end">
-                  <Button onClick={() => navigate('/create-offer')} size="sm" variant="outline">
-                    <Icon name="Plus" className="h-4 w-4 mr-2" />
-                    Создать предложение
-                  </Button>
-                </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {myOffers.map(offer => {
-                    const image = offer.images?.[0]?.url;
-                    const isTransport = offer.category === 'transport';
-                    const statusLabels: Record<string, { label: string; color: string }> = {
-                      active: { label: 'Активно', color: 'bg-green-500' },
-                      moderation: { label: 'На модерации', color: 'bg-orange-500' },
-                      pending: { label: 'На проверке', color: 'bg-yellow-500' },
-                      archived: { label: 'В архиве', color: 'bg-slate-500' },
-                    };
-                    const statusInfo = statusLabels[offer.status || 'active'] || statusLabels.active;
-                    return (
-                      <Card key={offer.id} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-0">
-                          <div className="relative aspect-video bg-muted overflow-hidden rounded-t-lg">
-                            {image ? (
-                              <img src={image} alt={offer.title} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Icon name="Package" className="h-12 w-12 text-muted-foreground" />
-                              </div>
-                            )}
-                            <div className="absolute top-2 left-2">
-                              <Badge className={`${statusInfo.color} text-white text-xs`}>{statusInfo.label}</Badge>
-                            </div>
-                          </div>
-                          <div className="p-3 space-y-2">
-                            <p className="font-semibold line-clamp-2">{offer.title}</p>
-                            {isTransport && offer.transportRoute && (
-                              <p className="text-xs text-muted-foreground line-clamp-1">{offer.transportRoute}</p>
-                            )}
-                            <p className="text-sm font-bold text-primary">
-                              {isTransport
-                                ? (offer.transportNegotiable || !offer.transportPrice ? 'Договорная' : `${Number(offer.transportPrice).toLocaleString('ru-RU')} ₽`)
-                                : `${offer.pricePerUnit?.toLocaleString('ru-RU')} ₽/${offer.unit}`
-                              }
-                            </p>
-                            {(offer.responses ?? 0) > 0 && (
-                              <p className="text-xs text-muted-foreground">{offer.responses} откликов</p>
-                            )}
-                            <div className="flex gap-2 pt-1">
-                              <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => navigate(`/offer/${offer.id}`)}>
-                                <Icon name="Eye" className="h-3.5 w-3.5 mr-1" />
-                                Просмотр
-                              </Button>
-                              <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => navigate(`/edit-offer/${offer.id}`)}>
-                                <Icon name="Pencil" className="h-3.5 w-3.5 mr-1" />
-                                Изменить
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <OrdersContent
+              activeTab="seller"
+              onTabChange={(tab) => setActiveTab(tab as AllTab)}
+              orders={orders}
+              isLoading={isLoading}
+              onOpenChat={handleOpenChat}
+              onAcceptOrder={handleAcceptOrder}
+              onCompleteOrder={handleCompleteOrder}
+            />
           </TabsContent>
 
           <TabsContent value="my-requests">
