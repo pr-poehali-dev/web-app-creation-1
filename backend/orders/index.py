@@ -487,7 +487,9 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 AND om.sender_id != {user_id_int}
             ), 0) as unread_messages,
             ub.rating as buyer_rating,
-            us.rating as seller_rating
+            us.rating as seller_rating,
+            (SELECT AVG(rv.rating) FROM {schema}.reviews rv WHERE rv.reviewed_user_id = o.seller_id) as seller_avg_review_rating,
+            (SELECT AVG(rv.rating) FROM {schema}.reviews rv WHERE rv.reviewed_user_id = o.buyer_id) as buyer_avg_review_rating
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
         LEFT JOIN {schema}.requests r ON o.offer_id = r.id
@@ -533,6 +535,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
         order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
         order_dict['sellerRating'] = float(order_dict.pop('seller_rating')) if order_dict.get('seller_rating') is not None else None
+        order_dict['sellerAvgReviewRating'] = round(float(order_dict.pop('seller_avg_review_rating')), 1) if order_dict.get('seller_avg_review_rating') is not None else None
+        order_dict['buyerAvgReviewRating'] = round(float(order_dict.pop('buyer_avg_review_rating')), 1) if order_dict.get('buyer_avg_review_rating') is not None else None
         
         order_dict['is_request'] = order_dict.get('is_request', False)
         
@@ -595,7 +599,9 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             ub.rating as buyer_rating,
-            us.rating as seller_rating
+            us.rating as seller_rating,
+            (SELECT AVG(rv.rating) FROM {schema}.reviews rv WHERE rv.reviewed_user_id = o.seller_id) as seller_avg_review_rating,
+            (SELECT AVG(rv.rating) FROM {schema}.reviews rv WHERE rv.reviewed_user_id = o.buyer_id) as buyer_avg_review_rating
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
         LEFT JOIN {schema}.requests r ON o.offer_id = r.id
@@ -633,6 +639,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['completionRequested'] = order_dict.pop('completion_requested', False) or False
     order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
     order_dict['sellerRating'] = float(order_dict.pop('seller_rating')) if order_dict.get('seller_rating') is not None else None
+    order_dict['sellerAvgReviewRating'] = round(float(order_dict.pop('seller_avg_review_rating')), 1) if order_dict.get('seller_avg_review_rating') is not None else None
+    order_dict['buyerAvgReviewRating'] = round(float(order_dict.pop('buyer_avg_review_rating')), 1) if order_dict.get('buyer_avg_review_rating') is not None else None
     
     order_dict['offer_title'] = order_dict.get('title', '')
     order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')

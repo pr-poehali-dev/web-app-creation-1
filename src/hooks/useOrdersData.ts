@@ -116,8 +116,10 @@ export function useOrdersData(
       archivedByAdmin: orderData.archived_by_admin || orderData.archivedByAdmin || false,
       adminArchiveReason: orderData.admin_archive_reason || orderData.adminArchiveReason,
       tripCancelled: orderData.trip_cancelled || orderData.tripCancelled || false,
-      buyerRating: orderData.buyer_rating || orderData.buyerRating,
-      sellerRating: orderData.seller_rating || orderData.sellerRating,
+      buyerRating: orderData.buyer_rating != null ? orderData.buyer_rating : orderData.buyerRating,
+      sellerRating: orderData.seller_rating != null ? orderData.seller_rating : orderData.sellerRating,
+      sellerAvgReviewRating: orderData.sellerAvgReviewRating != null ? orderData.sellerAvgReviewRating : undefined,
+      buyerAvgReviewRating: orderData.buyerAvgReviewRating != null ? orderData.buyerAvgReviewRating : undefined,
       offerImageUrl: orderData.offerImageUrl || orderData.offer_image_url,
     };
   };

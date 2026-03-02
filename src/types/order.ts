@@ -53,6 +53,8 @@ export interface Order {
   tripCancelled?: boolean;
   buyerRating?: number;
   sellerRating?: number;
+  sellerAvgReviewRating?: number;
+  buyerAvgReviewRating?: number;
   offerImageUrl?: string;
   archivedByAdmin?: boolean;
   adminArchiveReason?: string;

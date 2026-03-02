@@ -149,18 +149,36 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                 ? (
                   <span className="flex flex-col gap-0.5">
                     <span>{isSeller ? order.buyerName : (order.sellerName || '—')}</span>
-                    {!isSeller && order.sellerRating != null && (
-                      <span className="flex items-center gap-1 text-xs">
-                        <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="font-semibold text-foreground">{Math.round(order.sellerRating)}%</span>
-                        <span className="text-muted-foreground">— рейтинг</span>
+                    {!isSeller && (order.sellerRating != null || order.sellerAvgReviewRating != null) && (
+                      <span className="flex items-center gap-2 text-xs flex-wrap">
+                        {order.sellerAvgReviewRating != null && (
+                          <span className="flex items-center gap-0.5">
+                            <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <span className="font-semibold text-foreground">{order.sellerAvgReviewRating.toFixed(1)}</span>
+                          </span>
+                        )}
+                        {order.sellerRating != null && (
+                          <span className="flex items-center gap-0.5 text-muted-foreground">
+                            <span className="font-semibold">{Math.round(order.sellerRating)}%</span>
+                            <span>надёжность</span>
+                          </span>
+                        )}
                       </span>
                     )}
-                    {isSeller && order.buyerRating != null && (
-                      <span className="flex items-center gap-1 text-xs">
-                        <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="font-semibold text-foreground">{Math.round(order.buyerRating)}%</span>
-                        <span className="text-muted-foreground">— рейтинг</span>
+                    {isSeller && (order.buyerRating != null || order.buyerAvgReviewRating != null) && (
+                      <span className="flex items-center gap-2 text-xs flex-wrap">
+                        {order.buyerAvgReviewRating != null && (
+                          <span className="flex items-center gap-0.5">
+                            <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <span className="font-semibold text-foreground">{order.buyerAvgReviewRating.toFixed(1)}</span>
+                          </span>
+                        )}
+                        {order.buyerRating != null && (
+                          <span className="flex items-center gap-0.5 text-muted-foreground">
+                            <span className="font-semibold">{Math.round(order.buyerRating)}%</span>
+                            <span>надёжность</span>
+                          </span>
+                        )}
                       </span>
                     )}
                   </span>
@@ -168,11 +186,20 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                 : (
                   <span className="flex flex-col gap-0.5">
                     <span className="text-muted-foreground italic text-sm">Скрыто до принятия</span>
-                    {!isSeller && order.sellerRating != null && (
-                      <span className="flex items-center gap-1 text-xs not-italic">
-                        <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                        <span className="font-semibold text-foreground">{Math.round(order.sellerRating)}%</span>
-                        <span className="text-muted-foreground">— рейтинг</span>
+                    {!isSeller && (order.sellerRating != null || order.sellerAvgReviewRating != null) && (
+                      <span className="flex items-center gap-2 text-xs not-italic flex-wrap">
+                        {order.sellerAvgReviewRating != null && (
+                          <span className="flex items-center gap-0.5">
+                            <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
+                            <span className="font-semibold text-foreground">{order.sellerAvgReviewRating.toFixed(1)}</span>
+                          </span>
+                        )}
+                        {order.sellerRating != null && (
+                          <span className="flex items-center gap-0.5 text-muted-foreground">
+                            <span className="font-semibold">{Math.round(order.sellerRating)}%</span>
+                            <span>надёжность</span>
+                          </span>
+                        )}
                       </span>
                     )}
                   </span>
