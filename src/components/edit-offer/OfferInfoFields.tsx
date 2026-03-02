@@ -21,6 +21,7 @@ interface EditData {
   transportPriceType: string;
   transportNegotiable: boolean;
   transportWaypoints: TransportWaypoint[];
+  transportComment: string;
 }
 
 interface OfferInfoFieldsProps {
@@ -348,6 +349,17 @@ export default function OfferInfoFields({
                     </div>
                     <p className="text-xs text-muted-foreground">Укажите адрес и цену, затем нажмите <span className="font-bold">+</span> для добавления пункта посадки.</p>
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="transportComment">Комментарий</Label>
+                  <Textarea
+                    id="transportComment"
+                    value={editData.transportComment}
+                    onChange={(e) => onEditDataChange({ ...editData, transportComment: e.target.value })}
+                    disabled={isSaving}
+                    rows={2}
+                    placeholder="Дополнительная информация для пассажиров"
+                  />
                 </div>
                 {offer.expiryDate && (
                   <p className="text-xs text-muted-foreground">

@@ -61,13 +61,7 @@ export default function MyOffersSection() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="mb-4 text-sm text-muted-foreground px-1">Загрузка предложений...</div>
-    );
-  }
-
-  if (offers.length === 0) return null;
+  if (isLoading || offers.length === 0) return null;
 
   return (
     <div className="mb-6">
@@ -99,8 +93,18 @@ export default function MyOffersSection() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium line-clamp-2 mb-1">{offer.title}</p>
+                    {offer.category === 'transport' && offer.transportRoute && (
+                      <p className="text-xs text-muted-foreground line-clamp-1 mb-1">
+                        {offer.transportRoute}
+                      </p>
+                    )}
                     <p className="text-sm text-primary font-semibold mb-1">
-                      {offer.pricePerUnit?.toLocaleString('ru-RU')} ₽/{offer.unit}
+                      {offer.category === 'transport'
+                        ? (offer.transportNegotiable || !offer.transportPrice)
+                          ? 'Ваша цена'
+                          : `${Number(offer.transportPrice).toLocaleString('ru-RU')} ₽`
+                        : `${offer.pricePerUnit?.toLocaleString('ru-RU')} ₽/${offer.unit}`
+                      }
                     </p>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className={`text-xs ${statusInfo.className}`}>

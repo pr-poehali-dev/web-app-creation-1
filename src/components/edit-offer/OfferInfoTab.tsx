@@ -55,6 +55,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     transportPriceType: offer.transportPriceType || '',
     transportNegotiable: offer.transportNegotiable || false,
     transportWaypoints: offer.transportWaypoints || [],
+    transportComment: offer.transportComment || '',
   });
   const [images, setImages] = useState<OfferImage[]>(offer.images || []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -122,7 +123,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         transportPriceType: editData.transportPriceType || offer.transportPriceType,
         transportNegotiable: editData.transportNegotiable,
         transportDateTime: editData.transportDateTime || undefined,
-        transportComment: offer.transportComment,
+        transportComment: editData.transportComment || offer.transportComment,
         transportAllDistricts: offer.transportAllDistricts,
         transportWaypoints: editData.transportWaypoints,
       });
@@ -157,6 +158,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       transportPriceType: offer.transportPriceType || '',
       transportNegotiable: offer.transportNegotiable || false,
       transportWaypoints: offer.transportWaypoints || [],
+      transportComment: offer.transportComment || '',
     });
     setImages(offer.images || []);
     setCurrentImageIndex(0);
