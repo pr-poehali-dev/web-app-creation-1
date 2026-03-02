@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import func2url from '../../backend/func2url.json';
 
 interface ShareOptions {
   title: string;
@@ -23,8 +24,26 @@ async function copyToClipboard(text: string): Promise<void> {
   }
 }
 
+async function shortenUrl(url: string): Promise<string> {
+  try {
+    const baseUrl = (func2url as Record<string, string>)['short-url'];
+    if (!baseUrl) return url;
+    const res = await fetch(baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!res.ok) return url;
+    const data = await res.json();
+    return data.short_url || url;
+  } catch {
+    return url;
+  }
+}
+
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
-  const fullText = `${text}\n\n🔗 ${url}`;
+  const shortUrl = await shortenUrl(url);
+  const fullText = `${text}\n\n🔗 ${shortUrl}`;
 
   if (navigator.share) {
     try {
@@ -45,7 +64,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
         }
       }
 
-      await navigator.share({ title, text: fullText, url });
+      await navigator.share({ title, text: fullText, url: shortUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {

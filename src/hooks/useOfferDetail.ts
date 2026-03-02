@@ -139,12 +139,60 @@ export function useOfferDetail(id: string | undefined) {
 
   const handleShare = async () => {
     if (!offer) return;
+
+    let shareText: string;
+
+    if (offer.category === 'transport' && offer.transportRoute) {
+      const price = offer.transportNegotiable
+        ? 'Цена договорная'
+        : offer.transportPrice
+          ? `${Number(offer.transportPrice).toLocaleString('ru-RU')} ₽`
+          : offer.pricePerUnit
+            ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽`
+            : null;
+
+      const dateStr = offer.transportDateTime
+        ? (() => {
+            try {
+              const d = new Date(offer.transportDateTime);
+              return isNaN(d.getTime())
+                ? offer.transportDateTime
+                : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            } catch { return offer.transportDateTime; }
+          })()
+        : null;
+
+      const remaining = (offer.quantity || 0) - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
+      const seats = remaining > 0 ? remaining : offer.quantity;
+
+      const activeWaypoints = (offer.transportWaypoints || []).filter(w => w.isActive && w.price);
+      const waypointLines = activeWaypoints.map(wp => {
+        const routeFrom = offer.transportRoute?.split(/\s*[-–—]\s*/)[0]?.trim() || '';
+        return `  • ${routeFrom} — ${wp.address}: ${Number(wp.price).toLocaleString('ru-RU')} ₽`;
+      });
+
+      const lines = [
+        `🚌 Пассажирские перевозки`,
+        `📍 ${offer.transportRoute}${price ? ` — ${price}` : ''}`,
+        dateStr ? `📅 ${dateStr}` : null,
+        seats ? `💺 ${seats} мест` : null,
+        waypointLines.length > 0 ? `\nПункты посадки:\n${waypointLines.join('\n')}` : null,
+        offer.description ? `\n📝 ${offer.description}` : null,
+      ].filter(Boolean);
+
+      shareText = lines.join('\n');
+    } else {
+      const price = offer.pricePerUnit != null
+        ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽/${offer.unit}`
+        : '—';
+      shareText = `📦 ${offer.title}\n\n💰 Цена: ${price}${offer.description ? `\n\n📝 ${offer.description}` : ''}`;
+    }
+
     await shareContent({
       title: offer.title,
-      text: `📦 ${offer.title}\n\n💰 Цена: ${offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString('ru-RU') : '—'} ₽/${offer.unit}${offer.description ? `\n\n📝 ${offer.description}` : ''}`,
+      text: shareText,
       url: window.location.href,
       imageUrl: offer.images?.[0]?.url,
-
     });
   };
 

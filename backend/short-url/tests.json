@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "Create short URL",
+      "method": "POST",
+      "path": "/",
+      "body": {"url": "https://erttp.ru/offer/9a006676-032f-4bc6-a3a6-30fe85ae0682"},
+      "expectedStatus": 200,
+      "bodyMatcher": "none"
+    },
+    {
+      "name": "Resolve short URL",
+      "method": "GET",
+      "path": "/?code=test404notexist",
+      "expectedStatus": 404,
+      "bodyMatcher": "none"
+    }
+  ]
+}

@@ -111,6 +111,7 @@ const MigrateImages = lazyWithRetry(() => import("./pages/MigrateImages"));
 const TelegramSetup = lazyWithRetry(() => import("./pages/TelegramSetup"));
 const VerifyPhone = lazyWithRetry(() => import("./pages/VerifyPhone"));
 const ImageEditor = lazyWithRetry(() => import("./pages/ImageEditor"));
+const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
 
 // Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
@@ -305,6 +306,7 @@ const App = () => {
             <Route path="/telegram-setup" element={<TelegramSetup isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/telegram-connect" element={<TelegramConnect />} />
             <Route path="/image-editor" element={<ImageEditor />} />
+            <Route path="/s/:code" element={<ShortUrlRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
