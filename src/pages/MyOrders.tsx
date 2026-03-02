@@ -215,20 +215,19 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           </TabsContent>
 
           <TabsContent value="my-offers">
-            {sellerOrdersCount > 0 && (
-              <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-3">Входящие заказы</h2>
-                <OrdersContent
-                  activeTab="seller"
-                  onTabChange={(tab) => setActiveTab(tab as AllTab)}
-                  orders={orders}
-                  isLoading={isLoading}
-                  onOpenChat={handleOpenChat}
-                  onAcceptOrder={handleAcceptOrder}
-                  onCompleteOrder={handleCompleteOrder}
-                />
-              </div>
-            )}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-3">Входящие заказы</h2>
+              <OrdersContent
+                activeTab="seller"
+                onTabChange={(tab) => setActiveTab(tab as AllTab)}
+                orders={orders}
+                isLoading={isLoading}
+                onOpenChat={handleOpenChat}
+                onAcceptOrder={handleAcceptOrder}
+                onCompleteOrder={handleCompleteOrder}
+              />
+            </div>
+            <h2 className="text-lg font-semibold mb-3">Мои предложения</h2>
             {offersLoading ? (
               <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">Загрузка предложений...</p></CardContent></Card>
             ) : myOffers.length === 0 ? (
