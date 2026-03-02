@@ -194,21 +194,32 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
         <div className="space-y-1">
           {isTransport ? (
             <>
-              {offer.transportRoute && (
-                <div className="flex items-center gap-1.5">
-                  <Icon name="ArrowRight" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-sm font-bold text-foreground truncate">{offer.transportRoute}</span>
-                </div>
-              )}
-              <div className="flex items-center justify-between gap-2">
-                {offer.transportNegotiable ? (
-                  <span className="font-bold text-primary text-base">Договорная</span>
-                ) : (offer.transportPrice || offer.pricePerUnit) ? (
-                  <span className="font-bold text-primary text-lg">
-                    {Number(offer.transportPrice || offer.pricePerUnit).toLocaleString('ru-RU')} ₽
-                    {offer.transportPriceType && <span className="text-xs text-muted-foreground ml-1">{offer.transportPriceType}</span>}
+              {/* Основной маршрут + цена в одну строку */}
+              <div className="flex items-start justify-between gap-1">
+                <span className="text-sm font-bold text-foreground leading-tight min-w-0 truncate">
+                  {offer.transportRoute}
+                </span>
+                <span className="font-bold text-primary text-sm whitespace-nowrap flex-shrink-0">
+                  {offer.transportNegotiable
+                    ? 'Договор.'
+                    : (offer.transportPrice || offer.pricePerUnit)
+                    ? `${Number(offer.transportPrice || offer.pricePerUnit).toLocaleString('ru-RU')} ₽`
+                    : ''}
+                </span>
+              </div>
+
+              {/* Дата + кол-во мест */}
+              <div className="flex items-center justify-between gap-1">
+                {offer.transportDateTime && (
+                  <span className="text-xs text-muted-foreground">
+                    {(() => {
+                      try {
+                        const d = new Date(offer.transportDateTime);
+                        return isNaN(d.getTime()) ? offer.transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                      } catch { return offer.transportDateTime; }
+                    })()}
                   </span>
-                ) : null}
+                )}
                 {(() => {
                   const capacity = Number(offer.transportCapacity);
                   const effectiveTotal = offer.quantity > 0 ? offer.quantity : (!isNaN(capacity) && capacity > 0 ? capacity : 0);
@@ -223,42 +234,20 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                   );
                 })()}
               </div>
-              {offer.transportDateTime && (
-                <div className="flex items-center gap-1.5">
-                  <Icon name="Calendar" className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                  <span className="text-xs font-medium text-foreground">
-                    {(() => {
-                      try {
-                        const d = new Date(offer.transportDateTime);
-                        return isNaN(d.getTime()) ? offer.transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                      } catch { return offer.transportDateTime; }
-                    })()}
-                  </span>
-                </div>
-              )}
+
+              {/* Маршруты по пути */}
               {offer.transportWaypoints && offer.transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0).length > 0 && (
-                <div className="pt-0.5 space-y-1">
+                <div className="space-y-0.5">
                   {offer.transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0).map(wp => (
-                    <div key={wp.id} className="flex items-center justify-between rounded bg-muted/50 px-2 py-1">
-                      <div className="flex items-center gap-1">
-                        <Icon name="MapPin" className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                        <span className="text-xs text-muted-foreground truncate">
-                          {offer.transportRoute ? `${offer.transportRoute.split(/\s*[—–-]\s*/)[0].trim()} — ${wp.address}` : wp.address}
-                        </span>
-                      </div>
+                    <div key={wp.id} className="flex items-center justify-between rounded bg-muted/50 px-1.5 py-0.5">
+                      <span className="text-xs text-muted-foreground truncate min-w-0">
+                        {offer.transportRoute ? `${offer.transportRoute.split(/\s*[—–-]\s*/)[0].trim()} — ${wp.address}` : wp.address}
+                      </span>
                       <span className="text-xs font-semibold text-primary whitespace-nowrap ml-1">
                         {wp.price!.toLocaleString('ru-RU')} ₽
                       </span>
                     </div>
                   ))}
-                </div>
-              )}
-              {offer.expiryDate && (
-                <div className="flex items-center gap-1.5">
-                  <Icon name="Clock" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-xs text-muted-foreground">
-                    до {new Date(offer.expiryDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
-                  </span>
                 </div>
               )}
             </>
