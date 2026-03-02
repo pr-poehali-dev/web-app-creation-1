@@ -229,6 +229,35 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   const requestGeolocation = async () => {
     setIsDetecting(true);
     try {
+      // Проверяем статус разрешения на геолокацию (Android/iOS)
+      if (navigator.permissions) {
+        try {
+          const permStatus = await navigator.permissions.query({ name: 'geolocation' });
+          if (permStatus.state === 'denied') {
+            // Разрешение отклонено — используем IP без вызова браузерного диалога
+            const location = await detectLocationByIP();
+            if (location.source !== 'default' && location.district && location.district !== 'Все районы') {
+              const districtData = DISTRICTS.find(d => d.id === location.district);
+              if (districtData) {
+                setSelectedRegionState(districtData.regionId);
+                setDetectedCity(location.city);
+                saveLocationToStorage(location);
+                setAvailableDistricts(getDistrictsByRegion(districtData.regionId));
+                setDetectedDistrictId(districtData.id);
+                localStorage.setItem('detectedDistrictId', districtData.id);
+                localStorage.setItem('detectedCity', location.city);
+                setSelectedDistrictsState([districtData.id]);
+                localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
+              }
+            }
+            setIsDetecting(false);
+            return;
+          }
+        } catch {
+          // permissions API не поддерживается — продолжаем без проверки
+        }
+      }
+
       let location = await detectLocationByBrowser();
       
       // Если браузерная геолокация не работает, используем IP

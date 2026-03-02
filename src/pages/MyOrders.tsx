@@ -7,6 +7,7 @@ import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrderReviewModal from '@/components/reviews/OrderReviewModal';
 import OrdersContent from '@/components/order/OrdersContent';
+import MyOffersSection from '@/components/order/MyOffersSection';
 import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData, type OrderTab } from '@/hooks/useOrdersData';
@@ -188,6 +189,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           </TabsContent>
 
           <TabsContent value="seller">
+            <MyOffersSection />
             <OrdersContent
               activeTab="seller"
               onTabChange={setActiveTab}
