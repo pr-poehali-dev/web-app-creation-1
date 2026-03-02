@@ -222,10 +222,7 @@ export default function OfferInfoFields({
                     id="transportDateTime"
                     type="datetime-local"
                     value={editData.transportDateTime}
-                    min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
                     onChange={(e) => {
-                      const selected = new Date(e.target.value);
-                      if (selected <= new Date()) return;
                       onEditDataChange({ ...editData, transportDateTime: e.target.value });
                     }}
                     disabled={isSaving}
