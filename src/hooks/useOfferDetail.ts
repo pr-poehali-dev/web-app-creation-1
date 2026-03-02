@@ -72,6 +72,34 @@ export function useOfferDetail(id: string | undefined) {
         
         console.log('Mapped offer:', { minOrderQuantity: mappedOffer.minOrderQuantity, unit: mappedOffer.unit });
         setOffer(mappedOffer);
+
+        // Динамически обновляем OG-теги для корректного превью в Telegram/соцсетях
+        const setMeta = (property: string, content: string) => {
+          let el = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
+          if (!el) { el = document.createElement('meta'); el.setAttribute('property', property); document.head.appendChild(el); }
+          el.setAttribute('content', content);
+        };
+        const ogTitle = mappedOffer.category === 'transport' && mappedOffer.transportRoute
+          ? `${mappedOffer.transportRoute} — ЕРТТП`
+          : `${mappedOffer.title} — ЕРТТП`;
+        const tPrice = Number(mappedOffer.transportPrice);
+        const priceStr = mappedOffer.transportNegotiable
+          ? 'Цена договорная'
+          : tPrice > 0
+            ? `${tPrice.toLocaleString('ru-RU')} ₽`
+            : mappedOffer.pricePerUnit > 0
+              ? `${mappedOffer.pricePerUnit.toLocaleString('ru-RU')} ₽/${mappedOffer.unit}`
+              : '';
+        const ogDesc = [priceStr, mappedOffer.description].filter(Boolean).join(' • ');
+        document.title = ogTitle;
+        setMeta('og:title', ogTitle);
+        setMeta('og:description', ogDesc || 'ЕРТТП — Единая Региональная Товарно-Торговая Площадка');
+        setMeta('og:url', window.location.href);
+        if (mappedOffer.images?.[0]?.url) {
+          setMeta('og:image', mappedOffer.images[0].url);
+          setMeta('og:image:width', '1200');
+          setMeta('og:image:height', '630');
+        }
         
         // Загружаем отзывы о продавце
         if (mappedOffer.seller?.id) {
@@ -143,11 +171,12 @@ export function useOfferDetail(id: string | undefined) {
     let shareText: string;
 
     if (offer.category === 'transport' && offer.transportRoute) {
+      const tPrice = Number(offer.transportPrice);
       const price = offer.transportNegotiable
         ? 'Цена договорная'
-        : offer.transportPrice
-          ? `${Number(offer.transportPrice).toLocaleString('ru-RU')} ₽`
-          : offer.pricePerUnit
+        : tPrice > 0
+          ? `${tPrice.toLocaleString('ru-RU')} ₽`
+          : offer.pricePerUnit > 0
             ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽`
             : null;
 

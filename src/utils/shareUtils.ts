@@ -64,7 +64,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
         }
       }
 
-      await navigator.share({ title, text: fullText, url: shortUrl });
+      await navigator.share({ title, text: fullText });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
