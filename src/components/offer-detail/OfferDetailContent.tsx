@@ -330,6 +330,7 @@ export default function OfferDetailContent({
         offerTransportWaypoints={offer.transportWaypoints}
         offerTransportPriceType={offer.transportPriceType}
         offerTransportNegotiable={offer.transportNegotiable}
+        offerTransportDateTime={offer.transportDateTime}
       />
 
       <Dialog open={isGalleryOpen} onOpenChange={onGalleryChange}>

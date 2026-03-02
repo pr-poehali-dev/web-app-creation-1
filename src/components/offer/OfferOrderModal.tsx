@@ -57,6 +57,7 @@ interface OfferOrderModalProps {
   offerTransportWaypoints?: TransportWaypoint[];
   offerTransportPriceType?: string;
   offerTransportNegotiable?: boolean;
+  offerTransportDateTime?: string;
 }
 
 export default function OfferOrderModal({
@@ -75,6 +76,7 @@ export default function OfferOrderModal({
   offerTransportWaypoints = [],
   offerTransportPriceType,
   offerTransportNegotiable,
+  offerTransportDateTime,
 }: OfferOrderModalProps) {
   const currentUser = getSession();
   const { toast } = useToast();
@@ -279,6 +281,22 @@ export default function OfferOrderModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {offerCategory === 'transport' && offerTransportDateTime && (
+            <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
+              <Icon name="Calendar" className="w-4 h-4 text-muted-foreground shrink-0" />
+              <div>
+                <span className="text-muted-foreground">Дата и время выезда: </span>
+                <span className="font-semibold">
+                  {(() => {
+                    try {
+                      const d = new Date(offerTransportDateTime);
+                      return isNaN(d.getTime()) ? offerTransportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    } catch { return offerTransportDateTime; }
+                  })()}
+                </span>
+              </div>
+            </div>
+          )}
           <QuantitySelector
             quantity={quantity}
             unit={unit}
@@ -355,31 +373,7 @@ export default function OfferOrderModal({
                         </div>
                       </label>
                     ))}
-                    <label className="flex items-center gap-2 cursor-pointer rounded-md border p-2.5 hover:bg-muted/40 transition-colors">
-                      <input
-                        type="radio"
-                        name="waypoint"
-                        value="__custom__"
-                        checked={selectedWaypoint === '__custom__'}
-                        onChange={() => setSelectedWaypoint('__custom__')}
-                        className="h-4 w-4"
-                      />
-                      <span className="text-sm font-medium">Другой адрес</span>
-                    </label>
-                    {selectedWaypoint === '__custom__' && (
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          value={customPickupAddress}
-                          placeholder="Выберите на карте"
-                          className="flex-1 cursor-pointer"
-                          readOnly
-                          onClick={() => setIsPickupMapOpen(true)}
-                        />
-                        <Button type="button" variant="outline" size="icon" onClick={() => setIsPickupMapOpen(true)} title="Выбрать на карте">
-                          <Icon name="Map" size={16} />
-                        </Button>
-                      </div>
-                    )}
+
                   </div>
                 </div>
               )}
