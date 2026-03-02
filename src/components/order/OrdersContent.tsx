@@ -54,11 +54,11 @@ export default function OrdersContent({
   };
 
   const isEffectivelyArchived = (order: Order) =>
-    isArchivedStatus(order.status as string) || isTransportExpired(order);
+    isArchivedStatus(order.status as string);
 
   const isOrderVisible = (order: Order) => {
     if (activeTab === 'archive') {
-      return isEffectivelyArchived(order);
+      return isEffectivelyArchived(order) || isTransportExpired(order);
     }
     if (activeTab === 'my-requests') {
       return order.isRequest && order.type === 'sale' && !isEffectivelyArchived(order);

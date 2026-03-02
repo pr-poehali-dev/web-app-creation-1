@@ -142,7 +142,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return !!dt && new Date(dt) < new Date();
   };
   const isEffectivelyArchived = (order: Order) => isArchived(order.status) || isTransportExpired(order);
-  const activeFilter = (order: Order) => !isEffectivelyArchived(order);
+  const activeFilter = (order: Order) => !isArchived(order.status);
   const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && activeFilter(order)).length;
 
   const myRequestsCount = orders.filter(order => order.isRequest && order.type === 'sale' && activeFilter(order)).length;
