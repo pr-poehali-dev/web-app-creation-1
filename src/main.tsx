@@ -20,6 +20,16 @@ root.render(
   </React.StrictMode>
 );
 
+// Убираем HTML splash как только React отрендерился
+requestAnimationFrame(() => {
+  const splash = document.getElementById('html-splash');
+  if (splash) {
+    splash.style.transition = 'opacity 0.3s ease';
+    splash.style.opacity = '0';
+    setTimeout(() => splash.remove(), 300);
+  }
+});
+
 
 
 if ('serviceWorker' in navigator) {
