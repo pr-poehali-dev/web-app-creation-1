@@ -117,17 +117,19 @@ export default function OfferInfoFields({
       <div className="space-y-3">
         {isEditing ? (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="description">Описание</Label>
-              <Textarea
-                id="description"
-                value={editData.description}
-                onChange={(e) => onEditDataChange({ ...editData, description: e.target.value })}
-                disabled={isSaving}
-                rows={3}
-                placeholder="Опишите ваше предложение"
-              />
-            </div>
+            {!isTransport && (
+              <div className="space-y-2">
+                <Label htmlFor="description">Описание</Label>
+                <Textarea
+                  id="description"
+                  value={editData.description}
+                  onChange={(e) => onEditDataChange({ ...editData, description: e.target.value })}
+                  disabled={isSaving}
+                  rows={3}
+                  placeholder="Опишите ваше предложение"
+                />
+              </div>
+            )}
             {!isTransport && (
               <>
                 <div className="space-y-2">
