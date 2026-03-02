@@ -429,6 +429,7 @@ export default function OfferOrderModal({
             counterPrice={counterPrice}
             counterComment={counterComment}
             quantity={quantity}
+            unit={unit}
             onToggle={() => setShowCounterPrice(!showCounterPrice)}
             onCounterPriceChange={setCounterPrice}
             onCounterCommentChange={setCounterComment}

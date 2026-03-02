@@ -9,6 +9,7 @@ interface CounterPriceSectionProps {
   counterPrice: string;
   counterComment: string;
   quantity: string;
+  unit?: string;
   onToggle: () => void;
   onCounterPriceChange: (value: string) => void;
   onCounterCommentChange: (value: string) => void;
@@ -20,6 +21,7 @@ export default function CounterPriceSection({
   counterPrice,
   counterComment,
   quantity,
+  unit = 'кг',
   onToggle,
   onCounterPriceChange,
   onCounterCommentChange,
@@ -39,10 +41,10 @@ export default function CounterPriceSection({
         <div className="space-y-3 p-4 bg-muted/50 rounded-lg">
           <div className="flex items-baseline gap-2 text-sm text-muted-foreground mb-2">
             <span>Цена продавца:</span>
-            <span className="font-semibold text-foreground">{pricePerUnit} ₽/{quantity > '0' ? 'кг' : 'кг'}</span>
+            <span className="font-semibold text-foreground">{pricePerUnit} ₽/{unit}</span>
           </div>
           <div>
-            <Label htmlFor="counter-price" className="text-sm">Ваша цена за кг</Label>
+            <Label htmlFor="counter-price" className="text-sm">Ваша цена за {unit}</Label>
             <div className="flex items-center gap-2 mt-1">
               <Input
                 id="counter-price"
