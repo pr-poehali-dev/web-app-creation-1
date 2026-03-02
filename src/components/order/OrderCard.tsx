@@ -146,7 +146,25 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
             </p>
             <p className="font-medium truncate">
               {['accepted', 'completed', 'cancelled'].includes(order.status)
-                ? (isSeller ? order.buyerName : (order.sellerName || '—'))
+                ? (
+                  <span className="flex flex-col gap-0.5">
+                    <span>{isSeller ? order.buyerName : (order.sellerName || '—')}</span>
+                    {!isSeller && order.sellerRating != null && (
+                      <span className="flex items-center gap-1 text-xs">
+                        <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
+                        <span className="font-semibold text-foreground">{Math.round(order.sellerRating)}%</span>
+                        <span className="text-muted-foreground">рейтинг</span>
+                      </span>
+                    )}
+                    {isSeller && order.buyerRating != null && (
+                      <span className="flex items-center gap-1 text-xs">
+                        <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
+                        <span className="font-semibold text-foreground">{Math.round(order.buyerRating)}%</span>
+                        <span className="text-muted-foreground">рейтинг</span>
+                      </span>
+                    )}
+                  </span>
+                )
                 : (
                   <span className="flex flex-col gap-0.5">
                     <span className="text-muted-foreground italic text-sm">Скрыто до принятия</span>
