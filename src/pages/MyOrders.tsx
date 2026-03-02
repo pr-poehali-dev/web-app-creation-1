@@ -184,7 +184,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
                 {buyerOrdersCount > 0 && <span className="text-[10px] font-bold text-primary">({buyerOrdersCount})</span>}
               </TabsTrigger>
               <TabsTrigger value="my-offers" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-col sm:flex-row gap-0.5 sm:gap-1">
-                <span>Предложения</span>
+                <span>Продажи</span>
                 {myOffersCount > 0 && <span className="text-[10px] font-bold text-primary">({myOffersCount})</span>}
               </TabsTrigger>
               <TabsTrigger value="my-requests" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-col sm:flex-row gap-0.5 sm:gap-1">
