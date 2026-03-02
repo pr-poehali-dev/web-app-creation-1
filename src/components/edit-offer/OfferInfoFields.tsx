@@ -474,17 +474,17 @@ export default function OfferInfoFields({
           </>
         ) : (
           <>
-            <Button className="flex-1" onClick={onStartEditing}>
-              <Icon name="Pencil" className="w-4 h-4 mr-2" />
-              Редактировать
+            <Button className="flex-1 sm:flex-none" onClick={onStartEditing}>
+              <Icon name="Pencil" className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Редактировать</span>
             </Button>
-            <Button variant="outline" onClick={handleShare} type="button">
-              <Icon name="Share2" className="w-4 h-4 mr-2" />
-              Поделиться
+            <Button variant="outline" className="flex-1 sm:flex-none" onClick={handleShare} type="button">
+              <Icon name="Share2" className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Поделиться</span>
             </Button>
             <Button
               variant="destructive"
-              size="icon"
+              className="flex-1 sm:flex-none"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -492,7 +492,8 @@ export default function OfferInfoFields({
               }}
               type="button"
             >
-              <Icon name="Trash2" className="w-4 h-4" />
+              <Icon name="Trash2" className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Удалить</span>
             </Button>
           </>
         )}
