@@ -402,7 +402,13 @@ export default function OfferOrderModal({
                   value={passengerRoute}
                   onChange={(e) => setPassengerRoute(e.target.value)}
                   placeholder={offerTransportRoute || 'Например: Нюрба - Якутск'}
+                  className={passengerRoute && passengerRoute !== offerTransportRoute
+                    ? 'border-2 border-green-500 bg-green-50 dark:bg-green-950/20 font-medium'
+                    : ''}
                 />
+                {passengerRoute && passengerRoute !== offerTransportRoute && (
+                  <p className="text-xs text-green-600 font-medium">Выбранный маршрут: {passengerRoute}</p>
+                )}
               </div>
             </div>
           )}

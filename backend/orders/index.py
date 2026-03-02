@@ -1192,24 +1192,26 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         
         cancelled_by_str = 'seller' if is_seller else 'buyer'
 
-        # Если покупатель отменяет ПРИНЯТЫЙ заказ — снижаем рейтинг покупателя
-        if is_buyer and order.get('status') == 'accepted':
-            buyer_id_cancel = order['buyer_id']
-            cur.execute(f"""
-                UPDATE {schema}.users 
-                SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
-                WHERE id = {buyer_id_cancel}
-            """)
-            print(f"[CANCEL_ORDER] Buyer {buyer_id_cancel} rating decreased 5% (cancelled accepted order)")
+        # Рейтинг снижается ТОЛЬКО при отмене уже принятого заказа
+        if order.get('status') == 'accepted':
+            if is_buyer:
+                buyer_id_cancel = order['buyer_id']
+                cur.execute(f"""
+                    UPDATE {schema}.users 
+                    SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+                    WHERE id = {buyer_id_cancel}
+                """)
+                print(f"[CANCEL_ORDER] Buyer {buyer_id_cancel} rating decreased 5% (cancelled accepted order)")
+            else:
+                seller_id_cancel = order['seller_id']
+                cur.execute(f"""
+                    UPDATE {schema}.users 
+                    SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+                    WHERE id = {seller_id_cancel}
+                """)
+                print(f"[CANCEL_ORDER] Seller {seller_id_cancel} rating decreased 5% (cancelled accepted order)")
         else:
-            # Снижаем рейтинг продавца при любой другой отмене
-            seller_id_cancel = order['seller_id']
-            cur.execute(f"""
-                UPDATE {schema}.users 
-                SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
-                WHERE id = {seller_id_cancel}
-            """)
-            print(f"[CANCEL_ORDER] Seller {seller_id_cancel} rating decreased 5% (cancelled by {cancelled_by_str})")
+            print(f"[CANCEL_ORDER] Order cancelled by {cancelled_by_str} before acceptance — no rating penalty")
     
     # Отклонение заказа - возвращаем зарезервированное количество
     elif 'status' in body and body['status'] == 'rejected':
