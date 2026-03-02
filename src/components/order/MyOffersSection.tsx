@@ -17,6 +17,22 @@ function getUserId(): string | null {
   }
 }
 
+const cachedOffersCount = 0;
+const offersCountListeners: Array<(n: number) => void> = [];
+
+export function useMyOffersCount(): number {
+  const [count, setCount] = useState(cachedOffersCount);
+  useEffect(() => {
+    offersCountListeners.push(setCount);
+    setCount(cachedOffersCount);
+    return () => {
+      const idx = offersCountListeners.indexOf(setCount);
+      if (idx !== -1) offersCountListeners.splice(idx, 1);
+    };
+  }, []);
+  return count;
+}
+
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   active: { label: 'Активно', className: 'bg-green-50 text-green-700 border-green-200' },
   moderation: { label: 'На модерации', className: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
@@ -35,7 +51,12 @@ export default function MyOffersSection() {
 
     setIsLoading(true);
     offersAPI.getOffers({ userId, status: 'all', limit: 100 })
-      .then(res => setOffers(res.offers || []))
+      .then(res => {
+        const list = res.offers || [];
+        setOffers(list);
+        cachedOffersCount = list.length;
+        offersCountListeners.forEach(fn => fn(list.length));
+      })
       .catch(() => setOffers([]))
       .finally(() => setIsLoading(false));
   }, []);
@@ -65,7 +86,7 @@ export default function MyOffersSection() {
             <Card
               key={offer.id}
               className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => navigate(`/offers/${offer.id}`)}
+              onClick={() => navigate(`/offer/${offer.id}`)}
             >
               <CardContent className="p-3">
                 <div className="flex gap-3">

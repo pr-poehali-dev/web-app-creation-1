@@ -7,7 +7,7 @@ import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrderReviewModal from '@/components/reviews/OrderReviewModal';
 import OrdersContent from '@/components/order/OrdersContent';
-import MyOffersSection from '@/components/order/MyOffersSection';
+import MyOffersSection, { useMyOffersCount } from '@/components/order/MyOffersSection';
 import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrdersData, type OrderTab } from '@/hooks/useOrdersData';
@@ -125,7 +125,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const isEffectivelyArchived = (order: Order) => isArchived(order.status) || isTransportExpired(order);
   const activeFilter = (order: Order) => !isEffectivelyArchived(order);
   const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && activeFilter(order)).length;
-  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length;
+  const myOffersCount = useMyOffersCount();
+  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length + myOffersCount;
   const myRequestsCount = orders.filter(order => order.isRequest && order.type === 'sale' && activeFilter(order)).length;
   const myResponsesCount = orders.filter(order => order.isRequest && order.type === 'purchase' && activeFilter(order)).length;
   const archiveOrdersCount = orders.filter(order => isEffectivelyArchived(order)).length;
