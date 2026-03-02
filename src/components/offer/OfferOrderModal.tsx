@@ -356,8 +356,8 @@ export default function OfferOrderModal({
                           checked={selectedWaypoint === wp.address}
                           onChange={() => {
                             setSelectedWaypoint(wp.address);
-                            const routeEnd = offerTransportRoute?.split(/\s*[-–—]\s*/).pop()?.trim() || '';
-                            setPassengerRoute(routeEnd ? `${wp.address} — ${routeEnd}` : wp.address);
+                            const routeStart = offerTransportRoute?.split(/\s*[-–—]\s*/)[0]?.trim() || '';
+                            setPassengerRoute(routeStart ? `${routeStart} — ${wp.address}` : wp.address);
                           }}
                           className="h-4 w-4"
                         />
