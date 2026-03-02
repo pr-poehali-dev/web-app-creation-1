@@ -39,7 +39,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     if (!val) return '';
     const d = new Date(val);
     if (isNaN(d.getTime())) return '';
-    return d.toISOString().slice(0, 16);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
   const [editData, setEditData] = useState({
@@ -87,6 +88,13 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     if (editData.deliveryPeriodStart && editData.deliveryPeriodEnd) {
       if (new Date(editData.deliveryPeriodEnd) <= new Date(editData.deliveryPeriodStart)) {
         toast({ title: 'Ошибка', description: 'Дата окончания периода поставки должна быть позже даты начала', variant: 'destructive' });
+        return;
+      }
+    }
+
+    if (offer.category === 'transport' && editData.transportDateTime) {
+      if (new Date(editData.transportDateTime) < new Date()) {
+        toast({ title: 'Ошибка', description: 'Дата выезда не может быть в прошлом', variant: 'destructive' });
         return;
       }
     }
