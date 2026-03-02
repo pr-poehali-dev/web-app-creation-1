@@ -347,15 +347,25 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                             Редактировать запрос
                           </Button>
                         ) : existingResponse ? (
-                          <Button 
-                            className="w-full" 
-                            size="lg"
-                            variant="outline"
-                            onClick={handleResponseClick}
-                          >
-                            <Icon name="Pencil" className="mr-2 h-4 w-4" />
-                            Редактировать отклик
-                          </Button>
+                          <>
+                            <Button 
+                              className="w-full" 
+                              size="lg"
+                              onClick={() => navigate(`/my-orders?tab=my-responses&orderId=${existingResponse.orderId}`)}
+                            >
+                              <Icon name="ExternalLink" className="mr-2 h-4 w-4" />
+                              Перейти к отклику
+                            </Button>
+                            <Button 
+                              className="w-full" 
+                              size="lg"
+                              variant="outline"
+                              onClick={() => setIsEditFormOpen(true)}
+                            >
+                              <Icon name="Pencil" className="mr-2 h-4 w-4" />
+                              Редактировать отклик
+                            </Button>
+                          </>
                         ) : (
                           <Button 
                             className="w-full" 

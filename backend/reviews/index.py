@@ -121,6 +121,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             ''', (order_id, user_id, seller_id, rating, comment))
             
             result = cur.fetchone()
+            
+            # Обновляем рейтинг продавца по звёздам
+            star_delta = {5: 0.05, 4: 0.02, 3: 0.0, 2: -0.03, 1: -0.05}
+            delta = star_delta.get(int(rating), 0.0)
+            if delta > 0:
+                cur.execute(f'''
+                    UPDATE {schema}.users
+                    SET rating = LEAST(100, COALESCE(rating, 100) * (1 + {delta}))
+                    WHERE id = %s
+                ''', (seller_id,))
+            elif delta < 0:
+                cur.execute(f'''
+                    UPDATE {schema}.users
+                    SET rating = GREATEST(0, COALESCE(rating, 100) * (1 + {delta}))
+                    WHERE id = %s
+                ''', (seller_id,))
+            print(f"[REVIEW] Seller {seller_id} rating updated by {delta*100:.0f}% for {rating}-star review")
+            
             conn.commit()
             
             return success_response({

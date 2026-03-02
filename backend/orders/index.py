@@ -1033,6 +1033,15 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"completion_requested = FALSE")
         updates.append(f"status = 'completed'")
         
+        # Повышаем рейтинг продавца на 5% за завершённую сделку
+        seller_id_complete = order['seller_id']
+        cur.execute(f"""
+            UPDATE {schema}.users
+            SET rating = LEAST(100, COALESCE(rating, 100) * 1.05)
+            WHERE id = {seller_id_complete}
+        """)
+        print(f"[COMPLETE_ORDER] Seller {seller_id_complete} rating increased by 5%")
+        
         # Автоматически переводим предложение в completed если всё продано
         offer_id_for_complete = str(order['offer_id']).replace("'", "''")
         cur.execute(f"""
@@ -1071,15 +1080,15 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         
         print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
         
-        # Если отменил продавец - снижаем его рейтинг на 5%
-        if is_seller:
-            seller_id = order['seller_id']
-            cur.execute(f"""
-                UPDATE {schema}.users 
-                SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
-                WHERE id = {seller_id}
-            """)
-            print(f"[CANCEL_ORDER] Seller {seller_id} rating decreased by 5%")
+        # Снижаем рейтинг продавца на 5% при любой отмене
+        seller_id_cancel = order['seller_id']
+        cur.execute(f"""
+            UPDATE {schema}.users 
+            SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+            WHERE id = {seller_id_cancel}
+        """)
+        cancelled_by_str = 'seller' if is_seller else 'buyer'
+        print(f"[CANCEL_ORDER] Seller {seller_id_cancel} rating decreased by 5% (cancelled by {cancelled_by_str})")
     
     # Отклонение заказа - возвращаем зарезервированное количество
     elif 'status' in body and body['status'] == 'rejected':
