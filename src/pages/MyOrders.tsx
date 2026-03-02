@@ -149,6 +149,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const myResponsesCount = orders.filter(order => order.isRequest && order.type === 'purchase' && activeFilter(order)).length;
   const archiveOrdersCount = orders.filter(order => isEffectivelyArchived(order)).length;
   const myOffersCount = myOffers.filter(o => o.status !== 'archived').length;
+  const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length;
 
   if (!isAuthenticated) {
     return null;
@@ -185,7 +186,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               </TabsTrigger>
               <TabsTrigger value="my-offers" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-row items-center gap-0.5">
                 <span>Продажи</span>
-                {myOffersCount > 0 && <span className="text-[10px] font-bold text-primary">({myOffersCount})</span>}
+                {sellerOrdersCount > 0 && <span className="text-[10px] font-bold text-primary">({sellerOrdersCount})</span>}
               </TabsTrigger>
               <TabsTrigger value="my-requests" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-row items-center gap-0.5">
                 <span>Запросы</span>
@@ -214,6 +215,20 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           </TabsContent>
 
           <TabsContent value="my-offers">
+            {sellerOrdersCount > 0 && (
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold mb-3">Входящие заказы</h2>
+                <OrdersContent
+                  activeTab="seller"
+                  onTabChange={(tab) => setActiveTab(tab as AllTab)}
+                  orders={orders}
+                  isLoading={isLoading}
+                  onOpenChat={handleOpenChat}
+                  onAcceptOrder={handleAcceptOrder}
+                  onCompleteOrder={handleCompleteOrder}
+                />
+              </div>
+            )}
             {offersLoading ? (
               <Card><CardContent className="py-12 text-center"><p className="text-muted-foreground">Загрузка предложений...</p></CardContent></Card>
             ) : myOffers.length === 0 ? (
