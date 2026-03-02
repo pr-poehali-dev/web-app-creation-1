@@ -34,7 +34,7 @@ export default function MyOffersSection() {
     if (!userId) return;
 
     setIsLoading(true);
-    offersAPI.getOffers({ userId })
+    offersAPI.getOffers({ userId, status: 'all', limit: 100 })
       .then(res => setOffers(res.offers || []))
       .catch(() => setOffers([]))
       .finally(() => setIsLoading(false));
