@@ -66,6 +66,20 @@ export default function OfferInfoDetails({
     <div className="space-y-3">
       {isTransport ? (
         <div className="space-y-2 text-sm">
+          {transportDateTime && (
+            <div>
+              <p className="text-xs text-muted-foreground">Дата и время выезда</p>
+              <p className="font-semibold text-foreground">
+                {(() => {
+                  try {
+                    const d = new Date(transportDateTime);
+                    return isNaN(d.getTime()) ? transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                  } catch { return transportDateTime; }
+                })()}
+              </p>
+            </div>
+          )}
+
           {transportComment && (
             <div>
               <p className="text-xs text-muted-foreground">Комментарий</p>
