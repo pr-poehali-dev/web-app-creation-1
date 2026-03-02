@@ -140,6 +140,84 @@ def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: s
         except Exception as e:
             print(f"[AUTO_REJECT] Notification error for user {o['buyer_id']}: {e}")
 
+def cancel_trip_handler(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
+    '''Отмена всего рейса исполнителем — все принятые заказы по предложению отменяются'''
+    body = json.loads(event.get('body', '{}'))
+    reason = body.get('cancellationReason', 'Рейс отменён исполнителем')
+
+    user_headers = event.get('headers', {})
+    seller_user_id = int(user_headers.get('X-User-Id') or user_headers.get('x-user-id') or 0)
+    if not seller_user_id:
+        return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Не авторизован'}), 'isBase64Encoded': False}
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    schema = get_schema()
+    offer_id_esc = offer_id.replace("'", "''")
+    reason_esc = reason.replace("'", "''")
+
+    cur.execute(f"SELECT id, seller_id FROM {schema}.offers WHERE id = '{offer_id_esc}'")
+    offer = cur.fetchone()
+    if not offer or int(offer['seller_id']) != seller_user_id:
+        cur.close(); conn.close()
+        return {'statusCode': 403, 'headers': headers, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
+
+    cur.execute(f"""
+        SELECT id, buyer_id, quantity, order_number
+        FROM {schema}.orders
+        WHERE offer_id = '{offer_id_esc}' AND status = 'accepted'
+    """)
+    accepted_orders = cur.fetchall()
+
+    if accepted_orders:
+        order_ids = [f"'{str(o['id'])}'" for o in accepted_orders]
+        cur.execute(f"""
+            UPDATE {schema}.orders
+            SET status = 'cancelled',
+                cancelled_by = 'seller',
+                cancellation_reason = 'Рейс отменён исполнителем: {reason_esc}',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id IN ({','.join(order_ids)})
+        """)
+
+        total_returned = sum(o['quantity'] for o in accepted_orders)
+        cur.execute(f"""
+            UPDATE {schema}.offers
+            SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - {total_returned}),
+                updated_at = NOW()
+            WHERE id = '{offer_id_esc}'
+        """)
+        offers_cache.clear()
+
+        cur.execute(f"""
+            UPDATE {schema}.users
+            SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+            WHERE id = {seller_user_id}
+        """)
+        print(f"[CANCEL_TRIP] Seller {seller_user_id} rating decreased 5% for cancelled trip")
+
+        for o in accepted_orders:
+            try:
+                send_notification(
+                    o['buyer_id'],
+                    'Рейс отменён',
+                    f'Исполнитель отменил рейс. Причина: {reason}',
+                    '/my-orders'
+                )
+            except Exception as e:
+                print(f"[CANCEL_TRIP] Notification error: {e}")
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'success': True, 'cancelledOrders': len(accepted_orders), 'message': 'Рейс отменён'})
+    }
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
     
@@ -243,6 +321,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'PUT':
             query_params = event.get('queryStringParameters', {}) or {}
             order_id = query_params.get('id')
+            cancel_trip = query_params.get('cancelTrip') == 'true'
+            offer_id_param = query_params.get('offerId')
+            if cancel_trip and offer_id_param:
+                return cancel_trip_handler(offer_id_param, event, headers)
             if not order_id:
                 return {
                     'statusCode': 400,
@@ -403,10 +485,14 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 SELECT COUNT(*) FROM {schema}.order_messages om 
                 WHERE om.order_id = o.id AND om.is_read = false 
                 AND om.sender_id != {user_id_int}
-            ), 0) as unread_messages
+            ), 0) as unread_messages,
+            ub.rating as buyer_rating,
+            us.rating as seller_rating
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
         LEFT JOIN {schema}.requests r ON o.offer_id = r.id
+        LEFT JOIN {schema}.users ub ON o.buyer_id = ub.id
+        LEFT JOIN {schema}.users us ON o.seller_id = us.id
         WHERE 1=1
     """
     
@@ -445,6 +531,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
         order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
         order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
+        order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
+        order_dict['sellerRating'] = float(order_dict.pop('seller_rating')) if order_dict.get('seller_rating') is not None else None
         
         order_dict['is_request'] = order_dict.get('is_request', False)
         
@@ -505,10 +593,14 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             of.transport_service_type as offer_transport_service_type,
             of.transport_date_time as offer_transport_date_time,
             of.transport_negotiable as offer_transport_negotiable,
-            CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request
+            CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
+            ub.rating as buyer_rating,
+            us.rating as seller_rating
         FROM {schema}.orders o
         LEFT JOIN {schema}.offers of ON o.offer_id = of.id
         LEFT JOIN {schema}.requests r ON o.offer_id = r.id
+        LEFT JOIN {schema}.users ub ON o.buyer_id = ub.id
+        LEFT JOIN {schema}.users us ON o.seller_id = us.id
         WHERE o.id = '{order_id_escaped}'
     """
     
@@ -539,6 +631,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
     order_dict['is_request'] = order_dict.get('is_request', False)
     order_dict['completionRequested'] = order_dict.pop('completion_requested', False) or False
+    order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
+    order_dict['sellerRating'] = float(order_dict.pop('seller_rating')) if order_dict.get('seller_rating') is not None else None
     
     order_dict['offer_title'] = order_dict.get('title', '')
     order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
@@ -1066,29 +1160,48 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         cancelled_by = 'seller' if is_seller else 'buyer'
         updates.append(f"cancelled_by = '{cancelled_by}'")
         
-        # Возвращаем зарезервированное количество в предложение
+        # Возвращаем количество в предложение (из sold если принят, из reserved если нет)
         offer_id_escaped = str(order['offer_id']).replace("'", "''")
         order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-            WHERE id = '{offer_id_escaped}'
-        """)
+        current_status = order.get('status', '')
+        if current_status == 'accepted':
+            cur.execute(f"""
+                UPDATE {schema}.offers 
+                SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - {order_quantity})
+                WHERE id = '{offer_id_escaped}'
+            """)
+        else:
+            cur.execute(f"""
+                UPDATE {schema}.offers 
+                SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
+                WHERE id = '{offer_id_escaped}'
+            """)
         
         # Инвалидируем кэш offers
         offers_cache.clear()
         
-        print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
+        print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {offer_id_escaped} (from {current_status})")
         
-        # Снижаем рейтинг продавца на 5% при любой отмене
-        seller_id_cancel = order['seller_id']
-        cur.execute(f"""
-            UPDATE {schema}.users 
-            SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
-            WHERE id = {seller_id_cancel}
-        """)
         cancelled_by_str = 'seller' if is_seller else 'buyer'
-        print(f"[CANCEL_ORDER] Seller {seller_id_cancel} rating decreased by 5% (cancelled by {cancelled_by_str})")
+
+        # Если покупатель отменяет ПРИНЯТЫЙ заказ — снижаем рейтинг покупателя
+        if is_buyer and order.get('status') == 'accepted':
+            buyer_id_cancel = order['buyer_id']
+            cur.execute(f"""
+                UPDATE {schema}.users 
+                SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+                WHERE id = {buyer_id_cancel}
+            """)
+            print(f"[CANCEL_ORDER] Buyer {buyer_id_cancel} rating decreased 5% (cancelled accepted order)")
+        else:
+            # Снижаем рейтинг продавца при любой другой отмене
+            seller_id_cancel = order['seller_id']
+            cur.execute(f"""
+                UPDATE {schema}.users 
+                SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+                WHERE id = {seller_id_cancel}
+            """)
+            print(f"[CANCEL_ORDER] Seller {seller_id_cancel} rating decreased 5% (cancelled by {cancelled_by_str})")
     
     # Отклонение заказа - возвращаем зарезервированное количество
     elif 'status' in body and body['status'] == 'rejected':

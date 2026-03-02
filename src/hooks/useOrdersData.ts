@@ -115,6 +115,10 @@ export function useOrdersData(
       completionRequested: orderData.completionRequested || orderData.completion_requested || false,
       archivedByAdmin: orderData.archived_by_admin || orderData.archivedByAdmin || false,
       adminArchiveReason: orderData.admin_archive_reason || orderData.adminArchiveReason,
+      tripCancelled: orderData.trip_cancelled || orderData.tripCancelled || false,
+      buyerRating: orderData.buyer_rating || orderData.buyerRating,
+      sellerRating: orderData.seller_rating || orderData.sellerRating,
+      offerImageUrl: orderData.offerImageUrl || orderData.offer_image_url,
     };
   };
 
@@ -766,6 +770,28 @@ export function useOrdersData(
     }
   };
 
+  const handleCancelTrip = async (offerId: string, reason: string) => {
+    try {
+      await ordersAPI.cancelTrip(offerId, reason);
+
+      toast({
+        title: 'Рейс отменён',
+        description: 'Все пассажиры уведомлены об отмене рейса',
+      });
+
+      localStorage.setItem('force_orders_reload', JSON.stringify({
+        timestamp: Date.now(),
+        action: 'cancel_trip'
+      }));
+      window.dispatchEvent(new Event('storage'));
+      await loadOrders(false);
+      setIsChatOpen(false);
+    } catch (error) {
+      console.error('Error cancelling trip:', error);
+      toast({ title: 'Ошибка', description: 'Не удалось отменить рейс', variant: 'destructive' });
+    }
+  };
+
   const handleDeleteOrder = async (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
     if (!order) return;
@@ -811,6 +837,7 @@ export function useOrdersData(
     handleCounterOffer,
     handleAcceptCounter,
     handleCancelOrder,
+    handleCancelTrip,
     handleCompleteOrder,
     handleRequestCompletion,
     handleDeleteOrder,

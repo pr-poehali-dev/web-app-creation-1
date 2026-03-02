@@ -22,12 +22,18 @@ interface OrderChatInfoCardProps {
   onCompleteOrder?: (orderId: string) => void;
   onAcceptOrder?: (orderId: string) => void;
   onRequestCompletion?: (orderId: string) => void;
+  onCancelTrip?: (offerId: string, reason: string) => void;
   onLightboxOpen?: (url: string) => void;
 }
 
-export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder, onAcceptOrder, onRequestCompletion, onLightboxOpen }: OrderChatInfoCardProps) {
+export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCancelOrder, onCompleteOrder, onAcceptOrder, onRequestCompletion, onCancelTrip, onLightboxOpen }: OrderChatInfoCardProps) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showCancelTripDialog, setShowCancelTripDialog] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [tripCancelReason, setTripCancelReason] = useState('');
+
+  const isPassengerTransport = order.offerCategory === 'transport' &&
+    order.offerTransportServiceType?.toLowerCase().includes('пассажир');
 
   const handleCancelClick = () => {
     setShowCancelDialog(true);
@@ -39,6 +45,14 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
     }
     setShowCancelDialog(false);
     setCancelReason('');
+  };
+
+  const handleConfirmCancelTrip = () => {
+    if (onCancelTrip && order.offerId) {
+      onCancelTrip(order.offerId, tripCancelReason.trim());
+    }
+    setShowCancelTripDialog(false);
+    setTripCancelReason('');
   };
 
   return (
@@ -55,6 +69,8 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           onAcceptOrder={onAcceptOrder}
           onCancelOrder={onCancelOrder}
           onRequestCompletion={onRequestCompletion}
+          isPassengerTransport={isPassengerTransport}
+          onCancelTripClick={() => setShowCancelTripDialog(true)}
         />
 
         <OrderFeedbackChat
@@ -66,12 +82,30 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
         />
       </CardContent>
 
+      {/* Диалог отмены заказа пассажиром */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Подтверждение отмены заказа</DialogTitle>
-            <DialogDescription>
-              Вы уверены, что хотите отменить этот заказ? Укажите причину отмены (необязательно).
+            <DialogTitle>
+              {isPassengerTransport && isBuyer && order.status === 'accepted'
+                ? 'Отмена принятого заказа'
+                : 'Подтверждение отмены заказа'}
+            </DialogTitle>
+            <DialogDescription asChild>
+              {isPassengerTransport && isBuyer && order.status === 'accepted' ? (
+                <div className="space-y-3">
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                    <Icon name="AlertTriangle" className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-amber-800">
+                      <p className="font-semibold mb-1">Внимание! Это повлияет на ваш рейтинг</p>
+                      <p>Отмена принятого заказа до даты и времени выезда снизит ваш рейтинг надёжности. Это может негативно повлиять на доверие исполнителей в будущих заказах.</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Вы уверены, что хотите отменить заказ? Укажите причину (необязательно).</p>
+                </div>
+              ) : (
+                <span>Вы уверены, что хотите отменить этот заказ? Укажите причину отмены (необязательно).</span>
+              )}
             </DialogDescription>
           </DialogHeader>
           
@@ -82,7 +116,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               placeholder="Укажите причину отмены заказа..."
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              rows={4}
+              rows={3}
             />
           </div>
 
@@ -101,7 +135,61 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               onClick={handleConfirmCancel}
             >
               <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-              Отменить заказ
+              {isPassengerTransport && isBuyer && order.status === 'accepted'
+                ? 'Подтвердить отмену'
+                : 'Отменить заказ'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог отмены всего рейса исполнителем */}
+      <Dialog open={showCancelTripDialog} onOpenChange={setShowCancelTripDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Отмена рейса</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
+                  <Icon name="AlertTriangle" className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-800">
+                    <p className="font-semibold mb-1">Внимание! Отмена всего рейса</p>
+                    <p>Все принятые пассажиры получат уведомление об отмене рейса. Отмена рейса снизит ваш рейтинг надёжности.</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">Укажите причину отмены — пассажиры увидят её в уведомлении.</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-2 py-4">
+            <Label htmlFor="trip-cancel-reason">Причина отмены рейса <span className="text-destructive">*</span></Label>
+            <Textarea
+              id="trip-cancel-reason"
+              placeholder="Например: техническая неисправность, непогода..."
+              value={tripCancelReason}
+              onChange={(e) => setTripCancelReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCancelTripDialog(false);
+                setTripCancelReason('');
+              }}
+            >
+              Назад
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmCancelTrip}
+              disabled={!tripCancelReason.trim()}
+            >
+              <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+              Отменить рейс
             </Button>
           </DialogFooter>
         </DialogContent>

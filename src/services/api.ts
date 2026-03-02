@@ -989,6 +989,21 @@ export const ordersAPI = {
     if (!response.ok) throw new Error('Failed to delete message');
     return response.json();
   },
+
+  async cancelTrip(offerId: string, cancellationReason: string): Promise<{ message: string; cancelledOrders: number }> {
+    const userId = getUserId();
+    if (!userId) throw new Error('User not authenticated');
+    const response = await fetchWithRetry(`${ORDERS_API}?cancelTrip=true&offerId=${offerId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ cancellationReason }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to cancel trip');
+    }
+    return response.json();
+  },
 };
 
 export interface AuctionsListResponse {

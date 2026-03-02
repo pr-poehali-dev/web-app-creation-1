@@ -17,10 +17,33 @@ interface OrderStatusActionsProps {
   onAcceptOrder?: (orderId: string) => void;
   onCancelOrder?: (orderId: string, reason?: string) => void;
   onRequestCompletion?: (orderId: string) => void;
+  isPassengerTransport?: boolean;
+  onCancelTripClick?: () => void;
 }
 
-export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder, onRequestCompletion }: OrderStatusActionsProps) {
+function RatingBadge({ rating }: { rating?: number }) {
+  if (rating == null) return null;
+  const r = Math.round(rating);
+  const color = r >= 90 ? 'text-green-600' : r >= 70 ? 'text-amber-600' : 'text-red-500';
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${color}`}>
+      <Icon name="Star" className="w-3 h-3" />
+      {r}%
+    </span>
+  );
+}
+
+export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder, onRequestCompletion, isPassengerTransport, onCancelTripClick }: OrderStatusActionsProps) {
   const roles = getOrderRoles(order);
+
+  const counterpartRating = isBuyer ? order.sellerRating : order.buyerRating;
+
+  const canComplete = (() => {
+    if (!isPassengerTransport) return true;
+    if (!order.offerTransportDateTime) return true;
+    return new Date(order.offerTransportDateTime) <= new Date();
+  })();
+
   return (
     <>
       {order.status === 'accepted' && (
@@ -36,6 +59,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   : (isBuyer ? roles.seller : roles.buyer)
                 }
               </h3>
+              <RatingBadge rating={counterpartRating} />
             </div>
             <p className="text-sm font-medium">{contactPerson.name}</p>
             <div className="space-y-1 mt-2">
@@ -105,7 +129,9 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             <Icon name="XCircle" className="h-6 w-6 text-red-600" />
           </div>
           <div>
-            <p className="font-semibold text-red-800">Заказ отменён</p>
+            <p className="font-semibold text-red-800">
+              {order.cancelledBy === 'buyer' && isPassengerTransport ? 'Заказ отменён пассажиром' : 'Заказ отменён'}
+            </p>
             {order.cancellationReason && (
               <p className="text-sm text-red-600">{order.cancellationReason}</p>
             )}
@@ -121,7 +147,10 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
                 <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">{roles.seller}: {contactPerson.name}</p>
+                  <p className="font-medium mb-1">
+                    {roles.seller}: {contactPerson.name}
+                    {counterpartRating != null && <RatingBadge rating={counterpartRating} />}
+                  </p>
                   <p>Заказ ожидает подтверждения {roles.counterSeller}. После принятия статус изменится на "Принят"</p>
                 </div>
               </div>
@@ -144,7 +173,10 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
                 <Icon name="UserCheck" className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-orange-800">
-                  <p className="font-medium mb-1">{roles.buyer}: {contactPerson.name}</p>
+                  <p className="font-medium mb-1 flex items-center gap-1.5">
+                    {roles.buyer}: {contactPerson.name}
+                    {counterpartRating != null && <RatingBadge rating={counterpartRating} />}
+                  </p>
                   <p>Новый заказ ожидает вашего подтверждения</p>
                 </div>
               </div>
@@ -210,22 +242,33 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             <>
               {isBuyer ? (
                 <div className="space-y-3">
-                  {order.completionRequested ? (
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-center gap-2">
-                      <Icon name="Bell" className="h-5 w-5 text-orange-600 flex-shrink-0" />
-                      <p className="text-sm text-orange-800 font-medium">
-                        Исполнитель запрашивает подтверждение завершения заказа
-                      </p>
-                    </div>
-                  ) : (
+                  {isPassengerTransport && !canComplete && order.offerTransportDateTime && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
-                      <Icon name="Info" className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <Icon name="Clock" className="h-5 w-5 text-blue-600 flex-shrink-0" />
                       <p className="text-sm text-blue-800 font-medium">
-                        Можете завершить заказ и оставить отзыв
+                        Завершить заказ можно после выезда:{' '}
+                        {new Date(order.offerTransportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   )}
-                  {onCompleteOrder && (
+                  {!isPassengerTransport && (
+                    order.completionRequested ? (
+                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-center gap-2">
+                        <Icon name="Bell" className="h-5 w-5 text-orange-600 flex-shrink-0" />
+                        <p className="text-sm text-orange-800 font-medium">
+                          Исполнитель запрашивает подтверждение завершения заказа
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
+                        <Icon name="Info" className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                        <p className="text-sm text-blue-800 font-medium">
+                          Можете завершить заказ и оставить отзыв
+                        </p>
+                      </div>
+                    )
+                  )}
+                  {onCompleteOrder && canComplete && (
                     <Button
                       onClick={() => onCompleteOrder(order.id)}
                       variant="default"
@@ -236,34 +279,69 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                       Завершить заказ
                     </Button>
                   )}
+                  {onCancelOrder && (
+                    <Button
+                      onClick={onCancelClick}
+                      variant="outline"
+                      size="sm"
+                      className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                    >
+                      <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                      Отменить заказ
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {order.completionRequested ? (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
-                      <Icon name="Clock" className="h-5 w-5 text-yellow-600 flex-shrink-0" />
-                      <p className="text-sm text-yellow-800 font-medium">
-                        Запрос на завершение отправлен — ожидаем подтверждения заказчика
-                      </p>
-                    </div>
-                  ) : (
+                  {isPassengerTransport ? (
                     <>
                       <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
                         <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
                         <p className="text-sm text-green-800 font-medium">
-                          Заказ в работе
+                          Рейс в работе
                         </p>
                       </div>
-                      {onRequestCompletion && (
+                      {onCancelTripClick && (
                         <Button
-                          onClick={() => onRequestCompletion(order.id)}
-                          variant="outline"
+                          onClick={onCancelTripClick}
+                          variant="destructive"
                           size="sm"
-                          className="w-full border-green-500 text-green-700 hover:bg-green-50"
+                          className="w-full"
                         >
-                          <Icon name="CheckSquare" className="mr-1.5 h-4 w-4" />
-                          Запросить завершение заказа
+                          <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                          Отменить весь рейс
                         </Button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {order.completionRequested ? (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
+                          <Icon name="Clock" className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+                          <p className="text-sm text-yellow-800 font-medium">
+                            Запрос на завершение отправлен — ожидаем подтверждения заказчика
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                            <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
+                            <p className="text-sm text-green-800 font-medium">
+                              Заказ в работе
+                            </p>
+                          </div>
+                          {onRequestCompletion && (
+                            <Button
+                              onClick={() => onRequestCompletion(order.id)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full border-green-500 text-green-700 hover:bg-green-50"
+                            >
+                              <Icon name="CheckSquare" className="mr-1.5 h-4 w-4" />
+                              Запросить завершение заказа
+                            </Button>
+                          )}
+                        </>
                       )}
                     </>
                   )}

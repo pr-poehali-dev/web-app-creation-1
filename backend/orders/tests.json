@@ -53,6 +53,14 @@
       "expectedBody": {
         "error": "Operation not specified"
       }
+    },
+    {
+      "name": "Cancel trip without auth returns 401",
+      "method": "PUT",
+      "path": "/?cancelTrip=true&offerId=00000000-0000-0000-0000-000000000000",
+      "body": { "cancellationReason": "test" },
+      "expectedStatus": 401,
+      "expectedBody": { "error": "Не авторизован" }
     }
   ]
 }

@@ -22,6 +22,20 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
         <div className="flex-1 min-w-0">
           <p className="text-muted-foreground text-xs">{order.isRequest ? 'Услуга' : 'Товар'}</p>
           <p className="font-medium">{order.offerTitle}</p>
+          <div className="flex items-center gap-3 mt-1">
+            {isBuyer && order.sellerRating != null && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Icon name="Star" className="w-3 h-3 text-amber-500" />
+                <span className="font-medium">{roles.seller}: {Math.round(order.sellerRating)}%</span>
+              </span>
+            )}
+            {!isBuyer && order.buyerRating != null && (
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Icon name="Star" className="w-3 h-3 text-amber-500" />
+                <span className="font-medium">{roles.buyer}: {Math.round(order.buyerRating)}%</span>
+              </span>
+            )}
+          </div>
           {isBuyer && order.status === 'new' && (
             <div className="flex items-center gap-1.5 mt-1.5 text-amber-600">
               <Icon name="Clock" className="h-3.5 w-3.5" />

@@ -21,6 +21,7 @@ interface OrderNegotiationModalProps {
   onCancelOrder?: (orderId?: string, reason?: string) => void;
   onCompleteOrder?: () => void;
   onRequestCompletion?: (orderId: string) => void;
+  onCancelTrip?: (offerId: string, reason: string) => void;
 }
 
 export default function OrderNegotiationModal({
@@ -33,6 +34,7 @@ export default function OrderNegotiationModal({
   onCancelOrder,
   onCompleteOrder,
   onRequestCompletion,
+  onCancelTrip,
 }: OrderNegotiationModalProps) {
   const currentUser = getSession();
   const isBuyer = currentUser?.id?.toString() === order.buyerId?.toString();
@@ -73,6 +75,7 @@ export default function OrderNegotiationModal({
               onCompleteOrder={onCompleteOrder ? () => onCompleteOrder() : undefined}
               onAcceptOrder={onAcceptOrder ? () => onAcceptOrder() : undefined}
               onRequestCompletion={onRequestCompletion}
+              onCancelTrip={onCancelTrip}
             />
           </div>
         </div>

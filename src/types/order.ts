@@ -50,6 +50,12 @@ export interface Order {
   offerTransportNegotiable?: boolean;
   passengerPickupAddress?: string;
   completionRequested?: boolean;
+  tripCancelled?: boolean;
+  buyerRating?: number;
+  sellerRating?: number;
+  offerImageUrl?: string;
+  archivedByAdmin?: boolean;
+  adminArchiveReason?: string;
 }
 
 export interface ChatMessage {
