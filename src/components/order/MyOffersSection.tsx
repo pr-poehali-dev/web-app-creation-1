@@ -17,7 +17,7 @@ function getUserId(): string | null {
   }
 }
 
-const cachedOffersCount = 0;
+let cachedOffersCount = 0;
 const offersCountListeners: Array<(n: number) => void> = [];
 
 export function useMyOffersCount(): number {
