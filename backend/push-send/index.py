@@ -5,7 +5,7 @@ import psycopg2
 from pywebpush import webpush, WebPushException
 
 def handler(event: dict, context) -> dict:
-    """API для отправки push-уведомлений пользователям (v2)"""
+    '''API для отправки push-уведомлений пользователям'''
     method = event.get('httpMethod', 'POST')
     
     if method == 'OPTIONS':
