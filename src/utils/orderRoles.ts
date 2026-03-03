@@ -13,7 +13,7 @@ export function getOrderRoles(order: Order): OrderRoles {
     if (order.offerCategory === 'transport' && svc.includes('пассажир')) {
       return { buyer: 'Заказчик', seller: 'Исполнитель', counterBuyer: 'Заказчика', counterSeller: 'Исполнителя' };
     }
-    return { buyer: 'Заказчик', seller: 'Откликнулся', counterBuyer: 'Заказчика', counterSeller: 'Откликнувшегося' };
+    return { buyer: 'Откликнулся', seller: 'Заказчик', counterBuyer: 'Откликнувшегося', counterSeller: 'Заказчика' };
   }
 
   if (order.offerCategory === 'transport') {
