@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { showBrowserNotification } from '@/utils/browserNotifications';
-import { setupPushNotifications, unsubscribeFromPush } from '@/services/pushNotifications';
 
 interface NotificationSettingsProps {
   userId: string;
@@ -39,21 +38,10 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
     }
   };
 
-  const checkCurrentPermission = async () => {
+  const checkCurrentPermission = () => {
     if ('Notification' in window) {
       const permission = Notification.permission;
-      if (permission !== 'granted') {
-        setIsEnabled(false);
-        return;
-      }
-      // Проверяем что реальная push-подписка существует
-      try {
-        const { checkPushSubscription } = await import('@/services/pushNotifications');
-        const sub = await checkPushSubscription();
-        setIsEnabled(!!sub);
-      } catch {
-        setIsEnabled(true);
-      }
+      setIsEnabled(permission === 'granted');
     }
   };
 
@@ -64,32 +52,36 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
 
     try {
       if (enabled) {
-        // Создаём push-подписку и отправляем на сервер (включает запрос разрешения)
-        const success = await setupPushNotifications(userId);
-
-        if (success) {
+        // Запрашиваем разрешение на уведомления
+        const permission = await Notification.requestPermission();
+        
+        if (permission === 'granted') {
           setIsEnabled(true);
-
+          
           // Автоматически включаем email-уведомления
           try {
             const authUrl = 'https://functions.poehali.dev/e95db6c2-d56f-42e2-b3e6-25fbf5e7bc98';
             await fetch(authUrl, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: parseInt(userId), emailNotifications: true })
+              body: JSON.stringify({
+                userId: parseInt(userId),
+                emailNotifications: true
+              })
             });
           } catch (e) {
             console.error('Не удалось включить email-уведомления:', e);
           }
-
-          showBrowserNotification({
-            title: 'Уведомления включены!',
+          
+          // Показываем тестовое уведомление
+          new Notification('Уведомления включены!', {
             body: 'Теперь вы будете получать важные обновления',
+            icon: '/logo-192.png',
           });
-
+          
           toast({
             title: 'Уведомления включены',
-            description: 'Вы будете получать уведомления о заказах и сообщениях',
+            description: 'Вы будете получать важные обновления в браузере и на email',
           });
         } else {
           toast({
@@ -99,7 +91,6 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
           });
         }
       } else {
-        await unsubscribeFromPush();
         setIsEnabled(false);
         toast({
           title: 'Уведомления отключены',

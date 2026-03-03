@@ -41,10 +41,8 @@ def handler(event: dict, context) -> dict:
         }
 
     private_key_pem = os.environ.get('VAPID_PRIVATE_KEY', '')
-    query = event.get('queryStringParameters') or {}
-    force = query.get('force') == '1'
 
-    if not private_key_pem or force:
+    if not private_key_pem:
         private_pem, public_key = generate_vapid_keys()
         return {
             'statusCode': 200,
@@ -60,24 +58,7 @@ def handler(event: dict, context) -> dict:
             })
         }
 
-    try:
-        public_key = get_public_key_from_pem(private_key_pem)
-    except Exception as e:
-        private_pem, public_key = generate_vapid_keys()
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            },
-            'body': json.dumps({
-                'status': 'generated_new',
-                'publicKey': public_key,
-                'privateKeyPem': private_pem,
-                'reason': f'Old key was invalid: {str(e)}',
-                'message': 'Save privateKeyPem as VAPID_PRIVATE_KEY secret, publicKey goes to frontend'
-            })
-        }
+    public_key = get_public_key_from_pem(private_key_pem)
     return {
         'statusCode': 200,
         'headers': {
