@@ -1,6 +1,7 @@
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
 import { getOrderRoles } from '@/utils/orderRoles';
+import { CATEGORIES } from '@/data/categories';
 
 interface OrderInfoDetailsProps {
   order: Order;
@@ -9,6 +10,9 @@ interface OrderInfoDetailsProps {
 
 export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsProps) {
   const roles = getOrderRoles(order);
+  const categoryName = order.offerCategory
+    ? (CATEGORIES.find(c => c.id === order.offerCategory)?.name || order.offerCategory)
+    : (order.isRequest ? 'Запрос' : 'Товар');
   return (
     <>
       <div className="flex items-start gap-3 mb-3">
@@ -20,7 +24,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
           </div>
         )}
         <div className="flex-1 min-w-0">
-          <p className="text-muted-foreground text-xs">{order.isRequest ? 'Услуга' : 'Товар'}</p>
+          <p className="text-muted-foreground text-xs">{categoryName}</p>
           <p className="font-medium">{order.offerTitle}</p>
           <div className="flex items-center gap-3 mt-1">
             {isBuyer && order.sellerRating != null && (

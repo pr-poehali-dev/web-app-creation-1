@@ -168,7 +168,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             </div>
           )}
 
-          {order.status === 'pending' && !isBuyer && (
+          {order.status === 'pending' && !isBuyer && !order.isRequest && (
             <div className="space-y-3">
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-start gap-2">
                 <Icon name="UserCheck" className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
