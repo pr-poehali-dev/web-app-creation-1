@@ -29,7 +29,7 @@ const InstallPrompt = () => {
     setIsIOS(iOS);
 
     if (iOS) {
-      setTimeout(() => setShowPrompt(true), 2000);
+      setTimeout(() => setShowPrompt(true), 180000);
       return;
     }
 
@@ -38,7 +38,7 @@ const InstallPrompt = () => {
       const installEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(installEvent);
       
-      setTimeout(() => setShowPrompt(true), 2000);
+      setTimeout(() => setShowPrompt(true), 180000);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -76,78 +76,49 @@ const InstallPrompt = () => {
           
           <button
             onClick={handleClose}
-            className="absolute top-3 right-3 text-white/70 hover:text-white transition-colors z-10"
+            className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white transition-colors z-10 rounded-md w-7 h-7 flex items-center justify-center border border-red-400"
             aria-label="Закрыть"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
           
           <div className="relative z-10">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-white rounded-2xl p-2 shadow-lg overflow-hidden">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-white rounded-xl p-1 shadow-lg overflow-hidden flex-shrink-0">
                 <img
                   src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png"
                   alt="ЕРТТП"
-                  className="w-full h-full object-contain scale-[1.8]"
+                  className="w-full h-full object-contain"
                   style={{ transform: 'scaleX(-1)' }}
                 />
               </div>
+              <div>
+                <h3 className="font-bold text-base leading-tight">Установите ЕРТТП</h3>
+                <p className="text-xs text-blue-100">Быстрый доступ с главного экрана</p>
+              </div>
             </div>
             
-            <h3 className="font-bold text-xl mb-2 text-center">Установите ЕРТТП</h3>
-            <p className="text-sm text-blue-100 mb-4 text-center">
-              Быстрый доступ с главного экрана
+            <div className="space-y-2 bg-white/10 backdrop-blur-sm rounded-lg p-3">
+              {[
+                { n: 1, text: 'Нажмите "Поделиться"', icon: <Share className="w-3.5 h-3.5" strokeWidth={2.5} />, hint: 'Внизу экрана' },
+                { n: 2, text: '"На экран Домой"', icon: <span className="text-sm">➕</span>, hint: 'В меню' },
+                { n: 3, text: 'Нажмите "Добавить"', icon: <span className="text-sm">✓</span>, hint: 'Готово!' },
+              ].map(({ n, text, icon, hint }) => (
+                <div key={n} className="flex items-center gap-2">
+                  <div className="flex-shrink-0 w-6 h-6 bg-white/20 rounded-full flex items-center justify-center font-bold text-sm">
+                    {n}
+                  </div>
+                  <p className="text-sm font-medium flex-1">{text}</p>
+                  <span className="bg-blue-500/60 px-2 py-0.5 rounded text-xs flex items-center gap-1">
+                    {icon} {hint}
+                  </span>
+                </div>
+              ))}
+            </div>
+            
+            <p className="text-xs text-blue-200 animate-pulse text-center mt-2">
+              👆 Следуйте инструкции выше
             </p>
-            
-            <div className="space-y-3 bg-white/10 backdrop-blur-sm rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg">
-                  1
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-sm font-medium mb-1">Нажмите кнопку "Поделиться"</p>
-                  <div className="flex items-center gap-2 text-xs text-blue-100">
-                    <span className="bg-blue-500 px-3 py-2 rounded-lg flex items-center gap-2 shadow-lg">
-                      <Share className="w-4 h-4" strokeWidth={2.5} /> Внизу экрана
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg">
-                  2
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-sm font-medium mb-1">Выберите "На экран Домой"</p>
-                  <div className="flex items-center gap-2 text-xs text-blue-100">
-                    <span className="bg-white/20 px-2 py-1 rounded flex items-center gap-1">
-                      <span className="text-xl">➕</span> В меню
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg">
-                  3
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-sm font-medium mb-1">Нажмите "Добавить"</p>
-                  <div className="flex items-center gap-2 text-xs text-blue-100">
-                    <span className="bg-white/20 px-2 py-1 rounded flex items-center gap-1">
-                      <span className="text-xl">✓</span> Готово!
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-4 text-center">
-              <p className="text-xs text-blue-200 animate-pulse">
-                👆 Следуйте инструкции выше
-              </p>
-            </div>
           </div>
         </div>
       </div>
