@@ -101,7 +101,7 @@ export default function CounterOfferForm({
   }
 
   // Форма предложения цены от заказчика запроса (isSeller = заказчик запроса)
-  if (isSeller && order.isRequest && order.status === 'new') {
+  if (isSeller && order.isRequest && (order.status === 'new' || order.status === 'pending')) {
     return (
       <Card className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
         <CardContent className="pt-4 space-y-3">

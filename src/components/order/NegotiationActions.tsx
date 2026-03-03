@@ -38,7 +38,7 @@ export default function NegotiationActions({
 
   const isSeller = !isBuyer;
 
-  if (isSeller && order.isRequest && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer) {
+  if (isSeller && order.isRequest && (order.status === 'new' || order.status === 'pending') && !showCounterForm && !order.counterPricePerUnit && onCounterOffer) {
     return (
       <Button 
         onClick={onShowCounterForm} 
