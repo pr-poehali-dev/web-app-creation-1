@@ -127,7 +127,7 @@ export default function DeliverySection({
             placeholder="Дополнительная информация к заказу"
             value={comment}
             onChange={(e) => onCommentChange(e.target.value)}
-            rows={3}
+            rows={2}
           />
         </div>
       )}

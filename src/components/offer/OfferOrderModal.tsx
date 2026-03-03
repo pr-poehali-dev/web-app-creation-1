@@ -280,7 +280,7 @@ export default function OfferOrderModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           {offerCategory === 'transport' && offerTransportDateTime && (
             <div className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
               <Icon name="Calendar" className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -445,7 +445,7 @@ export default function OfferOrderModal({
             onCounterCommentChange={setCounterComment}
           />
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-2">
             <Button 
               type="submit" 
               className="flex-1"

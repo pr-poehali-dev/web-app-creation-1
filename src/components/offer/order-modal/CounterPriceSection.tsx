@@ -27,7 +27,7 @@ export default function CounterPriceSection({
   onCounterCommentChange,
 }: CounterPriceSectionProps) {
   return (
-    <div className="border-t pt-4">
+    <div className="border-t pt-2">
       <button
         type="button"
         onClick={onToggle}
