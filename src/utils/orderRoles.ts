@@ -9,7 +9,11 @@ interface OrderRoles {
 
 export function getOrderRoles(order: Order): OrderRoles {
   if (order.isRequest) {
-    return { buyer: 'Заказчик', seller: 'Исполнитель', counterBuyer: 'Заказчика', counterSeller: 'Исполнителя' };
+    const svc = order.offerTransportServiceType?.toLowerCase() || '';
+    if (order.offerCategory === 'transport' && svc.includes('пассажир')) {
+      return { buyer: 'Заказчик', seller: 'Исполнитель', counterBuyer: 'Заказчика', counterSeller: 'Исполнителя' };
+    }
+    return { buyer: 'Заказчик', seller: 'Откликнулся', counterBuyer: 'Заказчика', counterSeller: 'Откликнувшегося' };
   }
 
   if (order.offerCategory === 'transport') {
