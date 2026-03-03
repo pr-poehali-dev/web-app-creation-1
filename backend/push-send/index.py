@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 import psycopg2
 from pywebpush import webpush, WebPushException
 
@@ -82,10 +83,12 @@ def handler(event: dict, context) -> dict:
                 'body': json.dumps({'success': True, 'message': 'No active subscriptions found', 'sent': 0})
             }
         
-        # VAPID ключи (в продакшене должны храниться в secrets)
-        vapid_private_key = os.environ.get('VAPID_PRIVATE_KEY', '')
+        # VAPID ключ хранится в PEM формате — записываем во временный файл
+        vapid_pem = os.environ.get('VAPID_PRIVATE_KEY', '')
+        vapid_pem_normalized = vapid_pem.replace('\\n', '\n')
+        
         vapid_claims = {
-            "sub": "mailto:noreply@yourapp.com"
+            "sub": "mailto:noreply@erttp.ru"
         }
         
         notification_payload = json.dumps({
@@ -104,23 +107,33 @@ def handler(event: dict, context) -> dict:
         sent_count = 0
         failed_count = 0
         
+        # Записываем PEM ключ во временный файл (pywebpush требует путь к файлу)
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.pem', delete=False) as tmp:
+            tmp.write(vapid_pem_normalized)
+            tmp_path = tmp.name
+        
         for sub_data in subscriptions:
             try:
                 subscription_info = json.loads(sub_data[0])
                 webpush(
                     subscription_info=subscription_info,
                     data=notification_payload,
-                    vapid_private_key=vapid_private_key,
+                    vapid_private_key=tmp_path,
                     vapid_claims=vapid_claims
                 )
                 sent_count += 1
+                print(f'[PUSH] Sent successfully to subscription')
             except WebPushException as e:
                 failed_count += 1
-                print(f'Failed to send push: {e}')
-                # TODO: Если подписка истекла (410), деактивировать её в БД
+                print(f'[PUSH] WebPushException: {e}')
             except Exception as e:
                 failed_count += 1
-                print(f'Error sending push: {e}')
+                print(f'[PUSH] Error: {e}')
+        
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
         
         return {
             'statusCode': 200,
