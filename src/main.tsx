@@ -20,17 +20,15 @@ root.render(
   </React.StrictMode>
 );
 
-// Убираем HTML splash после двух кадров — React успевает отрисовать первый экран
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    const splash = document.getElementById('html-splash');
-    if (splash) {
-      splash.style.transition = 'opacity 0.4s ease';
-      splash.style.opacity = '0';
-      setTimeout(() => splash.remove(), 400);
-    }
-  });
-});
+// Убираем HTML splash с задержкой — даём React время отрисовать первый экран
+setTimeout(() => {
+  const splash = document.getElementById('html-splash');
+  if (splash) {
+    splash.style.transition = 'opacity 0.4s ease';
+    splash.style.opacity = '0';
+    setTimeout(() => splash.remove(), 400);
+  }
+}, 600);
 
 
 
