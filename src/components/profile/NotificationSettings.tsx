@@ -18,20 +18,30 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
 
   useEffect(() => {
     init();
-  }, []);
+  }, [userId]);
 
   const init = async () => {
-    if (!('Notification' in window)) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
       setIsLoading(false);
       return;
     }
-    setIsBlocked(Notification.permission === 'denied');
-    try {
-      const sub = await checkPushSubscription();
-      setIsEnabled(!!sub && Notification.permission === 'granted');
-    } catch {
+
+    const perm = Notification.permission;
+    setIsBlocked(perm === 'denied');
+
+    if (perm === 'granted') {
+      try {
+        const sub = await checkPushSubscription();
+        // Считаем включёнными только если есть реальная подписка в браузере
+        setIsEnabled(!!sub);
+      } catch {
+        setIsEnabled(false);
+      }
+    } else {
+      // Если разрешение не дано — всегда выключено
       setIsEnabled(false);
     }
+
     setIsLoading(false);
   };
 
@@ -39,7 +49,6 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
     setIsLoading(true);
     try {
       if (enabled) {
-        // Один клик — браузер сам покажет диалог разрешения, затем подписка
         const success = await setupPushNotifications(userId);
         if (success) {
           setIsEnabled(true);
@@ -51,20 +60,22 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
             setIsBlocked(true);
             toast({
               title: 'Браузер заблокировал уведомления',
-              description: 'Нажмите 🔒 у адресной строки → Уведомления → Разрешить, затем обновите страницу',
+              description: 'Нажмите на замок у адресной строки → Уведомления → Разрешить, затем обновите страницу',
               variant: 'destructive',
             });
           } else {
             toast({ title: 'Не удалось включить', description: 'Попробуйте ещё раз', variant: 'destructive' });
           }
+          setIsEnabled(false);
         }
       } else {
-        await unsubscribeFromPush();
+        await unsubscribeFromPush(userId);
         setIsEnabled(false);
         toast({ title: 'Уведомления отключены' });
       }
     } catch {
       toast({ title: 'Ошибка', description: 'Попробуйте ещё раз', variant: 'destructive' });
+      setIsEnabled(!enabled);
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +91,9 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Ваш браузер не поддерживает push-уведомления. Используйте Chrome, Firefox или Edge.</p>
+          <p className="text-sm text-muted-foreground">
+            Ваш браузер не поддерживает push-уведомления. Используйте Chrome, Firefox или Edge.
+          </p>
         </CardContent>
       </Card>
     );
@@ -104,9 +117,11 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
               {isEnabled ? 'Уведомления включены' : 'Включить уведомления'}
             </Label>
             <p className="text-sm text-muted-foreground">
-              {isEnabled
-                ? 'Вы получаете уведомления на этом устройстве'
-                : 'При включении браузер запросит разрешение'}
+              {isBlocked
+                ? 'Браузер заблокировал уведомления'
+                : isEnabled
+                  ? 'Вы получаете уведомления на этом устройстве'
+                  : 'При включении браузер запросит разрешение'}
             </p>
           </div>
           <Switch
