@@ -5,7 +5,7 @@ import type { Order, ChatMessage } from '@/types/order';
 import { offersAPI, reviewsAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
-import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
+import { notifyNewOrder } from '@/utils/notifications';
 import { dataSync, notifyOfferUpdated, notifyOrderUpdated } from '@/utils/dataSync';
 import { shareContent } from '@/utils/shareUtils';
 
