@@ -35,131 +35,122 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
             <BackButton />
           </div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-4 md:mb-6">
-            О нас
+            Единая Региональная Товарно-Торговая Площадка (ЕРТТП)
           </h1>
 
           <div className="space-y-4 md:space-y-5 text-foreground">
             <p className="text-sm md:text-base">
-              Единая Региональная Товарно‑Торговая Площадка (ЕРТТП) — это современная онлайн‑платформа, созданная для поддержки и развития местного бизнеса. Мы объединяем производителей, поставщиков и потребителей, формируя устойчивую экосистему региональной торговли.
-            </p>
-            <p className="text-sm md:text-base">
-              Наша цель — сделать локальный рынок более эффективным, прозрачным и доступным для всех участников.
+              ЕРТТП – это онлайн-платформа, разработанная для поддержки и развития местных производителей и поставщиков товаров и услуг. Проект нацелен на создание эффективной и инновационной системы онлайн-торговли, способствующей увеличению производства местной продукции, стимулированию товарооборота и диверсификации экономики регионов.
             </p>
 
             <div>
-              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Почему ЕРТТП — ваш надёжный партнёр?</h2>
-              <p className="font-semibold mb-2 text-sm md:text-base">Для предпринимателей:</p>
-              <ul className="space-y-2 md:space-y-2.5 pl-4 mb-4">
-                <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Гарантированные заказы</strong> — заключайте форвардные контракты с чёткими условиями: цена, объём, сроки поставки. Планируйте производство без риска излишков.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Прямые продажи</strong> — выходите на новых клиентов без посредников, увеличивайте прибыль за счёт сокращения издержек.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Совместные закупки</strong> — оптимизируйте расходы, объединяясь с другими участниками для выгодных оптовых заказов.</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Простые инструменты</strong> — проводите онлайн‑аукционы, оформляйте договоры в цифровом формате, управляйте процессами в одном окне.</span>
-                </li>
-              </ul>
-              <p className="font-semibold mb-2 text-sm md:text-base">Для потребителей:</p>
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Актуальность проекта:</h2>
+              <p className="text-sm md:text-base">
+                В условиях цифровизации экономики и развития интернет-технологий создание ЕРТТП является стратегически важным шагом для поддержки малого и среднего предпринимательства и оптимизации экономической деятельности в регионах.
+              </p>
+            </div>
+
+            <div>
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Цели и задачи:</h2>
               <ul className="space-y-2 md:space-y-2.5 pl-4">
                 <li className="flex gap-2">
                   <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Широкий ассортимент</strong> — выбирайте из проверенных предложений в ключевых категориях: от продуктов питания до строительных материалов.</span>
+                  <span className="text-sm md:text-base">Создание условий для роста и развития местных производителей и поставщиков.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Надёжность поставок</strong> — работайте с проверенными поставщиками, которые выполняют обязательства по форвардным контрактам.</span>
+                  <span className="text-sm md:text-base">Увеличение объема производства и потребления местной продукции.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Выгодные цены</strong> — получайте доступ к оптовым условиям через совместные закупки и прямые поставки.</span>
+                  <span className="text-sm md:text-base">Снижение финансовой нагрузки на субъекты малого и среднего предпринимательства.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Диверсификация и устойчивое развитие местной экономики.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold text-sm">•</span>
+                  <span className="text-sm md:text-base">Обеспечение доступа к финансовым ресурсам через механизмы совместных закупок и фьючерсных/форвардных контрактов.</span>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Что вы найдёте на ЕРТТП?</h2>
-              <p className="mb-2 text-sm md:text-base">Мы охватываем важнейшие сегменты региональной экономики:</p>
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Функциональность ЕРТТП:</h2>
+              <p className="mb-2 text-sm md:text-base">
+                Платформа предоставляет широкий спектр инструментов для онлайн-торговли, включая:
+              </p>
               <ul className="space-y-2 md:space-y-2.5 pl-4">
                 <li className="flex gap-2">
                   <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">сельхозпродукция местного производства;</span>
+                  <span className="text-sm md:text-base">Онлайн-аукционы.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">продукты и товары первой необходимости;</span>
+                  <span className="text-sm md:text-base">Заключение договоров с применением фьючерсных и форвардных контрактов.</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">строительные материалы;</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">энергетические и почвенно‑земельные ресурсы;</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">транспортные услуги.</span>
+                  <span className="text-sm md:text-base">Организацию совместных закупок.</span>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Наши преимущества для региональной экономики</h2>
-              <p className="mb-2 text-sm md:text-base">ЕРТТП — это:</p>
+              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Специализация ЕРТТП:</h2>
+              <p className="mb-2 text-sm md:text-base">
+                Платформа специализируется на торговле следующими категориями товаров и услуг:
+              </p>
               <ul className="space-y-2 md:space-y-2.5 pl-4">
                 <li className="flex gap-2">
                   <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Стабильность для бизнеса</strong> — форвардные контракты обеспечивают предсказуемость доходов и расходов, снижая влияние инфляции и рыночных колебаний.</span>
+                  <span className="text-sm md:text-base">Сельхозпродукция местного производства.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Развитие локального рынка</strong> — деньги остаются в регионе, поддерживая местные предприятия и создавая рабочие места.</span>
+                  <span className="text-primary font-bold">•</span>
+                  <span>Продукты и товары первой необходимости.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Прозрачность сделок</strong> — все операции фиксируются в системе, минимизируя риски и повышая доверие между участниками.</span>
+                  <span className="text-primary font-bold">•</span>
+                  <span>Строительные материалы.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base"><strong>Упрощение торговли</strong> — цифровые инструменты делают процессы заключения договоров и исполнения обязательств максимально удобными.</span>
+                  <span className="text-primary font-bold">•</span>
+                  <span>Энергетические ресурсы.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Почвенно-земельные ресурсы.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary font-bold">•</span>
+                  <span>Транспортные услуги.</span>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h2 className="text-lg md:text-xl font-bold mb-2 md:mb-3">Начните работать с ЕРТТП уже сегодня!</h2>
-              <p className="mb-2 text-sm md:text-base">Зарегистрируйтесь на платформе, чтобы:</p>
-              <ul className="space-y-2 md:space-y-2.5 pl-4">
+              <h2 className="text-2xl font-bold mb-4">Почему ЕРТТП важна:</h2>
+              <ul className="space-y-3 pl-5">
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">расширить клиентскую базу;</span>
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Преодоление экономической нестабильности:</strong> Мы помогаем снизить зависимость от кредитов и инфляции, предоставляя инструменты для прямого финансирования.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">оптимизировать производственные и закупочные процессы;</span>
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Плановое производство и поставки:</strong> ЕРТТП помогает адаптировать ваше производство к реальным потребностям местного рынка, сокращая излишки и убытки, получая заказы по заранее оговоренной цене, сроков поставки и объема.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">укрепить позиции на региональном рынке;</span>
-                </li>
-                <li className="flex gap-2">
-                  <span className="text-primary font-bold text-sm">•</span>
-                  <span className="text-sm md:text-base">внести вклад в устойчивое развитие местной экономики.</span>
+                  <span className="text-primary font-bold">•</span>
+                  <span><strong>Инвестиции в местную экономику:</strong> Мы создаем условия для того, чтобы деньги оставались в регионе, поддерживая местный бизнес и создание рабочих мест.</span>
                 </li>
               </ul>
             </div>
 
             <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-6 rounded-lg border border-primary/20 mt-8">
               <p className="text-lg font-semibold">
-                ЕРТТП — ваш ключ к успешному бизнесу в регионе. Присоединяйтесь, и давайте строить сильную экономику вместе!
+                ЕРТТП – это инструмент для развития местного бизнеса и экономики, обеспечивающий эффективное взаимодействие между производителями, поставщиками и потребителями для увеличения местного производства товарооборота и экономического суверенитета регионов.
               </p>
             </div>
             

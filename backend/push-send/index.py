@@ -1,70 +1,41 @@
 import json
 import os
-import tempfile
 import psycopg2
 from pywebpush import webpush, WebPushException
-from cryptography.hazmat.primitives.serialization import load_pem_private_key, Encoding, PrivateFormat, NoEncryption
 
 
-def generate_and_save_vapid_key(db_url: str, schema: str) -> str:
-    """Генерирует новый EC P-256 ключ и сохраняет в БД. Возвращает PEM."""
-    from cryptography.hazmat.primitives.asymmetric import ec as ec_mod
-    private_key = ec_mod.generate_private_key(ec_mod.SECP256R1())
-    pem_bytes = private_key.private_bytes(
-        encoding=Encoding.PEM,
-        format=PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=NoEncryption()
-    )
-    pem_str = pem_bytes.decode('utf-8')
-    conn = psycopg2.connect(db_url)
-    cur = conn.cursor()
-    cur.execute(
-        f"UPDATE {schema}.site_settings SET setting_value = %s, updated_at = NOW() WHERE setting_key = 'vapid_private_key_pem'",
-        (pem_str,)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-    print('[PUSH] Generated and saved new VAPID key to DB')
-    return pem_str
-
-
-def get_vapid_pem(db_url: str, schema: str) -> str:
-    """Читает VAPID PEM из БД. Если ключ повреждён — генерирует новый."""
-    try:
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor()
-        cur.execute(f"SELECT setting_value FROM {schema}.site_settings WHERE setting_key = 'vapid_private_key_pem' LIMIT 1")
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-        if row and row[0]:
-            pem = row[0].strip()
-            # Быстрая проверка — пытаемся загрузить ключ
-            try:
-                load_pem_private_key(pem.encode(), password=None)
-                print('[PUSH] VAPID key from DB is valid')
-                return pem
-            except Exception as e:
-                print(f'[PUSH] DB key invalid ({e}), regenerating...')
-                return generate_and_save_vapid_key(db_url, schema)
-    except Exception as e:
-        print(f'[PUSH] DB read failed: {e}')
-
-    return generate_and_save_vapid_key(db_url, schema)
-
-
-def get_vapid_pem_path(db_url: str, schema: str) -> str:
+def get_vapid_pem() -> str:
     """
-    Загружает EC ключ (SEC1) и сохраняет во временный файл.
-    pywebpush принимает путь к PEM файлу в формате -----BEGIN EC PRIVATE KEY-----.
+    Возвращает VAPID приватный ключ в корректном PEM формате.
+    Поддерживает ключи с \\n-литералами и без разбивки base64 по 64 символа.
     """
-    pem_str = get_vapid_pem(db_url, schema)
-    print(f'[PUSH] PEM ready, len={len(pem_str)}')
-    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.pem', delete=False)
-    tmp.write(pem_str)
-    tmp.close()
-    return tmp.name
+    raw = os.environ.get('VAPID_PRIVATE_KEY', '').strip()
+    if not raw:
+        raise ValueError('VAPID_PRIVATE_KEY не задан')
+
+    # Заменяем литеральные \n на реальные переносы
+    pem = raw.replace('\\n', '\n')
+
+    # Извлекаем тело ключа между заголовками
+    begin = '-----BEGIN EC PRIVATE KEY-----'
+    end = '-----END EC PRIVATE KEY-----'
+
+    if begin in pem and end in pem:
+        start_idx = pem.index(begin) + len(begin)
+        end_idx = pem.index(end)
+        body = pem[start_idx:end_idx].replace('\n', '').replace(' ', '').strip()
+
+        # Разбиваем base64 по 64 символа (стандарт PEM)
+        body_lines = '\n'.join(body[i:i+64] for i in range(0, len(body), 64))
+        pem = f'{begin}\n{body_lines}\n{end}\n'
+    else:
+        # Ключ без заголовков — оборачиваем
+        body = pem.replace('\n', '').replace(' ', '').strip()
+        body_lines = '\n'.join(body[i:i+64] for i in range(0, len(body), 64))
+        pem = f'{begin}\n{body_lines}\n{end}\n'
+
+    print(f'[PUSH] PEM rebuilt, body length={len(pem)}')
+    return pem
 
 
 def handler(event: dict, context) -> dict:
@@ -121,7 +92,11 @@ def handler(event: dict, context) -> dict:
             WHERE user_id = %s AND active = true
         ''', (str(user_id),))
     else:
-        cur.execute(f'SELECT subscription_data FROM {schema}.push_subscriptions WHERE active = true')
+        cur.execute(f'''
+            SELECT ps.subscription_data
+            FROM {schema}.push_subscriptions ps
+            WHERE ps.active = true
+        ''')
 
     subscriptions = cur.fetchall()
     cur.close()
@@ -137,8 +112,8 @@ def handler(event: dict, context) -> dict:
         }
 
     try:
-        vapid_key_path = get_vapid_pem_path(db_url, schema)
-        print(f'[PUSH] VAPID key file ready: {vapid_key_path}')
+        vapid_key_pem = get_vapid_pem()
+        print(f'[PUSH] VAPID PEM loaded, length={len(vapid_key_pem)}')
     except Exception as e:
         print(f'[PUSH] VAPID key error: {e}')
         return {
@@ -169,7 +144,7 @@ def handler(event: dict, context) -> dict:
             webpush(
                 subscription_info=subscription_info,
                 data=notification_payload,
-                vapid_private_key=vapid_key_path,
+                vapid_private_key=vapid_key_pem,
                 vapid_claims=vapid_claims
             )
             sent_count += 1
@@ -177,8 +152,8 @@ def handler(event: dict, context) -> dict:
         except WebPushException as e:
             failed_count += 1
             status = e.response.status_code if e.response else 'no-response'
-            resp_text = e.response.text[:300] if e.response else ''
-            print(f'[PUSH] WebPushException status={status} body={resp_text}')
+            resp_text = e.response.text[:200] if e.response else ''
+            print(f'[PUSH] WebPushException status={status} body={resp_text}: {e}')
             if e.response and e.response.status_code in (404, 410) and subscription_info:
                 try:
                     endpoint = subscription_info.get('endpoint', '')
@@ -196,7 +171,7 @@ def handler(event: dict, context) -> dict:
                     print(f'[PUSH] Failed to deactivate: {ex}')
         except Exception as e:
             failed_count += 1
-            print(f'[PUSH] Unexpected error: {e}')
+            print(f'[PUSH] Error: {e}')
 
     return {
         'statusCode': 200,
