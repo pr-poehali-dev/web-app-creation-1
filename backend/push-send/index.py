@@ -1,70 +1,23 @@
 import json
 import os
-import tempfile
+import base64
 import psycopg2
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from pywebpush import webpush, WebPushException
-from cryptography.hazmat.primitives.serialization import load_pem_private_key, Encoding, PrivateFormat, NoEncryption
 
 
-def generate_and_save_vapid_key(db_url: str, schema: str) -> str:
-    """Генерирует новый EC P-256 ключ и сохраняет в БД. Возвращает PEM."""
-    from cryptography.hazmat.primitives.asymmetric import ec as ec_mod
-    private_key = ec_mod.generate_private_key(ec_mod.SECP256R1())
-    pem_bytes = private_key.private_bytes(
-        encoding=Encoding.PEM,
-        format=PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=NoEncryption()
-    )
-    pem_str = pem_bytes.decode('utf-8')
-    conn = psycopg2.connect(db_url)
-    cur = conn.cursor()
-    cur.execute(
-        f"UPDATE {schema}.site_settings SET setting_value = %s, updated_at = NOW() WHERE setting_key = 'vapid_private_key_pem'",
-        (pem_str,)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-    print('[PUSH] Generated and saved new VAPID key to DB')
-    return pem_str
-
-
-def get_vapid_pem(db_url: str, schema: str) -> str:
-    """Читает VAPID PEM из БД. Если ключ повреждён — генерирует новый."""
-    try:
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor()
-        cur.execute(f"SELECT setting_value FROM {schema}.site_settings WHERE setting_key = 'vapid_private_key_pem' LIMIT 1")
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-        if row and row[0]:
-            pem = row[0].strip()
-            # Быстрая проверка — пытаемся загрузить ключ
-            try:
-                load_pem_private_key(pem.encode(), password=None)
-                print('[PUSH] VAPID key from DB is valid')
-                return pem
-            except Exception as e:
-                print(f'[PUSH] DB key invalid ({e}), regenerating...')
-                return generate_and_save_vapid_key(db_url, schema)
-    except Exception as e:
-        print(f'[PUSH] DB read failed: {e}')
-
-    return generate_and_save_vapid_key(db_url, schema)
-
-
-def get_vapid_pem_path(db_url: str, schema: str) -> str:
+def get_vapid_private_key_pem() -> str:
     """
-    Загружает EC ключ (SEC1) и сохраняет во временный файл.
-    pywebpush принимает путь к PEM файлу в формате -----BEGIN EC PRIVATE KEY-----.
+    Читает приватный VAPID ключ из env VAPID_PRIVATE_KEY.
+    Поддерживает PEM-формат (с \\n экранированием).
     """
-    pem_str = get_vapid_pem(db_url, schema)
-    print(f'[PUSH] PEM ready, len={len(pem_str)}')
-    tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.pem', delete=False)
-    tmp.write(pem_str)
-    tmp.close()
-    return tmp.name
+    raw = os.environ.get('VAPID_PRIVATE_KEY', '').strip()
+    if not raw:
+        raise ValueError('VAPID_PRIVATE_KEY is not set')
+    pem = raw.replace('\\n', '\n')
+    load_pem_private_key(pem.encode(), password=None)
+    print('[PUSH] VAPID key from env OK')
+    return pem
 
 
 def handler(event: dict, context) -> dict:
@@ -114,7 +67,6 @@ def handler(event: dict, context) -> dict:
 
     conn = psycopg2.connect(db_url)
     cur = conn.cursor()
-
     if user_id:
         cur.execute(f'''
             SELECT subscription_data FROM {schema}.push_subscriptions
@@ -122,7 +74,6 @@ def handler(event: dict, context) -> dict:
         ''', (str(user_id),))
     else:
         cur.execute(f'SELECT subscription_data FROM {schema}.push_subscriptions WHERE active = true')
-
     subscriptions = cur.fetchall()
     cur.close()
     conn.close()
@@ -137,8 +88,7 @@ def handler(event: dict, context) -> dict:
         }
 
     try:
-        vapid_key_path = get_vapid_pem_path(db_url, schema)
-        print(f'[PUSH] VAPID key file ready: {vapid_key_path}')
+        vapid_pem = get_vapid_private_key_pem()
     except Exception as e:
         print(f'[PUSH] VAPID key error: {e}')
         return {
@@ -169,7 +119,7 @@ def handler(event: dict, context) -> dict:
             webpush(
                 subscription_info=subscription_info,
                 data=notification_payload,
-                vapid_private_key=vapid_key_path,
+                vapid_private_key=vapid_pem,
                 vapid_claims=vapid_claims
             )
             sent_count += 1
@@ -191,7 +141,7 @@ def handler(event: dict, context) -> dict:
                     conn2.commit()
                     cur2.close()
                     conn2.close()
-                    print(f'[PUSH] Deactivated expired subscription')
+                    print(f'[PUSH] Deactivated expired subscription for endpoint: {endpoint[:60]}')
                 except Exception as ex:
                     print(f'[PUSH] Failed to deactivate: {ex}')
         except Exception as e:
