@@ -36,6 +36,22 @@ export default function NegotiationActions({
     );
   }
 
+  const isSeller = !isBuyer;
+
+  if (isSeller && order.isRequest && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer) {
+    return (
+      <Button 
+        onClick={onShowCounterForm} 
+        variant="outline" 
+        size="sm" 
+        className="w-full border-2 border-primary hover:bg-primary/10 font-semibold shadow-sm"
+      >
+        <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
+        Предложить свою цену
+      </Button>
+    );
+  }
+
   if (isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && !order.isRequest) {
     return (
       <Button 
