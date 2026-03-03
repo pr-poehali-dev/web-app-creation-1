@@ -4,9 +4,8 @@ import func2url from '../../backend/func2url.json';
 interface ShareOptions {
   title: string;
   text: string;
-  url: string;        // прямая ссылка на страницу (erttp.ru/offer/UUID)
+  url: string;
   imageUrl?: string;
-  ogProxyUrl?: string; // URL og-proxy для превью в мессенджерах (необязательно)
 }
 
 async function copyToClipboard(text: string): Promise<void> {

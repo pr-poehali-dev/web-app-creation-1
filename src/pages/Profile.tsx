@@ -183,10 +183,10 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
 
           {isViewingOwnProfile && <ProfileVerificationCard />}
 
-          {isViewingOwnProfile && (
+          {isViewingOwnProfile && currentUser.id && (
             <>
-              <NotificationSettings />
-              <EmailNotificationSettings />
+              <NotificationSettings userId={String(currentUser.id)} />
+              <EmailNotificationSettings userId={String(currentUser.id)} userEmail={currentUser.email || ''} />
             </>
           )}
         </div>
