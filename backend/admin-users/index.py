@@ -111,8 +111,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.inn,
                         u.ogrnip,
                         u.ogrn,
-                        u.created_at,
-                        u.email_notifications
+                        u.created_at
                     FROM t_p42562714_web_app_creation_1.users u
                     WHERE u.id = %s AND u.removed_at IS NULL
                 """, (user_id_param,))
@@ -126,6 +125,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
                 
+                # Конвертируем datetime в строку для JSON сериализации
                 user_dict = dict(user_data)
                 if user_dict.get('created_at'):
                     user_dict['created_at'] = user_dict['created_at'].isoformat()
@@ -133,7 +133,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return {
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'user': user_dict}),
+                    'body': json.dumps(user_dict),
                     'isBase64Encoded': False
                 }
             
@@ -286,36 +286,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         elif method == 'PUT':
             body_data = json.loads(event.get('body', '{}'))
-            user_id = body_data.get('userId') or body_data.get('id')
+            user_id = body_data.get('userId')
             action = body_data.get('action')
-
-            # Обновление email_notifications (из профиля пользователя)
-            if user_id and 'email_notifications' in body_data:
-                cur.execute(
-                    "UPDATE t_p42562714_web_app_creation_1.users SET email_notifications = %s WHERE id = %s",
-                    (body_data['email_notifications'], user_id)
-                )
-                conn.commit()
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True}),
-                    'isBase64Encoded': False
-                }
-
-            # Обновление emailNotifications (camelCase из NotificationSettings)
-            if user_id and 'emailNotifications' in body_data:
-                cur.execute(
-                    "UPDATE t_p42562714_web_app_creation_1.users SET email_notifications = %s WHERE id = %s",
-                    (body_data['emailNotifications'], user_id)
-                )
-                conn.commit()
-                return {
-                    'statusCode': 200,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'success': True}),
-                    'isBase64Encoded': False
-                }
             
             if not user_id or not action:
                 return {

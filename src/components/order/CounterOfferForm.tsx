@@ -38,66 +38,6 @@ export default function CounterOfferForm({
     return null;
   }
 
-  // Форма встречного предложения от продавца при статусе new
-  if (!isBuyer && isSeller && order.status === 'new') {
-    return (
-      <Card className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
-        <CardContent className="pt-4 space-y-3">
-          <h3 className="font-semibold text-sm">Встречное предложение</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground block mb-1">Количество ({order.unit})</label>
-              <Input
-                type="number"
-                value={counterQuantity}
-                onChange={(e) => onCounterQuantityChange(e.target.value)}
-                min="1"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground block mb-1">Цена за {order.unit}</label>
-              <Input
-                type="number"
-                value={counterPrice}
-                onChange={(e) => onCounterPriceChange(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="bg-white/50 dark:bg-gray-900/50 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Общая сумма:</span>
-              <span className="font-bold text-lg text-orange-600 dark:text-orange-400">
-                {(parseFloat(counterPrice || '0') * parseFloat(counterQuantity || '0')).toLocaleString('ru-RU')} ₽
-              </span>
-            </div>
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">Комментарий (необязательно)</label>
-            <textarea
-              className="w-full px-3 py-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-orange-500"
-              rows={2}
-              placeholder="Добавьте комментарий к предложению..."
-              value={counterMessage}
-              onChange={(e) => onCounterMessageChange(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={onSubmit}
-              size="sm"
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              Отправить предложение
-            </Button>
-            <Button onClick={onCancel} size="sm" variant="outline">
-              Отмена
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   // Форма встречного предложения от покупателя
   if (isBuyer && order.status === 'new') {
     return (

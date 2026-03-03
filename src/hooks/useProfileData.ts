@@ -60,8 +60,7 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
         throw new Error('Failed to fetch user profile');
       }
       
-      const raw = await response.json();
-      const data = raw.user || raw;
+      const data = await response.json();
       
       const userData = {
         id: data.id,

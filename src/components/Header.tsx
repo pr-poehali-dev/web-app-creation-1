@@ -241,10 +241,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
       return shortenCompanyName(currentUser.companyName || 'Организация');
     }
     
-    const firstName = currentUser.firstName || '';
-    const lastName = currentUser.lastName || '';
-    const fullName = `${firstName} ${lastName}`.trim();
-    return fullName || currentUser.email || 'Личный кабинет';
+    return `${currentUser.firstName} ${currentUser.lastName}`;
   };
 
   return (
