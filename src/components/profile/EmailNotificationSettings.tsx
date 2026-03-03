@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
@@ -10,16 +11,16 @@ interface EmailNotificationSettingsProps {
   userEmail: string;
 }
 
-const API_URL = 'https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f';
-
 export default function EmailNotificationSettings({ userId, userEmail }: EmailNotificationSettingsProps) {
-  const [isEnabled, setIsEnabled] = useState(false);
+  const [isEnabled, setIsEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
+  const API_URL = 'https://functions.poehali.dev/admin-users';
+
   useEffect(() => {
-    if (userId) checkSettings();
+    checkSettings();
   }, [userId]);
 
   const checkSettings = async () => {
@@ -27,17 +28,14 @@ export default function EmailNotificationSettings({ userId, userEmail }: EmailNo
     try {
       const response = await fetch(`${API_URL}?id=${userId}`, {
         method: 'GET',
-        headers: { 'X-User-Id': userId },
       });
 
-      if (!response.ok) throw new Error('Failed to fetch');
-
       const data = await response.json();
-      // Сервер может вернуть email_notifications = null (не задано) — трактуем как true
-      const val = data.user?.email_notifications;
-      setIsEnabled(val === null || val === undefined ? true : Boolean(val));
-    } catch {
-      setIsEnabled(true);
+      if (data.user?.email_notifications !== undefined) {
+        setIsEnabled(data.user.email_notifications);
+      }
+    } catch (error) {
+      console.error('Ошибка загрузки настроек email:', error);
     } finally {
       setIsLoading(false);
     }
@@ -45,35 +43,40 @@ export default function EmailNotificationSettings({ userId, userEmail }: EmailNo
 
   const handleToggle = async (checked: boolean) => {
     setIsSaving(true);
-    const prev = isEnabled;
-    setIsEnabled(checked);
     try {
       const response = await fetch(API_URL, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': userId,
         },
         body: JSON.stringify({
-          id: Number(userId),
+          id: userId,
           email_notifications: checked,
         }),
       });
 
       if (response.ok) {
+        setIsEnabled(checked);
         toast({
-          title: checked ? 'Email уведомления включены' : 'Email уведомления отключены',
+          title: checked ? 'Включено' : 'Отключено',
           description: checked
-            ? `Уведомления будут приходить на ${userEmail}`
-            : 'Вы не будете получать email-уведомления',
+            ? 'Вы будете получать уведомления на email'
+            : 'Email уведомления отключены',
         });
       } else {
-        setIsEnabled(prev);
-        toast({ title: 'Ошибка', description: 'Не удалось изменить настройки', variant: 'destructive' });
+        toast({
+          title: 'Ошибка',
+          description: 'Не удалось изменить настройки',
+          variant: 'destructive',
+        });
       }
-    } catch {
-      setIsEnabled(prev);
-      toast({ title: 'Ошибка', description: 'Нет соединения с сервером', variant: 'destructive' });
+    } catch (error) {
+      console.error('Ошибка изменения настроек email:', error);
+      toast({
+        title: 'Ошибка',
+        description: 'Произошла ошибка при изменении настроек',
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
     }
@@ -87,44 +90,79 @@ export default function EmailNotificationSettings({ userId, userEmail }: EmailNo
           <CardTitle>Email уведомления</CardTitle>
         </div>
         <CardDescription>
-          Уведомления об откликах и заказах на вашу почту
+          Получайте уведомления об откликах на вашу почту
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {isLoading ? (
-          <div className="flex items-center justify-center py-6">
+          <div className="flex items-center justify-center py-8">
             <Icon name="Loader2" className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="email-toggle" className="text-base">
-                  {isEnabled ? 'Email уведомления включены' : 'Включить email уведомления'}
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  {userEmail}
-                </p>
+            <div className="p-4 bg-muted rounded-lg space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <Label htmlFor="email-toggle" className="text-sm font-medium cursor-pointer">
+                    Уведомления на email
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Отправлять уведомления на {userEmail}
+                  </p>
+                </div>
+                <Switch
+                  id="email-toggle"
+                  checked={isEnabled}
+                  onCheckedChange={handleToggle}
+                  disabled={isSaving}
+                />
               </div>
-              <Switch
-                id="email-toggle"
-                checked={isEnabled}
-                onCheckedChange={handleToggle}
-                disabled={isSaving}
-              />
             </div>
 
             {isEnabled && (
-              <div className="p-3 bg-primary/5 rounded-lg text-sm text-muted-foreground space-y-1">
-                <p className="font-medium text-foreground">Вы получаете письма о:</p>
-                <ul className="space-y-0.5 ml-2">
-                  <li>• Новых откликах на ваши запросы и предложения</li>
-                  <li>• Встречных предложениях цены</li>
-                  <li>• Принятии и отклонении заказов</li>
-                  <li>• Новых сообщениях по заказам</li>
-                </ul>
+              <div className="p-4 bg-primary/5 rounded-lg flex items-start gap-3">
+                <Icon name="CheckCircle" className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-medium mb-1">Email уведомления включены</p>
+                  <p className="text-sm text-muted-foreground">
+                    Вы получаете уведомления о новых откликах на ваши запросы и предложения
+                  </p>
+                </div>
               </div>
             )}
+
+            <div className="p-4 bg-blue-500/10 text-blue-900 dark:text-blue-100 rounded-lg flex items-start gap-3">
+              <Icon name="Info" className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold mb-1">Преимущества Email</p>
+                <ul className="space-y-1 list-disc list-inside">
+                  <li>Работает на всех устройствах</li>
+                  <li>Сохраняется история уведомлений</li>
+                  <li>Не требует установки приложений</li>
+                  <li>Удобно для деловой переписки</li>
+                </ul>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={checkSettings}
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? (
+                <>
+                  <Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />
+                  Обновление...
+                </>
+              ) : (
+                <>
+                  <Icon name="RefreshCw" className="mr-2 h-4 w-4" />
+                  Обновить статус
+                </>
+              )}
+            </Button>
           </>
         )}
       </CardContent>

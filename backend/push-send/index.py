@@ -6,35 +6,24 @@ from pywebpush import webpush, WebPushException
 
 def get_vapid_pem() -> str:
     """
-    Возвращает VAPID приватный ключ в корректном PEM формате.
-    Поддерживает ключи с \\n-литералами и без разбивки base64 по 64 символа.
+    Возвращает VAPID приватный ключ в PEM формате.
+    Секрет хранится как PEM с \\n или с реальными переносами строк.
     """
     raw = os.environ.get('VAPID_PRIVATE_KEY', '').strip()
     if not raw:
         raise ValueError('VAPID_PRIVATE_KEY не задан')
 
-    # Заменяем литеральные \n на реальные переносы
+    # Нормализуем \n как литерал → реальный перенос
     pem = raw.replace('\\n', '\n')
 
-    # Извлекаем тело ключа между заголовками
-    begin = '-----BEGIN EC PRIVATE KEY-----'
-    end = '-----END EC PRIVATE KEY-----'
+    # Если PEM без переносов внутри тела — восстанавливаем структуру
+    if '-----BEGIN EC PRIVATE KEY-----' in pem and '\n' not in pem.replace('-----BEGIN EC PRIVATE KEY-----', '').replace('-----END EC PRIVATE KEY-----', ''):
+        body = pem.replace('-----BEGIN EC PRIVATE KEY-----', '').replace('-----END EC PRIVATE KEY-----', '').strip()
+        pem = f'-----BEGIN EC PRIVATE KEY-----\n{body}\n-----END EC PRIVATE KEY-----\n'
 
-    if begin in pem and end in pem:
-        start_idx = pem.index(begin) + len(begin)
-        end_idx = pem.index(end)
-        body = pem[start_idx:end_idx].replace('\n', '').replace(' ', '').strip()
+    if not pem.endswith('\n'):
+        pem += '\n'
 
-        # Разбиваем base64 по 64 символа (стандарт PEM)
-        body_lines = '\n'.join(body[i:i+64] for i in range(0, len(body), 64))
-        pem = f'{begin}\n{body_lines}\n{end}\n'
-    else:
-        # Ключ без заголовков — оборачиваем
-        body = pem.replace('\n', '').replace(' ', '').strip()
-        body_lines = '\n'.join(body[i:i+64] for i in range(0, len(body), 64))
-        pem = f'{begin}\n{body_lines}\n{end}\n'
-
-    print(f'[PUSH] PEM rebuilt, body length={len(pem)}')
     return pem
 
 

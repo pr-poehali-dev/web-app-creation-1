@@ -1,5 +1,4 @@
 const PUBLIC_VAPID_KEY = 'BI2ZLgIe4irdciCdMl4ai3cm_edH19mxvX7K-NKyY_O9zukg90NMrgWbnyWDAEV214ffrZ524T5Tg5ui3bafxsI';
-const PUSH_SUBSCRIBE_URL = 'https://functions.poehali.dev/51a6c510-719b-44bb-840d-80b4bfe2484c';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -17,17 +16,30 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
-  if (!('Notification' in window)) return 'denied';
+  if (!('Notification' in window)) {
+    console.error('Браузер не поддерживает уведомления');
+    return 'denied';
+  }
+
   const permission = await Notification.requestPermission();
+  console.log('Notification permission:', permission);
   return permission;
 }
 
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-  if (!('serviceWorker' in navigator)) return null;
+  if (!('serviceWorker' in navigator)) {
+    console.error('Service Worker не поддерживается');
+    return null;
+  }
+
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    const registration = await navigator.serviceWorker.register('/sw.js', {
+      scope: '/',
+    });
+    console.log('Service Worker зарегистрирован:', registration);
     return registration;
-  } catch {
+  } catch (error) {
+    console.error('Ошибка регистрации Service Worker:', error);
     return null;
   }
 }
@@ -40,8 +52,10 @@ export async function subscribeToPushNotifications(
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
     });
+    console.log('Push subscription:', subscription);
     return subscription;
-  } catch {
+  } catch (error) {
+    console.error('Ошибка подписки на push-уведомления:', error);
     return null;
   }
 }
@@ -51,78 +65,91 @@ export async function sendSubscriptionToServer(
   userId: string
 ): Promise<boolean> {
   try {
-    const response = await fetch(PUSH_SUBSCRIBE_URL, {
+    const response = await fetch('https://functions.poehali.dev/4ff79524-ce04-4dc8-aeb9-d4030c140d66', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscription, userId }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        subscription,
+        userId,
+      }),
     });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
 
-export async function removeSubscriptionFromServer(userId: string): Promise<boolean> {
-  try {
-    const response = await fetch(PUSH_SUBSCRIBE_URL, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    });
-    return response.ok;
-  } catch {
+    if (!response.ok) {
+      throw new Error('Failed to send subscription to server');
+    }
+
+    console.log('Подписка отправлена на сервер');
+    return true;
+  } catch (error) {
+    console.error('Ошибка отправки подписки на сервер:', error);
     return false;
   }
 }
 
 export async function setupPushNotifications(userId: string): Promise<boolean> {
   try {
+    // 1. Запрашиваем разрешение
     const permission = await requestNotificationPermission();
-    if (permission !== 'granted') return false;
-
-    const registration = await registerServiceWorker();
-    if (!registration) return false;
-
-    await navigator.serviceWorker.ready;
-
-    // Сначала пробуем получить существующую подписку
-    let subscription = await registration.pushManager.getSubscription();
-
-    // Если нет — создаём новую
-    if (!subscription) {
-      subscription = await subscribeToPushNotifications(registration);
+    if (permission !== 'granted') {
+      console.log('Разрешение на уведомления не предоставлено');
+      return false;
     }
 
-    if (!subscription) return false;
+    // 2. Регистрируем Service Worker
+    const registration = await registerServiceWorker();
+    if (!registration) {
+      console.error('Не удалось зарегистрировать Service Worker');
+      return false;
+    }
 
-    return await sendSubscriptionToServer(subscription, userId);
-  } catch {
+    // Ждем, пока Service Worker станет активным
+    await navigator.serviceWorker.ready;
+
+    // 3. Подписываемся на push-уведомления
+    const subscription = await subscribeToPushNotifications(registration);
+    if (!subscription) {
+      console.error('Не удалось подписаться на push-уведомления');
+      return false;
+    }
+
+    // 4. Отправляем подписку на сервер
+    const success = await sendSubscriptionToServer(subscription, userId);
+    return success;
+  } catch (error) {
+    console.error('Ошибка настройки push-уведомлений:', error);
     return false;
   }
 }
 
 export async function checkPushSubscription(): Promise<PushSubscription | null> {
-  if (!('serviceWorker' in navigator)) return null;
+  if (!('serviceWorker' in navigator)) {
+    return null;
+  }
+
   try {
     const registration = await navigator.serviceWorker.ready;
-    return await registration.pushManager.getSubscription();
-  } catch {
+    const subscription = await registration.pushManager.getSubscription();
+    return subscription;
+  } catch (error) {
+    console.error('Ошибка проверки подписки:', error);
     return null;
   }
 }
 
-export async function unsubscribeFromPush(userId?: string): Promise<boolean> {
+export async function unsubscribeFromPush(): Promise<boolean> {
   try {
     const subscription = await checkPushSubscription();
-    if (subscription) {
-      await subscription.unsubscribe();
+    if (!subscription) {
+      return true;
     }
-    // Всегда деактивируем на сервере
-    if (userId) {
-      await removeSubscriptionFromServer(userId);
-    }
-    return true;
-  } catch {
+
+    const success = await subscription.unsubscribe();
+    console.log('Отписка от push-уведомлений:', success);
+    return success;
+  } catch (error) {
+    console.error('Ошибка отписки от push-уведомлений:', error);
     return false;
   }
 }
