@@ -213,24 +213,8 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
               <div className="p-4 bg-destructive/10 text-destructive rounded-lg flex items-start gap-3">
                 <Icon name="AlertCircle" className="h-5 w-5 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold mb-1">Уведомления заблокированы браузером</p>
-                  <p className="mb-2">Вы ранее отклонили запрос. Чтобы разрешить:</p>
-                  <ol className="list-decimal list-inside space-y-1">
-                    <li>Нажмите на замок 🔒 слева от адреса сайта</li>
-                    <li>Найдите пункт «Уведомления»</li>
-                    <li>Выберите «Разрешить»</li>
-                    <li>Обновите страницу и попробуйте снова</li>
-                  </ol>
-                </div>
-              </div>
-            )}
-
-            {Notification.permission === 'default' && !isEnabled && (
-              <div className="p-4 bg-blue-500/10 rounded-lg flex items-start gap-3">
-                <Icon name="Info" className="h-5 w-5 flex-shrink-0 mt-0.5 text-blue-600" />
-                <div className="text-sm">
-                  <p className="font-semibold mb-1">Как включить уведомления</p>
-                  <p>При нажатии на переключатель браузер покажет запрос — нажмите <strong>«Разрешить»</strong>. Это необходимо для получения уведомлений.</p>
+                  <p className="font-semibold mb-1">Уведомления заблокированы</p>
+                  <p>Вы заблокировали уведомления для этого сайта. Чтобы включить их, откройте настройки браузера и разрешите уведомления для этого сайта.</p>
                 </div>
               </div>
             )}

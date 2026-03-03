@@ -1,30 +1,50 @@
 import json
 import os
+import base64
 import psycopg2
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import Encoding, PrivateFormat, NoEncryption
 from pywebpush import webpush, WebPushException
 
 
-def get_vapid_pem() -> str:
+def get_vapid_key_b64() -> str:
     """
-    Возвращает VAPID приватный ключ в PEM формате.
-    Секрет хранится как PEM с \\n или с реальными переносами строк.
+    Загружает VAPID приватный ключ из env.
+    Поддерживает два формата:
+      1. base64url-encoded DER (предпочтительный, ~44 символа)
+      2. PEM (-----BEGIN EC PRIVATE KEY-----)
+    Возвращает base64url-encoded DER строку для pywebpush.
     """
     raw = os.environ.get('VAPID_PRIVATE_KEY', '').strip()
     if not raw:
         raise ValueError('VAPID_PRIVATE_KEY не задан')
 
-    # Нормализуем \n как литерал → реальный перенос
+    # Формат 1: уже base64url DER (нет заголовка PEM)
+    if '-----' not in raw:
+        return raw
+
+    # Формат 2: PEM — извлекаем DER и конвертируем в base64url
+    # Нормализуем переносы строк (секрет может хранить \n как литерал)
     pem = raw.replace('\\n', '\n')
+    # Если всё ещё нет переносов — добавим их по позициям PEM
+    if '\n' not in pem:
+        # Вставляем перенос после заголовка и перед footer
+        pem = (
+            '-----BEGIN EC PRIVATE KEY-----\n'
+            + pem.replace('-----BEGIN EC PRIVATE KEY-----', '')
+                 .replace('-----END EC PRIVATE KEY-----', '')
+                 .strip()
+            + '\n-----END EC PRIVATE KEY-----\n'
+        )
 
-    # Если PEM без переносов внутри тела — восстанавливаем структуру
-    if '-----BEGIN EC PRIVATE KEY-----' in pem and '\n' not in pem.replace('-----BEGIN EC PRIVATE KEY-----', '').replace('-----END EC PRIVATE KEY-----', ''):
-        body = pem.replace('-----BEGIN EC PRIVATE KEY-----', '').replace('-----END EC PRIVATE KEY-----', '').strip()
-        pem = f'-----BEGIN EC PRIVATE KEY-----\n{body}\n-----END EC PRIVATE KEY-----\n'
-
-    if not pem.endswith('\n'):
-        pem += '\n'
-
-    return pem
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key
+    private_key = load_pem_private_key(pem.encode(), password=None)
+    der = private_key.private_bytes(
+        encoding=Encoding.DER,
+        format=PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=NoEncryption()
+    )
+    return base64.urlsafe_b64encode(der).decode('utf-8')
 
 
 def handler(event: dict, context) -> dict:
@@ -62,13 +82,6 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'title and message are required'})
         }
 
-    if not user_id and not district:
-        return {
-            'statusCode': 400,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'userId or district is required'})
-        }
-
     db_url = os.environ.get('DATABASE_URL')
     schema = os.environ.get('DB_SCHEMA', 'public')
 
@@ -80,12 +93,20 @@ def handler(event: dict, context) -> dict:
             SELECT subscription_data FROM {schema}.push_subscriptions
             WHERE user_id = %s AND active = true
         ''', (str(user_id),))
-    else:
+    elif district:
         cur.execute(f'''
             SELECT ps.subscription_data
             FROM {schema}.push_subscriptions ps
             WHERE ps.active = true
         ''')
+    else:
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': 'userId or district is required'})
+        }
 
     subscriptions = cur.fetchall()
     cur.close()
@@ -100,9 +121,10 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'success': True, 'message': 'No active subscriptions found', 'sent': 0})
         }
 
+    # Загружаем ключ
     try:
-        vapid_key_pem = get_vapid_pem()
-        print(f'[PUSH] VAPID PEM loaded, length={len(vapid_key_pem)}')
+        vapid_key = get_vapid_key_b64()
+        print(f'[PUSH] VAPID key loaded, length={len(vapid_key)}')
     except Exception as e:
         print(f'[PUSH] VAPID key error: {e}')
         return {
@@ -127,13 +149,12 @@ def handler(event: dict, context) -> dict:
     failed_count = 0
 
     for sub_data in subscriptions:
-        subscription_info = None
         try:
             subscription_info = json.loads(sub_data[0])
             webpush(
                 subscription_info=subscription_info,
                 data=notification_payload,
-                vapid_private_key=vapid_key_pem,
+                vapid_private_key=vapid_key,
                 vapid_claims=vapid_claims
             )
             sent_count += 1
@@ -142,7 +163,8 @@ def handler(event: dict, context) -> dict:
             failed_count += 1
             status = e.response.status_code if e.response else 'no-response'
             print(f'[PUSH] WebPushException status={status}: {e}')
-            if e.response and e.response.status_code in (404, 410) and subscription_info:
+            # Деактивируем протухшую подписку (410 Gone)
+            if e.response and e.response.status_code in (404, 410):
                 try:
                     endpoint = subscription_info.get('endpoint', '')
                     conn2 = psycopg2.connect(db_url)
