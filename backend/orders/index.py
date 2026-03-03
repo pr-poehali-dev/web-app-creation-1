@@ -73,19 +73,19 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
 
     # Web Push-уведомление
     try:
-        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=8)
         conn.request('POST', '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a',  # push-send
                     notification_data, headers)
         response = conn.getresponse()
-        response.read()
+        body_resp = response.read()
         conn.close()
-        print(f'[NOTIFICATION] Push sent to user {user_id}: {title}')
+        print(f'[NOTIFICATION] Push sent to user {user_id}: {title} | status={response.status} resp={body_resp[:200]}')
     except Exception as e:
         print(f'[NOTIFICATION] Push error: {e}')
 
     # Email-уведомление
     try:
-        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=2)
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=5)
         conn.request('POST', '/dd3295a9-ffa3-4842-8c95-de00a018ecf0',  # email-notify
                     notification_data, headers)
         response = conn.getresponse()
