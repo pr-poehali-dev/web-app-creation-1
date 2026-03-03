@@ -49,11 +49,11 @@ def handler(event: dict, context) -> dict:
         
         # Получаем активные подписки
         if user_id:
-            # Отправка конкретному пользователю
+            # Отправка конкретному пользователю (user_id хранится как VARCHAR)
             cur.execute(f'''
                 SELECT subscription_data FROM {schema}.push_subscriptions 
                 WHERE user_id = %s AND active = true
-            ''', (user_id,))
+            ''', (str(user_id),))
         elif district:
             # Отправка всем пользователям района
             cur.execute(f'''
