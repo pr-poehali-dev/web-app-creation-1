@@ -1,4 +1,4 @@
-const PUBLIC_VAPID_KEY = 'BI2ZLgIe4irdciCdMl4ai3cm_edH19mxvX7K-NKyY_O9zukg90NMrgWbnyWDAEV214ffrZ524T5Tg5ui3bafxsI';
+const PUBLIC_VAPID_KEY = 'BBAOyH2crWlAfCDryPHr-AQsT3-IjDzuWiiMvQG_u3jqJRZQCF98C-yZWr4WCfv2kglUzCKcceAlOj3RPtA-uWY';
 const PUSH_SUBSCRIBE_URL = 'https://functions.poehali.dev/51a6c510-719b-44bb-840d-80b4bfe2484c';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {

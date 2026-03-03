@@ -152,7 +152,8 @@ def handler(event: dict, context) -> dict:
         except WebPushException as e:
             failed_count += 1
             status = e.response.status_code if e.response else 'no-response'
-            print(f'[PUSH] WebPushException status={status}: {e}')
+            resp_text = e.response.text[:200] if e.response else ''
+            print(f'[PUSH] WebPushException status={status} body={resp_text}: {e}')
             if e.response and e.response.status_code in (404, 410) and subscription_info:
                 try:
                     endpoint = subscription_info.get('endpoint', '')
