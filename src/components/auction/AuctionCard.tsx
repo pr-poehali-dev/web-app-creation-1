@@ -176,43 +176,43 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
             )}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1">
-                <Icon name="Users" className="h-3 w-3" />
-                {auction.bidsCount}
-              </span>
-              <span className="flex items-center gap-1 truncate max-w-[100px]">
-                <Icon name="MapPin" className="h-3 w-3 shrink-0" />
-                <span className="truncate">{districtName}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
+          <div className="flex flex-col gap-1 pt-1 border-t text-xs text-muted-foreground">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="flex items-center gap-1 shrink-0">
+                  <Icon name="Users" className="h-3 w-3" />
+                  {auction.bidsCount}
+                </span>
+                <span className="flex items-center gap-1 min-w-0">
+                  <Icon name="MapPin" className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{districtName}</span>
+                </span>
+              </div>
               {auction.gpsCoordinates && (
                 <a
                   href={`https://www.google.com/maps?q=${auction.gpsCoordinates}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="flex items-center gap-0.5 text-primary hover:underline"
+                  className="flex items-center gap-0.5 text-primary hover:underline shrink-0 ml-1"
                 >
                   <Icon name="Map" className="h-3 w-3" />
                   Карта
                 </a>
               )}
-              {auction.status === 'upcoming' && auction.startTime && (
-                <span className="flex items-center gap-1 text-blue-600 font-semibold tabular-nums">
-                  <Icon name="Clock" className="h-3 w-3" />
-                  {liveTime}
-                </span>
-              )}
-              {auction.status === 'active' && (
-                <span className="flex items-center gap-1 text-muted-foreground font-medium tabular-nums">
-                  <Icon name="Clock" className="h-3 w-3" />
-                  {liveTime}
-                </span>
-              )}
             </div>
+            {auction.status === 'upcoming' && auction.startTime && (
+              <span className="flex items-center gap-1 text-blue-600 font-semibold tabular-nums">
+                <Icon name="Clock" className="h-3 w-3 shrink-0" />
+                До начала: {liveTime}
+              </span>
+            )}
+            {auction.status === 'active' && (
+              <span className="flex items-center gap-1 text-muted-foreground font-medium tabular-nums">
+                <Icon name="Clock" className="h-3 w-3 shrink-0" />
+                До конца: {liveTime}
+              </span>
+            )}
           </div>
         </div>
       </CardContent>
