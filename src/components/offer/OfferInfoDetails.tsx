@@ -85,7 +85,7 @@ export default function OfferInfoDetails({
                       <div className="flex items-center gap-1.5">
                         <Icon name="MapPin" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                         <span className="text-sm">
-                          {routeOrigin ? `${routeOrigin} — ${wp.address}` : wp.address}
+                          {wp.address}
                         </span>
                       </div>
                       <span className="text-sm font-semibold text-primary ml-2 whitespace-nowrap">
