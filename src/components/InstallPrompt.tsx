@@ -13,10 +13,20 @@ const InstallPrompt = () => {
 
   useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = (window.navigator as any).standalone === true;
+    const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
     
     if (isStandalone || isIOSStandalone) {
       return;
+    }
+
+    if (localStorage.getItem('pwa-installed') === '1') {
+      return;
+    }
+
+    const dismissed = localStorage.getItem('pwa-install-dismissed');
+    if (dismissed) {
+      const daysSince = (Date.now() - Number(dismissed)) / (1000 * 60 * 60 * 24);
+      if (daysSince < 7) return;
     }
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -25,7 +35,7 @@ const InstallPrompt = () => {
       return;
     }
 
-    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as { MSStream?: unknown }).MSStream;
     setIsIOS(iOS);
 
     if (iOS) {
@@ -55,7 +65,7 @@ const InstallPrompt = () => {
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === 'accepted') {
-      console.log('Пользователь принял установку');
+      localStorage.setItem('pwa-installed', '1');
     }
 
     setDeferredPrompt(null);
@@ -63,6 +73,7 @@ const InstallPrompt = () => {
   };
 
   const handleClose = () => {
+    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
     setShowPrompt(false);
   };
 
