@@ -24,6 +24,7 @@ import { DISTRICTS } from '@/data/districts';
 import { getSession } from '@/utils/auth';
 import { getExpirationStatus } from '@/utils/expirationFilter';
 import { NASLEGS } from '@/data/naslegs';
+import OfferCardTransportInfo from '@/components/offer/OfferCardTransportInfo';
 
 interface OfferCardProps {
   offer: Offer;
@@ -193,65 +194,19 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
         <div className="space-y-1">
           {isTransport ? (
-            <>
-              {/* Основной маршрут + цена в одну строку */}
-              <div className="flex items-start justify-between gap-1">
-                <span className="text-sm font-bold text-foreground leading-tight min-w-0 truncate">
-                  {offer.transportRoute}
-                </span>
-                <span className="font-bold text-primary text-sm whitespace-nowrap flex-shrink-0">
-                  {offer.transportNegotiable
-                    ? 'Договор.'
-                    : (offer.transportPrice || offer.pricePerUnit)
-                    ? `${Number(offer.transportPrice || offer.pricePerUnit).toLocaleString('ru-RU')} ₽`
-                    : ''}
-                </span>
-              </div>
-
-              {/* Дата + кол-во мест */}
-              <div className="flex items-center justify-between gap-1">
-                {(offer.transportDepartureDateTime || offer.transportDateTime) && (
-                  <span className="text-xs text-muted-foreground">
-                    {(() => {
-                      const raw = offer.transportDepartureDateTime || offer.transportDateTime;
-                      try {
-                        const d = new Date(raw!);
-                        return isNaN(d.getTime()) ? raw : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                      } catch { return raw; }
-                    })()}
-                  </span>
-                )}
-                {(() => {
-                  const capacity = Number(offer.transportCapacity);
-                  const effectiveTotal = offer.quantity > 0 ? offer.quantity : (!isNaN(capacity) && capacity > 0 ? capacity : 0);
-                  if (effectiveTotal <= 0) return null;
-                  const available = effectiveTotal - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
-                  return available > 0 ? (
-                    <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
-                      {available} мест
-                    </span>
-                  ) : (
-                    <span className="text-xs font-semibold text-red-500 whitespace-nowrap">Мест нет</span>
-                  );
-                })()}
-              </div>
-
-              {/* Маршруты по пути */}
-              {offer.transportWaypoints && offer.transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0).length > 0 && (
-                <div className="space-y-0.5">
-                  {offer.transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0).map(wp => (
-                    <div key={wp.id} className="flex items-center justify-between rounded bg-muted/50 px-1.5 py-0.5">
-                      <span className="text-xs text-muted-foreground truncate min-w-0">
-                        {wp.address}
-                      </span>
-                      <span className="text-xs font-semibold text-primary whitespace-nowrap ml-1">
-                        {wp.price!.toLocaleString('ru-RU')} ₽
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>
+            <OfferCardTransportInfo
+              transportRoute={offer.transportRoute}
+              transportPrice={offer.transportPrice}
+              pricePerUnit={offer.pricePerUnit}
+              transportNegotiable={offer.transportNegotiable}
+              transportDepartureDateTime={offer.transportDepartureDateTime}
+              transportDateTime={offer.transportDateTime}
+              transportCapacity={offer.transportCapacity}
+              quantity={offer.quantity}
+              soldQuantity={offer.soldQuantity}
+              reservedQuantity={offer.reservedQuantity}
+              transportWaypoints={offer.transportWaypoints}
+            />
           ) : (
             <>
               <div className="flex items-baseline gap-1">
