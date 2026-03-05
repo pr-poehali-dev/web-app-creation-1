@@ -61,8 +61,8 @@ function OffersFilters({
       />
 
       <div className="mb-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-sm flex-wrap">
+        <div className="flex items-center justify-between flex-wrap gap-2 text-sm">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-muted-foreground">Найдено:</span>
             <span className="font-semibold">{filteredOffersCount}</span>
             {filters.query && filters.query.length >= 2 && (
@@ -76,14 +76,9 @@ function OffersFilters({
               </>
             )}
           </div>
-
-          <div className="flex items-center gap-3 flex-wrap text-xs">
-
-            
-            <span className="text-muted-foreground">
-              Сортировка: <span className="font-medium text-foreground">Премиум + Новизна</span>
-            </span>
-          </div>
+          <span className="text-xs text-muted-foreground">
+            Сортировка: <span className="font-medium text-foreground">Премиум + Новизна</span>
+          </span>
         </div>
 
         {filters.category && (
