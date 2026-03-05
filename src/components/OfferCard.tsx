@@ -242,7 +242,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                   {offer.transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0).map(wp => (
                     <div key={wp.id} className="flex items-center justify-between rounded bg-muted/50 px-1.5 py-0.5">
                       <span className="text-xs text-muted-foreground truncate min-w-0">
-                        {offer.transportRoute ? `${offer.transportRoute.split(/\s*[—–-]\s*/)[0].trim()} — ${wp.address}` : wp.address}
+                        {wp.address}
                       </span>
                       <span className="text-xs font-semibold text-primary whitespace-nowrap ml-1">
                         {wp.price!.toLocaleString('ru-RU')} ₽
