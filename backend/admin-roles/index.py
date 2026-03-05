@@ -10,7 +10,7 @@ from psycopg2.extras import RealDictCursor
 import jwt
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
-JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'fallback-dev-secret-DO-NOT-USE-IN-PRODUCTION')
+JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
 
 def get_db_connection():
