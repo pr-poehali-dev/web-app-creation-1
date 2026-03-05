@@ -184,11 +184,24 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
             </div>
             
             {!isTransport && !isService && request.quantity > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Icon name="Package" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                <span className="text-xs text-muted-foreground">
-                  Нужно: <span className="font-medium text-foreground">{request.quantity} {request.unit || 'шт'}</span>
-                </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <Icon name="Package" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground">
+                    Нужно: <span className="font-medium text-foreground">{request.quantity} {request.unit || 'шт'}</span>
+                  </span>
+                </div>
+                {request.responses !== undefined && (
+                  <>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <div className="flex items-center gap-1">
+                      <Icon name="MessageSquare" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                      <span className="text-xs text-muted-foreground">
+                        Откликов: <span className={`font-medium ${request.responses > 0 ? 'text-primary' : 'text-foreground'}`}>{request.responses}</span>
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
