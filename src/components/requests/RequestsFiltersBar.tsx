@@ -33,19 +33,7 @@ export default function RequestsFiltersBar({
         </div>
 
         <div className="flex items-center gap-3 flex-wrap text-xs">
-          {isAuthenticated && (
-            <div className="flex items-center gap-1.5 px-3 py-2 border-2 border-primary rounded-lg bg-primary/5">
-              <Switch
-                id="show-only-my-requests"
-                checked={showOnlyMy}
-                onCheckedChange={onShowOnlyMyChange}
-                className="scale-75"
-              />
-              <Label htmlFor="show-only-my-requests" className="cursor-pointer text-foreground font-medium">
-                Только мои
-              </Label>
-            </div>
-          )}
+
 
           <span className="text-muted-foreground">
             Сортировка: <span className="font-medium text-foreground">Новизна</span>

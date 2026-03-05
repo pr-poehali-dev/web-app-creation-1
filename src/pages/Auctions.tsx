@@ -388,19 +388,7 @@ export default function Auctions({ isAuthenticated, onLogout }: AuctionsProps) {
           </Button>
         )}
 
-        {isAuthenticated && (
-          <div className="mb-2 md:mb-3 flex items-center gap-2 px-3 py-2 border-2 border-primary rounded-lg bg-primary/5 w-fit">
-            <Switch
-              id="show-only-my"
-              checked={showOnlyMy}
-              onCheckedChange={setShowOnlyMy}
-              className="scale-75"
-            />
-            <Label htmlFor="show-only-my" className="cursor-pointer text-xs md:text-sm text-foreground font-medium">
-              Только мои
-            </Label>
-          </div>
-        )}
+
 
         {isLoading ? (
           <div className="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
