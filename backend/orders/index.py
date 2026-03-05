@@ -97,16 +97,18 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
 
 def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: str, title: str, is_request: bool = True):
     """Отклоняет все остальные отклики на тот же запрос/предложение при принятии одного"""
-    offer_id_escaped = offer_id.replace("'", "''")
-    accepted_id_escaped = accepted_order_id.replace("'", "''")
+    from psycopg2 import sql as pgsql
     
-    cur.execute(f"""
-        SELECT id, buyer_id, order_number 
-        FROM {schema}.orders 
-        WHERE offer_id = '{offer_id_escaped}' 
-          AND id != '{accepted_id_escaped}'
-          AND status IN ('new', 'pending', 'negotiating')
-    """)
+    cur.execute(
+        pgsql.SQL("""
+            SELECT id, buyer_id, order_number 
+            FROM {schema}.orders 
+            WHERE offer_id = %s 
+              AND id != %s
+              AND status IN ('new', 'pending', 'negotiating')
+        """).format(schema=pgsql.Identifier(schema)),
+        (offer_id, accepted_order_id)
+    )
     other_orders = cur.fetchall()
     
     if not other_orders:
@@ -115,16 +117,18 @@ def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: s
     
     entity_type = 'запрос' if is_request else 'предложение'
     reason_text = 'Автоматически отклонён — выбран другой исполнитель'
-    reason_escaped = reason_text.replace("'", "''")
     
-    other_ids = [f"'{str(o['id'])}'" for o in other_orders]
-    cur.execute(f"""
-        UPDATE {schema}.orders 
-        SET status = 'rejected', 
-            cancellation_reason = '{reason_escaped}',
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id IN ({','.join(other_ids)})
-    """)
+    other_ids = [o['id'] for o in other_orders]
+    cur.execute(
+        pgsql.SQL("""
+            UPDATE {schema}.orders 
+            SET status = 'rejected', 
+                cancellation_reason = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ANY(%s)
+        """).format(schema=pgsql.Identifier(schema)),
+        (reason_text, other_ids)
+    )
     
     print(f"[AUTO_REJECT] Rejected {len(other_orders)} other responses for {entity_type} {offer_id}")
     
@@ -153,47 +157,62 @@ def cancel_trip_handler(offer_id: str, event: Dict[str, Any], headers: Dict[str,
     conn = get_db_connection()
     cur = conn.cursor()
     schema = get_schema()
-    offer_id_esc = offer_id.replace("'", "''")
-    reason_esc = reason.replace("'", "''")
+    from psycopg2 import sql as pgsql
 
-    cur.execute(f"SELECT id, seller_id FROM {schema}.offers WHERE id = '{offer_id_esc}'")
+    cur.execute(
+        pgsql.SQL("SELECT id, seller_id FROM {schema}.offers WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+        (offer_id,)
+    )
     offer = cur.fetchone()
     if not offer or int(offer['seller_id']) != seller_user_id:
         cur.close(); conn.close()
         return {'statusCode': 403, 'headers': headers, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
 
-    cur.execute(f"""
-        SELECT id, buyer_id, quantity, order_number
-        FROM {schema}.orders
-        WHERE offer_id = '{offer_id_esc}' AND status = 'accepted'
-    """)
+    cur.execute(
+        pgsql.SQL("""
+            SELECT id, buyer_id, quantity, order_number
+            FROM {schema}.orders
+            WHERE offer_id = %s AND status = 'accepted'
+        """).format(schema=pgsql.Identifier(schema)),
+        (offer_id,)
+    )
     accepted_orders = cur.fetchall()
 
     if accepted_orders:
-        order_ids = [f"'{str(o['id'])}'" for o in accepted_orders]
-        cur.execute(f"""
-            UPDATE {schema}.orders
-            SET status = 'cancelled',
-                cancelled_by = 'seller',
-                cancellation_reason = 'Рейс отменён исполнителем: {reason_esc}',
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id IN ({','.join(order_ids)})
-        """)
+        order_ids = [o['id'] for o in accepted_orders]
+        cancellation_reason = f'Рейс отменён исполнителем: {reason}'
+        cur.execute(
+            pgsql.SQL("""
+                UPDATE {schema}.orders
+                SET status = 'cancelled',
+                    cancelled_by = 'seller',
+                    cancellation_reason = %s,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ANY(%s)
+            """).format(schema=pgsql.Identifier(schema)),
+            (cancellation_reason, order_ids)
+        )
 
         total_returned = sum(o['quantity'] for o in accepted_orders)
-        cur.execute(f"""
-            UPDATE {schema}.offers
-            SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - {total_returned}),
-                updated_at = NOW()
-            WHERE id = '{offer_id_esc}'
-        """)
+        cur.execute(
+            pgsql.SQL("""
+                UPDATE {schema}.offers
+                SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - %s),
+                    updated_at = NOW()
+                WHERE id = %s
+            """).format(schema=pgsql.Identifier(schema)),
+            (total_returned, offer_id)
+        )
         offers_cache.clear()
 
-        cur.execute(f"""
-            UPDATE {schema}.users
-            SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
-            WHERE id = {seller_user_id}
-        """)
+        cur.execute(
+            pgsql.SQL("""
+                UPDATE {schema}.users
+                SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
+                WHERE id = %s
+            """).format(schema=pgsql.Identifier(schema)),
+            (seller_user_id,)
+        )
         print(f"[CANCEL_TRIP] Seller {seller_user_id} rating decreased 5% for cancelled trip")
 
         for o in accepted_orders:
@@ -259,8 +278,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 try:
                     conn_tmp = get_db_connection()
                     cur_tmp = conn_tmp.cursor()
-                    num_escaped = order_number_param.replace("'", "''")
-                    cur_tmp.execute(f"SELECT id FROM {schema}.orders WHERE order_number = '{num_escaped}' LIMIT 1")
+                    from psycopg2 import sql as pgsql
+                    cur_tmp.execute(
+                        pgsql.SQL("SELECT id FROM {schema}.orders WHERE order_number = %s LIMIT 1").format(schema=pgsql.Identifier(schema)),
+                        (order_number_param,)
+                    )
                     row = cur_tmp.fetchone()
                     cur_tmp.close()
                     conn_tmp.close()
@@ -394,9 +416,10 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
     conn = get_db_connection()
     cur = conn.cursor()
     schema = get_schema()
-    offer_id_escaped = offer_id.replace("'", "''")
+    from psycopg2 import sql as pgsql
     cur.execute(
-        f"SELECT id, price_per_unit, quantity, buyer_comment, status, attachments FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}' AND buyer_id = {int(user_id)} AND status NOT IN ('cancelled') LIMIT 1"
+        pgsql.SQL("SELECT id, price_per_unit, quantity, buyer_comment, status, attachments FROM {schema}.orders WHERE offer_id = %s AND buyer_id = %s AND status NOT IN ('cancelled') LIMIT 1").format(schema=pgsql.Identifier(schema)),
+        (offer_id, int(user_id))
     )
     row = cur.fetchone()
     cur.close()
@@ -895,10 +918,13 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     conn = get_db_connection()
     cur = conn.cursor()
     schema = get_schema()
-    order_id_escaped = order_id.replace("'", "''")
+    from psycopg2 import sql as pgsql
     
     # Получаем текущий заказ
-    cur.execute(f"SELECT * FROM {schema}.orders WHERE id = '{order_id_escaped}'")
+    cur.execute(
+        pgsql.SQL("SELECT * FROM {schema}.orders WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+        (order_id,)
+    )
     order = cur.fetchone()
     
     if not order:
@@ -1007,15 +1033,16 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         counter_accepted = True
         
         # Переносим количество из reserved в sold
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
         order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET 
-                sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
-                reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-            WHERE id = '{offer_id_escaped}'
-        """)
+        cur.execute(
+            pgsql.SQL("""
+                UPDATE {schema}.offers 
+                SET sold_quantity = COALESCE(sold_quantity, 0) + %s,
+                    reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - %s)
+                WHERE id = %s
+            """).format(schema=pgsql.Identifier(schema)),
+            (order_quantity, order_quantity, str(order['offer_id']))
+        )
         
         # Инвалидируем кэш offers
         offers_cache.clear()
@@ -1050,15 +1077,16 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         counter_accepted = True
         
         # Переносим количество из reserved в sold
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
         order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET 
-                sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
-                reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-            WHERE id = '{offer_id_escaped}'
-        """)
+        cur.execute(
+            pgsql.SQL("""
+                UPDATE {schema}.offers 
+                SET sold_quantity = COALESCE(sold_quantity, 0) + %s,
+                    reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - %s)
+                WHERE id = %s
+            """).format(schema=pgsql.Identifier(schema)),
+            (order_quantity, order_quantity, str(order['offer_id']))
+        )
         
         # Инвалидируем кэш offers
         offers_cache.clear()
@@ -1066,12 +1094,10 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     # Продавец принимает заказ (по исходной цене или после принятия встречной покупателем)
     if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
         # Проверяем доступное количество в предложении
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
-        cur.execute(f"""
-            SELECT quantity, sold_quantity, reserved_quantity 
-            FROM {schema}.offers 
-            WHERE id = '{offer_id_escaped}'
-        """)
+        cur.execute(
+            pgsql.SQL("SELECT quantity, sold_quantity, reserved_quantity FROM {schema}.offers WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+            (str(order['offer_id']),)
+        )
         offer = cur.fetchone()
         
         if offer:
@@ -1093,13 +1119,15 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 }
             
             # Переносим количество из reserved в sold
-            cur.execute(f"""
-                UPDATE {schema}.offers 
-                SET 
-                    sold_quantity = COALESCE(sold_quantity, 0) + {order_quantity},
-                    reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-                WHERE id = '{offer_id_escaped}'
-            """)
+            cur.execute(
+                pgsql.SQL("""
+                    UPDATE {schema}.offers 
+                    SET sold_quantity = COALESCE(sold_quantity, 0) + %s,
+                        reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - %s)
+                    WHERE id = %s
+                """).format(schema=pgsql.Identifier(schema)),
+                (order_quantity, order_quantity, str(order['offer_id']))
+            )
             
             # Инвалидируем кэш offers
             offers_cache.clear()
@@ -1137,23 +1165,21 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         
         # Повышаем рейтинг продавца на 5% за завершённую сделку
         seller_id_complete = order['seller_id']
-        cur.execute(f"""
-            UPDATE {schema}.users
-            SET rating = LEAST(100, COALESCE(rating, 100) * 1.05)
-            WHERE id = {seller_id_complete}
-        """)
+        cur.execute(
+            pgsql.SQL("UPDATE {schema}.users SET rating = LEAST(100, COALESCE(rating, 100) * 1.05) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+            (seller_id_complete,)
+        )
         print(f"[COMPLETE_ORDER] Seller {seller_id_complete} rating increased by 5%")
         
         # Автоматически переводим предложение в completed если всё продано
-        offer_id_for_complete = str(order['offer_id']).replace("'", "''")
-        cur.execute(f"""
-            UPDATE {schema}.offers
-            SET status = 'completed', updated_at = NOW()
-            WHERE id = '{offer_id_for_complete}'
-              AND status = 'active'
-              AND quantity > 0
-              AND sold_quantity >= quantity
-        """)
+        cur.execute(
+            pgsql.SQL("""
+                UPDATE {schema}.offers
+                SET status = 'completed', updated_at = NOW()
+                WHERE id = %s AND status = 'active' AND quantity > 0 AND sold_quantity >= quantity
+            """).format(schema=pgsql.Identifier(schema)),
+            (str(order['offer_id']),)
+        )
         rows_updated = cur.rowcount
         if rows_updated > 0:
             offers_cache.clear()
@@ -1169,26 +1195,23 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         updates.append(f"cancelled_by = '{cancelled_by}'")
         
         # Возвращаем количество в предложение (из sold если принят, из reserved если нет)
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
         order_quantity = order['quantity']
         current_status = order.get('status', '')
         if current_status == 'accepted':
-            cur.execute(f"""
-                UPDATE {schema}.offers 
-                SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - {order_quantity})
-                WHERE id = '{offer_id_escaped}'
-            """)
+            cur.execute(
+                pgsql.SQL("UPDATE {schema}.offers SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - %s) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                (order_quantity, str(order['offer_id']))
+            )
         else:
-            cur.execute(f"""
-                UPDATE {schema}.offers 
-                SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-                WHERE id = '{offer_id_escaped}'
-            """)
+            cur.execute(
+                pgsql.SQL("UPDATE {schema}.offers SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - %s) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                (order_quantity, str(order['offer_id']))
+            )
         
         # Инвалидируем кэш offers
         offers_cache.clear()
         
-        print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {offer_id_escaped} (from {current_status})")
+        print(f"[CANCEL_ORDER] Returned {order_quantity} units to offer {order['offer_id']} (from {current_status})")
         
         cancelled_by_str = 'seller' if is_seller else 'buyer'
 
@@ -1196,42 +1219,39 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         if order.get('status') == 'accepted':
             if is_buyer:
                 buyer_id_cancel = order['buyer_id']
-                cur.execute(f"""
-                    UPDATE {schema}.users 
-                    SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
-                    WHERE id = {buyer_id_cancel}
-                """)
+                cur.execute(
+                    pgsql.SQL("UPDATE {schema}.users SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                    (buyer_id_cancel,)
+                )
                 print(f"[CANCEL_ORDER] Buyer {buyer_id_cancel} rating decreased 5% (cancelled accepted order)")
             else:
                 seller_id_cancel = order['seller_id']
-                cur.execute(f"""
-                    UPDATE {schema}.users 
-                    SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95)
-                    WHERE id = {seller_id_cancel}
-                """)
+                cur.execute(
+                    pgsql.SQL("UPDATE {schema}.users SET rating = GREATEST(0, COALESCE(rating, 100) * 0.95) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                    (seller_id_cancel,)
+                )
                 print(f"[CANCEL_ORDER] Seller {seller_id_cancel} rating decreased 5% (cancelled accepted order)")
         else:
             print(f"[CANCEL_ORDER] Order cancelled by {cancelled_by_str} before acceptance — no rating penalty")
     
     # Отклонение заказа - возвращаем зарезервированное количество
     elif 'status' in body and body['status'] == 'rejected':
-        status_escaped = body['status'].replace("'", "''")
-        updates.append(f"status = '{status_escaped}'")
+        updates.append(f"status = 'rejected'")
         
         # Возвращаем зарезервированное количество в предложение
-        offer_id_escaped = str(order['offer_id']).replace("'", "''")
         order_quantity = order['quantity']
-        cur.execute(f"""
-            UPDATE {schema}.offers 
-            SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - {order_quantity})
-            WHERE id = '{offer_id_escaped}'
-        """)
-        print(f"[REJECT_ORDER] Returned {order_quantity} units to offer {offer_id_escaped}")
+        cur.execute(
+            pgsql.SQL("UPDATE {schema}.offers SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - %s) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+            (order_quantity, str(order['offer_id']))
+        )
+        print(f"[REJECT_ORDER] Returned {order_quantity} units to offer {order['offer_id']}")
     
     # Обычное обновление статуса
     elif 'status' in body and body['status'] != 'accepted':
-        status_escaped = body['status'].replace("'", "''")
-        updates.append(f"status = '{status_escaped}'")
+        allowed_statuses = {'new', 'pending', 'negotiating', 'cancelled', 'completed', 'rejected', 'accepted'}
+        new_status = body['status'] if body['status'] in allowed_statuses else None
+        if new_status:
+            updates.append(f"status = '{new_status}'")
     
     if 'trackingNumber' in body:
         tracking_escaped = body['trackingNumber'].replace("'", "''")
@@ -1259,17 +1279,21 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             'isBase64Encoded': False
         }
     
-    sql = f"UPDATE {schema}.orders SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = '{order_id_escaped}'"
-    
-    print(f"[UPDATE_ORDER] SQL: {sql}")
-    
-    cur.execute(sql)
+    cur.execute(
+        pgsql.SQL("UPDATE {schema}.orders SET {fields}, updated_at = CURRENT_TIMESTAMP WHERE id = %s").format(
+            schema=pgsql.Identifier(schema),
+            fields=pgsql.SQL(', '.join(updates))
+        ),
+        (order_id,)
+    )
     
     accepted_now = counter_accepted or (body.get('status') == 'accepted')
     if accepted_now:
         try:
-            oid = str(order['offer_id']).replace("'", "''")
-            cur.execute(f"SELECT id FROM {schema}.requests WHERE id = '{oid}'")
+            cur.execute(
+                pgsql.SQL("SELECT id FROM {schema}.requests WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                (str(order['offer_id']),)
+            )
             is_request = cur.fetchone() is not None
             if is_request:
                 reject_other_responses(
