@@ -13,6 +13,7 @@ import type { Auction } from '@/types/auction';
 import AuctionBasicInfoSection from '@/components/auction/AuctionBasicInfoSection';
 import AuctionPricingSection from '@/components/auction/AuctionPricingSection';
 import AuctionMediaSection from '@/components/auction/AuctionMediaSection';
+import AuctionScheduleSection from '@/components/auction/AuctionScheduleSection';
 import { notifyAuctionUpdated } from '@/utils/dataSync';
 
 interface EditAuctionProps {
@@ -43,6 +44,9 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
     buyNowPrice: '',
     hasVAT: false,
     vatRate: '20',
+    startDate: '',
+    startTime: '',
+    duration: '7',
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -103,6 +107,9 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
         buyNowPrice: loadedAuction.buyNowPrice?.toString() || '',
         hasVAT: loadedAuction.hasVAT ?? false,
         vatRate: loadedAuction.vatRate?.toString() || '20',
+        startDate: loadedAuction.startDate ? loadedAuction.startDate.split('T')[0] : '',
+        startTime: loadedAuction.startDate ? loadedAuction.startDate.split('T')[1]?.slice(0, 5) || '' : '',
+        duration: '7',
       });
       
       if (loadedAuction.images && loadedAuction.images.length > 0) {
@@ -164,6 +171,14 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
 
       if (formData.buyNowPrice) {
         updateData.buyNowPrice = parseFloat(formData.buyNowPrice);
+      }
+
+      if (formData.startDate && formData.startTime) {
+        const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
+        updateData.startDate = startDateTime.toISOString();
+        const endDate = new Date(startDateTime);
+        endDate.setDate(endDate.getDate() + parseInt(formData.duration || '7'));
+        updateData.endDate = endDate.toISOString();
       }
 
       if (images.length > 0) {
@@ -283,6 +298,15 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
                 buyNowPrice: formData.buyNowPrice,
                 hasVAT: formData.hasVAT,
                 vatRate: formData.vatRate,
+              }}
+              onInputChange={handleInputChange}
+            />
+
+            <AuctionScheduleSection
+              formData={{
+                startDate: formData.startDate,
+                startTime: formData.startTime,
+                duration: formData.duration,
               }}
               onInputChange={handleInputChange}
             />

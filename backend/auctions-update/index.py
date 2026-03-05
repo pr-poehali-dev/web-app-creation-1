@@ -119,6 +119,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 update_fields.append('min_bid_step = %s')
                 update_values.append(body_data['minBidStep'])
             
+            if 'startDate' in body_data:
+                update_fields.append('start_date = %s')
+                update_values.append(body_data['startDate'])
+            
+            if 'endDate' in body_data:
+                update_fields.append('end_date = %s')
+                update_values.append(body_data['endDate'])
+            
             if update_fields:
                 update_values.extend([auction_id, user_id])
                 query = f"""

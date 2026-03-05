@@ -10,7 +10,7 @@ import type { Auction, AuctionBid } from '@/types/auction';
 
 interface AuctionBidFormProps {
   auction: Auction;
-  currentUser: any;
+  currentUser: { id: number | string } | null;
   bids: AuctionBid[];
   onBidPlaced: (bids: AuctionBid[], newCurrentBid: number) => void;
 }
@@ -107,13 +107,20 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
     return null;
   }
 
+  const isOwner = currentUser && auction.userId && String(currentUser.id) === String(auction.userId);
+
   return (
     <Card>
       <CardHeader className="py-2 md:py-3">
         <CardTitle className="text-sm md:text-base">Сделать ставку</CardTitle>
       </CardHeader>
       <CardContent className="py-2 md:py-3">
-        {currentUser ? (
+        {isOwner ? (
+          <div className="text-center py-3">
+            <Icon name="ShieldCheck" className="h-8 w-8 mx-auto mb-1.5 text-muted-foreground opacity-50" />
+            <p className="text-xs md:text-sm text-muted-foreground">Вы не можете делать ставки на свой аукцион</p>
+          </div>
+        ) : currentUser ? (
           <div className="space-y-2">
             <Label htmlFor="bidAmount" className="text-xs md:text-sm">Сумма ставки (₽)</Label>
             <div className="flex items-center gap-2">
@@ -165,6 +172,7 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
             </Button>
           </div>
         )}
+
       </CardContent>
     </Card>
   );
