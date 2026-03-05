@@ -171,7 +171,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       transportPrice: formData.transportPrice || undefined,
       transportPriceType: formData.transportPriceType || undefined,
       transportNegotiable: formData.transportNegotiable || undefined,
-      transportDateTime: formData.transportDateTime || undefined,
+      transportDateTime: formData.transportDepartureDateTime || formData.transportDateTime || undefined,
       transportComment: formData.transportComment || undefined,
       transportAllDistricts: formData.transportAllDistricts,
       transportWaypoints: transportWaypoints.length > 0 ? transportWaypoints : undefined,
