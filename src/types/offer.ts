@@ -93,6 +93,7 @@ export interface Offer {
   transportType?: string;
   transportCapacity?: string;
   transportDateTime?: string;
+  transportDepartureDateTime?: string;
   transportPrice?: string;
   transportPriceType?: string;
   transportNegotiable?: boolean;
