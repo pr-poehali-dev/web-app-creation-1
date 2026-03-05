@@ -266,11 +266,13 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
             />
 
             <AuctionPricingSection
-              startingPrice={formData.startingPrice}
-              minBidStep={formData.minBidStep}
-              buyNowPrice={formData.buyNowPrice}
-              hasVAT={auction.hasVAT}
-              vatRate={auction.vatRate?.toString() || '20'}
+              formData={{
+                startingPrice: formData.startingPrice,
+                minBidStep: formData.minBidStep,
+                buyNowPrice: formData.buyNowPrice,
+                hasVAT: auction.hasVAT ?? false,
+                vatRate: auction.vatRate?.toString() || '20',
+              }}
               onInputChange={handleInputChange}
             />
 
