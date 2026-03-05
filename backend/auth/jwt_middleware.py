@@ -2,7 +2,7 @@ import os
 import jwt
 from typing import Dict, Any, Optional
 
-JWT_SECRET = os.environ.get('JWT_SECRET_KEY', 'fallback-dev-secret-DO-NOT-USE-IN-PRODUCTION')
+JWT_SECRET = os.environ.get('JWT_SECRET_KEY') or 'fallback-dev-secret-DO-NOT-USE-IN-PRODUCTION'
 JWT_ALGORITHM = 'HS256'
 
 def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
