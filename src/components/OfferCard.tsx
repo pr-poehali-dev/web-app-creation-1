@@ -210,13 +210,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
               {/* Дата + кол-во мест */}
               <div className="flex items-center justify-between gap-1">
-                {offer.transportDateTime && (
+                {(offer.transportDepartureDateTime || offer.transportDateTime) && (
                   <span className="text-xs text-muted-foreground">
                     {(() => {
+                      const raw = offer.transportDepartureDateTime || offer.transportDateTime;
                       try {
-                        const d = new Date(offer.transportDateTime);
-                        return isNaN(d.getTime()) ? offer.transportDateTime : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                      } catch { return offer.transportDateTime; }
+                        const d = new Date(raw!);
+                        return isNaN(d.getTime()) ? raw : d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                      } catch { return raw; }
                     })()}
                   </span>
                 )}
