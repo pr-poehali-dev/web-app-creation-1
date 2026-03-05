@@ -128,6 +128,7 @@ export default function DeliverySection({
             value={comment}
             onChange={(e) => onCommentChange(e.target.value)}
             rows={2}
+            className="md:rows-[2] rows-[1] min-h-[40px] md:min-h-[60px]"
           />
         </div>
       )}
