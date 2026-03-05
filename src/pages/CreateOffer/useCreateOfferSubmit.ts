@@ -28,6 +28,18 @@ interface SubmitData {
   noNegotiation?: boolean;
   isPremium: boolean;
   status: string;
+  transportServiceType?: string;
+  transportRoute?: string;
+  transportType?: string;
+  transportCapacity?: string;
+  transportDateTime?: string;
+  transportPrice?: string;
+  transportPriceType?: string;
+  transportNegotiable?: boolean;
+  transportComment?: string;
+  transportAllDistricts?: boolean;
+  transportWaypoints?: unknown;
+  expiryDate?: string;
 }
 
 export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = false) {
@@ -185,10 +197,10 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         transportPrice: formData.transportPrice || undefined,
         transportPriceType: formData.transportPriceType || undefined,
         transportNegotiable: formData.transportNegotiable || undefined,
-        transportDateTime: (formData as unknown as Record<string, string>).transportDepartureDateTime || formData.transportDateTime || undefined,
+        transportDateTime: formData.transportDateTime || undefined,
         transportComment: formData.transportComment || undefined,
-        transportWaypoints: (formData as { transportWaypoints?: unknown }).transportWaypoints || undefined,
-        expiryDate: (formData as unknown as Record<string, string>).expiryDate || undefined,
+        transportWaypoints: formData.transportWaypoints || undefined,
+        expiryDate: formData.expiryDate || undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
           alt: `${formData.title} - изображение ${index + 1}`,
