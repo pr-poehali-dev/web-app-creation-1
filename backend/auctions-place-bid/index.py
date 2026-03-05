@@ -3,9 +3,39 @@
 """
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import psycopg2
 from typing import Dict, Any
+
+
+def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 10, window_minutes: int = 1) -> bool:
+    with conn.cursor() as cur:
+        window_start = datetime.now() - timedelta(minutes=window_minutes)
+        cur.execute(
+            "SELECT request_count, window_start FROM rate_limits WHERE identifier = %s AND endpoint = %s",
+            (identifier, endpoint)
+        )
+        result = cur.fetchone()
+        if result:
+            if result[1] > window_start:
+                if result[0] >= max_requests:
+                    return False
+                cur.execute(
+                    "UPDATE rate_limits SET request_count = request_count + 1 WHERE identifier = %s AND endpoint = %s",
+                    (identifier, endpoint)
+                )
+            else:
+                cur.execute(
+                    "UPDATE rate_limits SET request_count = 1, window_start = CURRENT_TIMESTAMP WHERE identifier = %s AND endpoint = %s",
+                    (identifier, endpoint)
+                )
+        else:
+            cur.execute(
+                "INSERT INTO rate_limits (identifier, endpoint, request_count, window_start) VALUES (%s, %s, 1, CURRENT_TIMESTAMP)",
+                (identifier, endpoint)
+            )
+        conn.commit()
+        return True
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'POST')
@@ -42,6 +72,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False
         }
     
+    source_ip = event.get('requestContext', {}).get('identity', {}).get('sourceIp', 'unknown')
+
+    try:
+        conn_rl = psycopg2.connect(os.environ['DATABASE_URL'])
+        if not check_rate_limit(conn_rl, f"{source_ip}:{user_id}", 'place_bid', max_requests=10, window_minutes=1):
+            conn_rl.close()
+            return {
+                'statusCode': 429,
+                'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                'body': json.dumps({'error': 'Слишком много ставок. Подождите минуту.'}),
+                'isBase64Encoded': False
+            }
+        conn_rl.close()
+    except Exception:
+        pass
+
     try:
         body_data = json.loads(event.get('body', '{}'))
         auction_id = body_data.get('auctionId')
