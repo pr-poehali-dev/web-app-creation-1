@@ -39,6 +39,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   const [isSaving, setIsSaving] = useState(false);
   const [title, setTitle] = useState(request.title);
   const [description, setDescription] = useState(request.description);
+  const [quantity, setQuantity] = useState(request.quantity ? String(request.quantity) : '');
+  const [unit, setUnit] = useState(request.unit || 'шт');
   const [pricingType, setPricingType] = useState<PricingType>(getInitialPricingType());
   const [price, setPrice] = useState(request.pricePerUnit > 0 ? String(request.pricePerUnit) : '');
   const [negotiablePrice, setNegotiablePrice] = useState(request.negotiablePrice || false);
@@ -75,6 +77,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   const handleCancel = () => {
     setTitle(request.title);
     setDescription(request.description);
+    setQuantity(request.quantity ? String(request.quantity) : '');
+    setUnit(request.unit || 'шт');
     setPricingType(getInitialPricingType());
     setPrice(request.pricePerUnit > 0 ? String(request.pricePerUnit) : '');
     setNegotiablePrice(request.negotiablePrice || false);
@@ -97,6 +101,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
       const updateData: Record<string, unknown> = {
         title,
         description,
+        quantity: quantity ? parseFloat(quantity) : 0,
+        unit,
         pricePerUnit: priceValue,
         negotiablePrice,
         images: images.map((url, idx) => ({ url, alt: `${title} ${idx + 1}` })),
@@ -126,6 +132,8 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
           ...request,
           title,
           description,
+          quantity: quantity ? parseFloat(quantity) : 0,
+          unit,
           pricePerUnit: priceValue,
           negotiablePrice,
           images: images.map((url, idx) => ({ id: `img-${idx}`, url, alt: `${title} ${idx + 1}` })),
@@ -214,6 +222,37 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
                 placeholder="Опишите, что вам нужно..."
               />
             </div>
+
+            {!isTransport && (
+              <div className="space-y-2">
+                <Label>Количество</Label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    placeholder="Количество"
+                    min={1}
+                    className="flex-1"
+                  />
+                  <Select value={unit} onValueChange={setUnit}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="шт">шт</SelectItem>
+                      <SelectItem value="кг">кг</SelectItem>
+                      <SelectItem value="т">т</SelectItem>
+                      <SelectItem value="л">л</SelectItem>
+                      <SelectItem value="м">м</SelectItem>
+                      <SelectItem value="м²">м²</SelectItem>
+                      <SelectItem value="м³">м³</SelectItem>
+                      <SelectItem value="уп">уп</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
             {!isTransport && (
               <div className="space-y-2">
