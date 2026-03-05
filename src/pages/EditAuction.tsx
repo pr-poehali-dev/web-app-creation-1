@@ -7,7 +7,6 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
 import { auctionsAPI } from '@/services/api';
 import type { Auction } from '@/types/auction';
@@ -27,7 +26,6 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
   const navigate = useNavigate();
   const { toast } = useToast();
   const currentUser = getSession();
-  const { districts } = useDistrict();
 
   const [auction, setAuction] = useState<Auction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,9 +34,15 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    category: '',
+    subcategory: '',
+    quantity: '',
+    unit: '',
     startingPrice: '',
     minBidStep: '',
     buyNowPrice: '',
+    hasVAT: false,
+    vatRate: '20',
   });
 
   const [images, setImages] = useState<File[]>([]);
@@ -88,11 +92,17 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
 
       setAuction(loadedAuction);
       setFormData({
-        title: loadedAuction.title,
-        description: loadedAuction.description,
+        title: loadedAuction.title || '',
+        description: loadedAuction.description || '',
+        category: loadedAuction.category || '',
+        subcategory: loadedAuction.subcategory || '',
+        quantity: loadedAuction.quantity?.toString() || '',
+        unit: loadedAuction.unit || '',
         startingPrice: loadedAuction.startingPrice?.toString() || '',
         minBidStep: loadedAuction.minBidStep?.toString() || '',
         buyNowPrice: loadedAuction.buyNowPrice?.toString() || '',
+        hasVAT: loadedAuction.hasVAT ?? false,
+        vatRate: loadedAuction.vatRate?.toString() || '20',
       });
       
       if (loadedAuction.images && loadedAuction.images.length > 0) {
@@ -140,7 +150,7 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
     try {
       setIsSubmitting(true);
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         auctionId: id,
         action: 'update',
         title: formData.title,
@@ -174,11 +184,11 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
       });
 
       navigate('/my-auctions');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error updating auction:', error);
       toast({
         title: 'Ошибка',
-        description: error.message || 'Не удалось обновить аукцион',
+        description: (error as Error)?.message || 'Не удалось обновить аукцион',
         variant: 'destructive',
       });
     } finally {
@@ -255,14 +265,15 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
 
           <div className="space-y-8">
             <AuctionBasicInfoSection
-              title={formData.title}
-              description={formData.description}
-              category={auction.category}
-              subcategory={auction.subcategory}
-              quantity={auction.quantity?.toString() || ''}
-              unit={auction.unit}
+              formData={{
+                title: formData.title,
+                description: formData.description,
+                category: formData.category,
+                subcategory: formData.subcategory,
+                quantity: formData.quantity,
+                unit: formData.unit,
+              }}
               onInputChange={handleInputChange}
-              disabled={false}
             />
 
             <AuctionPricingSection
@@ -270,8 +281,8 @@ export default function EditAuction({ isAuthenticated, onLogout }: EditAuctionPr
                 startingPrice: formData.startingPrice,
                 minBidStep: formData.minBidStep,
                 buyNowPrice: formData.buyNowPrice,
-                hasVAT: auction.hasVAT ?? false,
-                vatRate: auction.vatRate?.toString() || '20',
+                hasVAT: formData.hasVAT,
+                vatRate: formData.vatRate,
               }}
               onInputChange={handleInputChange}
             />
