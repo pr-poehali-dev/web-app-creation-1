@@ -945,7 +945,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     is_seller = user_id == order['seller_id']
     
     # Редактирование отклика покупателем (до принятия продавцом)
-    if body.get('editResponse') and is_buyer and order['status'] in ('new', 'negotiating'):
+    if body.get('editResponse') and is_buyer and order['status'] in ('new', 'pending', 'negotiating'):
         if 'pricePerUnit' in body:
             new_price = float(body['pricePerUnit'])
             new_qty = int(body.get('quantity', order['quantity']))
