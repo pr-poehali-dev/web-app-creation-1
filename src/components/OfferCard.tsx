@@ -228,6 +228,14 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
                   </span>
                 ) : null}
               </div>
+              {!isService && offer.quantity != null && (
+                <div className="flex items-center gap-1.5">
+                  <Icon name="Package" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground">
+                    Доступно: {Math.max(0, (offer.quantity ?? 0) - (offer.soldQuantity ?? 0) - (offer.reservedQuantity ?? 0)).toLocaleString('ru-RU')} {offer.unit}
+                  </span>
+                </div>
+              )}
               {districtName && (
                 <div className="flex items-center gap-1.5">
                   <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
