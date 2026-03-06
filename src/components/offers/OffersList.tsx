@@ -18,6 +18,7 @@ interface OffersListProps {
   onFiltersChange: (filters: SearchFilters) => void;
   onDelete: (id: string) => Promise<void>;
   getUnreadMessages: (offerId: string) => number;
+  getExistingOrderId?: (offerId: string) => string | undefined;
   loadMore: () => Promise<void>;
 }
 
@@ -36,6 +37,7 @@ function OffersList({
   onFiltersChange,
   onDelete,
   getUnreadMessages,
+  getExistingOrderId,
   loadMore,
 }: OffersListProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -147,6 +149,7 @@ function OffersList({
               offer={offer} 
               onDelete={onDelete}
               unreadMessages={getUnreadMessages(offer.id)}
+              existingOrderId={getExistingOrderId?.(offer.id)}
             />
           </div>
         ))}

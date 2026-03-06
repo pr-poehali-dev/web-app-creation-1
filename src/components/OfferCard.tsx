@@ -30,9 +30,10 @@ interface OfferCardProps {
   offer: Offer;
   onDelete?: (id: string) => void;
   unreadMessages?: number;
+  existingOrderId?: string;
 }
 
-export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCardProps) {
+export default function OfferCard({ offer, onDelete, unreadMessages, existingOrderId }: OfferCardProps) {
   const navigate = useNavigate();
   const currentUser = getSession();
   const { toast } = useToast();
@@ -92,7 +93,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages }: OfferCard
 
   const handleOrderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/offer/${offer.id}`);
+    if (existingOrderId) {
+      navigate(`/my-orders?tab=my-responses&orderId=${existingOrderId}`);
+    } else {
+      navigate(`/offer/${offer.id}`);
+    }
   };
 
   const handleEdit = (e: React.MouseEvent) => {

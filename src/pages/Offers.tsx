@@ -368,6 +368,16 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     return relatedOrders.length;
   };
 
+  const getExistingOrderId = (offerId: string): string | undefined => {
+    if (!currentUser) return undefined;
+    const found = orders.find(o => {
+      const orderOfferId = o.offer_id || o.offerId;
+      const isBuyer = String(currentUser.id) === String(o.buyer_id || o.buyerId);
+      return orderOfferId === offerId && isBuyer;
+    });
+    return found?.id;
+  };
+
   const handleFiltersChange = (newFilters: SearchFilters) => {
     setFilters(newFilters);
     setDisplayedCount(ITEMS_PER_PAGE);
@@ -434,6 +444,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           onFiltersChange={handleFiltersChange}
           onDelete={handleDelete}
           getUnreadMessages={getUnreadMessages}
+          getExistingOrderId={getExistingOrderId}
           loadMore={loadMore}
         />
       </main>
