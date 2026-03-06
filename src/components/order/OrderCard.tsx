@@ -377,7 +377,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               <Icon name="Clock" className="mr-1.5 h-4 w-4" />
               Ожидает подтверждения
             </Button>
-          ) : !isSeller && (order.status === 'new' || order.status === 'pending') && !order.counterPricePerUnit ? (
+          ) : !isSeller && (order.status === 'new' || order.status === 'pending' || order.status === 'negotiating') && order.counterOfferedBy !== 'seller' ? (
             <div className="flex gap-2 w-full">
               <Button
                 onClick={(e) => {
@@ -400,6 +400,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                   variant="outline"
                   size="sm"
                   className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                  title="Редактировать заказ"
                 >
                   <Icon name="Pencil" className="h-4 w-4" />
                 </Button>

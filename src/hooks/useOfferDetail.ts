@@ -244,7 +244,8 @@ export function useOfferDetail(id: string | undefined) {
     if (offer) {
       const existing = await ordersAPI.checkExistingResponse(offer.id);
       if (existing.exists && existing.orderId) {
-        navigate(`/my-orders?tab=my-responses&orderId=${existing.orderId}`);
+        const tab = (offer as unknown as Record<string, unknown>).type === 'request' ? 'my-responses' : 'buyer';
+        navigate(`/my-orders?tab=${tab}&orderId=${existing.orderId}`);
         return;
       }
     }
