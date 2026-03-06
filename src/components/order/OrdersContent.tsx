@@ -15,6 +15,7 @@ interface OrdersContentProps {
   onAcceptOrder: (orderId: string) => void;
   onCompleteOrder?: (orderId: string) => void;
   onDeleteOrder?: (orderId: string) => void;
+  onEditOrder?: (order: Order) => void;
 }
 
 export default function OrdersContent({
@@ -26,6 +27,7 @@ export default function OrdersContent({
   onAcceptOrder,
   onCompleteOrder,
   onDeleteOrder,
+  onEditOrder,
 }: OrdersContentProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [exitingOrderIds, setExitingOrderIds] = useState<Set<string>>(new Set());
@@ -200,6 +202,7 @@ export default function OrdersContent({
               onAcceptOrder={isSeller ? onAcceptOrder : undefined}
               onCompleteOrder={onCompleteOrder}
               onDeleteOrder={onDeleteOrder}
+              onEditOrder={!isSeller ? onEditOrder : undefined}
               isExiting={exitingOrderIds.has(order.id as string)}
               isNew={newOrderIds.has(order.id as string)}
             />

@@ -6,6 +6,7 @@ import DataSyncIndicator from '@/components/DataSyncIndicator';
 import BackButton from '@/components/BackButton';
 import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import OrderReviewModal from '@/components/reviews/OrderReviewModal';
+import EditResponseModal from '@/components/order/EditResponseModal';
 import OrdersContent from '@/components/order/OrdersContent';
 import PullToRefresh from '@/components/PullToRefresh';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,6 +36,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const [activeTab, setActiveTab] = useState<AllTab>(tabParam || 'buyer');
   const [myOffers, setMyOffers] = useState<Offer[]>([]);
   const [offersLoading, setOffersLoading] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -212,6 +214,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               onOpenChat={handleOpenChat}
               onAcceptOrder={handleAcceptOrder}
               onCompleteOrder={handleCompleteOrder}
+              onEditOrder={setEditingOrder}
             />
           </TabsContent>
 
@@ -249,6 +252,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
               onAcceptOrder={handleAcceptOrder}
               onCompleteOrder={handleCompleteOrder}
               onDeleteOrder={handleDeleteOrder}
+              onEditOrder={setEditingOrder}
             />
           </TabsContent>
 
@@ -291,6 +295,15 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onSubmit={handleSubmitReview}
           offerTitle={pendingReviewOrder.offerTitle}
           sellerName={pendingReviewOrder.sellerName}
+        />
+      )}
+
+      {editingOrder && (
+        <EditResponseModal
+          isOpen={!!editingOrder}
+          onClose={() => setEditingOrder(null)}
+          order={editingOrder}
+          onSaved={() => loadOrders(false)}
         />
       )}
     </div>

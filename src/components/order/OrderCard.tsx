@@ -12,11 +12,12 @@ interface OrderCardProps {
   onAcceptOrder?: (orderId: string) => void;
   onCompleteOrder?: (orderId: string) => void;
   onDeleteOrder?: (orderId: string) => void;
+  onEditOrder?: (order: Order) => void;
   isExiting?: boolean;
   isNew?: boolean;
 }
 
-export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, onDeleteOrder, isExiting, isNew }: OrderCardProps) {
+export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, onDeleteOrder, onEditOrder, isExiting, isNew }: OrderCardProps) {
   const roles = getOrderRoles(order);
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
@@ -376,6 +377,49 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               <Icon name="Clock" className="mr-1.5 h-4 w-4" />
               Ожидает подтверждения
             </Button>
+          ) : !isSeller && (order.status === 'new' || order.status === 'pending') && !order.counterPricePerUnit ? (
+            <div className="flex gap-2 w-full">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpenChat(order);
+                }}
+                variant="outline"
+                className="flex-1"
+                size="sm"
+              >
+                <Icon name="FileText" className="mr-1.5 h-4 w-4" />
+                Детали заказа
+              </Button>
+              {onEditOrder && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditOrder(order);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                >
+                  <Icon name="Pencil" className="h-4 w-4" />
+                </Button>
+              )}
+              {onDeleteOrder && (
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm('Вы уверены, что хотите удалить заказ?')) {
+                      onDeleteOrder(order.id);
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                >
+                  <Icon name="Trash2" className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           ) : (
             <Button
               onClick={(e) => {
