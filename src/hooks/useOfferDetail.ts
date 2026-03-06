@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Offer } from '@/types/offer';
 import type { Order, ChatMessage } from '@/types/order';
-import { offersAPI, reviewsAPI } from '@/services/api';
+import { offersAPI, reviewsAPI, ordersAPI } from '@/services/api';
 import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { notifyNewOrder, notifyNewMessage } from '@/utils/notifications';
@@ -225,7 +225,7 @@ export function useOfferDetail(id: string | undefined) {
     });
   };
 
-  const handleOrderClick = (isAuthenticated: boolean) => {
+  const handleOrderClick = async (isAuthenticated: boolean) => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
@@ -239,6 +239,14 @@ export function useOfferDetail(id: string | undefined) {
         variant: 'destructive',
       });
       return;
+    }
+
+    if (offer) {
+      const existing = await ordersAPI.checkExistingResponse(offer.id);
+      if (existing.exists && existing.orderId) {
+        navigate(`/my-orders?tab=my-responses&orderId=${existing.orderId}`);
+        return;
+      }
     }
     
     setIsOrderModalOpen(true);
