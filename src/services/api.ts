@@ -476,6 +476,27 @@ export const offersAPI = {
 
     return response.json();
   },
+
+  async adminEditOffer(offerId: string, data: { title?: string; pricePerUnit?: number; quantity?: number }): Promise<{ success: boolean }> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(ADMIN_OFFERS_API, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ offerId, action: 'edit_offer', ...data }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to edit offer');
+    }
+
+    invalidateCache(`id=${offerId}`);
+    invalidateCache('offers');
+
+    return response.json();
+  },
 };
 
 export const requestsAPI = {

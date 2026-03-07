@@ -11,6 +11,7 @@ import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
 import AdminOffersFilters from '@/components/admin-offers/AdminOffersFilters';
 import AdminOffersTable, { type AdminOffer } from '@/components/admin-offers/AdminOffersTable';
 import AdminOffersDeleteDialog from '@/components/admin-offers/AdminOffersDeleteDialog';
+import AdminOfferEditModal from '@/components/admin-offers/AdminOfferEditModal';
 
 interface AdminOffersProps {
   isAuthenticated: boolean;
@@ -30,6 +31,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
   const [isLoading, setIsLoading] = useState(true);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [editingOffer, setEditingOffer] = useState<AdminOffer | null>(null);
 
   useEffect(() => {
     fetchOffers();
@@ -264,7 +266,7 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
                 editingTitleId={editingTitleId}
                 editingTitleValue={editingTitleValue}
                 onEditingTitleValueChange={setEditingTitleValue}
-                onEditTitle={handleEditTitle}
+                onEditTitle={(offer) => setEditingOffer(offer)}
                 onSaveTitle={handleSaveTitle}
                 onCancelEditTitle={handleCancelEditTitle}
                 onApprove={handleApproveOffer}
@@ -284,6 +286,13 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDeleteOffer}
         offerTitle={selectedOffer?.title}
+      />
+
+      <AdminOfferEditModal
+        isOpen={!!editingOffer}
+        onClose={() => setEditingOffer(null)}
+        offer={editingOffer}
+        onSaved={() => { notifyOfferUpdated(editingOffer?.id || ''); fetchOffers(); }}
       />
 
       <Footer />

@@ -241,6 +241,42 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
 
+            elif action == 'edit_offer':
+                fields = []
+                values = []
+                new_title = body_data.get('title', '').strip()
+                new_price = body_data.get('pricePerUnit')
+                new_quantity = body_data.get('quantity')
+                if new_title:
+                    fields.append('title = %s')
+                    values.append(new_title)
+                if new_price is not None:
+                    fields.append('price_per_unit = %s')
+                    values.append(float(new_price))
+                if new_quantity is not None:
+                    fields.append('quantity = %s')
+                    values.append(int(new_quantity))
+                if not fields:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'No fields to update'}),
+                        'isBase64Encoded': False
+                    }
+                fields.append('updated_at = CURRENT_TIMESTAMP')
+                values.append(offer_id)
+                cur.execute(
+                    f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(fields)} WHERE id = %s",
+                    tuple(values)
+                )
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Offer updated'}),
+                    'isBase64Encoded': False
+                }
+
         elif method == 'DELETE':
             body_data = json.loads(event.get('body', '{}'))
             offer_id = body_data.get('offerId')
