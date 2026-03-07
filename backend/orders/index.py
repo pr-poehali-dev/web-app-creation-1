@@ -1656,54 +1656,8 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     }
 
 def delete_message(message_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-    """Удалить сообщение пользователя и файл из S3 (только своё)"""
-    user_headers = event.get('headers', {})
-    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
-    if not user_id:
-        return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'Auth required'}), 'isBase64Encoded': False}
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-    schema = get_schema()
-    message_id_escaped = message_id.replace("'", "''")
-
-    cur.execute(f"SELECT sender_id, attachments FROM {schema}.order_messages WHERE id = '{message_id_escaped}'")
-    msg = cur.fetchone()
-
-    if not msg:
-        cur.close(); conn.close()
-        return {'statusCode': 404, 'headers': headers, 'body': json.dumps({'error': 'Message not found'}), 'isBase64Encoded': False}
-
-    if str(msg['sender_id']) != str(user_id):
-        cur.close(); conn.close()
-        return {'statusCode': 403, 'headers': headers, 'body': json.dumps({'error': 'Not your message'}), 'isBase64Encoded': False}
-
-    # Удаляем файлы из S3
-    attachments = msg.get('attachments') or []
-    if attachments:
-        try:
-            s3 = boto3.client(
-                's3',
-                endpoint_url='https://bucket.poehali.dev',
-                aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
-                aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
-            )
-            for att in attachments:
-                url = att.get('url', '')
-                # Извлекаем ключ из CDN URL
-                if '/bucket/' in url:
-                    key = url.split('/bucket/', 1)[1]
-                    s3.delete_object(Bucket='files', Key=key)
-                    print(f"[DELETE_MESSAGE] Deleted S3 file: {key}")
-        except Exception as e:
-            print(f"[DELETE_MESSAGE] S3 delete error: {e}")
-
-    cur.execute(f"DELETE FROM {schema}.order_messages WHERE id = '{message_id_escaped}'")
-    conn.commit()
-    cur.close()
-    conn.close()
-
-    return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'message': 'Deleted'}), 'isBase64Encoded': False}
+    """Удаление сообщений отключено — сообщения хранятся навсегда"""
+    return {'statusCode': 403, 'headers': headers, 'body': json.dumps({'error': 'Удаление сообщений запрещено'}), 'isBase64Encoded': False}
 
 
 def cleanup_orphaned_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:

@@ -65,6 +65,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         ...m,
         senderType: m.senderType || m.sender_type,
         senderName: m.senderName || m.sender_name,
+        isRead: m.isRead ?? m.is_read ?? false,
       })) as OrderMessage[];
 
       if (!isFirstLoad.current && fetched.length > prevCountRef.current) {
@@ -97,7 +98,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   }, [orderStatus, toast]);
 
   useEffect(() => {
-    if (orderStatus === 'accepted' || orderStatus === 'completed') {
+    if (['new', 'pending', 'negotiating', 'accepted', 'completed'].includes(orderStatus)) {
       isFirstLoad.current = true;
       initialScrollDone.current = false;
       prevMessagesLengthRef.current = 0;
@@ -108,7 +109,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   }, [orderId, orderStatus, loadMessages]);
 
   useEffect(() => {
-    if (orderStatus !== 'accepted') return;
+    const activeStatuses = ['new', 'pending', 'negotiating', 'accepted'];
+    if (!activeStatuses.includes(orderStatus)) return;
     const interval = setInterval(() => loadMessages(true), 5000);
     return () => clearInterval(interval);
   }, [orderId, orderStatus, loadMessages]);
