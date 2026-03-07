@@ -953,6 +953,10 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             updates.append(f"price_per_unit = {new_price}")
             updates.append(f"quantity = {new_qty}")
             updates.append(f"total_amount = {new_total}")
+            # Если встречное предложение было от покупателя — обновляем counter_price и counter_total
+            if order.get('counter_offered_by') == 'buyer':
+                updates.append(f"counter_price_per_unit = {new_price}")
+                updates.append(f"counter_total_amount = {new_total}")
         if 'buyerComment' in body:
             comment_escaped = body['buyerComment'].replace("'", "''")
             updates.append(f"buyer_comment = '{comment_escaped}'")
