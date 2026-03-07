@@ -250,8 +250,8 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
               let width = img.width;
               let height = img.height;
               
-              // Уменьшаем размер пропорционально до 1200px по большей стороне
-              const maxSize = 1200;
+              // Уменьшаем размер пропорционально до 800px по большей стороне
+              const maxSize = 800;
               if (width > maxSize || height > maxSize) {
                 const ratio = Math.min(maxSize / width, maxSize / height);
                 width = Math.round(width * ratio);
@@ -264,8 +264,8 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
               const ctx = canvas.getContext('2d');
               ctx?.drawImage(img, 0, 0, width, height);
               
-              // Сжимаем до 80% качества для меньшего размера файла
-              const compressed = canvas.toDataURL('image/jpeg', 0.8);
+              // Сжимаем до 70% качества для меньшего размера файла
+              const compressed = canvas.toDataURL('image/jpeg', 0.7);
               resolve(compressed);
             };
             img.onerror = reject;

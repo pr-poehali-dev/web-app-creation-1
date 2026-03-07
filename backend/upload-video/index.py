@@ -112,15 +112,15 @@ def upload_video(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
                 content_type = 'image/gif'
                 extension = 'gif'
         
-        # Проверка размера (макс 10 МБ для видео, 5 МБ для изображений)
-        max_size = 10 * 1024 * 1024 if is_video else 5 * 1024 * 1024
+        # Проверка размера (макс 50 МБ для видео, 10 МБ для изображений)
+        max_size = 50 * 1024 * 1024 if is_video else 10 * 1024 * 1024
         if len(media_data) > max_size:
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({
                     'error': f'{"Video" if is_video else "Image"} too large',
-                    'maxSize': f'{"10" if is_video else "5"} MB',
+                    'maxSize': f'{"50" if is_video else "10"} MB',
                     'actualSize': f'{len(media_data) / 1024 / 1024:.1f} MB'
                 }),
                 'isBase64Encoded': False
