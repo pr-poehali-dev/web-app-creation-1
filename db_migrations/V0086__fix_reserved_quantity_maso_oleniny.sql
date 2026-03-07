@@ -1,0 +1,1 @@
+UPDATE t_p42562714_web_app_creation_1.offers SET reserved_quantity = 20 WHERE id = '7e66a68c-2480-48bf-8f69-dd350fa2f21d';

@@ -946,9 +946,12 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     
     # Редактирование отклика покупателем (до принятия продавцом)
     if body.get('editResponse') and is_buyer and order['status'] in ('new', 'pending', 'negotiating'):
+        qty_diff = 0
         if 'pricePerUnit' in body:
             new_price = float(body['pricePerUnit'])
             new_qty = int(body.get('quantity', order['quantity']))
+            old_qty = int(order['quantity'])
+            qty_diff = new_qty - old_qty
             new_total = new_price * new_qty
             updates.append(f"price_per_unit = {new_price}")
             updates.append(f"quantity = {new_qty}")
@@ -978,6 +981,12 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 ),
                 (order_id,)
             )
+            # Обновляем reserved_quantity на предложении при изменении количества
+            if qty_diff != 0 and order.get('offer_id') and not order.get('is_request'):
+                cur.execute(
+                    pgsql.SQL("UPDATE {schema}.offers SET reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) + %s) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                    (qty_diff, str(order['offer_id']))
+                )
             conn.commit()
             cur.close()
             conn.close()
