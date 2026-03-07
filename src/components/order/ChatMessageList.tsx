@@ -125,15 +125,7 @@ export default function ChatMessageList({
                         : <Icon name="Check" size={12} className="text-muted-foreground/60 shrink-0" title="Отправлено" />
                     )}
                   </div>
-                  {isMe && hasAttachment && !isHistory && onDeleteMessage && (
-                    <button
-                      onClick={() => setConfirmDeleteId(msg.id)}
-                      className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive/80 flex-shrink-0"
-                      title="Удалить сообщение"
-                    >
-                      <Icon name="Trash2" size={11} />
-                    </button>
-                  )}
+
                 </div>
               </div>
             </div>
