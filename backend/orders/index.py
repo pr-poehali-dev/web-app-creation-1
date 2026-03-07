@@ -916,7 +916,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     body = json.loads(event.get('body', '{}'))
     
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     schema = get_schema()
     from psycopg2 import sql as pgsql
     
@@ -968,9 +968,12 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             att_json = json.dumps(body['attachments']).replace("'", "''")
             updates.append(f"attachments = '{att_json}'::jsonb")
         if updates:
-            updates.append("updated_at = CURRENT_TIMESTAMP")
-            sql = f"UPDATE {schema}.orders SET {', '.join(updates)} WHERE id = '{order_id_escaped}'"
-            cur.execute(sql)
+            cur.execute(
+                pgsql.SQL("UPDATE {schema}.orders SET " + ', '.join(updates) + " WHERE id = %s").format(
+                    schema=pgsql.Identifier(schema)
+                ),
+                (order_id,)
+            )
             conn.commit()
             cur.close()
             conn.close()
