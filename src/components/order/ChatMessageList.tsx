@@ -115,9 +115,16 @@ export default function ChatMessageList({
                   </div>
                 )}
                 <div className="flex items-center justify-between gap-2 mt-1">
-                  <p className={`text-[10px] ${isMe ? (isHistory ? 'text-muted-foreground' : 'text-primary-foreground/60') : 'text-muted-foreground'}`}>
-                    {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                  </p>
+                  <div className="flex items-center gap-1">
+                    <p className={`text-[10px] ${isMe ? (isHistory ? 'text-muted-foreground' : 'text-muted-foreground') : 'text-muted-foreground'}`}>
+                      {new Date(msg.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    {isMe && (
+                      msg.isRead
+                        ? <Icon name="CheckCheck" size={12} className="text-blue-500 shrink-0" title="Прочитано" />
+                        : <Icon name="Check" size={12} className="text-muted-foreground/60 shrink-0" title="Отправлено" />
+                    )}
+                  </div>
                   {isMe && hasAttachment && !isHistory && onDeleteMessage && (
                     <button
                       onClick={() => setConfirmDeleteId(msg.id)}
