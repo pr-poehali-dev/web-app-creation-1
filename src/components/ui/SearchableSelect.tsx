@@ -9,6 +9,7 @@ interface SearchableSelectProps {
   placeholder?: string;
   disabled?: boolean;
   id?: string;
+  allowCustom?: boolean;
 }
 
 export default function SearchableSelect({
@@ -18,25 +19,29 @@ export default function SearchableSelect({
   placeholder = 'Начните вводить...',
   disabled = false,
   id,
+  allowCustom = false,
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filtered = options.filter(o =>
-    o.toLowerCase().includes(search.toLowerCase())
+    o.toLowerCase().includes((isOpen ? search : value).toLowerCase())
   );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        if (allowCustom && isOpen && search) {
+          onChange(search);
+        }
         setIsOpen(false);
         setSearch('');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [allowCustom, isOpen, search, onChange]);
 
   const handleSelect = (option: string) => {
     onChange(option);
@@ -47,6 +52,27 @@ export default function SearchableSelect({
   const handleFocus = () => {
     if (!disabled) {
       setIsOpen(true);
+      setSearch(value);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearch(val);
+    if (allowCustom) {
+      onChange(val);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && allowCustom && search) {
+      e.preventDefault();
+      onChange(search);
+      setIsOpen(false);
+      setSearch('');
+    }
+    if (e.key === 'Escape') {
+      setIsOpen(false);
       setSearch('');
     }
   };
@@ -57,8 +83,9 @@ export default function SearchableSelect({
         <Input
           id={id}
           value={isOpen ? search : value}
-          onChange={e => setSearch(e.target.value)}
+          onChange={handleChange}
           onFocus={handleFocus}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
           className="pr-8"
@@ -76,6 +103,15 @@ export default function SearchableSelect({
 
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+          {allowCustom && search && !options.includes(search) && (
+            <button
+              type="button"
+              onClick={() => handleSelect(search)}
+              className="w-full text-left px-3 py-2 text-sm border-b border-input hover:bg-accent transition-colors text-primary font-medium"
+            >
+              Использовать: «{search}»
+            </button>
+          )}
           {filtered.length > 0 ? (
             filtered.map(option => (
               <button
@@ -89,11 +125,11 @@ export default function SearchableSelect({
                 {option}
               </button>
             ))
-          ) : (
+          ) : !allowCustom ? (
             <div className="px-3 py-2 text-sm text-muted-foreground">
               Ничего не найдено
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </div>

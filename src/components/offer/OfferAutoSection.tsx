@@ -88,6 +88,15 @@ export default function OfferAutoSection({ formData, onInputChange }: OfferAutoS
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => { setIsMakeOpen(false); setMakeSearch(''); }} />
                   <div className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
+                    {makeSearch && !AUTO_MAKES.some(m => m.name.toLowerCase() === makeSearch.toLowerCase()) && (
+                      <button
+                        type="button"
+                        onClick={() => handleSelectMake(makeSearch)}
+                        className="w-full text-left px-3 py-2 text-sm border-b border-input hover:bg-accent transition-colors text-primary font-medium"
+                      >
+                        Использовать: «{makeSearch}»
+                      </button>
+                    )}
                     {filteredMakes.length > 0 ? (
                       filteredMakes.map(make => (
                         <button
@@ -102,23 +111,26 @@ export default function OfferAutoSection({ formData, onInputChange }: OfferAutoS
                         </button>
                       ))
                     ) : (
-                      <div className="px-3 py-2 text-sm text-muted-foreground">Ничего не найдено</div>
+                      <div className="px-3 py-2 text-sm text-muted-foreground">Нет совпадений — введите название вручную выше</div>
                     )}
                   </div>
                 </>
               )}
+              <p className="text-xs text-muted-foreground mt-1">Можно выбрать из списка или ввести вручную</p>
             </div>
 
             <div>
-              <Label htmlFor="autoModel">Марка (модель) авто *</Label>
+              <Label htmlFor="autoModel">Модель авто *</Label>
               <SearchableSelect
                 id="autoModel"
                 value={formData.autoModel}
                 onChange={v => onInputChange('autoModel', v)}
-                options={modelOptions.length > 0 ? modelOptions : ['Другая модель']}
-                placeholder={formData.autoMake ? 'Выберите модель...' : 'Сначала выберите производителя'}
+                options={modelOptions}
+                placeholder={formData.autoMake ? 'Выберите или введите модель...' : 'Сначала выберите производителя'}
                 disabled={!formData.autoMake}
+                allowCustom
               />
+              <p className="text-xs text-muted-foreground mt-1">Можно выбрать из списка или ввести вручную</p>
             </div>
           </div>
 
