@@ -210,6 +210,7 @@ export default function CreateOfferFormFields({
         onRemoveImage={onRemoveImage}
         onVideoUpload={onVideoUpload}
         onRemoveVideo={onRemoveVideo}
+        isAutoSale={formData.category === 'auto-sale'}
       />
 
       {isUploadingVideo && (

@@ -13,6 +13,7 @@ interface OfferMediaSectionProps {
   onRemoveImage: (index: number) => void;
   onVideoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveVideo: () => void;
+  isAutoSale?: boolean;
 }
 
 export default function OfferMediaSection({
@@ -23,7 +24,8 @@ export default function OfferMediaSection({
   onImageUpload,
   onRemoveImage,
   onVideoUpload,
-  onRemoveVideo
+  onRemoveVideo,
+  isAutoSale = false,
 }: OfferMediaSectionProps) {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
@@ -64,6 +66,12 @@ export default function OfferMediaSection({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {isAutoSale && (
+          <div className="flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            <Icon name="ShieldCheck" className="h-4 w-4 mt-0.5 shrink-0" />
+            <span>Гос. номер на фото будет скрыт автоматически</span>
+          </div>
+        )}
         <div>
           <Label htmlFor="images" className="flex items-center gap-2">
             Фотографии (до 10)
