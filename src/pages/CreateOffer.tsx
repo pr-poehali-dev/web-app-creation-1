@@ -108,6 +108,9 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
     isSubmitting,
     videoUploadProgress,
     isUploadingVideo,
+    isUploadingImages,
+    imageUploadCurrent,
+    imageUploadTotal,
     handleSubmit: submitOffer,
   } = useCreateOfferSubmit(editOffer, isEditMode);
 
@@ -279,6 +282,9 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
               onWaypointPriceChange={handleWaypointPriceChange}
               videoUploadProgress={videoUploadProgress}
               isUploadingVideo={isUploadingVideo}
+              isUploadingImages={isUploadingImages}
+              imageUploadCurrent={imageUploadCurrent}
+              imageUploadTotal={imageUploadTotal}
             />
 
             <div className="flex flex-col gap-3">

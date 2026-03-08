@@ -62,6 +62,9 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [imageUploadCurrent, setImageUploadCurrent] = useState(0);
+  const [imageUploadTotal, setImageUploadTotal] = useState(0);
 
   const handleSubmit = async (
     formData: SubmitData,
@@ -127,50 +130,41 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       // Загружаем все изображения
       const uploadedImageUrls: string[] = [];
       if (imagePreviews.length > 0) {
-        // Считаем сколько изображений нужно загрузить (только base64, не CDN URL)
         const imagesToUpload = imagePreviews.filter(img => !img.startsWith('https://'));
-        
+
         if (imagesToUpload.length > 0) {
-          toast({
-            title: 'Загрузка фото...',
-            description: `Загружаем ${imagesToUpload.length} фото`,
-          });
+          setIsUploadingImages(true);
+          setImageUploadTotal(imagesToUpload.length);
+          setImageUploadCurrent(0);
         }
 
+        let uploadedCount = 0;
         for (let i = 0; i < imagePreviews.length; i++) {
           const imagePreview = imagePreviews[i];
-          
-          // Если это уже CDN URL - используем его как есть
+
           if (imagePreview.startsWith('https://')) {
             uploadedImageUrls.push(imagePreview);
             console.log(`Image ${i + 1}/${imagePreviews.length} already uploaded:`, imagePreview);
             continue;
           }
-          
+
           try {
             console.log(`Uploading image ${i + 1}/${imagePreviews.length}...`);
-            
-            // Обновляем прогресс
-            if (imagesToUpload.length > 1) {
-              const uploadIndex = uploadedImageUrls.filter(url => url.startsWith('https://')).length + 1;
-              toast({
-                title: 'Загрузка фото...',
-                description: `Загружаем ${uploadIndex} из ${imagesToUpload.length}`,
-              });
-            }
-            
+            uploadedCount += 1;
+            setImageUploadCurrent(uploadedCount);
+
             const isAutoSalePhoto = formData.category === 'auto-sale';
             const uploadResult = await offersAPI.uploadMedia(imagePreview, isAutoSalePhoto);
             uploadedImageUrls.push(uploadResult.url);
             console.log(`Image ${i + 1}/${imagePreviews.length} uploaded:`, uploadResult.url, 'plateCovered:', uploadResult.plateCovered);
-            
-            // Небольшая задержка между загрузками (кроме последнего)
+
             if (i < imagePreviews.length - 1) {
               await new Promise(resolve => setTimeout(resolve, 300));
             }
           } catch (error) {
             console.error(`Failed to upload image ${i + 1}:`, error);
             const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+            setIsUploadingImages(false);
             toast({
               title: 'Ошибка загрузки фото',
               description: `Не удалось загрузить фото ${i + 1}: ${errorMessage}`,
@@ -180,6 +174,8 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
             return;
           }
         }
+
+        setIsUploadingImages(false);
       }
 
       const isAutoSale = formData.category === 'auto-sale';
@@ -362,6 +358,9 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
     isSubmitting,
     videoUploadProgress,
     isUploadingVideo,
+    isUploadingImages,
+    imageUploadCurrent,
+    imageUploadTotal,
     handleSubmit,
   };
 }

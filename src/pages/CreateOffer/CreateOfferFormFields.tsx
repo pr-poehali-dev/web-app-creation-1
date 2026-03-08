@@ -82,6 +82,9 @@ interface CreateOfferFormFieldsProps {
   onWaypointPriceChange?: (districtId: string, price: string) => void;
   videoUploadProgress: number;
   isUploadingVideo: boolean;
+  isUploadingImages: boolean;
+  imageUploadCurrent: number;
+  imageUploadTotal: number;
 }
 
 export default function CreateOfferFormFields({
@@ -104,6 +107,9 @@ export default function CreateOfferFormFields({
   onWaypointPriceChange,
   videoUploadProgress,
   isUploadingVideo,
+  isUploadingImages,
+  imageUploadCurrent,
+  imageUploadTotal,
 }: CreateOfferFormFieldsProps) {
   return (
     <>
@@ -225,6 +231,29 @@ export default function CreateOfferFormFields({
                 <div
                   className="bg-primary h-full transition-all duration-300 ease-out"
                   style={{ width: `${videoUploadProgress}%` }}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isUploadingImages && imageUploadTotal > 0 && (
+        <Card className="border-primary bg-primary/5">
+          <CardContent className="pt-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">
+                  Обрабатываем фото {imageUploadCurrent} из {imageUploadTotal}...
+                </span>
+                <span className="text-muted-foreground">
+                  {Math.round((imageUploadCurrent / imageUploadTotal) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                <div
+                  className="bg-primary h-full transition-all duration-300 ease-out"
+                  style={{ width: `${Math.round((imageUploadCurrent / imageUploadTotal) * 100)}%` }}
                 />
               </div>
             </div>
