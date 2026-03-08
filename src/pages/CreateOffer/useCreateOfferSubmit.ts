@@ -159,9 +159,10 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
               });
             }
             
-            const uploadResult = await offersAPI.uploadMedia(imagePreview);
+            const isAutoSalePhoto = formData.category === 'auto-sale';
+            const uploadResult = await offersAPI.uploadMedia(imagePreview, isAutoSalePhoto);
             uploadedImageUrls.push(uploadResult.url);
-            console.log(`Image ${i + 1}/${imagePreviews.length} uploaded:`, uploadResult.url);
+            console.log(`Image ${i + 1}/${imagePreviews.length} uploaded:`, uploadResult.url, 'plateCovered:', uploadResult.plateCovered);
             
             // Небольшая задержка между загрузками (кроме последнего)
             if (i < imagePreviews.length - 1) {

@@ -396,8 +396,8 @@ export const offersAPI = {
     return response.json();
   },
 
-  async uploadMedia(mediaBase64: string): Promise<{ url: string; message: string }> {
-    console.log('uploadMedia: Starting upload, data size:', mediaBase64.length);
+  async uploadMedia(mediaBase64: string, isAutoPhoto = false): Promise<{ url: string; message: string; plateCovered?: boolean }> {
+    console.log('uploadMedia: Starting upload, data size:', mediaBase64.length, 'isAutoPhoto:', isAutoPhoto);
     
     // Для загрузки медиа не используем fetchWithRetry, т.к. загрузка может быть долгой
     const response = await fetch(UPLOAD_VIDEO_API, {
@@ -405,7 +405,7 @@ export const offersAPI = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ video: mediaBase64 }),
+      body: JSON.stringify({ video: mediaBase64, isAutoPhoto }),
     });
     
     console.log('uploadMedia: Response status:', response.status);
