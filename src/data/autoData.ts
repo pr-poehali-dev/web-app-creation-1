@@ -529,7 +529,9 @@ export const AUTO_COLORS = [
 
 export const AUTO_FUEL_TYPES = [
   'Бензин',
+  'Бензин/ГБО',
   'Дизель',
+  'Дизель/ГБО',
   'Газ (LPG)',
   'Газ (CNG)',
   'Гибрид (бензин+электро)',
