@@ -5,6 +5,7 @@ import { shareContent } from '@/utils/shareUtils';
 import type { Offer, TransportWaypoint } from '@/types/offer';
 import OfferEditFormRegular from './OfferEditFormRegular';
 import OfferEditFormTransport from './OfferEditFormTransport';
+import OfferEditFormAutoSale from './OfferEditFormAutoSale';
 import OfferViewInfo from './OfferViewInfo';
 
 interface EditData {
@@ -21,6 +22,17 @@ interface EditData {
   transportNegotiable: boolean;
   transportWaypoints: TransportWaypoint[];
   transportComment: string;
+  autoMake: string;
+  autoModel: string;
+  autoYear: string;
+  autoBodyType: string;
+  autoColor: string;
+  autoFuelType: string;
+  autoTransmission: string;
+  autoDriveType: string;
+  autoMileage: string;
+  autoPtsRecords: string;
+  autoDescription: string;
 }
 
 interface OfferInfoFieldsProps {
@@ -49,6 +61,7 @@ export default function OfferInfoFields({
   onDelete,
 }: OfferInfoFieldsProps) {
   const isTransport = offer.category === 'transport';
+  const isAutoSale = offer.category === 'auto-sale';
 
   const handleShare = async () => {
     let shareText: string;
@@ -120,7 +133,7 @@ export default function OfferInfoFields({
       <div className="space-y-3">
         {isEditing ? (
           <div className="space-y-4">
-            {!isTransport && (
+            {!isTransport && !isAutoSale && (
               <OfferEditFormRegular
                 offer={offer}
                 editData={editData}
@@ -130,6 +143,14 @@ export default function OfferInfoFields({
             )}
             {isTransport && (
               <OfferEditFormTransport
+                offer={offer}
+                editData={editData}
+                isSaving={isSaving}
+                onEditDataChange={onEditDataChange}
+              />
+            )}
+            {isAutoSale && (
+              <OfferEditFormAutoSale
                 offer={offer}
                 editData={editData}
                 isSaving={isSaving}

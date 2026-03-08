@@ -58,6 +58,17 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     transportNegotiable: offer.transportNegotiable || false,
     transportWaypoints: offer.transportWaypoints || [],
     transportComment: offer.transportComment || '',
+    autoMake: offer.autoMake || '',
+    autoModel: offer.autoModel || '',
+    autoYear: offer.autoYear || '',
+    autoBodyType: offer.autoBodyType || '',
+    autoColor: offer.autoColor || '',
+    autoFuelType: offer.autoFuelType || '',
+    autoTransmission: offer.autoTransmission || '',
+    autoDriveType: offer.autoDriveType || '',
+    autoMileage: offer.autoMileage?.toString() || '',
+    autoPtsRecords: offer.autoPtsRecords || '',
+    autoDescription: offer.autoDescription || '',
   });
   const [images, setImages] = useState<OfferImage[]>(offer.images || []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -135,7 +146,18 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         transportComment: editData.transportComment || offer.transportComment,
         transportAllDistricts: offer.transportAllDistricts,
         transportWaypoints: editData.transportWaypoints,
-      });
+        autoMake: editData.autoMake || undefined,
+        autoModel: editData.autoModel || undefined,
+        autoYear: editData.autoYear || undefined,
+        autoBodyType: editData.autoBodyType || undefined,
+        autoColor: editData.autoColor || undefined,
+        autoFuelType: editData.autoFuelType || undefined,
+        autoTransmission: editData.autoTransmission || undefined,
+        autoDriveType: editData.autoDriveType || undefined,
+        autoMileage: editData.autoMileage ? parseInt(editData.autoMileage) : undefined,
+        autoPtsRecords: editData.autoPtsRecords || undefined,
+        autoDescription: editData.autoDescription || undefined,
+      } as Parameters<typeof offersAPI.updateOffer>[1]);
 
       localStorage.removeItem('cached_offers');
       notifyOfferUpdated(offer.id);
@@ -168,6 +190,17 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       transportNegotiable: offer.transportNegotiable || false,
       transportWaypoints: offer.transportWaypoints || [],
       transportComment: offer.transportComment || '',
+      autoMake: offer.autoMake || '',
+      autoModel: offer.autoModel || '',
+      autoYear: offer.autoYear || '',
+      autoBodyType: offer.autoBodyType || '',
+      autoColor: offer.autoColor || '',
+      autoFuelType: offer.autoFuelType || '',
+      autoTransmission: offer.autoTransmission || '',
+      autoDriveType: offer.autoDriveType || '',
+      autoMileage: offer.autoMileage?.toString() || '',
+      autoPtsRecords: offer.autoPtsRecords || '',
+      autoDescription: offer.autoDescription || '',
     });
     setImages(offer.images || []);
     setCurrentImageIndex(0);

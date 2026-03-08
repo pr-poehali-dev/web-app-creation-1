@@ -17,6 +17,17 @@ interface EditData {
   transportNegotiable: boolean;
   transportWaypoints: import('@/types/offer').TransportWaypoint[];
   transportComment: string;
+  autoMake: string;
+  autoModel: string;
+  autoYear: string;
+  autoBodyType: string;
+  autoColor: string;
+  autoFuelType: string;
+  autoTransmission: string;
+  autoDriveType: string;
+  autoMileage: string;
+  autoPtsRecords: string;
+  autoDescription: string;
 }
 
 interface OfferEditFormRegularProps {
