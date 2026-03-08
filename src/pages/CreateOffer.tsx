@@ -149,10 +149,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
         toast({ title: "Ошибка", description: "Укажите дату окончания публикации", variant: "destructive" });
         return;
       }
-      if (imagePreviews.length === 0) {
-        toast({ title: "Ошибка", description: "Добавьте хотя бы одну фотографию автомобиля", variant: "destructive" });
-        return;
-      }
+
     }
 
     // Валидация периода поставки

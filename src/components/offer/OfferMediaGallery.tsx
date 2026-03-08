@@ -144,10 +144,19 @@ export default function OfferMediaGallery({
         </div>
         </Card>
       ) : (
-        <div className="flex items-center gap-2 px-4 py-3 mb-6 bg-muted/50 rounded-lg border border-border">
-          <Icon name="ImageOff" className="h-5 w-5 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground font-medium">Фото отсутствует</p>
-        </div>
+        <Card className="overflow-hidden mb-6">
+          <div className="relative aspect-video bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 opacity-40">
+              <img
+                src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png"
+                alt="ЕРТТП"
+                className="h-24 w-24 object-contain"
+                style={{ filter: 'brightness(0.7) contrast(1.2)', transform: 'scaleX(-1)' }}
+              />
+              <p className="text-sm text-muted-foreground font-medium">Фото не добавлено</p>
+            </div>
+          </div>
+        </Card>
       )}
 
       {(images.length > 0 || (showVideo && video)) && (

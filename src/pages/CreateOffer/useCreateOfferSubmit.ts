@@ -127,7 +127,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         }
       }
 
-      // Загружаем все изображения
+      // Загружаем все изображения параллельно
       const uploadedImageUrls: string[] = [];
       if (imagePreviews.length > 0) {
         const imagesToUpload = imagePreviews.filter(img => !img.startsWith('https://'));
@@ -138,42 +138,60 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
           setImageUploadCurrent(0);
         }
 
-        let uploadedCount = 0;
-        for (let i = 0; i < imagePreviews.length; i++) {
-          const imagePreview = imagePreviews[i];
+        const isAutoSalePhoto = formData.category === 'auto-sale';
 
-          if (imagePreview.startsWith('https://')) {
-            uploadedImageUrls.push(imagePreview);
-            console.log(`Image ${i + 1}/${imagePreviews.length} already uploaded:`, imagePreview);
-            continue;
-          }
+        // Разделяем уже загруженные и новые
+        const alreadyUploaded = imagePreviews
+          .map((img, i) => ({ img, i }))
+          .filter(({ img }) => img.startsWith('https://'));
 
+        const toUpload = imagePreviews
+          .map((img, i) => ({ img, i }))
+          .filter(({ img }) => !img.startsWith('https://'));
+
+        // Параллельная загрузка новых фото (батчами по 3)
+        const results: Array<{ i: number; url: string }> = [];
+
+        for (const already of alreadyUploaded) {
+          results.push({ i: already.i, url: already.img });
+        }
+
+        const BATCH_SIZE = 3;
+        let uploadFailed = false;
+        for (let b = 0; b < toUpload.length; b += BATCH_SIZE) {
+          if (uploadFailed) break;
+          const batch = toUpload.slice(b, b + BATCH_SIZE);
+          let batchResults: Array<{ i: number; url: string }>;
           try {
-            console.log(`Uploading image ${i + 1}/${imagePreviews.length}...`);
-            uploadedCount += 1;
-            setImageUploadCurrent(uploadedCount);
-
-            const isAutoSalePhoto = formData.category === 'auto-sale';
-            const uploadResult = await offersAPI.uploadMedia(imagePreview, isAutoSalePhoto);
-            uploadedImageUrls.push(uploadResult.url);
-            console.log(`Image ${i + 1}/${imagePreviews.length} uploaded:`, uploadResult.url, 'plateCovered:', uploadResult.plateCovered);
-
-            if (i < imagePreviews.length - 1) {
-              await new Promise(resolve => setTimeout(resolve, 300));
-            }
+            batchResults = await Promise.all(
+              batch.map(async ({ img, i }) => {
+                console.log(`Uploading image ${i + 1}/${imagePreviews.length}...`);
+                const uploadResult = await offersAPI.uploadMedia(img, isAutoSalePhoto);
+                setImageUploadCurrent(prev => prev + 1);
+                console.log(`Image ${i + 1} uploaded:`, uploadResult.url);
+                return { i, url: uploadResult.url };
+              })
+            );
           } catch (error) {
-            console.error(`Failed to upload image ${i + 1}:`, error);
+            console.error('Failed to upload image batch:', error);
             const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
             setIsUploadingImages(false);
             toast({
               title: 'Ошибка загрузки фото',
-              description: `Не удалось загрузить фото ${i + 1}: ${errorMessage}`,
+              description: errorMessage,
               variant: 'destructive',
             });
             setIsSubmitting(false);
-            return;
+            uploadFailed = true;
+            break;
           }
+          results.push(...batchResults);
         }
+        if (uploadFailed) return;
+
+        // Восстанавливаем порядок
+        results.sort((a, b) => a.i - b.i);
+        uploadedImageUrls.push(...results.map(r => r.url));
 
         setIsUploadingImages(false);
       }
