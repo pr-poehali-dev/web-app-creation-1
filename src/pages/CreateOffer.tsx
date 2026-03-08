@@ -114,6 +114,44 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
   const handleSubmit = (e: React.FormEvent, isDraft: boolean = false) => {
     e.preventDefault();
     
+    const isAutoSale = formData.category === 'auto-sale';
+    
+    // Валидация авто-продажи
+    if (isAutoSale) {
+      if (!formData.autoMake || !formData.autoModel) {
+        toast({ title: "Ошибка", description: "Укажите производителя и модель автомобиля", variant: "destructive" });
+        return;
+      }
+      if (!formData.autoYear) {
+        toast({ title: "Ошибка", description: "Укажите год выпуска", variant: "destructive" });
+        return;
+      }
+      if (!formData.autoBodyType) {
+        toast({ title: "Ошибка", description: "Укажите тип кузова", variant: "destructive" });
+        return;
+      }
+      if (!formData.autoColor) {
+        toast({ title: "Ошибка", description: "Укажите цвет автомобиля", variant: "destructive" });
+        return;
+      }
+      if (!formData.autoPtsRecords) {
+        toast({ title: "Ошибка", description: "Укажите количество записей в ПТС", variant: "destructive" });
+        return;
+      }
+      if (!formData.pricePerUnit || parseFloat(formData.pricePerUnit) <= 0) {
+        toast({ title: "Ошибка", description: "Укажите цену автомобиля", variant: "destructive" });
+        return;
+      }
+      if (!formData.expiryDate) {
+        toast({ title: "Ошибка", description: "Укажите дату окончания публикации", variant: "destructive" });
+        return;
+      }
+      if (imagePreviews.length === 0) {
+        toast({ title: "Ошибка", description: "Добавьте хотя бы одну фотографию автомобиля", variant: "destructive" });
+        return;
+      }
+    }
+
     // Валидация периода поставки
     if (formData.deliveryPeriodStart && formData.deliveryPeriodEnd) {
       const startDate = new Date(formData.deliveryPeriodStart);
@@ -175,6 +213,18 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       transportComment: formData.transportComment || undefined,
       transportAllDistricts: formData.transportAllDistricts,
       transportWaypoints: transportWaypoints.length > 0 ? transportWaypoints : undefined,
+      autoMake: formData.autoMake || undefined,
+      autoModel: formData.autoModel || undefined,
+      autoYear: formData.autoYear || undefined,
+      autoBodyType: formData.autoBodyType || undefined,
+      autoColor: formData.autoColor || undefined,
+      autoFuelType: formData.autoFuelType || undefined,
+      autoTransmission: formData.autoTransmission || undefined,
+      autoDriveType: formData.autoDriveType || undefined,
+      autoMileage: formData.autoMileage || undefined,
+      autoPtsRecords: formData.autoPtsRecords || undefined,
+      autoDescription: formData.autoDescription || undefined,
+      expiryDate: formData.expiryDate || undefined,
     };
 
     submitOffer(submitData, videoPreview, imagePreviews, isDraft);

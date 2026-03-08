@@ -19,6 +19,7 @@ interface OfferBasicInfoSectionProps {
 
 export default function OfferBasicInfoSection({ formData, onInputChange }: OfferBasicInfoSectionProps) {
   const isTransport = formData.category === 'transport';
+  const isAutoSale = formData.category === 'auto-sale';
   const selectedCategory = CATEGORIES.find(c => c.id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
   
@@ -163,7 +164,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
           )}
         </div>
 
-        {!isTransport && (
+        {!isTransport && !isAutoSale && (
           <>
             <div>
               <Label htmlFor="title">Название предложения *</Label>

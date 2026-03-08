@@ -112,6 +112,8 @@ const TelegramSetup = lazyWithRetry(() => import("./pages/TelegramSetup"));
 const VerifyPhone = lazyWithRetry(() => import("./pages/VerifyPhone"));
 const ImageEditor = lazyWithRetry(() => import("./pages/ImageEditor"));
 const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
+const MyAutoSales = lazyWithRetry(() => import("./pages/MyAutoSales"));
+const MyAutoRequests = lazyWithRetry(() => import("./pages/MyAutoRequests"));
 
 // Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
@@ -284,6 +286,8 @@ const App = () => {
             <Route path="/my-listings" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-auto-sales" element={<MyAutoSales isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/my-auto-requests" element={<MyAutoRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />

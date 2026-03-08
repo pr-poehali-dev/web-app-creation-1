@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -10,6 +10,9 @@ import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
 import NotificationSettings from '@/components/profile/NotificationSettings';
 import EmailNotificationSettings from '@/components/profile/EmailNotificationSettings';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Icon from '@/components/ui/icon';
 import ProfileEditForm from '@/components/profile/ProfileEditForm';
 import ProfilePasswordForm from '@/components/profile/ProfilePasswordForm';
 import { useProfileData } from '@/hooks/useProfileData';
@@ -29,6 +32,7 @@ const USER_TYPE_LABELS: Record<string, string> = {
 
 export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
   useScrollToTop();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const viewingUserId = searchParams.get('userId');
 
@@ -182,6 +186,41 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
           />
 
           {isViewingOwnProfile && <ProfileVerificationCard />}
+
+          {isViewingOwnProfile && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon name="Car" className="h-5 w-5" />
+                  Авто продажа
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid sm:grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 h-auto py-3"
+                  onClick={() => navigate('/my-auto-sales')}
+                >
+                  <Icon name="CarFront" className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="font-medium">Мои продажи авто</div>
+                    <div className="text-xs text-muted-foreground">Управление объявлениями о продаже</div>
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 h-auto py-3"
+                  onClick={() => navigate('/my-auto-requests')}
+                >
+                  <Icon name="Search" className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="font-medium">Мои запросы авто</div>
+                    <div className="text-xs text-muted-foreground">Запросы на покупку автомобилей</div>
+                  </div>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {isViewingOwnProfile && (
             <>

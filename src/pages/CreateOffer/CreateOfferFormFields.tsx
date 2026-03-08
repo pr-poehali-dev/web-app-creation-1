@@ -5,6 +5,7 @@ import OfferLocationSection from '@/components/offer/OfferLocationSection';
 import OfferMediaSection from '@/components/offer/OfferMediaSection';
 import OfferTransportSection from '@/components/offer/OfferTransportSection';
 import OfferAdditionalSection from '@/components/offer/OfferAdditionalSection';
+import OfferAutoSection from '@/components/offer/OfferAutoSection';
 import type { DeliveryType, TransportWaypoint } from '@/types/offer';
 
 interface District {
@@ -48,6 +49,17 @@ interface FormData {
   transportComment: string;
   transportAllDistricts: boolean;
   transportDepartureDateTime?: string;
+  autoMake: string;
+  autoModel: string;
+  autoYear: string;
+  autoBodyType: string;
+  autoColor: string;
+  autoFuelType: string;
+  autoTransmission: string;
+  autoDriveType: string;
+  autoMileage: string;
+  autoPtsRecords: string;
+  autoDescription: string;
 }
 
 interface CreateOfferFormFieldsProps {
@@ -132,7 +144,7 @@ export default function CreateOfferFormFields({
         />
       )}
 
-      {formData.category !== 'transport' && (
+      {formData.category !== 'transport' && formData.category !== 'auto-sale' && (
         <OfferPricingSection
           formData={{
             quantity: formData.quantity,
@@ -150,7 +162,7 @@ export default function CreateOfferFormFields({
         />
       )}
 
-      {formData.category !== 'transport' && (
+      {formData.category !== 'transport' && formData.category !== 'auto-sale' && (
         <OfferLocationSection
           formData={{
             district: formData.district,
@@ -164,6 +176,27 @@ export default function CreateOfferFormFields({
           onInputChange={onInputChange}
           onDistrictToggle={onDistrictToggle}
           onDeliveryTypeToggle={onDeliveryTypeToggle}
+        />
+      )}
+
+      {formData.category === 'auto-sale' && (
+        <OfferAutoSection
+          formData={{
+            autoMake: formData.autoMake,
+            autoModel: formData.autoModel,
+            autoYear: formData.autoYear,
+            autoBodyType: formData.autoBodyType,
+            autoColor: formData.autoColor,
+            autoFuelType: formData.autoFuelType,
+            autoTransmission: formData.autoTransmission,
+            autoDriveType: formData.autoDriveType,
+            autoMileage: formData.autoMileage,
+            autoPtsRecords: formData.autoPtsRecords,
+            autoDescription: formData.autoDescription,
+            pricePerUnit: formData.pricePerUnit,
+            expiryDate: formData.expiryDate,
+          }}
+          onInputChange={onInputChange}
         />
       )}
 
@@ -197,20 +230,22 @@ export default function CreateOfferFormFields({
         </Card>
       )}
 
-      <OfferAdditionalSection
-        formData={{
-          deliveryTime: formData.deliveryTime,
-          deliveryPeriodStart: formData.deliveryPeriodStart,
-          deliveryPeriodEnd: formData.deliveryPeriodEnd,
-          expiryDate: formData.expiryDate,
-          publicationStartDate: formData.publicationStartDate,
-          publicationDuration: formData.publicationDuration,
-          category: formData.category,
-          transportServiceType: formData.transportServiceType,
-          transportDepartureDateTime: formData.transportDepartureDateTime || '',
-        }}
-        onInputChange={onInputChange}
-      />
+      {formData.category !== 'auto-sale' && (
+        <OfferAdditionalSection
+          formData={{
+            deliveryTime: formData.deliveryTime,
+            deliveryPeriodStart: formData.deliveryPeriodStart,
+            deliveryPeriodEnd: formData.deliveryPeriodEnd,
+            expiryDate: formData.expiryDate,
+            publicationStartDate: formData.publicationStartDate,
+            publicationDuration: formData.publicationDuration,
+            category: formData.category,
+            transportServiceType: formData.transportServiceType,
+            transportDepartureDateTime: formData.transportDepartureDateTime || '',
+          }}
+          onInputChange={onInputChange}
+        />
+      )}
     </>
   );
 }

@@ -285,6 +285,9 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 o.transport_service_type, o.transport_route, o.transport_type, o.transport_capacity,
                 o.transport_date_time, o.transport_price, o.transport_price_type,
                 o.transport_negotiable, o.transport_comment, o.transport_waypoints,
+                o.auto_make, o.auto_model, o.auto_year, o.auto_body_type, o.auto_color,
+                o.auto_fuel_type, o.auto_transmission, o.auto_drive_type, o.auto_mileage,
+                o.auto_pts_records, o.auto_description,
                 COALESCE(u.rating, 100.0) as seller_rating
             FROM t_p42562714_web_app_creation_1.offers o
             LEFT JOIN t_p42562714_web_app_creation_1.users u ON o.user_id = u.id
@@ -360,6 +363,17 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 'transportComment': offer.get('transport_comment'),
                 'transportAllDistricts': offer.get('transport_all_districts', False),
                 'transportWaypoints': (offer.get('transport_waypoints') or []),
+                'autoMake': offer.get('auto_make'),
+                'autoModel': offer.get('auto_model'),
+                'autoYear': offer.get('auto_year'),
+                'autoBodyType': offer.get('auto_body_type'),
+                'autoColor': offer.get('auto_color'),
+                'autoFuelType': offer.get('auto_fuel_type'),
+                'autoTransmission': offer.get('auto_transmission'),
+                'autoDriveType': offer.get('auto_drive_type'),
+                'autoMileage': offer.get('auto_mileage'),
+                'autoPtsRecords': offer.get('auto_pts_records'),
+                'autoDescription': offer.get('auto_description'),
                 'seller': {
                     'rating': seller_rating
                 }
@@ -552,6 +566,19 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         offer_dict['transportWaypoints'] = raw_waypoints if isinstance(raw_waypoints, list) else json.loads(raw_waypoints)
     else:
         offer_dict['transportWaypoints'] = []
+
+    # Маппинг авто-полей
+    offer_dict['autoMake'] = offer_dict.pop('auto_make', None)
+    offer_dict['autoModel'] = offer_dict.pop('auto_model', None)
+    offer_dict['autoYear'] = offer_dict.pop('auto_year', None)
+    offer_dict['autoBodyType'] = offer_dict.pop('auto_body_type', None)
+    offer_dict['autoColor'] = offer_dict.pop('auto_color', None)
+    offer_dict['autoFuelType'] = offer_dict.pop('auto_fuel_type', None)
+    offer_dict['autoTransmission'] = offer_dict.pop('auto_transmission', None)
+    offer_dict['autoDriveType'] = offer_dict.pop('auto_drive_type', None)
+    offer_dict['autoMileage'] = offer_dict.pop('auto_mileage', None)
+    offer_dict['autoPtsRecords'] = offer_dict.pop('auto_pts_records', None)
+    offer_dict['autoDescription'] = offer_dict.pop('auto_description', None)
     
     # ⚠️ НЕ кэшируем, чтобы views_count всегда был актуальным
     
@@ -637,6 +664,25 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     transport_waypoints = body.get('transportWaypoints', [])
     transport_waypoints_json = json.dumps(transport_waypoints if transport_waypoints else []).replace("'", "''")
 
+    auto_make_esc = body.get('autoMake', '').replace("'", "''") if body.get('autoMake') else None
+    auto_model_esc = body.get('autoModel', '').replace("'", "''") if body.get('autoModel') else None
+    auto_year_esc = body.get('autoYear', '').replace("'", "''") if body.get('autoYear') else None
+    auto_body_type_esc = body.get('autoBodyType', '').replace("'", "''") if body.get('autoBodyType') else None
+    auto_color_esc = body.get('autoColor', '').replace("'", "''") if body.get('autoColor') else None
+    auto_fuel_type_esc = body.get('autoFuelType', '').replace("'", "''") if body.get('autoFuelType') else None
+    auto_transmission_esc = body.get('autoTransmission', '').replace("'", "''") if body.get('autoTransmission') else None
+    auto_drive_type_esc = body.get('autoDriveType', '').replace("'", "''") if body.get('autoDriveType') else None
+    auto_mileage = body.get('autoMileage')
+    if auto_mileage is not None and auto_mileage != '':
+        try:
+            auto_mileage = int(auto_mileage)
+        except (ValueError, TypeError):
+            auto_mileage = None
+    else:
+        auto_mileage = None
+    auto_pts_records_esc = body.get('autoPtsRecords', '').replace("'", "''") if body.get('autoPtsRecords') else None
+    auto_description_esc = body.get('autoDescription', '').replace("'", "''") if body.get('autoDescription') else None
+
     sql = f"""
         INSERT INTO t_p42562714_web_app_creation_1.offers (
             user_id, title, description, category, subcategory,
@@ -648,7 +694,9 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             transport_all_districts,
             transport_service_type, transport_route, transport_type, transport_capacity,
             transport_date_time, transport_price, transport_price_type, transport_negotiable, transport_comment,
-            expiry_date, transport_waypoints
+            expiry_date, transport_waypoints,
+            auto_make, auto_model, auto_year, auto_body_type, auto_color,
+            auto_fuel_type, auto_transmission, auto_drive_type, auto_mileage, auto_pts_records, auto_description
         ) VALUES (
             '{user_id_esc}', 
             '{title_esc}', 
@@ -688,7 +736,18 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             {transport_negotiable},
             {'NULL' if transport_comment_esc is None else f"'{transport_comment_esc}'"},
             {'NULL' if not expiry_date else f"'{expiry_date}'"},
-            '{transport_waypoints_json}'::jsonb
+            '{transport_waypoints_json}'::jsonb,
+            {'NULL' if auto_make_esc is None else f"'{auto_make_esc}'"},
+            {'NULL' if auto_model_esc is None else f"'{auto_model_esc}'"},
+            {'NULL' if auto_year_esc is None else f"'{auto_year_esc}'"},
+            {'NULL' if auto_body_type_esc is None else f"'{auto_body_type_esc}'"},
+            {'NULL' if auto_color_esc is None else f"'{auto_color_esc}'"},
+            {'NULL' if auto_fuel_type_esc is None else f"'{auto_fuel_type_esc}'"},
+            {'NULL' if auto_transmission_esc is None else f"'{auto_transmission_esc}'"},
+            {'NULL' if auto_drive_type_esc is None else f"'{auto_drive_type_esc}'"},
+            {auto_mileage if auto_mileage is not None else 'NULL'},
+            {'NULL' if auto_pts_records_esc is None else f"'{auto_pts_records_esc}'"},
+            {'NULL' if auto_description_esc is None else f"'{auto_description_esc}'"}
         )
         RETURNING id, created_at
     """
@@ -918,6 +977,26 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             waypoints_json = json.dumps(waypoints_val if waypoints_val is not None else [])
             waypoints_escaped = waypoints_json.replace("'", "''")
             updates.append(f"transport_waypoints = '{waypoints_escaped}'::jsonb")
+
+        for field, col in [
+            ('autoMake', 'auto_make'), ('autoModel', 'auto_model'), ('autoYear', 'auto_year'),
+            ('autoBodyType', 'auto_body_type'), ('autoColor', 'auto_color'),
+            ('autoFuelType', 'auto_fuel_type'), ('autoTransmission', 'auto_transmission'),
+            ('autoDriveType', 'auto_drive_type'), ('autoPtsRecords', 'auto_pts_records'),
+            ('autoDescription', 'auto_description'),
+        ]:
+            if field in body:
+                val = body[field]
+                updates.append(f"{col} = {'NULL' if not val else repr(str(val).replace(chr(39), chr(39)+chr(39)))}")
+        if 'autoMileage' in body:
+            val = body['autoMileage']
+            if val is not None and val != '':
+                try:
+                    updates.append(f"auto_mileage = {int(val)}")
+                except (ValueError, TypeError):
+                    updates.append("auto_mileage = NULL")
+            else:
+                updates.append("auto_mileage = NULL")
 
         # Обработка видео
         if 'video' in body:

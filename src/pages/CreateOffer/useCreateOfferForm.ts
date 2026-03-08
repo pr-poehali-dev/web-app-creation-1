@@ -38,6 +38,17 @@ interface FormData {
   transportNegotiable: boolean;
   transportComment: string;
   transportAllDistricts: boolean;
+  autoMake: string;
+  autoModel: string;
+  autoYear: string;
+  autoBodyType: string;
+  autoColor: string;
+  autoFuelType: string;
+  autoTransmission: string;
+  autoDriveType: string;
+  autoMileage: string;
+  autoPtsRecords: string;
+  autoDescription: string;
 }
 
 export function useCreateOfferForm(editOffer?: Offer) {
@@ -81,6 +92,17 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportNegotiable: editOffer.transportNegotiable || false,
     transportComment: editOffer.transportComment || '',
     transportAllDistricts: editOffer.transportAllDistricts || false,
+    autoMake: editOffer.autoMake || '',
+    autoModel: editOffer.autoModel || '',
+    autoYear: editOffer.autoYear || '',
+    autoBodyType: editOffer.autoBodyType || '',
+    autoColor: editOffer.autoColor || '',
+    autoFuelType: editOffer.autoFuelType || '',
+    autoTransmission: editOffer.autoTransmission || '',
+    autoDriveType: editOffer.autoDriveType || '',
+    autoMileage: editOffer.autoMileage ? String(editOffer.autoMileage) : '',
+    autoPtsRecords: editOffer.autoPtsRecords || '',
+    autoDescription: editOffer.autoDescription || '',
   } : {
     title: '',
     description: '',
@@ -117,6 +139,17 @@ export function useCreateOfferForm(editOffer?: Offer) {
     transportNegotiable: false,
     transportComment: '',
     transportAllDistricts: false,
+    autoMake: '',
+    autoModel: '',
+    autoYear: '',
+    autoBodyType: '',
+    autoColor: '',
+    autoFuelType: '',
+    autoTransmission: '',
+    autoDriveType: '',
+    autoMileage: '',
+    autoPtsRecords: '',
+    autoDescription: '',
   });
 
   const [images, setImages] = useState<File[]>([]);

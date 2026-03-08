@@ -40,6 +40,17 @@ interface SubmitData {
   transportAllDistricts?: boolean;
   transportWaypoints?: unknown;
   expiryDate?: string;
+  autoMake?: string;
+  autoModel?: string;
+  autoYear?: string;
+  autoBodyType?: string;
+  autoColor?: string;
+  autoFuelType?: string;
+  autoTransmission?: string;
+  autoDriveType?: string;
+  autoMileage?: string;
+  autoPtsRecords?: string;
+  autoDescription?: string;
 }
 
 export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = false) {
@@ -170,19 +181,24 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         }
       }
 
+      const isAutoSale = formData.category === 'auto-sale';
+      const autoTitle = isAutoSale
+        ? [formData.autoMake, formData.autoModel, formData.autoYear].filter(Boolean).join(' ')
+        : formData.title;
+
       const offerData = {
-        title: formData.title,
-        description: formData.description,
+        title: isAutoSale ? autoTitle : formData.title,
+        description: isAutoSale ? (formData.autoDescription || autoTitle) : formData.description,
         category: formData.category,
         subcategory: formData.subcategory,
         quantity: formData.category === 'transport'
           ? (Number(formData.transportCapacity) || 0)
-          : Number(formData.quantity),
+          : 1,
         minOrderQuantity: formData.minOrderQuantity ? Number(formData.minOrderQuantity) : undefined,
-        unit: formData.unit,
+        unit: isAutoSale ? 'шт' : formData.unit,
         pricePerUnit: Number(formData.pricePerUnit),
         location: formData.location,
-        district: formData.district,
+        district: formData.district || '',
         fullAddress: formData.fullAddress,
         availableDistricts: formData.availableDistricts,
         availableDeliveryTypes: formData.availableDeliveryTypes,
@@ -201,9 +217,20 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         transportComment: formData.transportComment || undefined,
         transportWaypoints: formData.transportWaypoints || undefined,
         expiryDate: formData.expiryDate || undefined,
+        autoMake: formData.autoMake || undefined,
+        autoModel: formData.autoModel || undefined,
+        autoYear: formData.autoYear || undefined,
+        autoBodyType: formData.autoBodyType || undefined,
+        autoColor: formData.autoColor || undefined,
+        autoFuelType: formData.autoFuelType || undefined,
+        autoTransmission: formData.autoTransmission || undefined,
+        autoDriveType: formData.autoDriveType || undefined,
+        autoMileage: formData.autoMileage ? Number(formData.autoMileage) : undefined,
+        autoPtsRecords: formData.autoPtsRecords || undefined,
+        autoDescription: formData.autoDescription || undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,
-          alt: `${formData.title} - изображение ${index + 1}`,
+          alt: `${isAutoSale ? autoTitle : formData.title} - изображение ${index + 1}`,
         })),
         videoUrl: videoUrl,
         isPremium: false,

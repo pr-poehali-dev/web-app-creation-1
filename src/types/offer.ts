@@ -100,6 +100,17 @@ export interface Offer {
   transportComment?: string;
   transportWaypoints?: TransportWaypoint[];
   transportAllDistricts?: boolean;
+  autoMake?: string;
+  autoModel?: string;
+  autoYear?: string;
+  autoBodyType?: string;
+  autoColor?: string;
+  autoFuelType?: string;
+  autoTransmission?: string;
+  autoDriveType?: string;
+  autoMileage?: number;
+  autoPtsRecords?: string;
+  autoDescription?: string;
 }
 
 export interface TransportWaypoint {

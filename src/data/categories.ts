@@ -62,6 +62,11 @@ export const CATEGORIES: Category[] = [
     subcategories: [],
   },
   {
+    id: 'auto-sale',
+    name: 'Авто продажа',
+    subcategories: [],
+  },
+  {
     id: 'transport',
     name: 'Транспортные услуги',
     subcategories: [],

@@ -1,0 +1,12 @@
+ALTER TABLE offers
+  ADD COLUMN IF NOT EXISTS auto_make TEXT,
+  ADD COLUMN IF NOT EXISTS auto_model TEXT,
+  ADD COLUMN IF NOT EXISTS auto_year TEXT,
+  ADD COLUMN IF NOT EXISTS auto_body_type TEXT,
+  ADD COLUMN IF NOT EXISTS auto_color TEXT,
+  ADD COLUMN IF NOT EXISTS auto_fuel_type TEXT,
+  ADD COLUMN IF NOT EXISTS auto_transmission TEXT,
+  ADD COLUMN IF NOT EXISTS auto_drive_type TEXT,
+  ADD COLUMN IF NOT EXISTS auto_mileage INTEGER,
+  ADD COLUMN IF NOT EXISTS auto_pts_records TEXT,
+  ADD COLUMN IF NOT EXISTS auto_description TEXT;
