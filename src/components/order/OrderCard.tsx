@@ -155,7 +155,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                         {order.sellerAvgReviewRating != null && (
                           <span className="flex items-center gap-0.5">
                             <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                            <span className="font-semibold text-foreground">{order.sellerAvgReviewRating.toFixed(1)}</span>
+                            <span className="font-semibold text-foreground">{Number(order.sellerAvgReviewRating).toFixed(1)}</span>
                           </span>
                         )}
                         {order.sellerRating != null && (
@@ -171,7 +171,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                         {order.buyerAvgReviewRating != null && (
                           <span className="flex items-center gap-0.5">
                             <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                            <span className="font-semibold text-foreground">{order.buyerAvgReviewRating.toFixed(1)}</span>
+                            <span className="font-semibold text-foreground">{Number(order.buyerAvgReviewRating).toFixed(1)}</span>
                           </span>
                         )}
                         {order.buyerRating != null && (
@@ -192,7 +192,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                         {order.sellerAvgReviewRating != null && (
                           <span className="flex items-center gap-0.5">
                             <Icon name="Star" className="w-3 h-3 text-amber-400 fill-amber-400" />
-                            <span className="font-semibold text-foreground">{order.sellerAvgReviewRating.toFixed(1)}</span>
+                            <span className="font-semibold text-foreground">{Number(order.sellerAvgReviewRating).toFixed(1)}</span>
                           </span>
                         )}
                         {order.sellerRating != null && (
