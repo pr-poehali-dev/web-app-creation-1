@@ -25,8 +25,8 @@ export default function SearchableSelect({
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const filtered = options.filter(o =>
-    String(o ?? '').toLowerCase().includes((isOpen ? search : value ?? '').toLowerCase())
+  const filtered = (options ?? []).filter(o =>
+    String(o ?? '').toLowerCase().includes(String(isOpen ? search : value ?? '').toLowerCase())
   );
 
   useEffect(() => {
