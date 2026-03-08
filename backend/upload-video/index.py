@@ -62,25 +62,28 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     """
     Детектирует вероятные зоны гос. номеров на изображении.
     Ищет прямоугольные светлые горизонтальные области с соотношением сторон типичным для номерных знаков.
-    Возвращает список (x, y, w, h) найденных зон.
+    Возвращает список (x, y, w, h) найденных зон в координатах оригинального изображения.
     """
-    from PIL import Image, ImageFilter
+    from PIL import Image
     import math
 
-    width, height = img.size
+    orig_width, orig_height = img.size
+
+    # Масштабируем до небольшого размера для быстрой обработки
+    MAX_DIM = 400
+    scale = min(MAX_DIM / orig_width, MAX_DIM / orig_height, 1.0)
+    work_w = max(1, int(orig_width * scale))
+    work_h = max(1, int(orig_height * scale))
+    small = img.resize((work_w, work_h), Image.BILINEAR)
+
+    width, height = small.size
 
     # Конвертируем в grayscale для анализа
-    gray = img.convert('L')
+    gray = small.convert('L')
 
-    # Параметры поиска номера
-    # Типичное соотношение сторон номерного знака: ~4:1 (ширина:высота)
-    # Размер номера обычно 5-25% от ширины изображения
-    regions = []
-
-    # Сканируем изображение скользящим окном
-    # Шаг = 2% от размера изображения
-    step_x = max(1, width // 50)
-    step_y = max(1, height // 50)
+    # Шаг сканирования = 4% от размера уменьшенного изображения
+    step_x = max(1, width // 25)
+    step_y = max(1, height // 25)
 
     # Типичные размеры номерного знака относительно изображения
     plate_width_ratios = [0.12, 0.18, 0.25]  # 12-25% ширины
@@ -91,7 +94,7 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     for pw_ratio in plate_width_ratios:
         for aspect in plate_aspect_ratios:
             pw = int(width * pw_ratio)
-            ph = max(10, int(pw / aspect))
+            ph = max(4, int(pw / aspect))
 
             for y in range(0, height - ph, step_y):
                 for x in range(0, width - pw, step_x):
@@ -124,7 +127,7 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     if not candidates:
         return []
 
-    # Берём топ-3 кандидата по оценке
+    # Берём топ-10 кандидатов по оценке
     candidates.sort(reverse=True)
     top_candidates = candidates[:10]
 
@@ -133,7 +136,6 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     for score, x, y, w, h in top_candidates:
         is_duplicate = False
         for sx, sy, sw, sh in selected:
-            # Проверяем перекрытие
             overlap_x = max(0, min(x + w, sx + sw) - max(x, sx))
             overlap_y = max(0, min(y + h, sy + sh) - max(y, sy))
             overlap_area = overlap_x * overlap_y
@@ -143,6 +145,11 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
                 break
         if not is_duplicate:
             selected.append((x, y, w, h))
+
+    # Переводим координаты обратно в масштаб оригинального изображения
+    if scale < 1.0:
+        inv = 1.0 / scale
+        selected = [(int(x * inv), int(y * inv), int(w * inv), int(h * inv)) for x, y, w, h in selected]
 
     return selected[:3]  # максимум 3 зоны
 
