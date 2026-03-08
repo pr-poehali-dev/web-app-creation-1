@@ -58,10 +58,21 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
 
 
+def fix_image_orientation(img):
+    """
+    Исправляет ориентацию изображения по EXIF-тегу (актуально для фото с телефона).
+    """
+    try:
+        from PIL import ImageOps
+        return ImageOps.exif_transpose(img)
+    except Exception:
+        return img
+
+
 def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     """
     Детектирует вероятные зоны гос. номеров на изображении.
-    Ищет прямоугольные светлые горизонтальные области с соотношением сторон типичным для номерных знаков.
+    Ищет только в нижней половине кадра (где обычно находится номер авто).
     Возвращает список (x, y, w, h) найденных зон в координатах оригинального изображения.
     """
     from PIL import Image
@@ -70,68 +81,72 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     orig_width, orig_height = img.size
 
     # Масштабируем до небольшого размера для быстрой обработки
-    MAX_DIM = 400
+    MAX_DIM = 600
     scale = min(MAX_DIM / orig_width, MAX_DIM / orig_height, 1.0)
     work_w = max(1, int(orig_width * scale))
     work_h = max(1, int(orig_height * scale))
     small = img.resize((work_w, work_h), Image.BILINEAR)
 
     width, height = small.size
-
-    # Конвертируем в grayscale для анализа
     gray = small.convert('L')
 
-    # Шаг сканирования = 4% от размера уменьшенного изображения
-    step_x = max(1, width // 25)
-    step_y = max(1, height // 25)
+    # Номер авто всегда в нижней части — сканируем только нижние 55% изображения
+    y_start = int(height * 0.45)
 
-    # Типичные размеры номерного знака относительно изображения
-    plate_width_ratios = [0.12, 0.18, 0.25]  # 12-25% ширины
-    plate_aspect_ratios = [4.0, 4.5, 5.2]    # соотношение ш:в
+    step_x = max(1, width // 30)
+    step_y = max(1, height // 30)
+
+    # Типичные размеры российского номерного знака (широкий и узкий)
+    # Стандарт: 520x112 мм → соотношение ~4.6:1
+    plate_configs = [
+        (0.15, 4.2), (0.15, 4.8), (0.15, 5.5),
+        (0.20, 4.2), (0.20, 4.8), (0.20, 5.5),
+        (0.25, 4.2), (0.25, 4.8), (0.25, 5.5),
+        (0.30, 4.2), (0.30, 4.8),
+    ]
 
     candidates = []
 
-    for pw_ratio in plate_width_ratios:
-        for aspect in plate_aspect_ratios:
-            pw = int(width * pw_ratio)
-            ph = max(4, int(pw / aspect))
+    for pw_ratio, aspect in plate_configs:
+        pw = int(width * pw_ratio)
+        ph = max(5, int(pw / aspect))
 
-            for y in range(0, height - ph, step_y):
-                for x in range(0, width - pw, step_x):
-                    region = gray.crop((x, y, x + pw, y + ph))
-                    region_data = list(region.getdata())
+        if pw < 10 or ph < 5:
+            continue
 
-                    if not region_data:
-                        continue
+        for y in range(y_start, height - ph, step_y):
+            for x in range(0, width - pw, step_x):
+                region = gray.crop((x, y, x + pw, y + ph))
+                region_data = list(region.getdata())
 
-                    # Средняя яркость — номерной знак обычно светлый
-                    avg_brightness = sum(region_data) / len(region_data)
+                if not region_data:
+                    continue
 
-                    # Контрастность — на номере есть тёмные символы
-                    min_val = min(region_data)
-                    max_val = max(region_data)
-                    contrast = max_val - min_val
+                avg_brightness = sum(region_data) / len(region_data)
+                min_val = min(region_data)
+                max_val = max(region_data)
+                contrast = max_val - min_val
+                variance = sum((p - avg_brightness) ** 2 for p in region_data) / len(region_data)
 
-                    # Дисперсия — неравномерная из-за символов
-                    variance = sum((p - avg_brightness) ** 2 for p in region_data) / len(region_data)
+                # Номер: светлый фон (>150), высокий контраст (>90), хорошая дисперсия
+                is_bright = avg_brightness > 150
+                has_contrast = contrast > 90
+                has_variance = variance > 1000
 
-                    # Критерии номерного знака
-                    is_bright = avg_brightness > 140        # достаточно светлый фон
-                    has_contrast = contrast > 80            # есть тёмные символы
-                    has_variance = variance > 800           # неравномерный (символы)
-
-                    if is_bright and has_contrast and has_variance:
-                        score = avg_brightness * 0.3 + contrast * 0.4 + math.sqrt(variance) * 0.3
-                        candidates.append((score, x, y, pw, ph))
+                if is_bright and has_contrast and has_variance:
+                    # Дополнительный штраф за слишком высокое расположение (небо, крыша)
+                    y_position_ratio = y / height  # 0 = верх, 1 = низ
+                    position_bonus = y_position_ratio * 50  # чем ниже — тем лучше
+                    score = avg_brightness * 0.2 + contrast * 0.5 + math.sqrt(variance) * 0.3 + position_bonus
+                    candidates.append((score, x, y, pw, ph))
 
     if not candidates:
         return []
 
-    # Берём топ-10 кандидатов по оценке
     candidates.sort(reverse=True)
-    top_candidates = candidates[:10]
+    top_candidates = candidates[:15]
 
-    # NMS (non-maximum suppression) — убираем перекрывающиеся зоны
+    # NMS — убираем перекрывающиеся зоны
     selected = []
     for score, x, y, w, h in top_candidates:
         is_duplicate = False
@@ -140,7 +155,7 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
             overlap_y = max(0, min(y + h, sy + sh) - max(y, sy))
             overlap_area = overlap_x * overlap_y
             min_area = min(w * h, sw * sh)
-            if min_area > 0 and overlap_area / min_area > 0.4:
+            if min_area > 0 and overlap_area / min_area > 0.3:
                 is_duplicate = True
                 break
         if not is_duplicate:
@@ -151,7 +166,7 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
         inv = 1.0 / scale
         selected = [(int(x * inv), int(y * inv), int(w * inv), int(h * inv)) for x, y, w, h in selected]
 
-    return selected[:3]  # максимум 3 зоны
+    return selected[:2]  # максимум 2 зоны (перед + зад)
 
 
 def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes]:
@@ -163,9 +178,19 @@ def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes
         from PIL import Image, ImageDraw, ImageFont
 
         img = Image.open(io.BytesIO(image_data))
+
+        # Исправляем ориентацию по EXIF (критично для фото с телефона)
+        img = fix_image_orientation(img)
+
         # Конвертируем в RGB для рисования (на случай RGBA/P)
         if img.mode not in ('RGB', 'RGBA'):
             img = img.convert('RGB')
+
+        # Сжимаем очень большие изображения чтобы не было таймаута
+        max_side = 2000
+        if img.width > max_side or img.height > max_side:
+            img.thumbnail((max_side, max_side), Image.LANCZOS)
+            print(f'Image resized to {img.width}x{img.height} for processing')
 
         regions = detect_license_plate_regions(img)
 
