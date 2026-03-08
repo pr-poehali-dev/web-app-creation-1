@@ -48,6 +48,17 @@ interface OfferInfoCardProps {
   transportNegotiable?: boolean;
   transportComment?: string;
   transportWaypoints?: TransportWaypoint[];
+  autoMake?: string;
+  autoModel?: string;
+  autoYear?: string;
+  autoBodyType?: string;
+  autoColor?: string;
+  autoFuelType?: string;
+  autoTransmission?: string;
+  autoDriveType?: string;
+  autoMileage?: number;
+  autoPtsRecords?: string;
+  autoDescription?: string;
 }
 
 export default function OfferInfoCard({
@@ -90,6 +101,17 @@ export default function OfferInfoCard({
   transportNegotiable,
   transportComment,
   transportWaypoints,
+  autoMake,
+  autoModel,
+  autoYear,
+  autoBodyType,
+  autoColor,
+  autoFuelType,
+  autoTransmission,
+  autoDriveType,
+  autoMileage,
+  autoPtsRecords,
+  autoDescription,
 }: OfferInfoCardProps) {
   // Найти название категории
   const categoryData = CATEGORIES.find(c => c.id === category);
@@ -144,6 +166,17 @@ export default function OfferInfoCard({
     transportComment,
     transportRoute,
     availableDistricts,
+    autoMake,
+    autoModel,
+    autoYear,
+    autoBodyType,
+    autoColor,
+    autoFuelType,
+    autoTransmission,
+    autoDriveType,
+    autoMileage,
+    autoPtsRecords,
+    autoDescription,
   };
 
   return (

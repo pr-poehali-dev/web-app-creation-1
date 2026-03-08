@@ -252,6 +252,17 @@ export default function OfferDetailContent({
                 transportNegotiable={offer.transportNegotiable}
                 transportComment={offer.transportComment}
                 transportWaypoints={offer.transportWaypoints}
+                autoMake={offer.autoMake}
+                autoModel={offer.autoModel}
+                autoYear={offer.autoYear}
+                autoBodyType={offer.autoBodyType}
+                autoColor={offer.autoColor}
+                autoFuelType={offer.autoFuelType}
+                autoTransmission={offer.autoTransmission}
+                autoDriveType={offer.autoDriveType}
+                autoMileage={offer.autoMileage}
+                autoPtsRecords={offer.autoPtsRecords}
+                autoDescription={offer.autoDescription}
               />
             </div>
           </div>
@@ -343,6 +354,17 @@ export default function OfferDetailContent({
                 transportNegotiable={offer.transportNegotiable}
                 transportComment={offer.transportComment}
                 transportWaypoints={offer.transportWaypoints}
+                autoMake={offer.autoMake}
+                autoModel={offer.autoModel}
+                autoYear={offer.autoYear}
+                autoBodyType={offer.autoBodyType}
+                autoColor={offer.autoColor}
+                autoFuelType={offer.autoFuelType}
+                autoTransmission={offer.autoTransmission}
+                autoDriveType={offer.autoDriveType}
+                autoMileage={offer.autoMileage}
+                autoPtsRecords={offer.autoPtsRecords}
+                autoDescription={offer.autoDescription}
               />
             </div>
           </div>

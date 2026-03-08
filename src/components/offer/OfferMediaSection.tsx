@@ -73,8 +73,8 @@ export default function OfferMediaSection({
           </div>
         )}
         <div>
-          <Label htmlFor="images" className="flex items-center gap-2">
-            Фотографии (до 10)
+          <Label className="flex items-center gap-2">
+            {isAutoSale ? 'Фотографии (до 10, только камера)' : 'Фотографии (до 10)'}
             {isImageUploading && (
               <span className="inline-flex items-center gap-1 text-primary text-xs font-normal">
                 <Icon name="Loader2" className="h-3 w-3 animate-spin" />
@@ -89,15 +89,37 @@ export default function OfferMediaSection({
             )}
           </Label>
           <div className="mt-2">
-            <Input
-              id="images"
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              disabled={images.length >= 10 || isImageUploading}
-              className={imageUploadSuccess ? 'border-green-500 bg-green-50' : ''}
-            />
+            {isAutoSale ? (
+              <>
+                <input
+                  id="images-camera"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  multiple
+                  onChange={handleImageUpload}
+                  disabled={images.length >= 10 || isImageUploading}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="images-camera"
+                  className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border text-sm font-medium transition-colors ${images.length >= 10 || isImageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-accent'} ${imageUploadSuccess ? 'border-green-500 bg-green-50' : 'border-input bg-background'}`}
+                >
+                  <Icon name="Camera" className="h-4 w-4" />
+                  Сфотографировать
+                </label>
+              </>
+            ) : (
+              <Input
+                id="images"
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageUpload}
+                disabled={images.length >= 10 || isImageUploading}
+                className={imageUploadSuccess ? 'border-green-500 bg-green-50' : ''}
+              />
+            )}
           </div>
           
           {imagePreviews.length > 0 && (

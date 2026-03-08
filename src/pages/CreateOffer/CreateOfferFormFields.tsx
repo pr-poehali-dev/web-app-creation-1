@@ -240,19 +240,22 @@ export default function CreateOfferFormFields({
 
       {isUploadingImages && imageUploadTotal > 0 && (
         <Card className="border-primary bg-primary/5">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 pb-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">
-                  Обрабатываем фото {imageUploadCurrent} из {imageUploadTotal}...
-                </span>
-                <span className="text-muted-foreground">
-                  {Math.round((imageUploadCurrent / imageUploadTotal) * 100)}%
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  <span className="font-medium">
+                    Отправляем на публикацию...
+                  </span>
+                </div>
+                <span className="text-muted-foreground text-xs">
+                  фото {imageUploadCurrent} из {imageUploadTotal}
                 </span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="bg-primary h-full transition-all duration-300 ease-out"
+                  className="bg-primary h-full transition-all duration-500 ease-out"
                   style={{ width: `${Math.round((imageUploadCurrent / imageUploadTotal) * 100)}%` }}
                 />
               </div>

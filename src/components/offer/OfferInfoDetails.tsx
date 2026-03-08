@@ -29,6 +29,17 @@ interface OfferInfoDetailsProps {
   transportPriceType?: string;
   transportComment?: string;
   transportRoute?: string;
+  autoMake?: string;
+  autoModel?: string;
+  autoYear?: string;
+  autoBodyType?: string;
+  autoColor?: string;
+  autoFuelType?: string;
+  autoTransmission?: string;
+  autoDriveType?: string;
+  autoMileage?: number;
+  autoPtsRecords?: string;
+  autoDescription?: string;
 }
 
 export default function OfferInfoDetails({
@@ -54,8 +65,20 @@ export default function OfferInfoDetails({
   transportPriceType,
   transportComment,
   transportRoute,
+  autoMake,
+  autoModel,
+  autoYear,
+  autoBodyType,
+  autoColor,
+  autoFuelType,
+  autoTransmission,
+  autoDriveType,
+  autoMileage,
+  autoPtsRecords,
+  autoDescription,
 }: OfferInfoDetailsProps) {
   const isTransport = category === 'transport';
+  const isAutoSale = category === 'auto-sale';
 
   const activeWaypoints = transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0);
 
@@ -75,6 +98,35 @@ export default function OfferInfoDetails({
           createdAt={createdAt}
           expiryDate={expiryDate}
         />
+      ) : isAutoSale ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            {autoMake && <div><p className="text-xs text-muted-foreground">Марка</p><p className="font-medium">{autoMake}</p></div>}
+            {autoModel && <div><p className="text-xs text-muted-foreground">Модель</p><p className="font-medium">{autoModel}</p></div>}
+            {autoYear && <div><p className="text-xs text-muted-foreground">Год выпуска</p><p className="font-medium">{autoYear}</p></div>}
+            {autoBodyType && <div><p className="text-xs text-muted-foreground">Тип кузова</p><p className="font-medium">{autoBodyType}</p></div>}
+            {autoColor && <div><p className="text-xs text-muted-foreground">Цвет</p><p className="font-medium">{autoColor}</p></div>}
+            {autoFuelType && <div><p className="text-xs text-muted-foreground">Топливо</p><p className="font-medium">{autoFuelType}</p></div>}
+            {autoTransmission && <div><p className="text-xs text-muted-foreground">КПП</p><p className="font-medium">{autoTransmission}</p></div>}
+            {autoDriveType && <div><p className="text-xs text-muted-foreground">Привод</p><p className="font-medium">{autoDriveType}</p></div>}
+            {autoMileage !== undefined && autoMileage !== null && <div><p className="text-xs text-muted-foreground">Пробег</p><p className="font-medium">{autoMileage.toLocaleString('ru-RU')} км</p></div>}
+            {autoPtsRecords && <div><p className="text-xs text-muted-foreground">Записей в ПТС</p><p className="font-medium">{autoPtsRecords}</p></div>}
+          </div>
+          {autoDescription && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-sm font-medium mb-1">Описание</p>
+                <p className="text-xs text-muted-foreground whitespace-pre-line">{autoDescription}</p>
+              </div>
+            </>
+          )}
+          <Separator />
+          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+            <div><p>Дата создания</p><p className="font-medium text-foreground">{formatDateWithTimezone(createdAt)}</p></div>
+            {expiryDate && <div><p>Публикация до</p><p className="font-medium text-foreground">{formatDateWithTimezone(expiryDate)}</p></div>}
+          </div>
+        </div>
       ) : category !== 'utilities' && (
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
