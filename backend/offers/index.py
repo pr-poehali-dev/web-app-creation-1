@@ -680,7 +680,7 @@ def create_offer(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             auto_mileage = None
     else:
         auto_mileage = None
-    auto_pts_records_esc = body.get('autoPtsRecords', '').replace("'", "''") if body.get('autoPtsRecords') else None
+    auto_pts_records_esc = str(body.get('autoPtsRecords', '')).replace("'", "''") if body.get('autoPtsRecords') is not None and body.get('autoPtsRecords') != '' else None
     auto_description_esc = body.get('autoDescription', '').replace("'", "''") if body.get('autoDescription') else None
 
     sql = f"""
