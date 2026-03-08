@@ -226,7 +226,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         autoTransmission: formData.autoTransmission || undefined,
         autoDriveType: formData.autoDriveType || undefined,
         autoMileage: formData.autoMileage ? Number(formData.autoMileage) : undefined,
-        autoPtsRecords: formData.autoPtsRecords || undefined,
+        autoPtsRecords: formData.autoPtsRecords ? parseInt(formData.autoPtsRecords) || undefined : undefined,
         autoDescription: formData.autoDescription || undefined,
         images: uploadedImageUrls.map((url, index) => ({
           url,

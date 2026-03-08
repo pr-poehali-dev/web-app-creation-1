@@ -195,6 +195,7 @@ export default function CreateOfferFormFields({
             autoDescription: formData.autoDescription,
             pricePerUnit: formData.pricePerUnit,
             expiryDate: formData.expiryDate,
+            fullAddress: formData.fullAddress,
           }}
           onInputChange={onInputChange}
         />

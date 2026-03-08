@@ -290,7 +290,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
                   (formData.category === 'transport'
                     ? !formData.transportServiceType || !formData.transportRoute || !formData.transportType || !formData.publicationStartDate || !formData.publicationDuration
                     : formData.category === 'auto-sale'
-                      ? !formData.autoMake || !formData.autoModel || !formData.autoYear || !formData.autoBodyType || !formData.autoColor || !formData.autoPtsRecords || !formData.pricePerUnit || !formData.expiryDate
+                      ? !formData.autoMake || !formData.autoModel || !formData.autoYear || !formData.autoBodyType || !formData.autoColor || !formData.autoPtsRecords || !formData.pricePerUnit || !formData.expiryDate || !formData.fullAddress
                       : !formData.title || !formData.district)
                 }
               >

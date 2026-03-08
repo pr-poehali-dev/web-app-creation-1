@@ -29,6 +29,7 @@ interface AutoFormData {
   autoDescription: string;
   pricePerUnit: string;
   expiryDate: string;
+  fullAddress: string;
 }
 
 interface OfferAutoSectionProps {
@@ -249,12 +250,26 @@ export default function OfferAutoSection({ formData, onInputChange }: OfferAutoS
             <Label htmlFor="autoPricePerUnit">Цена (₽) *</Label>
             <Input
               id="autoPricePerUnit"
-              type="number"
-              min="0"
-              value={formData.pricePerUnit}
-              onChange={e => onInputChange('pricePerUnit', e.target.value)}
-              placeholder="Укажите цену в рублях"
+              type="text"
+              inputMode="numeric"
+              value={formData.pricePerUnit ? Number(formData.pricePerUnit.replace(/\s/g, '')).toLocaleString('ru-RU') : ''}
+              onChange={e => {
+                const raw = e.target.value.replace(/\s/g, '').replace(/[^\d]/g, '');
+                onInputChange('pricePerUnit', raw);
+              }}
+              placeholder="Например: 700 000"
               required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="autoFullAddress">Местонахождение автомобиля *</Label>
+            <Input
+              id="autoFullAddress"
+              type="text"
+              value={formData.fullAddress}
+              onChange={e => onInputChange('fullAddress', e.target.value)}
+              placeholder="Например: Якутск, ул. Ленина, 10"
             />
           </div>
 
