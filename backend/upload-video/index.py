@@ -74,35 +74,38 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     Детектирует вероятные зоны гос. номеров на изображении.
     Ищет только в нижней половине кадра (где обычно находится номер авто).
     Возвращает список (x, y, w, h) найденных зон в координатах оригинального изображения.
+    Использует numpy для быстрых матричных вычислений.
     """
     from PIL import Image
     import math
+    import numpy as np
 
     orig_width, orig_height = img.size
 
-    # Масштабируем до небольшого размера для быстрой обработки
-    MAX_DIM = 600
+    # Уменьшаем рабочий размер до 400px — достаточно для детекции, в 2× быстрее чем 600
+    MAX_DIM = 400
     scale = min(MAX_DIM / orig_width, MAX_DIM / orig_height, 1.0)
     work_w = max(1, int(orig_width * scale))
     work_h = max(1, int(orig_height * scale))
     small = img.resize((work_w, work_h), Image.BILINEAR)
 
     width, height = small.size
-    gray = small.convert('L')
+    # Конвертируем в numpy-массив сразу — быстрее чем crop+getdata на каждой итерации
+    gray_arr = np.array(small.convert('L'), dtype=np.float32)
 
     # Номер авто всегда в нижней части — сканируем только нижние 55% изображения
     y_start = int(height * 0.45)
 
-    step_x = max(1, width // 30)
-    step_y = max(1, height // 30)
+    # Крупный шаг — достаточно для детекции, в 2-3× меньше итераций
+    step_x = max(1, width // 18)
+    step_y = max(1, height // 18)
 
-    # Типичные размеры российского номерного знака (широкий и узкий)
-    # Стандарт: 520x112 мм → соотношение ~4.6:1
+    # Сокращённый набор конфигураций: оставляем 3 репрезентативных соотношения
+    # (широкий, стандартный, узкий номер). Было 11 — стало 3, в 3.6× быстрее.
     plate_configs = [
-        (0.15, 4.2), (0.15, 4.8), (0.15, 5.5),
-        (0.20, 4.2), (0.20, 4.8), (0.20, 5.5),
-        (0.25, 4.2), (0.25, 4.8), (0.25, 5.5),
-        (0.30, 4.2), (0.30, 4.8),
+        (0.18, 4.2),  # небольшой номер
+        (0.22, 4.8),  # стандарт (520x112 мм ≈ 4.6:1)
+        (0.28, 5.5),  # крупный / квадратный кадр
     ]
 
     candidates = []
@@ -111,34 +114,31 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
         pw = int(width * pw_ratio)
         ph = max(5, int(pw / aspect))
 
-        if pw < 10 or ph < 5:
+        if pw < 8 or ph < 4:
             continue
 
         for y in range(y_start, height - ph, step_y):
             for x in range(0, width - pw, step_x):
-                region = gray.crop((x, y, x + pw, y + ph))
-                region_data = list(region.getdata())
+                # numpy-срез вместо crop+getdata — на порядок быстрее
+                region = gray_arr[y:y + ph, x:x + pw]
 
-                if not region_data:
+                avg_brightness = region.mean()
+                # Быстрая проверка: отсекаем тёмные зоны сразу
+                if avg_brightness <= 150:
                     continue
 
-                avg_brightness = sum(region_data) / len(region_data)
-                min_val = min(region_data)
-                max_val = max(region_data)
-                contrast = max_val - min_val
-                variance = sum((p - avg_brightness) ** 2 for p in region_data) / len(region_data)
+                contrast = float(region.max() - region.min())
+                if contrast <= 90:
+                    continue
 
-                # Номер: светлый фон (>150), высокий контраст (>90), хорошая дисперсия
-                is_bright = avg_brightness > 150
-                has_contrast = contrast > 90
-                has_variance = variance > 1000
+                variance = float(region.var())
+                if variance <= 1000:
+                    continue
 
-                if is_bright and has_contrast and has_variance:
-                    # Дополнительный штраф за слишком высокое расположение (небо, крыша)
-                    y_position_ratio = y / height  # 0 = верх, 1 = низ
-                    position_bonus = y_position_ratio * 50  # чем ниже — тем лучше
-                    score = avg_brightness * 0.2 + contrast * 0.5 + math.sqrt(variance) * 0.3 + position_bonus
-                    candidates.append((score, x, y, pw, ph))
+                y_position_ratio = y / height
+                position_bonus = y_position_ratio * 50
+                score = avg_brightness * 0.2 + contrast * 0.5 + math.sqrt(variance) * 0.3 + position_bonus
+                candidates.append((score, x, y, pw, ph))
 
     if not candidates:
         return []
