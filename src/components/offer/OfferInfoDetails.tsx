@@ -233,7 +233,7 @@ export default function OfferInfoDetails({
           </div>
           {expiryDate && (
             <div>
-              <p>Срок годности</p>
+              <p>{isAutoSale ? 'Актуально до:' : 'Срок годности'}</p>
               <p className="font-medium text-foreground">
                 {formatDateWithTimezone(expiryDate)}
               </p>
