@@ -9,14 +9,18 @@ export interface Nasleg {
 }
 
 export const NASLEGS: Nasleg[] = [
-  // г. Якутск — приоритетная запись (проверяется первой, радиус покрывает весь город)
-  { id: 'yakutsk-city-nasleg', name: 'Якутск', districtId: 'yakutsk-city', type: 'settlement', latitude: 62.0355, longitude: 129.6755, radius: 20 },
+  // г. Якутск — приоритетная запись (радиус покрывает весь город включая пригороды)
+  { id: 'yakutsk-city-nasleg', name: 'Якутск', districtId: 'yakutsk-city', type: 'settlement', latitude: 62.0355, longitude: 129.6755, radius: 35 },
+  // Восточная часть Якутска (Залог, Птицефабрика и др.)
+  { id: 'yakutsk-east', name: 'Якутск', districtId: 'yakutsk-city', type: 'settlement', latitude: 62.0100, longitude: 129.8500, radius: 15 },
+  // Северная часть Якутска (Марха, Жатай)
+  { id: 'yakutsk-north', name: 'Якутск', districtId: 'yakutsk-city', type: 'settlement', latitude: 62.1500, longitude: 129.6500, radius: 15 },
 
   // Мегино-Кангаласский улус
   { id: 'megino-mayya', name: 'Мегино-Майя', districtId: 'yakutsk-megino-kangalassky', type: 'nasleg', latitude: 61.7000, longitude: 130.5000, radius: 15 },
   { id: 'mayya', name: 'Майя', districtId: 'yakutsk-megino-kangalassky', type: 'nasleg', latitude: 61.6500, longitude: 130.4000, radius: 15 },
   { id: 'tehtyur', name: 'Тёхтюр', districtId: 'yakutsk-megino-kangalassky', type: 'nasleg', latitude: 61.8000, longitude: 130.6000, radius: 15 },
-  { id: 'nijniy-bestyakh', name: 'Нижний Бестях', districtId: 'yakutsk-megino-kangalassky', type: 'settlement', latitude: 62.0000, longitude: 129.9000, radius: 5 },
+  { id: 'nijniy-bestyakh', name: 'Нижний Бестях', districtId: 'yakutsk-megino-kangalassky', type: 'settlement', latitude: 62.0000, longitude: 130.0500, radius: 8 },
   
   // Хангаласский улус
   { id: 'pokrovsk', name: 'Покровск', districtId: 'yakutsk-khangalassky', type: 'settlement', latitude: 61.4833, longitude: 129.1500, radius: 10 },
