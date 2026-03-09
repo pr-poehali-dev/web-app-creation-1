@@ -20,8 +20,9 @@ export function searchOffers(offers: Offer[], query: string): Offer[] {
   }
 
   return offers.filter(offer => {
+    const autoPrefix = offer.category === 'auto-sale' ? 'авто' : '';
     const searchableText = normalizeSearchString(
-      `${offer.title} ${offer.description} ${offer.seller.name}`
+      `${autoPrefix} ${offer.title} ${offer.description} ${offer.seller.name} ${offer.autoMake ?? ''} ${offer.autoModel ?? ''} ${offer.autoYear ?? ''}`
     );
 
     return queryWords.every(word => searchableText.includes(word));
