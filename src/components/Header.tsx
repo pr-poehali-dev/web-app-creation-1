@@ -292,11 +292,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                     if (selectedDistricts.length === 0) return 'Все районы';
                     if (selectedDistricts.length === districts.length) return 'Все районы';
                     
-                    const detectedDistrict = detectedDistrictId 
-                      ? districts.find(d => d.id === detectedDistrictId)
-                      : null;
-                    
-                    const districtName = detectedDistrict?.name || districts.find(d => d.id === selectedDistricts[0])?.name || 'Район';
+                    const districtName = districts.find(d => d.id === selectedDistricts[0])?.name || 'Район';
                     
                     if (selectedDistricts.length === 1) {
                       return districtName;

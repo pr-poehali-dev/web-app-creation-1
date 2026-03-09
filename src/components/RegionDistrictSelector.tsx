@@ -111,27 +111,24 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
     // Проверка размера экрана (компьютер vs мобильный)
     const isMobile = window.innerWidth < 768;
     
-    if (detectedCity) {
-      if (selectedDistricts.length > 0) {
-        // На компьютере показываем только город, на мобильном с индикатором
-        return isMobile ? `${detectedCity} +${selectedDistricts.length}` : detectedCity;
+    // Если пользователь выбрал районы вручную — показываем их, игнорируем detectedCity
+    if (selectedDistricts.length > 0) {
+      const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
+      if (!firstDistrict) return detectedCity || null;
+      
+      if (selectedDistricts.length === 1) {
+        return firstDistrict.name;
       }
+      
+      return isMobile ? `${firstDistrict.name} +${selectedDistricts.length - 1}` : firstDistrict.name;
+    }
+    
+    // Если районы не выбраны — показываем авто-определённый город
+    if (detectedCity) {
       return detectedCity;
     }
     
-    if (selectedDistricts.length === 0) {
-      return null;
-    }
-    
-    const firstDistrict = districts.find(d => d.id === selectedDistricts[0]);
-    if (!firstDistrict) return null;
-    
-    if (selectedDistricts.length === 1) {
-      return firstDistrict.name;
-    }
-    
-    // На компьютере показываем только первый район, на мобильном с индикатором
-    return isMobile ? `${firstDistrict.name} +${selectedDistricts.length - 1}` : firstDistrict.name;
+    return null;
   };
 
   return (
