@@ -69,6 +69,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     autoMileage: offer.autoMileage?.toString() || '',
     autoPtsRecords: offer.autoPtsRecords || '',
     autoDescription: offer.autoDescription || '',
+    district: offer.district || '',
   });
   const [images, setImages] = useState<OfferImage[]>(offer.images || []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -157,6 +158,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         autoMileage: editData.autoMileage ? parseInt(editData.autoMileage) : undefined,
         autoPtsRecords: editData.autoPtsRecords || undefined,
         autoDescription: editData.autoDescription || undefined,
+        district: editData.district || offer.district,
       } as Parameters<typeof offersAPI.updateOffer>[1]);
 
       localStorage.removeItem('cached_offers');

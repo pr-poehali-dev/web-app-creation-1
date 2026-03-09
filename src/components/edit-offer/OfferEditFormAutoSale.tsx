@@ -13,6 +13,7 @@ import {
   AUTO_PTS_RECORDS,
   YEAR_OPTIONS,
 } from '@/data/autoData';
+import { DISTRICTS } from '@/data/districts';
 import type { Offer } from '@/types/offer';
 
 interface EditData {
@@ -40,6 +41,7 @@ interface EditData {
   autoMileage: string;
   autoPtsRecords: string;
   autoDescription: string;
+  district: string;
 }
 
 interface OfferEditFormAutoSaleProps {
@@ -82,6 +84,22 @@ export default function OfferEditFormAutoSale({ offer, editData, isSaving, onEdi
           min="0"
           step="1"
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="district">Местонахождение</Label>
+        <select
+          id="district"
+          className="w-full border rounded-md px-3 py-2 text-sm bg-background text-foreground"
+          value={editData.district}
+          onChange={(e) => onEditDataChange({ ...editData, district: e.target.value })}
+          disabled={isSaving}
+        >
+          <option value="">— Выберите район —</option>
+          {DISTRICTS.map(d => (
+            <option key={d.id} value={d.id}>{d.name}</option>
+          ))}
+        </select>
       </div>
 
       <div className="pt-1 font-medium text-sm text-muted-foreground">Основная информация</div>

@@ -33,6 +33,7 @@ interface EditData {
   autoMileage: string;
   autoPtsRecords: string;
   autoDescription: string;
+  district: string;
 }
 
 interface OfferInfoFieldsProps {

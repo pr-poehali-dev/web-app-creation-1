@@ -121,6 +121,16 @@ export default function OfferInfoDetails({
               </div>
             </>
           )}
+          {districtName && (
+            <>
+              <Separator />
+              <div>
+                <p className="text-xs text-muted-foreground mb-0.5">Местонахождение</p>
+                <p className="text-sm font-medium">{districtName}</p>
+                {cityName && <p className="text-xs text-muted-foreground mt-0.5">{cityName}</p>}
+              </div>
+            </>
+          )}
           <Separator />
           <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
             <div><p>Дата создания</p><p className="font-medium text-foreground">{formatDateWithTimezone(createdAt)}</p></div>
