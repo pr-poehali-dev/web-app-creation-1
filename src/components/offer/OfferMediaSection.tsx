@@ -74,7 +74,7 @@ export default function OfferMediaSection({
         )}
         <div>
           <Label className="flex items-center gap-2">
-            {isAutoSale ? 'Фотографии (до 10, только камера)' : 'Фотографии (до 10)'}
+            {'Фотографии (до 10)'}
             {isImageUploading && (
               <span className="inline-flex items-center gap-1 text-primary text-xs font-normal">
                 <Icon name="Loader2" className="h-3 w-3 animate-spin" />
@@ -90,7 +90,7 @@ export default function OfferMediaSection({
           </Label>
           <div className="mt-2">
             {isAutoSale ? (
-              <>
+              <div className="flex gap-2 flex-wrap">
                 <input
                   id="images-camera"
                   type="file"
@@ -106,9 +106,25 @@ export default function OfferMediaSection({
                   className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border text-sm font-medium transition-colors ${images.length >= 10 || isImageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-accent'} ${imageUploadSuccess ? 'border-green-500 bg-green-50' : 'border-input bg-background'}`}
                 >
                   <Icon name="Camera" className="h-4 w-4" />
-                  Сфотографировать
+                  Камера
                 </label>
-              </>
+                <input
+                  id="images-gallery"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  disabled={images.length >= 10 || isImageUploading}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="images-gallery"
+                  className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border text-sm font-medium transition-colors ${images.length >= 10 || isImageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-accent'} ${imageUploadSuccess ? 'border-green-500 bg-green-50' : 'border-input bg-background'}`}
+                >
+                  <Icon name="Images" className="h-4 w-4" />
+                  Галерея
+                </label>
+              </div>
             ) : (
               <Input
                 id="images"
