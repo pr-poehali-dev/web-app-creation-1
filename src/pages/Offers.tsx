@@ -258,20 +258,25 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         return offerDistricts.some(d => targetDistricts.includes(d));
       };
 
+      const isAutoSaleVisible = (offer: { category?: string }) => offer.category === 'auto-sale';
+
       if (selectedDistricts.length > 0) {
         result = result.filter((offer) => 
+          isAutoSaleVisible(offer) ||
           isTransportVisible(offer, selectedDistricts) ||
           selectedDistricts.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => selectedDistricts.includes(d))
         );
       } else if (detectedDistrictId) {
         result = result.filter((offer) => 
+          isAutoSaleVisible(offer) ||
           isTransportVisible(offer, [detectedDistrictId]) ||
           offer.district === detectedDistrictId || 
           (offer.availableDistricts || []).includes(detectedDistrictId)
         );
       } else {
         result = result.filter((offer) => 
+          isAutoSaleVisible(offer) ||
           isTransportVisible(offer, districtsInRegion) ||
           districtsInRegion.includes(offer.district) || 
           (offer.availableDistricts || []).some(d => districtsInRegion.includes(d))
