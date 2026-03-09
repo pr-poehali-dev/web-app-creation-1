@@ -162,8 +162,8 @@ function toRadians(degrees: number): number {
 }
 
 export function findNaslegByCoordinates(latitude: number, longitude: number): Nasleg | null {
-  let closestNasleg: Nasleg | null = null;
-  let minDistance = Infinity;
+  let bestNasleg: Nasleg | null = null;
+  let bestScore = Infinity;
 
   for (const nasleg of NASLEGS) {
     if (!nasleg.latitude || !nasleg.longitude) continue;
@@ -177,13 +177,20 @@ export function findNaslegByCoordinates(latitude: number, longitude: number): Na
 
     const maxDistance = nasleg.radius || 20;
 
-    if (distance <= maxDistance && distance < minDistance) {
-      minDistance = distance;
-      closestNasleg = nasleg;
+    if (distance <= maxDistance) {
+      // Score = относительная дистанция (0..1). Меньше = лучше совпадение.
+      // Это позволяет крупным районам (большой radius) корректно проигрывать
+      // точным маленьким записям, но Якутск (radius=20, дистанция ~1 км)
+      // всегда выигрывает у Нижнего Бестяха (radius=5, дистанция ~15 км).
+      const score = distance / maxDistance;
+      if (score < bestScore) {
+        bestScore = score;
+        bestNasleg = nasleg;
+      }
     }
   }
 
-  return closestNasleg;
+  return bestNasleg;
 }
 
 export function getNaslegsByDistrict(districtId: string): Nasleg[] {
