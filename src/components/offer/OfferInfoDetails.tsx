@@ -146,7 +146,7 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      {!isTransport && (
+      {!isTransport && !isAutoSale && (
         <>
           <Separator />
           <div>
@@ -156,17 +156,20 @@ export default function OfferInfoDetails({
         </>
       )}
 
-      <Separator />
+      {!isAutoSale && (
+        <>
+          <Separator />
+          <div>
+            <p className="text-xs text-muted-foreground mb-0.5">Район</p>
+            <p className="text-sm font-medium">{districtName}</p>
+            {cityName && (
+              <p className="text-xs text-muted-foreground mt-0.5">{cityName}</p>
+            )}
+          </div>
+        </>
+      )}
 
-      <div>
-        <p className="text-xs text-muted-foreground mb-0.5">Район</p>
-        <p className="text-sm font-medium">{districtName}</p>
-        {cityName && (
-          <p className="text-xs text-muted-foreground mt-0.5">{cityName}</p>
-        )}
-      </div>
-
-      {!isTransport && availableDistrictNames.length > 0 && (
+      {!isTransport && !isAutoSale && availableDistrictNames.length > 0 && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Доступно в районах</p>
           <div className="flex flex-wrap gap-1">
@@ -177,7 +180,7 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      {!isTransport && (
+      {!isTransport && !isAutoSale && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
           <div className="flex gap-2">
@@ -197,7 +200,7 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      {!isTransport && availableDeliveryTypes.includes('pickup') && streetAddress && (
+      {!isTransport && !isAutoSale && availableDeliveryTypes.includes('pickup') && streetAddress && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
           <div className="flex items-center gap-1.5">
