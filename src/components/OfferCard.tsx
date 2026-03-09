@@ -39,6 +39,8 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
   const { toast } = useToast();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditingDistrict, setIsEditingDistrict] = useState(false);
+  const [districtSaving, setDistrictSaving] = useState(false);
   
   const isOwner = currentUser && String(offer.userId) === String(currentUser.id);
 
@@ -48,6 +50,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
   const expirationInfo = getExpirationStatus(offer);
   const isService = offer.category === 'utilities';
   const isTransport = offer.category === 'transport';
+  const isAutoSale = offer.category === 'auto-sale';
   
   // Найти административный центр района (settlement)
   const getDistrictCenter = (districtId: string) => {
@@ -124,6 +127,20 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
     navigate('/my-orders?tab=seller');
   };
 
+  const handleDistrictSave = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newDistrict = e.target.value;
+    setDistrictSaving(true);
+    try {
+      await offersAPI.update(offer.id, { district: newDistrict });
+      offer.district = newDistrict;
+      toast({ title: 'Местонахождение обновлено' });
+    } catch {
+      toast({ title: 'Ошибка сохранения', variant: 'destructive' });
+    }
+    setDistrictSaving(false);
+    setIsEditingDistrict(false);
+  };
+
   return (
     <Card
       className={`transition-all hover:shadow-xl cursor-pointer group ${
@@ -194,7 +211,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
 
       <CardContent className="p-2.5 space-y-1.5">
         <h3 className="font-semibold text-sm line-clamp-2 group-hover:text-primary transition-colors leading-snug">
-          {offer.title}
+          {isAutoSale ? `Авто: ${offer.title}` : offer.title}
         </h3>
 
         <div className="space-y-1">
@@ -233,7 +250,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
                   </span>
                 ) : null}
               </div>
-              {!isService && offer.quantity != null && (
+              {!isService && !isAutoSale && offer.quantity != null && (
                 <div className="flex items-center gap-1.5">
                   <Icon name="Package" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="text-xs text-muted-foreground">
@@ -241,12 +258,37 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
                   </span>
                 </div>
               )}
-              {districtName && (
+              {isAutoSale && isOwner ? (
+                <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                  <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  {isEditingDistrict ? (
+                    <select
+                      className="text-xs border rounded px-1 py-0.5 bg-background text-foreground"
+                      defaultValue={offer.district}
+                      onChange={handleDistrictSave}
+                      disabled={districtSaving}
+                      autoFocus
+                      onBlur={() => setIsEditingDistrict(false)}
+                    >
+                      {DISTRICTS.map(d => (
+                        <option key={d.id} value={d.id}>{d.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span
+                      className="text-xs text-muted-foreground truncate underline decoration-dotted cursor-pointer hover:text-primary"
+                      onClick={() => setIsEditingDistrict(true)}
+                    >
+                      {districtName || 'Указать район'}
+                    </span>
+                  )}
+                </div>
+              ) : districtName ? (
                 <div className="flex items-center gap-1.5">
                   <Icon name="MapPin" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <span className="text-xs text-muted-foreground truncate">{districtName}</span>
                 </div>
-              )}
+              ) : null}
             </>
           )}
         </div>
