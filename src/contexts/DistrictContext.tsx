@@ -86,21 +86,17 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
           setDetectedDistrictId(district.id);
           localStorage.setItem('detectedDistrictId', district.id);
           localStorage.setItem('detectedCity', storedLocation.city);
-          console.log('✅ Установлен detectedDistrictId:', district.id);
           
+          // Не перезаписываем selectedDistricts если пользователь уже сделал выбор вручную
           const storedDistricts = localStorage.getItem('selectedDistricts');
           const parsedDistricts = storedDistricts ? JSON.parse(storedDistricts) : [];
           
-          if (!parsedDistricts.includes(district.id)) {
-            const newDistricts = [district.id, ...parsedDistricts];
-            setSelectedDistrictsState(newDistricts);
-            localStorage.setItem('selectedDistricts', JSON.stringify(newDistricts));
-            console.log('✅ Добавлен район местоположения в selectedDistricts:', newDistricts);
+          if (parsedDistricts.length === 0) {
+            setSelectedDistrictsState([district.id]);
+            localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
           } else {
-            console.log('✅ Район местоположения уже в selectedDistricts');
+            setSelectedDistrictsState(parsedDistricts);
           }
-        } else {
-          console.log('⚠️ Район не найден для:', storedLocation.district);
         }
         return;
       }
@@ -179,6 +175,12 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
     setSelectedRegionState(region);
     if (region !== selectedRegion) {
       setSelectedDistrictsState([]);
+      // Сбрасываем сохранённую геолокацию при ручной смене региона
+      localStorage.removeItem('userLocation');
+      localStorage.removeItem('detectedDistrictId');
+      localStorage.removeItem('detectedCity');
+      setDetectedDistrictId(null);
+      setDetectedCity(null);
     }
     
     // Сразу обновляем доступные районы
@@ -192,6 +194,8 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
 
   const setSelectedDistricts = (districts: string[]) => {
     setSelectedDistrictsState(districts);
+    // Сбрасываем сохранённую геолокацию при ручном выборе районов
+    localStorage.removeItem('userLocation');
   };
 
   const toggleDistrict = (districtId: string) => {
@@ -199,6 +203,9 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
       setSelectedDistrictsState([]);
       return;
     }
+
+    // Сбрасываем сохранённую геолокацию при ручном переключении района
+    localStorage.removeItem('userLocation');
 
     setSelectedDistrictsState(prev => {
       if (prev.includes(districtId)) {
