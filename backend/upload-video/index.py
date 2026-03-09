@@ -170,13 +170,174 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     return selected[:2]  # максимум 2 зоны (перед + зад)
 
 
+def detect_license_plate_google_vision(image_data: bytes) -> List[Tuple[int, int, int, int]]:
+    """
+    Использует Google Vision API для точного обнаружения гос. номеров.
+    Возвращает список (x, y, w, h) найденных зон.
+    Требует секрет GOOGLE_VISION_API_KEY.
+    """
+    api_key = os.environ.get('GOOGLE_VISION_API_KEY', '')
+    if not api_key:
+        return []
+
+    try:
+        import requests
+
+        encoded = base64.b64encode(image_data).decode('utf-8')
+        url = f'https://vision.googleapis.com/v1/images:annotate?key={api_key}'
+        payload = {
+            'requests': [{
+                'image': {'content': encoded},
+                'features': [
+                    {'type': 'TEXT_DETECTION', 'maxResults': 20},
+                    {'type': 'OBJECT_LOCALIZATION', 'maxResults': 20},
+                ]
+            }]
+        }
+
+        resp = requests.post(url, json=payload, timeout=10)
+        if resp.status_code != 200:
+            print(f'Google Vision API error: {resp.status_code} {resp.text[:200]}')
+            return []
+
+        data = resp.json()
+        result = data.get('responses', [{}])[0]
+        regions = []
+
+        # 1. Ищем через OBJECT_LOCALIZATION — ищем объект с именем "Vehicle registration plate"
+        for obj in result.get('localizedObjectAnnotations', []):
+            name = obj.get('name', '').lower()
+            if 'license' in name or 'plate' in name or 'registration' in name or 'number plate' in name:
+                verts = obj['boundingPoly']['normalizedVertices']
+                xs = [v.get('x', 0) for v in verts]
+                ys = [v.get('y', 0) for v in verts]
+                # normalizedVertices — будет умножено на реальные размеры позже
+                regions.append(('normalized', min(xs), min(ys), max(xs) - min(xs), max(ys) - min(ys)))
+
+        # 2. Если объекты не нашли — ищем через TEXT_DETECTION по паттернам номеров
+        if not regions:
+            text_ann = result.get('textAnnotations', [])
+            # Российский номер: А123ВС78, A123BC78 (латиница или кириллица)
+            plate_pattern = re.compile(
+                r'^[АВЕКМНОРСТУХABEKMHOPCTYX]\d{3}[АВЕКМНОРСТУХABEKMHOPCTYX]{2}\d{2,3}$',
+                re.IGNORECASE
+            )
+            for ann in text_ann[1:]:  # первый — весь текст, пропускаем
+                text = ann.get('description', '').strip().replace(' ', '').upper()
+                if plate_pattern.match(text):
+                    verts = ann['boundingPoly']['vertices']
+                    xs = [v.get('x', 0) for v in verts]
+                    ys = [v.get('y', 0) for v in verts]
+                    x1, y1 = min(xs), min(ys)
+                    w = max(xs) - x1
+                    h = max(ys) - y1
+                    # добавляем отступ 20%
+                    pad_x = int(w * 0.2)
+                    pad_y = int(h * 0.2)
+                    regions.append(('pixel', max(0, x1 - pad_x), max(0, y1 - pad_y), w + 2 * pad_x, h + 2 * pad_y))
+
+        print(f'Google Vision found {len(regions)} plate region(s)')
+        return regions
+
+    except Exception as e:
+        print(f'Google Vision API exception: {e}')
+        return []
+
+
+def resolve_regions(regions: list, img_width: int, img_height: int) -> List[Tuple[int, int, int, int]]:
+    """
+    Преобразует регионы (normalized или pixel) в пиксельные координаты (x, y, w, h).
+    """
+    result = []
+    for r in regions:
+        if r[0] == 'normalized':
+            _, nx, ny, nw, nh = r
+            x = int(nx * img_width)
+            y = int(ny * img_height)
+            w = int(nw * img_width)
+            h = int(nh * img_height)
+            # добавляем отступ 10%
+            pad_x = int(w * 0.10)
+            pad_y = int(h * 0.10)
+            result.append((max(0, x - pad_x), max(0, y - pad_y), w + 2 * pad_x, h + 2 * pad_y))
+        else:
+            _, x, y, w, h = r
+            result.append((x, y, w, h))
+    return result
+
+
+def draw_erttp_on_regions(img, regions: List[Tuple[int, int, int, int]]):
+    """
+    Рисует белый прямоугольник с текстом ЕРТТП поверх каждой зоны гос. номера.
+    """
+    from PIL import ImageDraw, ImageFont
+
+    draw = ImageDraw.Draw(img)
+    width, height = img.size
+    text = 'ЕРТТП'
+
+    for (x, y, w, h) in regions:
+        x1 = max(0, x)
+        y1 = max(0, y)
+        x2 = min(width, x + w)
+        y2 = min(height, y + h)
+        box_w = x2 - x1
+        box_h = y2 - y1
+
+        draw.rectangle([x1, y1, x2, y2], fill=(255, 255, 255), outline=(0, 0, 0), width=3)
+
+        font_size = max(12, int(box_h * 0.85))
+        font = None
+        for font_path in [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+        ]:
+            try:
+                font = ImageFont.truetype(font_path, font_size)
+                break
+            except Exception:
+                continue
+        if font is None:
+            try:
+                font = ImageFont.load_default()
+            except Exception:
+                pass
+
+        text_w, text_h = box_w, box_h
+        if font:
+            for _ in range(3):
+                try:
+                    bbox = draw.textbbox((0, 0), text, font=font)
+                    text_w = bbox[2] - bbox[0]
+                    text_h = bbox[3] - bbox[1]
+                except Exception:
+                    text_w = len(text) * font_size // 2
+                    text_h = font_size
+                if text_w <= box_w * 0.9:
+                    break
+                font_size = int(font_size * 0.8)
+                try:
+                    font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', font_size)
+                except Exception:
+                    break
+        else:
+            text_w = len(text) * 6
+            text_h = 11
+
+        text_x = x1 + (box_w - text_w) // 2
+        text_y = y1 + (box_h - text_h) // 2
+        draw.text((text_x, text_y), text, fill=(20, 20, 20), font=font)
+
+
 def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes]:
     """
     Находит гос. номер(а) на фото и заменяет их прямоугольником с текстом ЕРТТП.
+    Сначала пробует Google Vision API (точный), затем собственный алгоритм (запасной).
     Возвращает обработанные байты или None если обработка не нужна/не удалась.
     """
     try:
-        from PIL import Image, ImageDraw, ImageFont
+        from PIL import Image
 
         img = Image.open(io.BytesIO(image_data))
 
@@ -193,78 +354,21 @@ def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes
             img.thumbnail((max_side, max_side), Image.LANCZOS)
             print(f'Image resized to {img.width}x{img.height} for processing')
 
-        regions = detect_license_plate_regions(img)
+        # 1. Пробуем Google Vision API — самый точный метод
+        raw_regions = detect_license_plate_google_vision(image_data)
+        pixel_regions = resolve_regions(raw_regions, img.width, img.height)
 
-        if not regions:
-            print('License plate detection: no plates found')
-            return None
-
-        print(f'License plate detection: found {len(regions)} candidate(s)')
-
-        draw = ImageDraw.Draw(img)
-        width, height = img.size
-
-        for (x, y, w, h) in regions:
-            # Немного расширяем зону для надёжности
-            pad_x = int(w * 0.05)
-            pad_y = int(h * 0.1)
-            x1 = max(0, x - pad_x)
-            y1 = max(0, y - pad_y)
-            x2 = min(width, x + w + pad_x)
-            y2 = min(height, y + h + pad_y)
-
-            # Рисуем белый прямоугольник с чёрной рамкой
-            draw.rectangle([x1, y1, x2, y2], fill=(255, 255, 255), outline=(0, 0, 0), width=3)
-
-            # Рассчитываем размер текста чтобы вписать в прямоугольник
-            box_w = x2 - x1
-            box_h = y2 - y1
-            text = 'ЕРТТП'
-
-            # Подбираем размер шрифта — увеличен до 85% высоты блока
-            font_size = max(12, int(box_h * 0.85))
-            font = None
-            for font_path in [
-                '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-                '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-                '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
-            ]:
-                try:
-                    font = ImageFont.truetype(font_path, font_size)
-                    break
-                except Exception:
-                    continue
-            if font is None:
-                try:
-                    font = ImageFont.load_default()
-                except Exception:
-                    pass
-
-            # Центрируем текст, подгоняем размер если не влезает по ширине
-            if font:
-                for attempt in range(3):
-                    try:
-                        bbox = draw.textbbox((0, 0), text, font=font)
-                        text_w = bbox[2] - bbox[0]
-                        text_h = bbox[3] - bbox[1]
-                    except Exception:
-                        text_w = len(text) * font_size // 2
-                        text_h = font_size
-                    if text_w <= box_w * 0.9:
-                        break
-                    font_size = int(font_size * 0.8)
-                    try:
-                        font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', font_size)
-                    except Exception:
-                        break
-            else:
-                text_w = len(text) * 6
-                text_h = 11
-
-            text_x = x1 + (box_w - text_w) // 2
-            text_y = y1 + (box_h - text_h) // 2
-
-            draw.text((text_x, text_y), text, fill=(20, 20, 20), font=font)
+        if pixel_regions:
+            print(f'Using Google Vision: {len(pixel_regions)} plate(s) found')
+            draw_erttp_on_regions(img, pixel_regions)
+        else:
+            # 2. Запасной алгоритм — собственная детекция через PIL/numpy
+            fallback_regions = detect_license_plate_regions(img)
+            if not fallback_regions:
+                print('License plate detection: no plates found (both methods)')
+                return None
+            print(f'Using fallback detector: {len(fallback_regions)} plate(s) found')
+            draw_erttp_on_regions(img, fallback_regions)
 
         # Сохраняем в буфер
         output = io.BytesIO()
