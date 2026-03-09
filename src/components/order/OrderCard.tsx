@@ -81,7 +81,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm">
-          {!order.isRequest && (
+          {!order.isRequest && order.offerCategory !== 'auto-sale' && (
           <div>
             <p className="text-muted-foreground">Количество</p>
             <p className="font-medium">{order.quantity} {order.unit}</p>

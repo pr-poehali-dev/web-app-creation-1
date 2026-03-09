@@ -297,6 +297,7 @@ export default function OfferOrderModal({
               </div>
             </div>
           )}
+          {offerCategory !== 'auto-sale' && (
           <QuantitySelector
             quantity={quantity}
             unit={unit}
@@ -308,6 +309,7 @@ export default function OfferOrderModal({
             onDecrement={decrementQuantity}
             onErrorClear={() => setQuantityError('')}
           />
+          )}
 
           <PriceDisplay
             pricePerUnit={

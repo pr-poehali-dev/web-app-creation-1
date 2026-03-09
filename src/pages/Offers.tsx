@@ -225,6 +225,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     if (!showOnlyMy) {
       result = result.filter((offer) => {
         if (offer.category === 'utilities') return true;
+        if (offer.category === 'auto-sale') return true;
         if (offer.category === 'transport') {
           // Для транспорта: скрываем только если capacity числовое и все места заняты
           const capacity = Number(offer.transportCapacity);
