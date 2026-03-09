@@ -109,48 +109,39 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (isFirstVisit()) {
-        setIsDetecting(true);
-        try {
-          const location = await Promise.race([
-            detectLocationByIP(),
-            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-          ]);
-          console.log('🌍 Определено местоположение:', {
-            city: location.city,
-            district: location.district,
-            coordinates: location.coordinates,
-            source: location.source
-          });
+      // Автоопределение при каждом открытии, если нет сохранённых данных
+      setIsDetecting(true);
+      try {
+        const location = await Promise.race([
+          detectLocationByIP(),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+        
+        const regionId = findRegionByLocation(location.city, location.district);
+        
+        if (regionId !== 'all') {
+          setSelectedRegionState(regionId);
+          setDetectedCity(location.city);
+          saveLocationToStorage(location);
           
-          const regionId = findRegionByLocation(location.city, location.district);
-          console.log('📍 Найден регион:', regionId);
+          const districts = getDistrictsByRegion(regionId);
+          setAvailableDistricts(districts);
           
-          if (regionId !== 'all') {
-            setSelectedRegionState(regionId);
-            setDetectedCity(location.city);
-            saveLocationToStorage(location);
-            
-            const districts = getDistrictsByRegion(regionId);
-            setAvailableDistricts(districts);
-            
-            const district = findDistrictByName(location.district, regionId);
-            if (district) {
-              console.log('✅ Найден район:', district.name);
-              setDetectedDistrictId(district.id);
-              localStorage.setItem('detectedDistrictId', district.id);
-              localStorage.setItem('detectedCity', location.city);
-              setSelectedDistrictsState([district.id]);
-              localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
-            }
+          const district = findDistrictByName(location.district, regionId);
+          if (district) {
+            setDetectedDistrictId(district.id);
+            localStorage.setItem('detectedDistrictId', district.id);
+            localStorage.setItem('detectedCity', location.city);
+            setSelectedDistrictsState([district.id]);
+            localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
           }
-          
-          markLocationDetected();
-        } catch (error) {
-          console.error('Location detection failed:', error);
-        } finally {
-          setIsDetecting(false);
         }
+        
+        markLocationDetected();
+      } catch (error) {
+        console.error('Location detection failed:', error);
+      } finally {
+        setIsDetecting(false);
       }
     };
 
