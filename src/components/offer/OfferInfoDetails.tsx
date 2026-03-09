@@ -131,11 +131,6 @@ export default function OfferInfoDetails({
               </div>
             </>
           )}
-          <Separator />
-          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-            <div><p>Дата создания</p><p className="font-medium text-foreground">{formatDateWithTimezone(createdAt)}</p></div>
-            {expiryDate && <div><p>Публикация до</p><p className="font-medium text-foreground">{formatDateWithTimezone(expiryDate)}</p></div>}
-          </div>
         </div>
       ) : category !== 'utilities' && (
         <div className="grid grid-cols-2 gap-2 text-sm">

@@ -168,6 +168,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       toast({ title: 'Успешно', description: 'Обновление сохранено' });
       setIsEditing(false);
       onUpdate();
+      navigate(`/offer/${offer.id}`);
     } catch (error) {
       console.error('Error updating offer:', error);
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
