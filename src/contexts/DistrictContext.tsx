@@ -178,11 +178,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   const setSelectedRegion = (region: string) => {
     setSelectedRegionState(region);
     if (region !== selectedRegion) {
-      if (detectedDistrictId) {
-        setSelectedDistrictsState([detectedDistrictId]);
-      } else {
-        setSelectedDistrictsState([]);
-      }
+      setSelectedDistrictsState([]);
     }
     
     // Сразу обновляем доступные районы
@@ -195,32 +191,19 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   };
 
   const setSelectedDistricts = (districts: string[]) => {
-    if (detectedDistrictId && districts.length > 0 && !districts.includes(detectedDistrictId)) {
-      setSelectedDistrictsState([detectedDistrictId, ...districts]);
-    } else {
-      setSelectedDistrictsState(districts);
-    }
+    setSelectedDistrictsState(districts);
   };
 
   const toggleDistrict = (districtId: string) => {
     if (districtId === 'all') {
-      if (detectedDistrictId) {
-        setSelectedDistrictsState([detectedDistrictId]);
-      } else {
-        setSelectedDistrictsState([]);
-      }
+      setSelectedDistrictsState([]);
       return;
     }
 
     setSelectedDistrictsState(prev => {
-      const isDetectedDistrict = districtId === detectedDistrictId;
-      
       if (prev.includes(districtId)) {
         return prev.filter(id => id !== districtId);
       } else {
-        if (detectedDistrictId && !prev.includes(detectedDistrictId) && !isDetectedDistrict) {
-          return [detectedDistrictId, ...prev, districtId];
-        }
         return [...prev, districtId];
       }
     });
