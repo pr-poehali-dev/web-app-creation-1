@@ -895,6 +895,10 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         
         updates = []
         
+        if 'district' in body:
+            district_esc = body['district'].replace("'", "''")
+            updates.append(f"district = '{district_esc}'")
+
         if 'title' in body:
             title_esc = body['title'].replace("'", "''")
             updates.append(f"title = '{title_esc}'")
