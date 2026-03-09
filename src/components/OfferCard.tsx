@@ -165,9 +165,6 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
                 loading="lazy"
                 decoding="async"
               />
-              {offer.category === 'auto-sale' && (
-                <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0) 100%)', height: '30%'}} />
-              )}
               {offer.images.length > 1 && (
                 <>
                   <button
