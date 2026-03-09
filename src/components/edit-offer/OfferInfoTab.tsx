@@ -258,10 +258,17 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         return;
       }
       const compressed = await compressImage(file);
-      console.log('Original size:', file.size, 'Compressed size:', compressed.length);
-      const newImage: OfferImage = { id: Date.now().toString(), url: compressed, alt: offer.title };
-      setImages([...images, newImage]);
-      toast({ title: 'Фото добавлено', description: 'Не забудьте сохранить изменения' });
+      const isAuto = offer.category === 'auto';
+      if (isAuto) {
+        const result = await offersAPI.uploadMedia(compressed, true);
+        const newImage: OfferImage = { id: Date.now().toString(), url: result.url, alt: offer.title };
+        setImages(prev => [...prev, newImage]);
+        toast({ title: 'Фото добавлено', description: result.plateCovered ? 'Гос. номер закрыт' : 'Не забудьте сохранить изменения' });
+      } else {
+        const newImage: OfferImage = { id: Date.now().toString(), url: compressed, alt: offer.title };
+        setImages(prev => [...prev, newImage]);
+        toast({ title: 'Фото добавлено', description: 'Не забудьте сохранить изменения' });
+      }
     } catch (error) {
       console.error('Error uploading image:', error);
       toast({ title: 'Ошибка', description: 'Не удалось загрузить фото', variant: 'destructive' });

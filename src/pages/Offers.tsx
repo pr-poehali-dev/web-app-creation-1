@@ -159,7 +159,17 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
       }
     };
 
-    loadData(false);
+    const hasPendingUpdate = (() => {
+      try {
+        const ev = localStorage.getItem('data_sync_events');
+        if (ev) {
+          const parsed = JSON.parse(ev);
+          return parsed.type === 'offer_updated' && Date.now() - parsed.timestamp < 30000;
+        }
+      } catch (_e) { /* ignore */ }
+      return false;
+    })();
+    loadData(hasPendingUpdate);
     
     const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
       if (isMounted) {
