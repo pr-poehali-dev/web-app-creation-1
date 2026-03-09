@@ -330,6 +330,28 @@ def draw_erttp_on_regions(img, regions: List[Tuple[int, int, int, int]]):
         draw.text((text_x, text_y), text, fill=(20, 20, 20), font=font)
 
 
+def merge_overlapping_regions(regions: List[Tuple[int, int, int, int]], overlap_threshold: float = 0.3) -> List[Tuple[int, int, int, int]]:
+    """
+    Объединяет перекрывающиеся регионы, оставляя только уникальные зоны (NMS).
+    """
+    if not regions:
+        return []
+    merged = []
+    for (x, y, w, h) in regions:
+        is_dup = False
+        for (mx, my, mw, mh) in merged:
+            overlap_x = max(0, min(x + w, mx + mw) - max(x, mx))
+            overlap_y = max(0, min(y + h, my + mh) - max(y, my))
+            overlap_area = overlap_x * overlap_y
+            min_area = min(w * h, mw * mh)
+            if min_area > 0 and overlap_area / min_area > overlap_threshold:
+                is_dup = True
+                break
+        if not is_dup:
+            merged.append((x, y, w, h))
+    return merged
+
+
 def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes]:
     """
     Находит гос. номер(а) на фото и заменяет их прямоугольником с текстом ЕРТТП.
@@ -357,6 +379,7 @@ def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes
         # 1. Пробуем Google Vision API — самый точный метод
         raw_regions = detect_license_plate_google_vision(image_data)
         pixel_regions = resolve_regions(raw_regions, img.width, img.height)
+        pixel_regions = merge_overlapping_regions(pixel_regions)
 
         if pixel_regions:
             print(f'Using Google Vision: {len(pixel_regions)} plate(s) found')
@@ -364,6 +387,7 @@ def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes
         else:
             # 2. Запасной алгоритм — собственная детекция через PIL/numpy
             fallback_regions = detect_license_plate_regions(img)
+            fallback_regions = merge_overlapping_regions(fallback_regions)
             if not fallback_regions:
                 print('License plate detection: no plates found (both methods)')
                 return None

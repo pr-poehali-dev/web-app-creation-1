@@ -156,25 +156,32 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
           results.push({ i: already.i, url: already.img });
         }
 
-        const BATCH_SIZE = 3;
+        const MAX_RETRIES = 2;
         let uploadFailed = false;
-        for (let b = 0; b < toUpload.length; b += BATCH_SIZE) {
+        for (const { img, i } of toUpload) {
           if (uploadFailed) break;
-          const batch = toUpload.slice(b, b + BATCH_SIZE);
-          let batchResults: Array<{ i: number; url: string }>;
-          try {
-            batchResults = await Promise.all(
-              batch.map(async ({ img, i }) => {
-                console.log(`Uploading image ${i + 1}/${imagePreviews.length}...`);
-                const uploadResult = await offersAPI.uploadMedia(img, isAutoSalePhoto);
-                setImageUploadCurrent(prev => prev + 1);
-                console.log(`Image ${i + 1} uploaded:`, uploadResult.url);
-                return { i, url: uploadResult.url };
-              })
-            );
-          } catch (error) {
-            console.error('Failed to upload image batch:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+          let lastError: unknown = null;
+          let uploaded = false;
+          for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+              console.log(`Uploading image ${i + 1}/${imagePreviews.length} (attempt ${attempt + 1})...`);
+              const uploadResult = await offersAPI.uploadMedia(img, isAutoSalePhoto);
+              setImageUploadCurrent(prev => prev + 1);
+              console.log(`Image ${i + 1} uploaded:`, uploadResult.url);
+              results.push({ i, url: uploadResult.url });
+              uploaded = true;
+              break;
+            } catch (error) {
+              lastError = error;
+              console.warn(`Image ${i + 1} attempt ${attempt + 1} failed:`, error);
+              if (attempt < MAX_RETRIES) {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+              }
+            }
+          }
+          if (!uploaded) {
+            console.error('Failed to upload image after retries:', lastError);
+            const errorMessage = lastError instanceof Error ? lastError.message : 'Неизвестная ошибка';
             setIsUploadingImages(false);
             toast({
               title: 'Ошибка загрузки фото',
@@ -183,9 +190,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
             });
             setIsSubmitting(false);
             uploadFailed = true;
-            break;
           }
-          results.push(...batchResults);
         }
         if (uploadFailed) return;
 
