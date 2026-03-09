@@ -84,12 +84,12 @@ export function useRequestsData() {
     loadRequests();
 
     const unsubscribeRequests = dataSync.subscribe('request_updated', () => {
-      console.log('Request updated, reloading...');
+      SmartCache.invalidate('requests_list');
       loadFreshRequests(false);
     });
 
     const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
-      console.log('Order updated, reloading...');
+      SmartCache.invalidate('requests_list');
       loadFreshRequests(false);
     });
 
@@ -124,6 +124,7 @@ export function useRequestsData() {
   const handleDelete = async (id: string) => {
     try {
       await requestsAPI.deleteRequest(id);
+      SmartCache.invalidate('requests_list');
       deleteRequest(id);
       setRequests(prev => prev.filter(r => r.id !== id));
       toast({ title: 'Успешно', description: 'Запрос удалён' });

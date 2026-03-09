@@ -163,12 +163,14 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     
     const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
       if (isMounted) {
+        SmartCache.invalidate('offers_list');
         loadFreshData(false);
       }
     });
     
     const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
       if (isMounted) {
+        SmartCache.invalidate('offers_list');
         loadFreshData(false);
       }
     });
@@ -343,6 +345,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
   const handleDelete = async (id: string) => {
     try {
       await offersAPI.updateOffer(id, { status: 'archived' });
+      SmartCache.invalidate('offers_list');
       setOffers(prev => prev.filter(o => o.id !== id));
       toast({
         title: 'Успешно',
