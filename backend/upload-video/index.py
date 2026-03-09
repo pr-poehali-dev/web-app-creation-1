@@ -93,19 +93,19 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
     # Конвертируем в numpy-массив сразу — быстрее чем crop+getdata на каждой итерации
     gray_arr = np.array(small.convert('L'), dtype=np.float32)
 
-    # Номер авто всегда в нижней части — сканируем только нижние 55% изображения
-    y_start = int(height * 0.45)
+    # Номер авто — нижние 65% изображения (расширено для захвата тёмных номеров)
+    y_start = int(height * 0.35)
 
-    # Крупный шаг — достаточно для детекции, в 2-3× меньше итераций
-    step_x = max(1, width // 18)
-    step_y = max(1, height // 18)
+    # Крупный шаг — достаточно для детекции
+    step_x = max(1, width // 20)
+    step_y = max(1, height // 20)
 
-    # Сокращённый набор конфигураций: оставляем 3 репрезентативных соотношения
-    # (широкий, стандартный, узкий номер). Было 11 — стало 3, в 3.6× быстрее.
     plate_configs = [
+        (0.15, 4.0),  # небольшой номер
         (0.18, 4.2),  # небольшой номер
         (0.22, 4.8),  # стандарт (520x112 мм ≈ 4.6:1)
-        (0.28, 5.5),  # крупный / квадратный кадр
+        (0.26, 5.2),  # крупный
+        (0.30, 5.5),  # очень крупный / квадратный кадр
     ]
 
     candidates = []
@@ -119,25 +119,26 @@ def detect_license_plate_regions(img) -> List[Tuple[int, int, int, int]]:
 
         for y in range(y_start, height - ph, step_y):
             for x in range(0, width - pw, step_x):
-                # numpy-срез вместо crop+getdata — на порядок быстрее
                 region = gray_arr[y:y + ph, x:x + pw]
 
                 avg_brightness = region.mean()
-                # Быстрая проверка: отсекаем тёмные зоны сразу
-                if avg_brightness <= 150:
-                    continue
-
                 contrast = float(region.max() - region.min())
-                if contrast <= 90:
-                    continue
-
                 variance = float(region.var())
-                if variance <= 1000:
+
+                # Принимаем и светлые (белые номера) и тёмные (затенённые)
+                # Главный признак — высокий контраст и дисперсия (текст на фоне)
+                if contrast <= 60:
+                    continue
+                if variance <= 500:
+                    continue
+                # Отсекаем только совсем однородные тёмные зоны без контраста
+                if avg_brightness <= 40 and contrast <= 80:
                     continue
 
                 y_position_ratio = y / height
-                position_bonus = y_position_ratio * 50
-                score = avg_brightness * 0.2 + contrast * 0.5 + math.sqrt(variance) * 0.3 + position_bonus
+                position_bonus = y_position_ratio * 60
+                # Для тёмных номеров снижаем вес яркости, повышаем вес контраста
+                score = min(avg_brightness, 200) * 0.1 + contrast * 0.6 + math.sqrt(variance) * 0.3 + position_bonus
                 candidates.append((score, x, y, pw, ph))
 
     if not candidates:
@@ -213,33 +214,49 @@ def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes
             y2 = min(height, y + h + pad_y)
 
             # Рисуем белый прямоугольник с чёрной рамкой
-            draw.rectangle([x1, y1, x2, y2], fill=(255, 255, 255), outline=(0, 0, 0), width=2)
+            draw.rectangle([x1, y1, x2, y2], fill=(255, 255, 255), outline=(0, 0, 0), width=3)
 
             # Рассчитываем размер текста чтобы вписать в прямоугольник
             box_w = x2 - x1
             box_h = y2 - y1
             text = 'ЕРТТП'
 
-            # Подбираем размер шрифта
-            font_size = max(8, int(box_h * 0.65))
+            # Подбираем размер шрифта — увеличен до 85% высоты блока
+            font_size = max(12, int(box_h * 0.85))
             font = None
-            try:
-                font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', font_size)
-            except Exception:
+            for font_path in [
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+                '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+                '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+            ]:
+                try:
+                    font = ImageFont.truetype(font_path, font_size)
+                    break
+                except Exception:
+                    continue
+            if font is None:
                 try:
                     font = ImageFont.load_default()
                 except Exception:
                     pass
 
-            # Центрируем текст
+            # Центрируем текст, подгоняем размер если не влезает по ширине
             if font:
-                try:
-                    bbox = draw.textbbox((0, 0), text, font=font)
-                    text_w = bbox[2] - bbox[0]
-                    text_h = bbox[3] - bbox[1]
-                except Exception:
-                    text_w = len(text) * font_size // 2
-                    text_h = font_size
+                for attempt in range(3):
+                    try:
+                        bbox = draw.textbbox((0, 0), text, font=font)
+                        text_w = bbox[2] - bbox[0]
+                        text_h = bbox[3] - bbox[1]
+                    except Exception:
+                        text_w = len(text) * font_size // 2
+                        text_h = font_size
+                    if text_w <= box_w * 0.9:
+                        break
+                    font_size = int(font_size * 0.8)
+                    try:
+                        font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', font_size)
+                    except Exception:
+                        break
             else:
                 text_w = len(text) * 6
                 text_h = 11
@@ -247,7 +264,7 @@ def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes
             text_x = x1 + (box_w - text_w) // 2
             text_y = y1 + (box_h - text_h) // 2
 
-            draw.text((text_x, text_y), text, fill=(30, 30, 30), font=font)
+            draw.text((text_x, text_y), text, fill=(20, 20, 20), font=font)
 
         # Сохраняем в буфер
         output = io.BytesIO()
