@@ -105,10 +105,10 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             o.*,
             of.price_per_unit as offer_price_per_unit,
             COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity,
-            of.category as offer_category,
+            COALESCE(of.category, o.offer_category) as offer_category,
             of.transport_route as offer_transport_route,
-            of.transport_service_type as offer_transport_service_type,
-            of.transport_date_time as offer_transport_date_time,
+            COALESCE(of.transport_service_type, o.offer_transport_service_type) as offer_transport_service_type,
+            COALESCE(of.transport_date_time, o.offer_transport_date_time) as offer_transport_date_time,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             COALESCE((
@@ -223,10 +223,10 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             o.*,
             of.price_per_unit as offer_price_per_unit,
             COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity,
-            of.category as offer_category,
+            COALESCE(of.category, o.offer_category) as offer_category,
             of.transport_route as offer_transport_route,
-            of.transport_service_type as offer_transport_service_type,
-            of.transport_date_time as offer_transport_date_time,
+            COALESCE(of.transport_service_type, o.offer_transport_service_type) as offer_transport_service_type,
+            COALESCE(of.transport_date_time, o.offer_transport_date_time) as offer_transport_date_time,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             ub.rating as buyer_rating,
@@ -333,9 +333,12 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     if request:
         seller_id = request['user_id']
+        offer_category = None
+        offer_transport_service_type = None
+        offer_transport_date_time = None
         is_request = True
     else:
-        cur.execute(f"SELECT user_id FROM {schema}.offers WHERE id = '{offer_id_escaped}'")
+        cur.execute(f"SELECT user_id, category, transport_service_type, transport_date_time FROM {schema}.offers WHERE id = '{offer_id_escaped}'")
         offer = cur.fetchone()
         
         if not offer:
@@ -349,6 +352,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             }
         
         seller_id = offer['user_id']
+        offer_category = offer.get('category')
+        offer_transport_service_type = offer.get('transport_service_type')
+        offer_transport_date_time = offer.get('transport_date_time')
         is_request = False
     
     if int(user_id) == seller_id:
@@ -441,7 +447,11 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     attachments_json = json.dumps(body.get('attachments', []))
     attachments_escaped = attachments_json.replace("'", "''")
-    
+
+    offer_category_sql = f"'{offer_category.replace(chr(39), chr(39)*2)}'" if offer_category else 'NULL'
+    offer_transport_service_type_sql = f"'{offer_transport_service_type.replace(chr(39), chr(39)*2)}'" if offer_transport_service_type else 'NULL'
+    offer_transport_date_time_sql = f"'{offer_transport_date_time.isoformat() if hasattr(offer_transport_date_time, 'isoformat') else offer_transport_date_time}'" if offer_transport_date_time else 'NULL'
+
     sql = f"""
         INSERT INTO {schema}.orders (
             order_number, buyer_id, seller_id, offer_id,
@@ -452,7 +462,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             seller_name, seller_phone, seller_email,
             status,
             counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by,
-            attachments, passenger_pickup_address
+            attachments, passenger_pickup_address,
+            offer_category, offer_transport_service_type, offer_transport_date_time
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
             '{title_escaped}', {quantity}, {quantity}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
@@ -462,7 +473,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             '{seller_name_escaped}', '{seller_phone_escaped}', '{seller_email_escaped}',
             '{initial_status}',
             {counter_price_sql}, {counter_total_sql}, {counter_message_sql}, {counter_offered_at_sql}, {counter_offered_by_sql},
-            '{attachments_escaped}'::jsonb, {f"'{passenger_pickup_escaped}'" if passenger_pickup_escaped else 'NULL'}
+            '{attachments_escaped}'::jsonb, {f"'{passenger_pickup_escaped}'" if passenger_pickup_escaped else 'NULL'},
+            {offer_category_sql}, {offer_transport_service_type_sql}, {offer_transport_date_time_sql}
         )
         RETURNING id, order_number, order_date
     """
@@ -759,6 +771,26 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 'body': json.dumps({'error': 'Только покупатель может завершить заказ'}),
                 'isBase64Encoded': False
             }
+        # Пассажирские перевозки: нельзя завершить до даты выезда
+        from datetime import datetime
+        order_category = order.get('offer_category')
+        order_service_type = order.get('offer_transport_service_type') or ''
+        order_transport_dt = order.get('offer_transport_date_time')
+        is_passenger = order_category == 'transport' and 'пассажир' in order_service_type.lower()
+        if is_passenger and order_transport_dt:
+            if hasattr(order_transport_dt, 'replace'):
+                departure_dt = order_transport_dt.replace(tzinfo=None)
+            else:
+                departure_dt = datetime.fromisoformat(str(order_transport_dt))
+            if datetime.now() < departure_dt:
+                cur.close()
+                conn.close()
+                return {
+                    'statusCode': 403,
+                    'headers': headers,
+                    'body': json.dumps({'error': f'Завершить заказ можно только после даты выезда: {departure_dt.strftime("%d.%m.%Y %H:%M")}'}),
+                    'isBase64Encoded': False
+                }
         updates.append(f"completed_date = CURRENT_TIMESTAMP")
         updates.append(f"completion_requested = FALSE")
         updates.append(f"status = 'completed'")
