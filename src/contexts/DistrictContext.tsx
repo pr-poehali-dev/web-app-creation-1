@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { detectLocationByIP, detectLocationByBrowser, isFirstVisit, markLocationDetected, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
+import { detectLocationByBrowser, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
 import { REGIONS, findRegionByLocation, type Region } from '@/data/regions';
 import { DISTRICTS, getDistrictsByRegion, findDistrictByName, type District as DistrictType } from '@/data/districts';
 
@@ -103,40 +103,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Автоопределение при каждом открытии, если нет сохранённых данных
-      setIsDetecting(true);
-      try {
-        const location = await Promise.race([
-          detectLocationByIP(),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-        ]);
-        
-        const regionId = findRegionByLocation(location.city, location.district);
-        
-        if (regionId !== 'all') {
-          setSelectedRegionState(regionId);
-          setDetectedCity(location.city);
-          saveLocationToStorage(location);
-          
-          const districts = getDistrictsByRegion(regionId);
-          setAvailableDistricts(districts);
-          
-          const district = findDistrictByName(location.district, regionId);
-          if (district) {
-            setDetectedDistrictId(district.id);
-            localStorage.setItem('detectedDistrictId', district.id);
-            localStorage.setItem('detectedCity', location.city);
-            setSelectedDistrictsState([district.id]);
-            localStorage.setItem('selectedDistricts', JSON.stringify([district.id]));
-          }
-        }
-        
-        markLocationDetected();
-      } catch (error) {
-        console.error('Location detection failed:', error);
-      } finally {
-        setIsDetecting(false);
-      }
+      // При первом открытии — оставляем "Все районы" по умолчанию
     };
 
     initLocation();
