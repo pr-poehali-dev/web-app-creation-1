@@ -85,7 +85,29 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       }
     };
 
+    const forceReload = localStorage.getItem('force_offers_reload');
+    if (forceReload) {
+      localStorage.removeItem('force_offers_reload');
+    }
     loadMyOffers();
+
+    const handleStorageChange = (e: StorageEvent | Event) => {
+      if ('key' in e && (e as StorageEvent).key === 'force_offers_reload') {
+        localStorage.removeItem('force_offers_reload');
+        loadMyOffers();
+      } else if (!('key' in e)) {
+        const flag = localStorage.getItem('force_offers_reload');
+        if (flag) {
+          localStorage.removeItem('force_offers_reload');
+          loadMyOffers();
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, currentUser?.id, navigate]);
 
