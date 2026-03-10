@@ -140,7 +140,8 @@ export default function OfferInfoCard({
       .trim();
   };
 
-  const cityName = getDistrictCenter(district);
+  const cityNameRaw = getDistrictCenter(district);
+  const cityName = cityNameRaw === districtName ? '' : cityNameRaw;
   const streetAddress = fullAddress || (location ? getCleanAddress(location) : '');
 
   const detailsProps = {
@@ -209,6 +210,7 @@ export default function OfferInfoCard({
           transportNegotiable={transportNegotiable}
           transportComment={transportComment}
           transportDateTime={transportDateTime}
+          transportWaypoints={transportWaypoints}
           expiryDate={expiryDate}
         />
 
