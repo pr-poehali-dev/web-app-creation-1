@@ -39,7 +39,7 @@ const InstallPrompt = () => {
     setIsIOS(iOS);
 
     if (iOS) {
-      setTimeout(() => setShowPrompt(true), 60000);
+      setTimeout(() => setShowPrompt(true), 5000);
       return;
     }
 
@@ -48,7 +48,7 @@ const InstallPrompt = () => {
       const installEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(installEvent);
       
-      setTimeout(() => setShowPrompt(true), 60000);
+      setTimeout(() => setShowPrompt(true), 5000);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

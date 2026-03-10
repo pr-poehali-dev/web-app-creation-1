@@ -74,7 +74,7 @@ export default function Login({ onLogin }: LoginProps) {
     
     toast({
       title: 'Подключение к серверу...',
-      description: 'Пожалуйста, подождите. Первый вход может занять до 10 секунд.',
+      description: 'Пожалуйста, подождите. Первый вход может занять до 3 секунд.',
     });
 
     try {
