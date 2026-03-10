@@ -342,7 +342,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       
       setTimeout(() => {
         if (isEditMode) {
-          navigate('/my-offers', { replace: true });
+          navigate('/my-orders', { replace: true });
         } else {
           navigate('/predlozheniya', { replace: true });
         }
