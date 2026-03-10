@@ -212,7 +212,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       transportDateTime: formData.transportDepartureDateTime || formData.transportDateTime || undefined,
       transportComment: formData.transportComment || undefined,
       transportAllDistricts: formData.transportAllDistricts,
-      transportWaypoints: transportWaypoints.length > 0 ? transportWaypoints : undefined,
+      transportWaypoints: transportWaypoints,
       autoMake: formData.autoMake || undefined,
       autoModel: formData.autoModel || undefined,
       autoYear: formData.autoYear || undefined,

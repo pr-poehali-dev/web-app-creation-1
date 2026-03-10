@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useOffers } from '@/contexts/OffersContext';
-import type { Offer } from '@/types/offer';
+import type { Offer, TransportWaypoint } from '@/types/offer';
 import { getSession } from '@/utils/auth';
 import { offersAPI } from '@/services/api';
 import { markDataAsUpdated } from '@/utils/smartCache';
@@ -38,7 +38,7 @@ interface SubmitData {
   transportNegotiable?: boolean;
   transportComment?: string;
   transportAllDistricts?: boolean;
-  transportWaypoints?: unknown;
+  transportWaypoints?: TransportWaypoint[];
   expiryDate?: string;
   autoMake?: string;
   autoModel?: string;
