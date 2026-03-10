@@ -4,7 +4,7 @@ import urllib.request
 import urllib.parse
 
 def handler(event: dict, context) -> dict:
-    '''Вспомогательная функция для настройки Telegram вебхука'''
+    '''Настройка Telegram вебхука для бота erttp_notify_bot'''
     
     method = event.get('httpMethod', 'GET')
     
