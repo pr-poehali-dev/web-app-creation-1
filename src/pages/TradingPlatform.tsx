@@ -257,8 +257,8 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
             <Button variant="outline" onClick={() => setShowVerificationDialog(false)}>
               Отмена
             </Button>
-            <Button onClick={() => navigate('/profile')}>
-              Перейти к верификации
+            <Button onClick={() => { setShowVerificationDialog(false); navigate('/verification'); }}>
+              Пройти верификацию
             </Button>
           </DialogFooter>
         </DialogContent>
