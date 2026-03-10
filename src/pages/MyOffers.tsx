@@ -14,7 +14,7 @@ import { offersAPI } from '@/services/api';
 import MyOfferCard from '@/components/my-offers/MyOfferCard';
 import MyOffersStats from '@/components/my-offers/MyOffersStats';
 import MyOffersDialogs from '@/components/my-offers/MyOffersDialogs';
-import { notifyOfferUpdated } from '@/utils/dataSync';
+import { notifyOfferUpdated, dataSync } from '@/utils/dataSync';
 
 interface MyOffersProps {
   isAuthenticated: boolean;
@@ -105,8 +105,13 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     };
     window.addEventListener('storage', handleStorageChange);
 
+    const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
+      loadMyOffers();
+    });
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      unsubscribeOffers();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, currentUser?.id, navigate]);
