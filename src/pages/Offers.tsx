@@ -157,6 +157,11 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
 
     const hasPendingUpdate = (() => {
       try {
+        const forceReload = localStorage.getItem('force_offers_reload');
+        if (forceReload) {
+          localStorage.removeItem('force_offers_reload');
+          return true;
+        }
         const ev = localStorage.getItem('data_sync_events');
         if (ev) {
           const parsed = JSON.parse(ev);
