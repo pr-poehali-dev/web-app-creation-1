@@ -13,6 +13,7 @@ class DataSyncManager {
   private listeners: Map<string, Set<() => void>> = new Map();
   private lastCheck: number = Date.now();
   private intervalId: number | null = null;
+  private debounceTimer: number | null = null;
 
   constructor() {
     // Слушаем изменения в других вкладках через storage event
@@ -24,6 +25,14 @@ class DataSyncManager {
     // Проверяем каждые 30 секунд на случай бездействия
     this.startBackgroundCheck();
   }
+
+  private debouncedCheck = () => {
+    if (this.debounceTimer !== null) return;
+    this.debounceTimer = window.setTimeout(() => {
+      this.checkForUpdates();
+      this.debounceTimer = null;
+    }, 1500);
+  };
 
   private handleStorageChange = (e: StorageEvent) => {
     if (e.key === SYNC_KEY && e.newValue) {
@@ -68,27 +77,27 @@ class DataSyncManager {
       this.checkForUpdates();
     });
 
-    // Проверяем при клике в любом месте страницы
+    // Проверяем при клике в любом месте страницы (с debounce)
     document.addEventListener('click', () => {
-      this.checkForUpdates();
+      this.debouncedCheck();
     }, { passive: true });
 
-    // Проверяем при скролле
+    // Проверяем при скролле (с debounce — не на каждый пиксель)
     window.addEventListener('scroll', () => {
-      this.checkForUpdates();
+      this.debouncedCheck();
     }, { passive: true });
 
-    // Проверяем при свайпе/касании (мобильные устройства)
+    // Проверяем при свайпе/касании (мобильные устройства, с debounce)
     document.addEventListener('touchstart', () => {
-      this.checkForUpdates();
+      this.debouncedCheck();
     }, { passive: true });
 
     document.addEventListener('touchmove', () => {
-      this.checkForUpdates();
+      this.debouncedCheck();
     }, { passive: true });
 
     document.addEventListener('touchend', () => {
-      this.checkForUpdates();
+      this.debouncedCheck();
     }, { passive: true });
 
     // Проверяем при навигации (popstate = кнопка "Назад")
@@ -98,10 +107,12 @@ class DataSyncManager {
   }
 
   private startBackgroundCheck() {
-    // Проверяем каждые 5 секунд (только localStorage, без запросов к серверу)
+    // Проверяем каждые 30 секунд (только localStorage, без запросов к серверу)
     this.intervalId = window.setInterval(() => {
-      this.checkForUpdates();
-    }, 5000);
+      if (!document.hidden) {
+        this.checkForUpdates();
+      }
+    }, 30000);
   }
 
   private notifyListeners(type: string) {

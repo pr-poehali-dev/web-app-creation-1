@@ -100,14 +100,17 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           setTimeout(() => reject(new Error('Превышено время ожидания загрузки')), 15000)
         );
         
-        const offersData = await Promise.race([
-          offersAPI.getOffers({ 
-            status: 'active',
-            limit: 20,
-            offset: 0
-          }),
-          timeoutPromise
-        ]) as { offers: Offer[]; total: number; hasMore: boolean };
+        const [offersData, ordersResponse] = await Promise.race([
+          Promise.all([
+            offersAPI.getOffers({ 
+              status: 'active',
+              limit: 20,
+              offset: 0
+            }),
+            ordersAPI.getAll('all').catch(() => ({ orders: [] })),
+          ]),
+          timeoutPromise,
+        ]) as [{ offers: Offer[]; total: number; hasMore: boolean }, { orders: unknown[] }];
         
         if (!isMounted) return;
         
@@ -116,6 +119,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         setGlobalOffers(loadedOffers);
         setTotalOffersCount(offersData.total || 0);
         setHasMoreOnServer(offersData.hasMore || false);
+        setOrders(ordersResponse.orders || []);
         
         SmartCache.set('offers_list', loadedOffers);
         
@@ -124,14 +128,6 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
         } else {
           setIsSyncing(false);
         }
-        
-        setTimeout(() => {
-          ordersAPI.getAll('all').then(ordersResponse => {
-            if (isMounted) {
-              setOrders(ordersResponse.orders || []);
-            }
-          }).catch(() => {});
-        }, 500);
       } catch (error) {
         console.error('Ошибка загрузки данных:', error);
         
