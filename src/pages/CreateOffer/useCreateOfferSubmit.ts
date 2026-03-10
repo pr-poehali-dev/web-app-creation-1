@@ -328,6 +328,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       window.dispatchEvent(new Event('storage'));
       
       if (isEditMode) {
+        updateOffer(result.id, newOffer);
         toast({
           title: 'Успешно',
           description: 'Предложение обновлено',
