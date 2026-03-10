@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import PullToRefresh from "./components/PullToRefresh";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
@@ -114,6 +114,19 @@ const ImageEditor = lazyWithRetry(() => import("./pages/ImageEditor"));
 const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
 const MyAutoSales = lazyWithRetry(() => import("./pages/MyAutoSales"));
 const MyAutoRequests = lazyWithRetry(() => import("./pages/MyAutoRequests"));
+
+// Инвалидирует кэш при каждой смене маршрута — гарантирует свежие данные на мобильных
+function RouteChangeInvalidator() {
+  const location = useLocation();
+  useEffect(() => {
+    SmartCache.invalidate('offers_list');
+    SmartCache.invalidate('requests_list');
+    SmartCache.invalidate('orders_list');
+    SmartCache.invalidate('auctions_list');
+    localStorage.setItem('force_offers_reload', Date.now().toString());
+  }, [location.pathname]);
+  return null;
+}
 
 // Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
@@ -227,6 +240,7 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
+          <RouteChangeInvalidator />
           <TimezoneProvider>
             <DistrictProvider>
               <OffersProvider>
