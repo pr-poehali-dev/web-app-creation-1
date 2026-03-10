@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import Icon from '@/components/ui/icon';
 
 const PRICE_TYPE_LABELS: Record<string, string> = {
   per_km: 'За км',
