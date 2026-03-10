@@ -200,7 +200,7 @@ export function notifyNewMessage(
 
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!('Notification' in window)) {
-    console.log('Браузер не поддерживает уведомления');
+
     return false;
   }
 

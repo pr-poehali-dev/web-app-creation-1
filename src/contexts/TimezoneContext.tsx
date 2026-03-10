@@ -98,8 +98,8 @@ export function TimezoneProvider({ children }: { children: ReactNode }) {
             setIsDetecting(false);
             return;
           }
-        } catch (error) {
-          console.log('Browser geolocation not available, trying IP detection');
+        } catch {
+          // geolocation not available
         }
 
         // Определяем через IP

@@ -111,12 +111,12 @@ export function initializeSeedData() {
   if (!existingOffers || JSON.parse(existingOffers).length === 0) {
     const userOffers = SEED_OFFERS.map(offer => ({ ...offer, userId: currentUserId }));
     localStorage.setItem(offersKey, JSON.stringify(userOffers));
-    console.log('Seed offers initialized');
+
   }
 
   if (!existingRequests || JSON.parse(existingRequests).length === 0) {
     const userRequests = SEED_REQUESTS.map(request => ({ ...request, userId: currentUserId }));
     localStorage.setItem(requestsKey, JSON.stringify(userRequests));
-    console.log('Seed requests initialized');
+
   }
 }

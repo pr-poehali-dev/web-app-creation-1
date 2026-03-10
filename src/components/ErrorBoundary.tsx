@@ -41,7 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
       // Защита от бесконечного цикла перезагрузок
       const hasAlreadyReloaded = sessionStorage.getItem('eb_reloaded') === '1';
       if (!hasAlreadyReloaded) {
-        console.log('Обнаружена ошибка React хуков, выполняется однократная перезагрузка...');
+
         sessionStorage.setItem('eb_reloaded', '1');
         this.setState({ isReloading: true });
         setTimeout(() => {

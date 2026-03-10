@@ -45,7 +45,7 @@ class DataSyncManager {
       try {
         const event: SyncEvent = JSON.parse(eventsStr);
         if (event.timestamp > this.lastCheck) {
-          console.log(`🔄 DataSync: detected ${event.type} update, notifying listeners...`);
+
           this.notifyListeners(event.type);
           this.lastCheck = event.timestamp;
         }
@@ -151,7 +151,7 @@ class DataSyncManager {
       ...event,
       timestamp: Date.now(),
     };
-    console.log(`📢 DataSync: publishing ${event.type} event`, eventWithTimestamp);
+
     localStorage.setItem(SYNC_KEY, JSON.stringify(eventWithTimestamp));
     
     // Сразу уведомляем текущую вкладку

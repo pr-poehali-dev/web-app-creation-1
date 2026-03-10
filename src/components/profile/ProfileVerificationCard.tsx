@@ -49,10 +49,8 @@ export default function ProfileVerificationCard() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Profile verification data:', data);
         setVerificationStatus(data.verificationStatus);
         if (data.verification) {
-          console.log('Verification details:', data.verification);
           setVerificationDetails(data.verification);
         }
       } else {

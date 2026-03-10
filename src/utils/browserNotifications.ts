@@ -8,7 +8,7 @@ export interface BrowserNotificationOptions {
   body: string;
   icon?: string;
   tag?: string;
-  data?: any;
+  data?: unknown;
   onClick?: () => void;
 }
 
@@ -34,14 +34,11 @@ export function getNotificationPermission(): NotificationPermission {
  */
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
   if (!isNotificationSupported()) {
-    console.warn('Браузер не поддерживает уведомления');
     return 'denied';
   }
 
   try {
-    const permission = await Notification.requestPermission();
-    console.log('Notification permission:', permission);
-    return permission;
+    return await Notification.requestPermission();
   } catch (error) {
     console.error('Ошибка запроса разрешения:', error);
     return 'denied';
@@ -53,12 +50,10 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
  */
 export function showBrowserNotification(options: BrowserNotificationOptions): Notification | null {
   if (!isNotificationSupported()) {
-    console.warn('Уведомления не поддерживаются');
     return null;
   }
 
   if (Notification.permission !== 'granted') {
-    console.warn('Разрешение на уведомления не предоставлено');
     return null;
   }
 

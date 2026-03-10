@@ -21,9 +21,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
     return 'denied';
   }
 
-  const permission = await Notification.requestPermission();
-  console.log('Notification permission:', permission);
-  return permission;
+  return await Notification.requestPermission();
 }
 
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
@@ -36,7 +34,6 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',
     });
-    console.log('Service Worker зарегистрирован:', registration);
     return registration;
   } catch (error) {
     console.error('Ошибка регистрации Service Worker:', error);
@@ -52,7 +49,6 @@ export async function subscribeToPushNotifications(
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
     });
-    console.log('Push subscription:', subscription);
     return subscription;
   } catch (error) {
     console.error('Ошибка подписки на push-уведомления:', error);
@@ -80,7 +76,6 @@ export async function sendSubscriptionToServer(
       throw new Error('Failed to send subscription to server');
     }
 
-    console.log('Подписка отправлена на сервер');
     return true;
   } catch (error) {
     console.error('Ошибка отправки подписки на сервер:', error);
@@ -93,7 +88,6 @@ export async function setupPushNotifications(userId: string): Promise<boolean> {
     // 1. Запрашиваем разрешение
     const permission = await requestNotificationPermission();
     if (permission !== 'granted') {
-      console.log('Разрешение на уведомления не предоставлено');
       return false;
     }
 
@@ -146,7 +140,6 @@ export async function unsubscribeFromPush(): Promise<boolean> {
     }
 
     const success = await subscription.unsubscribe();
-    console.log('Отписка от push-уведомлений:', success);
     return success;
   } catch (error) {
     console.error('Ошибка отписки от push-уведомлений:', error);
