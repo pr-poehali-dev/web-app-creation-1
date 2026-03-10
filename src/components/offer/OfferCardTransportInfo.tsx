@@ -41,7 +41,7 @@ export default function OfferCardTransportInfo({
     <>
       {/* Основной маршрут + цена */}
       <div className="flex items-start justify-between gap-1">
-        <span className="text-sm font-bold text-foreground leading-tight min-w-0 truncate">
+        <span className="text-sm font-bold text-foreground leading-tight min-w-0">
           {transportRoute}
         </span>
         <span className="font-bold text-primary text-sm whitespace-nowrap flex-shrink-0">
