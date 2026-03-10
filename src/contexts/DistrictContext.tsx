@@ -39,13 +39,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
   
   const [selectedDistricts, setSelectedDistrictsState] = useState<string[]>(() => {
     const stored = localStorage.getItem('selectedDistricts');
-    const parsed = stored ? JSON.parse(stored) : [];
-    
-    if (parsed.length === 0 && detectedDistrictIdStored) {
-      return [detectedDistrictIdStored];
-    }
-    
-    return parsed;
+    return stored ? JSON.parse(stored) : [];
   });
   
   const [detectedCity, setDetectedCity] = useState<string | null>(() => {

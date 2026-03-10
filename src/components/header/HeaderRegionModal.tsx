@@ -161,7 +161,7 @@ export default function HeaderRegionModal({ isOpen, onClose }: HeaderRegionModal
                       className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
                     >
                       <Icon name={isDetecting ? 'Loader2' : 'LocateFixed'} className={`h-3 w-3 ${isDetecting ? 'animate-spin' : ''}`} />
-                      {isDetecting ? 'Определяем...' : 'Обновить местоположение'}
+                      {isDetecting ? 'Определяем...' : 'Мое местоположение'}
                     </button>
                   </div>
                 </div>
