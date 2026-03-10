@@ -405,14 +405,11 @@ export default function OfferOrderModal({
                 <Label htmlFor="passenger-route">Ваш маршрут <span className="text-muted-foreground font-normal">(если отличается)</span></Label>
                 <Input
                   id="passenger-route"
-                  value={passengerRoute}
+                  value={selectedWaypoint && selectedWaypoint !== '__custom__' ? '' : passengerRoute}
                   onChange={(e) => setPassengerRoute(e.target.value)}
                   placeholder={offerTransportRoute || 'Например: Нюрба - Якутск'}
-                  className={passengerRoute && passengerRoute !== offerTransportRoute
-                    ? 'border-2 border-green-500 bg-green-50 dark:bg-green-950/20 font-medium'
-                    : ''}
+                  disabled={!!(selectedWaypoint && selectedWaypoint !== '__custom__')}
                 />
-
               </div>
             </div>
           )}
