@@ -92,6 +92,7 @@ export default function OfferInfoDetails({
         <OfferInfoTransportDetails
           transportComment={transportComment}
           transportPriceType={transportPriceType}
+          transportRoute={transportRoute}
           transportWaypoints={transportWaypoints}
           availableDistricts={availableDistricts}
           availableDistrictNames={availableDistrictNames}
