@@ -52,6 +52,11 @@ export const CATEGORIES: Category[] = [
     subcategories: [],
   },
   {
+    id: 'household-chemicals',
+    name: 'Бытовая химия',
+    subcategories: [],
+  },
+  {
     id: 'household-appliances',
     name: 'Бытовая техника и мебель',
     subcategories: [],
