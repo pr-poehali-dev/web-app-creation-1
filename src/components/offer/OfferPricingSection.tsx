@@ -40,6 +40,7 @@ export default function OfferPricingSection({ formData, onInputChange }: OfferPr
     'equipment':            [{ value: 'шт', label: 'шт' }, { value: 'комплект', label: 'комплект' }, { value: 'набор', label: 'набор' }],
     'household-appliances': [{ value: 'шт', label: 'шт' }, { value: 'комплект', label: 'комплект' }, { value: 'набор', label: 'набор' }],
     'essentials':           [{ value: 'шт', label: 'шт' }, { value: 'комплект', label: 'комплект' }, { value: 'набор', label: 'набор' }, { value: 'упак', label: 'упак' }, { value: 'кг', label: 'кг' }],
+    'household-chemicals':  [{ value: 'шт', label: 'шт' }, { value: 'упак', label: 'упак' }, { value: 'кг', label: 'кг' }, { value: 'л', label: 'л' }, { value: 'набор', label: 'набор' }, { value: 'комплект', label: 'комплект' }],
   };
 
   const ALL_UNITS = [
