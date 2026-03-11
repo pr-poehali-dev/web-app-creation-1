@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
-import { getSession } from '@/utils/auth';
+import { getSession, saveSession, getJwtToken } from '@/utils/auth';
+import func2url from '../../backend/func2url.json';
 import { dataSync } from '@/utils/dataSync';
 import {
   Dialog,
@@ -71,7 +72,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
-  const currentUser = getSession();
+  const [currentUser, setCurrentUser] = useState(getSession());
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -79,6 +80,29 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       return;
     }
 
+    const syncSession = async () => {
+      const token = getJwtToken();
+      if (!token) return;
+      try {
+        const res = await fetch(func2url.auth, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ action: 'get_me' }),
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          const updated = { ...getSession(), ...{
+            verificationStatus: data.user.verification_status,
+          }};
+          saveSession(updated);
+          setCurrentUser(updated);
+        }
+      } catch (e) {
+        console.error('Session sync error:', e);
+      }
+    };
+
+    syncSession();
     loadContracts();
     
     const unsubscribe = dataSync.subscribe('contract_updated', () => {

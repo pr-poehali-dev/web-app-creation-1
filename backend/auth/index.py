@@ -459,7 +459,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     cur.execute(
                         """SELECT id, email, phone, password_hash, first_name, last_name, middle_name, 
                            user_type, is_active, company_name, inn, ogrnip, ogrn, 
-                           position, director_name, legal_address, created_at, role, is_root_admin, locked_until 
+                           position, director_name, legal_address, created_at, role, is_root_admin, locked_until,
+                           verification_status
                            FROM users 
                            WHERE email = %s 
                               OR REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = %s 
@@ -636,6 +637,45 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({'success': True, 'message': 'Email успешно подтверждён'}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'get_me':
+                auth_user = get_user_from_request(event)
+                if not auth_user:
+                    return {
+                        'statusCode': 401,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Требуется авторизация'}),
+                        'isBase64Encoded': False
+                    }
+                
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """SELECT id, email, phone, first_name, last_name, middle_name,
+                           user_type, company_name, inn, ogrnip, ogrn, position, director_name,
+                           legal_address, created_at, role, is_root_admin, verification_status
+                           FROM users WHERE id = %s AND removed_at IS NULL""",
+                        (auth_user['user_id'],)
+                    )
+                    user = cur.fetchone()
+                
+                if not user:
+                    return {
+                        'statusCode': 404,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Пользователь не найден'}),
+                        'isBase64Encoded': False
+                    }
+                
+                user_data = dict(user)
+                if user_data.get('email') and user_data['email'].endswith('@noemail.erttp.local'):
+                    user_data['email'] = ''
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'user': user_data}, default=str),
                     'isBase64Encoded': False
                 }
             
