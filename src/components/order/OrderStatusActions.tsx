@@ -343,6 +343,17 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                           )}
                         </>
                       )}
+                      {onCancelOrder && (
+                        <Button
+                          onClick={onCancelClick}
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                        >
+                          <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                          Отменить заказ
+                        </Button>
+                      )}
                     </>
                   )}
                 </div>
