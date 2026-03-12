@@ -831,7 +831,16 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         current_status = order.get('status', '')
         if current_status == 'accepted':
             cur.execute(
-                pgsql.SQL("UPDATE {schema}.offers SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - %s) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                pgsql.SQL("""
+                    UPDATE {schema}.offers
+                    SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - %s),
+                        status = CASE
+                            WHEN status IN ('completed', 'archived') THEN 'active'
+                            ELSE status
+                        END,
+                        updated_at = NOW()
+                    WHERE id = %s
+                """).format(schema=pgsql.Identifier(schema)),
                 (order_quantity, str(order['offer_id']))
             )
         else:
