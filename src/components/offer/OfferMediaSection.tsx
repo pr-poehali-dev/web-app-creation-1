@@ -74,7 +74,7 @@ export default function OfferMediaSection({
         )}
         <div>
           <Label className="flex items-center gap-2">
-            {'Фотографии (до 10)'}
+            {'Фото и файлы (до 10)'}
             {isImageUploading && (
               <span className="inline-flex items-center gap-1 text-primary text-xs font-normal">
                 <Icon name="Loader2" className="h-3 w-3 animate-spin" />
@@ -111,7 +111,6 @@ export default function OfferMediaSection({
                 <input
                   id="images-gallery"
                   type="file"
-                  accept="image/*"
                   multiple
                   onChange={handleImageUpload}
                   disabled={images.length >= 10 || isImageUploading}
@@ -129,7 +128,6 @@ export default function OfferMediaSection({
               <Input
                 id="images"
                 type="file"
-                accept="image/*"
                 multiple
                 onChange={handleImageUpload}
                 disabled={images.length >= 10 || isImageUploading}
@@ -140,22 +138,33 @@ export default function OfferMediaSection({
           
           {imagePreviews.length > 0 && (
             <div className="grid grid-cols-3 md:grid-cols-5 gap-2 mt-4">
-              {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border">
-                  <img
-                    src={preview}
-                    alt={`Preview ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onRemoveImage(index)}
-                    className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
-                  >
-                    <Icon name="X" className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
+              {imagePreviews.map((preview, index) => {
+                const file = images[index];
+                const isImage = file?.type?.startsWith('image/');
+                return (
+                  <div key={index} className="relative aspect-square rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                    {isImage ? (
+                      <img
+                        src={preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-1 p-2 text-center">
+                        <Icon name="FileText" className="h-8 w-8 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground truncate w-full px-1">{file?.name}</span>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onRemoveImage(index)}
+                      className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+                    >
+                      <Icon name="X" className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

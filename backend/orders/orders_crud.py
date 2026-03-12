@@ -5,8 +5,13 @@ from psycopg2.extras import RealDictCursor
 from orders_utils import (
     get_db_connection, get_schema, send_notification,
     generate_order_number, reject_other_responses,
-    decimal_to_float, offers_cache
+    decimal_to_float, offers_cache, SafeJSONEncoder
 )
+
+
+def safe_json(obj) -> str:
+    """json.dumps с поддержкой datetime и Decimal"""
+    return json.dumps(obj, cls=SafeJSONEncoder)
 
 
 def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
@@ -17,7 +22,7 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({'exists': False}),
+            'body': safe_json({'exists': False}),
             'isBase64Encoded': False
         }
     conn = get_db_connection()
@@ -35,7 +40,7 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({
+            'body': safe_json({
                 'exists': True,
                 'orderId': str(row['id']),
                 'pricePerUnit': float(row['price_per_unit']),
@@ -49,7 +54,7 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({'exists': False}),
+        'body': safe_json({'exists': False}),
         'isBase64Encoded': False
     }
 
@@ -65,7 +70,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         return {
             'statusCode': 401,
             'headers': headers,
-            'body': json.dumps({'error': 'User ID required'}),
+            'body': safe_json({'error': 'User ID required'}),
             'isBase64Encoded': False
         }
     
@@ -108,7 +113,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             COALESCE(of.category, o.offer_category) as _offer_category_merged,
             of.transport_route as offer_transport_route,
             COALESCE(of.transport_service_type, o.offer_transport_service_type) as _offer_transport_service_type_merged,
-            COALESCE(of.transport_date_time, o.offer_transport_date_time) as _offer_transport_date_time_merged,
+            COALESCE(of.transport_date_time::timestamp, o.offer_transport_date_time) as _offer_transport_date_time_merged,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             COALESCE((
@@ -175,12 +180,16 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['seller_full_name'] = order_dict.get('seller_name', 'Продавец')
         order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
         
-        order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
-        order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
-        order_dict['completedDate'] = order_dict.pop('completed_date').isoformat() if order_dict.get('completed_date') else None
-        order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
-        order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
-        order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
+        def _iso(val): return val.isoformat() if val and hasattr(val, 'isoformat') else None
+        order_dict['orderDate'] = _iso(order_dict.pop('order_date', None))
+        order_dict['deliveryDate'] = _iso(order_dict.pop('delivery_date', None))
+        order_dict['completedDate'] = _iso(order_dict.pop('completed_date', None))
+        order_dict['createdAt'] = _iso(order_dict.pop('created_at', None))
+        order_dict['updatedAt'] = _iso(order_dict.pop('updated_at', None))
+        order_dict['counterOfferedAt'] = _iso(order_dict.pop('counter_offered_at', None))
+        order_dict['cancelledDate'] = _iso(order_dict.pop('cancelled_date', None))
+        order_dict['archivedAt'] = _iso(order_dict.pop('archived_at', None))
+        order_dict['adminArchivedAt'] = _iso(order_dict.pop('admin_archived_at', None))
         
         if 'counter_offer_message' in order_dict:
             order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
@@ -196,16 +205,19 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     cur.close()
     conn.close()
     
+    payload = {
+        'orders': result,
+        'total': total_count,
+        'limit': limit,
+        'offset': offset,
+        'hasMore': offset + len(result) < total_count
+    }
+    payload = decimal_to_float(payload)
+    
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({
-            'orders': result,
-            'total': total_count,
-            'limit': limit,
-            'offset': offset,
-            'hasMore': offset + len(result) < total_count
-        }),
+        'body': json.dumps(payload),
         'isBase64Encoded': False
     }
 
@@ -226,7 +238,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             COALESCE(of.category, o.offer_category) as _offer_category_merged,
             of.transport_route as offer_transport_route,
             COALESCE(of.transport_service_type, o.offer_transport_service_type) as _offer_transport_service_type_merged,
-            COALESCE(of.transport_date_time, o.offer_transport_date_time) as _offer_transport_date_time_merged,
+            COALESCE(of.transport_date_time::timestamp, o.offer_transport_date_time) as _offer_transport_date_time_merged,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             ub.rating as buyer_rating,
@@ -251,7 +263,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
         return {
             'statusCode': 404,
             'headers': headers,
-            'body': json.dumps({'error': 'Order not found'}),
+            'body': safe_json({'error': 'Order not found'}),
             'isBase64Encoded': False
         }
     
@@ -286,12 +298,16 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     if user_id:
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id else 'sale'
     
-    order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
-    order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
-    order_dict['completedDate'] = order_dict.pop('completed_date').isoformat() if order_dict.get('completed_date') else None
-    order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
-    order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
-    order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
+    def _iso(val): return val.isoformat() if val and hasattr(val, 'isoformat') else None
+    order_dict['orderDate'] = _iso(order_dict.pop('order_date', None))
+    order_dict['deliveryDate'] = _iso(order_dict.pop('delivery_date', None))
+    order_dict['completedDate'] = _iso(order_dict.pop('completed_date', None))
+    order_dict['createdAt'] = _iso(order_dict.pop('created_at', None))
+    order_dict['updatedAt'] = _iso(order_dict.pop('updated_at', None))
+    order_dict['counterOfferedAt'] = _iso(order_dict.pop('counter_offered_at', None))
+    order_dict['cancelledDate'] = _iso(order_dict.pop('cancelled_date', None))
+    order_dict['archivedAt'] = _iso(order_dict.pop('archived_at', None))
+    order_dict['adminArchivedAt'] = _iso(order_dict.pop('admin_archived_at', None))
     
     if 'counter_offer_message' in order_dict:
         order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
@@ -318,7 +334,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         return {
             'statusCode': 401,
             'headers': headers,
-            'body': json.dumps({'error': 'User ID required'}),
+            'body': safe_json({'error': 'User ID required'}),
             'isBase64Encoded': False
         }
     
@@ -347,7 +363,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             return {
                 'statusCode': 404,
                 'headers': headers,
-                'body': json.dumps({'error': 'Offer or request not found'}),
+                'body': safe_json({'error': 'Offer or request not found'}),
                 'isBase64Encoded': False
             }
         
@@ -363,7 +379,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         return {
             'statusCode': 403,
             'headers': headers,
-            'body': json.dumps({'error': 'Нельзя купить собственное предложение'}),
+            'body': safe_json({'error': 'Нельзя купить собственное предложение'}),
             'isBase64Encoded': False
         }
     
@@ -378,7 +394,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             return {
                 'statusCode': 409,
                 'headers': headers,
-                'body': json.dumps({'error': 'Вы уже отправили отклик на этот запрос', 'existingOrderId': str(existing_response['id'])}),
+                'body': safe_json({'error': 'Вы уже отправили отклик на этот запрос', 'existingOrderId': str(existing_response['id'])}),
                 'isBase64Encoded': False
             }
     
@@ -512,7 +528,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     return {
         'statusCode': 201,
         'headers': headers,
-        'body': json.dumps({
+        'body': safe_json({
             'id': str(result['id']),
             'orderNumber': result['order_number'],
             'orderDate': result['order_date'].isoformat(),
@@ -543,7 +559,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         return {
             'statusCode': 404,
             'headers': headers,
-            'body': json.dumps({'error': 'Order not found'}),
+            'body': safe_json({'error': 'Order not found'}),
             'isBase64Encoded': False
         }
     
@@ -601,7 +617,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 200,
                 'headers': headers,
-                'body': json.dumps({'message': 'Response updated successfully'}),
+                'body': safe_json({'message': 'Response updated successfully'}),
                 'isBase64Encoded': False
             }
     
@@ -646,7 +662,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': 'No counter offer to accept'}),
+                'body': safe_json({'error': 'No counter offer to accept'}),
                 'isBase64Encoded': False
             }
         
@@ -676,7 +692,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': 'No counter offer to accept'}),
+                'body': safe_json({'error': 'No counter offer to accept'}),
                 'isBase64Encoded': False
             }
         
@@ -686,7 +702,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': 'No seller counter offer to accept'}),
+                'body': safe_json({'error': 'No seller counter offer to accept'}),
                 'isBase64Encoded': False
             }
         
@@ -726,7 +742,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 return {
                     'statusCode': 400,
                     'headers': headers,
-                    'body': json.dumps({
+                    'body': safe_json({
                         'error': 'Insufficient quantity',
                         'available': available,
                         'requested': order_quantity
@@ -768,7 +784,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 403,
                 'headers': headers,
-                'body': json.dumps({'error': 'Только покупатель может завершить заказ'}),
+                'body': safe_json({'error': 'Только покупатель может завершить заказ'}),
                 'isBase64Encoded': False
             }
         # Пассажирские перевозки: нельзя завершить до даты выезда
@@ -788,7 +804,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 return {
                     'statusCode': 403,
                     'headers': headers,
-                    'body': json.dumps({'error': f'Завершить заказ можно только после даты выезда: {departure_dt.strftime("%d.%m.%Y %H:%M")}'}),
+                    'body': safe_json({'error': f'Завершить заказ можно только после даты выезда: {departure_dt.strftime("%d.%m.%Y %H:%M")}'}),
                     'isBase64Encoded': False
                 }
         updates.append(f"completed_date = CURRENT_TIMESTAMP")
@@ -831,7 +847,16 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         current_status = order.get('status', '')
         if current_status == 'accepted':
             cur.execute(
-                pgsql.SQL("UPDATE {schema}.offers SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - %s) WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                pgsql.SQL("""
+                    UPDATE {schema}.offers
+                    SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - %s),
+                        status = CASE
+                            WHEN status IN ('completed', 'archived') THEN 'active'
+                            ELSE status
+                        END,
+                        updated_at = NOW()
+                    WHERE id = %s
+                """).format(schema=pgsql.Identifier(schema)),
                 (order_quantity, str(order['offer_id']))
             )
         else:
@@ -903,7 +928,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': json.dumps({'error': 'No fields to update'}),
+            'body': safe_json({'error': 'No fields to update'}),
             'isBase64Encoded': False
         }
     
@@ -1021,6 +1046,6 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({'message': 'Order updated successfully'}),
+        'body': safe_json({'message': 'Order updated successfully'}),
         'isBase64Encoded': False
     }
