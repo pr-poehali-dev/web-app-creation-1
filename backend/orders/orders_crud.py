@@ -187,9 +187,12 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         order_dict = decimal_to_float(order_dict)
         
+        from datetime import datetime, date
         for key, val in list(order_dict.items()):
             if hasattr(val, 'hex'):
                 order_dict[key] = str(val)
+            elif isinstance(val, (datetime, date)):
+                order_dict[key] = val.isoformat()
         
         result.append(order_dict)
     
