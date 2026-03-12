@@ -20,9 +20,11 @@ except ImportError:
 
 
 def decimal_to_float(obj):
-    """Рекурсивно конвертирует Decimal в float"""
+    """Рекурсивно конвертирует Decimal в float и datetime в строку"""
     if isinstance(obj, Decimal):
         return float(obj)
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
     elif isinstance(obj, dict):
         return {k: decimal_to_float(v) for k, v in obj.items()}
     elif isinstance(obj, list):
