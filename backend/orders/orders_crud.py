@@ -204,16 +204,19 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     cur.close()
     conn.close()
     
+    payload = {
+        'orders': result,
+        'total': total_count,
+        'limit': limit,
+        'offset': offset,
+        'hasMore': offset + len(result) < total_count
+    }
+    payload = decimal_to_float(payload)
+    
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': safe_json({
-            'orders': result,
-            'total': total_count,
-            'limit': limit,
-            'offset': offset,
-            'hasMore': offset + len(result) < total_count
-        }),
+        'body': json.dumps(payload),
         'isBase64Encoded': False
     }
 
@@ -312,7 +315,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': safe_json(order_dict),
+        'body': json.dumps(order_dict),
         'isBase64Encoded': False
     }
 
