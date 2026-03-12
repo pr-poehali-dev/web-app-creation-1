@@ -217,7 +217,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps(payload),
+        'body': json.dumps(payload, cls=SafeJSONEncoder),
         'isBase64Encoded': False
     }
 
@@ -317,7 +317,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps(order_dict),
+        'body': json.dumps(order_dict, cls=SafeJSONEncoder),
         'isBase64Encoded': False
     }
 
