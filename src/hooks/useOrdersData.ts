@@ -696,6 +696,10 @@ export function useOrdersData(
         orderId: orderToCancel,
         action: 'cancel'
       }));
+      localStorage.setItem('force_offers_reload', JSON.stringify({
+        timestamp: Date.now(),
+        action: 'order_cancelled'
+      }));
       window.dispatchEvent(new Event('storage'));
 
       setTimeout(() => setIsChatOpen(false), 400);
