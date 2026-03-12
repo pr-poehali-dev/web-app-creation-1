@@ -10,19 +10,10 @@ PUT /?id=uuid - обновить статус заказа
 '''
 
 import json
-from datetime import datetime, date
-from decimal import Decimal
 from typing import Dict, Any
 from rate_limiter import rate_limiter
 
-from orders_utils import get_schema, get_db_connection, SafeJSONEncoder
-
-# Патч: json.dumps всегда безопасно сериализует datetime и Decimal
-_original_dumps = json.dumps
-def _safe_dumps(obj, *args, **kwargs):
-    kwargs.setdefault('cls', SafeJSONEncoder)
-    return _original_dumps(obj, *args, **kwargs)
-json.dumps = _safe_dumps
+from orders_utils import get_schema, get_db_connection
 from orders_crud import (
     check_existing_response,
     get_user_orders,
