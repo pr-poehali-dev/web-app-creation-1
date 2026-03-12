@@ -4,7 +4,7 @@ import os
 import sys
 import http.client
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -20,10 +20,10 @@ except ImportError:
 
 
 def decimal_to_float(obj):
-    """Рекурсивно конвертирует Decimal в float и datetime в строку"""
+    """Рекурсивно конвертирует Decimal в float и datetime/date в строку"""
     if isinstance(obj, Decimal):
         return float(obj)
-    elif isinstance(obj, datetime):
+    elif isinstance(obj, (datetime, date)):
         return obj.isoformat()
     elif isinstance(obj, dict):
         return {k: decimal_to_float(v) for k, v in obj.items()}
@@ -33,9 +33,9 @@ def decimal_to_float(obj):
 
 
 class SafeJSONEncoder(json.JSONEncoder):
-    """JSON encoder который безопасно сериализует datetime и Decimal"""
+    """JSON encoder который безопасно сериализует datetime, date и Decimal"""
     def default(self, obj):
-        if isinstance(obj, datetime):
+        if isinstance(obj, (datetime, date)):
             return obj.isoformat()
         if isinstance(obj, Decimal):
             return float(obj)
