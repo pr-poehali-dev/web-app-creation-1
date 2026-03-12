@@ -16,17 +16,18 @@ from typing import Dict, Any
 from rate_limiter import rate_limiter
 
 from orders_utils import get_schema, get_db_connection, SafeJSONEncoder, decimal_to_float
-import orders_crud as _orders_crud_module
-import orders_messages as _orders_messages_module
 
-# Патч: заменяем json.dumps во всех модулях orders на безопасную версию
-_original_dumps = json.dumps
-def _safe_dumps(obj, *args, **kwargs):
-    kwargs.setdefault('cls', SafeJSONEncoder)
-    return _original_dumps(obj, *args, **kwargs)
-json.dumps = _safe_dumps
-_orders_crud_module.json.dumps = _safe_dumps
-_orders_messages_module.json.dumps = _safe_dumps
+
+def _fix_response(resp: dict) -> dict:
+    """Перехватывает ответ функции и безопасно сериализует body если там есть datetime"""
+    if resp and isinstance(resp.get('body'), str):
+        try:
+            parsed = json.loads(resp['body'])
+            parsed = decimal_to_float(parsed)
+            resp['body'] = json.dumps(parsed, cls=SafeJSONEncoder)
+        except Exception:
+            pass
+    return resp
 
 from orders_crud import (
     check_existing_response,
@@ -132,9 +133,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif messages_flag == 'true' and order_id:
                 return get_messages_by_order(order_id, headers, event)
             elif order_id:
-                return get_order_by_id(order_id, headers, event)
+                resp = get_order_by_id(order_id, headers, event)
+                return _fix_response(resp)
             else:
-                return get_user_orders(event, headers)
+                resp = get_user_orders(event, headers)
+                return _fix_response(resp)
         
         elif method == 'POST':
             query_params = event.get('queryStringParameters', {}) or {}
