@@ -15,14 +15,19 @@ from decimal import Decimal
 from typing import Dict, Any
 from rate_limiter import rate_limiter
 
-from orders_utils import get_schema, get_db_connection, SafeJSONEncoder
+from orders_utils import get_schema, get_db_connection, SafeJSONEncoder, decimal_to_float
+import orders_crud as _orders_crud_module
+import orders_messages as _orders_messages_module
 
-# Патч: json.dumps всегда безопасно сериализует datetime и Decimal
+# Патч: заменяем json.dumps во всех модулях orders на безопасную версию
 _original_dumps = json.dumps
 def _safe_dumps(obj, *args, **kwargs):
     kwargs.setdefault('cls', SafeJSONEncoder)
     return _original_dumps(obj, *args, **kwargs)
 json.dumps = _safe_dumps
+_orders_crud_module.json.dumps = _safe_dumps
+_orders_messages_module.json.dumps = _safe_dumps
+
 from orders_crud import (
     check_existing_response,
     get_user_orders,
