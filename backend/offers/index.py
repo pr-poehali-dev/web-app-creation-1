@@ -255,7 +255,7 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
                 print(f'[EXPIRY] Notification error: {e}')
 
         # Строим WHERE условия
-        where_conditions = []
+        where_conditions = ["o.status != 'deleted'"]
         if status_filter and status_filter != 'all':
             where_conditions.append(f"o.status = '{status_filter}'")
         if user_id_filter:
@@ -1113,30 +1113,18 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         }
 
 def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
-    """Удалить предложение безвозвратно из базы данных"""
+    """Мягкое удаление предложения (status = 'deleted') для возможности восстановления при отмене заказа"""
     try:
         conn = get_db_connection()
         cur = conn.cursor()
         
         offer_id_esc = offer_id.replace("'", "''")
         
-        # Удаляем связи с изображениями (каскадное удаление)
-        try:
-            cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_image_relations WHERE offer_id = '{offer_id_esc}'")
-        except Exception as e:
-            print(f"Warning: Could not delete image relations: {str(e)}")
+        # Мягкое удаление: ставим статус 'deleted' вместо физического удаления
+        cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET status = 'deleted', updated_at = NOW() WHERE id = '{offer_id_esc}'")
+        updated_rows = cur.rowcount
         
-        # Удаляем из избранного (если есть)
-        try:
-            cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offer_favorites WHERE offer_id = '{offer_id_esc}'")
-        except Exception as e:
-            print(f"Warning: Could not delete favorites: {str(e)}")
-        
-        # Удаляем само предложение (главная операция)
-        cur.execute(f"DELETE FROM t_p42562714_web_app_creation_1.offers WHERE id = '{offer_id_esc}'")
-        deleted_rows = cur.rowcount
-        
-        if deleted_rows == 0:
+        if updated_rows == 0:
             conn.rollback()
             cur.close()
             conn.close()
@@ -1154,7 +1142,7 @@ def delete_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
         # Инвалидируем кэш
         offers_cache.invalidate('offers_list')
         
-        print(f"Successfully deleted offer {offer_id}")
+        print(f"[DELETE_OFFER] Soft-deleted offer {offer_id} (status=deleted)")
         
         return {
             'statusCode': 200,

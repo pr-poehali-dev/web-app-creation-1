@@ -13,7 +13,7 @@ import json
 from typing import Dict, Any
 from rate_limiter import rate_limiter
 
-from orders_utils import get_schema, get_db_connection, SafeJSONEncoder
+from orders_utils import get_schema, get_db_connection
 from orders_crud import (
     check_existing_response,
     get_user_orders,

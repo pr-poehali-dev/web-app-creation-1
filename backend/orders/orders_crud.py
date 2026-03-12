@@ -5,13 +5,8 @@ from psycopg2.extras import RealDictCursor
 from orders_utils import (
     get_db_connection, get_schema, send_notification,
     generate_order_number, reject_other_responses,
-    decimal_to_float, offers_cache, SafeJSONEncoder
+    decimal_to_float, offers_cache
 )
-
-
-def safe_json(obj) -> str:
-    """json.dumps с поддержкой datetime и Decimal"""
-    return json.dumps(obj, cls=SafeJSONEncoder)
 
 
 def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
@@ -22,7 +17,7 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': safe_json({'exists': False}),
+            'body': json.dumps({'exists': False}),
             'isBase64Encoded': False
         }
     conn = get_db_connection()
@@ -40,7 +35,7 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': safe_json({
+            'body': json.dumps({
                 'exists': True,
                 'orderId': str(row['id']),
                 'pricePerUnit': float(row['price_per_unit']),
@@ -54,7 +49,7 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': safe_json({'exists': False}),
+        'body': json.dumps({'exists': False}),
         'isBase64Encoded': False
     }
 
@@ -70,7 +65,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         return {
             'statusCode': 401,
             'headers': headers,
-            'body': safe_json({'error': 'User ID required'}),
+            'body': json.dumps({'error': 'User ID required'}),
             'isBase64Encoded': False
         }
     
@@ -204,7 +199,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': safe_json({
+        'body': json.dumps({
             'orders': result,
             'total': total_count,
             'limit': limit,
@@ -256,7 +251,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
         return {
             'statusCode': 404,
             'headers': headers,
-            'body': safe_json({'error': 'Order not found'}),
+            'body': json.dumps({'error': 'Order not found'}),
             'isBase64Encoded': False
         }
     
@@ -306,7 +301,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': safe_json(order_dict, cls=SafeJSONEncoder),
+        'body': json.dumps(order_dict),
         'isBase64Encoded': False
     }
 
@@ -323,7 +318,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         return {
             'statusCode': 401,
             'headers': headers,
-            'body': safe_json({'error': 'User ID required'}),
+            'body': json.dumps({'error': 'User ID required'}),
             'isBase64Encoded': False
         }
     
@@ -352,7 +347,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             return {
                 'statusCode': 404,
                 'headers': headers,
-                'body': safe_json({'error': 'Offer or request not found'}),
+                'body': json.dumps({'error': 'Offer or request not found'}),
                 'isBase64Encoded': False
             }
         
@@ -368,7 +363,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         return {
             'statusCode': 403,
             'headers': headers,
-            'body': safe_json({'error': 'Нельзя купить собственное предложение'}),
+            'body': json.dumps({'error': 'Нельзя купить собственное предложение'}),
             'isBase64Encoded': False
         }
     
@@ -383,7 +378,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             return {
                 'statusCode': 409,
                 'headers': headers,
-                'body': safe_json({'error': 'Вы уже отправили отклик на этот запрос', 'existingOrderId': str(existing_response['id'])}),
+                'body': json.dumps({'error': 'Вы уже отправили отклик на этот запрос', 'existingOrderId': str(existing_response['id'])}),
                 'isBase64Encoded': False
             }
     
@@ -517,7 +512,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     return {
         'statusCode': 201,
         'headers': headers,
-        'body': safe_json({
+        'body': json.dumps({
             'id': str(result['id']),
             'orderNumber': result['order_number'],
             'orderDate': result['order_date'].isoformat(),
@@ -548,7 +543,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         return {
             'statusCode': 404,
             'headers': headers,
-            'body': safe_json({'error': 'Order not found'}),
+            'body': json.dumps({'error': 'Order not found'}),
             'isBase64Encoded': False
         }
     
@@ -606,7 +601,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 200,
                 'headers': headers,
-                'body': safe_json({'message': 'Response updated successfully'}),
+                'body': json.dumps({'message': 'Response updated successfully'}),
                 'isBase64Encoded': False
             }
     
@@ -651,7 +646,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': safe_json({'error': 'No counter offer to accept'}),
+                'body': json.dumps({'error': 'No counter offer to accept'}),
                 'isBase64Encoded': False
             }
         
@@ -681,7 +676,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': safe_json({'error': 'No counter offer to accept'}),
+                'body': json.dumps({'error': 'No counter offer to accept'}),
                 'isBase64Encoded': False
             }
         
@@ -691,7 +686,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': safe_json({'error': 'No seller counter offer to accept'}),
+                'body': json.dumps({'error': 'No seller counter offer to accept'}),
                 'isBase64Encoded': False
             }
         
@@ -731,7 +726,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 return {
                     'statusCode': 400,
                     'headers': headers,
-                    'body': safe_json({
+                    'body': json.dumps({
                         'error': 'Insufficient quantity',
                         'available': available,
                         'requested': order_quantity
@@ -773,7 +768,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             return {
                 'statusCode': 403,
                 'headers': headers,
-                'body': safe_json({'error': 'Только покупатель может завершить заказ'}),
+                'body': json.dumps({'error': 'Только покупатель может завершить заказ'}),
                 'isBase64Encoded': False
             }
         # Пассажирские перевозки: нельзя завершить до даты выезда
@@ -793,7 +788,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 return {
                     'statusCode': 403,
                     'headers': headers,
-                    'body': safe_json({'error': f'Завершить заказ можно только после даты выезда: {departure_dt.strftime("%d.%m.%Y %H:%M")}'}),
+                    'body': json.dumps({'error': f'Завершить заказ можно только после даты выезда: {departure_dt.strftime("%d.%m.%Y %H:%M")}'}),
                     'isBase64Encoded': False
                 }
         updates.append(f"completed_date = CURRENT_TIMESTAMP")
@@ -840,7 +835,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                     UPDATE {schema}.offers
                     SET sold_quantity = GREATEST(0, COALESCE(sold_quantity, 0) - %s),
                         status = CASE
-                            WHEN status IN ('completed', 'archived') THEN 'active'
+                            WHEN status IN ('completed', 'archived', 'deleted') THEN 'active'
                             ELSE status
                         END,
                         updated_at = NOW()
@@ -917,7 +912,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         return {
             'statusCode': 400,
             'headers': headers,
-            'body': safe_json({'error': 'No fields to update'}),
+            'body': json.dumps({'error': 'No fields to update'}),
             'isBase64Encoded': False
         }
     
@@ -1035,6 +1030,6 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': safe_json({'message': 'Order updated successfully'}),
+        'body': json.dumps({'message': 'Order updated successfully'}),
         'isBase64Encoded': False
     }
