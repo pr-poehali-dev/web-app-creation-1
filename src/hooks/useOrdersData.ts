@@ -668,22 +668,6 @@ export function useOrdersData(
         cancellationReason: reason || undefined
       });
 
-      if (currentUser?.id) {
-        try {
-          const cancelMessage = cancelledBy === 'seller'
-            ? `Продавец отменил заказ${reason ? `: ${reason}` : '.'}`
-            : `Покупатель отменил заказ${reason ? `: ${reason}` : '.'}`;
-          await ordersAPI.createMessage({
-            orderId: orderToCancel as string,
-            senderId: currentUser.id,
-            senderType: cancelledBy as 'buyer' | 'seller',
-            message: cancelMessage,
-          });
-        } catch (e) {
-          console.error('Failed to send cancel message:', e);
-        }
-      }
-
       notifyOrderUpdated(orderToCancel);
       
       toast({
@@ -695,10 +679,6 @@ export function useOrdersData(
         timestamp: Date.now(),
         orderId: orderToCancel,
         action: 'cancel'
-      }));
-      localStorage.setItem('force_offers_reload', JSON.stringify({
-        timestamp: Date.now(),
-        action: 'order_cancelled'
       }));
       window.dispatchEvent(new Event('storage'));
 

@@ -296,13 +296,13 @@ export function useCreateOfferForm(editOffer?: Offer) {
       return;
     }
 
-    // Проверка размера каждого файла (макс 20 МБ)
-    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+    // Проверка размера каждого файла (макс 5 МБ)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
         toast({
           title: 'Файл слишком большой',
-          description: `Файл ${file.name} превышает 20 МБ. Пожалуйста, уменьшите размер файла.`,
+          description: `Файл ${file.name} превышает 5 МБ. Пожалуйста, уменьшите размер изображения.`,
           variant: 'destructive',
         });
         return;

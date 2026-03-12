@@ -10,139 +10,10 @@ PUT /?id=uuid - обновить статус заказа
 '''
 
 import json
-from datetime import datetime, date
-from decimal import Decimal
 from typing import Dict, Any
 from rate_limiter import rate_limiter
 
-from orders_utils import get_schema, get_db_connection, SafeJSONEncoder, decimal_to_float
-from psycopg2.extras import RealDictCursor
-
-
-def _serialize_order(order_dict: dict, user_id_int: int) -> dict:
-    """Безопасно сериализует один заказ — конвертирует все datetime/Decimal"""
-    def _iso(val):
-        return val.isoformat() if val and hasattr(val, 'isoformat') else None
-
-    order_dict['offerPricePerUnit'] = float(order_dict.pop('offer_price_per_unit')) if order_dict.get('offer_price_per_unit') is not None else None
-    order_dict['offerAvailableQuantity'] = int(order_dict.pop('offer_available_quantity', 0) or 0)
-    order_dict['offerCategory'] = order_dict.pop('_offer_category_merged', None) or order_dict.pop('offer_category', None)
-    order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
-    order_dict['offerTransportServiceType'] = order_dict.pop('_offer_transport_service_type_merged', None) or order_dict.pop('offer_transport_service_type', None)
-    dt = order_dict.pop('_offer_transport_date_time_merged', None) or order_dict.pop('offer_transport_date_time', None)
-    order_dict['offerTransportDateTime'] = _iso(dt)
-    order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
-    order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
-    order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
-    order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
-    order_dict['sellerRating'] = float(order_dict.pop('seller_rating')) if order_dict.get('seller_rating') is not None else None
-    order_dict['sellerAvgReviewRating'] = round(float(order_dict.pop('seller_avg_review_rating')), 1) if order_dict.get('seller_avg_review_rating') is not None else None
-    order_dict['buyerAvgReviewRating'] = round(float(order_dict.pop('buyer_avg_review_rating')), 1) if order_dict.get('buyer_avg_review_rating') is not None else None
-    order_dict['is_request'] = order_dict.get('is_request', False)
-    order_dict['type'] = 'purchase' if order_dict.get('buyer_id') == user_id_int else 'sale'
-    order_dict['offer_title'] = order_dict.get('title', '')
-    order_dict['seller_full_name'] = order_dict.get('seller_name', 'Продавец')
-    order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
-    order_dict['orderDate'] = _iso(order_dict.pop('order_date', None))
-    order_dict['deliveryDate'] = _iso(order_dict.pop('delivery_date', None))
-    order_dict['completedDate'] = _iso(order_dict.pop('completed_date', None))
-    order_dict['createdAt'] = _iso(order_dict.pop('created_at', None))
-    order_dict['updatedAt'] = _iso(order_dict.pop('updated_at', None))
-    order_dict['counterOfferedAt'] = _iso(order_dict.pop('counter_offered_at', None))
-    order_dict['cancelledDate'] = _iso(order_dict.pop('cancelled_date', None))
-    order_dict['archivedAt'] = _iso(order_dict.pop('archived_at', None))
-    order_dict['adminArchivedAt'] = _iso(order_dict.pop('admin_archived_at', None))
-    if 'counter_offer_message' in order_dict:
-        order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
-    order_dict = decimal_to_float(order_dict)
-    for key, val in list(order_dict.items()):
-        if hasattr(val, 'hex'):
-            order_dict[key] = str(val)
-    return order_dict
-
-
-def _safe_get_user_orders(event: dict, headers: dict) -> dict:
-    """Получить список заказов с гарантированной сериализацией datetime"""
-    user_headers = event.get('headers', {})
-    user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
-    if not user_id:
-        return {'statusCode': 401, 'headers': headers, 'body': json.dumps({'error': 'User ID required'}, cls=SafeJSONEncoder), 'isBase64Encoded': False}
-    user_id_int = int(user_id)
-    params = event.get('queryStringParameters', {}) or {}
-    order_type = params.get('type', 'all')
-    status = params.get('status', 'all')
-    limit = int(params.get('limit', '50'))
-    offset = int(params.get('offset', '0'))
-    schema = get_schema()
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    count_sql = f"SELECT COUNT(*) as total FROM {schema}.orders WHERE 1=1"
-    if order_type == 'purchase':
-        count_sql += f" AND buyer_id = {user_id_int}"
-    elif order_type == 'sale':
-        count_sql += f" AND seller_id = {user_id_int}"
-    else:
-        count_sql += f" AND (buyer_id = {user_id_int} OR seller_id = {user_id_int})"
-    if status != 'all':
-        count_sql += f" AND status = '{status.replace(chr(39), chr(39)*2)}'"
-    cur.execute(count_sql)
-    total_count = cur.fetchone()['total']
-    sql = f"""
-        SELECT o.*,
-            of.price_per_unit as offer_price_per_unit,
-            COALESCE(of.quantity - of.sold_quantity - of.reserved_quantity, 0) as offer_available_quantity,
-            COALESCE(of.category, o.offer_category) as _offer_category_merged,
-            of.transport_route as offer_transport_route,
-            COALESCE(of.transport_service_type, o.offer_transport_service_type) as _offer_transport_service_type_merged,
-            COALESCE(of.transport_date_time::timestamp, o.offer_transport_date_time) as _offer_transport_date_time_merged,
-            of.transport_negotiable as offer_transport_negotiable,
-            CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
-            COALESCE((SELECT COUNT(*) FROM {schema}.order_messages om WHERE om.order_id = o.id AND om.is_read = false AND om.sender_id != {user_id_int}), 0) as unread_messages,
-            ub.rating as buyer_rating, us.rating as seller_rating,
-            (SELECT AVG(rv.rating) FROM {schema}.reviews rv WHERE rv.reviewed_user_id = o.seller_id) as seller_avg_review_rating,
-            (SELECT AVG(rv.rating) FROM {schema}.reviews rv WHERE rv.reviewed_user_id = o.buyer_id) as buyer_avg_review_rating
-        FROM {schema}.orders o
-        LEFT JOIN {schema}.offers of ON o.offer_id = of.id
-        LEFT JOIN {schema}.requests r ON o.offer_id = r.id
-        LEFT JOIN {schema}.users ub ON o.buyer_id = ub.id
-        LEFT JOIN {schema}.users us ON o.seller_id = us.id
-        WHERE 1=1
-    """
-    if order_type == 'purchase':
-        sql += f" AND o.buyer_id = {user_id_int}"
-    elif order_type == 'sale':
-        sql += f" AND o.seller_id = {user_id_int}"
-    else:
-        sql += f" AND (o.buyer_id = {user_id_int} OR o.seller_id = {user_id_int})"
-    if status != 'all':
-        sql += f" AND o.status = '{status.replace(chr(39), chr(39)*2)}'"
-    sql += f" ORDER BY order_date DESC LIMIT {limit} OFFSET {offset}"
-    cur.execute(sql)
-    orders = cur.fetchall()
-    cur.close()
-    conn.close()
-    result = [_serialize_order(dict(o), user_id_int) for o in orders]
-    return {
-        'statusCode': 200,
-        'headers': headers,
-        'body': json.dumps({'orders': result, 'total': total_count, 'limit': limit, 'offset': offset, 'hasMore': offset + len(result) < total_count}, cls=SafeJSONEncoder),
-        'isBase64Encoded': False
-    }
-
-
-def _safe_get_order_by_id(order_id: str, headers: dict, event: dict) -> dict:
-    """Получить заказ по ID с гарантированной сериализацией datetime"""
-    try:
-        resp = get_order_by_id(order_id, headers, event)
-        if resp.get('statusCode') == 200:
-            parsed = json.loads(resp['body'])
-            parsed = decimal_to_float(parsed)
-            resp['body'] = json.dumps(parsed, cls=SafeJSONEncoder)
-        return resp
-    except Exception as e:
-        print(f'[SAFE_GET_ORDER] Error: {e}')
-        return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': str(e)}, cls=SafeJSONEncoder), 'isBase64Encoded': False}
-
+from orders_utils import get_schema, get_db_connection
 from orders_crud import (
     check_existing_response,
     get_user_orders,
@@ -247,9 +118,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif messages_flag == 'true' and order_id:
                 return get_messages_by_order(order_id, headers, event)
             elif order_id:
-                return _safe_get_order_by_id(order_id, headers, event)
+                return get_order_by_id(order_id, headers, event)
             else:
-                return _safe_get_user_orders(event, headers)
+                return get_user_orders(event, headers)
         
         elif method == 'POST':
             query_params = event.get('queryStringParameters', {}) or {}
