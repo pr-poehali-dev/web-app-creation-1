@@ -186,6 +186,9 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
         order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
         order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
+        order_dict['cancelledDate'] = order_dict.pop('cancelled_date').isoformat() if order_dict.get('cancelled_date') else None
+        order_dict['archivedAt'] = order_dict.pop('archived_at').isoformat() if order_dict.get('archived_at') else None
+        order_dict['adminArchivedAt'] = order_dict.pop('admin_archived_at').isoformat() if order_dict.get('admin_archived_at') else None
         
         if 'counter_offer_message' in order_dict:
             order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
@@ -297,6 +300,9 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
     order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
     order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
+    order_dict['cancelledDate'] = order_dict.pop('cancelled_date').isoformat() if order_dict.get('cancelled_date') else None
+    order_dict['archivedAt'] = order_dict.pop('archived_at').isoformat() if order_dict.get('archived_at') else None
+    order_dict['adminArchivedAt'] = order_dict.pop('admin_archived_at').isoformat() if order_dict.get('admin_archived_at') else None
     
     if 'counter_offer_message' in order_dict:
         order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
@@ -306,7 +312,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': safe_json(order_dict, cls=SafeJSONEncoder),
+        'body': safe_json(order_dict),
         'isBase64Encoded': False
     }
 
