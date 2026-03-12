@@ -180,15 +180,16 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['seller_full_name'] = order_dict.get('seller_name', 'Продавец')
         order_dict['buyer_full_name'] = order_dict.get('buyer_name', 'Покупатель')
         
-        order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
-        order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
-        order_dict['completedDate'] = order_dict.pop('completed_date').isoformat() if order_dict.get('completed_date') else None
-        order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
-        order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
-        order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
-        order_dict['cancelledDate'] = order_dict.pop('cancelled_date').isoformat() if order_dict.get('cancelled_date') else None
-        order_dict['archivedAt'] = order_dict.pop('archived_at').isoformat() if order_dict.get('archived_at') else None
-        order_dict['adminArchivedAt'] = order_dict.pop('admin_archived_at').isoformat() if order_dict.get('admin_archived_at') else None
+        def _iso(val): return val.isoformat() if val and hasattr(val, 'isoformat') else None
+        order_dict['orderDate'] = _iso(order_dict.pop('order_date', None))
+        order_dict['deliveryDate'] = _iso(order_dict.pop('delivery_date', None))
+        order_dict['completedDate'] = _iso(order_dict.pop('completed_date', None))
+        order_dict['createdAt'] = _iso(order_dict.pop('created_at', None))
+        order_dict['updatedAt'] = _iso(order_dict.pop('updated_at', None))
+        order_dict['counterOfferedAt'] = _iso(order_dict.pop('counter_offered_at', None))
+        order_dict['cancelledDate'] = _iso(order_dict.pop('cancelled_date', None))
+        order_dict['archivedAt'] = _iso(order_dict.pop('archived_at', None))
+        order_dict['adminArchivedAt'] = _iso(order_dict.pop('admin_archived_at', None))
         
         if 'counter_offer_message' in order_dict:
             order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
@@ -297,15 +298,16 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     if user_id:
         order_dict['type'] = 'purchase' if order_dict['buyer_id'] == user_id else 'sale'
     
-    order_dict['orderDate'] = order_dict.pop('order_date').isoformat() if order_dict.get('order_date') else None
-    order_dict['deliveryDate'] = order_dict.pop('delivery_date').isoformat() if order_dict.get('delivery_date') else None
-    order_dict['completedDate'] = order_dict.pop('completed_date').isoformat() if order_dict.get('completed_date') else None
-    order_dict['createdAt'] = order_dict.pop('created_at').isoformat() if order_dict.get('created_at') else None
-    order_dict['updatedAt'] = order_dict.pop('updated_at').isoformat() if order_dict.get('updated_at') else None
-    order_dict['counterOfferedAt'] = order_dict.pop('counter_offered_at').isoformat() if order_dict.get('counter_offered_at') else None
-    order_dict['cancelledDate'] = order_dict.pop('cancelled_date').isoformat() if order_dict.get('cancelled_date') else None
-    order_dict['archivedAt'] = order_dict.pop('archived_at').isoformat() if order_dict.get('archived_at') else None
-    order_dict['adminArchivedAt'] = order_dict.pop('admin_archived_at').isoformat() if order_dict.get('admin_archived_at') else None
+    def _iso(val): return val.isoformat() if val and hasattr(val, 'isoformat') else None
+    order_dict['orderDate'] = _iso(order_dict.pop('order_date', None))
+    order_dict['deliveryDate'] = _iso(order_dict.pop('delivery_date', None))
+    order_dict['completedDate'] = _iso(order_dict.pop('completed_date', None))
+    order_dict['createdAt'] = _iso(order_dict.pop('created_at', None))
+    order_dict['updatedAt'] = _iso(order_dict.pop('updated_at', None))
+    order_dict['counterOfferedAt'] = _iso(order_dict.pop('counter_offered_at', None))
+    order_dict['cancelledDate'] = _iso(order_dict.pop('cancelled_date', None))
+    order_dict['archivedAt'] = _iso(order_dict.pop('archived_at', None))
+    order_dict['adminArchivedAt'] = _iso(order_dict.pop('admin_archived_at', None))
     
     if 'counter_offer_message' in order_dict:
         order_dict['counterOfferMessage'] = order_dict.pop('counter_offer_message')
