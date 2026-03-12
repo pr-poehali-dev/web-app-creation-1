@@ -140,7 +140,9 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [orders, activeTab]);
 
   const isArchived = (s: string) => s === 'completed' || s === 'cancelled' || s === 'archived' || s === 'rejected';
+  const ACTIVE_STATUSES = ['new', 'accepted', 'negotiating', 'awaiting_payment', 'pending'];
   const isTransportExpired = (order: Order) => {
+    if (ACTIVE_STATUSES.includes(order.status as string)) return false;
     const dt = (order as unknown as Record<string, unknown>).offerTransportDateTime as string | undefined;
     return !!dt && new Date(dt) < new Date();
   };

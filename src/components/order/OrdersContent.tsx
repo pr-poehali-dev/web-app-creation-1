@@ -49,7 +49,10 @@ export default function OrdersContent({
   const isArchivedStatus = (status: string) =>
     status === 'completed' || status === 'cancelled' || status === 'archived' || status === 'rejected';
 
+  const ACTIVE_STATUSES = ['new', 'accepted', 'negotiating', 'awaiting_payment', 'pending'];
+
   const isTransportExpired = (order: Order) => {
+    if (ACTIVE_STATUSES.includes(order.status as string)) return false;
     const dt = (order as unknown as Record<string, unknown>).offerTransportDateTime as string | undefined;
     if (!dt) return false;
     return new Date(dt) < new Date();
