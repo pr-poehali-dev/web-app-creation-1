@@ -142,12 +142,14 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
 
   const handleDeleteRequest = async () => {
     if (selectedRequest) {
+      const deletedId = selectedRequest.id;
       try {
-        await requestsAPI.deleteAdminRequest(selectedRequest.id);
+        await requestsAPI.deleteAdminRequest(deletedId);
+        setAllRequests(prev => prev.filter(r => r.id !== deletedId));
+        setRequests(prev => prev.filter(r => r.id !== deletedId));
         toast.success(`Запрос "${selectedRequest.title}" удален`);
         setShowDeleteDialog(false);
         setSelectedRequest(null);
-        fetchRequests();
       } catch (error) {
         console.error('Delete error:', error);
         toast.error('Ошибка при удалении запроса');

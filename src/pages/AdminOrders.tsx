@@ -196,9 +196,9 @@ export default function AdminOrders({ isAuthenticated, onLogout }: AdminOrdersPr
       if (order.sellerId) addNotification(order.sellerId, 'system', notifTitle, notifMessage, '/my-orders?tab=archived');
 
       toast({ title: 'Заказ перемещён в архив', description: `Причина: ${archiveReason.trim()}` });
+      setOrders(prev => prev.filter(o => o.id !== order.id));
       setArchiveDialogOrder(null);
       setArchiveReason('');
-      await loadOrders();
     } catch {
       toast({ title: 'Ошибка', description: 'Не удалось архивировать заказ', variant: 'destructive' });
     } finally {

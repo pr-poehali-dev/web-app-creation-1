@@ -133,8 +133,8 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
   const handleCancelAuction = async (auction: AdminAuction) => {
     try {
       await auctionsAPI.deleteAuction(auction.id);
+      setAuctions(prev => prev.filter(a => a.id !== auction.id));
       toast.success(`Аукцион "${auction.title}" отменен`);
-      loadAuctions();
     } catch (error) {
       toast.error('Не удалось отменить аукцион');
     }
@@ -142,12 +142,13 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
 
   const handleDeleteAuction = async () => {
     if (selectedAuction) {
+      const deletedId = selectedAuction.id;
       try {
-        await auctionsAPI.deleteAuction(selectedAuction.id);
+        await auctionsAPI.deleteAuction(deletedId);
+        setAuctions(prev => prev.filter(a => a.id !== deletedId));
         toast.success(`Аукцион "${selectedAuction.title}" удален`);
         setShowDeleteDialog(false);
         setSelectedAuction(null);
-        loadAuctions();
       } catch (error) {
         toast.error('Не удалось удалить аукцион');
       }
