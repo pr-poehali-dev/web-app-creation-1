@@ -124,7 +124,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             COALESCE(of.category, o.offer_category) as _offer_category_merged,
             of.transport_route as offer_transport_route,
             COALESCE(of.transport_service_type, o.offer_transport_service_type) as _offer_transport_service_type_merged,
-            COALESCE(of.transport_date_time, o.offer_transport_date_time::timestamp) as _offer_transport_date_time_merged,
+            of.transport_date_time as _of_transport_date_time,
+            o.offer_transport_date_time as _o_transport_date_time,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             COALESCE((
@@ -173,7 +174,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerCategory'] = order_dict.pop('_offer_category_merged', None) or order_dict.pop('offer_category', None)
         order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
         order_dict['offerTransportServiceType'] = order_dict.pop('_offer_transport_service_type_merged', None) or order_dict.pop('offer_transport_service_type', None)
-        dt = order_dict.pop('_offer_transport_date_time_merged', None) or order_dict.pop('offer_transport_date_time', None)
+        dt = order_dict.pop('_of_transport_date_time', None) or order_dict.pop('_o_transport_date_time', None) or order_dict.pop('offer_transport_date_time', None)
         order_dict['offerTransportDateTime'] = dt.isoformat() if dt and hasattr(dt, 'isoformat') else (str(dt) if dt else None)
         order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
         order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
@@ -244,7 +245,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             COALESCE(of.category, o.offer_category) as _offer_category_merged,
             of.transport_route as offer_transport_route,
             COALESCE(of.transport_service_type, o.offer_transport_service_type) as _offer_transport_service_type_merged,
-            COALESCE(of.transport_date_time, o.offer_transport_date_time::timestamp) as _offer_transport_date_time_merged,
+            of.transport_date_time as _of_transport_date_time,
+            o.offer_transport_date_time as _o_transport_date_time,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             ub.rating as buyer_rating,
@@ -280,7 +282,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['offerCategory'] = order_dict.pop('_offer_category_merged', None) or order_dict.pop('offer_category', None)
     order_dict['offerTransportRoute'] = order_dict.pop('offer_transport_route', None)
     order_dict['offerTransportServiceType'] = order_dict.pop('_offer_transport_service_type_merged', None) or order_dict.pop('offer_transport_service_type', None)
-    dt2 = order_dict.pop('_offer_transport_date_time_merged', None) or order_dict.pop('offer_transport_date_time', None)
+    dt2 = order_dict.pop('_of_transport_date_time', None) or order_dict.pop('_o_transport_date_time', None) or order_dict.pop('offer_transport_date_time', None)
     order_dict['offerTransportDateTime'] = dt2.isoformat() if dt2 and hasattr(dt2, 'isoformat') else (str(dt2) if dt2 else None)
     order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
     order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
