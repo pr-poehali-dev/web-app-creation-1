@@ -1,5 +1,8 @@
 """CRUD операции с заказами: создание, получение, обновление, проверка отклика"""
 import json
+import uuid
+from decimal import Decimal
+from datetime import datetime, date
 from typing import Dict, Any
 from psycopg2.extras import RealDictCursor
 from orders_utils import (
@@ -7,6 +10,19 @@ from orders_utils import (
     generate_order_number, reject_other_responses,
     decimal_to_float, offers_cache
 )
+
+
+class SafeJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
+        if isinstance(obj, Decimal):
+            return float(obj)
+        if hasattr(obj, 'hex'):
+            return str(obj)
+        return super().default(obj)
 
 
 def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
@@ -108,7 +124,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             COALESCE(of.category, o.offer_category) as _offer_category_merged,
             of.transport_route as offer_transport_route,
             COALESCE(of.transport_service_type, o.offer_transport_service_type) as _offer_transport_service_type_merged,
-            COALESCE(of.transport_date_time::timestamp, o.offer_transport_date_time) as _offer_transport_date_time_merged,
+            COALESCE(of.transport_date_time, o.offer_transport_date_time) as _offer_transport_date_time_merged,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             COALESCE((
@@ -187,9 +203,8 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         
         order_dict = decimal_to_float(order_dict)
         
-        from datetime import datetime, date
         for key, val in list(order_dict.items()):
-            if hasattr(val, 'hex'):
+            if isinstance(val, uuid.UUID) or hasattr(val, 'hex'):
                 order_dict[key] = str(val)
             elif isinstance(val, (datetime, date)):
                 order_dict[key] = val.isoformat()
@@ -208,7 +223,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             'limit': limit,
             'offset': offset,
             'hasMore': offset + len(result) < total_count
-        }),
+        }, cls=SafeJSONEncoder),
         'isBase64Encoded': False
     }
 
@@ -229,7 +244,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
             COALESCE(of.category, o.offer_category) as _offer_category_merged,
             of.transport_route as offer_transport_route,
             COALESCE(of.transport_service_type, o.offer_transport_service_type) as _offer_transport_service_type_merged,
-            COALESCE(of.transport_date_time::timestamp, o.offer_transport_date_time) as _offer_transport_date_time_merged,
+            COALESCE(of.transport_date_time, o.offer_transport_date_time) as _offer_transport_date_time_merged,
             of.transport_negotiable as offer_transport_negotiable,
             CASE WHEN r.id IS NOT NULL THEN true ELSE false END as is_request,
             ub.rating as buyer_rating,
@@ -301,10 +316,16 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     
     order_dict = decimal_to_float(order_dict)
     
+    for key, val in list(order_dict.items()):
+        if isinstance(val, uuid.UUID) or hasattr(val, 'hex'):
+            order_dict[key] = str(val)
+        elif isinstance(val, (datetime, date)):
+            order_dict[key] = val.isoformat()
+    
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps(order_dict),
+        'body': json.dumps(order_dict, cls=SafeJSONEncoder),
         'isBase64Encoded': False
     }
 
