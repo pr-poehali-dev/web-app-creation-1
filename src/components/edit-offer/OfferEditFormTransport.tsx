@@ -89,12 +89,11 @@ export default function OfferEditFormTransport({ offer, editData, isSaving, onEd
         <Label htmlFor="transportCapacity">Количество мест</Label>
         <Input
           id="transportCapacity"
-          type="number"
+          type="text"
           value={editData.transportCapacity}
           onChange={(e) => onEditDataChange({ ...editData, transportCapacity: e.target.value })}
           disabled={isSaving}
-          min="1"
-          placeholder="0"
+          placeholder="Например: 8 мест или 5 тонн"
         />
       </div>
       <div className="space-y-2">
