@@ -19,6 +19,15 @@ interface OrderCardProps {
 
 export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, onDeleteOrder, onEditOrder, isExiting, isNew }: OrderCardProps) {
   const roles = getOrderRoles(order);
+
+  const isFreightTransport = order.offerCategory === 'transport' &&
+    order.offerTransportServiceType?.toLowerCase().includes('груз');
+  const isPassengerTransport = order.offerCategory === 'transport' &&
+    order.offerTransportServiceType?.toLowerCase().includes('пассажир');
+  const isTransportWithDate = (isFreightTransport || isPassengerTransport) && !!order.offerTransportDateTime;
+  const transportDatePassed = isTransportWithDate
+    ? new Date(order.offerTransportDateTime!) <= new Date()
+    : true;
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -337,32 +346,42 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               )}
             </>
           ) : order.status === 'accepted' ? (
-            <div className="flex gap-2 w-full">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenChat(order);
-                }}
-                variant="outline"
-                className="flex-1"
-                size="sm"
-              >
-                <Icon name="FileText" className="mr-1.5 h-4 w-4" />
-                {isSeller ? 'Детали заказа' : 'Детали заказа'}
-              </Button>
-              {onCompleteOrder && !isSeller && (
+            <div className="flex flex-col gap-2 w-full">
+              {isTransportWithDate && !transportDatePassed && !isSeller && (
+                <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                  <Icon name="Clock" className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
+                  <p className="text-xs text-blue-800 font-medium">
+                    Завершить можно после {new Date(order.offerTransportDateTime!).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              )}
+              <div className="flex gap-2">
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onCompleteOrder(order.id);
+                    onOpenChat(order);
                   }}
+                  variant="outline"
+                  className="flex-1"
                   size="sm"
-                  className="bg-green-600 hover:bg-green-700"
                 >
-                  <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
-                  Завершить
+                  <Icon name="FileText" className="mr-1.5 h-4 w-4" />
+                  Детали заказа
                 </Button>
-              )}
+                {onCompleteOrder && !isSeller && transportDatePassed && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCompleteOrder(order.id);
+                    }}
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Icon name="CheckCircle" className="mr-1.5 h-4 w-4" />
+                    Завершить
+                  </Button>
+                )}
+              </div>
             </div>
           ) : isSeller && (order.status === 'new' || order.status === 'pending') ? (
             <Button
