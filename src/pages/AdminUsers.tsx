@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -12,6 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 import { toast } from 'sonner';
 import UsersTable, { type User } from '@/components/admin/UsersTable';
@@ -35,6 +44,10 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [blockDuration, setBlockDuration] = useState<number>(0);
+  const [showCallDialog, setShowCallDialog] = useState(false);
+  const [callUser, setCallUser] = useState<User | null>(null);
+  const [callText, setCallText] = useState('Вам поступил новый заказ на вашем сайте.');
+  const [isCalling, setIsCalling] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -148,6 +161,35 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
     }
   };
 
+  const handleCall = (user: User) => {
+    setCallUser(user);
+    setCallText('Вам поступил новый заказ на вашем сайте.');
+    setShowCallDialog(true);
+  };
+
+  const handleMakeCall = async () => {
+    if (!callUser?.phone) return;
+    setIsCalling(true);
+    try {
+      const response = await fetch('https://functions.poehali.dev/5dbb4a7a-067d-4c58-805a-9e6fc53c9692', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: callUser.phone, text: callText }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Звонок на ${callUser.phone} совершён`);
+        setShowCallDialog(false);
+      } else {
+        toast.error(`Ошибка звонка: ${data.error || 'неизвестная ошибка'}`);
+      }
+    } catch {
+      toast.error('Ошибка при выполнении звонка');
+    } finally {
+      setIsCalling(false);
+    }
+  };
+
   const handleViewDetails = (user: User) => {
     setSelectedUser(user);
     setShowDetailsDialog(true);
@@ -234,6 +276,7 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
                 onBlock={handleBlock}
                 onUnblock={handleUnblockUser}
                 onDelete={handleDelete}
+                onCall={handleCall}
               />
             </CardContent>
           </Card>
@@ -260,6 +303,33 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
         isOpen={showDetailsDialog}
         onClose={() => setShowDetailsDialog(false)}
       />
+
+      <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Голосовой звонок</DialogTitle>
+            <DialogDescription>
+              Звонок на номер {callUser?.phone} ({callUser?.name})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <label className="text-sm font-medium">Текст голосового сообщения</label>
+            <Textarea
+              value={callText}
+              onChange={(e) => setCallText(e.target.value)}
+              rows={4}
+              placeholder="Введите текст сообщения..."
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCallDialog(false)}>Отмена</Button>
+            <Button onClick={handleMakeCall} disabled={isCalling} className="gap-2">
+              <Icon name="Phone" className="h-4 w-4" />
+              {isCalling ? 'Звоним...' : 'Позвонить'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

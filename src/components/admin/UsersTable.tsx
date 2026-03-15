@@ -40,6 +40,7 @@ interface UsersTableProps {
   onBlock: (user: User) => void;
   onUnblock: (user: User) => void;
   onDelete: (user: User) => void;
+  onCall?: (user: User) => void;
 }
 
 const getStatusBadge = (status: string) => {
@@ -75,6 +76,7 @@ export default function UsersTable({
   onBlock,
   onUnblock,
   onDelete,
+  onCall,
 }: UsersTableProps) {
   return (
     <div className="rounded-md border">
@@ -149,6 +151,17 @@ export default function UsersTable({
                       className="border-green-500 text-green-600 hover:bg-green-50"
                     >
                       <Icon name="CheckCircle" className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onCall && user.phone && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onCall(user)}
+                      title="Позвонить"
+                      className="border-blue-400 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Icon name="Phone" className="h-4 w-4" />
                     </Button>
                   )}
                   <Button
