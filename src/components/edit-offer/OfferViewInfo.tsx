@@ -24,8 +24,14 @@ export default function OfferViewInfo({ offer, districtName }: OfferViewInfoProp
             )}
           </div>
           <div>
-            <span className="text-muted-foreground">Мест доступно:</span>
-            <p className="font-semibold">{offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)}</p>
+            <span className="text-muted-foreground">
+              {offer.transportCapacity && isNaN(Number(offer.transportCapacity)) ? 'Вместимость / Грузоподъёмность:' : 'Мест доступно:'}
+            </span>
+            <p className="font-semibold">
+              {offer.transportCapacity && isNaN(Number(offer.transportCapacity))
+                ? offer.transportCapacity.trim()
+                : offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)}
+            </p>
           </div>
           <div className="col-span-2">
             <span className="text-muted-foreground">Дата выезда:</span>
