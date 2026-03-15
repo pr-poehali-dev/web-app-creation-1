@@ -1,14 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
-const PRICE_TYPE_LABELS: Record<string, string> = {
-  per_km: 'За км',
-  per_ton: 'За тонну',
-  per_hour: 'За час',
-  per_seat: 'За место',
-  negotiable: 'Договорная',
-};
-
 interface OfferInfoSummaryProps {
   category: string;
   quantity: number;
@@ -79,7 +71,7 @@ export default function OfferInfoSummary({
                     <p className="font-bold text-primary text-base leading-tight">
                       {Number(transportPrice || pricePerUnit).toLocaleString('ru-RU')} ₽
                     </p>
-                    {transportPriceType && <p className="text-xs text-muted-foreground">{PRICE_TYPE_LABELS[transportPriceType] || transportPriceType}</p>}
+                    {transportPriceType && <p className="text-xs text-muted-foreground">{transportPriceType}</p>}
                   </>
                 ) : null}
               </div>
