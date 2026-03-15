@@ -9,25 +9,32 @@ interface AudioItem {
   type: 'order' | 'response';
   label: string;
   description: string;
+  cdnKey: string;
 }
+
+const ACCESS_KEY = '1a60f89a-b726-4c33-8dad-d42db554ed3e';
 
 const AUDIO_ITEMS: AudioItem[] = [
   {
     type: 'order',
     label: 'Новый заказ на предложение',
-    description: 'Воспроизводится когда кто-то оформляет заказ на ваше предложение'
+    description: 'Воспроизводится когда кто-то оформляет заказ на ваше предложение',
+    cdnKey: 'audio/new_order.mp3'
   },
   {
     type: 'response',
     label: 'Новый отклик на запрос',
-    description: 'Воспроизводится когда кто-то откликается на ваш запрос'
+    description: 'Воспроизводится когда кто-то откликается на ваш запрос',
+    cdnKey: 'audio/new_response.mp3'
   }
 ];
 
 export default function AdminAudioUpload() {
   const [uploading, setUploading] = useState<'order' | 'response' | null>(null);
+  const [playing, setPlaying] = useState<'order' | 'response' | null>(null);
   const orderRef = useRef<HTMLInputElement>(null);
   const responseRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleUpload = async (type: 'order' | 'response', file: File) => {
     if (!file) return;
@@ -65,6 +72,22 @@ export default function AdminAudioUpload() {
     }
   };
 
+  const handlePlay = (item: AudioItem) => {
+    if (playing === item.type) {
+      audioRef.current?.pause();
+      setPlaying(null);
+      return;
+    }
+    if (audioRef.current) audioRef.current.pause();
+    const url = `https://cdn.poehali.dev/projects/${ACCESS_KEY}/bucket/${item.cdnKey}?t=${Date.now()}`;
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.onended = () => setPlaying(null);
+    audio.onerror = () => { toast.error('Не удалось воспроизвести файл'); setPlaying(null); };
+    audio.play();
+    setPlaying(item.type);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -75,6 +98,7 @@ export default function AdminAudioUpload() {
         {AUDIO_ITEMS.map((item) => {
           const ref = item.type === 'order' ? orderRef : responseRef;
           const isUploading = uploading === item.type;
+          const isPlaying = playing === item.type;
           return (
             <div key={item.type} className="flex items-center justify-between rounded-lg border p-4">
               <div className="flex items-center gap-3">
@@ -86,7 +110,17 @@ export default function AdminAudioUpload() {
                   <p className="text-sm text-muted-foreground">{item.description}</p>
                 </div>
               </div>
-              <div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePlay(item)}
+                  className="gap-2"
+                  title={isPlaying ? 'Остановить' : 'Прослушать'}
+                >
+                  <Icon name={isPlaying ? 'Square' : 'Play'} className="h-4 w-4" />
+                  {isPlaying ? 'Стоп' : 'Слушать'}
+                </Button>
                 <input
                   ref={ref}
                   type="file"

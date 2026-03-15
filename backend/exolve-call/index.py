@@ -48,9 +48,9 @@ def handler(event: dict, context) -> dict:
         source = '7' + source[1:]
 
     if call_type == 'response':
-        service_id = os.environ.get('EXOLVE_SERVICE_ID_RESPONSE', '')
+        service_id = int(os.environ.get('EXOLVE_SERVICE_ID_RESPONSE', '0'))
     else:
-        service_id = os.environ.get('EXOLVE_SERVICE_ID_ORDER', '')
+        service_id = int(os.environ.get('EXOLVE_SERVICE_ID_ORDER', '0'))
 
     payload = json.dumps({
         'source': source,
