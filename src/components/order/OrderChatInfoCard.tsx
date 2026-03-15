@@ -35,6 +35,11 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
   const isPassengerTransport = order.offerCategory === 'transport' &&
     order.offerTransportServiceType?.toLowerCase().includes('пассажир');
 
+  const isFreightTransport = order.offerCategory === 'transport' &&
+    order.offerTransportServiceType?.toLowerCase().includes('груз');
+
+  const isTransportOrder = isPassengerTransport || isFreightTransport;
+
   const handleCancelClick = () => {
     setShowCancelDialog(true);
   };
@@ -69,7 +74,8 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           onAcceptOrder={onAcceptOrder}
           onCancelOrder={onCancelOrder}
           onRequestCompletion={onRequestCompletion}
-          isPassengerTransport={isPassengerTransport}
+          isPassengerTransport={isTransportOrder}
+          isFreightTransport={isFreightTransport}
           onCancelTripClick={() => setShowCancelTripDialog(true)}
         />
 
@@ -87,18 +93,18 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {isPassengerTransport && isBuyer && order.status === 'accepted'
+              {isTransportOrder && isBuyer && order.status === 'accepted'
                 ? 'Отмена принятого заказа'
                 : 'Подтверждение отмены заказа'}
             </DialogTitle>
             <DialogDescription asChild>
-              {isPassengerTransport && isBuyer && order.status === 'accepted' ? (
+              {isTransportOrder && isBuyer && order.status === 'accepted' ? (
                 <div className="space-y-3">
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
                     <Icon name="AlertTriangle" className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-amber-800">
                       <p className="font-semibold mb-1">Внимание! Это повлияет на ваш рейтинг</p>
-                      <p>Отмена принятого заказа до даты и времени выезда снизит ваш рейтинг надёжности. Это может негативно повлиять на доверие исполнителей в будущих заказах.</p>
+                      <p>Отмена принятого заказа до даты и времени {isFreightTransport ? 'выполнения рейса' : 'выезда'} снизит ваш рейтинг надёжности. Это может негативно повлиять на доверие исполнителей в будущих заказах.</p>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">Вы уверены, что хотите отменить заказ? Укажите причину (необязательно).</p>
@@ -135,7 +141,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
               onClick={handleConfirmCancel}
             >
               <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-              {isPassengerTransport && isBuyer && order.status === 'accepted'
+              {isTransportOrder && isBuyer && order.status === 'accepted'
                 ? 'Подтвердить отмену'
                 : 'Отменить заказ'}
             </Button>
@@ -154,10 +160,10 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                   <Icon name="AlertTriangle" className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-red-800">
                     <p className="font-semibold mb-1">Внимание! Отмена всего рейса</p>
-                    <p>Все принятые пассажиры получат уведомление об отмене рейса. Отмена рейса снизит ваш рейтинг надёжности.</p>
+                    <p>{isFreightTransport ? 'Все принятые заказчики получат уведомление об отмене рейса.' : 'Все принятые пассажиры получат уведомление об отмене рейса.'} Отмена рейса снизит ваш рейтинг надёжности.</p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground">Укажите причину отмены — пассажиры увидят её в уведомлении.</p>
+                <p className="text-sm text-muted-foreground">Укажите причину отмены — {isFreightTransport ? 'заказчики' : 'пассажиры'} увидят её в уведомлении.</p>
               </div>
             </DialogDescription>
           </DialogHeader>

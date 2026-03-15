@@ -18,6 +18,7 @@ interface OrderStatusActionsProps {
   onCancelOrder?: (orderId: string, reason?: string) => void;
   onRequestCompletion?: (orderId: string) => void;
   isPassengerTransport?: boolean;
+  isFreightTransport?: boolean;
   onCancelTripClick?: () => void;
 }
 
@@ -33,13 +34,13 @@ function RatingBadge({ rating }: { rating?: number }) {
   );
 }
 
-export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder, onRequestCompletion, isPassengerTransport, onCancelTripClick }: OrderStatusActionsProps) {
+export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder, onRequestCompletion, isPassengerTransport, isFreightTransport, onCancelTripClick }: OrderStatusActionsProps) {
   const roles = getOrderRoles(order);
 
   const counterpartRating = isBuyer ? order.sellerRating : order.buyerRating;
 
   const canComplete = (() => {
-    if (!isPassengerTransport) return true;
+    if (!isPassengerTransport && !isFreightTransport) return true;
     if (!order.offerTransportDateTime) return true;
     return new Date(order.offerTransportDateTime) <= new Date();
   })();
@@ -130,7 +131,13 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
           </div>
           <div>
             <p className="font-semibold text-red-800">
-              {order.cancelledBy === 'buyer' && isPassengerTransport ? 'Заказ отменён пассажиром' : 'Заказ отменён'}
+              {order.cancelledBy === 'buyer' && isFreightTransport
+                ? 'Заказ отменён заказчиком'
+                : order.cancelledBy === 'buyer' && isPassengerTransport
+                  ? 'Заказ отменён пассажиром'
+                  : order.cancelledBy === 'seller' && (isPassengerTransport || isFreightTransport)
+                    ? 'Рейс отменён перевозчиком'
+                    : 'Заказ отменён'}
             </p>
             {order.cancellationReason && (
               <p className="text-sm text-red-600">{order.cancellationReason}</p>
@@ -242,16 +249,16 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             <>
               {isBuyer ? (
                 <div className="space-y-3">
-                  {isPassengerTransport && !canComplete && order.offerTransportDateTime && (
+                  {(isPassengerTransport || isFreightTransport) && !canComplete && order.offerTransportDateTime && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
                       <Icon name="Clock" className="h-5 w-5 text-blue-600 flex-shrink-0" />
                       <p className="text-sm text-blue-800 font-medium">
-                        Завершить заказ можно после выезда:{' '}
+                        Завершить заказ можно после даты выполнения:{' '}
                         {new Date(order.offerTransportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   )}
-                  {!isPassengerTransport && (
+                  {!isPassengerTransport && !isFreightTransport && (
                     order.completionRequested ? (
                       <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 flex items-center gap-2">
                         <Icon name="Bell" className="h-5 w-5 text-orange-600 flex-shrink-0" />
@@ -293,7 +300,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {isPassengerTransport ? (
+                  {(isPassengerTransport || isFreightTransport) ? (
                     <>
                       <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
                         <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
