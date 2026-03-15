@@ -23,6 +23,7 @@ export const CARGO_TRANSPORT_TYPES = [
   'Спецтехника',
   'Рефрижератор',
   'Внедорожник с прицепом',
+  'Открытый фургон',
 ];
 
 export const PRICE_TYPES = [

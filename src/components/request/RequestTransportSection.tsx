@@ -308,7 +308,7 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
             id="transportCapacity"
             value={formData.transportCapacity}
             onChange={(e) => onInputChange('transportCapacity', e.target.value)}
-            placeholder="Кол-во пассажиров или кг / м³"
+            placeholder={formData.transportServiceType === 'Грузоперевозки' ? 'Вес, объём' : 'Кол-во пассажиров или кг / м³'}
           />
         </div>
 
