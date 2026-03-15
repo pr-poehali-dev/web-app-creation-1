@@ -46,11 +46,16 @@ def handler(event: dict, context) -> dict:
     caller_number = os.environ.get('EXOLVE_CALLER_NUMBER', '')
 
     payload = json.dumps({
-        'number': normalized,
-        'caller_id': caller_number,
-        'voice_message_text': text,
-        'voice_message_language': 'ru-RU',
-        'voice_message_repeat': 1
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'MakeCall',
+        'params': {
+            'number': normalized,
+            'caller_id': caller_number,
+            'voice_message_text': text,
+            'voice_message_language': 'ru-RU',
+            'voice_message_repeat': 1
+        }
     })
 
     try:
