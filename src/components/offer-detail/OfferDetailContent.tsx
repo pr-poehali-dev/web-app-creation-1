@@ -124,6 +124,7 @@ export default function OfferDetailContent({
               averageRating={offer.seller.rating || 0}
               totalReviews={offer.seller.reviewsCount || 0}
               sellerId={offer.seller.id}
+              completedOrders={offer.seller.statistics?.completedOrders}
             />
           </div>
         )}
