@@ -225,6 +225,8 @@ const App = () => {
     SmartCache.invalidateAll('auctions');
     // Сигнализируем компонентам о необходимости перезагрузить данные
     window.dispatchEvent(new CustomEvent('globalRefresh'));
+    // Жёсткая перезагрузка — подхватывает новую версию кода с сервера
+    window.location.reload();
   };
 
 
