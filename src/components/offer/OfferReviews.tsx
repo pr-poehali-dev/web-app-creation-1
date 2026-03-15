@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -25,25 +25,24 @@ interface OfferReviewsProps {
   sellerId?: string;
 }
 
-export default function OfferReviews({ reviews, averageRating, totalReviews, sellerId }: OfferReviewsProps) {
-  const navigate = useNavigate();
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Icon
-            key={star}
-            name="Star"
-            className={`h-4 w-4 ${
-              star <= rating
-                ? 'text-yellow-500 fill-yellow-500'
-                : 'text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
+const PREVIEW_COUNT = 3;
+
+export default function OfferReviews({ reviews, averageRating, totalReviews }: OfferReviewsProps) {
+  const [showAll, setShowAll] = useState(false);
+
+  const visibleReviews = showAll ? reviews : reviews.slice(0, PREVIEW_COUNT);
+
+  const renderStars = (rating: number) => (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Icon
+          key={star}
+          name="Star"
+          className={`h-4 w-4 ${star <= rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <Card id="seller-reviews">
@@ -73,24 +72,13 @@ export default function OfferReviews({ reviews, averageRating, totalReviews, sel
         </div>
       </CardHeader>
       <CardContent className="py-2 md:py-3">
-        {sellerId && totalReviews > 0 && (
-          <div className="mb-4">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => navigate(`/seller/${sellerId}#reviews`)}
-            >
-              Посмотреть все отзывы ({totalReviews})
-            </Button>
-          </div>
-        )}
         {!reviews || reviews.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             Пока нет отзывов о продавце
           </p>
         ) : (
           <div className="space-y-4">
-            {reviews.map((review) => (
+            {visibleReviews.map((review) => (
               <div key={review.id} className="border-b last:border-b-0 pb-4 last:pb-0">
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10">
@@ -115,7 +103,7 @@ export default function OfferReviews({ reviews, averageRating, totalReviews, sel
                       {renderStars(review.rating)}
                     </div>
                     <p className="text-sm text-muted-foreground">{review.comment}</p>
-                    
+
                     {review.sellerResponse && (
                       <div className="mt-3 ml-4 pl-4 border-l-2 border-primary/20 bg-primary/5 rounded-r-lg p-3">
                         <div className="flex items-center gap-2 mb-2">
@@ -137,6 +125,18 @@ export default function OfferReviews({ reviews, averageRating, totalReviews, sel
                 </div>
               </div>
             ))}
+
+            {reviews.length > PREVIEW_COUNT && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowAll((v) => !v)}
+              >
+                {showAll
+                  ? 'Скрыть отзывы'
+                  : `Просмотреть все отзывы (${reviews.length})`}
+              </Button>
+            )}
           </div>
         )}
       </CardContent>
