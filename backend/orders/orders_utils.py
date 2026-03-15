@@ -42,6 +42,33 @@ def generate_order_number():
     random_part = random.randint(1000, 9999)
     return f'ORD-{timestamp}-{random_part}'
 
+def send_call(phone: str, text: str):
+    """Голосовой звонок через МТС Exolve"""
+    if not phone:
+        return
+    try:
+        func2url_path = os.path.join(os.path.dirname(__file__), '..', 'func2url.json')
+        with open(func2url_path) as f:
+            func2url = json.load(f)
+        exolve_url = func2url.get('exolve-call', '')
+        if not exolve_url:
+            print('[EXOLVE] exolve-call URL not found in func2url.json')
+            return
+        from urllib.parse import urlparse
+        parsed = urlparse(exolve_url)
+        host = parsed.netloc
+        path = parsed.path or '/'
+        payload = json.dumps({'phone': phone, 'text': text})
+        conn = http.client.HTTPSConnection(host, timeout=15)
+        conn.request('POST', path, payload, {'Content-Type': 'application/json'})
+        resp = conn.getresponse()
+        resp_body = resp.read().decode('utf-8')
+        conn.close()
+        print(f'[EXOLVE] Call to {phone}: status={resp.status} resp={resp_body[:200]}')
+    except Exception as e:
+        print(f'[EXOLVE] Call error: {e}')
+
+
 def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
     """Отправка push и email уведомлений"""
     notification_data = json.dumps({

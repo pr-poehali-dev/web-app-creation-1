@@ -6,7 +6,7 @@ from datetime import datetime, date
 from typing import Dict, Any
 from psycopg2.extras import RealDictCursor
 from orders_utils import (
-    get_db_connection, get_schema, send_notification,
+    get_db_connection, get_schema, send_notification, send_call,
     generate_order_number, reject_other_responses,
     decimal_to_float, offers_cache
 )
@@ -532,6 +532,11 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽{pickup_info}'
         
         send_notification(seller_id, notification_title, notification_message, f'/my-orders?id={result["id"]}')
+        # Голосовой звонок продавцу
+        call_text = f'Вам поступил новый отклик на ваше предложение. Зайдите на сайт, чтобы посмотреть детали.'
+        if initial_status != 'negotiating':
+            call_text = f'Вам поступил новый заказ. Зайдите на сайт, чтобы посмотреть детали.'
+        send_call(seller_phone, call_text)
     except Exception as e:
         print(f'Notification error: {e}')
     
