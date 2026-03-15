@@ -1,4 +1,4 @@
-"""Голосовой звонок через МТС Exolve Voice API при новом заказе/отклике"""
+"""Голосовой звонок через МТС Exolve Voice API при новом заказе/отклике. v2"""
 import json
 import os
 import http.client
