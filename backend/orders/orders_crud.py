@@ -533,10 +533,10 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         
         send_notification(seller_id, notification_title, notification_message, f'/my-orders?id={result["id"]}')
         # Голосовой звонок продавцу
-        call_text = f'Вам поступил новый отклик на ваше предложение. Зайдите на сайт, чтобы посмотреть детали.'
-        if initial_status != 'negotiating':
-            call_text = f'Вам поступил новый заказ. Зайдите на сайт, чтобы посмотреть детали.'
-        send_call(seller_phone, call_text)
+        if is_request:
+            send_call(seller_phone, call_type='response')
+        else:
+            send_call(seller_phone, call_type='order')
     except Exception as e:
         print(f'Notification error: {e}')
     

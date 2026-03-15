@@ -24,7 +24,8 @@ def handler(event: dict, context) -> dict:
         body = {}
 
     phone = body.get('phone', '').strip()
-    text = body.get('text', 'Вам поступил новый заказ на вашем сайте.')
+    # type: 'order' (default) или 'response'
+    call_type = body.get('type', 'order')
 
     if not phone:
         return {
@@ -33,7 +34,7 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'phone is required'})
         }
 
-    # Нормализуем номер: убираем пробелы, скобки, тире
+    # Нормализуем номер
     normalized = ''.join(c for c in phone if c.isdigit() or c == '+')
     if normalized.startswith('8') and len(normalized) == 11:
         normalized = '+7' + normalized[1:]
@@ -45,17 +46,15 @@ def handler(event: dict, context) -> dict:
     api_key = os.environ.get('EXOLVE_API_KEY', '')
     caller_number = os.environ.get('EXOLVE_CALLER_NUMBER', '')
 
+    if call_type == 'response':
+        service_id = int(os.environ.get('EXOLVE_SERVICE_ID_RESPONSE', '0'))
+    else:
+        service_id = int(os.environ.get('EXOLVE_SERVICE_ID_ORDER', '0'))
+
     payload = json.dumps({
-        'jsonrpc': '2.0',
-        'id': 1,
-        'method': 'MakeCall',
-        'params': {
-            'number': normalized,
-            'caller_id': caller_number,
-            'voice_message_text': text,
-            'voice_message_language': 'ru-RU',
-            'voice_message_repeat': 1
-        }
+        'number': normalized,
+        'caller_id': caller_number,
+        'service_id': service_id
     })
 
     try:
@@ -73,7 +72,7 @@ def handler(event: dict, context) -> dict:
         resp_body = resp.read().decode('utf-8')
         conn.close()
 
-        print(f'[EXOLVE] Call to {normalized}: status={resp.status} response={resp_body[:300]}')
+        print(f'[EXOLVE] Call to {normalized} type={call_type} service_id={service_id}: status={resp.status} response={resp_body[:300]}')
 
         if resp.status in (200, 201):
             return {
