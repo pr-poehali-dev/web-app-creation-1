@@ -30,6 +30,7 @@ interface OfferInfoSummaryProps {
   transportNegotiable?: boolean;
   transportComment?: string;
   transportDateTime?: string;
+  transportCapacity?: string;
   expiryDate?: Date;
 }
 
@@ -54,6 +55,7 @@ export default function OfferInfoSummary({
   transportNegotiable,
   transportComment,
   transportDateTime,
+  transportCapacity,
   expiryDate,
 }: OfferInfoSummaryProps) {
   const isTransport = category === 'transport';
@@ -84,8 +86,12 @@ export default function OfferInfoSummary({
             </div>
           )}
           <div>
-            <p className="text-xs text-muted-foreground">Доступно мест:</p>
-            <p className="font-semibold">{remainingQuantity > 0 ? `${remainingQuantity} мест` : `${quantity} мест`}</p>
+            <p className="text-xs text-muted-foreground">{transportCapacity && isNaN(Number(transportCapacity)) ? 'Вместимость:' : 'Доступно мест:'}</p>
+            <p className="font-semibold">
+              {transportCapacity && isNaN(Number(transportCapacity))
+                ? transportCapacity.trim()
+                : remainingQuantity > 0 ? `${remainingQuantity} мест` : `${quantity} мест`}
+            </p>
           </div>
           {transportType && (
             <div>

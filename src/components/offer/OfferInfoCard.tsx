@@ -210,6 +210,7 @@ export default function OfferInfoCard({
           transportNegotiable={transportNegotiable}
           transportComment={transportComment}
           transportDateTime={transportDateTime}
+          transportCapacity={transportCapacity}
           expiryDate={expiryDate}
         />
 
