@@ -1,4 +1,4 @@
-"""Голосовой звонок через МТС Exolve API при новом заказе/отклике"""
+"""Голосовой звонок через МТС Exolve Voice API при новом заказе/отклике"""
 import json
 import os
 import http.client
@@ -24,7 +24,6 @@ def handler(event: dict, context) -> dict:
         body = {}
 
     phone = body.get('phone', '').strip()
-    # type: 'order' (default) или 'response'
     call_type = body.get('type', 'order')
 
     if not phone:
@@ -34,26 +33,28 @@ def handler(event: dict, context) -> dict:
             'body': json.dumps({'error': 'phone is required'})
         }
 
-    # Нормализуем номер
-    normalized = ''.join(c for c in phone if c.isdigit() or c == '+')
+    # Нормализуем номер: убираем всё кроме цифр (без +)
+    normalized = ''.join(c for c in phone if c.isdigit())
     if normalized.startswith('8') and len(normalized) == 11:
-        normalized = '+7' + normalized[1:]
-    elif normalized.startswith('7') and len(normalized) == 11:
-        normalized = '+' + normalized
-    elif not normalized.startswith('+'):
-        normalized = '+7' + normalized
+        normalized = '7' + normalized[1:]
+    elif not normalized.startswith('7'):
+        normalized = '7' + normalized
 
     api_key = os.environ.get('EXOLVE_API_KEY', '')
     caller_number = os.environ.get('EXOLVE_CALLER_NUMBER', '')
+    # Убираем + из номера отправителя
+    source = ''.join(c for c in caller_number if c.isdigit())
+    if source.startswith('8'):
+        source = '7' + source[1:]
 
     if call_type == 'response':
-        service_id = int(os.environ.get('EXOLVE_SERVICE_ID_RESPONSE', '0'))
+        service_id = os.environ.get('EXOLVE_SERVICE_ID_RESPONSE', '')
     else:
-        service_id = int(os.environ.get('EXOLVE_SERVICE_ID_ORDER', '0'))
+        service_id = os.environ.get('EXOLVE_SERVICE_ID_ORDER', '')
 
     payload = json.dumps({
-        'number': normalized,
-        'caller_id': caller_number,
+        'source': source,
+        'destination': normalized,
         'service_id': service_id
     })
 
@@ -61,7 +62,7 @@ def handler(event: dict, context) -> dict:
         conn = http.client.HTTPSConnection('api.exolve.ru', timeout=15)
         conn.request(
             'POST',
-            '/calling/v1/MakeCall',
+            '/voice/v1/MakeVoiceMessage',
             payload,
             {
                 'Content-Type': 'application/json',
