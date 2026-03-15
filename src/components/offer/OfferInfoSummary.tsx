@@ -65,7 +65,10 @@ export default function OfferInfoSummary({
               </div>
               <div className="text-right shrink-0">
                 {transportNegotiable ? (
-                  <Badge variant="secondary" className="text-xs">Договорная</Badge>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Цена:</p>
+                    <Badge variant="secondary" className="text-xs">Договорная</Badge>
+                  </div>
                 ) : (transportPrice || pricePerUnit) ? (
                   <>
                     <p className="font-bold text-primary text-base leading-tight">

@@ -48,7 +48,7 @@ export default function OfferCardTransportInfo({
         </span>
         <span className="font-bold text-primary text-sm whitespace-nowrap flex-shrink-0">
           {transportNegotiable
-            ? 'Договор.'
+            ? 'Цена: Договор.'
             : (transportPrice || pricePerUnit)
             ? `${Number(transportPrice || pricePerUnit).toLocaleString('ru-RU')} ₽${transportPriceType ? ` · ${transportPriceType.replace('За ', '')}` : ''}`
             : ''}
