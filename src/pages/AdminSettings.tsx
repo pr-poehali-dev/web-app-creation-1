@@ -11,8 +11,8 @@ import funcUrl from '../../backend/func2url.json';
 
 import AdminGeneralSettings from '@/components/admin/AdminGeneralSettings';
 import AdminRolesManagement from '@/components/admin/AdminRolesManagement';
-
 import AdminOtherTabs from '@/components/admin/AdminOtherTabs';
+import AdminAudioUpload from '@/components/admin/AdminAudioUpload';
 
 interface AdminSettingsProps {
   isAuthenticated: boolean;
@@ -168,6 +168,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
               <TabsTrigger value="notifications">Уведомления</TabsTrigger>
               <TabsTrigger value="telegram">Telegram</TabsTrigger>
               <TabsTrigger value="security">Безопасность</TabsTrigger>
+              <TabsTrigger value="audio">Аудио</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general" className="space-y-6">
@@ -234,6 +235,10 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
                 setEmailNotifications={setEmailNotifications}
                 handleSaveSettings={handleSaveSettings}
               />
+            </TabsContent>
+
+            <TabsContent value="audio" className="space-y-6">
+              <AdminAudioUpload />
             </TabsContent>
           </Tabs>
         </div>
