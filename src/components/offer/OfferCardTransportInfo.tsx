@@ -5,6 +5,7 @@ interface OfferCardTransportInfoProps {
   transportPrice?: string;
   pricePerUnit: number;
   transportNegotiable?: boolean;
+  transportPriceType?: string;
   transportDepartureDateTime?: string;
   transportDateTime?: string;
   transportCapacity?: string;
@@ -19,6 +20,7 @@ export default function OfferCardTransportInfo({
   transportPrice,
   pricePerUnit,
   transportNegotiable,
+  transportPriceType,
   transportDepartureDateTime,
   transportDateTime,
   transportCapacity,
@@ -48,7 +50,7 @@ export default function OfferCardTransportInfo({
           {transportNegotiable
             ? 'Договор.'
             : (transportPrice || pricePerUnit)
-            ? `${Number(transportPrice || pricePerUnit).toLocaleString('ru-RU')} ₽`
+            ? `${Number(transportPrice || pricePerUnit).toLocaleString('ru-RU')} ₽${transportPriceType ? ` · ${transportPriceType.replace('За ', '')}` : ''}`
             : ''}
         </span>
       </div>

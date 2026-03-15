@@ -221,6 +221,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
               transportPrice={offer.transportPrice}
               pricePerUnit={offer.pricePerUnit}
               transportNegotiable={offer.transportNegotiable}
+              transportPriceType={offer.transportPriceType}
               transportDepartureDateTime={offer.transportDepartureDateTime}
               transportDateTime={offer.transportDateTime}
               transportCapacity={offer.transportCapacity}
