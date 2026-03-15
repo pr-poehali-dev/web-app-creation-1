@@ -161,6 +161,8 @@ export default function OfferDetailContent({
         offerTransportPriceType={offer.transportPriceType}
         offerTransportNegotiable={offer.transportNegotiable}
         offerTransportDateTime={offer.transportDateTime}
+        offerTransportServiceType={offer.transportServiceType}
+        offerTransportCapacity={offer.transportCapacity}
       />
 
       <OfferDetailGalleryModal
