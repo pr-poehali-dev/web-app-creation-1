@@ -86,7 +86,7 @@ export default function OfferEditFormTransport({ offer, editData, isSaving, onEd
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="transportCapacity">Количество мест</Label>
+        <Label htmlFor="transportCapacity">Вместимость / Грузоподъёмность</Label>
         <Input
           id="transportCapacity"
           type="text"
