@@ -67,7 +67,11 @@ export default function OfferCardTransportInfo({
             })()}
           </span>
         )}
-        {effectiveTotal > 0 && (
+        {transportCapacity && isNaN(Number(transportCapacity)) ? (
+          <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
+            {transportCapacity.trim()}
+          </span>
+        ) : effectiveTotal > 0 && (
           available > 0 ? (
             <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
               {available} мест
