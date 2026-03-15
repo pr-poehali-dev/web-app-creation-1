@@ -86,7 +86,7 @@ export default function OfferInfoSummary({
             </div>
           )}
           <div>
-            <p className="text-xs text-muted-foreground">{transportCapacity && isNaN(Number(transportCapacity)) ? 'Вместимость:' : 'Доступно мест:'}</p>
+            <p className="text-xs text-muted-foreground">{transportCapacity && isNaN(Number(transportCapacity)) ? 'Вместимость / Грузоподъёмность:' : 'Доступно мест:'}</p>
             <p className="font-semibold">
               {transportCapacity && isNaN(Number(transportCapacity))
                 ? transportCapacity.trim()
