@@ -52,6 +52,14 @@ const TRANSPORT_TYPES = [
   'Спецтехника',
 ];
 
+const CARGO_TRANSPORT_TYPES = [
+  'Грузовик',
+  'Микроавтобус',
+  'Спецтехника',
+  'Рефрижератор',
+  'Внедорожник с прицепом',
+];
+
 const PRICE_TYPES = [
   'За рейс',
   'За час',
@@ -429,7 +437,9 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
         <CollapsibleSelectList
           label="Тип транспорта *"
           placeholder="Выберите тип транспорта"
-          options={formData.transportServiceType === 'Пассажирские перевозки'
+          options={formData.transportServiceType === 'Грузоперевозки'
+            ? CARGO_TRANSPORT_TYPES
+            : formData.transportServiceType === 'Пассажирские перевозки'
             ? TRANSPORT_TYPES.filter(t => t !== 'Грузовик')
             : TRANSPORT_TYPES}
           value={formData.transportType}
@@ -442,7 +452,7 @@ export default function OfferTransportSection({ formData, transportWaypoints = [
             id="transportCapacity"
             value={formData.transportCapacity}
             onChange={(e) => onInputChange('transportCapacity', e.target.value)}
-            placeholder="Кол-во пассажиров или кг / м³"
+            placeholder={formData.transportServiceType === 'Грузоперевозки' ? 'Вес, объём' : 'Кол-во пассажиров или кг / м³'}
           />
         </div>
 
