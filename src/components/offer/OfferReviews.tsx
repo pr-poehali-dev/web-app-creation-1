@@ -1,5 +1,7 @@
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -20,9 +22,11 @@ interface OfferReviewsProps {
   reviews: Review[];
   averageRating: number;
   totalReviews: number;
+  sellerId?: string;
 }
 
-export default function OfferReviews({ reviews, averageRating, totalReviews }: OfferReviewsProps) {
+export default function OfferReviews({ reviews, averageRating, totalReviews, sellerId }: OfferReviewsProps) {
+  const navigate = useNavigate();
   const renderStars = (rating: number) => {
     return (
       <div className="flex gap-0.5">
@@ -69,6 +73,17 @@ export default function OfferReviews({ reviews, averageRating, totalReviews }: O
         </div>
       </CardHeader>
       <CardContent className="py-2 md:py-3">
+        {sellerId && totalReviews > 0 && (
+          <div className="mb-4">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate(`/seller/${sellerId}#reviews`)}
+            >
+              Посмотреть все отзывы ({totalReviews})
+            </Button>
+          </div>
+        )}
         {!reviews || reviews.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             Пока нет отзывов о продавце
