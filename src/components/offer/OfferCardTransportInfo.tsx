@@ -42,11 +42,11 @@ export default function OfferCardTransportInfo({
   return (
     <>
       {/* Основной маршрут + цена */}
-      <div className="flex items-start justify-between gap-1">
-        <span className="text-sm font-bold text-foreground leading-tight min-w-0">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-sm font-bold text-foreground leading-tight">
           {transportRoute}
         </span>
-        <span className="font-bold text-primary text-sm whitespace-nowrap flex-shrink-0">
+        <span className="font-bold text-primary text-sm">
           {transportNegotiable
             ? 'Цена: Договор.'
             : (transportPrice || pricePerUnit)
