@@ -67,7 +67,7 @@ export default function OfferCardTransportInfo({
       </div>
 
       {/* Дата + кол-во мест */}
-      <div className="flex items-center justify-between gap-1">
+      <div className="flex flex-col gap-1">
         {rawDate && (
           <span className="text-xs text-muted-foreground">
             {(() => {
@@ -82,7 +82,7 @@ export default function OfferCardTransportInfo({
         )}
         {effectiveTotal > 0 && (
           available > 0 ? (
-            <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
+            <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap self-start">
               Доступно: {available} {unit} из {effectiveTotal}
             </span>
           ) : (
