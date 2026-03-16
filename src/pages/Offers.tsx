@@ -213,6 +213,20 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Polling заказов каждые 10 секунд для актуального счётчика новых заказов
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const pollOrders = async () => {
+      if (document.hidden) return;
+      try {
+        const response = await ordersAPI.getAll('all');
+        setOrders(response.orders || []);
+      } catch (_e) { /* тихо игнорируем */ }
+    };
+    const intervalId = setInterval(pollOrders, 10000);
+    return () => clearInterval(intervalId);
+  }, [isAuthenticated]);  
+
   const userIdStr = currentUser?.id;
   const selectedDistrictsKey = selectedDistricts.join(',');
   const districtsLength = districts.length;
