@@ -1,0 +1,1 @@
+UPDATE t_p42562714_web_app_creation_1.offers SET sold_quantity = 3 WHERE id = 'dfe3f6bf-40a6-4e35-8925-766ac2a564ab';
