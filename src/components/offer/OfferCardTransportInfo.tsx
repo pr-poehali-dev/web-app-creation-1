@@ -32,10 +32,20 @@ export default function OfferCardTransportInfo({
   const rawDate = transportDepartureDateTime || transportDateTime;
 
   const capacity = Number(transportCapacity);
-  const effectiveTotal = quantity > 0 ? quantity : (!isNaN(capacity) && capacity > 0 ? capacity : 0);
+  // Парсим число из строки вида "8 тонн", "5.5 т" и т.п.
+  const capacityFromString = isNaN(capacity) && transportCapacity
+    ? parseFloat(transportCapacity.replace(',', '.'))
+    : NaN;
+  const numericCapacity = !isNaN(capacity) && capacity > 0
+    ? capacity
+    : (!isNaN(capacityFromString) && capacityFromString > 0 ? capacityFromString : 0);
+  const effectiveTotal = quantity > 0 ? quantity : numericCapacity;
   const available = effectiveTotal > 0
     ? effectiveTotal - (soldQuantity || 0) - (reservedQuantity || 0)
     : -1;
+  // Единица измерения из строки transportCapacity (напр. "тонн", "т", "мест")
+  const unitMatch = transportCapacity ? transportCapacity.match(/[^\d.,\s]+/) : null;
+  const unit = unitMatch ? unitMatch[0] : 'мест';
 
   const activeWaypoints = transportWaypoints?.filter(w => w.isActive && (w.price ?? 0) > 0) || [];
 
@@ -69,14 +79,10 @@ export default function OfferCardTransportInfo({
             })()}
           </span>
         )}
-        {transportCapacity && isNaN(Number(transportCapacity)) ? (
-          <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
-            {transportCapacity.trim()}
-          </span>
-        ) : effectiveTotal > 0 && (
+        {effectiveTotal > 0 && (
           available > 0 ? (
             <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
-              {available} мест
+              {available} {unit} из {effectiveTotal}
             </span>
           ) : (
             <span className="text-xs font-semibold text-red-500 whitespace-nowrap">Мест нет</span>
