@@ -39,7 +39,8 @@ export default function OfferCardTransportInfo({
   const numericCapacity = !isNaN(capacity) && capacity > 0
     ? capacity
     : (!isNaN(capacityFromString) && capacityFromString > 0 ? capacityFromString : 0);
-  const effectiveTotal = quantity > 0 ? quantity : numericCapacity;
+  // Для транспорта: общий объём всегда из transportCapacity, quantity — запасной вариант
+  const effectiveTotal = numericCapacity > 0 ? numericCapacity : quantity;
   const available = effectiveTotal > 0
     ? effectiveTotal - (soldQuantity || 0) - (reservedQuantity || 0)
     : -1;
