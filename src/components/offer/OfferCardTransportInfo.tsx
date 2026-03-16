@@ -83,7 +83,7 @@ export default function OfferCardTransportInfo({
         {effectiveTotal > 0 && (
           available > 0 ? (
             <span className="text-xs font-semibold text-green-600 bg-green-50 px-1.5 py-0.5 rounded whitespace-nowrap">
-              {available} {unit} из {effectiveTotal}
+              Доступно: {available} {unit} из {effectiveTotal}
             </span>
           ) : (
             <span className="text-xs font-semibold text-red-500 whitespace-nowrap">Мест нет</span>
