@@ -80,14 +80,23 @@ export default function OfferInfoSummary({
               </div>
             </div>
           )}
-          <div>
-            <p className="text-xs text-muted-foreground">{transportCapacity && isNaN(Number(transportCapacity)) ? 'Вместимость / Грузоподъёмность:' : 'Мест:'}</p>
-            <p className="font-semibold">
-              {transportCapacity && isNaN(Number(transportCapacity))
-                ? transportCapacity.trim()
-                : `Доступно: ${remainingQuantity > 0 ? remainingQuantity : 0} мест из ${quantity}`}
-            </p>
-          </div>
+          {transportCapacity && isNaN(Number(transportCapacity)) ? (
+            <>
+              <div>
+                <p className="text-xs text-muted-foreground">Вместимость / Грузоподъёмность:</p>
+                <p className="font-semibold">{transportCapacity.trim()}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Количество:</p>
+                <p className="font-semibold">Доступно: {remainingQuantity > 0 ? remainingQuantity : 0} из {quantity}</p>
+              </div>
+            </>
+          ) : (
+            <div>
+              <p className="text-xs text-muted-foreground">Мест:</p>
+              <p className="font-semibold">Доступно: {remainingQuantity > 0 ? remainingQuantity : 0} мест из {quantity}</p>
+            </div>
+          )}
           {transportType && (
             <div>
               <p className="text-xs text-muted-foreground">Транспорт:</p>
