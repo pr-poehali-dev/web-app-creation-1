@@ -7,6 +7,12 @@
       "expectedStatus": 200
     },
     {
+      "name": "OG proxy for request",
+      "method": "GET",
+      "path": "/?type=request&id=3b553dd1-9c48-4277-8ee9-533f2b120ecc",
+      "expectedStatus": 200
+    },
+    {
       "name": "OG proxy unknown type redirect",
       "method": "GET",
       "path": "/?type=unknown&id=123",

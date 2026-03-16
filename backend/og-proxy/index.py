@@ -133,9 +133,9 @@ def handler(event: dict, context) -> dict:
         elif item_type == 'request':
             cur.execute(f"""
                 SELECT r.title, r.description, r.price_per_unit, r.unit,
-                       (SELECT ri.url FROM {schema}.request_images ri
-                        JOIN {schema}.request_image_relations rir ON ri.id = rir.image_id
-                        WHERE rir.request_id = r.id ORDER BY rir.sort_order LIMIT 1) as image_url
+                       (SELECT oi.url FROM {schema}.offer_images oi
+                        JOIN {schema}.request_image_relations rir ON oi.id = rir.image_id
+                        WHERE rir.request_id = r.id LIMIT 1) as image_url
                 FROM {schema}.requests r WHERE r.id = '{item_id}' LIMIT 1
             """)
             row = cur.fetchone()
