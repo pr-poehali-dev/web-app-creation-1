@@ -65,37 +65,13 @@ def handler(event: dict, context) -> dict:
 
     print(f'[EXOLVE] Calling {normalized} type={call_type} resource_id={resource_id} source={source}')
 
-    # service_id — числовой file_id аудиофайла (uint64), resource_id хранит его как строку
-    try:
-        service_id = int(resource_id)
-    except (ValueError, TypeError):
-        # resource_id — UUID, нужно получить file_id через GetList
-        getlist_payload = json.dumps({'resource_id': resource_id})
-        gl_status, gl_body = exolve_request('/media/v1/GetList', getlist_payload, api_key)
-        print(f'[EXOLVE] GetList status={gl_status} body={gl_body[:300]}')
-        service_id = None
-        if gl_status == 200:
-            try:
-                gl_data = json.loads(gl_body)
-                files = gl_data.get('files', [])
-                if files:
-                    service_id = int(files[0].get('file_id', 0))
-            except Exception as e:
-                print(f'[EXOLVE] GetList parse error: {e}')
-        if not service_id:
-            return {
-                'statusCode': 200,
-                'headers': {'Access-Control-Allow-Origin': '*'},
-                'body': json.dumps({'success': False, 'error': f'Could not resolve file_id from resource_id={resource_id}', 'getlist': gl_body[:200]})
-            }
-
     call_payload = json.dumps({
         'source': source,
         'destination': normalized,
-        'service_id': service_id
+        'service_id': resource_id
     })
 
-    call_status, call_body = exolve_request('/voice/v1/MakeVoiceMessage', call_payload, api_key)
+    call_status, call_body = exolve_request('/call/v1/MakeVoiceMessage', call_payload, api_key)
     print(f'[EXOLVE] MakeVoiceMessage status={call_status} body={call_body[:300]}')
 
     if call_status in (200, 201):
