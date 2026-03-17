@@ -15,10 +15,16 @@ interface NumberStepperProps {
 }
 
 function NumberStepper({ id, name, min, max, defaultValue, required }: NumberStepperProps) {
-  const [value, setValue] = useState<number>(defaultValue ?? min);
+  const [rawValue, setRawValue] = useState<string>(String(defaultValue ?? min));
   const [error, setError] = useState<string>('');
 
+  const numValue = parseFloat(rawValue) || 0;
+
   const validate = (val: number) => {
+    if (rawValue === '') {
+      setError('Введите значение');
+      return false;
+    }
     if (max !== undefined && val > max) {
       setError(`Значение должно быть не больше ${max}`);
       return false;
@@ -33,30 +39,35 @@ function NumberStepper({ id, name, min, max, defaultValue, required }: NumberSte
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
+    setRawValue(raw);
     if (raw === '') {
-      setValue(min);
-      setError('');
+      setError('Введите значение');
       return;
     }
     const num = parseFloat(raw);
-    if (isNaN(num)) return;
-    setValue(num);
-    validate(num);
+    if (!isNaN(num)) validate(num);
+  };
+
+  const handleBlur = () => {
+    if (rawValue === '' || isNaN(parseFloat(rawValue))) {
+      setRawValue(String(min));
+      setError('');
+    }
   };
 
   const step = (delta: number) => {
-    const next = value + delta;
+    const next = numValue + delta;
     if (max !== undefined && next > max) {
-      setValue(max);
+      setRawValue(String(max));
       setError(`Значение должно быть не больше ${max}`);
       return;
     }
     if (next < min) {
-      setValue(min);
+      setRawValue(String(min));
       setError(`Значение должно быть не меньше ${min}`);
       return;
     }
-    setValue(next);
+    setRawValue(String(next));
     setError('');
   };
 
@@ -78,8 +89,9 @@ function NumberStepper({ id, name, min, max, defaultValue, required }: NumberSte
           inputMode="decimal"
           min={min}
           max={max}
-          value={value}
+          value={rawValue}
           onChange={handleChange}
+          onBlur={handleBlur}
           required={required}
           className="flex-1 h-9 border border-input bg-background px-2 text-center text-sm focus:outline-none focus:ring-1 focus:ring-ring [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           style={{ minWidth: 0 }}
