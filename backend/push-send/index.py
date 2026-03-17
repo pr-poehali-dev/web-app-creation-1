@@ -1,9 +1,8 @@
 import json
 import os
-import tempfile
-# v2
 import psycopg2
 from pywebpush import webpush, WebPushException
+from cryptography.hazmat.primitives.serialization import load_pem_private_key
 
 def handler(event: dict, context) -> dict:
     '''API для отправки push-уведомлений пользователям'''
@@ -31,7 +30,7 @@ def handler(event: dict, context) -> dict:
         body = json.loads(event.get('body', '{}'))
         user_id = body.get('userId')
         district = body.get('district')
-        notification_type = body.get('type')  # 'new_request', 'new_offer', 'new_response'
+        notification_type = body.get('type')
         title = body.get('title')
         message = body.get('message')
         url = body.get('url', '/')
@@ -49,19 +48,15 @@ def handler(event: dict, context) -> dict:
         conn = psycopg2.connect(db_url)
         cur = conn.cursor()
         
-        # Получаем активные подписки
         if user_id:
-            # Отправка конкретному пользователю (user_id хранится как VARCHAR)
             cur.execute(f'''
                 SELECT subscription_data FROM {schema}.push_subscriptions 
                 WHERE user_id = %s AND active = true
             ''', (str(user_id),))
         elif district:
-            # Отправка всем пользователям района
             cur.execute(f'''
                 SELECT ps.subscription_data 
                 FROM {schema}.push_subscriptions ps
-                JOIN {schema}.users u ON ps.user_id = u.id
                 WHERE ps.active = true
             ''')
         else:
@@ -85,23 +80,34 @@ def handler(event: dict, context) -> dict:
                 'body': json.dumps({'success': True, 'message': 'No active subscriptions found', 'sent': 0})
             }
         
-        # VAPID ключ хранится в PEM формате — записываем во временный файл
-        vapid_pem = os.environ.get('VAPID_PRIVATE_KEY', '')
-        vapid_pem_normalized = vapid_pem.replace('\\n', '\n')
+        # Загружаем VAPID ключ напрямую из строки — без временного файла
+        vapid_pem_raw = os.environ.get('VAPID_PRIVATE_KEY', '')
+        # Нормализуем переносы строк (секрет может хранить \n как литерал)
+        vapid_pem = vapid_pem_raw.replace('\\n', '\n').strip()
+        if not vapid_pem.endswith('\n'):
+            vapid_pem += '\n'
         
-        vapid_claims = {
-            "sub": "mailto:noreply@erttp.ru"
-        }
+        # Проверяем что ключ читается
+        try:
+            load_pem_private_key(vapid_pem.encode('utf-8'), password=None)
+            print(f'[PUSH] VAPID key loaded OK, length={len(vapid_pem)}')
+        except Exception as key_err:
+            print(f'[PUSH] VAPID key error: {key_err}')
+            print(f'[PUSH] Key preview: {repr(vapid_pem[:80])}')
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': f'Invalid VAPID key: {key_err}'})
+            }
+        
+        vapid_claims = {"sub": "mailto:noreply@erttp.ru"}
         
         notification_payload = json.dumps({
             'title': title,
             'body': message,
             'icon': '/favicon.png',
             'badge': '/favicon.png',
-            'data': {
-                'url': url,
-                'type': notification_type
-            },
+            'data': {'url': url, 'type': notification_type},
             'tag': notification_type,
             'requireInteraction': False
         })
@@ -109,36 +115,26 @@ def handler(event: dict, context) -> dict:
         sent_count = 0
         failed_count = 0
         
-        # Записываем PEM ключ во временный файл (pywebpush требует путь к файлу)
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.pem', delete=False) as tmp:
-            tmp.write(vapid_pem_normalized)
-            tmp_path = tmp.name
-        
         for sub_data in subscriptions:
             try:
                 subscription_info = json.loads(sub_data[0])
                 webpush(
                     subscription_info=subscription_info,
                     data=notification_payload,
-                    vapid_private_key=tmp_path,
+                    vapid_private_key=vapid_pem,
                     vapid_claims=vapid_claims
                 )
                 sent_count += 1
-                print(f'[PUSH] Sent successfully to subscription')
+                print(f'[PUSH] Sent successfully')
             except WebPushException as e:
                 failed_count += 1
                 resp_info = ''
                 if hasattr(e, 'response') and e.response is not None:
-                    resp_info = f' status={e.response.status_code} body={e.response.text[:200]}'
+                    resp_info = f' status={e.response.status_code} body={e.response.text[:300]}'
                 print(f'[PUSH] WebPushException:{resp_info} {e}')
             except Exception as e:
                 failed_count += 1
                 print(f'[PUSH] Error: {e}')
-        
-        try:
-            os.unlink(tmp_path)
-        except Exception:
-            pass
         
         return {
             'statusCode': 200,
