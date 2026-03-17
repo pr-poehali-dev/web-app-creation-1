@@ -21,17 +21,7 @@ root.render(
 );
 
 // Убираем HTML splash с задержкой — даём React время отрисовать первый экран
-setTimeout(() => {
-  const splash = document.getElementById('html-splash');
-  if (splash) {
-    splash.style.transition = 'opacity 0.4s ease';
-    splash.style.opacity = '0';
-    setTimeout(() => splash.remove(), 400);
-  }
-}, 600);
-
-// Аварийный выход из splash — если React не запустился за 15 сек (медленная сеть)
-setTimeout(() => {
+const emergencyTimer = setTimeout(() => {
   const splash = document.getElementById('html-splash');
   if (splash) {
     const btn = document.createElement('button');
@@ -41,6 +31,16 @@ setTimeout(() => {
     splash.appendChild(btn);
   }
 }, 15000);
+
+setTimeout(() => {
+  const splash = document.getElementById('html-splash');
+  if (splash) {
+    clearTimeout(emergencyTimer);
+    splash.style.transition = 'opacity 0.4s ease';
+    splash.style.opacity = '0';
+    setTimeout(() => splash.remove(), 400);
+  }
+}, 600);
 
 
 
