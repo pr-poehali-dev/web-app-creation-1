@@ -48,20 +48,9 @@ def send_call(phone: str, text: str = '', call_type: str = 'order'):
     if not phone:
         return
     try:
-        from urllib.parse import urlparse
-        func2url_path = os.path.join(os.path.dirname(__file__), '..', 'func2url.json')
-        with open(func2url_path) as f:
-            func2url = json.load(f)
-        exolve_url = func2url.get('exolve-call', '')
-        if not exolve_url:
-            print('[EXOLVE] exolve-call URL not found in func2url.json')
-            return
-        parsed = urlparse(exolve_url)
-        host = parsed.netloc
-        path = parsed.path or '/'
         payload = json.dumps({'phone': phone, 'type': call_type})
-        conn = http.client.HTTPSConnection(host, timeout=20)
-        conn.request('POST', path, payload, {'Content-Type': 'application/json'})
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=20)
+        conn.request('POST', '/5dbb4a7a-067d-4c58-805a-9e6fc53c9692', payload, {'Content-Type': 'application/json'})
         resp = conn.getresponse()
         resp_body = resp.read().decode('utf-8')
         conn.close()

@@ -52,10 +52,11 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
 
     try {
       if (enabled) {
-        // Запрашиваем разрешение на уведомления
-        const permission = await Notification.requestPermission();
+        // Запрашиваем разрешение и регистрируем push-подписку в БД
+        const { setupPushNotifications } = await import('@/services/pushNotifications');
+        const success = await setupPushNotifications(userId);
         
-        if (permission === 'granted') {
+        if (success) {
           setIsEnabled(true);
           
           // Автоматически включаем email-уведомления
@@ -73,15 +74,15 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
             console.error('Не удалось включить email-уведомления:', e);
           }
           
-          // Показываем тестовое уведомление
-          new Notification('Уведомления включены!', {
-            body: 'Теперь вы будете получать важные обновления',
-            icon: '/logo-192.png',
-          });
-          
           toast({
             title: 'Уведомления включены',
             description: 'Вы будете получать важные обновления в браузере и на email',
+          });
+        } else if (Notification.permission === 'denied') {
+          toast({
+            title: 'Уведомления заблокированы',
+            description: 'Разрешите уведомления в настройках браузера',
+            variant: 'destructive',
           });
         } else {
           toast({
