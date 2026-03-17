@@ -45,6 +45,11 @@ export async function subscribeToPushNotifications(
   registration: ServiceWorkerRegistration
 ): Promise<PushSubscription | null> {
   try {
+    // Если уже есть подписка — отписываем сначала (старый VAPID ключ может конфликтовать)
+    const existing = await registration.pushManager.getSubscription();
+    if (existing) {
+      await existing.unsubscribe();
+    }
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
