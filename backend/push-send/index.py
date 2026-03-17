@@ -73,6 +73,7 @@ def handler(event: dict, context) -> dict:
             }
         
         subscriptions = cur.fetchall()
+        print(f'[PUSH] user_id={user_id} found {len(subscriptions)} subscriptions')
         cur.close()
         conn.close()
         
@@ -125,7 +126,10 @@ def handler(event: dict, context) -> dict:
                 print(f'[PUSH] Sent successfully to subscription')
             except WebPushException as e:
                 failed_count += 1
-                print(f'[PUSH] WebPushException: {e}')
+                resp_info = ''
+                if hasattr(e, 'response') and e.response is not None:
+                    resp_info = f' status={e.response.status_code} body={e.response.text[:200]}'
+                print(f'[PUSH] WebPushException:{resp_info} {e}')
             except Exception as e:
                 failed_count += 1
                 print(f'[PUSH] Error: {e}')
