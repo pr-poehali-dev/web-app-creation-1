@@ -129,8 +129,13 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
       <main className="container mx-auto px-4 py-3 flex-1">
         <BackButton fallbackUrl="/my-orders?tab=my-responses" />
 
-        <div className="grid gap-3 lg:grid-cols-3 mb-3 mt-1">
-          <div className="lg:col-span-2 min-w-0">
+        {(() => {
+          const hasMedia = request.images.length > 0 || (showVideo && request.video);
+          const isTransportWithPlaceholder = request.category === 'transport';
+          const hasLeftColumn = hasMedia || isTransportWithPlaceholder;
+          return (
+        <div className={`grid gap-3 mb-3 mt-1 ${hasLeftColumn ? 'lg:grid-cols-3' : 'lg:grid-cols-[1fr_340px]'}`}>
+          <div className={`${hasLeftColumn ? 'lg:col-span-2' : ''} min-w-0`}>
             {request.category === 'transport' && request.images.length === 0 && !(showVideo && request.video) && (
               <div className="aspect-video bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg flex flex-col items-center justify-center mb-4 opacity-60">
                 {(request.transportServiceType === 'cargo' || request.transportServiceType === 'Грузоперевозки') ? (
@@ -399,6 +404,8 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
             )}
           </div>
         </div>
+          );
+        })()}
       </main>
 
       <Footer />

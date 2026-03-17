@@ -32,6 +32,7 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     negotiableDeadline,
     budget,
     negotiableBudget,
+    negotiablePrice,
     transportServiceType,
     transportRoute,
     transportType,
@@ -198,19 +199,31 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Цена за {unit}</p>
-                {pricePerUnit > 0
-                  ? <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
-                  : <p className="font-semibold text-primary">Ваша цена</p>
-                }
+                {pricePerUnit > 0 ? (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-semibold">{pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+                    {negotiablePrice && (
+                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5">Торг</Badge>
+                    )}
+                  </div>
+                ) : (
+                  <p className="font-semibold text-primary">Ваша цена</p>
+                )}
               </div>
             </div>
 
             <div className="bg-primary/5 p-3 rounded-lg">
               <p className="text-xs text-muted-foreground mb-0.5">Общий бюджет</p>
-              {totalAmount > 0
-                ? <p className="text-2xl font-bold text-primary">{totalAmount.toLocaleString('ru-RU')} ₽</p>
-                : <p className="text-lg font-bold text-primary">Предложите свою цену</p>
-              }
+              {totalAmount > 0 ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-2xl font-bold text-primary">{totalAmount.toLocaleString('ru-RU')} ₽</p>
+                  {negotiablePrice && (
+                    <Badge variant="secondary" className="text-sm">Торг</Badge>
+                  )}
+                </div>
+              ) : (
+                <p className="text-lg font-bold text-primary">Предложите свою цену</p>
+              )}
             </div>
           </>
         )}
