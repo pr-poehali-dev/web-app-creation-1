@@ -78,13 +78,15 @@ export async function sendSubscriptionToServer(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        subscription,
+        subscription: subscription.toJSON(),
         userId,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send subscription to server');
+      const errBody = await response.text().catch(() => '');
+      console.error(`HTTP ${response.status} push-subscribe:`, errBody);
+      return false;
     }
 
     return true;

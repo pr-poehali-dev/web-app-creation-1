@@ -224,7 +224,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
 
           {isViewingOwnProfile && (
             <>
-              <NotificationSettings />
+              <NotificationSettings userId={String(currentUser?.id ?? '')} />
               <EmailNotificationSettings />
             </>
           )}
