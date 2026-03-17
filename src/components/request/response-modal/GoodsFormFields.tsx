@@ -1,9 +1,104 @@
-import { Input } from '@/components/ui/input';
+import { useState } from 'react';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import type { GoodsFormFieldsProps } from './types';
+
+interface NumberStepperProps {
+  id: string;
+  name: string;
+  min: number;
+  max?: number;
+  defaultValue?: number;
+  required?: boolean;
+}
+
+function NumberStepper({ id, name, min, max, defaultValue, required }: NumberStepperProps) {
+  const [value, setValue] = useState<number>(defaultValue ?? min);
+  const [error, setError] = useState<string>('');
+
+  const validate = (val: number) => {
+    if (max !== undefined && val > max) {
+      setError(`Значение должно быть не больше ${max}`);
+      return false;
+    }
+    if (val < min) {
+      setError(`Значение должно быть не меньше ${min}`);
+      return false;
+    }
+    setError('');
+    return true;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    if (raw === '') {
+      setValue(min);
+      setError('');
+      return;
+    }
+    const num = parseFloat(raw);
+    if (isNaN(num)) return;
+    setValue(num);
+    validate(num);
+  };
+
+  const step = (delta: number) => {
+    const next = value + delta;
+    if (max !== undefined && next > max) {
+      setValue(max);
+      setError(`Значение должно быть не больше ${max}`);
+      return;
+    }
+    if (next < min) {
+      setValue(min);
+      setError(`Значение должно быть не меньше ${min}`);
+      return;
+    }
+    setValue(next);
+    setError('');
+  };
+
+  return (
+    <div>
+      <div className="flex items-center mt-1 h-9">
+        <button
+          type="button"
+          onClick={() => step(-1)}
+          className="flex items-center justify-center w-9 h-9 rounded-l-md border border-r-0 border-input bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground active:scale-95 transition-transform flex-shrink-0 select-none"
+          aria-label="Уменьшить"
+        >
+          <Icon name="Minus" size={14} />
+        </button>
+        <input
+          id={id}
+          name={name}
+          type="number"
+          inputMode="decimal"
+          min={min}
+          max={max}
+          value={value}
+          onChange={handleChange}
+          required={required}
+          className="flex-1 h-9 border border-input bg-background px-2 text-center text-sm focus:outline-none focus:ring-1 focus:ring-ring [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          style={{ minWidth: 0 }}
+        />
+        <button
+          type="button"
+          onClick={() => step(1)}
+          className="flex items-center justify-center w-9 h-9 rounded-r-md border border-l-0 border-input bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground active:scale-95 transition-transform flex-shrink-0 select-none"
+          aria-label="Увеличить"
+        >
+          <Icon name="Plus" size={14} />
+        </button>
+      </div>
+      {error && (
+        <p className="text-xs text-destructive mt-1">{error}</p>
+      )}
+    </div>
+  );
+}
 
 export default function GoodsFormFields({
   isEditMode,
@@ -22,42 +117,35 @@ export default function GoodsFormFields({
     <>
       <div>
         <Label htmlFor="response-quantity" className="text-sm">Количество ({unit})</Label>
-        <Input
+        <NumberStepper
           id="response-quantity"
           name="response-quantity"
-          type="number"
-          min="1"
+          min={1}
           max={quantity}
           defaultValue={isEditMode ? existingResponse?.quantity : quantity}
           required
-          className="h-9 mt-1"
         />
       </div>
-      
+
       <div>
         <Label htmlFor="response-price" className="text-sm">Ваша цена за единицу (₽)</Label>
-        <Input
+        <NumberStepper
           id="response-price"
           name="response-price"
-          type="number"
-          min="1"
+          min={1}
           defaultValue={isEditMode ? existingResponse?.pricePerUnit : pricePerUnit}
           required
-          className="h-9 mt-1"
         />
       </div>
 
       <div>
         <Label htmlFor="response-delivery" className="text-sm">Срок поставки (дней)</Label>
-        <Input
+        <NumberStepper
           id="response-delivery"
           name="response-delivery"
-          type="number"
-          min="1"
-          defaultValue={isEditMode ? existingParsed.deliveryDays : undefined}
-          placeholder="Укажите срок поставки"
+          min={1}
+          defaultValue={isEditMode ? parseInt(existingParsed.deliveryDays) || undefined : undefined}
           required
-          className="h-9 mt-1"
         />
       </div>
 
