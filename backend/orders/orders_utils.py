@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import http.client
+import threading
 from typing import Dict, Any
 from datetime import datetime
 from decimal import Decimal
@@ -42,10 +43,8 @@ def generate_order_number():
     random_part = random.randint(1000, 9999)
     return f'ORD-{timestamp}-{random_part}'
 
-def send_call(phone: str, text: str = '', call_type: str = 'order'):
-    """Голосовой звонок через МТС Exolve"""
-    if not phone:
-        return
+def _send_call_sync(phone: str, call_type: str):
+    """Внутренняя синхронная отправка звонка (вызывается в отдельном потоке)"""
     try:
         func2url_path = os.path.join(os.path.dirname(__file__), '..', 'func2url.json')
         with open(func2url_path) as f:
@@ -59,7 +58,7 @@ def send_call(phone: str, text: str = '', call_type: str = 'order'):
         host = parsed.netloc
         path = parsed.path or '/'
         payload = json.dumps({'phone': phone, 'type': call_type})
-        conn = http.client.HTTPSConnection(host, timeout=15)
+        conn = http.client.HTTPSConnection(host, timeout=20)
         conn.request('POST', path, payload, {'Content-Type': 'application/json'})
         resp = conn.getresponse()
         resp_body = resp.read().decode('utf-8')
@@ -69,8 +68,16 @@ def send_call(phone: str, text: str = '', call_type: str = 'order'):
         print(f'[EXOLVE] Call error: {e}')
 
 
-def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
-    """Отправка push и email уведомлений"""
+def send_call(phone: str, text: str = '', call_type: str = 'order'):
+    """Голосовой звонок через МТС Exolve (асинхронно в отдельном потоке)"""
+    if not phone:
+        return
+    t = threading.Thread(target=_send_call_sync, args=(phone, call_type), daemon=True)
+    t.start()
+
+
+def _send_notification_sync(user_id: int, title: str, message: str, url: str):
+    """Внутренняя синхронная отправка уведомлений (вызывается в отдельном потоке)"""
     notification_data = json.dumps({
         'userId': user_id,
         'title': title,
@@ -102,6 +109,12 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
         print(f'[NOTIFICATION] Email sent to user {user_id}: {title}')
     except Exception as e:
         print(f'[NOTIFICATION] Email error: {e}')
+
+
+def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
+    """Отправка push и email уведомлений (асинхронно в отдельном потоке)"""
+    t = threading.Thread(target=_send_notification_sync, args=(user_id, title, message, url), daemon=True)
+    t.start()
 
 def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: str, title: str, is_request: bool = True):
     """Отклоняет все остальные отклики на тот же запрос/предложение при принятии одного"""

@@ -521,6 +521,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     cur.close()
     conn.close()
     
+    import threading, time
+    threads = []
     try:
         if initial_status == 'negotiating':
             notification_title = 'Новое встречное предложение по заказу'
@@ -530,13 +532,15 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             pickup = body.get('passengerPickupAddress', '')
             pickup_info = f' | Посадка: {pickup}' if pickup else ''
             notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽{pickup_info}'
-        
+
         send_notification(seller_id, notification_title, notification_message, f'/my-orders?id={result["id"]}')
         # Голосовой звонок продавцу
         if is_request:
             send_call(seller_phone, call_type='response')
         else:
             send_call(seller_phone, call_type='order')
+        # Ждём 2 сек чтобы потоки успели инициализировать соединения
+        time.sleep(2)
     except Exception as e:
         print(f'Notification error: {e}')
     
