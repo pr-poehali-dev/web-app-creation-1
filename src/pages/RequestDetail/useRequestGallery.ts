@@ -28,15 +28,21 @@ export function useRequestGallery(request: Request | null, showVideo: boolean) {
 
   const handleShare = async () => {
     if (!request) return;
-    const price = request.pricePerUnit != null && request.pricePerUnit > 0
-      ? `${Number(request.pricePerUnit).toLocaleString('ru-RU')} ₽/${request.unit}`
-      : '';
+    
+    let quantityPrice = '';
+    if (request.quantity > 0 && request.pricePerUnit != null && request.pricePerUnit > 0) {
+      const priceStr = `${Number(request.pricePerUnit).toLocaleString('ru-RU')} ₽/${request.unit}`;
+      const negotiable = request.negotiablePrice ? '(торг)' : '(без торга)';
+      quantityPrice = `Нужно: ${request.quantity} ${request.unit}. ${priceStr} ${negotiable}`;
+    } else if (request.negotiablePrice && !(request.pricePerUnit > 0)) {
+      quantityPrice = request.quantity > 0 ? `Нужно: ${request.quantity} ${request.unit}. Цена договорная` : 'Цена договорная';
+    }
+
     await shareContent({
       title: request.title,
-      text: `📋 ${request.title}${price ? `\n\n💰 Бюджет: ${price}` : ''}${request.description ? `\n\n📝 ${request.description}` : ''}`,
+      text: `📋 ${request.title}${quantityPrice ? `\n\n📦 ${quantityPrice}` : ''}${request.description ? `\n\n📝 ${request.description}` : ''}`,
       url: window.location.href,
       imageUrl: request.images?.[0]?.url,
-
     });
   };
 
