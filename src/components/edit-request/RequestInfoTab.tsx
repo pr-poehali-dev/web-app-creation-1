@@ -24,7 +24,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   const districtName = districts.find(d => d.id === request.district)?.name || request.district;
 
   const getInitialPricingType = (): PricingType => {
-    if (request.pricePerUnit > 0 && !request.negotiablePrice) return 'fixed';
+    if (request.pricePerUnit > 0) return 'fixed';
     if (request.negotiablePrice) return 'negotiable';
     return 'not_set';
   };
