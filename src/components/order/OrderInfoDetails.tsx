@@ -49,12 +49,6 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 text-sm">
-        {order.isRequest && order.buyerComment?.match(/Срок (?:поставки|выполнения): (\d+) дней/) ? (
-        <div>
-          <p className="text-muted-foreground">Срок выполнения</p>
-          <p className="font-medium">{order.buyerComment.match(/Срок (?:поставки|выполнения): (\d+) дней/)?.[1]} дней</p>
-        </div>
-        ) : (
         <div>
           <p className="text-muted-foreground">Количество</p>
           <div className="flex items-center gap-2">
@@ -66,7 +60,6 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
             )}
           </div>
         </div>
-        )}
         <div>
           <p className="text-muted-foreground">Сумма</p>
           <p className="font-bold text-primary">
@@ -77,6 +70,12 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
                   : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽`}
           </p>
         </div>
+        {order.isRequest && order.buyerComment?.match(/Срок (?:поставки|выполнения): (\d+) дней/) && (
+        <div>
+          <p className="text-muted-foreground">Срок выполнения</p>
+          <p className="font-medium">{order.buyerComment.match(/Срок (?:поставки|выполнения): (\d+) дней/)?.[1]} дней</p>
+        </div>
+        )}
         {order.offerCategory === 'transport' && order.offerTransportDateTime && (
           <div className="col-span-2">
             <p className="text-muted-foreground">Дата и время рейса</p>
