@@ -1,2 +1,5 @@
 psycopg2-binary==2.9.9
-pywebpush==1.14.0
+cryptography>=41.0.0
+requests>=2.31.0
+py-vapid>=1.9.0
+http-ece>=1.2.0
