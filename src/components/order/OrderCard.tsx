@@ -125,9 +125,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               <>
                 <p className="text-muted-foreground">Маршрут</p>
                 <p className="font-medium">
-                  {order.buyerComment?.includes('Маршрут:')
-                    ? order.buyerComment.match(/Маршрут:\s*([^\n]*)/)?.[1]?.trim() || order.offerTransportRoute || '—'
-                    : order.offerTransportRoute || '—'}
+                  {order.offerTransportRoute || order.buyerComment?.match(/Маршрут:\s*([^\n]*)/)?.[1]?.trim() || '—'}
                 </p>
                 {order.passengerPickupAddress && (
                   <p className="text-xs text-primary mt-0.5">

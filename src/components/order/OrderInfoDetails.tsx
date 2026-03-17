@@ -112,7 +112,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
             <>
               <p className="text-muted-foreground">Маршрут</p>
               <p className="font-medium">
-                {order.buyerComment?.match(/Маршрут:\s*([^\n]*)/)?.[1]?.trim() || order.offerTransportRoute || '—'}
+                {order.offerTransportRoute || order.buyerComment?.match(/Маршрут:\s*([^\n]*)/)?.[1]?.trim() || '—'}
               </p>
             </>
           ) : (
@@ -143,6 +143,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
           .replace(/\n?\n?Прикрепленные файлы:[\s\S]*$/, '')
           .replace(/Срок (?:поставки|выполнения): \d+ дней\.\s*/, '')
           .replace(/Образование: [^\n]*\n?/, '')
+          .replace(/Маршрут:[^\n]*\n?/, '')
           .trim();
         
         const parsedFiles: { url: string; name: string }[] = [];
@@ -166,12 +167,10 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
                 <p className="font-medium">{education}</p>
               </div>
             )}
-            {cleanComment && (
-              <div className="text-sm">
-                <p className="text-muted-foreground mb-1">{order.isRequest ? 'Комментарий к отклику' : `Комментарий ${roles.counterBuyer}`}</p>
-                <p className="font-medium whitespace-pre-line">{cleanComment}</p>
-              </div>
-            )}
+            <div className="text-sm">
+              <p className="text-muted-foreground mb-1">{order.isRequest ? 'Комментарий к отклику' : `Комментарий ${roles.counterBuyer}`}</p>
+              <p className="font-medium whitespace-pre-line">{cleanComment || 'Без комментария'}</p>
+            </div>
             {allFiles.length > 0 && (
               <div className="text-sm">
                 <p className="text-muted-foreground mb-2">Прикрепленные файлы</p>
