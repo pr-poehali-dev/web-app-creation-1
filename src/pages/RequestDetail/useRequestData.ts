@@ -67,6 +67,7 @@ export interface Request {
   negotiableDeadline?: boolean;
   budget?: number;
   negotiableBudget?: boolean;
+  negotiablePrice?: boolean;
   transportServiceType?: string;
   transportRoute?: string;
   transportType?: string;
@@ -135,6 +136,7 @@ export function useRequestData(id: string | undefined) {
           negotiableDeadline: data.negotiableDeadline,
           budget: data.budget,
           negotiableBudget: data.negotiableBudget,
+          negotiablePrice: data.negotiablePrice,
           transportServiceType: data.transportServiceType,
           transportRoute: data.transportRoute,
           transportType: data.transportType,

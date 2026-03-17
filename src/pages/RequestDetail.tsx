@@ -288,7 +288,7 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
                 existingResponse={existingResponse}
               />
             ) : (
-              <div className="lg:hidden">
+              <div className={hasLeftColumn ? 'lg:hidden' : ''}>
                 <RequestInfoCard request={request} />
               </div>
             )}
@@ -396,10 +396,12 @@ export default function RequestDetail({ isAuthenticated, onLogout }: RequestDeta
 
                 <RequestAuthorCard author={request.author} />
 
-                {/* На десктопе показываем информацию под кнопками */}
-                <div className="hidden lg:block">
-                  <RequestInfoCard request={request} />
-                </div>
+                {/* На десктопе показываем информацию под кнопками только если есть медиа (иначе она уже в левой колонке) */}
+                {hasLeftColumn && (
+                  <div className="hidden lg:block">
+                    <RequestInfoCard request={request} />
+                  </div>
+                )}
               </>
             )}
           </div>
