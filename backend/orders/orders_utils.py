@@ -43,9 +43,12 @@ def generate_order_number():
     random_part = random.randint(1000, 9999)
     return f'ORD-{timestamp}-{random_part}'
 
-def _send_call_sync(phone: str, call_type: str):
-    """Внутренняя синхронная отправка звонка (вызывается в отдельном потоке)"""
+def send_call(phone: str, text: str = '', call_type: str = 'order'):
+    """Голосовой звонок через МТС Exolve (синхронно — гарантированно выполняется до завершения функции)"""
+    if not phone:
+        return
     try:
+        from urllib.parse import urlparse
         func2url_path = os.path.join(os.path.dirname(__file__), '..', 'func2url.json')
         with open(func2url_path) as f:
             func2url = json.load(f)
@@ -53,7 +56,6 @@ def _send_call_sync(phone: str, call_type: str):
         if not exolve_url:
             print('[EXOLVE] exolve-call URL not found in func2url.json')
             return
-        from urllib.parse import urlparse
         parsed = urlparse(exolve_url)
         host = parsed.netloc
         path = parsed.path or '/'
@@ -68,29 +70,33 @@ def _send_call_sync(phone: str, call_type: str):
         print(f'[EXOLVE] Call error: {e}')
 
 
-def send_call(phone: str, text: str = '', call_type: str = 'order'):
-    """Голосовой звонок через МТС Exolve (асинхронно в отдельном потоке)"""
-    if not phone:
-        return
-    t = threading.Thread(target=_send_call_sync, args=(phone, call_type), daemon=True)
-    t.start()
+def _send_email_async(notification_data: str):
+    """Email-уведомление в фоновом потоке"""
+    try:
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=5)
+        conn.request('POST', '/dd3295a9-ffa3-4842-8c95-de00a018ecf0',  # email-notify
+                    notification_data, {'Content-Type': 'application/json'})
+        response = conn.getresponse()
+        response.read()
+        conn.close()
+    except Exception as e:
+        print(f'[NOTIFICATION] Email error: {e}')
 
 
-def _send_notification_sync(user_id: int, title: str, message: str, url: str):
-    """Внутренняя синхронная отправка уведомлений (вызывается в отдельном потоке)"""
+def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
+    """Отправка push (синхронно) и email (асинхронно) уведомлений"""
     notification_data = json.dumps({
         'userId': user_id,
         'title': title,
         'message': message,
         'url': url
     })
-    headers = {'Content-Type': 'application/json'}
 
-    # Web Push-уведомление
+    # Web Push — синхронно, гарантированно до завершения функции
     try:
-        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=8)
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=10)
         conn.request('POST', '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a',  # push-send
-                    notification_data, headers)
+                    notification_data, {'Content-Type': 'application/json'})
         response = conn.getresponse()
         body_resp = response.read()
         conn.close()
@@ -98,22 +104,8 @@ def _send_notification_sync(user_id: int, title: str, message: str, url: str):
     except Exception as e:
         print(f'[NOTIFICATION] Push error: {e}')
 
-    # Email-уведомление
-    try:
-        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=5)
-        conn.request('POST', '/dd3295a9-ffa3-4842-8c95-de00a018ecf0',  # email-notify
-                    notification_data, headers)
-        response = conn.getresponse()
-        response.read()
-        conn.close()
-        print(f'[NOTIFICATION] Email sent to user {user_id}: {title}')
-    except Exception as e:
-        print(f'[NOTIFICATION] Email error: {e}')
-
-
-def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
-    """Отправка push и email уведомлений (асинхронно в отдельном потоке)"""
-    t = threading.Thread(target=_send_notification_sync, args=(user_id, title, message, url), daemon=True)
+    # Email — в фоне, не блокирует
+    t = threading.Thread(target=_send_email_async, args=(notification_data,), daemon=True)
     t.start()
 
 def reject_other_responses(cur, schema: str, offer_id: str, accepted_order_id: str, title: str, is_request: bool = True):
