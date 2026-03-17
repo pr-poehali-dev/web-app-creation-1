@@ -45,19 +45,25 @@ export async function subscribeToPushNotifications(
   registration: ServiceWorkerRegistration
 ): Promise<PushSubscription | null> {
   try {
-    // Если уже есть подписка — отписываем сначала (старый VAPID ключ может конфликтовать)
-    const existing = await registration.pushManager.getSubscription();
-    if (existing) {
-      await existing.unsubscribe();
-    }
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
     });
     return subscription;
   } catch (error) {
-    console.error('Ошибка подписки на push-уведомления:', error);
-    return null;
+    // Конфликт VAPID — сбрасываем и пробуем снова
+    try {
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY),
+      });
+      return subscription;
+    } catch (retryError) {
+      console.error('Ошибка подписки на push-уведомления:', retryError);
+      return null;
+    }
   }
 }
 
@@ -66,7 +72,7 @@ export async function sendSubscriptionToServer(
   userId: string
 ): Promise<boolean> {
   try {
-    const response = await fetch('https://functions.poehali.dev/4ff79524-ce04-4dc8-aeb9-d4030c140d66', {
+    const response = await fetch('https://functions.poehali.dev/51a6c510-719b-44bb-840d-80b4bfe2484c', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
