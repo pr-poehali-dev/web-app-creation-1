@@ -12,6 +12,14 @@
       "path": "/",
       "body": {"text": "Тест"},
       "expectedStatus": 400
+    },
+    {
+      "name": "Real call to seller phone",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": "+79841017355", "type": "order"},
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
     }
   ]
 }
