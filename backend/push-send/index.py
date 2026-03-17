@@ -82,10 +82,17 @@ def handler(event: dict, context) -> dict:
         
         # Загружаем VAPID ключ напрямую из строки — без временного файла
         vapid_pem_raw = os.environ.get('VAPID_PRIVATE_KEY', '')
-        # Нормализуем переносы строк (секрет может хранить \n как литерал)
-        vapid_pem = vapid_pem_raw.replace('\\n', '\n').strip()
-        if not vapid_pem.endswith('\n'):
-            vapid_pem += '\n'
+        # Нормализуем: \n как литерал → реальный перенос
+        vapid_pem = vapid_pem_raw.replace('\\n', '\n')
+        # Если секрет сохранён с пробелами вместо переносов — восстанавливаем PEM
+        if '\n' not in vapid_pem and 'BEGIN' in vapid_pem:
+            vapid_pem = vapid_pem.replace('-----BEGIN EC PRIVATE KEY----- ', '-----BEGIN EC PRIVATE KEY-----\n')
+            vapid_pem = vapid_pem.replace(' -----END EC PRIVATE KEY-----', '\n-----END EC PRIVATE KEY-----')
+            parts = vapid_pem.split('\n')
+            if len(parts) == 3:
+                b64_lines = [parts[1][i:i+64] for i in range(0, len(parts[1]), 64)]
+                vapid_pem = parts[0] + '\n' + '\n'.join(b64_lines) + '\n' + parts[2] + '\n'
+        vapid_pem = vapid_pem.strip() + '\n'
         
         # Проверяем что ключ читается
         try:
