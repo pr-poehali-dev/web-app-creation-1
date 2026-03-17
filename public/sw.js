@@ -87,8 +87,11 @@ self.addEventListener('fetch', (event) => {
         });
         return response;
       }).catch(async () => {
+        // Нет сети — отдаём закэшированный index.html, React запустится из кэша JS/CSS
         const cached = await caches.match('/');
-        return cached || new Response('Нет соединения с интернетом', { status: 503 });
+        if (cached) return cached;
+        // Кэша нет — повторяем напрямую, браузер покажет своё сообщение об ошибке
+        return fetch(event.request);
       })
     );
     return;

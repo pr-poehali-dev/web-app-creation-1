@@ -30,6 +30,18 @@ setTimeout(() => {
   }
 }, 600);
 
+// Аварийный выход из splash — если React не запустился за 15 сек (медленная сеть)
+setTimeout(() => {
+  const splash = document.getElementById('html-splash');
+  if (splash) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Обновить страницу';
+    btn.style.cssText = 'margin-top:8px;padding:12px 24px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:-apple-system,sans-serif;';
+    btn.onclick = () => location.reload();
+    splash.appendChild(btn);
+  }
+}, 15000);
+
 
 
 if ('serviceWorker' in navigator) {
