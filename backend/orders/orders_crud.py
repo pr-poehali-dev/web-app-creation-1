@@ -1,6 +1,7 @@
 """CRUD операции с заказами: создание, получение, обновление, проверка отклика"""
 import json
 import uuid
+import threading
 from decimal import Decimal
 from datetime import datetime, date
 from typing import Dict, Any
@@ -531,12 +532,26 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             pickup_info = f' | Посадка: {pickup}' if pickup else ''
             notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽{pickup_info}'
 
-        send_notification(seller_id, notification_title, notification_message, f'/my-orders?id={result["id"]}')
-        # Голосовой звонок продавцу (синхронный)
-        if is_request:
-            send_call(seller_phone, call_type='response')
-        else:
-            send_call(seller_phone, call_type='order')
+        call_type = 'response' if is_request else 'order'
+        order_url = f'/my-orders?id={result["id"]}'
+
+        # Push и звонок запускаем параллельно — не ждём друг друга
+        t_notif = threading.Thread(
+            target=send_notification,
+            args=(seller_id, notification_title, notification_message, order_url),
+            daemon=False
+        )
+        t_call = threading.Thread(
+            target=send_call,
+            args=(seller_phone,),
+            kwargs={'call_type': call_type},
+            daemon=False
+        )
+        t_notif.start()
+        t_call.start()
+        # Ждём оба завершения (таймаут 25 сек суммарно)
+        t_notif.join(timeout=12)
+        t_call.join(timeout=12)
     except Exception as e:
         print(f'Notification error: {e}')
     
