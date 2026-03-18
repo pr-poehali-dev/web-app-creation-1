@@ -42,8 +42,7 @@ def is_admin(user_id: str) -> bool:
     conn = get_db_connection()
     cur = conn.cursor()
     schema = get_schema()
-    user_id_escaped = user_id.replace("'", "''")
-    cur.execute(f"SELECT role FROM {schema}.users WHERE id = '{user_id_escaped}'")
+    cur.execute(f"SELECT role FROM {schema}.users WHERE id = %s", (user_id,))
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -196,9 +195,8 @@ def get_content_by_key(key: str, headers: Dict[str, str]) -> Dict[str, Any]:
     conn = get_db_connection()
     cur = conn.cursor()
     schema = get_schema()
-    key_escaped = key.replace("'", "''")
     
-    cur.execute(f"SELECT * FROM {schema}.site_content WHERE key = '{key_escaped}'")
+    cur.execute(f"SELECT * FROM {schema}.site_content WHERE key = %s", (key,))
     content = cur.fetchone()
     
     cur.close()
@@ -230,10 +228,10 @@ def get_active_banners(headers: Dict[str, str]) -> Dict[str, Any]:
     cur.execute(f"""
         SELECT * FROM {schema}.holiday_banners 
         WHERE is_active = TRUE 
-        AND start_date <= '{today}' 
-        AND end_date >= '{today}'
+        AND start_date <= %s 
+        AND end_date >= %s
         ORDER BY created_at DESC
-    """)
+    """, (today, today))
     banners = cur.fetchall()
     
     cur.close()
@@ -256,50 +254,46 @@ def create_or_update_content(event: Dict[str, Any], headers: Dict[str, str]) -> 
     content_type = body.get('type', 'content')
     
     if content_type == 'banner':
-        title = body['title'].replace("'", "''")
-        message = body['message'].replace("'", "''")
-        banner_type = body.get('bannerType', 'banner').replace("'", "''")
+        title = body['title']
+        message = body['message']
+        banner_type = body.get('bannerType', 'banner')
         start_date = body['startDate']
         end_date = body['endDate']
         is_active = body.get('isActive', True)
-        bg_color = body.get('backgroundColor', '#4F46E5').replace("'", "''")
-        text_color = body.get('textColor', '#FFFFFF').replace("'", "''")
-        icon = body.get('icon', '').replace("'", "''")
+        bg_color = body.get('backgroundColor', '#4F46E5')
+        text_color = body.get('textColor', '#FFFFFF')
+        icon = body.get('icon', '')
         show_on_pages = body.get('showOnPages', ['home'])
         
-        pages_array = "ARRAY[" + ",".join([f"'{p}'" for p in show_on_pages]) + "]"
-        
-        sql = f"""
+        cur.execute(f"""
             INSERT INTO {schema}.holiday_banners 
             (title, message, type, start_date, end_date, is_active, background_color, text_color, icon, show_on_pages)
-            VALUES ('{title}', '{message}', '{banner_type}', '{start_date}', '{end_date}', {is_active}, '{bg_color}', '{text_color}', '{icon}', {pages_array})
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        """
+        """, (title, message, banner_type, start_date, end_date, is_active, bg_color, text_color, icon, show_on_pages))
         
-        cur.execute(sql)
         result = cur.fetchone()
         conn.commit()
         
         message_text = 'Banner created successfully'
         result_id = result['id']
     else:
-        key = body['key'].replace("'", "''")
-        value = body['value'].replace("'", "''")
-        description = body.get('description', '').replace("'", "''")
-        category = body.get('category', '').replace("'", "''")
+        key = body['key']
+        value = body['value']
+        description = body.get('description', '')
+        category = body.get('category', '')
         
-        sql = f"""
+        cur.execute(f"""
             INSERT INTO {schema}.site_content (key, value, description, category)
-            VALUES ('{key}', '{value}', '{description}', '{category}')
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (key) DO UPDATE SET 
                 value = EXCLUDED.value,
                 description = EXCLUDED.description,
                 category = EXCLUDED.category,
                 updated_at = CURRENT_TIMESTAMP
             RETURNING id
-        """
+        """, (key, value, description, category))
         
-        cur.execute(sql)
         result = cur.fetchone()
         conn.commit()
         
@@ -323,35 +317,30 @@ def update_banner(banner_id: str, event: Dict[str, Any], headers: Dict[str, str]
     cur = conn.cursor()
     schema = get_schema()
     
-    banner_id_escaped = banner_id.replace("'", "''")
     updates = []
+    params = []
     
-    if 'title' in body:
-        title = body['title'].replace("'", "''")
-        updates.append(f"title = '{title}'")
+    field_map = {
+        'title': 'title',
+        'message': 'message',
+        'type': 'type',
+        'startDate': 'start_date',
+        'endDate': 'end_date',
+        'isActive': 'is_active',
+        'backgroundColor': 'background_color',
+        'textColor': 'text_color',
+        'icon': 'icon',
+        'showOnPages': 'show_on_pages',
+    }
     
-    if 'message' in body:
-        message = body['message'].replace("'", "''")
-        updates.append(f"message = '{message}'")
-    
-    if 'isActive' in body:
-        updates.append(f"is_active = {body['isActive']}")
-    
-    if 'startDate' in body:
-        updates.append(f"start_date = '{body['startDate']}'")
-    
-    if 'endDate' in body:
-        updates.append(f"end_date = '{body['endDate']}'")
-    
-    if 'backgroundColor' in body:
-        bg_color = body['backgroundColor'].replace("'", "''")
-        updates.append(f"background_color = '{bg_color}'")
-    
-    if 'textColor' in body:
-        text_color = body['textColor'].replace("'", "''")
-        updates.append(f"text_color = '{text_color}'")
+    for key, col in field_map.items():
+        if key in body:
+            updates.append(f"{col} = %s")
+            params.append(body[key])
     
     if not updates:
+        cur.close()
+        conn.close()
         return {
             'statusCode': 400,
             'headers': headers,
@@ -360,17 +349,29 @@ def update_banner(banner_id: str, event: Dict[str, Any], headers: Dict[str, str]
         }
     
     updates.append("updated_at = CURRENT_TIMESTAMP")
-    sql = f"UPDATE {schema}.holiday_banners SET {', '.join(updates)} WHERE id = '{banner_id_escaped}'"
+    params.append(banner_id)
     
-    cur.execute(sql)
+    cur.execute(
+        f"UPDATE {schema}.holiday_banners SET {', '.join(updates)} WHERE id = %s RETURNING id",
+        params
+    )
+    result = cur.fetchone()
     conn.commit()
     cur.close()
     conn.close()
     
+    if not result:
+        return {
+            'statusCode': 404,
+            'headers': headers,
+            'body': json.dumps({'error': 'Banner not found'}),
+            'isBase64Encoded': False
+        }
+    
     return {
         'statusCode': 200,
         'headers': headers,
-        'body': json.dumps({'message': 'Banner updated successfully'}),
+        'body': json.dumps({'id': result['id'], 'message': 'Banner updated successfully'}),
         'isBase64Encoded': False
     }
 
@@ -379,12 +380,20 @@ def delete_banner(banner_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     conn = get_db_connection()
     cur = conn.cursor()
     schema = get_schema()
-    banner_id_escaped = banner_id.replace("'", "''")
     
-    cur.execute(f"DELETE FROM {schema}.holiday_banners WHERE id = '{banner_id_escaped}'")
+    cur.execute(f"DELETE FROM {schema}.holiday_banners WHERE id = %s RETURNING id", (banner_id,))
+    result = cur.fetchone()
     conn.commit()
     cur.close()
     conn.close()
+    
+    if not result:
+        return {
+            'statusCode': 404,
+            'headers': headers,
+            'body': json.dumps({'error': 'Banner not found'}),
+            'isBase64Encoded': False
+        }
     
     return {
         'statusCode': 200,
