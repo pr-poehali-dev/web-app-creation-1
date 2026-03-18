@@ -50,6 +50,31 @@ const PREVIEW_STYLES: Record<string, { className: string; wrapper?: string; labe
     wrapper: 'bg-slate-800 rounded-lg px-5 py-4',
     label: 'Текст в подвале сайта',
   },
+  'footer.notice.title': {
+    className: 'font-semibold text-base text-amber-900',
+    wrapper: 'bg-amber-50 border-2 border-amber-300 rounded-lg px-4 py-3',
+    label: 'Заголовок блока «Внимание!» в подвале',
+  },
+  'footer.notice.text1': {
+    className: 'text-sm text-amber-900/80 leading-relaxed',
+    wrapper: 'bg-amber-50 border-2 border-amber-300 rounded-lg px-4 py-3',
+    label: 'Первый абзац блока «Внимание!»',
+  },
+  'footer.notice.text2': {
+    className: 'text-sm text-amber-900/80 leading-relaxed',
+    wrapper: 'bg-amber-50 border-2 border-amber-300 rounded-lg px-4 py-3',
+    label: 'Второй абзац блока «Внимание!»',
+  },
+  'about.intro1': {
+    className: 'text-base text-foreground leading-relaxed',
+    wrapper: 'bg-muted/30 rounded-lg px-5 py-4',
+    label: 'Первый абзац на странице «О нас»',
+  },
+  'about.intro2': {
+    className: 'text-base text-foreground leading-relaxed',
+    wrapper: 'bg-muted/30 rounded-lg px-5 py-4',
+    label: 'Второй абзац на странице «О нас»',
+  },
   'offers.empty.title': {
     className: 'text-xl font-semibold text-foreground',
     wrapper: 'bg-muted/30 rounded-lg px-5 py-4 text-center',

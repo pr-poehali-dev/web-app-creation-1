@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { useTimezone } from '@/contexts/TimezoneContext';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 
 const TIMEZONE_NAMES: Record<string, string> = {
@@ -41,6 +42,11 @@ export default function Footer() {
   };
   
   const timezoneName = getTimezoneName(timezone);
+
+  const notice = useSiteContent(['footer.notice.title', 'footer.notice.text1', 'footer.notice.text2']);
+  const noticeTitle = notice['footer.notice.title'] || 'Внимание!';
+  const noticeText1 = notice['footer.notice.text1'] || 'Сайт/веб-приложение находится на стадии активной начальной разработки. В связи с этим возможны временные некорректности в работе, изменения в функционале и появление тестовых заявок. Приносим извинения за возможные неудобства.';
+  const noticeText2 = notice['footer.notice.text2'] || '';
 
   return (
     <footer className="border-t bg-muted/30 mt-16">
@@ -131,13 +137,11 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <Icon name="AlertCircle" className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
                 <div className="space-y-3 flex-1">
-                  <h4 className="font-semibold text-foreground text-base">Внимание!</h4>
-                  <p className="text-sm text-foreground/80 leading-relaxed">
-                    Сайт/веб-приложение находится на стадии активной начальной разработки. В связи с этим возможны временные некорректности в работе, изменения в функционале и появление тестовых заявок. Приносим извинения за возможные неудобства.
-                  </p>
-                  <p className="text-sm text-foreground/80 leading-relaxed">
-                    Мы верим в потенциал этого проекта и приглашаем вас стать частью его успеха! Проект нуждается в финансировании для дальнейшего развития и реализации перспективных возможностей. По вопросам спонсорства и инвестиций просим обращаться к разработчику по контактам, указанным ниже.
-                  </p>
+                  <h4 className="font-semibold text-foreground text-base">{noticeTitle}</h4>
+                  <p className="text-sm text-foreground/80 leading-relaxed">{noticeText1}</p>
+                  {noticeText2 && (
+                    <p className="text-sm text-foreground/80 leading-relaxed">{noticeText2}</p>
+                  )}
                 </div>
               </div>
             </div>

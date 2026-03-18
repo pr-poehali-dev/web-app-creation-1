@@ -5,6 +5,7 @@ import BackButton from '@/components/BackButton';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { useSiteContent } from '@/hooks/useSiteContent';
 
 interface HomeProps {
   isAuthenticated: boolean;
@@ -14,6 +15,11 @@ interface HomeProps {
 export default function Home({ isAuthenticated, onLogout }: HomeProps) {
   useScrollToTop();
   const { toast } = useToast();
+
+  const aboutContent = useSiteContent(['about.title', 'about.intro1', 'about.intro2', 'about.description', 'about.content']);
+  const aboutTitle = aboutContent['about.title'] || 'О нас';
+  const aboutIntro1 = aboutContent['about.intro1'] || 'ЕРТТП — это современная онлайн‑платформа, созданная для поддержки и развития местного бизнеса. Мы объединяем производителей, поставщиков и потребителей, формируя устойчивую экосистему региональной торговли.';
+  const aboutIntro2 = aboutContent['about.intro2'] || 'Наша цель — сделать локальный рынок более эффективным, прозрачным и доступным для всех участников, создавая конкурентные условия, где главным преимуществом становится качество товаров и услуг.';
 
   const handleJoinClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (isAuthenticated) {
@@ -35,19 +41,15 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
             <BackButton />
           </div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            О нас
+            {aboutTitle}
           </h1>
           <p className="text-xl md:text-2xl font-semibold text-primary mb-6">
             Единая Региональная Товарно‑Торговая Площадка (ЕРТТП)
           </p>
 
           <div className="space-y-8 text-foreground text-[15px] md:text-base leading-relaxed">
-            <p>
-              ЕРТТП — это современная онлайн‑платформа, созданная для поддержки и развития местного бизнеса. Мы объединяем производителей, поставщиков и потребителей, формируя устойчивую экосистему региональной торговли.
-            </p>
-            <p>
-              Наша цель — сделать локальный рынок более эффективным, прозрачным и доступным для всех участников, создавая конкурентные условия, где главным преимуществом становится качество товаров и услуг.
-            </p>
+            <p>{aboutIntro1}</p>
+            <p>{aboutIntro2}</p>
 
             <div>
               <h2 className="text-xl md:text-2xl font-bold mb-4 border-l-4 border-primary pl-3">
