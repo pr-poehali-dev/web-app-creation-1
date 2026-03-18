@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -125,6 +125,16 @@ export default function GoodsFormFields({
   onRemoveUploadedCertificate,
   onRemoveCertificateFile,
 }: GoodsFormFieldsProps) {
+  const [showCertMenu, setShowCertMenu] = useState(false);
+  const certFileRef = useRef<HTMLInputElement>(null);
+  const certCameraRef = useRef<HTMLInputElement>(null);
+
+  const handleCertOption = (type: 'file' | 'camera') => {
+    setShowCertMenu(false);
+    if (type === 'file') certFileRef.current?.click();
+    else certCameraRef.current?.click();
+  };
+
   return (
     <>
       <div>
@@ -213,20 +223,58 @@ export default function GoodsFormFields({
               </Button>
             </div>
           ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => document.getElementById('certificate-upload')?.click()}
-            >
-              <Icon name="Upload" className="h-4 w-4 mr-1" />
-              Загрузить сертификат
-            </Button>
+            <div className="relative inline-block">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCertMenu(!showCertMenu)}
+              >
+                <Icon name="Upload" className="h-4 w-4 mr-1" />
+                Загрузить сертификат
+                <Icon name="ChevronDown" className="h-3 w-3 ml-1" />
+              </Button>
+
+              {showCertMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowCertMenu(false)}
+                  />
+                  <div className="absolute z-20 left-0 mt-1 w-52 bg-background border border-input rounded-md shadow-lg">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted text-left"
+                      onClick={() => handleCertOption('file')}
+                    >
+                      <Icon name="FolderOpen" className="h-4 w-4 text-muted-foreground" />
+                      Выбрать из файлов
+                    </button>
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-muted text-left"
+                      onClick={() => handleCertOption('camera')}
+                    >
+                      <Icon name="Camera" className="h-4 w-4 text-muted-foreground" />
+                      Снять фото с камеры
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
           <input
-            id="certificate-upload"
+            ref={certFileRef}
             type="file"
             accept="image/*,.pdf"
+            onChange={onCertificateChange}
+            className="hidden"
+          />
+          <input
+            ref={certCameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
             onChange={onCertificateChange}
             className="hidden"
           />
