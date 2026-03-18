@@ -90,7 +90,8 @@ export default function TradingPlatformFilters({
           <Input
             value={isCategoryOpen ? categorySearch : (
               selectedCategory === 'all' ? 'Все категории' :
-              selectedCategory === 'agriculture' ? 'Сельское хозяйство' :
+              selectedCategory === 'agriculture' ? 'Сельхозпродукция' :
+              selectedCategory === 'goods' ? 'Товары' :
               selectedCategory === 'food' ? 'Продукты питания' :
               selectedCategory === 'materials' ? 'Стройматериалы' :
               selectedCategory === 'services' ? 'Услуги' : 'Прочее'
@@ -119,7 +120,8 @@ export default function TradingPlatformFilters({
             <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
               {[
                 {value: 'all', label: 'Все категории'},
-                {value: 'agriculture', label: 'Сельское хозяйство'},
+                {value: 'agriculture', label: 'Сельхозпродукция'},
+                {value: 'goods', label: 'Товары'},
                 {value: 'food', label: 'Продукты питания'},
                 {value: 'materials', label: 'Стройматериалы'},
                 {value: 'services', label: 'Услуги'},
