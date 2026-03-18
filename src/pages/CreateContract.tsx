@@ -224,7 +224,8 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
                           <SelectValue placeholder="Выберите категорию" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="agriculture">Сельское хозяйство</SelectItem>
+                          <SelectItem value="agriculture">Сельхозпродукция</SelectItem>
+                          <SelectItem value="goods">Товары</SelectItem>
                           <SelectItem value="food">Продукты питания</SelectItem>
                           <SelectItem value="materials">Стройматериалы</SelectItem>
                           <SelectItem value="services">Услуги</SelectItem>
