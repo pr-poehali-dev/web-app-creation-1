@@ -99,7 +99,7 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
             <div className="flex gap-3">
               <Icon name="Info" size={20} className="text-amber-600 shrink-0 mt-0.5" />
               <div className="text-[14px] md:text-[15px] text-amber-900 dark:text-amber-200 leading-relaxed space-y-2">
-                <p>Обращаем ваше внимание: участие в пилотной версии платформы предоставляется бесплатно. Для участников пилотного этапа действуют особые условия:</p>
+                <p>Обращаем ваше внимание: участие в пилотной версии площадки предоставляется бесплатно. Для участников пилотного этапа действуют особые условия:</p>
                 <ul className="list-disc list-inside space-y-1 pl-1">
                   <li>автоматическое первенство в рейтинге «Надёжности»;</li>
                   <li>начисление 100% рейтинга надёжности сразу после регистрации.</li>
