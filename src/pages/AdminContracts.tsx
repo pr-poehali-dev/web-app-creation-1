@@ -40,7 +40,7 @@ interface AdminContractsProps {
 interface Contract {
   id: string;
   title: string;
-  contractType: 'futures' | 'forward';
+  contractType: 'forward';
   seller: string;
   buyer: string | null;
   amount: number;
@@ -61,8 +61,8 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
   const mockContracts: Contract[] = [
     {
       id: '1',
-      title: 'Фьючерс на цемент М500',
-      contractType: 'futures',
+      title: 'Форвардный контракт на цемент М500',
+      contractType: 'forward',
       seller: 'ООО "СтройМатериалы"',
       buyer: 'ПАО "ГорСтрой"',
       amount: 2500000,
@@ -83,8 +83,8 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
     },
     {
       id: '3',
-      title: 'Фьючерс на щебень фракции 5-20',
-      contractType: 'futures',
+      title: 'Форвардный контракт на щебень фракции 5-20',
+      contractType: 'forward',
       seller: 'ООО "КаменьСнаб"',
       buyer: 'ООО "СтройКомплект"',
       amount: 950000,
@@ -111,12 +111,8 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
     }
   };
 
-  const getTypeBadge = (type: string) => {
-    return type === 'futures' ? (
-      <Badge variant="outline" className="bg-purple-50">Фьючерс</Badge>
-    ) : (
-      <Badge variant="outline" className="bg-orange-50">Форвард</Badge>
-    );
+  const getTypeBadge = (_type: string) => {
+    return <Badge variant="outline" className="bg-orange-50">Форвард</Badge>;
   };
 
   const handleCancelContract = (contract: Contract) => {
@@ -151,7 +147,7 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
                 Назад
               </Button>
               <h1 className="text-3xl font-bold">Управление контрактами</h1>
-              <p className="text-muted-foreground">Просмотр и модерация фьючерсов и форвардов</p>
+              <p className="text-muted-foreground">Просмотр и модерация форвардных контрактов</p>
             </div>
           </div>
 
@@ -176,7 +172,6 @@ export default function AdminContracts({ isAuthenticated, onLogout }: AdminContr
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Все типы</SelectItem>
-                    <SelectItem value="futures">Фьючерсы</SelectItem>
                     <SelectItem value="forward">Форварды</SelectItem>
                   </SelectContent>
                 </Select>

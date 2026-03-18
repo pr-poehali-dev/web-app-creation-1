@@ -73,7 +73,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
   };
 
   const [formData, setFormData] = useState({
-    contractType: 'futures',
+    contractType: 'forward',
     title: '',
     description: '',
     category: '',
@@ -206,14 +206,11 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="futures">Фьючерсный контракт</SelectItem>
                           <SelectItem value="forward">Форвардный контракт</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formData.contractType === 'futures' 
-                          ? 'Стандартизированный биржевой контракт' 
-                          : 'Индивидуальный внебиржевой контракт'}
+                        Индивидуальный внебиржевой контракт
                       </p>
                     </div>
 

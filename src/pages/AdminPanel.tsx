@@ -167,7 +167,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
     {
       id: 'contracts',
       title: 'Управление контрактами',
-      description: 'Просмотр и модерация фьючерсных контрактов',
+      description: 'Просмотр и модерация форвардных контрактов',
       icon: 'FileSignature',
       color: 'bg-indigo-500',
       count: null,

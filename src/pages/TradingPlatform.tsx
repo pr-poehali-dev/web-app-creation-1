@@ -142,7 +142,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   };
 
   const getContractTypeLabel = (type: string) => {
-    return type === 'futures' ? 'Фьючерс' : 'Форвард';
+    return 'Форвард';
   };
 
   const getStatusBadge = (status: string) => {
@@ -214,7 +214,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
               <div>
                 <h1 className="text-3xl font-bold mb-2">Торговая площадка</h1>
                 <p className="text-muted-foreground">
-                  Фьючерсные и форвардные контракты для верифицированных участников
+                  Форвардные контракты для верифицированных участников
                 </p>
               </div>
               {currentUser?.userType !== 'individual' && (
