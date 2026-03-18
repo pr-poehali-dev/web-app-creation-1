@@ -77,6 +77,8 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
             <BackButton />
           </div>
 
+          <h1 className="text-2xl md:text-3xl font-bold mb-4">О нас</h1>
+
           <div
             className="about-rich-content text-foreground text-[15px] md:text-base leading-relaxed"
             dangerouslySetInnerHTML={{ __html: pageHtml }}
@@ -91,6 +93,15 @@ export default function Home({ isAuthenticated, onLogout }: HomeProps) {
               Зарегистрироваться
               <Icon name="ArrowRight" className="h-5 w-5" />
             </Link>
+          </div>
+
+          <div className="border border-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg p-4 md:p-5 mb-6">
+            <div className="flex gap-3">
+              <Icon name="Info" size={20} className="text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-[14px] md:text-[15px] text-amber-900 dark:text-amber-200 leading-relaxed">
+                <strong>Важно:</strong> участие в платформе в пилотной версии полностью бесплатно и даёт всем участникам преимущество быть первым в рейтинге «Надёжности» и даёт 100% баллов, что в последующем новые пользователи получат 50% нейтральное количество баллов, чтоб повысить рейтинг надёжности, можно будет только заработать реальными делами. Пользователи, у кого больше баллов «Надёжности», те будут всегда в приоритете на площадке.
+              </p>
+            </div>
           </div>
         </div>
       </main>
