@@ -1,9 +1,11 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
+import RichTextEditor from '@/components/ui/RichTextEditor';
 import { type ContentItem, getContentLabel, CATEGORY_LABELS } from './types';
 
 const BOOLEAN_KEYS = new Set(['footer.notice.visible']);
+const RICH_TEXT_KEYS = new Set(['about.page']);
 
 interface ContentTextsTabProps {
   contentItems: ContentItem[];
@@ -168,7 +170,54 @@ export default function ContentTextsTab({
                 const isEditing = editingKey === item.key;
                 const hasPreview = Boolean(PREVIEW_STYLES[item.key]);
                 const isBoolean = BOOLEAN_KEYS.has(item.key);
+                const isRichText = RICH_TEXT_KEYS.has(item.key);
                 const boolValue = item.value !== 'false';
+
+                if (isRichText) {
+                  return (
+                    <div key={item.key} className="p-5">
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div>
+                          <p className="font-medium text-sm">{label}</p>
+                          {hint && <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>}
+                        </div>
+                        {!isEditing && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => onStartEdit(item.key, item.value)}
+                            className="shrink-0"
+                          >
+                            <Icon name="Pencil" size={14} className="mr-1" />
+                            Редактировать
+                          </Button>
+                        )}
+                      </div>
+
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <RichTextEditor
+                            value={editValue}
+                            onChange={onChangeValue}
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => onSave(item.key)} disabled={saving}>
+                              {saving ? 'Сохранение...' : 'Сохранить'}
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={onCancelEdit}>
+                              Отмена
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          className="about-rich-content border rounded-lg p-4 bg-muted/20 text-sm text-foreground max-h-60 overflow-y-auto"
+                          dangerouslySetInnerHTML={{ __html: item.value || '<p class="text-muted-foreground italic">Пусто</p>' }}
+                        />
+                      )}
+                    </div>
+                  );
+                }
 
                 if (isBoolean) {
                   return (

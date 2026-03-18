@@ -5,6 +5,109 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Rich Text Editor */
+.rich-editor-content .tiptap {
+  outline: none;
+  min-height: 400px;
+}
+.rich-editor-content .tiptap h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 0.5em 0;
+}
+.rich-editor-content .tiptap h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.5em 0;
+}
+.rich-editor-content .tiptap h3 {
+  font-size: 1.25em;
+  font-weight: bold;
+  margin: 0.4em 0;
+}
+.rich-editor-content .tiptap p {
+  margin: 0.4em 0;
+}
+.rich-editor-content .tiptap ul {
+  list-style: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.rich-editor-content .tiptap ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.rich-editor-content .tiptap li {
+  margin: 0.2em 0;
+}
+.rich-editor-content .tiptap blockquote {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1em;
+  margin: 0.5em 0;
+  opacity: 0.8;
+}
+.rich-editor-content .tiptap hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 1em 0;
+}
+
+/* About page rich text display */
+.about-rich-content h1 {
+  font-size: 2em;
+  font-weight: bold;
+  margin: 0.6em 0 0.4em;
+}
+.about-rich-content h2 {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin: 0.6em 0 0.4em;
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 0.75rem;
+}
+.about-rich-content h3 {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 0.5em 0 0.3em;
+  color: hsl(var(--primary));
+}
+.about-rich-content p {
+  margin: 0.5em 0;
+  line-height: 1.7;
+}
+.about-rich-content ul {
+  list-style: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.about-rich-content ol {
+  list-style: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+.about-rich-content li {
+  margin: 0.3em 0;
+  line-height: 1.6;
+}
+.about-rich-content blockquote {
+  border-left: 4px solid hsl(var(--primary));
+  padding-left: 1em;
+  margin: 0.75em 0;
+  opacity: 0.8;
+}
+.about-rich-content hr {
+  border: none;
+  border-top: 1px solid hsl(var(--border));
+  margin: 1.5em 0;
+}
+.about-rich-content strong {
+  font-weight: 700;
+}
+.about-rich-content em {
+  font-style: italic;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
