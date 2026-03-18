@@ -43,7 +43,8 @@ export default function Footer() {
   
   const timezoneName = getTimezoneName(timezone);
 
-  const notice = useSiteContent(['footer.notice.title', 'footer.notice.text1', 'footer.notice.text2']);
+  const notice = useSiteContent(['footer.notice.visible', 'footer.notice.title', 'footer.notice.text1', 'footer.notice.text2']);
+  const noticeVisible = notice['footer.notice.visible'] !== 'false';
   const noticeTitle = notice['footer.notice.title'] || 'Внимание!';
   const noticeText1 = notice['footer.notice.text1'] || 'Сайт/веб-приложение находится на стадии активной начальной разработки. В связи с этим возможны временные некорректности в работе, изменения в функционале и появление тестовых заявок. Приносим извинения за возможные неудобства.';
   const noticeText2 = notice['footer.notice.text2'] || '';
@@ -132,20 +133,22 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t space-y-6">
-          <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4 md:p-6">
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <Icon name="AlertCircle" className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
-                <div className="space-y-3 flex-1">
-                  <h4 className="font-semibold text-foreground text-base">{noticeTitle}</h4>
-                  <p className="text-sm text-foreground/80 leading-relaxed">{noticeText1}</p>
-                  {noticeText2 && (
-                    <p className="text-sm text-foreground/80 leading-relaxed">{noticeText2}</p>
-                  )}
+          {noticeVisible && (
+            <div className="bg-amber-50 dark:bg-amber-950/20 border-2 border-amber-300 dark:border-amber-700 rounded-lg p-4 md:p-6">
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Icon name="AlertCircle" className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
+                  <div className="space-y-3 flex-1">
+                    <h4 className="font-semibold text-foreground text-base">{noticeTitle}</h4>
+                    <p className="text-sm text-foreground/80 leading-relaxed">{noticeText1}</p>
+                    {noticeText2 && (
+                      <p className="text-sm text-foreground/80 leading-relaxed">{noticeText2}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex flex-col items-center md:items-start gap-1">

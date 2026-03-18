@@ -3,6 +3,8 @@ import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { type ContentItem, getContentLabel, CATEGORY_LABELS } from './types';
 
+const BOOLEAN_KEYS = new Set(['footer.notice.visible']);
+
 interface ContentTextsTabProps {
   contentItems: ContentItem[];
   editingKey: string | null;
@@ -12,6 +14,7 @@ interface ContentTextsTabProps {
   onCancelEdit: () => void;
   onChangeValue: (value: string) => void;
   onSave: (key: string) => void;
+  onSaveValue: (key: string, value: string) => void;
 }
 
 const PREVIEW_STYLES: Record<string, { className: string; wrapper?: string; label: string }> = {
@@ -113,6 +116,7 @@ export default function ContentTextsTab({
   onCancelEdit,
   onChangeValue,
   onSave,
+  onSaveValue,
 }: ContentTextsTabProps) {
   const CATEGORY_ORDER = ['home', 'about', 'offers', 'footer', 'other'];
 
@@ -163,6 +167,38 @@ export default function ContentTextsTab({
                 const { label, hint } = getContentLabel(item.key);
                 const isEditing = editingKey === item.key;
                 const hasPreview = Boolean(PREVIEW_STYLES[item.key]);
+                const isBoolean = BOOLEAN_KEYS.has(item.key);
+                const boolValue = item.value !== 'false';
+
+                if (isBoolean) {
+                  return (
+                    <div key={item.key} className="p-5">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm">{label}</p>
+                          {hint && <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>}
+                        </div>
+                        <button
+                          onClick={() => onSaveValue(item.key, String(!boolValue))}
+                          disabled={saving}
+                          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                            boolValue ? 'bg-green-500' : 'bg-muted-foreground/30'
+                          }`}
+                          title={boolValue ? 'Нажмите чтобы скрыть' : 'Нажмите чтобы показать'}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+                              boolValue ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                      </div>
+                      <p className="text-xs mt-2 text-muted-foreground">
+                        Сейчас: <span className={boolValue ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}>{boolValue ? 'показывается' : 'скрыт'}</span>
+                      </p>
+                    </div>
+                  );
+                }
 
                 return (
                   <div key={item.key} className="p-5">

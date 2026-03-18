@@ -48,6 +48,7 @@ export const CONTENT_LABELS: Record<string, { label: string; hint: string }> = {
   'footer.notice.title': { label: 'Заголовок блока «Внимание!»', hint: 'Заголовок жёлтого информационного блока в подвале' },
   'footer.notice.text1': { label: 'Блок «Внимание!» — первый абзац', hint: 'Основной текст предупреждения (о разработке, статусе и т.д.)' },
   'footer.notice.text2': { label: 'Блок «Внимание!» — второй абзац', hint: 'Дополнительный текст (инвестиции, спонсорство и т.д.) — можно оставить пустым' },
+  'footer.notice.visible': { label: 'Показывать блок «Внимание!»', hint: 'Включите, чтобы жёлтый блок был виден посетителям сайта' },
 };
 
 export const EMPTY_BANNER: BannerFormState = {

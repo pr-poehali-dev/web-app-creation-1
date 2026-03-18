@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { contentAPI } from '@/services/api';
+import { invalidateSiteContentCache } from '@/hooks/useSiteContent';
 import Icon from '@/components/ui/icon';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -96,10 +97,28 @@ export default function AdminContentManagement() {
       ));
       setEditingKey(null);
       setEditValue('');
+      invalidateSiteContentCache();
       showSuccess('Текст сохранён');
     } catch (error) {
       console.error('Failed to update content:', error);
       alert('Ошибка при сохранении: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveValue = async (key: string, value: string) => {
+    try {
+      setSaving(true);
+      await contentAPI.updateContent(key, value);
+      setContentItems(contentItems.map(item =>
+        item.key === key ? { ...item, value } : item
+      ));
+      invalidateSiteContentCache();
+      showSuccess('Сохранено');
+    } catch (error) {
+      console.error('Failed to update content:', error);
+      alert('Ошибка: ' + (error as Error).message);
     } finally {
       setSaving(false);
     }
@@ -254,6 +273,7 @@ export default function AdminContentManagement() {
             onCancelEdit={() => { setEditingKey(null); setEditValue(''); }}
             onChangeValue={setEditValue}
             onSave={handleSaveText}
+            onSaveValue={handleSaveValue}
           />
         ) : (
           <BannersTab
