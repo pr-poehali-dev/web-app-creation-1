@@ -1,7 +1,6 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import TextStyle from '@tiptap/extension-text-style';
-import { Color } from '@tiptap/extension-color';
+import { TextStyle, Color } from '@tiptap/extension-text-style';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
@@ -56,7 +55,6 @@ function ToolbarButton({
 
 export default function RichTextEditor({ value, onChange, readOnly = false }: RichTextEditorProps) {
   const colorInputRef = useRef<HTMLInputElement>(null);
-  const sizeInputRef = useRef<HTMLSelectElement>(null);
 
   const editor = useEditor({
     extensions: [
@@ -83,7 +81,7 @@ export default function RichTextEditor({ value, onChange, readOnly = false }: Ri
   if (!editor) return null;
 
   const setFontSize = (size: string) => {
-    editor.chain().focus().setMark('textStyle', { fontSize: `${size}px` }).run();
+    editor.chain().focus().setFontSize(`${size}px`).run();
   };
 
   if (readOnly) {
@@ -168,7 +166,6 @@ export default function RichTextEditor({ value, onChange, readOnly = false }: Ri
         {/* Font size */}
         <div className="flex items-center pr-2 mr-1 border-r">
           <select
-            ref={sizeInputRef}
             onChange={(e) => setFontSize(e.target.value)}
             defaultValue=""
             title="Размер шрифта"
