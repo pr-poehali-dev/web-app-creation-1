@@ -1224,8 +1224,11 @@ export const auctionsAPI = {
 };
 
 export const contentAPI = {
-  async getContent(): Promise<any> {
-    const response = await fetchWithRetry(CONTENT_MANAGEMENT_API);
+  async getContent(): Promise<{ content: Record<string, unknown>[]; banners: Record<string, unknown>[] }> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(CONTENT_MANAGEMENT_API, {
+      headers: userId ? { 'X-User-Id': userId } : {},
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch content');
     }
@@ -1233,21 +1236,34 @@ export const contentAPI = {
   },
 
   async updateContent(key: string, value: string): Promise<void> {
+    const userId = getUserId();
     const response = await fetchWithRetry(CONTENT_MANAGEMENT_API, {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(userId ? { 'X-User-Id': userId } : {}),
       },
-      body: JSON.stringify({ key, value }),
+      body: JSON.stringify({ type: 'content', key, value }),
     });
-    
     if (!response.ok) {
       throw new Error('Failed to update content');
     }
   },
 
-  async getBanners(): Promise<any[]> {
+  async getBanners(): Promise<Record<string, unknown>[]> {
     const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?banners=true`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch banners');
+    }
+    const data = await response.json();
+    return Array.isArray(data) ? data : (data.banners || []);
+  },
+
+  async getAllBannersAdmin(): Promise<Record<string, unknown>[]> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(CONTENT_MANAGEMENT_API, {
+      headers: userId ? { 'X-User-Id': userId } : {},
+    });
     if (!response.ok) {
       throw new Error('Failed to fetch banners');
     }
@@ -1255,49 +1271,65 @@ export const contentAPI = {
     return data.banners || [];
   },
 
-  async createBanner(data: {
+  async createBannerAdmin(data: {
     title: string;
     message: string;
     type: string;
-    start_date?: string;
-    end_date?: string;
-    is_active: boolean;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    backgroundColor?: string;
+    textColor?: string;
+    icon?: string;
+    showOnPages?: string[];
   }): Promise<void> {
+    const userId = getUserId();
     const response = await fetchWithRetry(CONTENT_MANAGEMENT_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(userId ? { 'X-User-Id': userId } : {}),
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ type: 'banner', ...data }),
     });
-    
     if (!response.ok) {
-      throw new Error('Failed to create banner');
+      const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(err.error || 'Failed to create banner');
     }
   },
 
-  async updateBanner(bannerId: number, updates: any): Promise<void> {
-    const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?bannerId=${bannerId}`, {
+  async updateBannerAdmin(bannerId: number, updates: Record<string, unknown>): Promise<void> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?id=${bannerId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...(userId ? { 'X-User-Id': userId } : {}),
       },
       body: JSON.stringify(updates),
     });
-    
     if (!response.ok) {
       throw new Error('Failed to update banner');
     }
   },
 
-  async deleteBanner(bannerId: number): Promise<void> {
-    const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?bannerId=${bannerId}`, {
+  async deleteBannerAdmin(bannerId: number): Promise<void> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(`${CONTENT_MANAGEMENT_API}?id=${bannerId}`, {
       method: 'DELETE',
+      headers: userId ? { 'X-User-Id': userId } : {},
     });
-    
     if (!response.ok) {
       throw new Error('Failed to delete banner');
     }
+  },
+
+  async updateBanner(bannerId: number, updates: Record<string, unknown>): Promise<void> {
+    return contentAPI.updateBannerAdmin(bannerId, updates);
+  },
+
+  async deleteBanner(bannerId: number): Promise<void> {
+    return contentAPI.deleteBannerAdmin(bannerId);
   },
 };
 

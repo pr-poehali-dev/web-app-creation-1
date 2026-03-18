@@ -2,10 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { contentAPI } from '@/services/api';
 import Icon from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 interface ContentItem {
+  id: number;
   key: string;
   value: string;
+  description?: string;
+  category?: string;
 }
 
 interface BannerItem {
@@ -22,65 +30,109 @@ interface BannerItem {
   show_on_pages?: string[];
 }
 
+const CONTENT_LABELS: Record<string, { label: string; hint: string }> = {
+  'home.hero.title': { label: 'Заголовок главной страницы', hint: 'Крупный заголовок баннера на главной странице' },
+  'home.hero.subtitle': { label: 'Подзаголовок главной страницы', hint: 'Описание под главным заголовком' },
+  'home.cta.button': { label: 'Текст кнопки призыва к действию', hint: 'Кнопка под главным баннером' },
+  'offers.empty.title': { label: 'Заголовок пустого списка предложений', hint: 'Показывается когда нет предложений' },
+  'offers.empty.description': { label: 'Описание пустого списка предложений', hint: 'Пояснение когда нет предложений' },
+  'about.title': { label: 'Заголовок "О нас"', hint: 'Заголовок страницы или блока "О нас"' },
+  'about.content': { label: 'Текст "О нас"', hint: 'Основной текст раздела "О нас"' },
+  'about.description': { label: 'Краткое описание "О нас"', hint: 'Краткое описание компании' },
+  'footer.description': { label: 'Описание в подвале сайта', hint: 'Текст в нижней части сайта' },
+};
+
+function getContentLabel(key: string): { label: string; hint: string } {
+  return CONTENT_LABELS[key] || { label: key, hint: '' };
+}
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    return new Date(dateStr).toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
+
+function isBannerActive(banner: BannerItem): boolean {
+  if (!banner.is_active) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (banner.start_date) {
+    const start = new Date(banner.start_date);
+    if (start > today) return false;
+  }
+  if (banner.end_date) {
+    const end = new Date(banner.end_date);
+    if (end < today) return false;
+  }
+  return true;
+}
+
+const EMPTY_BANNER = {
+  title: '',
+  message: '',
+  type: 'info',
+  startDate: '',
+  endDate: '',
+  isActive: true,
+  backgroundColor: '#4F46E5',
+  textColor: '#FFFFFF',
+  icon: '',
+  showOnPages: ['home'] as string[],
+};
+
 export default function AdminContentManagement() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'texts' | 'banners'>('texts');
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [showBannerForm, setShowBannerForm] = useState(false);
-  const [newBanner, setNewBanner] = useState({
-    title: '',
-    message: '',
-    type: 'info',
-    start_date: '',
-    end_date: '',
-    is_active: true,
-  });
+  const [editingBanner, setEditingBanner] = useState<BannerItem | null>(null);
+  const [bannerForm, setBannerForm] = useState({ ...EMPTY_BANNER });
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     loadData();
   }, [activeTab]);
+
+  const showSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
 
   const loadData = async () => {
     try {
       setLoading(true);
       if (activeTab === 'texts') {
         const data = await contentAPI.getContent();
-        console.log('Raw content data:', data);
-        
-        const items: ContentItem[] = [];
-        if (Array.isArray(data)) {
-          data.forEach((item: any) => {
-            if (item && typeof item === 'object' && 'key' in item && 'value' in item) {
-              items.push({
+        const arr: ContentItem[] = [];
+        if (data && Array.isArray(data.content)) {
+          (data.content as Record<string, unknown>[]).forEach((item) => {
+            if (item && item.key) {
+              arr.push({
+                id: Number(item.id) || 0,
                 key: String(item.key),
-                value: String(item.value || '')
+                value: String(item.value || ''),
+                description: item.description ? String(item.description) : undefined,
+                category: item.category ? String(item.category) : undefined,
               });
             }
           });
-        } else if (typeof data === 'object' && data !== null) {
-          Object.entries(data).forEach(([key, value]) => {
-            items.push({
-              key: String(key),
-              value: String(value || '')
-            });
-          });
         }
-        
-        console.log('Processed content items:', items);
-        setContentItems(items);
+        setContentItems(arr);
       } else {
-        const data = await contentAPI.getBanners();
-        console.log('Raw banners data:', data);
-        
-        const bannerList: BannerItem[] = [];
+        const data = await contentAPI.getAllBannersAdmin();
+        const arr: BannerItem[] = [];
         if (Array.isArray(data)) {
-          data.forEach((item: any) => {
-            if (item && typeof item === 'object') {
-              bannerList.push({
+          (data as Record<string, unknown>[]).forEach((item) => {
+            if (item) {
+              arr.push({
                 id: item.id || 0,
                 title: String(item.title || ''),
                 message: String(item.message || ''),
@@ -91,18 +143,15 @@ export default function AdminContentManagement() {
                 background_color: item.background_color,
                 text_color: item.text_color,
                 icon: item.icon,
-                show_on_pages: item.show_on_pages
+                show_on_pages: item.show_on_pages,
               });
             }
           });
         }
-        
-        console.log('Processed banners:', bannerList);
-        setBanners(bannerList);
+        setBanners(arr);
       }
     } catch (error) {
       console.error('Failed to load data:', error);
-      alert('Ошибка загрузки данных: ' + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -110,291 +159,498 @@ export default function AdminContentManagement() {
 
   const handleSaveText = async (key: string) => {
     try {
+      setSaving(true);
       await contentAPI.updateContent(key, editValue);
-      
-      setContentItems(contentItems.map(item => 
+      setContentItems(contentItems.map(item =>
         item.key === key ? { ...item, value: editValue } : item
       ));
-      
       setEditingKey(null);
       setEditValue('');
-      alert('✓ Текст успешно сохранён');
+      showSuccess('Текст сохранён');
     } catch (error) {
       console.error('Failed to update content:', error);
       alert('Ошибка при сохранении: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleCreateBanner = async () => {
-    if (!newBanner.title || !newBanner.message) {
+  const handleSaveBanner = async () => {
+    if (!bannerForm.title.trim() || !bannerForm.message.trim()) {
       alert('Заполните заголовок и сообщение');
       return;
     }
+    if (!bannerForm.startDate || !bannerForm.endDate) {
+      alert('Укажите период показа баннера');
+      return;
+    }
     try {
-      await contentAPI.createBanner(newBanner);
+      setSaving(true);
+      if (editingBanner) {
+        await contentAPI.updateBannerAdmin(editingBanner.id, bannerForm);
+        showSuccess('Баннер обновлён');
+      } else {
+        await contentAPI.createBannerAdmin(bannerForm);
+        showSuccess('Баннер создан');
+      }
       setShowBannerForm(false);
-      setNewBanner({
-        title: '',
-        message: '',
-        type: 'info',
-        start_date: '',
-        end_date: '',
-        is_active: true,
-      });
-      alert('✓ Баннер успешно создан');
-      loadData();
+      setEditingBanner(null);
+      setBannerForm({ ...EMPTY_BANNER });
+      await loadData();
     } catch (error) {
-      console.error('Failed to create banner:', error);
-      alert('Ошибка при создании баннера: ' + (error as Error).message);
+      console.error('Failed to save banner:', error);
+      alert('Ошибка при сохранении баннера: ' + (error as Error).message);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleToggleBanner = async (bannerId: number, isActive: boolean) => {
+  const handleEditBanner = (banner: BannerItem) => {
+    setEditingBanner(banner);
+    setBannerForm({
+      title: banner.title,
+      message: banner.message,
+      type: banner.type,
+      startDate: banner.start_date || '',
+      endDate: banner.end_date || '',
+      isActive: banner.is_active,
+      backgroundColor: banner.background_color || '#4F46E5',
+      textColor: banner.text_color || '#FFFFFF',
+      icon: banner.icon || '',
+      showOnPages: banner.show_on_pages || ['home'],
+    });
+    setShowBannerForm(true);
+  };
+
+  const handleToggleBanner = async (banner: BannerItem) => {
     try {
-      await contentAPI.updateBanner(bannerId, { is_active: !isActive });
-      alert('✓ Статус баннера изменён');
-      loadData();
+      await contentAPI.updateBannerAdmin(banner.id, { isActive: !banner.is_active });
+      setBanners(banners.map(b => b.id === banner.id ? { ...b, is_active: !b.is_active } : b));
+      showSuccess(banner.is_active ? 'Баннер отключён' : 'Баннер включён');
     } catch (error) {
-      console.error('Failed to toggle banner:', error);
-      alert('Ошибка при изменении статуса: ' + (error as Error).message);
+      alert('Ошибка: ' + (error as Error).message);
     }
   };
 
   const handleDeleteBanner = async (bannerId: number) => {
-    if (!confirm('Удалить баннер?')) return;
+    if (!confirm('Удалить этот баннер? Это действие нельзя отменить.')) return;
     try {
-      await contentAPI.deleteBanner(bannerId);
-      alert('✓ Баннер удалён');
-      loadData();
+      await contentAPI.deleteBannerAdmin(bannerId);
+      setBanners(banners.filter(b => b.id !== bannerId));
+      showSuccess('Баннер удалён');
     } catch (error) {
-      console.error('Failed to delete banner:', error);
-      alert('Ошибка при удалении: ' + (error as Error).message);
+      alert('Ошибка: ' + (error as Error).message);
     }
+  };
+
+  const handleCancelBannerForm = () => {
+    setShowBannerForm(false);
+    setEditingBanner(null);
+    setBannerForm({ ...EMPTY_BANNER });
+  };
+
+  const togglePage = (page: string) => {
+    const pages = bannerForm.showOnPages.includes(page)
+      ? bannerForm.showOnPages.filter(p => p !== page)
+      : [...bannerForm.showOnPages, page];
+    setBannerForm({ ...bannerForm, showOnPages: pages });
+  };
+
+  const pageOptions = [
+    { value: 'home', label: 'Главная' },
+    { value: 'offers', label: 'Предложения' },
+    { value: 'requests', label: 'Запросы' },
+    { value: 'auctions', label: 'Аукционы' },
+  ];
+
+  const groupedContent = contentItems.reduce((acc, item) => {
+    const cat = item.category || 'other';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {} as Record<string, ContentItem[]>);
+
+  const categoryLabels: Record<string, string> = {
+    home: 'Главная страница',
+    about: 'О нас',
+    offers: 'Предложения',
+    footer: 'Подвал сайта',
+    other: 'Прочее',
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate('/admin/panel')}
-              className="p-2 hover:bg-muted rounded-lg transition-colors"
-            >
-              <Icon name="ArrowLeft" size={24} />
-            </button>
-            <h1 className="text-3xl font-bold">Управление контентом</h1>
+      <div className="max-w-4xl mx-auto p-4 md:p-6">
+
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => navigate('/admin/panel')}
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+          >
+            <Icon name="ArrowLeft" size={22} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold">Управление контентом</h1>
+            <p className="text-sm text-muted-foreground">Редактирование текстов и баннеров сайта</p>
           </div>
         </div>
 
-        <div className="flex gap-4 mb-6">
+        {/* Success message */}
+        {successMsg && (
+          <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-800">
+            <Icon name="CheckCircle" size={18} />
+            <span>{successMsg}</span>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 bg-muted rounded-lg mb-6 w-fit">
           <button
             onClick={() => setActiveTab('texts')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`px-5 py-2 rounded-md font-medium text-sm transition-colors ${
               activeTab === 'texts'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card hover:bg-muted'
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Тексты сайта
+            <span className="flex items-center gap-2">
+              <Icon name="FileText" size={16} />
+              Тексты сайта
+            </span>
           </button>
           <button
             onClick={() => setActiveTab('banners')}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+            className={`px-5 py-2 rounded-md font-medium text-sm transition-colors ${
               activeTab === 'banners'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card hover:bg-muted'
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            Праздничные баннеры
+            <span className="flex items-center gap-2">
+              <Icon name="Megaphone" size={16} />
+              Баннеры
+              {banners.filter(b => isBannerActive(b)).length > 0 && (
+                <Badge className="ml-1 bg-green-500 text-white text-xs px-1.5 py-0">
+                  {banners.filter(b => isBannerActive(b)).length}
+                </Badge>
+              )}
+            </span>
           </button>
         </div>
 
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="flex justify-center items-center h-48">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
           </div>
         ) : activeTab === 'texts' ? (
-          contentItems.length === 0 ? (
-            <div className="bg-card rounded-lg border p-6">
-              <p className="text-center text-muted-foreground">Нет доступных текстов для редактирования</p>
-            </div>
-          ) : (
-            <div className="bg-card rounded-lg border">
-              <div className="p-6 space-y-4">
-                {contentItems.map((item) => (
-                  <div key={item.key} className="border-b last:border-b-0 pb-4 last:pb-0">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm text-muted-foreground mb-2">
-                          {item.key}
-                        </div>
-                        {editingKey === item.key ? (
-                          <textarea
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
-                            className="w-full p-3 border rounded-lg min-h-[100px] bg-background"
-                            autoFocus
-                          />
-                        ) : (
-                          <div className="text-foreground whitespace-pre-wrap">
-                            {item.value}
+          /* === ТЕКСТЫ САЙТА === */
+          <div className="space-y-6">
+            {contentItems.length === 0 ? (
+              <div className="bg-card rounded-xl border p-10 text-center text-muted-foreground">
+                <Icon name="FileX" size={40} className="mx-auto mb-3 opacity-40" />
+                <p>Нет текстов для редактирования</p>
+              </div>
+            ) : (
+              Object.entries(groupedContent).map(([category, items]) => (
+                <div key={category} className="bg-card rounded-xl border overflow-hidden">
+                  <div className="px-5 py-3 border-b bg-muted/40">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+                      {categoryLabels[category] || category}
+                    </h3>
+                  </div>
+                  <div className="divide-y">
+                    {items.map((item) => {
+                      const { label, hint } = getContentLabel(item.key);
+                      const isEditing = editingKey === item.key;
+                      return (
+                        <div key={item.key} className="p-5">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <div>
+                              <p className="font-medium text-sm">{label}</p>
+                              {hint && <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>}
+                            </div>
+                            {!isEditing && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingKey(item.key);
+                                  setEditValue(item.value);
+                                }}
+                              >
+                                <Icon name="Pencil" size={14} className="mr-1" />
+                                Изменить
+                              </Button>
+                            )}
                           </div>
-                        )}
+
+                          {isEditing ? (
+                            <div className="mt-3 space-y-3">
+                              <Textarea
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="min-h-[100px] resize-y"
+                                autoFocus
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveText(item.key)}
+                                  disabled={saving}
+                                >
+                                  {saving ? 'Сохранение...' : 'Сохранить'}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => { setEditingKey(null); setEditValue(''); }}
+                                >
+                                  Отмена
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="mt-1 text-sm text-foreground bg-muted/30 rounded-lg px-3 py-2 whitespace-pre-wrap">
+                              {item.value || <span className="text-muted-foreground italic">Пусто</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          /* === БАННЕРЫ === */
+          <div className="space-y-4">
+
+            {/* Форма создания/редактирования */}
+            {showBannerForm ? (
+              <div className="bg-card rounded-xl border p-6">
+                <h3 className="text-lg font-bold mb-5">
+                  {editingBanner ? 'Редактировать баннер' : 'Новый баннер'}
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label>Заголовок</Label>
+                    <Input
+                      className="mt-1"
+                      value={bannerForm.title}
+                      onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
+                      placeholder="Например: С Новым годом!"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Сообщение</Label>
+                    <Textarea
+                      className="mt-1 min-h-[80px]"
+                      value={bannerForm.message}
+                      onChange={(e) => setBannerForm({ ...bannerForm, message: e.target.value })}
+                      placeholder="Текст баннера для пользователей"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Начало показа</Label>
+                      <Input
+                        type="date"
+                        className="mt-1"
+                        value={bannerForm.startDate}
+                        onChange={(e) => setBannerForm({ ...bannerForm, startDate: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Конец показа</Label>
+                      <Input
+                        type="date"
+                        className="mt-1"
+                        value={bannerForm.endDate}
+                        onChange={(e) => setBannerForm({ ...bannerForm, endDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Цвет фона</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="color"
+                          value={bannerForm.backgroundColor}
+                          onChange={(e) => setBannerForm({ ...bannerForm, backgroundColor: e.target.value })}
+                          className="h-9 w-14 rounded border cursor-pointer"
+                        />
+                        <Input
+                          value={bannerForm.backgroundColor}
+                          onChange={(e) => setBannerForm({ ...bannerForm, backgroundColor: e.target.value })}
+                          placeholder="#4F46E5"
+                        />
                       </div>
-                      <div className="flex gap-2">
-                        {editingKey === item.key ? (
-                          <>
-                            <button
-                              onClick={() => handleSaveText(item.key)}
-                              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
-                            >
-                              Сохранить
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEditingKey(null);
-                                setEditValue('');
-                              }}
-                              className="px-4 py-2 bg-muted rounded-lg hover:bg-muted/80"
-                            >
-                              Отмена
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingKey(item.key);
-                              setEditValue(item.value);
-                            }}
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
-                          >
-                            <Icon name="Pencil" size={16} />
-                          </button>
-                        )}
+                    </div>
+                    <div>
+                      <Label>Цвет текста</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="color"
+                          value={bannerForm.textColor}
+                          onChange={(e) => setBannerForm({ ...bannerForm, textColor: e.target.value })}
+                          className="h-9 w-14 rounded border cursor-pointer"
+                        />
+                        <Input
+                          value={bannerForm.textColor}
+                          onChange={(e) => setBannerForm({ ...bannerForm, textColor: e.target.value })}
+                          placeholder="#FFFFFF"
+                        />
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )
-        ) : (
-          <div className="space-y-4">
-            <button
-              onClick={() => setShowBannerForm(!showBannerForm)}
-              className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:opacity-90 flex items-center gap-2"
-            >
-              <Icon name="Plus" size={20} />
-              Создать баннер
-            </button>
 
-            {showBannerForm && (
-              <div className="bg-card rounded-lg border p-6 space-y-4">
-                <h3 className="text-xl font-bold">Новый баннер</h3>
-                <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Заголовок
-                    </label>
-                    <input
-                      type="text"
-                      value={newBanner.title}
-                      onChange={(e) =>
-                        setNewBanner({ ...newBanner, title: e.target.value })
-                      }
-                      className="w-full p-3 border rounded-lg bg-background"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Сообщение
-                    </label>
-                    <textarea
-                      value={newBanner.message}
-                      onChange={(e) =>
-                        setNewBanner({ ...newBanner, message: e.target.value })
-                      }
-                      className="w-full p-3 border rounded-lg bg-background min-h-[100px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Тип
-                    </label>
-                    <select
-                      value={newBanner.type}
-                      onChange={(e) =>
-                        setNewBanner({ ...newBanner, type: e.target.value })
-                      }
-                      className="w-full p-3 border rounded-lg bg-background"
+                    <Label>Предпросмотр баннера</Label>
+                    <div
+                      className="mt-1 rounded-lg px-4 py-3 text-sm font-medium"
+                      style={{ backgroundColor: bannerForm.backgroundColor, color: bannerForm.textColor }}
                     >
-                      <option value="info">Информация</option>
-                      <option value="warning">Предупреждение</option>
-                      <option value="success">Успех</option>
-                      <option value="error">Ошибка</option>
-                    </select>
+                      <strong>{bannerForm.title || 'Заголовок'}</strong>
+                      {bannerForm.message && <span className="ml-2 opacity-80">{bannerForm.message}</span>}
+                    </div>
                   </div>
-                  <div className="flex gap-4">
+
+                  <div>
+                    <Label>Показывать на страницах</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {pageOptions.map(page => (
+                        <button
+                          key={page.value}
+                          type="button"
+                          onClick={() => togglePage(page.value)}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                            bannerForm.showOnPages.includes(page.value)
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-background text-muted-foreground border-border hover:border-primary'
+                          }`}
+                        >
+                          {page.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
                     <button
-                      onClick={handleCreateBanner}
-                      className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
+                      type="button"
+                      onClick={() => setBannerForm({ ...bannerForm, isActive: !bannerForm.isActive })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        bannerForm.isActive ? 'bg-primary' : 'bg-muted-foreground/30'
+                      }`}
                     >
-                      Создать
+                      <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform shadow ${
+                        bannerForm.isActive ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
                     </button>
-                    <button
-                      onClick={() => setShowBannerForm(false)}
-                      className="px-6 py-2 bg-muted rounded-lg hover:bg-muted/80"
-                    >
-                      Отмена
-                    </button>
+                    <Label className="cursor-pointer" onClick={() => setBannerForm({ ...bannerForm, isActive: !bannerForm.isActive })}>
+                      {bannerForm.isActive ? 'Баннер включён' : 'Баннер выключен'}
+                    </Label>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <Button onClick={handleSaveBanner} disabled={saving}>
+                      {saving ? 'Сохранение...' : editingBanner ? 'Сохранить изменения' : 'Создать баннер'}
+                    </Button>
+                    <Button variant="outline" onClick={handleCancelBannerForm}>Отмена</Button>
                   </div>
                 </div>
               </div>
+            ) : (
+              <Button onClick={() => setShowBannerForm(true)} className="flex items-center gap-2">
+                <Icon name="Plus" size={18} />
+                Создать баннер
+              </Button>
             )}
 
-            {banners.length === 0 ? (
-              <div className="bg-card rounded-lg border p-6">
-                <p className="text-center text-muted-foreground">Нет созданных баннеров</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {banners.map((banner) => (
-                  <div
-                    key={banner.id}
-                    className="bg-card rounded-lg border p-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg">{banner.title}</h3>
-                        <p className="text-muted-foreground mt-1">{banner.message}</p>
-                        <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>Тип: {banner.type}</span>
-                          <span>Статус: {banner.is_active ? 'Активен' : 'Неактивен'}</span>
+            {/* Список баннеров */}
+            {!showBannerForm && (
+              banners.length === 0 ? (
+                <div className="bg-card rounded-xl border p-10 text-center text-muted-foreground">
+                  <Icon name="Megaphone" size={40} className="mx-auto mb-3 opacity-40" />
+                  <p>Нет созданных баннеров</p>
+                  <p className="text-sm mt-1">Создайте праздничный баннер — он появится на выбранных страницах</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {banners.map((banner) => {
+                    const active = isBannerActive(banner);
+                    return (
+                      <div key={banner.id} className="bg-card rounded-xl border overflow-hidden">
+                        {/* Цветная полоска */}
+                        <div
+                          className="h-1.5"
+                          style={{ backgroundColor: banner.background_color || '#4F46E5' }}
+                        />
+                        <div className="p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold">{banner.title}</h3>
+                                <Badge
+                                  variant={active ? 'default' : 'secondary'}
+                                  className={active ? 'bg-green-500 text-white' : ''}
+                                >
+                                  {active ? 'Активен' : banner.is_active ? 'По датам неактивен' : 'Выключен'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{banner.message}</p>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Icon name="Calendar" size={12} />
+                                  {formatDate(banner.start_date)} — {formatDate(banner.end_date)}
+                                </span>
+                                {banner.show_on_pages && banner.show_on_pages.length > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    <Icon name="Globe" size={12} />
+                                    {banner.show_on_pages.map(p => pageOptions.find(o => o.value === p)?.label || p).join(', ')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => handleToggleBanner(banner)}
+                                title={banner.is_active ? 'Выключить' : 'Включить'}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  banner.is_active
+                                    ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                }`}
+                              >
+                                <Icon name={banner.is_active ? 'PauseCircle' : 'PlayCircle'} size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleEditBanner(banner)}
+                                className="p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                              >
+                                <Icon name="Pencil" size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBanner(banner.id)}
+                                className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                              >
+                                <Icon name="Trash2" size={18} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleToggleBanner(banner.id, banner.is_active)}
-                          className={`px-4 py-2 rounded-lg font-medium ${
-                            banner.is_active
-                              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                              : 'bg-green-500 text-white hover:bg-green-600'
-                          }`}
-                        >
-                          {banner.is_active ? 'Деактивировать' : 'Активировать'}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteBanner(banner.id)}
-                          className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:opacity-90"
-                        >
-                          <Icon name="Trash2" size={16} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )
             )}
           </div>
         )}
