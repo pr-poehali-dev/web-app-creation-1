@@ -47,9 +47,14 @@ export function useCreateRequestSubmit(
 
   const buildRequestData = () => {
     const isService = formData.category === 'utilities';
+    const isTransport = formData.category === 'transport';
+
+    const title = isTransport
+      ? [formData.transportServiceType, formData.transportRoute].filter(Boolean).join(' — ') || 'Транспортный запрос'
+      : formData.title;
 
     return {
-      title: formData.title,
+      title,
       description: formData.description,
       category: formData.category,
       subcategory: formData.subcategory || undefined,

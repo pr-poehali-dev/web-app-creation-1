@@ -128,15 +128,17 @@ export function useCreateRequestForm() {
       }
     }
 
-    setFormData(prev => ({ ...prev, [field]: value }));
-
     if (field === 'category') {
       setFormData(prev => ({
         ...prev,
+        category: value as string,
         subcategory: '',
         unit: '',
       }));
+      return;
     }
+
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleDistrictToggle = (districtId: string) => {
