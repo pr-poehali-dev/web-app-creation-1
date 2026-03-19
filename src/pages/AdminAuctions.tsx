@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -30,14 +31,30 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { auctionsAPI } from '@/services/api';
 import type { Auction } from '@/types/auction';
 import { dataSync } from '@/utils/dataSync';
+import func2url from '../../backend/func2url.json';
+
+const API_URL = func2url['auctions-list'];
 
 interface AdminAuctionsProps {
   isAuthenticated: boolean;
   onLogout: () => void;
+}
+
+interface AuctionComplaint {
+  id: number;
+  auctionId: string;
+  complainantId: number;
+  complainantName: string;
+  auctionTitle: string;
+  text: string;
+  fileUrls: string[];
+  status: string;
+  createdAt: string;
 }
 
 interface AdminAuction {
@@ -61,6 +78,9 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
   const [showBidsDialog, setShowBidsDialog] = useState(false);
   const [auctions, setAuctions] = useState<AdminAuction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [complaints, setComplaints] = useState<AuctionComplaint[]>([]);
+  const [complaintsLoading, setComplaintsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('auctions');
 
   useEffect(() => {
     loadAuctions();
@@ -140,6 +160,23 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
     }
   };
 
+  const loadComplaints = async () => {
+    setComplaintsLoading(true);
+    try {
+      const userId = localStorage.getItem('userId') || '';
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ action: 'get_complaints', auctionId: 'admin' }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComplaints(data.complaints || []);
+      }
+    } catch { /* ignore */ }
+    finally { setComplaintsLoading(false); }
+  };
+
   const handleDeleteAuction = async () => {
     if (selectedAuction) {
       const deletedId = selectedAuction.id;
@@ -161,7 +198,7 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
       
       <main className="flex-1 py-8">
         <div className="container mx-auto px-4">
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 flex items-center justify-between">
             <div>
               <Button variant="ghost" onClick={() => navigate(-1)} className="mb-2">
                 <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
@@ -172,6 +209,81 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
             </div>
           </div>
 
+          <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v === 'complaints') loadComplaints(); }}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="auctions">Аукционы</TabsTrigger>
+              <TabsTrigger value="complaints" className="relative">
+                Жалобы
+                {complaints.length > 0 && <Badge className="ml-2 h-5 px-1.5 text-xs bg-red-500">{complaints.length}</Badge>}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="complaints">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Жалобы победителей аукционов</CardTitle>
+                  <CardDescription>Жалобы от победителей о не полученных товарах</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {complaintsLoading ? (
+                    <p className="text-center py-8 text-muted-foreground">Загрузка...</p>
+                  ) : complaints.length === 0 ? (
+                    <p className="text-center py-8 text-muted-foreground">Жалоб нет</p>
+                  ) : (
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Аукцион</TableHead>
+                            <TableHead>Заявитель</TableHead>
+                            <TableHead>Суть жалобы</TableHead>
+                            <TableHead>Файлы</TableHead>
+                            <TableHead>Статус</TableHead>
+                            <TableHead>Дата</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {complaints.map(c => (
+                            <TableRow key={c.id}>
+                              <TableCell>
+                                <Button variant="link" className="p-0 h-auto" onClick={() => navigate(`/auction/${c.auctionId}`)}>
+                                  {c.auctionTitle || c.auctionId}
+                                </Button>
+                              </TableCell>
+                              <TableCell>{c.complainantName}</TableCell>
+                              <TableCell className="max-w-xs">
+                                <p className="text-sm truncate" title={c.text}>{c.text}</p>
+                              </TableCell>
+                              <TableCell>
+                                {c.fileUrls?.length > 0 ? (
+                                  <div className="flex gap-1 flex-wrap">
+                                    {c.fileUrls.map((url: string, i: number) => (
+                                      <a key={i} href={url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline">
+                                        Файл {i + 1}
+                                      </a>
+                                    ))}
+                                  </div>
+                                ) : <span className="text-muted-foreground text-xs">—</span>}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={c.status === 'new' ? 'destructive' : 'secondary'}>
+                                  {c.status === 'new' ? 'Новая' : c.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {c.createdAt ? new Date(c.createdAt).toLocaleDateString('ru-RU') : '—'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="auctions">
           <Card>
             <CardHeader>
               <CardTitle>Список аукционов</CardTitle>
@@ -291,6 +403,8 @@ export default function AdminAuctions({ isAuthenticated, onLogout }: AdminAuctio
               </div>
             </CardContent>
           </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 

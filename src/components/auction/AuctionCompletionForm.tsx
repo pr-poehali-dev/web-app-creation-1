@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
@@ -136,9 +137,15 @@ export default function AuctionCompletionForm({
   sellerName,
 }: AuctionCompletionFormProps) {
 
+  const { toast } = useToast();
   const [contactsReceived, setContactsReceived] = useState<Record<string, string> | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
   const [sellerId, setSellerId] = useState<number | null>(null);
+  const [completed, setCompleted] = useState(false);
+  const [complaintOpen, setComplaintOpen] = useState(false);
+  const [complaintText, setComplaintText] = useState('');
+  const [complaintFiles, setComplaintFiles] = useState<string[]>([]);
+  const [complaintLoading, setComplaintLoading] = useState(false);
 
   const currentUserId = localStorage.getItem('userId') || '';
 
@@ -162,12 +169,76 @@ export default function AuctionCompletionForm({
     fetchContacts();
   }, [auctionId, currentUserId]);
 
+  const handleComplete = async () => {
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId },
+        body: JSON.stringify({ action: 'complete', auctionId }),
+      });
+      if (res.ok) {
+        setCompleted(true);
+        setChatOpen(false);
+        toast({ title: '🎉 Поздравляем!', description: 'Сделка завершена. Спасибо за участие в аукционе!' });
+      }
+    } catch { /* ignore */ }
+  };
+
+  const handleComplaintFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    const uploadUrl = (await import('../../../backend/func2url.json')).default['upload-document'] as string;
+    for (const file of Array.from(files)) {
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const base64 = (ev.target?.result as string);
+        try {
+          const res = await fetch(uploadUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId },
+            body: JSON.stringify({ file: base64, filename: file.name, contentType: file.type }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.url) setComplaintFiles(prev => [...prev, data.url]);
+          }
+        } catch { /* ignore */ }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleComplaintSubmit = async () => {
+    if (!complaintText.trim()) {
+      toast({ title: 'Ошибка', description: 'Опишите суть жалобы', variant: 'destructive' });
+      return;
+    }
+    setComplaintLoading(true);
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId },
+        body: JSON.stringify({ action: 'complain', auctionId, text: complaintText, fileUrls: complaintFiles }),
+      });
+      if (res.ok) {
+        setComplaintOpen(false);
+        toast({ title: 'Жалоба отправлена', description: 'Администратор рассмотрит вашу жалобу в ближайшее время.' });
+      } else {
+        toast({ title: 'Ошибка', description: 'Не удалось отправить жалобу', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Ошибка', description: 'Нет соединения', variant: 'destructive' });
+    } finally {
+      setComplaintLoading(false);
+    }
+  };
+
   if (!isWinner && !isSeller) return null;
 
   return (
     <>
       {/* Поздравление победителю */}
-      {isWinner && (
+      {isWinner && !completed && (
         <Card className="border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/20">
           <CardContent className="py-6">
             <div className="text-center space-y-3">
@@ -191,15 +262,34 @@ export default function AuctionCompletionForm({
                 </Button>
                 <Button
                   size="lg"
-                  variant="outline"
-                  className="border-yellow-400 text-yellow-700"
-                  onClick={() => setChatOpen(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+                  onClick={handleComplete}
                 >
-                  <Icon name="ShoppingBag" className="h-5 w-5 mr-2" />
-                  Забрать товар
+                  <Icon name="PackageCheck" className="h-5 w-5 mr-2" />
+                  Товар получен
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-red-300 text-red-600 hover:bg-red-50"
+                  onClick={() => setComplaintOpen(true)}
+                >
+                  <Icon name="AlertTriangle" className="h-5 w-5 mr-2" />
+                  Пожаловаться
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Сделка завершена */}
+      {isWinner && completed && (
+        <Card className="border-2 border-green-400 bg-green-50 dark:bg-green-950/20">
+          <CardContent className="py-6 text-center space-y-2">
+            <div className="text-5xl">✅</div>
+            <h2 className="text-xl font-bold text-green-700">Сделка завершена!</h2>
+            <p className="text-sm text-muted-foreground">Спасибо за участие в аукционе</p>
           </CardContent>
         </Card>
       )}
@@ -305,6 +395,50 @@ export default function AuctionCompletionForm({
             sellerId={sellerId || 0}
             winnerId={winnerId}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Диалог жалобы */}
+      <Dialog open={complaintOpen} onOpenChange={setComplaintOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Icon name="AlertTriangle" className="h-5 w-5 text-red-500" />
+              Жалоба на аукцион
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Опишите проблему *</p>
+              <Textarea
+                value={complaintText}
+                onChange={e => setComplaintText(e.target.value)}
+                placeholder="Подробно опишите суть жалобы: что произошло, когда, какие нарушения..."
+                rows={5}
+                className="text-sm resize-none"
+              />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Прикрепить файлы (фото/видео)</p>
+              <Input type="file" accept="image/*,video/*" multiple onChange={handleComplaintFileUpload} className="text-sm" />
+              {complaintFiles.length > 0 && (
+                <p className="text-xs text-green-600">{complaintFiles.length} файл(ов) прикреплено</p>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setComplaintOpen(false)}>Отмена</Button>
+            <Button
+              variant="destructive"
+              onClick={handleComplaintSubmit}
+              disabled={complaintLoading || !complaintText.trim()}
+            >
+              {complaintLoading
+                ? <Icon name="Loader2" className="h-4 w-4 animate-spin mr-2" />
+                : <Icon name="Send" className="h-4 w-4 mr-2" />}
+              Отправить жалобу
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

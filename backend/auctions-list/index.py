@@ -48,6 +48,27 @@ def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, An
         aid = str(auction_id).replace("'", "''")
         uid = str(user_id).replace("'", "''")
 
+        # Отдельный обработчик для получения жалоб (только для авторизованных)
+        if action == 'get_complaints':
+            cur.execute(f"""
+                SELECT ac.id, ac.auction_id, ac.complainant_id, ac.text, ac.file_urls, ac.status, ac.created_at,
+                       a.title as auction_title,
+                       COALESCE(u.company_name, TRIM(CONCAT(u.first_name, ' ', u.last_name))) as complainant_name
+                FROM {S}.auction_complaints ac
+                LEFT JOIN {S}.auctions a ON ac.auction_id = a.id
+                LEFT JOIN {S}.users u ON ac.complainant_id = u.id
+                ORDER BY ac.created_at DESC
+            """)
+            complaints = []
+            for r in cur.fetchall():
+                complaints.append({
+                    'id': r[0], 'auctionId': r[1], 'complainantId': r[2],
+                    'text': r[3], 'fileUrls': r[4] or [], 'status': r[5],
+                    'createdAt': r[6].isoformat() if r[6] else None,
+                    'auctionTitle': r[7], 'complainantName': r[8]
+                })
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'complaints': complaints}), 'isBase64Encoded': False}
+
         cur.execute(f"SELECT user_id FROM {S}.auctions WHERE id = '{aid}'")
         auction_row = cur.fetchone()
         if not auction_row:
@@ -132,6 +153,30 @@ def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, An
             for r in cur.fetchall():
                 msgs.append({'id': r[0], 'senderId': r[1], 'senderName': r[2] or 'Участник', 'message': r[3], 'createdAt': r[4].isoformat()})
             return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'messages': msgs, 'sellerId': seller_id, 'winnerId': winner_id}), 'isBase64Encoded': False}
+
+        elif action == 'complete':
+            if not is_winner:
+                return {'statusCode': 403, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Только победитель может подтвердить получение'}), 'isBase64Encoded': False}
+            cur.execute(f"UPDATE {S}.auctions SET status = 'completed' WHERE id = '{aid}'")
+            conn.commit()
+            print(f'[COMPLETE] Auction {aid} marked completed by winner {uid}')
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
+
+        elif action == 'complain':
+            if not is_winner:
+                return {'statusCode': 403, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Только победитель может подать жалобу'}), 'isBase64Encoded': False}
+            complaint_text = str(body_data.get('text', '')).replace("'", "''")
+            if not complaint_text:
+                return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Текст жалобы обязателен'}), 'isBase64Encoded': False}
+            file_urls = body_data.get('fileUrls', [])
+            file_urls_str = "ARRAY[" + ",".join(f"'{str(u).replace(chr(39), chr(39)+chr(39))}'" for u in file_urls) + "]" if file_urls else "ARRAY[]::text[]"
+            cur.execute(f"""
+                INSERT INTO {S}.auction_complaints (auction_id, complainant_id, text, file_urls, status)
+                VALUES ('{aid}', {int(uid)}, '{complaint_text}', {file_urls_str}, 'new')
+            """)
+            conn.commit()
+            print(f'[COMPLAIN] Complaint filed for auction {aid} by user {uid}')
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
 
         else:
             return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Неизвестное действие'}), 'isBase64Encoded': False}
