@@ -965,18 +965,33 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
     if accepted_now:
         try:
             cur.execute(
-                pgsql.SQL("SELECT id FROM {schema}.requests WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                pgsql.SQL("SELECT id, quantity FROM {schema}.requests WHERE id = %s").format(schema=pgsql.Identifier(schema)),
                 (str(order['offer_id']),)
             )
-            is_request = cur.fetchone() is not None
+            request_row = cur.fetchone()
+            is_request = request_row is not None
             if is_request:
-                reject_other_responses(
-                    cur, schema,
-                    str(order['offer_id']),
-                    order_id,
-                    order.get('title', 'предложение'),
-                    is_request=True
+                # Проверяем, набрано ли полное количество по запросу
+                request_quantity = request_row['quantity'] or 0
+                cur.execute(
+                    pgsql.SQL("""
+                        SELECT COALESCE(SUM(o.quantity), 0) as accepted_total
+                        FROM {schema}.orders o
+                        WHERE o.offer_id = %s AND o.status = 'accepted'
+                    """).format(schema=pgsql.Identifier(schema)),
+                    (str(order['offer_id']),)
                 )
+                accepted_row = cur.fetchone()
+                accepted_total = float(accepted_row['accepted_total']) if accepted_row else 0
+                # Отклоняем остальных только если запрос полностью закрыт
+                if accepted_total >= float(request_quantity):
+                    reject_other_responses(
+                        cur, schema,
+                        str(order['offer_id']),
+                        order_id,
+                        order.get('title', 'предложение'),
+                        is_request=True
+                    )
         except Exception as e:
             print(f"[AUTO_REJECT] Error: {e}")
     
