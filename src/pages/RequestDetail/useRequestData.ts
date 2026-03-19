@@ -78,6 +78,7 @@ export interface Request {
   transportPriceType?: string;
   transportNegotiable?: boolean;
   transportComment?: string;
+  acceptedQty?: number;
 }
 
 export function useRequestData(id: string | undefined) {

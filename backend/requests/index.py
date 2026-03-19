@@ -373,6 +373,11 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.transport_date_time, r.transport_departure_date_time, r.transport_price, r.transport_price_type,
             r.transport_negotiable, r.transport_comment, r.transport_all_districts,
             COALESCE(
+                (SELECT SUM(o.quantity) FROM t_p42562714_web_app_creation_1.orders o
+                 WHERE o.offer_id = r.id AND o.status = 'accepted'),
+                0
+            ) as accepted_qty,
+            COALESCE(
                 json_agg(
                     json_build_object('id', ri.id, 'url', ri.url, 'alt', ri.alt)
                 ) FILTER (WHERE ri.id IS NOT NULL),
@@ -489,6 +494,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     req_dict['transportNegotiable'] = req_dict.pop('transport_negotiable', False)
     req_dict['transportComment'] = req_dict.pop('transport_comment', None)
     req_dict['transportAllDistricts'] = req_dict.pop('transport_all_districts', False)
+    req_dict['acceptedQty'] = float(req_dict.pop('accepted_qty', 0) or 0)
     
     return {
         'statusCode': 200,

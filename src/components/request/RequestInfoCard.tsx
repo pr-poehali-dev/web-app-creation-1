@@ -43,7 +43,8 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
     transportPriceType,
     transportNegotiable,
     transportComment,
-    author
+    author,
+    acceptedQty
   } = request;
   
   const isTransport = category === 'transport';
@@ -192,6 +193,14 @@ export default function RequestInfoCard({ request }: RequestInfoCardProps) {
           </div>
         ) : (
           <>
+            {(acceptedQty ?? 0) > 0 && (
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-sm mb-2">
+                <Icon name="CheckCircle" className="h-4 w-4 text-green-500 flex-shrink-0" />
+                <span className="text-green-700 font-medium">
+                  Частично принято: {acceptedQty} {unit} — Осталось: {quantity - (acceptedQty ?? 0)} {unit}
+                </span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <p className="text-xs text-muted-foreground">Количество</p>
