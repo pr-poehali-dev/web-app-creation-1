@@ -148,6 +148,7 @@ export function useRequestData(id: string | undefined) {
           transportPriceType: data.transportPriceType,
           transportNegotiable: data.transportNegotiable,
           transportComment: data.transportComment,
+          acceptedQty: data.acceptedQty ?? 0,
         };
         setRequest(mappedRequest);
         
