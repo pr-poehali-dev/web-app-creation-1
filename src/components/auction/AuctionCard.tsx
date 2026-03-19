@@ -247,12 +247,12 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
           <Button
             className="w-full h-8 text-xs"
             size="sm"
-            disabled={auction.status === 'upcoming'}
+            variant={auction.status === 'ended' ? 'secondary' : 'default'}
+            disabled={auction.status === 'upcoming' || auction.status === 'ended'}
             onClick={() => {
+              if (auction.status === 'ended') return;
               if (!isAuthenticated) { navigate('/login'); return; }
-              if (auction.status === 'ended') {
-                navigate(`/auction/${auction.id}`);
-              } else if (auction.status === 'active') {
+              if (auction.status === 'active') {
                 navigate(`/auction/${auction.id}?scrollTo=bids`);
               } else {
                 navigate(`/auction/${auction.id}`);
@@ -260,9 +260,11 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
             }}
           >
             {auction.status === 'ended' ? (
-              <><Icon name="MessageCircle" className="mr-1 h-3 w-3" />Контакты продавца</>
+              <><Icon name="CheckCircle" className="mr-1 h-3 w-3" />Завершён</>
             ) : !isAuthenticated ? (
               <><Icon name="Lock" className="mr-1 h-3 w-3" />Войти</>
+            ) : auction.status === 'upcoming' ? (
+              <><Icon name="Clock" className="mr-1 h-3 w-3" />Ожидается</>
             ) : (
               <><Icon name="Gavel" className="mr-1 h-3 w-3" />Сделать ставку</>
             )}
