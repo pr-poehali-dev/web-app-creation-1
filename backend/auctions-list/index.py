@@ -57,8 +57,8 @@ def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, An
             return {'statusCode': 404, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Победитель не найден'}), 'isBase64Encoded': False}
         
         winner_id = winner_row[0]
-        is_winner = user_id == winner_id
-        is_seller = user_id == seller_id
+        is_winner = str(user_id) == str(winner_id)
+        is_seller = str(user_id) == str(seller_id)
         
         if not is_winner and not is_seller:
             return {'statusCode': 403, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Доступ запрещен'}), 'isBase64Encoded': False}
