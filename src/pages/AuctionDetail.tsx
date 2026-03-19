@@ -108,8 +108,8 @@ export default function AuctionDetail({ isAuthenticated, onLogout }: AuctionDeta
               winnerName={bids[0].userName}
               winnerId={bids[0].userId}
               winningBid={bids[0].amount}
-              isWinner={bids[0].userId === currentUser.userId}
-              isSeller={auction.userId === currentUser.userId}
+              isWinner={String(bids[0].userId) === String(currentUser.userId || currentUser.id)}
+              isSeller={String(auction.userId) === String(currentUser.userId || currentUser.id)}
             />
           )}
 
