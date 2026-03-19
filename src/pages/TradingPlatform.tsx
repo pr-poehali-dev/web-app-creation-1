@@ -88,8 +88,9 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
           headers: { 'X-User-Id': userId },
         });
         const data = await res.json();
-        if (data.verification_status) {
-          const updated = { ...getSession(), verificationStatus: data.verification_status };
+        const status = data.verificationStatus || data.verification_status;
+        if (status) {
+          const updated = { ...getSession(), verificationStatus: status };
           saveSession(updated);
           setCurrentUser(updated);
         }
@@ -192,8 +193,9 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
           headers: { 'X-User-Id': userId },
         });
         const data = await res.json();
-        if (data.verification_status) {
-          verificationStatus = data.verification_status;
+        const status = data.verificationStatus || data.verification_status;
+        if (status) {
+          verificationStatus = status;
           const updated = { ...getSession(), verificationStatus };
           saveSession(updated);
           setCurrentUser(updated);
