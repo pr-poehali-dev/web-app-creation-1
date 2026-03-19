@@ -368,7 +368,10 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.is_premium, r.views, r.status, r.created_at, r.updated_at,
             r.expiry_date, r.deadline_start, r.deadline_end, r.negotiable_deadline,
             r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
-            r.responses, r.deadline,
+            r.deadline,
+            (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders o
+             WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
+            ) as responses,
             r.transport_service_type, r.transport_route, r.transport_type, r.transport_capacity,
             r.transport_date_time, r.transport_departure_date_time, r.transport_price, r.transport_price_type,
             r.transport_negotiable, r.transport_comment, r.transport_all_districts,
@@ -402,7 +405,7 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
             r.is_premium, r.views, r.status, r.created_at, r.updated_at,
             r.expiry_date, r.deadline_start, r.deadline_end, r.negotiable_deadline,
             r.budget, r.negotiable_budget, r.negotiable_quantity, r.negotiable_price,
-            r.responses, r.deadline,
+            r.deadline,
             r.transport_service_type, r.transport_route, r.transport_type, r.transport_capacity,
             r.transport_date_time, r.transport_departure_date_time, r.transport_price, r.transport_price_type,
             r.transport_negotiable, r.transport_comment, r.transport_all_districts,
