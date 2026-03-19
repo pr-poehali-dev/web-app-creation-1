@@ -247,10 +247,10 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
           <Button
             className="w-full h-8 text-xs"
             size="sm"
-            variant={auction.status === 'ended' ? 'secondary' : 'default'}
-            disabled={auction.status === 'upcoming' || auction.status === 'ended'}
+            variant={['ended','completed','cancelled','archived'].includes(auction.status) ? 'secondary' : 'default'}
+            disabled={['upcoming','ended','completed','cancelled','archived'].includes(auction.status)}
             onClick={() => {
-              if (auction.status === 'ended') return;
+              if (['ended','completed','cancelled','archived'].includes(auction.status)) return;
               if (!isAuthenticated) { navigate('/login'); return; }
               if (auction.status === 'active') {
                 navigate(`/auction/${auction.id}?scrollTo=bids`);
@@ -259,8 +259,10 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
               }
             }}
           >
-            {auction.status === 'ended' ? (
+            {['ended','completed'].includes(auction.status) ? (
               <><Icon name="CheckCircle" className="mr-1 h-3 w-3" />Завершён</>
+            ) : auction.status === 'cancelled' ? (
+              <><Icon name="XCircle" className="mr-1 h-3 w-3" />Отменён</>
             ) : !isAuthenticated ? (
               <><Icon name="Lock" className="mr-1 h-3 w-3" />Войти</>
             ) : auction.status === 'upcoming' ? (
