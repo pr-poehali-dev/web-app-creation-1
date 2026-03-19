@@ -191,6 +191,17 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
                     Нужно: <span className="font-medium text-foreground">{request.quantity} {request.unit || 'шт'}</span>
                   </span>
                 </div>
+                {(request.acceptedQty ?? 0) > 0 && (
+                  <>
+                    <span className="text-muted-foreground/40 text-xs">·</span>
+                    <div className="flex items-center gap-1">
+                      <Icon name="CheckCircle" className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                      <span className="text-xs font-medium text-green-600">
+                        Осталось: {request.quantity - (request.acceptedQty ?? 0)} {request.unit || 'шт'}
+                      </span>
+                    </div>
+                  </>
+                )}
                 {request.responses !== undefined && (
                   <>
                     <span className="text-muted-foreground/40 text-xs">·</span>

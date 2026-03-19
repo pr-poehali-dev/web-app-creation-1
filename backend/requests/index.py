@@ -256,7 +256,12 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
             ) as images,
             (SELECT COUNT(*) FROM t_p42562714_web_app_creation_1.orders o 
              WHERE o.offer_id = r.id AND o.status NOT IN ('cancelled')
-            ) as responses
+            ) as responses,
+            COALESCE(
+                (SELECT SUM(o.quantity) FROM t_p42562714_web_app_creation_1.orders o
+                 WHERE o.offer_id = r.id AND o.status = 'accepted'),
+                0
+            ) as accepted_qty
         FROM t_p42562714_web_app_creation_1.requests r
         WHERE r.status != 'archived' AND r.status != 'closed' AND (r.is_removed IS NULL OR r.is_removed = FALSE)
     """
@@ -335,6 +340,7 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
         req_dict['transportNegotiable'] = req_dict.pop('transport_negotiable', False)
         req_dict['transportComment'] = req_dict.pop('transport_comment', None)
         req_dict['transportAllDistricts'] = req_dict.pop('transport_all_districts', False)
+        req_dict['acceptedQty'] = float(req_dict.pop('accepted_qty', 0) or 0)
         
         result.append(req_dict)
     

@@ -152,6 +152,7 @@ export interface Request {
   expiryDate?: Date;
   views?: number;
   responses?: number;
+  acceptedQty?: number;
   status?: 'active' | 'pending' | 'closed' | 'archived';
   transportServiceType?: string;
   transportRoute?: string;
