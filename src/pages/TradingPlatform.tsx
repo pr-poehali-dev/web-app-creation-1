@@ -86,7 +86,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       try {
         const res = await fetch(func2url.auth, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          headers: { 'Content-Type': 'application/json', 'X-Authorization': `Bearer ${token}` },
           body: JSON.stringify({ action: 'get_me' }),
         });
         const data = await res.json();
@@ -186,8 +186,28 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     return matchesSearch && matchesCategory && matchesType;
   });
 
-  const handleCreateContract = () => {
-    if (currentUser?.verificationStatus === 'pending') {
+  const handleCreateContract = async () => {
+    let verificationStatus = currentUser?.verificationStatus;
+    
+    const token = getJwtToken();
+    if (token) {
+      try {
+        const res = await fetch(func2url.auth, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ action: 'get_me' }),
+        });
+        const data = await res.json();
+        if (data.success && data.user) {
+          verificationStatus = data.user.verification_status;
+          const updated = { ...getSession(), verificationStatus };
+          saveSession(updated);
+          setCurrentUser(updated);
+        }
+      } catch (e) { /* network unavailable, use cached status */ }
+    }
+
+    if (verificationStatus === 'pending') {
       toast({
         title: 'Верификация на рассмотрении',
         description: 'Верификация вашей учётной записи на рассмотрении. После одобрения верификации или отказа вы получите соответствующее уведомление. После успешной верификации вам будут доступны все возможности на ЕРТТП.',
@@ -195,7 +215,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       });
       return;
     }
-    if (currentUser?.verificationStatus !== 'verified') {
+    if (verificationStatus !== 'verified') {
       setShowVerificationDialog(true);
       return;
     }
