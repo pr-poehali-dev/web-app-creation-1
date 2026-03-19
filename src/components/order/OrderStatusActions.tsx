@@ -131,13 +131,25 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
           </div>
           <div>
             <p className="font-semibold text-red-800">
-              {order.cancelledBy === 'buyer' && isFreightTransport
-                ? 'Заказ отменён заказчиком'
-                : order.cancelledBy === 'buyer' && isPassengerTransport
-                  ? 'Заказ отменён пассажиром'
-                  : order.cancelledBy === 'seller' && (isPassengerTransport || isFreightTransport)
+              {(() => {
+                const cancelledByMe =
+                  (isBuyer && order.cancelledBy === 'buyer') ||
+                  (!isBuyer && order.cancelledBy === 'seller');
+                if (cancelledByMe) return 'Отменено вами';
+                if (order.isRequest) {
+                  return order.cancelledBy === 'buyer'
+                    ? 'Отменено заказчиком'
+                    : 'Отменено исполнителем';
+                }
+                if (isFreightTransport || isPassengerTransport) {
+                  return order.cancelledBy === 'seller'
                     ? 'Рейс отменён перевозчиком'
-                    : 'Заказ отменён'}
+                    : isPassengerTransport
+                      ? 'Заказ отменён пассажиром'
+                      : 'Заказ отменён заказчиком';
+                }
+                return order.cancelledBy === 'seller' ? 'Отменено продавцом' : 'Отменено покупателем';
+              })()}
             </p>
             {order.cancellationReason && (
               <p className="text-sm text-red-600">{order.cancellationReason}</p>
