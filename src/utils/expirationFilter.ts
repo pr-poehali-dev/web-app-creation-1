@@ -27,7 +27,11 @@ export function filterActiveOffers(offers: Offer[]): Offer[] {
 }
 
 export function filterActiveRequests(requests: Request[]): Request[] {
-  return requests.filter(request => !isExpired(request));
+  return requests.filter(request =>
+    !isExpired(request) &&
+    request.status !== 'closed' &&
+    request.status !== 'archived'
+  );
 }
 
 export function getExpirationStatus(item: Offer | Request): {

@@ -369,6 +369,9 @@ export function useOrdersData(
         description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
       });
 
+      // Инвалидируем кэш запросов — после принятия отклика запрос мог изменить состояние
+      SmartCache.invalidate('requests_list');
+
       // Триггер для МГНОВЕННОГО обновления у контрагента
       localStorage.setItem('force_orders_reload', JSON.stringify({
         timestamp: Date.now(),
