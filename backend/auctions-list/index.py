@@ -40,84 +40,90 @@ def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, An
             'isBase64Encoded': False
         }
     
+    S = 't_p42562714_web_app_creation_1'
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
-    
+
     try:
-        cur.execute("SELECT user_id FROM t_p42562714_web_app_creation_1.auctions WHERE id = %s", (auction_id,))
+        aid = str(auction_id).replace("'", "''")
+        uid = str(user_id).replace("'", "''")
+
+        cur.execute(f"SELECT user_id FROM {S}.auctions WHERE id = '{aid}'")
         auction_row = cur.fetchone()
         if not auction_row:
             return {'statusCode': 404, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Аукцион не найден'}), 'isBase64Encoded': False}
-        
+
         seller_id = auction_row[0]
-        
-        cur.execute("SELECT user_id FROM t_p42562714_web_app_creation_1.bids WHERE auction_id = %s ORDER BY amount DESC, created_at ASC LIMIT 1", (auction_id,))
+
+        cur.execute(f"SELECT user_id FROM {S}.bids WHERE auction_id = '{aid}' ORDER BY amount DESC, created_at ASC LIMIT 1")
         winner_row = cur.fetchone()
         if not winner_row:
             return {'statusCode': 404, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Победитель не найден'}), 'isBase64Encoded': False}
-        
+
         winner_id = winner_row[0]
         is_winner = str(user_id) == str(winner_id)
         is_seller = str(user_id) == str(seller_id)
-        
+
         if not is_winner and not is_seller:
             return {'statusCode': 403, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Доступ запрещен'}), 'isBase64Encoded': False}
-        
+
         if action == 'submit':
-            phone = body_data.get('phone')
+            phone = body_data.get('phone', '').replace("'", "''")
             if not phone:
                 return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Требуется phone'}), 'isBase64Encoded': False}
-            
+
             role = 'winner' if is_winner else 'seller'
-            cur.execute("""
-                INSERT INTO t_p42562714_web_app_creation_1.auction_contacts 
-                (auction_id, user_id, role, phone, email, address, preferred_time, notes)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (auction_id, role) DO UPDATE SET 
+            email = str(body_data.get('email', '') or '').replace("'", "''")
+            address = str(body_data.get('address', '') or '').replace("'", "''")
+            preferred_time = str(body_data.get('preferredTime', '') or '').replace("'", "''")
+            notes = str(body_data.get('notes', '') or '').replace("'", "''")
+
+            cur.execute(f"""
+                INSERT INTO {S}.auction_contacts (auction_id, user_id, role, phone, email, address, preferred_time, notes)
+                VALUES ('{aid}', '{uid}', '{role}', '{phone}', '{email}', '{address}', '{preferred_time}', '{notes}')
+                ON CONFLICT (auction_id, role) DO UPDATE SET
                     phone = EXCLUDED.phone, email = EXCLUDED.email, address = EXCLUDED.address,
                     preferred_time = EXCLUDED.preferred_time, notes = EXCLUDED.notes, created_at = CURRENT_TIMESTAMP
-            """, (auction_id, user_id, role, phone, body_data.get('email', ''), body_data.get('address', ''), body_data.get('preferredTime', ''), body_data.get('notes', '')))
+            """)
             conn.commit()
             return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
-        
+
         elif action == 'get':
             role_to_fetch = 'seller' if is_winner else 'winner'
-            cur.execute("SELECT phone, email, address, preferred_time, notes, created_at FROM t_p42562714_web_app_creation_1.auction_contacts WHERE auction_id = %s AND role = %s", (auction_id, role_to_fetch))
+            cur.execute(f"SELECT phone, email, address, preferred_time, notes, created_at FROM {S}.auction_contacts WHERE auction_id = '{aid}' AND role = '{role_to_fetch}'")
             contact_row = cur.fetchone()
-            
+
             if not contact_row:
-                return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': None}), 'isBase64Encoded': False}
-            
+                return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': None, 'sellerId': seller_id, 'winnerId': winner_id}), 'isBase64Encoded': False}
+
             contacts = {'phone': contact_row[0], 'email': contact_row[1], 'address': contact_row[2], 'preferredTime': contact_row[3], 'notes': contact_row[4], 'submittedAt': contact_row[5].isoformat() if contact_row[5] else None}
-            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': contacts}), 'isBase64Encoded': False}
-        
+            return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': contacts, 'sellerId': seller_id, 'winnerId': winner_id}), 'isBase64Encoded': False}
+
         elif action == 'send_message':
-            message_text = body_data.get('message', '').strip()
+            message_text = body_data.get('message', '').strip().replace("'", "''")
             if not message_text:
                 return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Сообщение не может быть пустым'}), 'isBase64Encoded': False}
 
-            # Получаем имя отправителя
-            cur.execute("SELECT COALESCE(company_name, CONCAT(first_name, ' ', last_name)) FROM t_p42562714_web_app_creation_1.users WHERE id = %s", (int(user_id),))
+            cur.execute(f"SELECT COALESCE(company_name, CONCAT(first_name, ' ', last_name)) FROM {S}.users WHERE id = {int(user_id)}")
             name_row = cur.fetchone()
-            sender_name = name_row[0] if name_row else 'Участник'
+            sender_name = (name_row[0] if name_row else 'Участник').replace("'", "''")
 
-            cur.execute("""
-                INSERT INTO t_p42562714_web_app_creation_1.auction_messages
-                (auction_id, sender_id, sender_name, message)
-                VALUES (%s, %s, %s, %s)
+            cur.execute(f"""
+                INSERT INTO {S}.auction_messages (auction_id, sender_id, sender_name, message)
+                VALUES ('{aid}', {int(user_id)}, '{sender_name}', '{message_text}')
                 RETURNING id, created_at
-            """, (auction_id, int(user_id), sender_name, message_text))
+            """)
             row = cur.fetchone()
             conn.commit()
             return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'id': row[0], 'created_at': row[1].isoformat()}), 'isBase64Encoded': False}
 
         elif action == 'get_messages':
-            cur.execute("""
+            cur.execute(f"""
                 SELECT id, sender_id, sender_name, message, created_at
-                FROM t_p42562714_web_app_creation_1.auction_messages
-                WHERE auction_id = %s
+                FROM {S}.auction_messages
+                WHERE auction_id = '{aid}'
                 ORDER BY created_at ASC
-            """, (auction_id,))
+            """)
             msgs = []
             for r in cur.fetchall():
                 msgs.append({'id': r[0], 'senderId': r[1], 'senderName': r[2] or 'Участник', 'message': r[3], 'createdAt': r[4].isoformat()})
@@ -125,7 +131,7 @@ def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, An
 
         else:
             return {'statusCode': 400, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'error': 'Неизвестное действие'}), 'isBase64Encoded': False}
-    
+
     finally:
         cur.close()
         conn.close()
