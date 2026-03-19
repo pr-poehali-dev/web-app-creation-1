@@ -40,8 +40,17 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
 
   const isTransportOrder = isPassengerTransport || isFreightTransport;
 
-  const departureNotYet = isTransportOrder && order.offerTransportDateTime
-    ? new Date(order.offerTransportDateTime) > new Date()
+  const transportDateTime = (() => {
+    if (order.offerTransportDateTime) return order.offerTransportDateTime;
+    if (isTransportOrder && order.buyerComment) {
+      const match = order.buyerComment.match(/Время выезда:\s*([^\n]+)/);
+      if (match) return match[1].trim();
+    }
+    return null;
+  })();
+
+  const departureNotYet = isTransportOrder && transportDateTime
+    ? new Date(transportDateTime) > new Date()
     : false;
 
   const showRatingWarning = order.status === 'accepted' && (

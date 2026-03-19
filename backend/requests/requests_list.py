@@ -121,6 +121,13 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
             ) as accepted_qty
         FROM t_p42562714_web_app_creation_1.requests r
         WHERE r.status != 'archived' AND r.status != 'closed' AND (r.is_removed IS NULL OR r.is_removed = FALSE)
+          AND NOT (
+            r.category = 'transport'
+            AND EXISTS (
+              SELECT 1 FROM t_p42562714_web_app_creation_1.orders o
+              WHERE o.offer_id = r.id AND o.status = 'accepted'
+            )
+          )
     """
 
     query_params = []

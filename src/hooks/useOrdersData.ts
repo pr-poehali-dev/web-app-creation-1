@@ -6,7 +6,7 @@ import { notifyOrderAccepted } from '@/utils/notifications';
 import type { Order } from '@/types/order';
 import { ordersAPI, reviewsAPI } from '@/services/api';
 import { showLoading, hideLoading } from '@/components/TopLoadingBar';
-import { SmartCache, checkForUpdates } from '@/utils/smartCache';
+import { SmartCache, checkForUpdates, markDataAsUpdated } from '@/utils/smartCache';
 import { dataSync, notifyOrderUpdated } from '@/utils/dataSync';
 
 export type OrderTab = 'buyer' | 'seller' | 'my-requests' | 'my-responses' | 'archive';
@@ -672,6 +672,8 @@ export function useOrdersData(
       });
 
       notifyOrderUpdated(orderToCancel);
+      SmartCache.invalidate('requests_list');
+      markDataAsUpdated('requests');
       
       toast({
         title: 'Заказ отменён',

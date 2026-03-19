@@ -355,14 +355,14 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     schema = get_schema()
     offer_id_escaped = body['offerId'].replace("'", "''")
     
-    cur.execute(f"SELECT user_id FROM {schema}.requests WHERE id = '{offer_id_escaped}'")
+    cur.execute(f"SELECT user_id, category, transport_service_type, transport_departure_date_time, transport_date_time FROM {schema}.requests WHERE id = '{offer_id_escaped}'")
     request = cur.fetchone()
     
     if request:
         seller_id = request['user_id']
-        offer_category = None
-        offer_transport_service_type = None
-        offer_transport_date_time = None
+        offer_category = request.get('category')
+        offer_transport_service_type = request.get('transport_service_type')
+        offer_transport_date_time = request.get('transport_departure_date_time') or request.get('transport_date_time')
         is_request = True
     else:
         cur.execute(f"SELECT user_id, category, transport_service_type, transport_date_time FROM {schema}.offers WHERE id = '{offer_id_escaped}'")

@@ -39,10 +39,19 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
 
   const counterpartRating = isBuyer ? order.sellerRating : order.buyerRating;
 
+  const transportDateTime = (() => {
+    if (order.offerTransportDateTime) return order.offerTransportDateTime;
+    if ((isPassengerTransport || isFreightTransport) && order.buyerComment) {
+      const match = order.buyerComment.match(/Время выезда:\s*([^\n]+)/);
+      if (match) return match[1].trim();
+    }
+    return null;
+  })();
+
   const canComplete = (() => {
     if (!isPassengerTransport && !isFreightTransport) return true;
-    if (!order.offerTransportDateTime) return true;
-    return new Date(order.offerTransportDateTime) <= new Date();
+    if (!transportDateTime) return true;
+    return new Date(transportDateTime) <= new Date();
   })();
 
   return (
@@ -261,12 +270,12 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             <>
               {isBuyer ? (
                 <div className="space-y-3">
-                  {(isPassengerTransport || isFreightTransport) && !canComplete && order.offerTransportDateTime && (
+                  {(isPassengerTransport || isFreightTransport) && !canComplete && transportDateTime && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-2">
                       <Icon name="Clock" className="h-5 w-5 text-blue-600 flex-shrink-0" />
                       <p className="text-sm text-blue-800 font-medium">
-                        Завершить заказ можно после даты выполнения:{' '}
-                        {new Date(order.offerTransportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        Завершить заказ можно после даты выезда:{' '}
+                        {new Date(transportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   )}
