@@ -238,7 +238,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                     (!isSeller && order.cancelledBy === 'buyer');
                   if (cancelledByMe) return 'Отменено вами';
                   if (order.isRequest) {
-                    return order.cancelledBy === 'buyer' ? 'Отменено заказчиком' : 'Отменено исполнителем';
+                    return order.cancelledBy === 'buyer' ? 'Отменено исполнителем' : 'Отменено заказчиком';
                   }
                   return order.cancelledBy === 'seller' ? 'Отменено продавцом' : 'Отменено покупателем';
                 })()}
