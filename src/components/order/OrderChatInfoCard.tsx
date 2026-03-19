@@ -40,6 +40,14 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
 
   const isTransportOrder = isPassengerTransport || isFreightTransport;
 
+  const departureNotYet = isTransportOrder && order.offerTransportDateTime
+    ? new Date(order.offerTransportDateTime) > new Date()
+    : false;
+
+  const showRatingWarning = order.status === 'accepted' && (
+    (isTransportOrder && departureNotYet) || !isTransportOrder
+  );
+
   const handleCancelClick = () => {
     setShowCancelDialog(true);
   };
@@ -93,33 +101,27 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {isTransportOrder && isBuyer && order.status === 'accepted'
-                ? 'Отмена принятого заказа'
-                : 'Подтверждение отмены заказа'}
+              {showRatingWarning ? 'Отмена принятого заказа' : 'Подтверждение отмены заказа'}
             </DialogTitle>
             <DialogDescription asChild>
-              {isTransportOrder && isBuyer && order.status === 'accepted' ? (
-                <div className="space-y-3">
+              <div className="space-y-3">
+                {showRatingWarning && (
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
                     <Icon name="AlertTriangle" className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                     <div className="text-sm text-amber-800">
                       <p className="font-semibold mb-1">Внимание! Это повлияет на ваш рейтинг</p>
-                      <p>Отмена принятого заказа до даты и времени {isFreightTransport ? 'выполнения рейса' : 'выезда'} снизит ваш рейтинг надёжности. Это может негативно повлиять на доверие исполнителей в будущих заказах.</p>
+                      <p>
+                        {isTransportOrder && departureNotYet
+                          ? `Отмена принятого заказа до даты и времени ${isFreightTransport ? 'выполнения рейса' : 'выезда'} приведёт к понижению рейтинга надёжности. Это может негативно повлиять на доверие ${isBuyer ? 'исполнителей' : 'пассажиров'} в будущих заказах.`
+                          : 'Отмена принятого заказа приведёт к понижению рейтинга надёжности.'}
+                      </p>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Вы уверены, что хотите отменить заказ? Укажите причину (необязательно).</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {order.status === 'accepted' && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                      <Icon name="AlertTriangle" className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm text-amber-800">Отмена принятого заказа понизит ваш рейтинг надёжности.</p>
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground">Вы уверены, что хотите отменить этот заказ? Укажите причину отмены (необязательно).</p>
-                </div>
-              )}
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Вы уверены, что хотите отменить заказ? Укажите причину (необязательно).
+                </p>
+              </div>
             </DialogDescription>
           </DialogHeader>
           
@@ -167,8 +169,8 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
                   <Icon name="AlertTriangle" className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-red-800">
-                    <p className="font-semibold mb-1">Внимание! Отмена всего рейса</p>
-                    <p>{isFreightTransport ? 'Все принятые заказчики получат уведомление об отмене рейса.' : 'Все принятые пассажиры получат уведомление об отмене рейса.'} Отмена рейса снизит ваш рейтинг надёжности.</p>
+                    <p className="font-semibold mb-1">Внимание! Отмена принятого заказа приведёт к понижению рейтинга надёжности</p>
+                    <p>{isFreightTransport ? 'Все принятые заказчики получат уведомление об отмене рейса.' : 'Все принятые пассажиры получат уведомление об отмене рейса.'}{departureNotYet ? ' Отмена до даты и времени выезда снизит ваш рейтинг надёжности.' : ' Отмена рейса снизит ваш рейтинг надёжности.'}</p>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground">Укажите причину отмены — {isFreightTransport ? 'заказчики' : 'пассажиры'} увидят её в уведомлении.</p>
