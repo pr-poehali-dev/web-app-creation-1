@@ -232,10 +232,12 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
               </Button>
             )}
             <div className="flex gap-1.5 w-full">
-              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs min-w-0" onClick={handleEdit}>
-                <Icon name="Pencil" className="mr-1 h-3 w-3 shrink-0" />
-                <span className="truncate">Редактировать</span>
-              </Button>
+              {auction.status === 'upcoming' && auction.bidCount === 0 && (
+                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs min-w-0" onClick={handleEdit}>
+                  <Icon name="Pencil" className="mr-1 h-3 w-3 shrink-0" />
+                  <span className="truncate">Редактировать</span>
+                </Button>
+              )}
               <Button variant="destructive" size="sm" className="h-8 w-8 shrink-0 p-0" onClick={handleDelete}>
                 <Icon name="Trash2" className="h-3.5 w-3.5" />
               </Button>
