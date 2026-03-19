@@ -145,7 +145,8 @@ export default function OrdersContent({
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
 
-  const isSeller = activeTab === 'seller' || activeTab === 'my-requests' || activeTab === 'my-responses';
+  // my-requests: я автор запроса (seller/заказчик), my-responses: я откликнулся (buyer/исполнитель)
+  const isSeller = activeTab === 'seller' || activeTab === 'my-requests';
 
   if (isLoading) {
     return (

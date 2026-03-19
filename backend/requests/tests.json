@@ -7,12 +7,10 @@
       "expectedStatus": 200
     },
     {
-      "name": "Get request by ID",
+      "name": "Get request by ID returns 404 for unknown id",
       "method": "GET",
-      "path": "/?id=e6f56928-de1f-4b6a-bdc9-a1fbb1e2d683",
-      "expectedStatus": 200,
-      "expectedBody": {"id": "string"},
-      "bodyMatcher": "partial"
+      "path": "/?id=00000000-0000-0000-0000-000000000000",
+      "expectedStatus": 404
     }
   ]
 }

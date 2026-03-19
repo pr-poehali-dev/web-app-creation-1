@@ -189,16 +189,16 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
     expired_requests += cur.fetchall()
     conn.commit()
 
-    # Авто-закрытие запросов принятых в работу
+    # Авто-закрытие запросов только если принятое количество >= запрошенному
     cur.execute("""
         UPDATE t_p42562714_web_app_creation_1.requests
         SET status = 'closed', updated_at = NOW()
         WHERE status = 'active'
-          AND EXISTS (
-              SELECT 1 FROM t_p42562714_web_app_creation_1.orders o
+          AND COALESCE((
+              SELECT SUM(o.quantity) FROM t_p42562714_web_app_creation_1.orders o
               WHERE o.offer_id = requests.id
                 AND o.status = 'accepted'
-          )
+          ), 0) >= requests.quantity
         RETURNING user_id, title
     """)
     accepted_requests = cur.fetchall()
