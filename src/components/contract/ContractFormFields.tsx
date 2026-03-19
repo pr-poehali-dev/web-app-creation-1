@@ -1,0 +1,327 @@
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import Icon from '@/components/ui/icon';
+import { CATEGORIES, UNITS } from '@/hooks/useContractData';
+import type { ContractFormData } from '@/hooks/useContractData';
+
+interface ContractFormFieldsProps {
+  formData: ContractFormData;
+  set: (field: string, value: string) => void;
+  handleProductNameChange: (value: string) => void;
+  handleProductNameBChange: (value: string) => void;
+  totalAmount: number;
+  prepaymentAmount: number;
+  isGenerating: boolean;
+  onGenerate: () => void;
+}
+
+export default function ContractFormFields({
+  formData,
+  set,
+  handleProductNameChange,
+  handleProductNameBChange,
+  totalAmount,
+  prepaymentAmount,
+  isGenerating,
+  onGenerate,
+}: ContractFormFieldsProps) {
+  const navigate = useNavigate();
+  const isBarter = formData.contractType === 'barter';
+  const categoryLabel = CATEGORIES.find(c => c.value === formData.category)?.label || '';
+
+  return (
+    <div className="space-y-6">
+      {/* Тип контракта */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Icon name="FileText" size={18} />
+            Тип договора
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              { value: 'forward', label: 'Форвардный контракт', desc: 'Поставка товара в будущем по фиксированной цене (ГК РФ ст. 454–524)', icon: 'TrendingUp' },
+              { value: 'barter', label: 'Договор на бартер (мену)', desc: 'Обмен товарами без денежного расчёта (ГК РФ ст. 567–571)', icon: 'ArrowLeftRight' },
+            ].map(opt => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => set('contractType', opt.value)}
+                className={`text-left p-4 rounded-lg border-2 transition-all ${formData.contractType === opt.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon name={opt.icon as 'TrendingUp'} size={16} className={formData.contractType === opt.value ? 'text-primary' : 'text-muted-foreground'} />
+                  <span className="font-semibold text-sm">{opt.label}</span>
+                  {formData.contractType === opt.value && <Badge variant="default" className="ml-auto text-xs">Выбран</Badge>}
+                </div>
+                <p className="text-xs text-muted-foreground">{opt.desc}</p>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Товар А */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Icon name="Package" size={18} />
+            {isBarter ? 'Товар А (ваш товар)' : 'Товар и условия поставки'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Название товара *</Label>
+              <Input
+                value={formData.productName}
+                onChange={e => handleProductNameChange(e.target.value)}
+                placeholder="Молоко цельное, пшеница 3 кл., кирпич М150..."
+              />
+              {formData.category && (
+                <p className="text-xs text-primary flex items-center gap-1">
+                  <Icon name="Sparkles" size={12} />
+                  Категория определена автоматически: {categoryLabel}
+                </p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label>Категория товара *</Label>
+              <Select value={formData.category} onValueChange={v => set('category', v)}>
+                <SelectTrigger><SelectValue placeholder="Выберите категорию" /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <Label>Количество *</Label>
+              <Input type="number" step="0.001" min="0" value={formData.quantity} onChange={e => set('quantity', e.target.value)} placeholder="100" />
+            </div>
+            <div className="space-y-1">
+              <Label>Единица</Label>
+              <Select value={formData.unit} onValueChange={v => set('unit', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            {!isBarter && (
+              <>
+                <div className="space-y-1">
+                  <Label>Цена за {formData.unit} (₽) *</Label>
+                  <Input type="number" step="0.01" min="0" value={formData.pricePerUnit} onChange={e => set('pricePerUnit', e.target.value)} placeholder="15000" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Итого (₽)</Label>
+                  <Input value={totalAmount ? totalAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : '0'} disabled />
+                </div>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Товар Б (только бартер) */}
+      {isBarter && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Icon name="PackageOpen" size={18} />
+              Товар Б (товар контрагента)
+            </CardTitle>
+            <CardDescription>Что вы получаете в обмен</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Название товара Б *</Label>
+                <Input
+                  value={formData.productNameB}
+                  onChange={e => handleProductNameBChange(e.target.value)}
+                  placeholder="Название товара для обмена..."
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Категория товара Б</Label>
+                <Select value={formData.categoryB} onValueChange={v => set('categoryB', v)}>
+                  <SelectTrigger><SelectValue placeholder="Выберите категорию" /></SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Количество Б *</Label>
+                <Input type="number" step="0.001" min="0" value={formData.quantityB} onChange={e => set('quantityB', e.target.value)} placeholder="100" />
+              </div>
+              <div className="space-y-1">
+                <Label>Единица Б</Label>
+                <Select value={formData.unitB} onValueChange={v => set('unitB', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label>Оценочная стоимость товара А (₽) — для раздела доплаты</Label>
+              <Input type="number" step="0.01" min="0" value={formData.pricePerUnit} onChange={e => set('pricePerUnit', e.target.value)} placeholder="500000" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Сроки */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Icon name="Calendar" size={18} />
+            Сроки
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <Label>Дата начала контракта</Label>
+              <Input type="date" value={formData.contractStartDate} onChange={e => set('contractStartDate', e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Дата поставки / обмена *</Label>
+              <Input type="date" value={formData.deliveryDate} onChange={e => set('deliveryDate', e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Дата окончания контракта</Label>
+              <Input type="date" value={formData.contractEndDate} onChange={e => set('contractEndDate', e.target.value)} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Доставка и оплата */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Icon name="Truck" size={18} />
+            Доставка и оплата
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>Адрес доставки</Label>
+              <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
+            </div>
+            <div className="space-y-1">
+              <Label>Способ доставки</Label>
+              <Select value={formData.deliveryMethod} onValueChange={v => set('deliveryMethod', v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="автомобильный транспорт">Автомобильный транспорт</SelectItem>
+                  <SelectItem value="железнодорожный транспорт">Железнодорожный транспорт</SelectItem>
+                  <SelectItem value="самовывоз">Самовывоз</SelectItem>
+                  <SelectItem value="авиатранспорт">Авиатранспорт</SelectItem>
+                  <SelectItem value="морской/речной транспорт">Морской / речной транспорт</SelectItem>
+                  <SelectItem value="смешанная перевозка">Смешанная перевозка</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {!isBarter && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label>Предоплата (%)</Label>
+                <Input type="number" step="1" min="0" max="100" value={formData.prepaymentPercent} onChange={e => set('prepaymentPercent', e.target.value)} placeholder="30" />
+              </div>
+              <div className="space-y-1">
+                <Label>Сумма предоплаты (₽)</Label>
+                <Input value={prepaymentAmount ? prepaymentAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : '0'} disabled />
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Контрагент */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Icon name="Users" size={18} />
+            Контрагент ({isBarter ? 'Сторона 2' : 'Покупатель'})
+          </CardTitle>
+          <CardDescription>Заполните, если контрагент уже известен. Можно оставить пустым — поля будут для ручного заполнения.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <Label>ФИО / Наименование</Label>
+              <Input value={formData.counterpartyName} onChange={e => set('counterpartyName', e.target.value)} placeholder="Иванов Иван Иванович / ООО «Ромашка»" />
+            </div>
+            <div className="space-y-1">
+              <Label>ИНН</Label>
+              <Input value={formData.counterpartyInn} onChange={e => set('counterpartyInn', e.target.value)} placeholder="123456789012" maxLength={12} />
+            </div>
+            <div className="space-y-1">
+              <Label>Организация</Label>
+              <Input value={formData.counterpartyCompany} onChange={e => set('counterpartyCompany', e.target.value)} placeholder="ООО «Компания»" />
+            </div>
+            <div className="space-y-1">
+              <Label>Город</Label>
+              <Input value={formData.counterpartyCity} onChange={e => set('counterpartyCity', e.target.value)} placeholder="Москва" />
+            </div>
+            <div className="space-y-1">
+              <Label>Телефон</Label>
+              <Input value={formData.counterpartyPhone} onChange={e => set('counterpartyPhone', e.target.value)} placeholder="+7 (900) 123-45-67" />
+            </div>
+            <div className="space-y-1">
+              <Label>Email</Label>
+              <Input type="email" value={formData.counterpartyEmail} onChange={e => set('counterpartyEmail', e.target.value)} placeholder="partner@example.com" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Доп. условия */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Icon name="ClipboardList" size={18} />
+            Название и дополнительные условия
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-1">
+            <Label>Название контракта (для «Моих контрактов»)</Label>
+            <Input value={formData.title} onChange={e => set('title', e.target.value)} placeholder="Например: Поставка молока, октябрь 2026" />
+          </div>
+          <div className="space-y-1">
+            <Label>Дополнительные условия (будут добавлены в контракт)</Label>
+            <Textarea value={formData.termsConditions} onChange={e => set('termsConditions', e.target.value)} rows={3} placeholder="Особые требования к качеству, упаковке, документации..." />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex gap-3 pb-4">
+        <Button onClick={onGenerate} disabled={isGenerating} className="flex-1">
+          {isGenerating ? (
+            <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Формирую документ...</>
+          ) : (
+            <><Icon name="FileDown" className="mr-2 h-4 w-4" />Сформировать контракт</>
+          )}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => navigate('/trading')}>Отмена</Button>
+      </div>
+    </div>
+  );
+}
