@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
-
+import { useToast } from '@/hooks/use-toast';
 import func2url from '../../../backend/func2url.json';
 
 const API_URL = func2url['auctions-list'];
