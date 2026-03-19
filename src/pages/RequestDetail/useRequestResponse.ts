@@ -95,14 +95,20 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
 
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-    const responseQuantity = parseFloat(formData.get('response-quantity') as string);
+    const isTransport = request.category === 'transport';
+    const responseQuantity = isTransport ? 1 : parseFloat(formData.get('response-quantity') as string);
     const priceValue = formData.get('response-price-value') as string || formData.get('response-price') as string;
-    const responsePrice = parseFloat(priceValue.replace(/\s/g, ''));
+    const responsePrice = parseFloat((priceValue || '0').replace(/\s/g, ''));
     const deliveryTime = parseInt(formData.get('response-delivery') as string);
     const comment = formData.get('response-comment') as string;
     const education = formData.get('response-education') as string;
+    const carType = formData.get('response-car-type') as string;
+    const departureTime = formData.get('response-departure-time') as string;
 
     const educationPart = education?.trim() ? `Образование: ${education.trim()}\n` : '';
+    const transportPart = isTransport
+      ? `Тип авто: ${carType || '—'}\nВремя выезда: ${departureTime || '—'}\n`
+      : '';
 
     const attachmentsInput = formData.get('response-attachments') as string;
     let attachments: { url: string; name: string }[] = [];
@@ -110,13 +116,17 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
       try { attachments = JSON.parse(attachmentsInput); } catch { /* ignore */ }
     }
 
+    const buyerComment = isTransport
+      ? `${transportPart}Комментарий: ${comment || ''}`.trim()
+      : `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`;
+
     try {
       if (existingResponse) {
         await ordersAPI.updateResponse(existingResponse.orderId, {
           editResponse: true,
           pricePerUnit: responsePrice,
           quantity: responseQuantity || 1,
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
+          buyerComment,
           attachments,
         });
 
@@ -124,7 +134,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
           ...existingResponse,
           pricePerUnit: responsePrice,
           quantity: responseQuantity || 1,
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
+          buyerComment,
           attachments,
         });
 
@@ -146,7 +156,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
           buyerName: `${session.firstName} ${session.lastName}`,
           buyerPhone: session.phone || '',
           buyerEmail: session.email || '',
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
+          buyerComment,
           attachments,
         };
 
@@ -156,7 +166,7 @@ export function useRequestResponse(request: Request | null, isAuthenticated: boo
           orderId: result.id,
           pricePerUnit: responsePrice,
           quantity: responseQuantity || 1,
-          buyerComment: `Срок поставки: ${deliveryTime} дней. ${educationPart}${comment || ''}`,
+          buyerComment,
           status: 'new',
           attachments,
         });

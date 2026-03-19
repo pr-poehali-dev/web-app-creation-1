@@ -60,6 +60,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
   const currentUser = getSession();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -71,7 +72,9 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
     videoPreview: string,
     imagePreviews: string[],
   ) => {
+    if (isSubmitting || submitted) return;
     setIsSubmitting(true);
+    setSubmitted(true);
 
     try {
       // Загружаем видео
@@ -122,6 +125,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
               variant: 'destructive',
             });
             setIsSubmitting(false);
+            setSubmitted(false);
             return;
           }
         }
@@ -189,6 +193,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
               variant: 'destructive',
             });
             setIsSubmitting(false);
+            setSubmitted(false);
             uploadFailed = true;
           }
         }
@@ -367,6 +372,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         errorMessage = `Нельзя установить количество меньше ${minAllowed} (уже продано: ${sold}, зарезервировано: ${reserved})`;
       }
       
+      setSubmitted(false);
       toast({
         title: 'Ошибка',
         description: errorMessage,
@@ -378,7 +384,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
   };
 
   return {
-    isSubmitting,
+    isSubmitting: isSubmitting || submitted,
     videoUploadProgress,
     isUploadingVideo,
     isUploadingImages,

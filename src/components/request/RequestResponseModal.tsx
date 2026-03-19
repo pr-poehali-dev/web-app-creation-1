@@ -13,6 +13,7 @@ import type { ExistingResponse } from '@/pages/RequestDetail/useRequestResponse'
 import type { UploadedFile } from './response-modal/types';
 import ServiceFormFields from './response-modal/ServiceFormFields';
 import GoodsFormFields from './response-modal/GoodsFormFields';
+import TransportFormFields from './response-modal/TransportFormFields';
 import FileAttachments from './response-modal/FileAttachments';
 
 interface RequestResponseModalProps {
@@ -39,6 +40,7 @@ export default function RequestResponseModal({
   existingResponse,
 }: RequestResponseModalProps) {
   const isService = category === 'utilities';
+  const isTransport = category === 'transport';
   const isEditMode = !!existingResponse;
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -49,6 +51,8 @@ export default function RequestResponseModal({
   const [uploadedDiploma, setUploadedDiploma] = useState<UploadedFile | null>(null);
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [uploadedCertificate, setUploadedCertificate] = useState<UploadedFile | null>(null);
+  const [carType, setCarType] = useState('');
+  const [departureTime, setDepartureTime] = useState('');
   
   useEffect(() => {
     if (isOpen && existingResponse) {
@@ -62,8 +66,10 @@ export default function RequestResponseModal({
       setDiplomaFile(null);
       setUploadedCertificate(ext.certificate || null);
       setCertificateFile(null);
+      setCarType('');
+      setDepartureTime('');
     } else if (isOpen && !existingResponse) {
-      const defaultPrice = isService ? budget : pricePerUnit;
+      const defaultPrice = isService ? budget : (isTransport ? undefined : pricePerUnit);
       setPriceValue(defaultPrice ? formatNumber(String(defaultPrice)) : '');
       setUploadedFiles([]);
       setNewFiles([]);
@@ -72,6 +78,8 @@ export default function RequestResponseModal({
       setDiplomaFile(null);
       setUploadedCertificate(null);
       setCertificateFile(null);
+      setCarType('');
+      setDepartureTime('');
     }
   }, [isOpen, existingResponse]);
   
@@ -193,6 +201,9 @@ export default function RequestResponseModal({
       if (isService) {
         setHiddenInput('response-education', education);
         setHiddenInput('response-diploma', JSON.stringify(diplomaData));
+      } else if (isTransport) {
+        setHiddenInput('response-car-type', carType);
+        setHiddenInput('response-departure-time', departureTime);
       } else {
         setHiddenInput('response-certificate', JSON.stringify(certificateData));
       }
@@ -235,6 +246,17 @@ export default function RequestResponseModal({
               onDiplomaChange={handleDiplomaChange}
               onRemoveUploadedDiploma={() => setUploadedDiploma(null)}
               onRemoveDiplomaFile={() => setDiplomaFile(null)}
+            />
+          ) : isTransport ? (
+            <TransportFormFields
+              isEditMode={isEditMode}
+              existingResponse={existingResponse}
+              priceValue={priceValue}
+              onPriceChange={handlePriceChange}
+              carType={carType}
+              onCarTypeChange={setCarType}
+              departureTime={departureTime}
+              onDepartureTimeChange={setDepartureTime}
             />
           ) : (
             <GoodsFormFields

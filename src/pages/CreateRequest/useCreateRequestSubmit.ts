@@ -44,6 +44,7 @@ export function useCreateRequestSubmit(
   const { toast } = useToast();
   const { addRequest } = useOffers();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const buildRequestData = () => {
     const isService = formData.category === 'utilities';
@@ -97,7 +98,9 @@ export function useCreateRequestSubmit(
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting || submitted) return;
     setIsSubmitting(true);
+    setSubmitted(true);
 
     try {
       const requestData = buildRequestData();
@@ -119,6 +122,7 @@ export function useCreateRequestSubmit(
       navigate('/zaprosy');
     } catch (error) {
       console.error('Ошибка создания запроса:', error);
+      setSubmitted(false);
       toast({
         title: 'Ошибка',
         description: error instanceof Error ? error.message : 'Не удалось создать запрос',
@@ -129,5 +133,5 @@ export function useCreateRequestSubmit(
     }
   };
 
-  return { isSubmitting, handleSubmit };
+  return { isSubmitting: isSubmitting || submitted, handleSubmit };
 }
