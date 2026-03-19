@@ -89,14 +89,18 @@ def handle_contact_exchange(event: Dict[str, Any], context: Any) -> Dict[str, An
             return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
 
         elif action == 'get':
-            role_to_fetch = 'seller' if is_winner else 'winner'
-            cur.execute(f"SELECT phone, email, address, preferred_time, notes, created_at FROM {S}.auction_contacts WHERE auction_id = '{aid}' AND role = '{role_to_fetch}'")
-            contact_row = cur.fetchone()
-
-            if not contact_row:
+            # Показываем контакты другой стороны прямо из профиля — без формы
+            contact_user_id = winner_id if is_seller else seller_id
+            cur.execute(f"""
+                SELECT phone, email,
+                       COALESCE(company_name, TRIM(CONCAT(first_name, ' ', last_name))) as name
+                FROM {S}.users WHERE id = {int(contact_user_id)}
+            """)
+            user_row = cur.fetchone()
+            if not user_row:
                 return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': None, 'sellerId': seller_id, 'winnerId': winner_id}), 'isBase64Encoded': False}
 
-            contacts = {'phone': contact_row[0], 'email': contact_row[1], 'address': contact_row[2], 'preferredTime': contact_row[3], 'notes': contact_row[4], 'submittedAt': contact_row[5].isoformat() if contact_row[5] else None}
+            contacts = {'phone': user_row[0] or '', 'email': user_row[1] or '', 'name': user_row[2] or ''}
             return {'statusCode': 200, 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}, 'body': json.dumps({'contacts': contacts, 'sellerId': seller_id, 'winnerId': winner_id}), 'isBase64Encoded': False}
 
         elif action == 'send_message':

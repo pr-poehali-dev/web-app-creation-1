@@ -1,12 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
-import { useToast } from '@/hooks/use-toast';
+
 import func2url from '../../../backend/func2url.json';
 
 const API_URL = func2url['auctions-list'];
@@ -137,11 +134,8 @@ export default function AuctionCompletionForm({
   isSeller,
   sellerName,
 }: AuctionCompletionFormProps) {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({ phone: '', email: '', address: '', preferredTime: '', notes: '' });
-  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const [contactsReceived, setContactsReceived] = useState<Record<string, string> | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [sellerId, setSellerId] = useState<number | null>(null);
 
@@ -149,7 +143,7 @@ export default function AuctionCompletionForm({
 
   useEffect(() => {
     const fetchContacts = async () => {
-      if (!currentUserId || contactsReceived || document.hidden) return;
+      if (!currentUserId || document.hidden) return;
       try {
         const res = await fetch(API_URL, {
           method: 'POST',
@@ -165,37 +159,7 @@ export default function AuctionCompletionForm({
     };
 
     fetchContacts();
-    const iv = setInterval(fetchContacts, 10000);
-    return () => clearInterval(iv);
-  }, [auctionId, contactsReceived, currentUserId]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    if (!currentUserId) {
-      toast({ title: 'Ошибка', description: 'Требуется авторизация', variant: 'destructive' });
-      setIsLoading(false);
-      return;
-    }
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUserId },
-        body: JSON.stringify({ action: 'submit', auctionId, ...formData, preferredTime: formData.preferredTime, notes: formData.notes }),
-      });
-      if (res.ok) {
-        setIsSubmitted(true);
-        toast({ title: 'Готово!', description: isWinner ? 'Ваши контакты отправлены продавцу' : 'Ваши контакты отправлены победителю' });
-      } else {
-        const err = await res.json();
-        toast({ title: 'Ошибка', description: err.error || 'Не удалось отправить', variant: 'destructive' });
-      }
-    } catch {
-      toast({ title: 'Ошибка', description: 'Нет соединения', variant: 'destructive' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [auctionId, currentUserId]);
 
   if (!isWinner && !isSeller) return null;
 
@@ -264,7 +228,7 @@ export default function AuctionCompletionForm({
         </Card>
       )}
 
-      {/* Блок контактов — показывается когда контрагент прислал свои данные */}
+      {/* Блок контактов — показывается сразу из профиля */}
       {contactsReceived && (
         <Card className="border-blue-500/50 bg-blue-50/50 dark:bg-blue-950/20">
           <CardHeader className="py-3">
@@ -274,6 +238,12 @@ export default function AuctionCompletionForm({
             </CardTitle>
           </CardHeader>
           <CardContent className="py-2 space-y-2">
+            {contactsReceived.name && (
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Icon name="User" className="h-4 w-4 text-muted-foreground" />
+                {contactsReceived.name}
+              </div>
+            )}
             {contactsReceived.phone && (
               <a href={`tel:${contactsReceived.phone}`} className="flex items-center gap-2 text-sm text-blue-600 hover:underline">
                 <Icon name="Phone" className="h-4 w-4 text-muted-foreground" />
@@ -286,99 +256,18 @@ export default function AuctionCompletionForm({
                 {contactsReceived.email}
               </a>
             )}
-            {contactsReceived.address && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Icon name="MapPin" className="h-4 w-4 mt-0.5 shrink-0" />
-                <span>{contactsReceived.address}</span>
-              </div>
-            )}
-            {contactsReceived.preferredTime && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Icon name="Clock" className="h-4 w-4" />
-                <span>{contactsReceived.preferredTime}</span>
-              </div>
-            )}
-            {contactsReceived.notes && (
-              <div className="flex items-start gap-2 text-sm text-muted-foreground pt-2 border-t">
-                <Icon name="MessageSquare" className="h-4 w-4 mt-0.5" />
-                <span>{contactsReceived.notes}</span>
-              </div>
+            {!contactsReceived.phone && !contactsReceived.email && (
+              <p className="text-xs text-muted-foreground">Контактные данные не указаны в профиле</p>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Форма отправки своих контактов — если ещё не отправил */}
-      {!isSubmitted && !contactsReceived && (
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Icon name="Contact" className="h-4 w-4 text-primary" />
-              {isWinner ? 'Укажите ваши контакты для продавца' : 'Укажите контакты для связи с победителем'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="py-3">
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Телефон *</Label>
-                  <Input
-                    value={formData.phone}
-                    onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))}
-                    placeholder="+7 (XXX) XXX-XX-XX"
-                    required
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Email</Label>
-                  <Input
-                    value={formData.email}
-                    onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
-                    placeholder="email@example.com"
-                    type="email"
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Адрес{isWinner ? ' для забора товара' : ''}</Label>
-                <Input
-                  value={formData.address}
-                  onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
-                  placeholder="Укажите адрес"
-                  className="h-8 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Комментарий</Label>
-                <Textarea
-                  value={formData.notes}
-                  onChange={e => setFormData(p => ({ ...p, notes: e.target.value }))}
-                  placeholder="Удобное время, пожелания..."
-                  rows={2}
-                  className="text-sm resize-none"
-                />
-              </div>
-              <Button type="submit" disabled={isLoading || !formData.phone} className="w-full" size="sm">
-                {isLoading
-                  ? <Icon name="Loader2" className="h-4 w-4 animate-spin mr-2" />
-                  : <Icon name="Send" className="h-4 w-4 mr-2" />}
-                Отправить контакты
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      )}
-
-      {isSubmitted && !contactsReceived && (
-        <Card className="border-green-500/50 bg-green-50/50">
-          <CardContent className="py-4 text-center space-y-2">
-            <Icon name="CheckCircle" className="h-8 w-8 text-green-600 mx-auto" />
-            <p className="text-sm font-medium">Контакты отправлены</p>
-            <p className="text-xs text-muted-foreground">
-              {isWinner ? 'Ожидайте — продавец скоро свяжется с вами' : 'Победитель получил ваши контакты'}
-            </p>
+      {/* Контакты загружаются */}
+      {!contactsReceived && (
+        <Card className="border-muted">
+          <CardContent className="py-4 text-center">
+            <Icon name="Loader2" className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
           </CardContent>
         </Card>
       )}
