@@ -891,24 +891,15 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
 
         # Если это отклик на запрос (is_request) и был принят — возвращаем запрос в active
         if current_status == 'accepted':
-            try:
-                offer_id_str = str(order['offer_id'])
-                cur.execute(
-                    pgsql.SQL("SELECT id FROM {schema}.requests WHERE id = %s").format(schema=pgsql.Identifier(schema)),
-                    (offer_id_str,)
-                )
-                if cur.fetchone():
-                    cur.execute(
-                        pgsql.SQL("""
-                            UPDATE {schema}.requests
-                            SET status = 'active', updated_at = NOW()
-                            WHERE id = %s AND status = 'closed'
-                        """).format(schema=pgsql.Identifier(schema)),
-                        (offer_id_str,)
-                    )
-                    print(f"[CANCEL_ORDER] Request {offer_id_str} returned to active after accepted order cancelled")
-            except Exception as re_err:
-                print(f"[CANCEL_ORDER] Could not restore request status: {re_err}")
+            offer_id_str = str(order['offer_id']).replace("'", "''")
+            cur.execute(f"SELECT id FROM {schema}.requests WHERE id = '{offer_id_str}'")
+            if cur.fetchone():
+                cur.execute(f"""
+                    UPDATE {schema}.requests
+                    SET status = 'active', updated_at = NOW()
+                    WHERE id = '{offer_id_str}' AND status = 'closed'
+                """)
+                print(f"[CANCEL_ORDER] Request {offer_id_str} returned to active after accepted order cancelled")
 
         cancelled_by_str = 'seller' if is_seller else 'buyer'
 
