@@ -233,9 +233,10 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
               <p className="text-muted-foreground">Причина отмены</p>
               <p className="font-medium text-red-600">
                 ❌ {(() => {
+                  const iAmSeller = order.type === 'sale';
                   const cancelledByMe =
-                    (isSeller && order.cancelledBy === 'seller') ||
-                    (!isSeller && order.cancelledBy === 'buyer');
+                    (iAmSeller && order.cancelledBy === 'seller') ||
+                    (!iAmSeller && order.cancelledBy === 'buyer');
                   if (cancelledByMe) return 'Отменено вами';
                   if (order.isRequest) {
                     return order.cancelledBy === 'buyer' ? 'Отменено исполнителем' : 'Отменено заказчиком';

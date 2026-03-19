@@ -138,8 +138,8 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                 if (cancelledByMe) return 'Отменено вами';
                 if (order.isRequest) {
                   return order.cancelledBy === 'buyer'
-                    ? 'Отменено заказчиком'
-                    : 'Отменено исполнителем';
+                    ? 'Отменено исполнителем'
+                    : 'Отменено заказчиком';
                 }
                 if (isFreightTransport || isPassengerTransport) {
                   return order.cancelledBy === 'seller'
