@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { checkAccessPermission } from '@/utils/permissions';
-import { getSession, saveSession, getJwtToken } from '@/utils/auth';
+import { getSession, saveSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
 import { dataSync } from '@/utils/dataSync';
 import {
@@ -81,19 +81,15 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     }
 
     const syncSession = async () => {
-      const token = getJwtToken();
-      if (!token) return;
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
       try {
-        const res = await fetch(func2url.auth, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ action: 'get_me' }),
+        const res = await fetch(func2url['verification-status'], {
+          headers: { 'X-User-Id': userId },
         });
         const data = await res.json();
-        if (data.success && data.user) {
-          const updated = { ...getSession(), ...{
-            verificationStatus: data.user.verification_status,
-          }};
+        if (data.verification_status) {
+          const updated = { ...getSession(), verificationStatus: data.verification_status };
           saveSession(updated);
           setCurrentUser(updated);
         }
@@ -189,17 +185,15 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const handleCreateContract = async () => {
     let verificationStatus = currentUser?.verificationStatus;
     
-    const token = getJwtToken();
-    if (token) {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
       try {
-        const res = await fetch(func2url.auth, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ action: 'get_me' }),
+        const res = await fetch(func2url['verification-status'], {
+          headers: { 'X-User-Id': userId },
         });
         const data = await res.json();
-        if (data.success && data.user) {
-          verificationStatus = data.user.verification_status;
+        if (data.verification_status) {
+          verificationStatus = data.verification_status;
           const updated = { ...getSession(), verificationStatus };
           saveSession(updated);
           setCurrentUser(updated);
