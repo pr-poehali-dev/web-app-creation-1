@@ -110,7 +110,15 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
                   <p className="text-sm text-muted-foreground">Вы уверены, что хотите отменить заказ? Укажите причину (необязательно).</p>
                 </div>
               ) : (
-                <span>Вы уверены, что хотите отменить этот заказ? Укажите причину отмены (необязательно).</span>
+                <div className="space-y-3">
+                  {order.status === 'accepted' && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                      <Icon name="AlertTriangle" className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-amber-800">Отмена принятого заказа понизит ваш рейтинг надёжности.</p>
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">Вы уверены, что хотите отменить этот заказ? Укажите причину отмены (необязательно).</p>
+                </div>
               )}
             </DialogDescription>
           </DialogHeader>
