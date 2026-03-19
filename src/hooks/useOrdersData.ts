@@ -285,7 +285,7 @@ export function useOrdersData(
   // Удалено: этот effect вызывал постоянные перерисовки модалки
   // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
 
-  // Периодическое обновление всех заказов каждые 30 секунд (optimistic updates уже мгновенные)
+  // Периодическое обновление всех заказов каждые 10 секунд (optimistic updates уже мгновенные)
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -293,7 +293,7 @@ export function useOrdersData(
 
     const intervalId = setInterval(() => {
       loadOrders(false);
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
