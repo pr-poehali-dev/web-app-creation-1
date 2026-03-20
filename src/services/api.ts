@@ -433,14 +433,14 @@ export const offersAPI = {
     return this.uploadMedia(videoBase64);
   },
 
-  async uploadVideoPresigned(file: File, _folder = 'offer-videos'): Promise<string> {
+  async uploadVideoPresigned(file: File, folder = 'offer-videos'): Promise<string> {
     const contentType = file.type || 'video/mp4';
     const rawName = file.name || '';
     const ext = rawName.includes('.') ? rawName.split('.').pop() || 'mp4' : 'mp4';
     const filename = rawName || `video.${ext}`;
-    const apiUrl = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(filename)}&ct=${encodeURIComponent(contentType)}`;
+    const CHUNK = 4 * 1024 * 1024; // 4 MB
 
-    // Читаем через FileReader для совместимости с iOS медиатекой
+    // Читаем файл через FileReader (совместимость с iOS медиатекой)
     const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as ArrayBuffer);
@@ -448,21 +448,57 @@ export const offersAPI = {
       reader.readAsArrayBuffer(file);
     });
 
-    const resp = await fetch(apiUrl, {
+    // 1. Инициализируем multipart upload
+    const initResp = await fetch(`${GET_UPLOAD_URL_API}?action=init`, {
       method: 'POST',
-      headers: { 'Content-Type': contentType },
-      body: buffer,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename, contentType, folder }),
     });
+    if (!initResp.ok) throw new Error(`Ошибка инициализации загрузки: ${initResp.status}`);
+    const { uploadId, key, fileUrl } = await initResp.json();
 
-    if (!resp.ok) {
-      let msg = `Ошибка ${resp.status}`;
-      try { const e = await resp.json(); msg = e.error || msg; } catch (_e) { /* ignore */ }
-      throw new Error(msg);
+    // 2. Загружаем чанки по 4 МБ
+    const parts: { partNumber: number; etag: string }[] = [];
+    const totalChunks = Math.ceil(buffer.byteLength / CHUNK);
+
+    try {
+      for (let i = 0; i < totalChunks; i++) {
+        const chunk = buffer.slice(i * CHUNK, (i + 1) * CHUNK);
+        // Конвертируем в base64 (безопасно для больших чанков)
+        const bytes = new Uint8Array(chunk);
+        let binary = '';
+        for (let j = 0; j < bytes.byteLength; j++) binary += String.fromCharCode(bytes[j]);
+        const b64 = btoa(binary);
+
+        const partResp = await fetch(`${GET_UPLOAD_URL_API}?action=part`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: b64 }),
+        });
+        if (!partResp.ok) throw new Error(`Ошибка загрузки части ${i + 1}: ${partResp.status}`);
+        const { etag } = await partResp.json();
+        parts.push({ partNumber: i + 1, etag });
+      }
+
+      // 3. Завершаем загрузку
+      const completeResp = await fetch(`${GET_UPLOAD_URL_API}?action=complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, uploadId, parts, fileUrl }),
+      });
+      if (!completeResp.ok) throw new Error(`Ошибка завершения загрузки: ${completeResp.status}`);
+      const result = await completeResp.json();
+      return result.url;
+
+    } catch (err) {
+      // Отменяем незавершённую загрузку
+      fetch(`${GET_UPLOAD_URL_API}?action=abort`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, uploadId }),
+      }).catch(() => {});
+      throw err;
     }
-
-    const result = await resp.json();
-    if (!result.url) throw new Error(`Нет URL в ответе: ${JSON.stringify(result)}`);
-    return result.url;
   },
 
   async getAdminOffers(params?: {
