@@ -315,8 +315,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    if (file.size > 100 * 1024 * 1024) {
-      toast({ title: 'Ошибка', description: 'Видео слишком большое. Максимум 100 МБ', variant: 'destructive' });
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ title: 'Ошибка', description: `Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 50 МБ`, variant: 'destructive' });
       return;
     }
 

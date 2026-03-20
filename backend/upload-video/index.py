@@ -454,6 +454,8 @@ def upload_media(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             elif 'video/webm' in header:
                 content_type = 'video/webm'
                 extension = 'webm'
+            else:
+                extension = 'mp4'
         else:
             content_type = 'image/jpeg'
             extension = 'jpg'
