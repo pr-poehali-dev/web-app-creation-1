@@ -54,9 +54,9 @@ class DataSyncManager {
       try {
         const event: SyncEvent = JSON.parse(eventsStr);
         if (event.timestamp > this.lastCheck) {
-
-          this.notifyListeners(event.type);
           this.lastCheck = event.timestamp;
+          localStorage.removeItem(SYNC_KEY);
+          this.notifyListeners(event.type);
         }
       } catch (error) {
         console.error('Error checking sync:', error);

@@ -102,19 +102,16 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     syncSession();
     loadContracts();
     
-    const unsubscribe = dataSync.subscribe('contract_updated', () => {
-      console.log('Contract updated, reloading contracts...');
-      loadContracts();
-    });
+    const unsubscribe = dataSync.subscribe('contract_updated', () => loadContracts(false));
     
     return () => {
       unsubscribe();
     };
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
 
-  const loadContracts = async () => {
+  const loadContracts = async (showSpinner = true) => {
     try {
-      setLoading(true);
+      if (showSpinner) setLoading(true);
       const userId = localStorage.getItem('userId');
       
       const response = await fetch(`${func2url['contracts-list']}?status=open`, {
@@ -128,13 +125,9 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
         setContracts(data.contracts || []);
       }
     } catch (error) {
-      toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить контракты',
-        variant: 'destructive',
-      });
+      console.error('Failed to load contracts:', error);
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
     }
   };
 
