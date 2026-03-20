@@ -1,14 +1,19 @@
 {
   "tests": [
     {
-      "name": "Get contracts list",
+      "name": "Get all contracts",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"contracts": "array", "total": "number"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get contracts by status",
       "method": "GET",
       "path": "/?status=open",
       "expectedStatus": 200,
-      "expectedBody": {
-        "contracts": "array",
-        "total": "number"
-      },
+      "expectedBody": {"contracts": "array", "total": "number"},
       "bodyMatcher": "partial"
     }
   ]

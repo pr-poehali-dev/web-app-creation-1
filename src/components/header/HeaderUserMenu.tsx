@@ -107,6 +107,10 @@ export default function HeaderUserMenu({
           <Icon name="Gavel" className="mr-2 h-4 w-4" />
           Мои аукционы
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/my-contracts')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="FileSignature" className="mr-2 h-4 w-4" />
+          Мои контракты
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/my-reviews')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Star" className="mr-2 h-4 w-4" />
           Мои отзывы
