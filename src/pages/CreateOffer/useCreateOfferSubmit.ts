@@ -218,7 +218,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
         subcategory: formData.subcategory,
         quantity: formData.category === 'transport'
           ? (Number(formData.transportCapacity) || 0)
-          : 1,
+          : (Number(formData.quantity) || 0),
         minOrderQuantity: formData.minOrderQuantity ? Number(formData.minOrderQuantity) : undefined,
         unit: isAutoSale ? 'шт' : formData.unit,
         pricePerUnit: Number(formData.pricePerUnit),

@@ -7,6 +7,7 @@ import { DISTRICTS } from '@/data/districts';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { notifyOfferUpdated } from '@/utils/dataSync';
+import { SmartCache, markDataAsUpdated } from '@/utils/smartCache';
 import OfferImageGallery from './OfferImageGallery';
 import OfferImageSortable from './OfferImageSortable';
 import OfferInfoFields from './OfferInfoFields';
@@ -162,6 +163,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       } as Parameters<typeof offersAPI.updateOffer>[1]);
 
       localStorage.removeItem('cached_offers');
+      SmartCache.invalidate('offers_list');
+      markDataAsUpdated('offers');
       notifyOfferUpdated(offer.id);
       if (onDataChanged) onDataChanged();
 
