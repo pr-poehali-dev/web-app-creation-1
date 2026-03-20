@@ -429,8 +429,43 @@ def upload_media(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     media_data_url = body['video']
     is_auto_photo = bool(body.get('isAutoPhoto', False))
 
-    is_video = media_data_url.startswith('data:video')
-    is_image = media_data_url.startswith('data:image')
+    VIDEO_MIME_TYPES = {
+        'video/mp4': 'mp4',
+        'video/quicktime': 'mov',
+        'video/mov': 'mov',
+        'video/webm': 'webm',
+        'video/avi': 'avi',
+        'video/x-msvideo': 'avi',
+        'video/x-matroska': 'mkv',
+        'video/mkv': 'mkv',
+        'video/3gpp': '3gp',
+        'video/3gpp2': '3g2',
+        'video/ogg': 'ogv',
+        'video/mpeg': 'mpeg',
+        'video/x-m4v': 'm4v',
+        'video/m4v': 'm4v',
+        'video/ts': 'ts',
+        'video/x-flv': 'flv',
+        'video/hevc': 'mp4',
+        'video/x-ms-wmv': 'wmv',
+    }
+
+    header_part = media_data_url.split(',', 1)[0].lower() if ',' in media_data_url else ''
+    detected_mime = ''
+    for mime in VIDEO_MIME_TYPES:
+        if mime in header_part:
+            detected_mime = mime
+            break
+
+    is_video = media_data_url.startswith('data:video') or bool(detected_mime)
+    # application/octet-stream с расширением видео — тоже видео
+    if not is_video and 'application/octet-stream' in header_part:
+        filename = body.get('filename', '')
+        video_exts = ('.mp4', '.mov', '.avi', '.mkv', '.webm', '.3gp', '.m4v', '.mpeg', '.mpg', '.flv', '.wmv', '.ts')
+        if any(filename.lower().endswith(ext) for ext in video_exts):
+            is_video = True
+
+    is_image = not is_video and media_data_url.startswith('data:image')
 
     if not is_video and not is_image:
         return {
@@ -445,16 +480,18 @@ def upload_media(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         media_data = base64.b64decode(base64_data)
 
         if is_video:
-            content_type = 'video/mp4'
-            extension = 'mp4'
             folder = 'offer-videos'
-            if 'video/quicktime' in header or 'video/mov' in header:
+            if detected_mime and detected_mime in VIDEO_MIME_TYPES:
+                content_type = detected_mime
+                extension = VIDEO_MIME_TYPES[detected_mime]
+            elif 'video/quicktime' in header or 'video/mov' in header:
                 content_type = 'video/quicktime'
                 extension = 'mov'
             elif 'video/webm' in header:
                 content_type = 'video/webm'
                 extension = 'webm'
             else:
+                content_type = 'video/mp4'
                 extension = 'mp4'
         else:
             content_type = 'image/jpeg'
