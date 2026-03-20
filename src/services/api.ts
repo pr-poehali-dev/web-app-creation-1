@@ -11,6 +11,7 @@ const AUCTIONS_LIST_API = func2url['auctions-list'];
 const AUCTIONS_MY_API = func2url['auctions-my'];
 const AUCTIONS_UPDATE_API = func2url['auctions-update'];
 const UPLOAD_VIDEO_API = func2url['upload-video'];
+const GET_UPLOAD_URL_API = func2url['get-upload-url'];
 const CONTENT_MANAGEMENT_API = func2url['content-management'];
 const REVIEWS_API = func2url.reviews;
 const ARCHIVE_EXPIRED_API = func2url['archive-expired'];
@@ -430,6 +431,25 @@ export const offersAPI = {
   // Алиас для обратной совместимости
   async uploadVideo(videoBase64: string): Promise<{ url: string; message: string }> {
     return this.uploadMedia(videoBase64);
+  },
+
+  async uploadVideoPresigned(file: File, folder = 'offer-videos'): Promise<string> {
+    const urlResp = await fetch(GET_UPLOAD_URL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: file.name, contentType: file.type || 'video/mp4', folder }),
+    });
+    if (!urlResp.ok) throw new Error('Не удалось получить URL для загрузки');
+    const { uploadUrl, fileUrl } = await urlResp.json();
+
+    const uploadResp = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'video/mp4' },
+      body: file,
+    });
+    if (!uploadResp.ok) throw new Error('Не удалось загрузить видео в хранилище');
+
+    return fileUrl;
   },
 
   async getAdminOffers(params?: {

@@ -315,32 +315,22 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     if (!files || files.length === 0) return;
 
     const file = files[0];
-    if (file.size > 100 * 1024 * 1024) {
-      toast({ title: 'Ошибка', description: `Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 100 МБ`, variant: 'destructive' });
+    if (file.size > 500 * 1024 * 1024) {
+      toast({ title: 'Ошибка', description: `Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 500 МБ`, variant: 'destructive' });
       return;
     }
 
     setIsUploadingVideo(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        try {
-          const base64 = ev.target?.result as string;
-          const result = await offersAPI.uploadMedia(base64);
-          setVideo({ id: Date.now().toString(), url: result.url });
-          toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });
-        } catch (err) {
-          console.error('Video upload error:', err);
-          toast({ title: 'Ошибка', description: 'Не удалось загрузить видео', variant: 'destructive' });
-        } finally {
-          setIsUploadingVideo(false);
-          if (e.target) e.target.value = '';
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      setIsUploadingVideo(false);
+      const url = await offersAPI.uploadVideoPresigned(file);
+      setVideo({ id: Date.now().toString(), url });
+      toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });
+    } catch (err) {
+      console.error('Video upload error:', err);
       toast({ title: 'Ошибка', description: 'Не удалось загрузить видео', variant: 'destructive' });
+    } finally {
+      setIsUploadingVideo(false);
+      if (e.target) e.target.value = '';
     }
   };
 

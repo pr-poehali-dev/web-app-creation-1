@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "name": "Generate presigned upload URL",
+      "method": "POST",
+      "path": "/",
+      "body": { "filename": "test.mp4", "contentType": "video/mp4", "folder": "offer-videos" },
+      "expectedStatus": 200,
+      "expectedBody": { "uploadUrl": "string", "fileUrl": "string", "key": "string" },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
