@@ -438,10 +438,13 @@ export const offersAPI = {
     const ext = file.name.includes('.') ? file.name.split('.').pop() : 'mp4';
     const url = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(file.name || `video.${ext}`)}&ct=${encodeURIComponent(contentType)}`;
 
+    // Читаем файл как ArrayBuffer для надёжной передачи на iOS
+    const buffer = await file.arrayBuffer();
+
     const resp = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': contentType },
-      body: file,
+      body: buffer,
     });
 
     if (!resp.ok) {
