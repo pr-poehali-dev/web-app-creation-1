@@ -470,14 +470,14 @@ def upload_media(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
                 content_type = 'image/gif'
                 extension = 'gif'
 
-        max_size = 50 * 1024 * 1024 if is_video else 10 * 1024 * 1024
+        max_size = 100 * 1024 * 1024 if is_video else 10 * 1024 * 1024
         if len(media_data) > max_size:
             return {
                 'statusCode': 400,
                 'headers': headers,
                 'body': json.dumps({
                     'error': f'{"Video" if is_video else "Image"} too large',
-                    'maxSize': f'{"50" if is_video else "10"} MB',
+                    'maxSize': f'{"100" if is_video else "10"} MB',
                     'actualSize': f'{len(media_data) / 1024 / 1024:.1f} MB'
                 }),
                 'isBase64Encoded': False
