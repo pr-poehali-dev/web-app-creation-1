@@ -9,10 +9,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import { checkAccessPermission } from '@/utils/permissions';
+
 import { getSession, saveSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
-import { dataSync } from '@/utils/dataSync';
+
 import {
   Dialog,
   DialogContent,
@@ -58,13 +58,6 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const navigate = useNavigate();
   useScrollToTop();
   const { toast } = useToast();
-  const accessCheck = checkAccessPermission(isAuthenticated, 'contracts');
-
-  useEffect(() => {
-    if (!accessCheck.allowed) {
-      navigate('/');
-    }
-  }, [accessCheck.allowed, navigate]);
   
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,52 +67,13 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [currentUser, setCurrentUser] = useState(getSession());
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-
-    const syncSession = async () => {
-      const userId = localStorage.getItem('userId');
-      if (!userId) return;
-      try {
-        const res = await fetch(func2url['verification-status'], {
-          headers: { 'X-User-Id': userId },
-        });
-        const data = await res.json();
-        const status = data.verificationStatus || data.verification_status;
-        if (status) {
-          const updated = { ...getSession(), verificationStatus: status };
-          saveSession(updated);
-          setCurrentUser(updated);
-        }
-      } catch (e) {
-        console.error('Session sync error:', e);
-      }
-    };
-
-    syncSession();
-    loadContracts();
-    
-    const unsubscribe = dataSync.subscribe('contract_updated', () => loadContracts(false));
-    
-    return () => {
-      unsubscribe();
-    };
-  }, [isAuthenticated]);
-
-  const loadContracts = async (showSpinner = true) => {
+  const loadContracts = async () => {
     try {
-      if (showSpinner) setLoading(true);
+      setLoading(true);
       const userId = localStorage.getItem('userId');
-      
       const response = await fetch(`${func2url['contracts-list']}?status=open`, {
-        headers: {
-          'X-User-Id': userId || '',
-        },
+        headers: { 'X-User-Id': userId || '' },
       });
-
       if (response.ok) {
         const data = await response.json();
         setContracts(data.contracts || []);
@@ -127,9 +81,17 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     } catch (error) {
       console.error('Failed to load contracts:', error);
     } finally {
-      if (showSpinner) setLoading(false);
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    loadContracts();
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getContractTypeLabel = (type: string) => {
     return 'Форвард';
