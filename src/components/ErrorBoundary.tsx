@@ -30,18 +30,20 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({ error, errorInfo });
     
-    // Автоматическая перезагрузка при ошибках хуков React — только один раз
-    const isHookError = error.message && (
-      error.message.includes('Cannot read properties of null') ||
-      error.message.includes('Invalid hook call') ||
-      error.message.includes('Hooks can only be called')
+    const msg = error?.message || '';
+    
+    // Пустой объект {} — Radix UI / сторонние библиотеки бросают не-Error
+    const isEmptyError = !msg && (!error || Object.keys(error).length === 0);
+    
+    const isHookError = msg && (
+      msg.includes('Cannot read properties of null') ||
+      msg.includes('Invalid hook call') ||
+      msg.includes('Hooks can only be called')
     );
     
-    if (isHookError) {
-      // Защита от бесконечного цикла перезагрузок
+    if (isHookError || isEmptyError) {
       const hasAlreadyReloaded = sessionStorage.getItem('eb_reloaded') === '1';
       if (!hasAlreadyReloaded) {
-
         sessionStorage.setItem('eb_reloaded', '1');
         this.setState({ isReloading: true });
         setTimeout(() => {
