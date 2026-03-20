@@ -116,7 +116,7 @@ export default function OfferImageGallery({
                 type="file"
                 accept="image/*"
                 onChange={onUpload}
-                className="hidden"
+                style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
                 id="image-upload"
               />
               <Button
@@ -143,7 +143,7 @@ export default function OfferImageGallery({
             type="file"
             accept="video/*"
             onChange={onVideoUpload}
-            className="hidden"
+            style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
             id="video-upload"
           />
           {video ? (
