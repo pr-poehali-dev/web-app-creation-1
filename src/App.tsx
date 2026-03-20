@@ -143,7 +143,7 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!getSession());
 
   useEffect(() => {
     // Быстрая проверка сессии без лишних операций
