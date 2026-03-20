@@ -10,11 +10,12 @@ interface ProductMediaGalleryProps {
   productName: string;
 }
 
-export default function ProductMediaGallery({ images = [], videoUrl, productName }: ProductMediaGalleryProps) {
+export default function ProductMediaGallery({ images, videoUrl, productName }: ProductMediaGalleryProps) {
+  const safeImages = images ?? [];
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [showVideo, setShowVideo] = useState(false);
 
-  if (!images.length && !videoUrl) {
+  if (!safeImages.length && !videoUrl) {
     return (
       <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
         <Icon name="ImageOff" className="h-12 w-12 text-muted-foreground" />
@@ -22,22 +23,21 @@ export default function ProductMediaGallery({ images = [], videoUrl, productName
     );
   }
 
-  const mainMedia = images[0] || videoUrl;
-  const hasMultipleImages = images.length > 1;
+  const hasMultipleImages = safeImages.length > 1;
 
   return (
     <>
       <div className="space-y-2">
         <div className="relative group cursor-pointer" onClick={() => {
-          if (images[0]) {
+          if (safeImages[0]) {
             setSelectedImageIndex(0);
           } else if (videoUrl) {
             setShowVideo(true);
           }
         }}>
-          {images[0] ? (
+          {safeImages[0] ? (
             <img
-              src={images[0]}
+              src={safeImages[0]}
               alt={productName}
               className="w-full h-48 object-cover rounded-lg"
             />
@@ -56,14 +56,14 @@ export default function ProductMediaGallery({ images = [], videoUrl, productName
           {hasMultipleImages && (
             <Badge className="absolute top-2 right-2 bg-black/70">
               <Icon name="Images" className="h-3 w-3 mr-1" />
-              {images.length}
+              {safeImages.length}
             </Badge>
           )}
         </div>
 
         {hasMultipleImages && (
           <div className="grid grid-cols-4 gap-2">
-            {images.slice(1, 5).map((image, index) => (
+            {safeImages.slice(1, 5).map((image, index) => (
               <div
                 key={index}
                 className="relative cursor-pointer group"
@@ -74,9 +74,9 @@ export default function ProductMediaGallery({ images = [], videoUrl, productName
                   alt={`${productName} ${index + 2}`}
                   className="w-full h-16 object-cover rounded-md"
                 />
-                {index === 3 && images.length > 5 && (
+                {index === 3 && safeImages.length > 5 && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
-                    <span className="text-white font-semibold">+{images.length - 5}</span>
+                    <span className="text-white font-semibold">+{safeImages.length - 5}</span>
                   </div>
                 )}
               </div>
@@ -84,7 +84,7 @@ export default function ProductMediaGallery({ images = [], videoUrl, productName
           </div>
         )}
 
-        {videoUrl && images.length > 0 && (
+        {videoUrl && safeImages.length > 0 && (
           <Button
             variant="outline"
             size="sm"
@@ -102,12 +102,12 @@ export default function ProductMediaGallery({ images = [], videoUrl, productName
           <DialogContent className="max-w-4xl">
             <div className="relative">
               <img
-                src={images[selectedImageIndex]}
+                src={safeImages[selectedImageIndex]}
                 alt={`${productName} ${selectedImageIndex + 1}`}
                 className="w-full h-auto max-h-[80vh] object-contain"
               />
               
-              {images.length > 1 && (
+              {safeImages.length > 1 && (
                 <div className="absolute top-1/2 -translate-y-1/2 left-2 right-2 flex justify-between">
                   <Button
                     variant="secondary"
@@ -120,8 +120,8 @@ export default function ProductMediaGallery({ images = [], videoUrl, productName
                   <Button
                     variant="secondary"
                     size="icon"
-                    onClick={() => setSelectedImageIndex(Math.min(images.length - 1, selectedImageIndex + 1))}
-                    disabled={selectedImageIndex === images.length - 1}
+                    onClick={() => setSelectedImageIndex(Math.min(safeImages.length - 1, selectedImageIndex + 1))}
+                    disabled={selectedImageIndex === safeImages.length - 1}
                   >
                     <Icon name="ChevronRight" className="h-6 w-6" />
                   </Button>
@@ -129,7 +129,7 @@ export default function ProductMediaGallery({ images = [], videoUrl, productName
               )}
 
               <div className="mt-4 text-center text-sm text-muted-foreground">
-                {selectedImageIndex + 1} / {images.length}
+                {selectedImageIndex + 1} / {safeImages.length}
               </div>
             </div>
           </DialogContent>
