@@ -192,18 +192,32 @@ export default function ContractFormFields({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-4">
             <div className="space-y-1">
               <Label>Дата начала контракта</Label>
               <Input type="date" value={formData.contractStartDate} onChange={e => set('contractStartDate', e.target.value)} />
             </div>
-            <div className="space-y-1">
-              <Label>Дата поставки / обмена *</Label>
-              <Input type="date" value={formData.deliveryDate} onChange={e => set('deliveryDate', e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>Дата окончания контракта</Label>
-              <Input type="date" value={formData.contractEndDate} onChange={e => set('contractEndDate', e.target.value)} />
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                Период поставки *
+                <span className="text-xs text-muted-foreground font-normal">(конечная дата = дата окончания контракта)</span>
+              </Label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 space-y-1">
+                  <span className="text-xs text-muted-foreground">Начало</span>
+                  <Input type="date" value={formData.deliveryDate} onChange={e => set('deliveryDate', e.target.value)} />
+                </div>
+                <Icon name="ArrowRight" size={16} className="text-muted-foreground mt-5 shrink-0" />
+                <div className="flex-1 space-y-1">
+                  <span className="text-xs text-muted-foreground">Конец (дата окончания контракта)</span>
+                  <Input
+                    type="date"
+                    value={formData.contractEndDate}
+                    min={formData.deliveryDate || undefined}
+                    onChange={e => set('contractEndDate', e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
