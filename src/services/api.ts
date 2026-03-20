@@ -445,12 +445,13 @@ export const offersAPI = {
     });
 
     if (!resp.ok) {
-      let msg = 'Не удалось загрузить видео';
+      let msg = `Ошибка ${resp.status}`;
       try { const e = await resp.json(); msg = e.error || msg; } catch (_e) { /* ignore */ }
       throw new Error(msg);
     }
 
     const result = await resp.json();
+    if (!result.url) throw new Error(`Нет URL в ответе: ${JSON.stringify(result)}`);
     return result.url;
   },
 
