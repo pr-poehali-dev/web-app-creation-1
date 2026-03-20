@@ -435,13 +435,20 @@ export const offersAPI = {
 
   async uploadVideoPresigned(file: File, _folder = 'offer-videos'): Promise<string> {
     const contentType = file.type || 'video/mp4';
-    const ext = file.name.includes('.') ? file.name.split('.').pop() : 'mp4';
-    const url = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(file.name || `video.${ext}`)}&ct=${encodeURIComponent(contentType)}`;
+    const rawName = file.name || '';
+    const ext = rawName.includes('.') ? rawName.split('.').pop() || 'mp4' : 'mp4';
+    const filename = rawName || `video.${ext}`;
+    const apiUrl = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(filename)}&ct=${encodeURIComponent(contentType)}`;
 
-    // Читаем файл как ArrayBuffer для надёжной передачи на iOS
-    const buffer = await file.arrayBuffer();
+    // Читаем через FileReader для совместимости с iOS медиатекой
+    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+      reader.readAsArrayBuffer(file);
+    });
 
-    const resp = await fetch(url, {
+    const resp = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': contentType },
       body: buffer,
