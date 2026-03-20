@@ -322,12 +322,14 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
 
     setIsUploadingVideo(true);
     try {
+      console.log('Video upload start:', file.name, file.type, file.size);
       const url = await offersAPI.uploadVideoPresigned(file);
+      console.log('Video upload success:', url);
       setVideo({ id: Date.now().toString(), url });
       toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });
     } catch (err) {
       console.error('Video upload error:', err);
-      toast({ title: 'Ошибка', description: 'Не удалось загрузить видео', variant: 'destructive' });
+      toast({ title: 'Ошибка', description: err instanceof Error ? err.message : 'Не удалось загрузить видео', variant: 'destructive' });
     } finally {
       setIsUploadingVideo(false);
       if (e.target) e.target.value = '';
