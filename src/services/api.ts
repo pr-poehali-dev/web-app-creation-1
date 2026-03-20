@@ -436,7 +436,7 @@ export const offersAPI = {
   async uploadVideoPresigned(file: File, _folder = 'offer-videos'): Promise<string> {
     const contentType = file.type || 'video/mp4';
     const ext = file.name.includes('.') ? file.name.split('.').pop() : 'mp4';
-    const url = `${UPLOAD_VIDEO_API}?filename=${encodeURIComponent(file.name || `video.${ext}`)}`;
+    const url = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(file.name || `video.${ext}`)}&ct=${encodeURIComponent(contentType)}`;
 
     const resp = await fetch(url, {
       method: 'POST',

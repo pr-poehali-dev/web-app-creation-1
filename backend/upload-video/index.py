@@ -36,14 +36,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     try:
         if method == 'POST':
-            # Если Content-Type — видео/бинарь (не JSON) — принимаем файл напрямую
-            content_type_header = ''
-            for k, v in (event.get('headers') or {}).items():
-                if k.lower() == 'content-type':
-                    content_type_header = v.lower()
-                    break
-            if content_type_header.startswith('video/') or content_type_header == 'application/octet-stream':
-                return upload_binary_video(event, headers, content_type_header)
+            params = event.get('queryStringParameters') or {}
+            if params.get('binary') == '1':
+                content_type = params.get('ct', 'video/mp4')
+                return upload_binary_video(event, headers, content_type)
             return upload_media(event, headers)
         else:
             return {
