@@ -71,6 +71,8 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
     formData: SubmitData,
     videoPreview: string,
     imagePreviews: string[],
+    isDraft?: boolean,
+    videoFile?: File | null,
   ) => {
     if (isSubmitting || submitted) return;
     setIsSubmitting(true);
@@ -79,41 +81,25 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
     try {
       // Загружаем видео
       let videoUrl: string | undefined = undefined;
-      if (videoPreview) {
+      if (videoFile || videoPreview) {
         // Если это уже CDN URL - используем его как есть
         if (videoPreview.startsWith('https://')) {
           videoUrl = videoPreview;
-          console.log('Video already uploaded:', videoUrl);
-        } else {
+        } else if (videoFile) {
           try {
             setIsUploadingVideo(true);
             setVideoUploadProgress(0);
-            
-            toast({
-              title: 'Загрузка видео...',
-              description: 'Пожалуйста, подождите',
-            });
-            
+            toast({ title: 'Загрузка видео...', description: 'Пожалуйста, подождите' });
+
             const progressInterval = setInterval(() => {
-              setVideoUploadProgress(prev => {
-                if (prev >= 90) return prev;
-                return prev + 10;
-              });
-            }, 200);
-            
-            const uploadResult = await offersAPI.uploadMedia(videoPreview);
-            
+              setVideoUploadProgress(prev => prev >= 90 ? prev : prev + 5);
+            }, 500);
+
+            videoUrl = await offersAPI.uploadVideoPresigned(videoFile);
+
             clearInterval(progressInterval);
             setVideoUploadProgress(100);
-            
-            videoUrl = uploadResult.url;
-            console.log('Video uploaded:', videoUrl);
-            
-            toast({
-              title: 'Видео загружено',
-              description: 'Загружаем фото...',
-            });
-            
+            toast({ title: 'Видео загружено', description: 'Загружаем фото...' });
             setIsUploadingVideo(false);
           } catch (error) {
             console.error('Failed to upload video:', error);
@@ -121,7 +107,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
             setVideoUploadProgress(0);
             toast({
               title: 'Ошибка загрузки видео',
-              description: error instanceof Error ? error.message : 'Попробуйте более короткое видео',
+              description: error instanceof Error ? error.message : 'Попробуйте ещё раз',
               variant: 'destructive',
             });
             setIsSubmitting(false);

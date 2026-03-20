@@ -227,7 +227,7 @@ export default function CreateOffer({ isAuthenticated, onLogout }: CreateOfferPr
       expiryDate: formData.expiryDate || undefined,
     };
 
-    submitOffer(submitData, videoPreview, imagePreviews, isDraft);
+    submitOffer(submitData, videoPreview, imagePreviews, isDraft, video);
   };
 
   if (isLoadingOffer) {

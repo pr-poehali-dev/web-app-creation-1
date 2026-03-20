@@ -1,12 +1,12 @@
 {
   "tests": [
     {
-      "name": "Generate presigned upload URL",
+      "name": "Init multipart upload",
       "method": "POST",
-      "path": "/",
+      "path": "/?action=init",
       "body": { "filename": "test.mp4", "contentType": "video/mp4", "folder": "offer-videos" },
       "expectedStatus": 200,
-      "expectedBody": { "uploadUrl": "string", "fileUrl": "string", "key": "string" },
+      "expectedBody": { "uploadId": "string", "key": "string", "fileUrl": "string" },
       "bodyMatcher": "partial"
     }
   ]

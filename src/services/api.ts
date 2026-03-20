@@ -433,23 +433,25 @@ export const offersAPI = {
     return this.uploadMedia(videoBase64);
   },
 
-  async uploadVideoPresigned(file: File, folder = 'offer-videos'): Promise<string> {
-    const urlResp = await fetch(GET_UPLOAD_URL_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ filename: file.name, contentType: file.type || 'video/mp4', folder }),
-    });
-    if (!urlResp.ok) throw new Error('Не удалось получить URL для загрузки');
-    const { uploadUrl, fileUrl } = await urlResp.json();
+  async uploadVideoPresigned(file: File, _folder = 'offer-videos'): Promise<string> {
+    const contentType = file.type || 'video/mp4';
+    const ext = file.name.includes('.') ? file.name.split('.').pop() : 'mp4';
+    const url = `${UPLOAD_VIDEO_API}?filename=${encodeURIComponent(file.name || `video.${ext}`)}`;
 
-    const uploadResp = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.type || 'video/mp4' },
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': contentType },
       body: file,
     });
-    if (!uploadResp.ok) throw new Error('Не удалось загрузить видео в хранилище');
 
-    return fileUrl;
+    if (!resp.ok) {
+      let msg = 'Не удалось загрузить видео';
+      try { const e = await resp.json(); msg = e.error || msg; } catch (_e) { /* ignore */ }
+      throw new Error(msg);
+    }
+
+    const result = await resp.json();
+    return result.url;
   },
 
   async getAdminOffers(params?: {

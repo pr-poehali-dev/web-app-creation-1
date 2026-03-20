@@ -345,24 +345,17 @@ export function useCreateOfferForm(editOffer?: Offer) {
       return;
     }
 
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (file.size > 500 * 1024 * 1024) {
       toast({
         title: 'Видео слишком большое',
-        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(1)} МБ. Максимум: 10 МБ. Сожмите видео или снимите более короткое.`,
+        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(0)} МБ. Максимум 500 МБ.`,
         variant: 'destructive',
       });
       return;
     }
-    
-    console.log(`Video size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
 
     setVideo(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setVideoPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    setVideoPreview(URL.createObjectURL(file));
   };
 
   const handleRemoveVideo = () => {

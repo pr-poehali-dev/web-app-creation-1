@@ -36,6 +36,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     try:
         if method == 'POST':
+            # Если Content-Type — видео/бинарь (не JSON) — принимаем файл напрямую
+            content_type_header = ''
+            for k, v in (event.get('headers') or {}).items():
+                if k.lower() == 'content-type':
+                    content_type_header = v.lower()
+                    break
+            if content_type_header.startswith('video/') or content_type_header == 'application/octet-stream':
+                return upload_binary_video(event, headers, content_type_header)
             return upload_media(event, headers)
         else:
             return {
@@ -412,6 +420,51 @@ def cover_license_plates(image_data: bytes, image_format: str) -> Optional[bytes
         print(f'cover_license_plates error: {str(e)}')
         print(traceback.format_exc())
         return None
+
+
+VIDEO_MIME_EXTENSIONS = {
+    'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm',
+    'video/avi': 'avi', 'video/x-msvideo': 'avi', 'video/x-matroska': 'mkv',
+    'video/3gpp': '3gp', 'video/3gpp2': '3g2', 'video/mpeg': 'mpeg',
+    'video/x-m4v': 'm4v', 'video/x-ms-wmv': 'wmv', 'video/x-flv': 'flv',
+}
+
+
+def upload_binary_video(event: Dict[str, Any], headers: Dict[str, str], content_type: str) -> Dict[str, Any]:
+    """Принимает видео файл как бинарное тело запроса (isBase64Encoded от платформы)"""
+    body_raw = event.get('body', '')
+    if not body_raw:
+        return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Empty body'}), 'isBase64Encoded': False}
+
+    if event.get('isBase64Encoded'):
+        video_data = base64.b64decode(body_raw)
+    else:
+        video_data = body_raw.encode('latin-1') if isinstance(body_raw, str) else body_raw
+
+    # Получаем расширение из Content-Type или query params
+    params = event.get('queryStringParameters') or {}
+    filename = params.get('filename', '')
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else VIDEO_MIME_EXTENSIONS.get(content_type, 'mp4')
+    ct = content_type if content_type in VIDEO_MIME_EXTENSIONS else 'video/mp4'
+
+    s3 = boto3.client('s3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    )
+    file_id = str(uuid.uuid4())
+    s3_key = f"offer-videos/{file_id}.{ext}"
+    s3.put_object(Bucket='files', Key=s3_key, Body=video_data, ContentType=ct)
+
+    cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
+    print(f"Binary video uploaded: {cdn_url}, size: {len(video_data) / 1024 / 1024:.2f} MB")
+
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'url': cdn_url, 'message': 'Video uploaded successfully'}),
+        'isBase64Encoded': False
+    }
 
 
 def upload_media(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
