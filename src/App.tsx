@@ -115,6 +115,7 @@ const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"))
 const MyAutoSales = lazyWithRetry(() => import("./pages/MyAutoSales"));
 const MyAutoRequests = lazyWithRetry(() => import("./pages/MyAutoRequests"));
 const MyContracts = lazyWithRetry(() => import("./pages/MyContracts"));
+const ContractDetail = lazyWithRetry(() => import("./pages/ContractDetail"));
 
 // Инвалидирует кэш при каждой смене маршрута — гарантирует свежие данные на мобильных
 function RouteChangeInvalidator() {
@@ -294,6 +295,7 @@ const App = () => {
             <Route path="/admin/arbitrage" element={<AdminArbitrage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/set-admin-password" element={<SetAdminPassword />} />
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/contract/:id" element={<ContractDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/create-contract" element={<CreateContract isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-contracts" element={<MyContracts isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/order/:offerId" element={<OrderPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
