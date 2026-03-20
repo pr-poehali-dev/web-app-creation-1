@@ -190,7 +190,7 @@ export default function OfferImageGallery({
                   <><Icon name="Video" className="h-4 w-4" />Добавить видео</>
                 )}
               </label>
-              <span className="text-xs text-muted-foreground">MP4, MOV до 100 МБ</span>
+              <span className="text-xs text-muted-foreground">MP4, MOV до 50 МБ</span>
             </div>
           )}
         </div>

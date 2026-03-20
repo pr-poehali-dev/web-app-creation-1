@@ -345,10 +345,10 @@ export function useCreateOfferForm(editOffer?: Offer) {
       return;
     }
 
-    if (file.size > 500 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       toast({
         title: 'Видео слишком большое',
-        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(0)} МБ. Максимум 500 МБ.`,
+        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(0)} МБ. Максимум 50 МБ.`,
         variant: 'destructive',
       });
       return;
