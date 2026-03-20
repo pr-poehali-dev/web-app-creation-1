@@ -143,8 +143,8 @@ export default function OfferImageGallery({
             type="file"
             accept="video/*"
             onChange={onVideoUpload}
-            style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
-            id="video-upload"
+            className="hidden"
+            id="video-upload-edit"
           />
           {video ? (
             <div className="space-y-2">
@@ -157,18 +157,16 @@ export default function OfferImageGallery({
                 />
               </div>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => videoInputRef.current?.click()}
-                  disabled={isUploadingVideo || isSaving}
+                <label
+                  htmlFor={isUploadingVideo || isSaving ? undefined : "video-upload-edit"}
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium transition-colors ${isUploadingVideo || isSaving ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-accent bg-background border-input'}`}
                 >
                   {isUploadingVideo ? (
-                    <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Загрузка...</>
+                    <><Icon name="Loader2" className="h-4 w-4 animate-spin" />Загрузка...</>
                   ) : (
-                    <><Icon name="RefreshCw" className="h-4 w-4 mr-2" />Заменить видео</>
+                    <><Icon name="RefreshCw" className="h-4 w-4" />Заменить видео</>
                   )}
-                </Button>
+                </label>
                 <Button
                   size="sm"
                   variant="destructive"
@@ -182,18 +180,16 @@ export default function OfferImageGallery({
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => videoInputRef.current?.click()}
-                disabled={isUploadingVideo || isSaving}
+              <label
+                htmlFor={isUploadingVideo || isSaving ? undefined : "video-upload-edit"}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium transition-colors ${isUploadingVideo || isSaving ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-accent bg-background border-input'}`}
               >
                 {isUploadingVideo ? (
-                  <><Icon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />Загрузка...</>
+                  <><Icon name="Loader2" className="h-4 w-4 animate-spin" />Загрузка...</>
                 ) : (
-                  <><Icon name="Video" className="h-4 w-4 mr-2" />Добавить видео</>
+                  <><Icon name="Video" className="h-4 w-4" />Добавить видео</>
                 )}
-              </Button>
+              </label>
               <span className="text-xs text-muted-foreground">MP4, MOV до 100 МБ</span>
             </div>
           )}

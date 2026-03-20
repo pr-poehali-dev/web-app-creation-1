@@ -161,7 +161,7 @@ export default function OfferMediaSection({
         </div>
 
         <div>
-          <Label htmlFor="video" className="flex items-center gap-2">
+          <Label className="flex items-center gap-2">
             Видео (1 файл)
             {isVideoUploading && (
               <span className="inline-flex items-center gap-1 text-primary text-xs font-normal">
@@ -177,14 +177,21 @@ export default function OfferMediaSection({
             )}
           </Label>
           <div className="mt-2">
-            <Input
-              id="video"
+            <input
+              id="video-upload-create"
               type="file"
               accept="video/*"
               onChange={handleVideoUpload}
               disabled={!!video || isVideoUploading}
-              className={videoUploadSuccess ? 'border-green-500 bg-green-50' : ''}
+              className="hidden"
             />
+            <label
+              htmlFor={!!video || isVideoUploading ? undefined : "video-upload-create"}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border text-sm font-medium transition-colors ${!!video || isVideoUploading ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-accent bg-background border-input'} ${videoUploadSuccess ? 'border-green-500 bg-green-50' : ''}`}
+            >
+              <Icon name="Video" className="h-4 w-4" />
+              {isVideoUploading ? 'Загрузка...' : videoUploadSuccess ? 'Загружено' : 'Выбрать видео'}
+            </label>
           </div>
           
           {videoPreview && (
