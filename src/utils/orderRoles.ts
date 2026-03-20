@@ -1,5 +1,32 @@
 import type { Order } from '@/types/order';
 
+export function isPassengerTransportOrder(order: Order): boolean {
+  if (order.offerCategory === 'transport' && order.offerTransportServiceType?.toLowerCase().includes('пассажир')) return true;
+  if (order.isRequest && order.buyerComment && /Время выезда:/i.test(order.buyerComment)) return true;
+  return false;
+}
+
+export function isFreightTransportOrder(order: Order): boolean {
+  return order.offerCategory === 'transport' && !!order.offerTransportServiceType?.toLowerCase().includes('груз');
+}
+
+export function getTransportDateTime(order: Order): string | null {
+  if (order.offerTransportDateTime) return order.offerTransportDateTime;
+  if (order.buyerComment) {
+    const match = order.buyerComment.match(/Время выезда:\s*([^\n]+)/);
+    if (match) return match[1].trim();
+  }
+  return null;
+}
+
+export function transportDatePassed(order: Order): boolean {
+  const isTransport = isPassengerTransportOrder(order) || isFreightTransportOrder(order);
+  if (!isTransport) return true;
+  const dt = getTransportDateTime(order);
+  if (!dt) return false;
+  return new Date(dt) <= new Date();
+}
+
 interface OrderRoles {
   buyer: string;
   seller: string;

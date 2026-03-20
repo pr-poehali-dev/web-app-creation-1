@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
+import { isPassengerTransportOrder, isFreightTransportOrder, getTransportDateTime, transportDatePassed as getTransportDatePassed } from '@/utils/orderRoles';
 import OrderInfoDetails from './OrderInfoDetails';
 import OrderStatusActions from './OrderStatusActions';
 import OrderFeedbackChat from './OrderFeedbackChat';
@@ -32,26 +33,11 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
   const [cancelReason, setCancelReason] = useState('');
   const [tripCancelReason, setTripCancelReason] = useState('');
 
-  const isPassengerTransport = order.offerCategory === 'transport' &&
-    order.offerTransportServiceType?.toLowerCase().includes('пассажир');
-
-  const isFreightTransport = order.offerCategory === 'transport' &&
-    order.offerTransportServiceType?.toLowerCase().includes('груз');
-
+  const isPassengerTransport = isPassengerTransportOrder(order);
+  const isFreightTransport = isFreightTransportOrder(order);
   const isTransportOrder = isPassengerTransport || isFreightTransport;
-
-  const transportDateTime = (() => {
-    if (order.offerTransportDateTime) return order.offerTransportDateTime;
-    if (isTransportOrder && order.buyerComment) {
-      const match = order.buyerComment.match(/Время выезда:\s*([^\n]+)/);
-      if (match) return match[1].trim();
-    }
-    return null;
-  })();
-
-  const departureNotYet = isTransportOrder && transportDateTime
-    ? new Date(transportDateTime) > new Date()
-    : false;
+  const transportDateTime = getTransportDateTime(order);
+  const departureNotYet = isTransportOrder && !getTransportDatePassed(order);
 
   const showRatingWarning = order.status === 'accepted' && (
     (isTransportOrder && departureNotYet) || !isTransportOrder

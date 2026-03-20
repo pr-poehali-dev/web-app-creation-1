@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
-import { getOrderRoles } from '@/utils/orderRoles';
+import { getOrderRoles, isPassengerTransportOrder, isFreightTransportOrder, getTransportDateTime, transportDatePassed as getTransportDatePassed } from '@/utils/orderRoles';
 
 interface OrderCardProps {
   order: Order;
@@ -20,25 +20,12 @@ interface OrderCardProps {
 export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, onCompleteOrder, onDeleteOrder, onEditOrder, isExiting, isNew }: OrderCardProps) {
   const roles = getOrderRoles(order);
 
-  const isFreightTransport = order.offerCategory === 'transport' &&
-    order.offerTransportServiceType?.toLowerCase().includes('груз');
-  const isPassengerTransport = order.offerCategory === 'transport' &&
-    order.offerTransportServiceType?.toLowerCase().includes('пассажир');
-  const isTransport = isFreightTransport || isPassengerTransport;
-
-  const transportDateTime = (() => {
-    if (order.offerTransportDateTime) return order.offerTransportDateTime;
-    if (isTransport && order.buyerComment) {
-      const match = order.buyerComment.match(/Время выезда:\s*([^\n]+)/);
-      if (match) return match[1].trim();
-    }
-    return null;
-  })();
-
+  const isPassengerTransport = isPassengerTransportOrder(order);
+  const isFreightTransport = isFreightTransportOrder(order);
+  const isTransport = isPassengerTransport || isFreightTransport;
+  const transportDateTime = getTransportDateTime(order);
   const isTransportWithDate = isTransport && !!transportDateTime;
-  const transportDatePassed = isTransportWithDate
-    ? new Date(transportDateTime!) <= new Date()
-    : !isTransport;
+  const canComplete = getTransportDatePassed(order);
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -366,7 +353,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
             </>
           ) : order.status === 'accepted' ? (
             <div className="flex flex-col gap-2 w-full">
-              {isTransport && !transportDatePassed && !isSeller && (
+              {isTransport && !canComplete && !isSeller && (
                 <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                   <Icon name="Clock" className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
                   <p className="text-xs text-blue-800 font-medium">
@@ -389,7 +376,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                   <Icon name="FileText" className="mr-1.5 h-4 w-4" />
                   Детали заказа
                 </Button>
-                {onCompleteOrder && !isSeller && transportDatePassed && (
+                {onCompleteOrder && !isSeller && canComplete && (
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();

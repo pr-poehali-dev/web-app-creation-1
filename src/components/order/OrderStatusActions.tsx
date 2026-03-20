@@ -2,7 +2,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { Order } from '@/types/order';
-import { getOrderRoles } from '@/utils/orderRoles';
+import { getOrderRoles, isPassengerTransportOrder, isFreightTransportOrder, getTransportDateTime, transportDatePassed as getTransportDatePassed } from '@/utils/orderRoles';
 
 interface OrderStatusActionsProps {
   order: Order;
@@ -34,25 +34,14 @@ function RatingBadge({ rating }: { rating?: number }) {
   );
 }
 
-export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder, onRequestCompletion, isPassengerTransport, isFreightTransport, onCancelTripClick }: OrderStatusActionsProps) {
+export default function OrderStatusActions({ order, isBuyer, contactPerson, onCancelClick, onCompleteOrder, onAcceptOrder, onCancelOrder, onRequestCompletion, isPassengerTransport: isPassengerTransportProp, isFreightTransport: isFreightTransportProp, onCancelTripClick }: OrderStatusActionsProps) {
   const roles = getOrderRoles(order);
-
   const counterpartRating = isBuyer ? order.sellerRating : order.buyerRating;
 
-  const transportDateTime = (() => {
-    if (order.offerTransportDateTime) return order.offerTransportDateTime;
-    if ((isPassengerTransport || isFreightTransport) && order.buyerComment) {
-      const match = order.buyerComment.match(/Время выезда:\s*([^\n]+)/);
-      if (match) return match[1].trim();
-    }
-    return null;
-  })();
-
-  const canComplete = (() => {
-    if (!isPassengerTransport && !isFreightTransport) return true;
-    if (!transportDateTime) return true;
-    return new Date(transportDateTime) <= new Date();
-  })();
+  const isPassengerTransport = isPassengerTransportProp || isPassengerTransportOrder(order);
+  const isFreightTransport = isFreightTransportProp || isFreightTransportOrder(order);
+  const transportDateTime = getTransportDateTime(order);
+  const canComplete = getTransportDatePassed(order);
 
   return (
     <>
@@ -315,7 +304,9 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                       className="w-full border-destructive text-destructive hover:bg-destructive/10"
                     >
                       <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-                      Отменить заказ
+                      {(isPassengerTransport || isFreightTransport) && !canComplete
+                        ? 'Отменить поездку'
+                        : 'Отменить заказ'}
                     </Button>
                   )}
                 </div>
