@@ -439,9 +439,10 @@ export const offersAPI = {
       throw new Error(`Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 50 МБ`);
     }
 
-    const contentType = file.type || 'video/mp4';
     const rawName = file.name || '';
-    const ext = rawName.includes('.') ? rawName.split('.').pop() || 'mp4' : 'mp4';
+    const ext = (rawName.includes('.') ? rawName.split('.').pop()?.toLowerCase() : '') || 'mp4';
+    const extToMime: Record<string, string> = { mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/avi', webm: 'video/webm', mkv: 'video/x-matroska', '3gp': 'video/3gpp' };
+    const contentType = file.type || extToMime[ext] || 'video/mp4';
     const filename = rawName || `video.${ext}`;
     const apiUrl = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(filename)}&ct=${encodeURIComponent(contentType)}`;
 

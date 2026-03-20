@@ -157,16 +157,18 @@ export default function OfferImageGallery({
                 />
               </div>
               <div className="flex gap-2">
-                <label
-                  htmlFor={isUploadingVideo || isSaving ? undefined : "video-upload-edit"}
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium transition-colors ${isUploadingVideo || isSaving ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-accent bg-background border-input'}`}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isUploadingVideo || isSaving}
+                  onClick={() => videoInputRef.current?.click()}
                 >
                   {isUploadingVideo ? (
-                    <><Icon name="Loader2" className="h-4 w-4 animate-spin" />Загрузка...</>
+                    <><Icon name="Loader2" className="h-4 w-4 animate-spin mr-2" />Загрузка...</>
                   ) : (
-                    <><Icon name="RefreshCw" className="h-4 w-4" />Заменить видео</>
+                    <><Icon name="RefreshCw" className="h-4 w-4 mr-2" />Заменить видео</>
                   )}
-                </label>
+                </Button>
                 <Button
                   size="sm"
                   variant="destructive"
@@ -180,16 +182,18 @@ export default function OfferImageGallery({
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <label
-                htmlFor={isUploadingVideo || isSaving ? undefined : "video-upload-edit"}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium transition-colors ${isUploadingVideo || isSaving ? 'opacity-50 pointer-events-none' : 'cursor-pointer hover:bg-accent bg-background border-input'}`}
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isUploadingVideo || isSaving}
+                onClick={() => videoInputRef.current?.click()}
               >
                 {isUploadingVideo ? (
-                  <><Icon name="Loader2" className="h-4 w-4 animate-spin" />Загрузка...</>
+                  <><Icon name="Loader2" className="h-4 w-4 animate-spin mr-2" />Загрузка...</>
                 ) : (
-                  <><Icon name="Video" className="h-4 w-4" />Добавить видео</>
+                  <><Icon name="Video" className="h-4 w-4 mr-2" />Добавить видео</>
                 )}
-              </label>
+              </Button>
               <span className="text-xs text-muted-foreground">MP4, MOV до 50 МБ</span>
             </div>
           )}

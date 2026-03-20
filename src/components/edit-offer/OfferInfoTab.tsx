@@ -320,10 +320,11 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     }
 
     const file = files[0];
-    console.log('[VIDEO] file selected:', file.name, file.type, file.size, 'bytes');
+    const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+    console.log('[VIDEO] file selected:', file.name, `type="${file.type}"`, file.size, `bytes (${sizeMB} MB)`);
 
-    if (file.size > 50 * 1024 * 1024) {
-      toast({ title: 'Ошибка', description: `Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 50 МБ`, variant: 'destructive' });
+    if (file.size > 0 && file.size > 50 * 1024 * 1024) {
+      toast({ title: 'Ошибка', description: `Видео слишком большое (${sizeMB} МБ). Максимум 50 МБ`, variant: 'destructive' });
       return;
     }
 
