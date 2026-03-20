@@ -445,18 +445,10 @@ export const offersAPI = {
     const filename = rawName || `video.${ext}`;
     const apiUrl = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(filename)}&ct=${encodeURIComponent(contentType)}`;
 
-    // FileReader для совместимости с iOS медиатекой
-    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as ArrayBuffer);
-      reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
-      reader.readAsArrayBuffer(file);
-    });
-
     const resp = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': contentType },
-      body: buffer,
+      body: file,
     });
 
     if (!resp.ok) {
