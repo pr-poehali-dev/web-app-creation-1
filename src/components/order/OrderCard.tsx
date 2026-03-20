@@ -24,10 +24,21 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
     order.offerTransportServiceType?.toLowerCase().includes('груз');
   const isPassengerTransport = order.offerCategory === 'transport' &&
     order.offerTransportServiceType?.toLowerCase().includes('пассажир');
-  const isTransportWithDate = (isFreightTransport || isPassengerTransport) && !!order.offerTransportDateTime;
+  const isTransport = isFreightTransport || isPassengerTransport;
+
+  const transportDateTime = (() => {
+    if (order.offerTransportDateTime) return order.offerTransportDateTime;
+    if (isTransport && order.buyerComment) {
+      const match = order.buyerComment.match(/Время выезда:\s*([^\n]+)/);
+      if (match) return match[1].trim();
+    }
+    return null;
+  })();
+
+  const isTransportWithDate = isTransport && !!transportDateTime;
   const transportDatePassed = isTransportWithDate
-    ? new Date(order.offerTransportDateTime!) <= new Date()
-    : true;
+    ? new Date(transportDateTime!) <= new Date()
+    : !isTransport;
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
       case 'new':
@@ -355,11 +366,13 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
             </>
           ) : order.status === 'accepted' ? (
             <div className="flex flex-col gap-2 w-full">
-              {isTransportWithDate && !transportDatePassed && !isSeller && (
+              {isTransport && !transportDatePassed && !isSeller && (
                 <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
                   <Icon name="Clock" className="h-3.5 w-3.5 text-blue-600 flex-shrink-0" />
                   <p className="text-xs text-blue-800 font-medium">
-                    Завершить можно после {new Date(order.offerTransportDateTime!).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    {transportDateTime
+                      ? `Завершить можно после ${new Date(transportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`
+                      : 'Завершить заказ можно после даты выезда'}
                   </p>
                 </div>
               )}
