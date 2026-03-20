@@ -445,11 +445,16 @@ export const offersAPI = {
     const filename = rawName || `video.${ext}`;
     const apiUrl = `${UPLOAD_VIDEO_API}?binary=1&filename=${encodeURIComponent(filename)}&ct=${encodeURIComponent(contentType)}`;
 
+    console.log('[VIDEO API] uploading to:', apiUrl);
+    console.log('[VIDEO API] file:', filename, contentType, (file.size / 1024 / 1024).toFixed(2), 'MB');
+
     const resp = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': contentType },
       body: file,
     });
+
+    console.log('[VIDEO API] response status:', resp.status);
 
     if (!resp.ok) {
       let msg = `Ошибка ${resp.status}`;
@@ -458,6 +463,7 @@ export const offersAPI = {
     }
 
     const result = await resp.json();
+    console.log('[VIDEO API] result:', result);
     if (!result.url) throw new Error(`Нет URL в ответе: ${JSON.stringify(result)}`);
     return result.url;
   },

@@ -311,10 +311,17 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
   // --- Handlers: Video ---
 
   const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[VIDEO] handleVideoUpload triggered');
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    console.log('[VIDEO] files:', files?.length, files?.[0]?.name, files?.[0]?.type, files?.[0]?.size);
+    if (!files || files.length === 0) {
+      console.log('[VIDEO] no files selected, returning');
+      return;
+    }
 
     const file = files[0];
+    console.log('[VIDEO] file selected:', file.name, file.type, file.size, 'bytes');
+
     if (file.size > 50 * 1024 * 1024) {
       toast({ title: 'Ошибка', description: `Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 50 МБ`, variant: 'destructive' });
       return;
@@ -322,13 +329,13 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
 
     setIsUploadingVideo(true);
     try {
-      console.log('Video upload start:', file.name, file.type, file.size);
+      console.log('[VIDEO] calling uploadVideoPresigned...');
       const url = await offersAPI.uploadVideoPresigned(file);
-      console.log('Video upload success:', url);
+      console.log('[VIDEO] upload success:', url);
       setVideo({ id: Date.now().toString(), url });
       toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });
     } catch (err) {
-      console.error('Video upload error:', err);
+      console.error('[VIDEO] upload error:', err);
       toast({ title: 'Ошибка', description: err instanceof Error ? err.message : 'Не удалось загрузить видео', variant: 'destructive' });
     } finally {
       setIsUploadingVideo(false);
