@@ -117,7 +117,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       setLoading(true);
       const userId = localStorage.getItem('userId');
       
-      const response = await fetch('https://functions.poehali.dev/f1e9dea3-13a0-488b-a042-58b89a19b204?status=open', {
+      const response = await fetch(`${func2url['contracts-list']}?status=open`, {
         headers: {
           'X-User-Id': userId || '',
         },
