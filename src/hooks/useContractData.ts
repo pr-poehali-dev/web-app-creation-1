@@ -98,6 +98,7 @@ export function useContractData(isAuthenticated: boolean) {
   const [isCheckingVerification, setIsCheckingVerification] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [generatedDocx, setGeneratedDocx] = useState<{ base64: string; url: string; filename: string } | null>(null);
   const [contractHtml, setContractHtml] = useState<string>('');
   const [step, setStep] = useState<'form' | 'preview'>('form');
@@ -263,13 +264,14 @@ export function useContractData(isAuthenticated: boolean) {
     URL.revokeObjectURL(url);
   };
 
-  const handleSaveToContracts = async () => {
+  const saveContract = async (publish: boolean) => {
     if (!validate()) return;
-    setIsSubmitting(true);
+    const setLoading = publish ? setIsPublishing : setIsSubmitting;
+    setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
-      const contractUrl = '1eb3dd30-04c6-4570-97ff-73c5403573f5';
-      const res = await fetch(`https://functions.poehali.dev/${contractUrl}`, {
+      const url = (func2url as Record<string, string>)['save-contract'];
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId || '' },
         body: JSON.stringify({
@@ -277,12 +279,17 @@ export function useContractData(isAuthenticated: boolean) {
           totalAmount,
           prepaymentAmount,
           documentUrl: generatedDocx?.url || null,
+          publish,
         }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         notifyContractUpdated(data.contractId);
-        toast({ title: 'Контракт сохранён', description: 'Контракт добавлен в раздел «Мои контракты»' });
+        if (publish) {
+          toast({ title: 'Контракт опубликован', description: 'Контракт виден другим участникам платформы' });
+        } else {
+          toast({ title: 'Черновик сохранён', description: 'Контракт добавлен в раздел «Мои контракты»' });
+        }
         navigate('/trading');
       } else {
         toast({ title: 'Ошибка', description: data.error || 'Не удалось сохранить контракт', variant: 'destructive' });
@@ -291,9 +298,12 @@ export function useContractData(isAuthenticated: boolean) {
       console.error(err);
       toast({ title: 'Ошибка', description: 'Не удалось сохранить контракт', variant: 'destructive' });
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
+
+  const handleSaveToContracts = () => saveContract(false);
+  const handlePublishContract = () => saveContract(true);
 
   return {
     formData,
@@ -307,11 +317,13 @@ export function useContractData(isAuthenticated: boolean) {
     isCheckingVerification,
     isGenerating,
     isSubmitting,
+    isPublishing,
     generatedDocx,
     contractHtml,
     handleGenerate,
     downloadPdf,
     downloadDocx,
     handleSaveToContracts,
+    handlePublishContract,
   };
 }

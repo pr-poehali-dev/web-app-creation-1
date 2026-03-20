@@ -29,12 +29,14 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
     isCheckingVerification,
     isGenerating,
     isSubmitting,
+    isPublishing,
     generatedDocx,
     contractHtml,
     handleGenerate,
     downloadPdf,
     downloadDocx,
     handleSaveToContracts,
+    handlePublishContract,
   } = useContractData(isAuthenticated);
 
   if (isCheckingVerification) {
@@ -88,9 +90,11 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
               totalAmount={totalAmount}
               generatedDocx={generatedDocx}
               isSubmitting={isSubmitting}
+              isPublishing={isPublishing}
               onDownloadPdf={downloadPdf}
               onDownloadDocx={downloadDocx}
               onSave={handleSaveToContracts}
+              onPublish={handlePublishContract}
               onEdit={() => setStep('form')}
             />
           )}

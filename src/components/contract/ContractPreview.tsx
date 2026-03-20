@@ -8,9 +8,11 @@ interface ContractPreviewProps {
   totalAmount: number;
   generatedDocx: { base64: string; url: string; filename: string } | null;
   isSubmitting: boolean;
+  isPublishing: boolean;
   onDownloadPdf: () => void;
   onDownloadDocx: () => void;
   onSave: () => void;
+  onPublish: () => void;
   onEdit: () => void;
 }
 
@@ -19,9 +21,11 @@ export default function ContractPreview({
   totalAmount,
   generatedDocx,
   isSubmitting,
+  isPublishing,
   onDownloadPdf,
   onDownloadDocx,
   onSave,
+  onPublish,
   onEdit,
 }: ContractPreviewProps) {
   const isBarter = formData.contractType === 'barter';
@@ -63,20 +67,27 @@ export default function ContractPreview({
         </div>
 
         <div className="border-t pt-4 space-y-3">
-          <p className="text-sm text-muted-foreground">После подписания сохраните контракт в систему для обмена с контрагентом:</p>
-          <div className="flex gap-3">
-            <Button onClick={onSave} disabled={isSubmitting} className="flex-1">
+          <p className="text-sm text-muted-foreground">Сохраните черновик или сразу опубликуйте контракт — он станет виден другим участникам:</p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button onClick={onSave} disabled={isSubmitting || isPublishing} variant="outline" className="flex-1">
               {isSubmitting ? (
                 <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Сохраняю...</>
               ) : (
-                <><Icon name="Save" className="mr-2 h-4 w-4" />Сохранить в Мои контракты</>
+                <><Icon name="Save" className="mr-2 h-4 w-4" />Сохранить черновик</>
               )}
             </Button>
-            <Button variant="outline" onClick={onEdit}>
-              <Icon name="Pencil" className="mr-2 h-4 w-4" />
-              Изменить данные
+            <Button onClick={onPublish} disabled={isSubmitting || isPublishing} className="flex-1">
+              {isPublishing ? (
+                <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Публикую...</>
+              ) : (
+                <><Icon name="Globe" className="mr-2 h-4 w-4" />Опубликовать контракт</>
+              )}
             </Button>
           </div>
+          <Button variant="ghost" onClick={onEdit} className="w-full text-muted-foreground">
+            <Icon name="Pencil" className="mr-2 h-4 w-4" />
+            Изменить данные
+          </Button>
         </div>
       </CardContent>
     </Card>
