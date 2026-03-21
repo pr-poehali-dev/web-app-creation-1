@@ -99,7 +99,7 @@ export default function ProfileVerificationCard() {
   const getStatusDescription = () => {
     switch (verificationStatus) {
       case 'verified':
-        return 'Ваш аккаунт успешно верифицирован. Вам доступен полный функционал платформы, включая создание форвардных, бартерных контрактов.';
+        return 'Ваш аккаунт успешно верифицирован. Вам доступен полный функционал платформы.';
       case 'pending':
         return 'Ваша заявка на верификацию находится на рассмотрении. Мы проверим документы в течение 1-3 рабочих дней и уведомим вас о результате.';
       case 'rejected':
@@ -153,7 +153,7 @@ export default function ProfileVerificationCard() {
             <Icon name="CheckCircle" className="h-5 w-5 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-semibold mb-1">Верификация пройдена</p>
-              <p className="text-green-600">Вам доступны все функции: создание предложений, запросов и участие в аукционах</p>
+              <p className="text-green-600">Вам доступны все функции: предложения, запросы, аукционы, форвардные, бартерные контракты.</p>
             </div>
           </div>
         )}
