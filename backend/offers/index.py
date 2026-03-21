@@ -1086,6 +1086,7 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             offer_id_esc = offer_id.replace("'", "''")
             
             sql = f"UPDATE t_p42562714_web_app_creation_1.offers SET {', '.join(updates)} WHERE id = '{offer_id_esc}'"
+            print(f"UPDATE SQL: {sql[:500]}")
             cur.execute(sql)
         
         conn.commit()
