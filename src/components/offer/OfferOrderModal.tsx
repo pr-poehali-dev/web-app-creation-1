@@ -9,6 +9,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import MapModal from '@/components/auction/MapModal';
+import Icon from '@/components/ui/icon';
 import QuantitySelector from './order-modal/QuantitySelector';
 import PriceDisplay from './order-modal/PriceDisplay';
 import DeliverySection from './order-modal/DeliverySection';
