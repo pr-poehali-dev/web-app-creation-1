@@ -364,7 +364,12 @@ export default function OfferOrderModal({
               onAddressErrorClear={() => setAddressError('')}
             />
 
-            {!noNegotiation && (
+            {noNegotiation ? (
+              <div className="border-t pt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <Icon name="Lock" size={14} />
+                <span>Цена фиксирована, торг не предусмотрен</span>
+              </div>
+            ) : (
               <CounterPriceSection
                 showCounterPrice={showCounterPrice}
                 pricePerUnit={pricePerUnit}
