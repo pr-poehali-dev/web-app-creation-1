@@ -68,7 +68,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conditions = []
             query_params = []
 
-            if user_id:
+            # user_id используется только если явно передан параметр user_id (Мои контракты)
+            # при запросе status=open — показываем всем
+            explicit_user_filter = params.get('user_id') and user_id
+            if explicit_user_filter:
                 conditions.append("(c.seller_id = %s OR c.buyer_id = %s)")
                 query_params.extend([user_id, user_id])
 

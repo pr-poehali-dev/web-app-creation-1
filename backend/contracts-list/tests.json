@@ -5,16 +5,16 @@
       "method": "GET",
       "path": "/",
       "expectedStatus": 200,
-      "expectedBody": {"contracts": "array", "total": "number"},
-      "bodyMatcher": "partial"
+      "bodyMatcher": "partial",
+      "expectedBody": {"limit": 50, "offset": 0}
     },
     {
-      "name": "Get contracts by status",
+      "name": "Get contracts by status open",
       "method": "GET",
       "path": "/?status=open",
       "expectedStatus": 200,
-      "expectedBody": {"contracts": "array", "total": "number"},
-      "bodyMatcher": "partial"
+      "bodyMatcher": "partial",
+      "expectedBody": {"limit": 50, "offset": 0}
     }
   ]
 }

@@ -115,7 +115,34 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(p || 0);
 
-  const handleRespond = () => {
+  const handleRespond = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      toast({ title: 'Требуется авторизация', variant: 'destructive' });
+      navigate('/login');
+      return;
+    }
+    try {
+      const res = await fetch(func2url['verification-status'], {
+        headers: { 'X-User-Id': userId },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const status = data.verificationStatus || data.verification_status;
+        if (status === 'pending') {
+          toast({ title: 'Верификация на рассмотрении', description: 'После одобрения верификации вам будет доступен отклик на контракты.', duration: 6000 });
+          return;
+        }
+        if (status !== 'verified') {
+          toast({ title: 'Необходима верификация', description: 'Для отклика на контракт необходимо пройти верификацию.', variant: 'destructive' });
+          navigate('/verification');
+          return;
+        }
+      }
+    } catch {
+      toast({ title: 'Ошибка проверки статуса', variant: 'destructive' });
+      return;
+    }
     toast({ title: 'Скоро', description: 'Форма отклика на контракт появится в ближайшем обновлении' });
   };
 

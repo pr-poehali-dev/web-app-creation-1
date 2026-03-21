@@ -21,7 +21,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import TradingPlatformStats from '@/components/trading/TradingPlatformStats';
 import TradingPlatformFilters from '@/components/trading/TradingPlatformFilters';
 import ContractCard from '@/components/trading/ContractCard';
 
@@ -195,8 +194,6 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
                 </Button>
               )}
             </div>
-
-            <TradingPlatformStats contracts={contracts} formatPrice={formatPrice} />
 
             <TradingPlatformFilters
               searchQuery={searchQuery}
