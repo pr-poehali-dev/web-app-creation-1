@@ -187,12 +187,10 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
                   {selectedType === 'barter' ? 'Бартерные контракты для верифицированных участников' : 'Форвардные контракты для верифицированных участников'}
                 </p>
               </div>
-              {currentUser?.userType !== 'individual' && (
-                <Button onClick={handleCreateContract} size="lg">
-                  <Icon name="Plus" className="mr-2 h-4 w-4" />
-                  Создать контракт
-                </Button>
-              )}
+              <Button onClick={handleCreateContract} size="lg">
+                <Icon name="Plus" className="mr-2 h-4 w-4" />
+                Создать контракт
+              </Button>
             </div>
 
             <TradingPlatformFilters

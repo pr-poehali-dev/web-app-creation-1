@@ -180,12 +180,12 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             />
           )}
 
+          {isViewingOwnProfile && <ProfileVerificationCard />}
+
           <ProfileStatsCard
             registrationDate={currentUser.createdAt || ''}
             formatDate={formatDate}
           />
-
-          {isViewingOwnProfile && <ProfileVerificationCard />}
 
           {isViewingOwnProfile && (
             <Card>
