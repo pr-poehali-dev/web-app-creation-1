@@ -128,6 +128,8 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
             onEdit={handleEdit}
           />
 
+          {isViewingOwnProfile && <ProfileVerificationCard />}
+
           <ProfileEditForm
             isEditing={isEditing}
             isSaving={isSaving}
@@ -179,8 +181,6 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               onPasswordChange={handlePasswordChange}
             />
           )}
-
-          {isViewingOwnProfile && <ProfileVerificationCard />}
 
           <ProfileStatsCard
             registrationDate={currentUser.createdAt || ''}
