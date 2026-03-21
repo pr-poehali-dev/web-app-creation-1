@@ -59,6 +59,7 @@ interface OfferOrderModalProps {
   offerTransportDateTime?: string;
   offerTransportServiceType?: string;
   offerTransportCapacity?: string;
+  noNegotiation?: boolean;
 }
 
 export default function OfferOrderModal({
@@ -80,6 +81,7 @@ export default function OfferOrderModal({
   offerTransportDateTime,
   offerTransportServiceType,
   offerTransportCapacity,
+  noNegotiation,
 }: OfferOrderModalProps) {
   const isFreight = offerTransportServiceType?.toLowerCase().includes('груз');
 
@@ -362,17 +364,19 @@ export default function OfferOrderModal({
               onAddressErrorClear={() => setAddressError('')}
             />
 
-            <CounterPriceSection
-              showCounterPrice={showCounterPrice}
-              pricePerUnit={pricePerUnit}
-              counterPrice={counterPrice}
-              counterComment={counterComment}
-              quantity={quantity}
-              unit={unit}
-              onToggle={() => setShowCounterPrice(!showCounterPrice)}
-              onCounterPriceChange={setCounterPrice}
-              onCounterCommentChange={setCounterComment}
-            />
+            {!noNegotiation && (
+              <CounterPriceSection
+                showCounterPrice={showCounterPrice}
+                pricePerUnit={pricePerUnit}
+                counterPrice={counterPrice}
+                counterComment={counterComment}
+                quantity={quantity}
+                unit={unit}
+                onToggle={() => setShowCounterPrice(!showCounterPrice)}
+                onCounterPriceChange={setCounterPrice}
+                onCounterCommentChange={setCounterComment}
+              />
+            )}
 
             <OrderFormActions
               quantityError={quantityError}

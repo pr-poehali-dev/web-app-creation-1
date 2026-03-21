@@ -163,6 +163,7 @@ export default function OfferDetailContent({
         offerTransportDateTime={offer.transportDateTime}
         offerTransportServiceType={offer.transportServiceType}
         offerTransportCapacity={offer.transportCapacity}
+        noNegotiation={offer.noNegotiation}
       />
 
       <OfferDetailGalleryModal

@@ -57,6 +57,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     transportCapacity: offer.transportCapacity || '',
     transportDateTime: toDateTimeInputValue(offer.transportDateTime),
     transportPriceType: offer.transportPriceType || '',
+    noNegotiation: offer.noNegotiation || false,
     transportNegotiable: offer.transportNegotiable || false,
     transportWaypoints: offer.transportWaypoints || [],
     transportComment: offer.transportComment || '',
@@ -161,6 +162,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         autoPtsRecords: editData.autoPtsRecords || undefined,
         autoDescription: editData.autoDescription || undefined,
         district: editData.district || offer.district,
+        noNegotiation: editData.noNegotiation,
       } as Parameters<typeof offersAPI.updateOffer>[1]);
 
       localStorage.removeItem('cached_offers');
@@ -194,6 +196,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       transportCapacity: offer.transportCapacity || '',
       transportDateTime: toDateTimeInputValue(offer.transportDateTime),
       transportPriceType: offer.transportPriceType || '',
+      noNegotiation: offer.noNegotiation || false,
       transportNegotiable: offer.transportNegotiable || false,
       transportWaypoints: offer.transportWaypoints || [],
       transportComment: offer.transportComment || '',

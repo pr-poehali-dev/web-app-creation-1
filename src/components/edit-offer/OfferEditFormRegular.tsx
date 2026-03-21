@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { Offer } from '@/types/offer';
 
 interface EditData {
@@ -14,6 +15,7 @@ interface EditData {
   transportCapacity: string;
   transportDateTime: string;
   transportPriceType: string;
+  noNegotiation: boolean;
   transportNegotiable: boolean;
   transportWaypoints: import('@/types/offer').TransportWaypoint[];
   transportComment: string;
@@ -86,6 +88,19 @@ export default function OfferEditFormRegular({ offer, editData, isSaving, onEdit
           placeholder="Не задано"
         />
       </div>
+      <div className="flex items-center space-x-2 pt-1">
+        <Checkbox
+          id="noNegotiation"
+          checked={editData.noNegotiation}
+          onCheckedChange={(checked) => onEditDataChange({ ...editData, noNegotiation: checked as boolean })}
+          disabled={isSaving}
+        />
+        <div className="grid gap-0.5 leading-none">
+          <label htmlFor="noNegotiation" className="text-sm font-medium cursor-pointer">Без торга</label>
+          <p className="text-xs text-muted-foreground">Цена фиксирована, переговоры не предусмотрены</p>
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label>Период поставки</Label>
         <div className="grid grid-cols-2 gap-2">

@@ -692,11 +692,23 @@ def complete_video_chunks(event: Dict[str, Any], headers: Dict[str, str], params
             print(f"ERROR reading chunk {i}: {e}")
             return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': f'Missing chunk {i}'}), 'isBase64Encoded': False}
 
-    # Сохраняем финальный файл
+    # Сохраняем финальный файл (с retry при 503)
     ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'mp4'
     file_id = str(uuid.uuid4())
     s3_key = f"offer-videos/{file_id}.{ext}"
-    s3.put_object(Bucket='files', Key=s3_key, Body=bytes(final_data), ContentType=content_type)
+    import time as _time
+    last_err = None
+    for attempt in range(5):
+        try:
+            s3.put_object(Bucket='files', Key=s3_key, Body=bytes(final_data), ContentType=content_type)
+            last_err = None
+            break
+        except Exception as e:
+            last_err = e
+            print(f"put_object attempt {attempt+1} failed: {e}")
+            _time.sleep(2 ** attempt)
+    if last_err:
+        return {'statusCode': 503, 'headers': headers, 'body': json.dumps({'error': f'Storage unavailable after retries: {str(last_err)}'}), 'isBase64Encoded': False}
     print(f"Final video uploaded: {s3_key}, size={len(final_data) / 1024 / 1024:.2f} MB")
 
     # Удаляем временные чанки
