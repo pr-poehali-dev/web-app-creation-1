@@ -60,16 +60,14 @@ function buildOgProxyUrl(pageUrl: string): string | null {
 }
 
 export async function shareContent({ title, text, url }: ShareOptions): Promise<void> {
+  // Укорачиваем og-proxy ссылку — Telegram читает превью именно из ссылки в тексте
   const ogUrl = buildOgProxyUrl(url) || url;
-  const shortUrl = await shortenUrl(url);
-
-  // В тексте — короткая ссылка erttp.ru/s/CODE
-  // В поле url — og-proxy напрямую, Telegram читает из него og:image и показывает фото
+  const shortUrl = await shortenUrl(ogUrl);
   const shareText = `${text}\n\n🔗 ${shortUrl}`;
 
   if (navigator.share) {
     try {
-      await navigator.share({ title, text: shareText, url: ogUrl });
+      await navigator.share({ title, text: shareText });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
