@@ -168,13 +168,11 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       localStorage.removeItem('cached_offers');
       SmartCache.invalidate('offers_list');
       markDataAsUpdated('offers');
-      notifyOfferUpdated(offer.id);
-      if (onDataChanged) onDataChanged();
 
       toast({ title: 'Успешно', description: 'Обновление сохранено' });
       setIsEditing(false);
-      onUpdate();
       navigate(`/offer/${offer.id}`);
+      setTimeout(() => { notifyOfferUpdated(offer.id); }, 500);
     } catch (error) {
       console.error('Error updating offer:', error);
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
