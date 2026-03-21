@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Offer, OfferImage, OfferVideo } from '@/types/offer';
 import { offersAPI } from '@/services/api';
+import { uploadVideoMultipart } from '@/utils/videoUpload';
 import { DISTRICTS } from '@/data/districts';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -330,8 +331,8 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
 
     setIsUploadingVideo(true);
     try {
-      console.log('[VIDEO] calling uploadVideoPresigned...');
-      const url = await offersAPI.uploadVideoPresigned(file);
+      console.log('[VIDEO] calling uploadVideoMultipart...');
+      const url = await uploadVideoMultipart(file);
       console.log('[VIDEO] upload success:', url);
       setVideo({ id: Date.now().toString(), url });
       toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });
