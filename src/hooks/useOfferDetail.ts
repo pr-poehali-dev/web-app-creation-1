@@ -319,6 +319,7 @@ export function useOfferDetail(id: string | undefined) {
         counterPrice: orderFormData.counterPrice || undefined,
         counterMessage: orderFormData.counterComment || undefined,
         passengerPickupAddress: orderFormData.passengerPickupAddress || undefined,
+        noNegotiation: offer.noNegotiation || false,
       };
 
       const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {

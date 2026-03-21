@@ -52,7 +52,7 @@ export default function NegotiationActions({
     );
   }
 
-  if (isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && !order.isRequest) {
+  if (isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && !order.isRequest && !order.noNegotiation) {
     return (
       <Button 
         onClick={onShowCounterForm} 

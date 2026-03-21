@@ -58,6 +58,7 @@ export interface Order {
   offerImageUrl?: string;
   archivedByAdmin?: boolean;
   adminArchiveReason?: string;
+  noNegotiation?: boolean;
 }
 
 export interface ChatMessage {

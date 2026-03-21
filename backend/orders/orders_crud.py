@@ -180,6 +180,7 @@ def get_user_orders(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
         order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
         order_dict['unreadMessages'] = int(order_dict.pop('unread_messages', 0) or 0)
         order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
+        order_dict['noNegotiation'] = bool(order_dict.pop('no_negotiation', False))
         order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
         order_dict['sellerRating'] = float(order_dict.pop('seller_rating')) if order_dict.get('seller_rating') is not None else None
         order_dict['sellerAvgReviewRating'] = round(float(order_dict.pop('seller_avg_review_rating')), 1) if order_dict.get('seller_avg_review_rating') is not None else None
@@ -287,6 +288,7 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['offerTransportDateTime'] = dt2.isoformat() if dt2 and hasattr(dt2, 'isoformat') else (str(dt2) if dt2 else None)
     order_dict['offerTransportNegotiable'] = order_dict.pop('offer_transport_negotiable', None)
     order_dict['passengerPickupAddress'] = order_dict.pop('passenger_pickup_address', None)
+    order_dict['noNegotiation'] = bool(order_dict.pop('no_negotiation', False))
     order_dict['is_request'] = order_dict.get('is_request', False)
     order_dict['completionRequested'] = order_dict.pop('completion_requested', False) or False
     order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
@@ -447,6 +449,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     buyer_inn_escaped = body.get('buyerInn', '').replace("'", "''")
     buyer_comment_escaped = body.get('buyerComment', '').replace("'", "''")
     passenger_pickup_address = body.get('passengerPickupAddress', '') or ''
+    no_negotiation = body.get('noNegotiation', False)
     passenger_pickup_escaped = passenger_pickup_address.replace("'", "''")
     
     seller_name_escaped = seller_name.replace("'", "''")
@@ -490,7 +493,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             status,
             counter_price_per_unit, counter_total_amount, counter_offer_message, counter_offered_at, counter_offered_by,
             attachments, passenger_pickup_address,
-            offer_category, offer_transport_service_type, offer_transport_date_time
+            offer_category, offer_transport_service_type, offer_transport_date_time,
+            no_negotiation
         ) VALUES (
             '{order_number}', {int(user_id)}, {seller_id}, '{offer_id_escaped}',
             '{title_escaped}', {quantity}, {quantity}, '{unit_escaped}', {body['pricePerUnit']}, {total_amount},
@@ -501,7 +505,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             '{initial_status}',
             {counter_price_sql}, {counter_total_sql}, {counter_message_sql}, {counter_offered_at_sql}, {counter_offered_by_sql},
             '{attachments_escaped}'::jsonb, {f"'{passenger_pickup_escaped}'" if passenger_pickup_escaped else 'NULL'},
-            {offer_category_sql}, {offer_transport_service_type_sql}, {offer_transport_date_time_sql}
+            {offer_category_sql}, {offer_transport_service_type_sql}, {offer_transport_date_time_sql},
+            {no_negotiation}
         )
         RETURNING id, order_number, order_date
     """
