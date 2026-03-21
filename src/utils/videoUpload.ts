@@ -1,6 +1,6 @@
 const UPLOAD_VIDEO_URL = 'https://functions.poehali.dev/9999daf2-27bb-4ac4-a09e-001928741e24';
 
-const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB на чанк
+const CHUNK_SIZE = 1 * 1024 * 1024; // 1 MB на чанк
 
 function toBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
