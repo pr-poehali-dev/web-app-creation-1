@@ -30,12 +30,9 @@ def escape_html(s: str) -> str:
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 def extract_offer_id(url: str) -> str | None:
-    """Извлекаем UUID оффера из URL вида /offer/{uuid} или ?type=offer&id={uuid}"""
+    """Извлекаем UUID оффера из URL вида /offer/{uuid}"""
     import re
     m = re.search(r'/offer/([0-9a-f-]{36})', url)
-    if m:
-        return m.group(1)
-    m = re.search(r'[?&]id=([0-9a-f-]{36})', url)
     return m.group(1) if m else None
 
 def extract_request_id(url: str) -> str | None:
