@@ -80,7 +80,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
   // og-proxy ссылка укорачивается через TinyURL — в тексте tinyurl.com/xxx, фото из og-proxy
   const directShareUrl = ogUrl || url;
   const tinyShareUrl = await tinyUrl(directShareUrl);
-  const fullText = `${text}\n\n🔗 ${tinyShareUrl}`;
+  const fullText = `🔗 ${tinyShareUrl}`;
 
   if (navigator.share) {
     try {
