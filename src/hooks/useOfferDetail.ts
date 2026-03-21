@@ -200,21 +200,12 @@ export function useOfferDetail(id: string | undefined) {
         return `  • ${routeFrom} — ${wp.address}: ${Number(wp.price).toLocaleString('ru-RU')} ₽`;
       });
 
-      const lines = [
-        `🚌 Пассажирские перевозки`,
-        `📍 ${offer.transportRoute}${price ? ` — ${price}` : ''}`,
-        dateStr ? `📅 ${dateStr}` : null,
-        seats ? `💺 ${seats} мест` : null,
-        waypointLines.length > 0 ? `\nПункты посадки:\n${waypointLines.join('\n')}` : null,
-        offer.description ? `\n📝 ${offer.description}` : null,
-      ].filter(Boolean);
-
-      shareText = lines.join('\n');
+      shareText = `🚌 ${offer.transportRoute}${price ? ` — ${price}` : ''}`;
     } else {
       const price = offer.pricePerUnit != null
         ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽/${offer.unit}`
         : '—';
-      shareText = `📦 ${offer.title}\n\n💰 Цена: ${price}${offer.description ? `\n\n📝 ${offer.description}` : ''}`;
+      shareText = `📦 ${offer.title} — ${price}`;
     }
 
     await shareContent({
