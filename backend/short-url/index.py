@@ -203,8 +203,9 @@ def handler(event: dict, context) -> dict:
 
         cur.close()
         conn.close()
-        # Обычный пользователь (фронтенд) — JSON как раньше
-        return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'url': original_url})}
+        # Обычный пользователь — редирект на оригинальный URL
+        # Если original_url — og-proxy, редиректим через него (он сам редиректит на страницу)
+        return {'statusCode': 302, 'headers': {**CORS_HEADERS, 'Location': original_url}, 'body': ''}
 
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
@@ -231,7 +232,10 @@ def handler(event: dict, context) -> dict:
         cur.close()
         conn.close()
 
-        short_url = f"{SITE_URL}/s/{code}"
+        # Короткая ссылка ведёт напрямую на эту функцию бэкенда.
+        # Telegram-бот получает og-HTML с фото, обычный пользователь — редирект на страницу.
+        func_self_url = 'https://functions.poehali.dev/c3038bbe-b541-4d95-ad57-e89f37964ac2'
+        short_url = f"{func_self_url}?code={code}"
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'short_url': short_url, 'code': code})}
 
     return {'statusCode': 405, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'method not allowed'})}
