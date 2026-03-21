@@ -4,9 +4,11 @@ const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB на чанк
 
 function toBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
+  // Безопасная конвертация через батчи — избегаем лимита стека на больших файлах
+  const BATCH = 8192;
   let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  for (let i = 0; i < bytes.byteLength; i += BATCH) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + BATCH));
   }
   return btoa(binary);
 }
