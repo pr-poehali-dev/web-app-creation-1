@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Offer, OfferImage, OfferVideo } from '@/types/offer';
 import { offersAPI } from '@/services/api';
+import { uploadVideoMultipart } from '@/utils/videoUpload';
 import { DISTRICTS } from '@/data/districts';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -323,15 +324,17 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     const sizeMB = (file.size / 1024 / 1024).toFixed(2);
     console.log('[VIDEO] file selected:', file.name, `type="${file.type}"`, file.size, `bytes (${sizeMB} MB)`);
 
-    if (file.size > 0 && file.size > 50 * 1024 * 1024) {
-      toast({ title: 'Ошибка', description: `Видео слишком большое (${sizeMB} МБ). Максимум 50 МБ`, variant: 'destructive' });
+    if (file.size > 0 && file.size > 100 * 1024 * 1024) {
+      toast({ title: 'Ошибка', description: `Видео слишком большое (${sizeMB} МБ). Максимум 100 МБ`, variant: 'destructive' });
       return;
     }
 
     setIsUploadingVideo(true);
     try {
-      console.log('[VIDEO] calling uploadVideoPresigned...');
-      const url = await offersAPI.uploadVideoPresigned(file);
+      console.log('[VIDEO] calling uploadVideoMultipart...');
+      const url = await uploadVideoMultipart(file, (percent) => {
+        console.log('[VIDEO] progress:', percent);
+      });
       console.log('[VIDEO] upload success:', url);
       setVideo({ id: Date.now().toString(), url });
       toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });

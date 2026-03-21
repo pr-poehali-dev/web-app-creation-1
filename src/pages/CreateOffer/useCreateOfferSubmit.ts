@@ -5,6 +5,7 @@ import { useOffers } from '@/contexts/OffersContext';
 import type { Offer, TransportWaypoint } from '@/types/offer';
 import { getSession } from '@/utils/auth';
 import { offersAPI } from '@/services/api';
+import { uploadVideoMultipart } from '@/utils/videoUpload';
 import { markDataAsUpdated } from '@/utils/smartCache';
 import { notifyOfferUpdated } from '@/utils/dataSync';
 
@@ -91,13 +92,10 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
             setVideoUploadProgress(0);
             toast({ title: 'Загрузка видео...', description: 'Пожалуйста, подождите' });
 
-            const progressInterval = setInterval(() => {
-              setVideoUploadProgress(prev => prev >= 90 ? prev : prev + 5);
-            }, 500);
+            videoUrl = await uploadVideoMultipart(videoFile, (percent) => {
+              setVideoUploadProgress(percent);
+            });
 
-            videoUrl = await offersAPI.uploadVideoPresigned(videoFile);
-
-            clearInterval(progressInterval);
             setVideoUploadProgress(100);
             toast({ title: 'Видео загружено', description: 'Загружаем фото...' });
             setIsUploadingVideo(false);
