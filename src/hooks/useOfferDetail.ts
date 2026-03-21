@@ -206,6 +206,7 @@ export function useOfferDetail(id: string | undefined) {
         dateStr ? `📅 ${dateStr}` : null,
         seats ? `💺 ${seats} мест` : null,
         waypointLines.length > 0 ? `\nПункты посадки:\n${waypointLines.join('\n')}` : null,
+        offer.description ? `\n📝 ${offer.description}` : null,
       ].filter(Boolean);
 
       shareText = lines.join('\n');
@@ -213,7 +214,7 @@ export function useOfferDetail(id: string | undefined) {
       const price = offer.pricePerUnit != null
         ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽/${offer.unit}`
         : '—';
-      shareText = `📦 ${offer.title}\n💰 ${price}`;
+      shareText = `📦 ${offer.title}\n\n💰 Цена: ${price}${offer.description ? `\n\n📝 ${offer.description}` : ''}`;
     }
 
     await shareContent({

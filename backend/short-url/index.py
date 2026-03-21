@@ -30,12 +30,9 @@ def escape_html(s: str) -> str:
     return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
 
 def extract_offer_id(url: str) -> str | None:
-    """Извлекаем UUID оффера из URL вида /offer/{uuid} или ?type=offer&id={uuid}"""
+    """Извлекаем UUID оффера из URL вида /offer/{uuid}"""
     import re
     m = re.search(r'/offer/([0-9a-f-]{36})', url)
-    if m:
-        return m.group(1)
-    m = re.search(r'[?&]id=([0-9a-f-]{36})', url)
     return m.group(1) if m else None
 
 def extract_request_id(url: str) -> str | None:
@@ -203,9 +200,8 @@ def handler(event: dict, context) -> dict:
 
         cur.close()
         conn.close()
-        # Обычный пользователь — редирект на оригинальный URL
-        # Если original_url — og-proxy, редиректим через него (он сам редиректит на страницу)
-        return {'statusCode': 302, 'headers': {**CORS_HEADERS, 'Location': original_url}, 'body': ''}
+        # Обычный пользователь (фронтенд) — JSON как раньше
+        return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'url': original_url})}
 
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
@@ -232,10 +228,7 @@ def handler(event: dict, context) -> dict:
         cur.close()
         conn.close()
 
-        # Короткая ссылка ведёт напрямую на эту функцию бэкенда.
-        # Telegram-бот получает og-HTML с фото, обычный пользователь — редирект на страницу.
-        func_self_url = 'https://functions.poehali.dev/c3038bbe-b541-4d95-ad57-e89f37964ac2'
-        short_url = f"{func_self_url}?code={code}"
+        short_url = f"{SITE_URL}/s/{code}"
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'short_url': short_url, 'code': code})}
 
     return {'statusCode': 405, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'method not allowed'})}
