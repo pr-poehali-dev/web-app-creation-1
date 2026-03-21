@@ -755,7 +755,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         offers_cache.clear()
     
     # Продавец принимает заказ (по исходной цене)
-    if 'status' in body and body['status'] == 'accepted' and not counter_accepted:
+    if 'status' in body and body['status'] == 'accepted' and not counter_accepted and is_seller:
         cur.execute(
             pgsql.SQL("SELECT quantity, sold_quantity, reserved_quantity FROM {schema}.offers WHERE id = %s").format(schema=pgsql.Identifier(schema)),
             (str(order['offer_id']),)

@@ -26,6 +26,24 @@ export default function EditOfferOrderModal({
       isOpen={isOpen}
       onClose={onClose}
       order={selectedOrder}
+      onAcceptOrder={async () => {
+        try {
+          await ordersAPI.updateOrder(selectedOrder.id, { status: 'accepted' });
+          await new Promise(resolve => setTimeout(resolve, 500));
+          notifyOrderUpdated(selectedOrder.id);
+          toast({
+            title: 'Заказ принят',
+            description: 'Заказ успешно принят в работу',
+          });
+          onDataReload();
+        } catch (error) {
+          toast({
+            title: 'Ошибка',
+            description: 'Не удалось принять заказ',
+            variant: 'destructive',
+          });
+        }
+      }}
       onCounterOffer={async (price, message) => {
         try {
           await ordersAPI.updateOrder(selectedOrder.id, { 

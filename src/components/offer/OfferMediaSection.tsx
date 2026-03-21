@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 
@@ -89,53 +88,41 @@ export default function OfferMediaSection({
             )}
           </Label>
           <div className="mt-2">
-            {isAutoSale ? (
-              <div className="flex gap-2 flex-wrap">
-                <input
-                  id="images-camera"
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  multiple
-                  onChange={handleImageUpload}
-                  disabled={images.length >= 10 || isImageUploading}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="images-camera"
-                  className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border text-sm font-medium transition-colors ${images.length >= 10 || isImageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-accent'} ${imageUploadSuccess ? 'border-green-500 bg-green-50' : 'border-input bg-background'}`}
-                >
-                  <Icon name="Camera" className="h-4 w-4" />
-                  Камера
-                </label>
-                <input
-                  id="images-gallery"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  disabled={images.length >= 10 || isImageUploading}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="images-gallery"
-                  className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border text-sm font-medium transition-colors ${images.length >= 10 || isImageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-accent'} ${imageUploadSuccess ? 'border-green-500 bg-green-50' : 'border-input bg-background'}`}
-                >
-                  <Icon name="Images" className="h-4 w-4" />
-                  Галерея
-                </label>
-              </div>
-            ) : (
-              <Input
-                id="images"
+            <div className="flex gap-2 flex-wrap">
+              <input
+                id="images-camera"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                multiple
+                onChange={handleImageUpload}
+                disabled={images.length >= 10 || isImageUploading}
+                className="hidden"
+              />
+              <label
+                htmlFor="images-camera"
+                className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border text-sm font-medium transition-colors ${images.length >= 10 || isImageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-accent'} ${imageUploadSuccess ? 'border-green-500 bg-green-50' : 'border-input bg-background'}`}
+              >
+                <Icon name="Camera" className="h-4 w-4" />
+                Камера
+              </label>
+              <input
+                id="images-gallery"
                 type="file"
                 accept="image/*"
                 multiple
                 onChange={handleImageUpload}
                 disabled={images.length >= 10 || isImageUploading}
-                className={imageUploadSuccess ? 'border-green-500 bg-green-50' : ''}
+                className="hidden"
               />
-            )}
+              <label
+                htmlFor="images-gallery"
+                className={`inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border text-sm font-medium transition-colors ${images.length >= 10 || isImageUploading ? 'opacity-50 pointer-events-none' : 'hover:bg-accent'} ${imageUploadSuccess ? 'border-green-500 bg-green-50' : 'border-input bg-background'}`}
+              >
+                <Icon name="Images" className="h-4 w-4" />
+                Галерея
+              </label>
+            </div>
           </div>
           
           {imagePreviews.length > 0 && (
