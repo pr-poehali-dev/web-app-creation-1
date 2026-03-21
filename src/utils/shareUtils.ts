@@ -42,6 +42,17 @@ async function shortenUrl(url: string): Promise<string> {
   }
 }
 
+async function tinyUrl(url: string): Promise<string> {
+  try {
+    const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return url;
+    const short = await res.text();
+    return short.startsWith('https://tinyurl.com') ? short : url;
+  } catch {
+    return url;
+  }
+}
+
 /** Строим URL og-proxy для оффера — он отдаёт HTML с OG-тегами для мессенджеров */
 function buildOgProxyUrl(pageUrl: string): string | null {
   const ogProxyBase = (func2url as Record<string, string>)['og-proxy'];
@@ -66,9 +77,10 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
   // Для копирования в буфер укорачиваем og-proxy (или прямую ссылку)
   const shortUrl = ogUrl ? await shortenUrl(ogUrl) : await shortenUrl(url);
 
-  // og-proxy ссылка в тексте — Telegram читает превью из неё и показывает фото
+  // og-proxy ссылка укорачивается через TinyURL — в тексте tinyurl.com/xxx, фото из og-proxy
   const directShareUrl = ogUrl || url;
-  const fullText = `${text}\n\n🔗 ${directShareUrl}`;
+  const tinyShareUrl = await tinyUrl(directShareUrl);
+  const fullText = `${text}\n\n🔗 ${tinyShareUrl}`;
 
   if (navigator.share) {
     try {
