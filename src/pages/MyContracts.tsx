@@ -72,14 +72,14 @@ function formatDate(dateStr: string) {
   }
 }
 
-function ContractCard({ contract, currentUserId }: { contract: Contract; currentUserId: number }) {
+function ContractCard({ contract, currentUserId, onClick }: { contract: Contract; currentUserId: number; onClick: () => void }) {
   const isSeller = contract.sellerId === currentUserId;
   const counterparty = isSeller
     ? `${contract.buyerFirstName || ''} ${contract.buyerLastName || ''}`.trim() || 'Покупатель'
     : `${contract.sellerFirstName || ''} ${contract.sellerLastName || ''}`.trim() || 'Продавец';
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
@@ -126,6 +126,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const currentUser = getSession();
 
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('active');
 
@@ -140,12 +141,29 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const loadContracts = async () => {
     setIsLoading(true);
     try {
-      const resp = await fetch(CONTRACTS_API, {
-        headers: { 'X-User-Id': String(currentUser!.userId) },
+      const userId = String(currentUser!.userId);
+      // Мои контракты (я автор)
+      const resp = await fetch(`${CONTRACTS_API}?user_id=${userId}`, {
+        headers: { 'X-User-Id': userId },
       });
       if (!resp.ok) throw new Error('Ошибка загрузки');
       const data = await resp.json();
       setContracts(data.contracts || []);
+
+      // Контракты на которые я откликнулся — загружаем отклики и потом сами контракты
+      const respResp = await fetch(`${CONTRACTS_API}?responses=true&contractId=all`, {
+        headers: { 'X-User-Id': userId },
+      }).catch(() => null);
+      // responses=true&contractId=all не поддерживается — используем user_responses
+      // Получаем все открытые контракты и фильтруем по наличию моего отклика
+      // Более простой способ: бэкенд вернёт контракты где user_id = buyer_id через user_responses
+      const myResponsesResp = await fetch(`${CONTRACTS_API}?myResponses=true`, {
+        headers: { 'X-User-Id': userId },
+      }).catch(() => null);
+      if (myResponsesResp && myResponsesResp.ok) {
+        const myRespData = await myResponsesResp.json();
+        setRespondedContracts(myRespData.contracts || []);
+      }
     } catch (err) {
       console.error(err);
       toast({ title: 'Ошибка', description: 'Не удалось загрузить контракты', variant: 'destructive' });
@@ -158,6 +176,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const activeContracts = contracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const closedContracts = contracts.filter(c => ['completed', 'cancelled'].includes(c.status));
   const currentUserId = currentUser?.userId ?? 0;
+  const allCount = contracts.length + respondedContracts.length;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -172,7 +191,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
           <div className="flex items-center justify-center py-16">
             <Icon name="Loader2" className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : contracts.length === 0 ? (
+        ) : allCount === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <Icon name="FileSignature" className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">Контрактов пока нет</p>
@@ -187,13 +206,16 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               <TabsTrigger value="closed">
                 Завершённые {closedContracts.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>}
               </TabsTrigger>
+              <TabsTrigger value="responses">
+                Мои отклики {respondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{respondedContracts.length}</span>}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="active" className="space-y-3">
               {activeContracts.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Нет активных контрактов</p>
               ) : (
-                activeContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} />)
+                activeContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)
               )}
             </TabsContent>
 
@@ -201,7 +223,17 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               {closedContracts.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Нет завершённых контрактов</p>
               ) : (
-                closedContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} />)
+                closedContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)
+              )}
+            </TabsContent>
+
+            <TabsContent value="responses" className="space-y-3">
+              {respondedContracts.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Вы ещё не откликались на контракты</p>
+              ) : (
+                respondedContracts.map(c => (
+                  <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />
+                ))
               )}
             </TabsContent>
           </Tabs>

@@ -143,6 +143,68 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
+    # GET ?myResponses=true — контракты на которые пользователь откликнулся
+    if params.get('myResponses') == 'true':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    SELECT c.*, cr.price_per_unit as my_price, cr.total_amount as my_total, cr.comment as my_comment, cr.status as my_response_status,
+                        s.first_name as seller_first_name, s.last_name as seller_last_name,
+                        COALESCE(AVG(r.rating), 0) as seller_rating
+                    FROM contract_responses cr
+                    JOIN contracts c ON cr.contract_id = c.id
+                    LEFT JOIN users s ON c.seller_id = s.id
+                    LEFT JOIN reviews r ON r.reviewed_user_id = c.seller_id
+                    WHERE cr.user_id = %s
+                    GROUP BY c.id, cr.price_per_unit, cr.total_amount, cr.comment, cr.status, s.first_name, s.last_name
+                    ORDER BY cr.created_at DESC
+                ''', (user_id,))
+                rows = cur.fetchall()
+                contracts_list = []
+                for row in rows:
+                    d = decimal_to_float(dict(row))
+                    d['sellerFirstName'] = d.pop('seller_first_name', '')
+                    d['sellerLastName'] = d.pop('seller_last_name', '')
+                    d['sellerRating'] = d.pop('seller_rating', 0)
+                    d['contractType'] = d.pop('contract_type', '')
+                    d['productName'] = d.pop('product_name', '')
+                    d['productSpecs'] = d.pop('product_specs', None)
+                    d['pricePerUnit'] = d.pop('price_per_unit', 0)
+                    d['totalAmount'] = d.pop('total_amount', 0)
+                    d['myPrice'] = d.pop('my_price', 0)
+                    d['myTotal'] = d.pop('my_total', 0)
+                    d['myComment'] = d.pop('my_comment', '')
+                    d['myResponseStatus'] = d.pop('my_response_status', 'pending')
+                    d['deliveryDate'] = str(d.pop('delivery_date', ''))
+                    d['contractStartDate'] = str(d.pop('contract_start_date', ''))
+                    d['contractEndDate'] = str(d.pop('contract_end_date', ''))
+                    d['sellerId'] = d.pop('seller_id', None)
+                    d['buyerId'] = d.pop('buyer_id', None)
+                    d['deliveryAddress'] = d.pop('delivery_address', '')
+                    d['deliveryMethod'] = d.pop('delivery_method', '')
+                    d['logisticsPartnerId'] = d.pop('logistics_partner_id', None)
+                    d['prepaymentPercent'] = d.pop('prepayment_percent', 0) or 0
+                    d['prepaymentAmount'] = d.pop('prepayment_amount', 0) or 0
+                    d['financingAvailable'] = d.pop('financing_available', False)
+                    d['termsConditions'] = d.pop('terms_conditions', '')
+                    d['minPurchaseQuantity'] = d.pop('min_purchase_quantity', 0) or 0
+                    d['discountPercent'] = d.pop('discount_percent', 0) or 0
+                    d['viewsCount'] = d.pop('views_count', 0)
+                    d['createdAt'] = str(d.pop('created_at', ''))
+                    d['updatedAt'] = str(d.pop('updated_at', ''))
+                    d['productImages'] = d.pop('product_images', None)
+                    d['productVideoUrl'] = d.pop('product_video_url', None)
+                    d['buyerFirstName'] = d.pop('buyer_first_name', None)
+                    d['buyerLastName'] = d.pop('buyer_last_name', None)
+                    contracts_list.append(d)
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'contracts': contracts_list, 'total': len(contracts_list)}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
     # GET — список контрактов (существующая логика, не изменена)
     status = params.get('status')
     category = params.get('category')

@@ -87,6 +87,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const [respondPrice, setRespondPrice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alreadyResponded, setAlreadyResponded] = useState(false);
+  const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -108,6 +109,10 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         const found = (data.contracts || []).find((c: Contract) => c.id === Number(id));
         if (found) {
           setContract(found);
+          // Если пользователь автор — загружаем отклики
+          if (userId && found.sellerId === Number(userId)) {
+            loadResponses(found.id, userId);
+          }
         } else {
           toast({ title: 'Контракт не найден', variant: 'destructive' });
           navigate('/trading');
@@ -117,6 +122,20 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
       toast({ title: 'Ошибка загрузки', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadResponses = async (contractId: number, userId: string) => {
+    try {
+      const res = await fetch(`${func2url['contracts-list']}?responses=true&contractId=${contractId}`, {
+        headers: { 'X-User-Id': userId },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setResponses(data.responses || []);
+      }
+    } catch {
+      // тихо игнорируем
     }
   };
 
@@ -371,6 +390,45 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               </div>
             </CardContent>
           </Card>
+
+          {/* Отклики — только для автора контракта */}
+          {isSeller && responses.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Icon name="Users" className="h-4 w-4" />Отклики ({responses.length})</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                {responses.map(r => (
+                  <div key={r.id} className="border rounded-lg p-3 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{r.firstName} {r.lastName}</span>
+                      <span className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString('ru-RU')}</span>
+                    </div>
+                    {r.pricePerUnit > 0 && (
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">Цена: </span>
+                        <span className="font-medium">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(r.pricePerUnit)} / ед.</span>
+                        <span className="text-muted-foreground ml-2">Итого: </span>
+                        <span className="font-medium">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(r.totalAmount)}</span>
+                      </div>
+                    )}
+                    {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
+                      {r.phone && <span className="flex items-center gap-1"><Icon name="Phone" size={12} />{r.phone}</span>}
+                      {r.email && <span className="flex items-center gap-1"><Icon name="Mail" size={12} />{r.email}</span>}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {isSeller && responses.length === 0 && contract.status === 'open' && (
+            <Card className="border-dashed">
+              <CardContent className="py-6 text-center text-muted-foreground text-sm">
+                <Icon name="Inbox" className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                Откликов пока нет
+              </CardContent>
+            </Card>
+          )}
 
           {/* Кнопка отклика снизу */}
           {!isSeller && contract.status === 'open' && (
