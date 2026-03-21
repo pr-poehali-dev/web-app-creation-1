@@ -105,13 +105,22 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
     };
     window.addEventListener('storage', handleStorageChange);
 
+    const handleGlobalRefresh = () => loadMyOffers();
+    window.addEventListener('globalRefresh', handleGlobalRefresh);
+
     const unsubscribeOffers = dataSync.subscribe('offer_updated', () => {
+      loadMyOffers();
+    });
+
+    const unsubscribeOrders = dataSync.subscribe('order_updated', () => {
       loadMyOffers();
     });
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('globalRefresh', handleGlobalRefresh);
       unsubscribeOffers();
+      unsubscribeOrders();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, currentUser?.id, navigate]);
