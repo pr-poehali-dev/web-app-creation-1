@@ -323,15 +323,15 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     const sizeMB = (file.size / 1024 / 1024).toFixed(2);
     console.log('[VIDEO] file selected:', file.name, `type="${file.type}"`, file.size, `bytes (${sizeMB} MB)`);
 
-    if (file.size > 0 && file.size > 50 * 1024 * 1024) {
-      toast({ title: 'Ошибка', description: `Видео слишком большое (${sizeMB} МБ). Максимум 50 МБ`, variant: 'destructive' });
+    if (file.size > 0 && file.size > 500 * 1024 * 1024) {
+      toast({ title: 'Ошибка', description: `Видео слишком большое (${sizeMB} МБ). Максимум 500 МБ`, variant: 'destructive' });
       return;
     }
 
     setIsUploadingVideo(true);
     try {
-      console.log('[VIDEO] calling uploadVideoPresigned...');
-      const url = await offersAPI.uploadVideoPresigned(file);
+      console.log('[VIDEO] calling uploadVideoMultipart...');
+      const url = await uploadVideoMultipart(file);
       console.log('[VIDEO] upload success:', url);
       setVideo({ id: Date.now().toString(), url });
       toast({ title: 'Видео добавлено', description: 'Не забудьте сохранить изменения' });

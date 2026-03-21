@@ -434,9 +434,9 @@ export const offersAPI = {
   },
 
   async uploadVideoPresigned(file: File, _folder = 'offer-videos'): Promise<string> {
-    const MAX_SIZE = 50 * 1024 * 1024; // 50 МБ
+    const MAX_SIZE = 500 * 1024 * 1024; // 500 МБ
     if (file.size > MAX_SIZE) {
-      throw new Error(`Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 50 МБ`);
+      throw new Error(`Видео слишком большое (${(file.size / 1024 / 1024).toFixed(0)} МБ). Максимум 500 МБ`);
     }
 
     const rawName = file.name || '';

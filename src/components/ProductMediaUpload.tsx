@@ -20,7 +20,7 @@ export default function ProductMediaUpload({
   onImagesChange,
   onVideoChange,
   maxImages = 5,
-  maxVideoSizeMB = 100
+  maxVideoSizeMB = 500
 }: ProductMediaUploadProps) {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
