@@ -37,6 +37,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         if method == 'POST':
             params = event.get('queryStringParameters') or {}
+            action = params.get('action', '')
+            if action == 'chunk':
+                return upload_video_chunk(event, headers, params)
+            if action == 'complete':
+                return complete_video_chunks(event, headers, params)
             if params.get('binary') == '1':
                 content_type = params.get('ct', 'video/mp4')
                 return upload_binary_video(event, headers, content_type)
@@ -619,3 +624,95 @@ def upload_media(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             'body': json.dumps({'error': f'Failed to upload media: {str(e)}'}),
             'isBase64Encoded': False
         }
+
+
+def get_s3():
+    return boto3.client('s3',
+        endpoint_url='https://bucket.poehali.dev',
+        aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'],
+    )
+
+
+def upload_video_chunk(event: Dict[str, Any], headers: Dict[str, str], params: Dict[str, str]) -> Dict[str, Any]:
+    """Принимает один чанк видео (base64) и сохраняет во временный S3-объект"""
+    upload_id = params.get('uploadId', '')
+    part_number = params.get('part', '0')
+    if not upload_id:
+        return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Missing uploadId'}), 'isBase64Encoded': False}
+
+    body_raw = event.get('body', '')
+    if event.get('isBase64Encoded'):
+        body_bytes = base64.b64decode(body_raw)
+        chunk_data = body_bytes
+    else:
+        try:
+            body_json = json.loads(body_raw)
+            chunk_data = base64.b64decode(body_json.get('chunk', ''))
+        except Exception:
+            chunk_data = body_raw.encode('latin-1') if isinstance(body_raw, str) else body_raw
+
+    s3 = get_s3()
+    tmp_key = f"tmp-video-chunks/{upload_id}/part_{part_number.zfill(5)}"
+    s3.put_object(Bucket='files', Key=tmp_key, Body=chunk_data)
+    print(f"Chunk {part_number} saved: {tmp_key}, size={len(chunk_data)}")
+
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'ok': True, 'part': part_number}),
+        'isBase64Encoded': False
+    }
+
+
+def complete_video_chunks(event: Dict[str, Any], headers: Dict[str, str], params: Dict[str, str]) -> Dict[str, Any]:
+    """Склеивает все чанки, загружает финальный файл, удаляет временные"""
+    body_raw = event.get('body', '{}')
+    if event.get('isBase64Encoded'):
+        body_raw = base64.b64decode(body_raw).decode('utf-8')
+    body = json.loads(body_raw)
+
+    upload_id = body.get('uploadId', '')
+    filename = body.get('filename', 'video.mp4')
+    content_type = body.get('contentType', 'video/mp4')
+    total_parts = int(body.get('totalParts', 0))
+
+    if not upload_id or not total_parts:
+        return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'Missing uploadId or totalParts'}), 'isBase64Encoded': False}
+
+    s3 = get_s3()
+
+    # Читаем и склеиваем все чанки по порядку
+    final_data = bytearray()
+    for i in range(total_parts):
+        tmp_key = f"tmp-video-chunks/{upload_id}/part_{str(i).zfill(5)}"
+        try:
+            obj = s3.get_object(Bucket='files', Key=tmp_key)
+            final_data.extend(obj['Body'].read())
+            print(f"Read chunk {i}: {tmp_key}")
+        except Exception as e:
+            print(f"ERROR reading chunk {i}: {e}")
+            return {'statusCode': 500, 'headers': headers, 'body': json.dumps({'error': f'Missing chunk {i}'}), 'isBase64Encoded': False}
+
+    # Сохраняем финальный файл
+    ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else 'mp4'
+    file_id = str(uuid.uuid4())
+    s3_key = f"offer-videos/{file_id}.{ext}"
+    s3.put_object(Bucket='files', Key=s3_key, Body=bytes(final_data), ContentType=content_type)
+    print(f"Final video uploaded: {s3_key}, size={len(final_data) / 1024 / 1024:.2f} MB")
+
+    # Удаляем временные чанки
+    for i in range(total_parts):
+        tmp_key = f"tmp-video-chunks/{upload_id}/part_{str(i).zfill(5)}"
+        try:
+            s3.delete_object(Bucket='files', Key=tmp_key)
+        except Exception:
+            pass
+
+    cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{s3_key}"
+    return {
+        'statusCode': 200,
+        'headers': headers,
+        'body': json.dumps({'url': cdn_url, 'message': 'Video uploaded successfully'}),
+        'isBase64Encoded': False
+    }

@@ -1,6 +1,6 @@
-const MULTIPART_URL = 'https://functions.poehali.dev/0337d155-71d5-48b2-995c-be83c3469396';
+const UPLOAD_VIDEO_URL = 'https://functions.poehali.dev/9999daf2-27bb-4ac4-a09e-001928741e24';
 
-const CHUNK_SIZE = 4 * 1024 * 1024; // 4 MB
+const CHUNK_SIZE = 3 * 1024 * 1024; // 3 MB на чанк
 
 function toBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -15,25 +15,12 @@ export async function uploadVideoMultipart(
   file: File,
   onProgress?: (percent: number) => void
 ): Promise<string> {
+  const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
   const contentType = file.type || 'video/mp4';
   const filename = file.name || 'video.mp4';
 
-  // 1. Init
-  onProgress?.(5);
-  const initRes = await fetch(`${MULTIPART_URL}?action=init`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filename, contentType, folder: 'offer-videos' }),
-  });
-  if (!initRes.ok) {
-    const err = await initRes.json().catch(() => ({}));
-    throw new Error(err.error || 'Ошибка инициализации загрузки');
-  }
-  const { uploadId, key, fileUrl } = await initRes.json();
-
-  // 2. Upload parts
-  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-  const parts: { partNumber: number; etag: string }[] = [];
+  onProgress?.(2);
 
   for (let i = 0; i < totalChunks; i++) {
     const start = i * CHUNK_SIZE;
@@ -42,49 +29,42 @@ export async function uploadVideoMultipart(
     const buffer = await chunk.arrayBuffer();
     const chunkB64 = toBase64(buffer);
 
-    const partRes = await fetch(`${MULTIPART_URL}?action=part`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        key,
-        uploadId,
-        partNumber: i + 1,
-        chunk: chunkB64,
-      }),
-    });
-
-    if (!partRes.ok) {
-      // Abort on failure
-      await fetch(`${MULTIPART_URL}?action=abort`, {
+    const resp = await fetch(
+      `${UPLOAD_VIDEO_URL}?action=chunk&uploadId=${uploadId}&part=${i}`,
+      {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, uploadId }),
-      }).catch(() => {});
-      const err = await partRes.json().catch(() => ({}));
-      throw new Error(err.error || `Ошибка загрузки части ${i + 1}`);
+        body: JSON.stringify({ chunk: chunkB64 }),
+      }
+    );
+
+    if (!resp.ok) {
+      let msg = `Ошибка загрузки части ${i + 1}`;
+      try { const e = await resp.json(); msg = e.error || msg; } catch (_) { /* ignore */ }
+      throw new Error(msg);
     }
 
-    const { etag } = await partRes.json();
-    parts.push({ partNumber: i + 1, etag });
-
-    // Progress: 5% init + 90% upload + 5% complete
-    const uploadPercent = Math.round(((i + 1) / totalChunks) * 90);
-    onProgress?.(5 + uploadPercent);
+    onProgress?.(2 + Math.round(((i + 1) / totalChunks) * 88));
   }
 
-  // 3. Complete
-  const completeRes = await fetch(`${MULTIPART_URL}?action=complete`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key, uploadId, parts, fileUrl }),
-  });
+  const completeResp = await fetch(
+    `${UPLOAD_VIDEO_URL}?action=complete`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uploadId, filename, contentType, totalParts: totalChunks }),
+    }
+  );
 
-  if (!completeRes.ok) {
-    const err = await completeRes.json().catch(() => ({}));
-    throw new Error(err.error || 'Ошибка завершения загрузки');
+  if (!completeResp.ok) {
+    let msg = 'Ошибка финализации загрузки';
+    try { const e = await completeResp.json(); msg = e.error || msg; } catch (_) { /* ignore */ }
+    throw new Error(msg);
   }
 
-  const result = await completeRes.json();
+  const result = await completeResp.json();
+  if (!result.url) throw new Error('Нет URL в ответе');
+
   onProgress?.(100);
   return result.url;
 }
