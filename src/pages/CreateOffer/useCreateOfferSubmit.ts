@@ -312,7 +312,7 @@ export function useCreateOfferSubmit(editOffer?: Offer, isEditMode: boolean = fa
       
       // Триггер для немедленного обновления страницы после публикации
       localStorage.setItem('force_offers_reload', Date.now().toString());
-      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('globalRefresh'));
       
       if (isEditMode) {
         toast({
