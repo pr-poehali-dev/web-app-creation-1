@@ -60,32 +60,20 @@ function buildOgProxyUrl(pageUrl: string): string | null {
 }
 
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
-  // Для мессенджеров шарим og-proxy URL (с фото + OG-тегами), укороченный через short-url
+  // og-proxy ссылка — отдаёт HTML с og:image, Telegram читает превью из неё
   const ogUrl = buildOgProxyUrl(url);
-  const shareUrl = ogUrl ? await shortenUrl(ogUrl) : await shortenUrl(url);
 
-  const fullText = `${text}\n\n🔗 ${shareUrl}`;
+  // Для копирования в буфер укорачиваем og-proxy (или прямую ссылку)
+  const shortUrl = ogUrl ? await shortenUrl(ogUrl) : await shortenUrl(url);
+
+  // В navigator.share передаём og-proxy напрямую (без short-url) — Telegram читает og-теги
+  const directShareUrl = ogUrl || url;
+  const fullText = `${text}\n\n🔗 ${directShareUrl}`;
+  const fullTextShort = `${text}\n\n🔗 ${shortUrl}`;
 
   if (navigator.share) {
     try {
-      if (imageUrl && navigator.canShare) {
-        try {
-          const response = await fetch(imageUrl);
-          const blob = await response.blob();
-          const ext = blob.type.includes('png') ? 'png' : 'jpg';
-          const file = new File([blob], `${title}.${ext}`, { type: blob.type });
-
-          if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ title, text: fullText, files: [file] });
-            toast.success('Ссылка отправлена!');
-            return;
-          }
-        } catch {
-          // Фото не удалось — шарим без него
-        }
-      }
-
-      await navigator.share({ title, text: fullText });
+      await navigator.share({ title, text: fullText, url: directShareUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
@@ -93,8 +81,8 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     }
   }
 
-  await copyToClipboard(fullText);
+  await copyToClipboard(fullTextShort);
   toast.success('Скопировано в буфер обмена', {
-    description: 'Вставьте в мессенджер — получатель увидит полную информацию',
+    description: 'Вставьте в мессенджер — получатель увидит превью с фото',
   });
 }
