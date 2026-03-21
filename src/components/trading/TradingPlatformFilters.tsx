@@ -38,7 +38,7 @@ export default function TradingPlatformFilters({
       <div className="w-[180px] relative">
         <div className="relative">
           <Input
-            value={isTypeOpen ? typeSearch : (selectedType === 'all' ? 'Все типы' : 'Форварды')}
+            value={isTypeOpen ? typeSearch : (selectedType === 'all' ? 'Все типы' : selectedType === 'forward' ? 'Форварды' : 'Бартер')}
             onChange={(e) => setTypeSearch(e.target.value)}
             onFocus={() => setIsTypeOpen(true)}
             placeholder="Тип контракта"
@@ -61,7 +61,7 @@ export default function TradingPlatformFilters({
               onClick={() => setIsTypeOpen(false)}
             />
             <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
-              {[{value: 'all', label: 'Все типы'}, {value: 'forward', label: 'Форварды'}]
+              {[{value: 'all', label: 'Все типы'}, {value: 'forward', label: 'Форварды'}, {value: 'barter', label: 'Бартер'}]
                 .filter(opt => opt.label.toLowerCase().includes(typeSearch.toLowerCase()))
                 .map(option => (
                   <button
