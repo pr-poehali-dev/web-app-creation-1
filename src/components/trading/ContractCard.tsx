@@ -1,7 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-import ProductMediaGallery from '@/components/ProductMediaGallery';
 
 interface Contract {
   id: number;
@@ -46,7 +45,7 @@ export default function ContractCard({
 }: ContractCardProps) {
   return (
     <Card 
-      className="hover:shadow-lg transition-shadow cursor-pointer"
+      className="border border-border hover:border-2 hover:border-primary transition-all cursor-pointer"
       onClick={() => onCardClick(contract.id)}
     >
       <CardHeader>
@@ -62,12 +61,6 @@ export default function ContractCard({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ProductMediaGallery 
-          images={contract.productImages}
-          videoUrl={contract.productVideoUrl}
-          productName={contract.productName}
-        />
-        <div className="mt-3 border-t pt-3" />
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Icon name="Package" className="h-4 w-4 text-muted-foreground" />
