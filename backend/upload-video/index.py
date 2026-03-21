@@ -643,14 +643,12 @@ def upload_video_chunk(event: Dict[str, Any], headers: Dict[str, str], params: D
 
     body_raw = event.get('body', '')
     if event.get('isBase64Encoded'):
-        body_bytes = base64.b64decode(body_raw)
-        chunk_data = body_bytes
-    else:
-        try:
-            body_json = json.loads(body_raw)
-            chunk_data = base64.b64decode(body_json.get('chunk', ''))
-        except Exception:
-            chunk_data = body_raw.encode('latin-1') if isinstance(body_raw, str) else body_raw
+        body_raw = base64.b64decode(body_raw).decode('utf-8')
+    try:
+        body_json = json.loads(body_raw)
+        chunk_data = base64.b64decode(body_json.get('chunk', ''))
+    except Exception:
+        chunk_data = b''
 
     s3 = get_s3()
     tmp_key = f"tmp-video-chunks/{upload_id}/part_{part_number.zfill(5)}"
