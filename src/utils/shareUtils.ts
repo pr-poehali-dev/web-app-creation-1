@@ -77,10 +77,8 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
   // Для копирования в буфер укорачиваем og-proxy (или прямую ссылку)
   const shortUrl = ogUrl ? await shortenUrl(ogUrl) : await shortenUrl(url);
 
-  // og-proxy ссылка укорачивается через TinyURL — в тексте tinyurl.com/xxx, фото из og-proxy
   const directShareUrl = ogUrl || url;
-  const tinyShareUrl = await tinyUrl(directShareUrl);
-  const fullText = `🔗 ${tinyShareUrl}`;
+  const fullText = `🔗 ${directShareUrl}`;
 
   if (navigator.share) {
     try {
