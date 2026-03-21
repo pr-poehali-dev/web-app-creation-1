@@ -976,6 +976,8 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
             updates.append(f"transport_comment = {'NULL' if not val else repr(val.replace(chr(39), chr(39)+chr(39)))}")
         if 'transportAllDistricts' in body:
             updates.append(f"transport_all_districts = {body['transportAllDistricts']}")
+        if 'noNegotiation' in body:
+            updates.append(f"no_negotiation = {body['noNegotiation']}")
         if 'transportWaypoints' in body:
             waypoints_val = body['transportWaypoints']
             waypoints_json = json.dumps(waypoints_val if waypoints_val is not None else [])
