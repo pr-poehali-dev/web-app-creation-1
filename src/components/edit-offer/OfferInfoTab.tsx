@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Offer, OfferImage, OfferVideo } from '@/types/offer';
 import { offersAPI } from '@/services/api';
+import { uploadVideoMultipart } from '@/utils/videoUpload';
 import { DISTRICTS } from '@/data/districts';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
