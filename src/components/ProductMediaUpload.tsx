@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { uploadMultipleFiles } from '@/utils/fileUpload';
+import { uploadVideoMultipart } from '@/utils/videoUpload';
 
 interface ProductMediaUploadProps {
   productImages: string[];
@@ -117,16 +118,15 @@ export default function ProductMediaUpload({
     setUploadProgress(0);
 
     try {
-      const uploadResult = await uploadMultipleFiles([{ file, type: 'product_video' }], userId);
-      const uploadedUrl = Object.values(uploadResult)[0];
-      if (uploadedUrl) {
-        onVideoChange(uploadedUrl);
-      }
+      const url = await uploadVideoMultipart(file, (percent) => {
+        setUploadProgress(percent);
+      });
+      onVideoChange(url);
       setUploadProgress(100);
       setUploadSuccess('Видео успешно загружено');
       setTimeout(() => setUploadSuccess(''), 3000);
     } catch (err) {
-      setError('Ошибка загрузки видео');
+      setError('Не удалось загрузить видео');
       console.error('Video upload error:', err);
     } finally {
       setUploadingVideo(false);
