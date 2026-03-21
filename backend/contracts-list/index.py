@@ -1,6 +1,8 @@
 '''
 Список контрактов пользователя или всех контрактов (с фильтрами).
 Если передан user_id — возвращает контракты, где пользователь продавец или покупатель.
+POST / — создать отклик на контракт
+GET /?responses=true&contractId={id} — список откликов на контракт (только для автора)
 '''
 
 import json
@@ -11,6 +13,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
+
+RESP_HEADERS = {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'}
 
 
 def decimal_to_float(obj):
@@ -33,30 +37,118 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
             'body': '',
             'isBase64Encoded': False
         }
-    
-    if method != 'GET':
-        return {
-            'statusCode': 405,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Method not allowed'}),
-            'isBase64Encoded': False
-        }
-    
-    params = event.get('queryStringParameters', {}) or {}
-    headers = event.get('headers', {}) or {}
 
-    # user_id — из заголовка X-User-Id или query-параметра
-    user_id_raw = headers.get('X-User-Id') or params.get('user_id')
+    req_headers = event.get('headers', {}) or {}
+    user_id_raw = req_headers.get('X-User-Id') or req_headers.get('x-user-id')
     user_id = int(user_id_raw) if user_id_raw and str(user_id_raw).isdigit() else None
 
-    status = params.get('status')  # None = все статусы
+    # ── POST: создать отклик на контракт ──────────────────────────────────────
+    if method == 'POST':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+
+        body = json.loads(event.get('body', '{}') or '{}')
+        contract_id_raw = body.get('contractId')
+        if not contract_id_raw:
+            return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
+
+        contract_id = int(contract_id_raw)
+        comment = (body.get('comment') or '').strip()
+        price_per_unit = body.get('pricePerUnit')
+        total_amount = body.get('totalAmount')
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id, seller_id, status, quantity, price_per_unit FROM contracts WHERE id = %s', (contract_id,))
+                contract = cur.fetchone()
+                if not contract:
+                    return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт не найден'}), 'isBase64Encoded': False}
+                if contract['status'] != 'open':
+                    return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт недоступен для отклика'}), 'isBase64Encoded': False}
+                if contract['seller_id'] == user_id:
+                    return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нельзя откликнуться на собственный контракт'}), 'isBase64Encoded': False}
+
+                cur.execute('SELECT id FROM contract_responses WHERE contract_id = %s AND user_id = %s', (contract_id, user_id))
+                if cur.fetchone():
+                    return {'statusCode': 409, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Вы уже откликнулись на этот контракт'}), 'isBase64Encoded': False}
+
+                if not price_per_unit:
+                    price_per_unit = float(contract['price_per_unit'] or 0)
+                if not total_amount:
+                    total_amount = float(price_per_unit) * float(contract['quantity'] or 1)
+
+                cur.execute(
+                    'INSERT INTO contract_responses (contract_id, user_id, price_per_unit, total_amount, comment, status) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',
+                    (contract_id, user_id, price_per_unit, total_amount, comment, 'pending')
+                )
+                new_id = cur.fetchone()['id']
+                conn.commit()
+
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': new_id, 'message': 'Отклик успешно отправлен'}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
+    # ── GET ───────────────────────────────────────────────────────────────────
+    if method != 'GET':
+        return {'statusCode': 405, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Method not allowed'}), 'isBase64Encoded': False}
+
+    params = event.get('queryStringParameters', {}) or {}
+
+    # GET ?responses=true&contractId={id} — список откликов (только для автора)
+    if params.get('responses') == 'true':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+
+        contract_id_raw = params.get('contractId')
+        if not contract_id_raw:
+            return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
+
+        contract_id = int(contract_id_raw)
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT seller_id FROM contracts WHERE id = %s', (contract_id,))
+                contract = cur.fetchone()
+                if not contract:
+                    return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт не найден'}), 'isBase64Encoded': False}
+                if contract['seller_id'] != user_id:
+                    return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
+
+                cur.execute('''
+                    SELECT cr.*, u.first_name, u.last_name, u.phone, u.email
+                    FROM contract_responses cr
+                    JOIN users u ON cr.user_id = u.id
+                    WHERE cr.contract_id = %s
+                    ORDER BY cr.created_at DESC
+                ''', (contract_id,))
+                rows = cur.fetchall()
+                responses = []
+                for r in rows:
+                    d = decimal_to_float(dict(r))
+                    d['firstName'] = d.pop('first_name')
+                    d['lastName'] = d.pop('last_name')
+                    d['pricePerUnit'] = d.pop('price_per_unit')
+                    d['totalAmount'] = d.pop('total_amount')
+                    d['contractId'] = d.pop('contract_id')
+                    d['userId'] = d.pop('user_id')
+                    d['createdAt'] = str(d.pop('created_at'))
+                    d['updatedAt'] = str(d.pop('updated_at'))
+                    responses.append(d)
+
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'responses': responses, 'total': len(responses)}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
+    # GET — список контрактов (существующая логика, не изменена)
+    status = params.get('status')
     category = params.get('category')
     contract_type = params.get('type')
     limit = min(int(params.get('limit', '50')), 200)
@@ -68,8 +160,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             conditions = []
             query_params = []
 
-            # user_id используется только если явно передан параметр user_id (Мои контракты)
-            # при запросе status=open — показываем всем
             explicit_user_filter = params.get('user_id') and user_id
             if explicit_user_filter:
                 conditions.append("(c.seller_id = %s OR c.buyer_id = %s)")
@@ -150,7 +240,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
             return {
                 'statusCode': 200,
-                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'headers': RESP_HEADERS,
                 'body': json.dumps({'contracts': contracts_list, 'total': total, 'limit': limit, 'offset': offset}),
                 'isBase64Encoded': False
             }

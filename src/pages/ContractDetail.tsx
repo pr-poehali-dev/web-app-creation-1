@@ -7,6 +7,10 @@ import BackButton from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
@@ -78,6 +82,11 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
+  const [respondOpen, setRespondOpen] = useState(false);
+  const [respondComment, setRespondComment] = useState('');
+  const [respondPrice, setRespondPrice] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [alreadyResponded, setAlreadyResponded] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -143,7 +152,46 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
       toast({ title: 'Ошибка проверки статуса', variant: 'destructive' });
       return;
     }
-    toast({ title: 'Скоро', description: 'Форма отклика на контракт появится в ближайшем обновлении' });
+    if (contract) setRespondPrice(String(contract.pricePerUnit || ''));
+    setRespondOpen(true);
+  };
+
+  const handleSubmitRespond = async () => {
+    if (!contract) return;
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    setIsSubmitting(true);
+    try {
+      const price = parseFloat(respondPrice) || contract.pricePerUnit;
+      const total = price * contract.quantity;
+      const res = await fetch(func2url['contracts-list'], {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({
+          contractId: contract.id,
+          comment: respondComment.trim(),
+          pricePerUnit: price,
+          totalAmount: total,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAlreadyResponded(true);
+        setRespondOpen(false);
+        setRespondComment('');
+        toast({ title: 'Отклик отправлен', description: 'Автор контракта получит уведомление' });
+      } else if (res.status === 409) {
+        setAlreadyResponded(true);
+        setRespondOpen(false);
+        toast({ title: 'Вы уже откликнулись', description: 'Ваш отклик на этот контракт уже отправлен' });
+      } else {
+        toast({ title: 'Ошибка', description: data.error || 'Не удалось отправить отклик', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Ошибка', description: 'Не удалось отправить отклик', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -186,9 +234,9 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               )}
             </div>
             {!isSeller && contract.status === 'open' && (
-              <Button onClick={handleRespond} className="shrink-0">
-                <Icon name="Send" className="mr-2 h-4 w-4" />
-                Откликнуться
+              <Button onClick={handleRespond} className="shrink-0" disabled={alreadyResponded}>
+                <Icon name={alreadyResponded ? 'Check' : 'Send'} className="mr-2 h-4 w-4" />
+                {alreadyResponded ? 'Отклик отправлен' : 'Откликнуться'}
               </Button>
             )}
           </div>
@@ -325,9 +373,9 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
           {/* Кнопка отклика снизу */}
           {!isSeller && contract.status === 'open' && (
-            <Button onClick={handleRespond} className="w-full" size="lg">
-              <Icon name="Send" className="mr-2 h-4 w-4" />
-              Откликнуться на контракт
+            <Button onClick={handleRespond} className="w-full" size="lg" disabled={alreadyResponded}>
+              <Icon name={alreadyResponded ? 'Check' : 'Send'} className="mr-2 h-4 w-4" />
+              {alreadyResponded ? 'Отклик отправлен' : 'Откликнуться на контракт'}
             </Button>
           )}
 
@@ -335,6 +383,55 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
       </main>
 
       <Footer />
+
+      {/* Диалог отклика */}
+      <Dialog open={respondOpen} onOpenChange={setRespondOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Отклик на контракт</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {!isBarter && (
+              <div className="space-y-1.5">
+                <Label>Ваша цена за единицу, ₽</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={respondPrice}
+                  onChange={e => setRespondPrice(e.target.value)}
+                  placeholder={String(contract?.pricePerUnit || '')}
+                />
+                {respondPrice && contract && (
+                  <p className="text-xs text-muted-foreground">
+                    Итого: {formatPrice(parseFloat(respondPrice) * contract.quantity)}
+                  </p>
+                )}
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label>Комментарий <span className="text-muted-foreground">(необязательно)</span></Label>
+              <Textarea
+                value={respondComment}
+                onChange={e => setRespondComment(e.target.value)}
+                placeholder="Опишите условия, сроки, особенности вашего предложения..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRespondOpen(false)} disabled={isSubmitting}>
+              Отмена
+            </Button>
+            <Button onClick={handleSubmitRespond} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Отправка...</>
+              ) : (
+                <><Icon name="Send" className="mr-2 h-4 w-4" />Отправить отклик</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
