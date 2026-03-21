@@ -13,7 +13,7 @@
   "push-subscribe": "https://functions.poehali.dev/51a6c510-719b-44bb-840d-80b4bfe2484c",
   "send-verification-email": "https://functions.poehali.dev/d90da2e2-7001-41e3-b0b4-38efb96e4888",
   "telegram-bot": "https://functions.poehali.dev/60481164-f1d2-4fb6-92a6-d2b06aa1c4fb",
-  "contracts-list": "https://functions.poehali.dev/86936502-59db-4e99-adac-269feae2bee3",
+  "contracts-list": "https://functions.poehali.dev/f1e9dea3-13a0-488b-a042-58b89a19b204",
   "telegram-bot-settings": "https://functions.poehali.dev/fbdad514-5b60-4cf3-bfdf-95d933f359fc",
   "telegram-verify": "https://functions.poehali.dev/885c0745-a68f-48ed-a5a5-66c96a203fa1",
   "admin-search-user": "https://functions.poehali.dev/6a5f6699-1898-49ce-9ac4-b7b746730abf",
