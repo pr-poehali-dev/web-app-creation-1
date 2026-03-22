@@ -173,7 +173,7 @@ export function useContractData(isAuthenticated: boolean) {
       ...prev,
       productName: value,
       category: prev.category || detectCategory(value),
-      title: prev.title || (value ? `Поставка: ${value}` : ''),
+      title: prev.title || (value ? (prev.contractType === 'forward-request' ? `Запрос: ${value}` : `Поставка: ${value}`) : ''),
     }));
   };
 

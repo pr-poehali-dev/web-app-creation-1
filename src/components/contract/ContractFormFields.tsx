@@ -33,6 +33,7 @@ export default function ContractFormFields({
 }: ContractFormFieldsProps) {
   const navigate = useNavigate();
   const isBarter = formData.contractType === 'barter';
+  const isForwardRequest = formData.contractType === 'forward-request';
   const categoryLabel = CATEGORIES.find(c => c.value === formData.category)?.label || '';
 
   return (
@@ -46,9 +47,10 @@ export default function ContractFormFields({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { value: 'forward', label: 'Форвардный контракт', desc: 'Поставка товара в будущем по фиксированной цене (ГК РФ ст. 454–524)', icon: 'TrendingUp' },
+              { value: 'forward-request', label: 'Форвардный контракт на запрос', desc: 'Закупка товара/услуги в будущем по зафиксированным условиям (ГК РФ ст. 454–524)', icon: 'ShoppingCart' },
               { value: 'barter', label: 'Договор на бартер (мену)', desc: 'Обмен товарами без денежного расчёта (ГК РФ ст. 567–571)', icon: 'ArrowLeftRight' },
             ].map(opt => (
               <button
@@ -73,18 +75,18 @@ export default function ContractFormFields({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Icon name="Package" size={18} />
-            {isBarter ? 'Товар А (ваш товар)' : 'Товар и условия поставки'}
+            <Icon name={isForwardRequest ? 'ShoppingBag' : 'Package'} size={18} />
+            {isBarter ? 'Товар А (ваш товар)' : isForwardRequest ? 'Запрашиваемый товар / услуга' : 'Товар и условия поставки'}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label>Название товара *</Label>
+              <Label>{isForwardRequest ? 'Название товара / услуги *' : 'Название товара *'}</Label>
               <Input
                 value={formData.productName}
                 onChange={e => handleProductNameChange(e.target.value)}
-                placeholder="Молоко цельное, пшеница 3 кл., кирпич М150..."
+                placeholder={isForwardRequest ? 'Молоко цельное, монтажные работы, зерно пшеницы...' : 'Молоко цельное, пшеница 3 кл., кирпич М150...'}
               />
               {formData.category && (
                 <p className="text-xs text-primary flex items-center gap-1">
@@ -119,12 +121,12 @@ export default function ContractFormFields({
             {!isBarter && (
               <>
                 <div className="space-y-1">
-                  <Label>Цена за {formData.unit} (₽) *</Label>
-                  <Input type="number" step="0.01" min="0" value={formData.pricePerUnit} onChange={e => set('pricePerUnit', e.target.value)} placeholder="15000" />
+                  <Label>{isForwardRequest ? `Макс. цена за ${formData.unit} (₽)` : `Цена за ${formData.unit} (₽) *`}</Label>
+                  <Input type="number" step="0.01" min="0" value={formData.pricePerUnit} onChange={e => set('pricePerUnit', e.target.value)} placeholder={isForwardRequest ? 'Не указывать или макс. бюджет' : '15000'} />
                 </div>
                 <div className="space-y-1">
-                  <Label>Итого (₽)</Label>
-                  <Input value={totalAmount ? totalAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : '0'} disabled />
+                  <Label>{isForwardRequest ? 'Макс. бюджет (₽)' : 'Итого (₽)'}</Label>
+                  <Input value={totalAmount ? totalAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : (isForwardRequest ? 'Договорная' : '0')} disabled />
                 </div>
               </>
             )}
@@ -199,7 +201,7 @@ export default function ContractFormFields({
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1">
-                Период поставки *
+                {isForwardRequest ? 'Период исполнения (поставки / оказания услуги) *' : 'Период поставки *'}
                 <span className="text-xs text-muted-foreground font-normal">(конечная дата = дата окончания контракта)</span>
               </Label>
               <div className="flex items-center gap-2">
@@ -234,7 +236,7 @@ export default function ContractFormFields({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label>Адрес доставки</Label>
+              <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
               <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
             </div>
             <div className="space-y-1">
@@ -272,7 +274,7 @@ export default function ContractFormFields({
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Icon name="Users" size={18} />
-            Контрагент ({isBarter ? 'Сторона 2' : 'Покупатель'})
+            Контрагент ({isBarter ? 'Сторона 2' : isForwardRequest ? 'Поставщик' : 'Покупатель'})
           </CardTitle>
           <CardDescription>Заполните, если контрагент уже известен. Можно оставить пустым — поля будут для ручного заполнения.</CardDescription>
         </CardHeader>

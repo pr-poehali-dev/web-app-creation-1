@@ -93,7 +93,12 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getContractTypeLabel = (type: string) => {
-    return 'Форвард';
+    const labels: Record<string, string> = {
+      forward: 'Форвард',
+      'forward-request': 'Запрос на закупку',
+      barter: 'Бартер',
+    };
+    return labels[type] || 'Контракт';
   };
 
   const getStatusBadge = (status: string) => {
@@ -184,7 +189,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
               <div>
                 <h1 className="text-3xl font-bold mb-2">Торговая площадка</h1>
                 <p className="text-muted-foreground">
-                  {selectedType === 'barter' ? 'Бартерные контракты для верифицированных участников' : selectedType === 'forward' ? 'Форвардные контракты для верифицированных участников' : 'Все контракты для верифицированных участников'}
+                  {selectedType === 'barter' ? 'Бартерные контракты для верифицированных участников' : selectedType === 'forward' ? 'Форвардные контракты для верифицированных участников' : selectedType === 'forward-request' ? 'Запросы на закупку для верифицированных участников' : 'Все контракты для верифицированных участников'}
                 </p>
               </div>
               <Button onClick={handleCreateContract} size="lg">
