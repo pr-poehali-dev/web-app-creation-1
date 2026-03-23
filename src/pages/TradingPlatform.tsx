@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import TradingPlatformFilters from '@/components/trading/TradingPlatformFilters';
 import ContractCard from '@/components/trading/ContractCard';
+import PullToRefresh from '@/components/PullToRefresh';
 
 interface TradingPlatformProps {
   isAuthenticated: boolean;
@@ -183,6 +184,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     <div className="min-h-screen bg-background flex flex-col">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
 
+      <PullToRefresh onRefresh={loadContracts}>
       <main className="container mx-auto px-4 py-8 flex-1">
         <BackButton />
         <div className="max-w-7xl mx-auto">
@@ -247,6 +249,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
           )}
         </div>
       </main>
+      </PullToRefresh>
 
       <Footer />
 
