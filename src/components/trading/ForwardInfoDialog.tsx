@@ -24,7 +24,7 @@ export default function ForwardInfoDialog({ open, onOpenChange }: ForwardInfoDia
             Форвардные контракты на ЕРТТП
           </DialogTitle>
           <DialogDescription>
-            Инструмент для верифицированных участников — ИП и юридических лиц
+            Инструмент для верифицированных участников — ИП и юридических лиц. Верифицированные физ. лица могут принять предложения по контракту, но не могут создавать контракт
           </DialogDescription>
         </DialogHeader>
 

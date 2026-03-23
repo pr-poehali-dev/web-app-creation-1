@@ -157,6 +157,16 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
           saveSession(updated);
           setCurrentUser(updated);
         }
+        const userType = data.userType;
+        const restrictedTypes = ['individual', 'self-employed'];
+        if (verificationStatus === 'verified' && userType && restrictedTypes.includes(userType)) {
+          toast({
+            title: 'Создание контрактов недоступно',
+            description: 'Создавать форвардные и бартерные контракты могут только ИП и юридические лица. Вы можете принимать предложения по контрактам.',
+            duration: 8000,
+          });
+          return;
+        }
       } catch (e) { /* network unavailable, use cached status */ }
     }
 

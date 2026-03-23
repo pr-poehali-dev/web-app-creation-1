@@ -158,6 +158,12 @@ export function useContractData(isAuthenticated: boolean) {
           navigate('/verification');
           return;
         }
+        const userType = data.userType;
+        if (userType && ['individual', 'self-employed'].includes(userType)) {
+          toast({ title: 'Создание контрактов недоступно', description: 'Создавать форвардные и бартерные контракты могут только ИП и юридические лица.', duration: 8000 });
+          navigate('/trading');
+          return;
+        }
       }
     } catch (e) {
       console.error(e);

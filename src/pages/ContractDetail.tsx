@@ -165,6 +165,11 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
           navigate('/verification');
           return;
         }
+        const userType = data.userType;
+        if (contract?.contractType === 'barter' && userType && ['individual', 'self-employed'].includes(userType)) {
+          toast({ title: 'Участие в бартере недоступно', description: 'Участвовать в бартерных контрактах могут только ИП и юридические лица.', duration: 8000 });
+          return;
+        }
       }
     } catch {
       toast({ title: 'Ошибка проверки статуса', variant: 'destructive' });
