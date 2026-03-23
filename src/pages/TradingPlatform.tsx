@@ -44,6 +44,7 @@ interface Contract {
   status: string;
   sellerFirstName: string;
   sellerLastName: string;
+  sellerCompanyName?: string;
   sellerRating: number;
   discountPercent: number;
   financingAvailable: boolean;

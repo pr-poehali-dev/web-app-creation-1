@@ -153,14 +153,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             with conn.cursor() as cur:
                 cur.execute('''
                     SELECT c.*, cr.price_per_unit as my_price, cr.total_amount as my_total, cr.comment as my_comment, cr.status as my_response_status,
-                        s.first_name as seller_first_name, s.last_name as seller_last_name,
+                        s.first_name as seller_first_name, s.last_name as seller_last_name, s.company_name as seller_company_name,
                         COALESCE(AVG(r.rating), 0) as seller_rating
                     FROM contract_responses cr
                     JOIN contracts c ON cr.contract_id = c.id
                     LEFT JOIN users s ON c.seller_id = s.id
                     LEFT JOIN reviews r ON r.reviewed_user_id = c.seller_id
                     WHERE cr.user_id = %s
-                    GROUP BY c.id, cr.price_per_unit, cr.total_amount, cr.comment, cr.status, s.first_name, s.last_name
+                    GROUP BY c.id, cr.price_per_unit, cr.total_amount, cr.comment, cr.status, s.first_name, s.last_name, s.company_name
                     ORDER BY cr.created_at DESC
                 ''', (user_id,))
                 rows = cur.fetchall()
@@ -169,6 +169,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d = decimal_to_float(dict(row))
                     d['sellerFirstName'] = d.pop('seller_first_name', '')
                     d['sellerLastName'] = d.pop('seller_last_name', '')
+                    d['sellerCompanyName'] = d.pop('seller_company_name', None)
                     d['sellerRating'] = d.pop('seller_rating', 0)
                     d['contractType'] = d.pop('contract_type', '')
                     d['productName'] = d.pop('product_name', '')
