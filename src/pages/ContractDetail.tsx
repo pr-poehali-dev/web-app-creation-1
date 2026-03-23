@@ -6,16 +6,14 @@ import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
-import { formatOrgName } from '@/lib/formatOrgName';
+
+import ContractDetailInfo from '@/components/contract-detail/ContractDetailInfo';
+import ContractDetailResponses from '@/components/contract-detail/ContractDetailResponses';
+import ContractRespondDialog from '@/components/contract-detail/ContractRespondDialog';
 
 interface ContractDetailProps {
   isAuthenticated: boolean;
@@ -111,7 +109,6 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         const found = (data.contracts || []).find((c: Contract) => c.id === Number(id));
         if (found) {
           setContract(found);
-          // Если пользователь автор — загружаем отклики
           if (userId && found.sellerId === Number(userId)) {
             loadResponses(found.id, userId);
           }
@@ -263,177 +260,18 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
             )}
           </div>
 
-          {/* Товар */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Товар</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Наименование</div>
-                  <div className="font-medium">{contract.productName}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Количество</div>
-                  <div className="font-medium">{contract.quantity} {contract.unit}</div>
-                </div>
-                {!isBarter && (
-                  <>
-                    <div>
-                      <div className="text-muted-foreground">Цена за единицу</div>
-                      <div className="font-medium">{formatPrice(contract.pricePerUnit)}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Общая сумма</div>
-                      <div className="font-bold text-lg">{formatPrice(contract.totalAmount)}</div>
-                    </div>
-                  </>
-                )}
-                {isBarter && contract.productSpecs && (
-                  <>
-                    <div>
-                      <div className="text-muted-foreground">В обмен (Товар Б)</div>
-                      <div className="font-medium">{contract.productSpecs.productNameB}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Кол-во Товара Б</div>
-                      <div className="font-medium">{contract.productSpecs.quantityB} {contract.productSpecs.unitB}</div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <ContractDetailInfo
+            contract={contract}
+            isBarter={isBarter}
+            formatDate={formatDate}
+            formatPrice={formatPrice}
+          />
 
-          {/* Сроки и доставка */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Сроки и доставка</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-muted-foreground">Дата поставки</div>
-                  <div className="font-medium">{formatDate(contract.deliveryDate)}</div>
-                </div>
-                <div>
-                  <div className="text-muted-foreground">Срок контракта</div>
-                  <div className="font-medium">{formatDate(contract.contractStartDate)} — {formatDate(contract.contractEndDate)}</div>
-                </div>
-                {contract.deliveryAddress && (
-                  <div className="col-span-2">
-                    <div className="text-muted-foreground">Адрес доставки</div>
-                    <div className="font-medium">{contract.deliveryAddress}</div>
-                  </div>
-                )}
-                {contract.deliveryMethod && (
-                  <div>
-                    <div className="text-muted-foreground">Способ доставки</div>
-                    <div className="font-medium">{contract.deliveryMethod}</div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Оплата */}
-          {!isBarter && (contract.prepaymentPercent > 0 || contract.financingAvailable) && (
-            <Card>
-              <CardHeader><CardTitle className="text-base">Оплата</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  {contract.prepaymentPercent > 0 && (
-                    <>
-                      <div>
-                        <div className="text-muted-foreground">Предоплата</div>
-                        <div className="font-medium">{contract.prepaymentPercent}%</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">Сумма предоплаты</div>
-                        <div className="font-medium">{formatPrice(contract.prepaymentAmount)}</div>
-                      </div>
-                    </>
-                  )}
-                  {contract.financingAvailable && (
-                    <div className="col-span-2">
-                      <Badge variant="secondary">
-                        <Icon name="CreditCard" className="h-3 w-3 mr-1" />
-                        Финансирование доступно
-                      </Badge>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Доп. условия */}
-          {contract.termsConditions && (
-            <Card>
-              <CardHeader><CardTitle className="text-base">Дополнительные условия</CardTitle></CardHeader>
-              <CardContent>
-                <p className="text-sm">{contract.termsConditions}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Продавец */}
-          <Card>
-            <CardHeader><CardTitle className="text-base">Поставщик</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                  <Icon name="Building2" className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <div className="font-medium">
-                    {formatOrgName(contract.sellerCompanyName) || `${contract.sellerFirstName} ${contract.sellerLastName}`.trim() || 'Не указано'}
-                  </div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Icon name="ShieldCheck" className="h-3 w-3 text-emerald-500" />
-                    <span className="text-emerald-600">{(contract.sellerRating || 0).toFixed(1)}</span>
-                    <span className="ml-1">Рейтинг надёжности</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Отклики — только для автора контракта */}
-          {isSeller && responses.length > 0 && (
-            <Card>
-              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Icon name="Users" className="h-4 w-4" />Отклики ({responses.length})</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                {responses.map(r => (
-                  <div key={r.id} className="border rounded-lg p-3 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{r.firstName} {r.lastName}</span>
-                      <span className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString('ru-RU')}</span>
-                    </div>
-                    {r.pricePerUnit > 0 && (
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Цена: </span>
-                        <span className="font-medium">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(r.pricePerUnit)} / ед.</span>
-                        <span className="text-muted-foreground ml-2">Итого: </span>
-                        <span className="font-medium">{new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(r.totalAmount)}</span>
-                      </div>
-                    )}
-                    {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
-                      {r.phone && <span className="flex items-center gap-1"><Icon name="Phone" size={12} />{r.phone}</span>}
-                      {r.email && <span className="flex items-center gap-1"><Icon name="Mail" size={12} />{r.email}</span>}
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {isSeller && responses.length === 0 && contract.status === 'open' && (
-            <Card className="border-dashed">
-              <CardContent className="py-6 text-center text-muted-foreground text-sm">
-                <Icon name="Inbox" className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                Откликов пока нет
-              </CardContent>
-            </Card>
-          )}
+          <ContractDetailResponses
+            responses={responses}
+            isSeller={isSeller}
+            contractStatus={contract.status}
+          />
 
           {/* Кнопка отклика снизу */}
           {!isSeller && contract.status === 'open' && (
@@ -448,54 +286,20 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
       <Footer />
 
-      {/* Диалог отклика */}
-      <Dialog open={respondOpen} onOpenChange={setRespondOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Отклик на контракт</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {!isBarter && (
-              <div className="space-y-1.5">
-                <Label>Ваша цена за единицу, ₽</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={respondPrice}
-                  onChange={e => setRespondPrice(e.target.value)}
-                  placeholder={String(contract?.pricePerUnit || '')}
-                />
-                {respondPrice && contract && (
-                  <p className="text-xs text-muted-foreground">
-                    Итого: {formatPrice(parseFloat(respondPrice) * contract.quantity)}
-                  </p>
-                )}
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label>Комментарий <span className="text-muted-foreground">(необязательно)</span></Label>
-              <Textarea
-                value={respondComment}
-                onChange={e => setRespondComment(e.target.value)}
-                placeholder="Опишите условия, сроки, особенности вашего предложения..."
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setRespondOpen(false)} disabled={isSubmitting}>
-              Отмена
-            </Button>
-            <Button onClick={handleSubmitRespond} disabled={isSubmitting}>
-              {isSubmitting ? (
-                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Отправка...</>
-              ) : (
-                <><Icon name="Send" className="mr-2 h-4 w-4" />Отправить отклик</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ContractRespondDialog
+        open={respondOpen}
+        onOpenChange={setRespondOpen}
+        isBarter={isBarter}
+        respondPrice={respondPrice}
+        onRespondPriceChange={setRespondPrice}
+        respondComment={respondComment}
+        onRespondCommentChange={setRespondComment}
+        isSubmitting={isSubmitting}
+        onSubmit={handleSubmitRespond}
+        contractPricePerUnit={contract.pricePerUnit}
+        contractQuantity={contract.quantity}
+        formatPrice={formatPrice}
+      />
     </div>
   );
 }
