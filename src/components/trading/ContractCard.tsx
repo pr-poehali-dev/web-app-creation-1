@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import { formatOrgName } from '@/lib/formatOrgName';
 
 interface Contract {
   id: number;
@@ -44,7 +45,7 @@ export default function ContractCard({
   formatDate,
   formatPrice,
 }: ContractCardProps) {
-  const orgName = contract.sellerCompanyName || `${contract.sellerFirstName} ${contract.sellerLastName}`.trim() || 'Не указано';
+  const orgName = formatOrgName(contract.sellerCompanyName) || `${contract.sellerFirstName} ${contract.sellerLastName}`.trim() || 'Не указано';
 
   return (
     <Card

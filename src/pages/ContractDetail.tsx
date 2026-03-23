@@ -15,6 +15,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
+import { formatOrgName } from '@/lib/formatOrgName';
 
 interface ContractDetailProps {
   isAuthenticated: boolean;
@@ -45,6 +46,7 @@ interface Contract {
   termsConditions: string;
   sellerFirstName: string;
   sellerLastName: string;
+  sellerCompanyName?: string;
   sellerRating: number;
   buyerFirstName?: string;
   buyerLastName?: string;
@@ -378,13 +380,16 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
             <CardContent>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                  <Icon name="User" className="h-5 w-5 text-muted-foreground" />
+                  <Icon name="Building2" className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <div className="font-medium">{contract.sellerFirstName} {contract.sellerLastName}</div>
+                  <div className="font-medium">
+                    {formatOrgName(contract.sellerCompanyName) || `${contract.sellerFirstName} ${contract.sellerLastName}`.trim() || 'Не указано'}
+                  </div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Icon name="Star" className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <span>{(contract.sellerRating || 0).toFixed(1)}</span>
+                    <Icon name="ShieldCheck" className="h-3 w-3 text-emerald-500" />
+                    <span className="text-emerald-600">{(contract.sellerRating || 0).toFixed(1)}</span>
+                    <span className="ml-1">Рейтинг надёжности</span>
                   </div>
                 </div>
               </div>
