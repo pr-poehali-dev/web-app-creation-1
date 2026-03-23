@@ -24,7 +24,7 @@ export default function BarterInfoDialog({ open, onOpenChange }: BarterInfoDialo
             Бартерные контракты на ЕРТТП
           </DialogTitle>
           <DialogDescription>
-            Обмен товарами, работами или услугами без денег
+            Инструмент для верифицированных участников — ИП и юридических лиц
           </DialogDescription>
         </DialogHeader>
 
