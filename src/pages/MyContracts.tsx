@@ -72,11 +72,18 @@ function formatDate(dateStr: string) {
   }
 }
 
+const CONTRACT_TYPE_LABELS: Record<string, string> = {
+  forward: 'Предложение',
+  'forward-request': 'Запрос на закупку',
+  barter: 'Бартер',
+};
+
 function ContractCard({ contract, currentUserId, onClick }: { contract: Contract; currentUserId: number; onClick: () => void }) {
   const isSeller = contract.sellerId === currentUserId;
+  const isRequest = contract.contractType === 'forward-request';
   const counterparty = isSeller
-    ? `${contract.buyerFirstName || ''} ${contract.buyerLastName || ''}`.trim() || 'Покупатель'
-    : `${contract.sellerFirstName || ''} ${contract.sellerLastName || ''}`.trim() || 'Продавец';
+    ? `${contract.buyerFirstName || ''} ${contract.buyerLastName || ''}`.trim() || (isRequest ? 'Поставщик' : 'Покупатель')
+    : `${contract.sellerFirstName || ''} ${contract.sellerLastName || ''}`.trim() || (isRequest ? 'Покупатель' : 'Продавец');
 
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
@@ -88,12 +95,17 @@ function ContractCard({ contract, currentUserId, onClick }: { contract: Contract
               <Badge variant={STATUS_VARIANTS[contract.status] ?? 'outline'} className="text-xs shrink-0">
                 {STATUS_LABELS[contract.status] ?? contract.status}
               </Badge>
+              {contract.contractType && CONTRACT_TYPE_LABELS[contract.contractType] && (
+                <Badge variant="outline" className="text-xs shrink-0">
+                  {CONTRACT_TYPE_LABELS[contract.contractType]}
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{contract.description || '—'}</p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Icon name="User" size={12} />
-                {isSeller ? 'Покупатель' : 'Продавец'}: {counterparty}
+                {isSeller ? (isRequest ? 'Поставщик' : 'Покупатель') : (isRequest ? 'Покупатель' : 'Продавец')}: {counterparty}
               </span>
               <span className="flex items-center gap-1">
                 <Icon name="Package" size={12} />
@@ -110,8 +122,8 @@ function ContractCard({ contract, currentUserId, onClick }: { contract: Contract
             </div>
           </div>
           <div className="text-right shrink-0">
-            <div className="font-semibold text-sm">{formatAmount(contract.totalAmount, contract.currency)}</div>
-            <div className="text-xs text-muted-foreground mt-1">{isSeller ? 'Продавец' : 'Покупатель'}</div>
+            <div className="font-semibold text-sm">{contract.totalAmount ? formatAmount(contract.totalAmount, contract.currency) : 'Договорная'}</div>
+            <div className="text-xs text-muted-foreground mt-1">{isSeller ? (isRequest ? 'Инициатор' : 'Продавец') : (isRequest ? 'Поставщик' : 'Покупатель')}</div>
           </div>
         </div>
       </CardContent>
@@ -173,10 +185,13 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
-  const activeContracts = contracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
+  const allActiveContracts = contracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
+  const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
+  const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
   const closedContracts = contracts.filter(c => ['completed', 'cancelled'].includes(c.status));
   const currentUserId = currentUser?.userId ?? 0;
   const allCount = contracts.length + respondedContracts.length;
+  const activeCount = allActiveContracts.length;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -201,7 +216,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="active">
-                Активные {activeContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeContracts.length}</span>}
+                Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="closed">
                 Завершённые {closedContracts.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>}
@@ -211,11 +226,34 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="active" className="space-y-3">
-              {activeContracts.length === 0 ? (
+            <TabsContent value="active" className="space-y-4">
+              {activeCount === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Нет активных контрактов</p>
               ) : (
-                activeContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)
+                <>
+                  {activeRequests.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="ShoppingCart" size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Запросы на закупку</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{activeRequests.length}</span>
+                      </div>
+                      {activeRequests.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)}
+                    </div>
+                  )}
+                  {activeContracts.length > 0 && (
+                    <div className="space-y-3">
+                      {activeRequests.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Icon name="TrendingUp" size={14} className="text-muted-foreground" />
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Форварды и бартер</span>
+                          <span className="text-xs bg-muted px-1.5 rounded-full">{activeContracts.length}</span>
+                        </div>
+                      )}
+                      {activeContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)}
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
 

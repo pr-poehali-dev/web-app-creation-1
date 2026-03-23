@@ -47,27 +47,52 @@ export default function ContractFormFields({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[
               { value: 'forward', label: 'Форвардный контракт', desc: 'Поставка товара в будущем по фиксированной цене (ГК РФ ст. 454–524)', icon: 'TrendingUp' },
-              { value: 'forward-request', label: 'Форвардный контракт на запрос', desc: 'Закупка товара/услуги в будущем по зафиксированным условиям (ГК РФ ст. 454–524)', icon: 'ShoppingCart' },
               { value: 'barter', label: 'Договор на бартер (мену)', desc: 'Обмен товарами без денежного расчёта (ГК РФ ст. 567–571)', icon: 'ArrowLeftRight' },
             ].map(opt => (
               <button
                 key={opt.value}
                 type="button"
-                onClick={() => set('contractType', opt.value)}
-                className={`text-left p-4 rounded-lg border-2 transition-all ${formData.contractType === opt.value ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
+                onClick={() => set('contractType', opt.value === 'forward' ? (isForwardRequest ? 'forward-request' : 'forward') : opt.value)}
+                className={`text-left p-4 rounded-lg border-2 transition-all ${(opt.value === 'forward' ? (formData.contractType === 'forward' || formData.contractType === 'forward-request') : formData.contractType === opt.value) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'}`}
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <Icon name={opt.icon as 'TrendingUp'} size={16} className={formData.contractType === opt.value ? 'text-primary' : 'text-muted-foreground'} />
+                  <Icon name={opt.icon as 'TrendingUp'} size={16} className={(opt.value === 'forward' ? (formData.contractType === 'forward' || formData.contractType === 'forward-request') : formData.contractType === opt.value) ? 'text-primary' : 'text-muted-foreground'} />
                   <span className="font-semibold text-sm">{opt.label}</span>
-                  {formData.contractType === opt.value && <Badge variant="default" className="ml-auto text-xs">Выбран</Badge>}
+                  {(opt.value === 'forward' ? (formData.contractType === 'forward' || formData.contractType === 'forward-request') : formData.contractType === opt.value) && <Badge variant="default" className="ml-auto text-xs">Выбран</Badge>}
                 </div>
                 <p className="text-xs text-muted-foreground">{opt.desc}</p>
               </button>
             ))}
           </div>
+
+          {/* Переключатель на предложение / запрос — только для форварда */}
+          {(formData.contractType === 'forward' || formData.contractType === 'forward-request') && (
+            <div className="mt-4 flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => set('contractType', 'forward')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${formData.contractType === 'forward' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Icon name="TrendingUp" size={14} />
+                  На предложение
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => set('contractType', 'forward-request')}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${formData.contractType === 'forward-request' ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Icon name="ShoppingCart" size={14} />
+                  На запрос
+                </span>
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
