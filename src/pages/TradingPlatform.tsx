@@ -94,8 +94,8 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
 
   const getContractTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      forward: 'Форвард',
-      'forward-request': 'Запрос на закупку',
+      forward: 'Форвард предложения',
+      'forward-request': 'Форвард запрос',
       barter: 'Бартер',
     };
     return labels[type] || 'Контракт';

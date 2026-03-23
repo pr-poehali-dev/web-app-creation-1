@@ -240,17 +240,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             query = f"""
                 SELECT
                     c.*,
-                    s.first_name as seller_first_name,
-                    s.last_name  as seller_last_name,
-                    b.first_name as buyer_first_name,
-                    b.last_name  as buyer_last_name,
+                    s.first_name   as seller_first_name,
+                    s.last_name    as seller_last_name,
+                    s.company_name as seller_company_name,
+                    b.first_name   as buyer_first_name,
+                    b.last_name    as buyer_last_name,
                     COALESCE(AVG(r.rating), 0) as seller_rating
                 FROM contracts c
                 LEFT JOIN users s ON c.seller_id = s.id
                 LEFT JOIN users b ON c.buyer_id  = b.id
                 LEFT JOIN reviews r ON r.reviewed_user_id = c.seller_id
                 {where_clause}
-                GROUP BY c.id, s.first_name, s.last_name, b.first_name, b.last_name
+                GROUP BY c.id, s.first_name, s.last_name, s.company_name, b.first_name, b.last_name
                 ORDER BY c.created_at DESC
                 LIMIT %s OFFSET %s
             """
@@ -267,6 +268,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d = decimal_to_float(dict(contract))
                 d['sellerFirstName']    = d.pop('seller_first_name')
                 d['sellerLastName']     = d.pop('seller_last_name')
+                d['sellerCompanyName']  = d.pop('seller_company_name', None)
                 d['buyerFirstName']     = d.pop('buyer_first_name')
                 d['buyerLastName']      = d.pop('buyer_last_name')
                 d['sellerRating']       = d.pop('seller_rating')

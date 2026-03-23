@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 
@@ -17,6 +17,7 @@ interface Contract {
   status: string;
   sellerFirstName: string;
   sellerLastName: string;
+  sellerCompanyName?: string;
   sellerRating: number;
   discountPercent: number;
   financingAvailable: boolean;
@@ -43,67 +44,57 @@ export default function ContractCard({
   formatDate,
   formatPrice,
 }: ContractCardProps) {
+  const orgName = contract.sellerCompanyName || `${contract.sellerFirstName} ${contract.sellerLastName}`.trim() || 'Не указано';
+
   return (
-    <Card 
+    <Card
       className="border border-border hover:border-2 hover:border-primary transition-all cursor-pointer"
       onClick={() => onCardClick(contract.id)}
     >
-      <CardHeader>
-        <div className="flex items-start justify-between mb-2">
-          <Badge variant="secondary">
-            {getContractTypeLabel(contract.contractType)}
-          </Badge>
-          {getStatusBadge(contract.status)}
-        </div>
-        <CardTitle className="text-lg line-clamp-2">{contract.title}</CardTitle>
-        <CardDescription className="line-clamp-2">
-          {contract.description}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Icon name="Package" className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {contract.productName}
-            </span>
+      <CardContent className="p-4">
+        <div className="space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <Badge variant="secondary" className="text-xs shrink-0">
+              {getContractTypeLabel(contract.contractType)}
+            </Badge>
+            {getStatusBadge(contract.status)}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Icon name="Scale" className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              {contract.quantity} {contract.unit}
-            </span>
+          <div className="font-semibold text-sm line-clamp-2 leading-tight">{contract.title}</div>
+          <div className="text-xs text-muted-foreground line-clamp-1">{contract.description}</div>
+
+          <div className="flex flex-col gap-1 text-xs">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Icon name="Package" className="h-3 w-3 shrink-0" />
+              <span>{contract.productName} · {contract.quantity} {contract.unit}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <Icon name="Calendar" className="h-3 w-3 shrink-0" />
+              <span>Поставка: {formatDate(contract.deliveryDate)}</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Icon name="Calendar" className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              Поставка: {formatDate(contract.deliveryDate)}
-            </span>
-          </div>
-
-          <div className="flex items-center justify-between pt-3 border-t">
+          <div className="flex items-center justify-between pt-2 border-t">
             <div>
-              <div className="text-xs text-muted-foreground">Цена за единицу</div>
-              <div className="font-semibold">{formatPrice(contract.pricePerUnit)}</div>
+              <div className="text-xs text-muted-foreground">За единицу</div>
+              <div className="text-sm font-semibold">{formatPrice(contract.pricePerUnit)}</div>
             </div>
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">Общая сумма</div>
-              <div className="font-bold text-lg">{formatPrice(contract.totalAmount)}</div>
+              <div className="text-xs text-muted-foreground">Итого</div>
+              <div className="font-bold text-base">{formatPrice(contract.totalAmount)}</div>
             </div>
           </div>
 
           {(contract.discountPercent > 0 || contract.financingAvailable) && (
-            <div className="flex gap-2 pt-2 flex-wrap">
+            <div className="flex gap-1.5 flex-wrap">
               {contract.discountPercent > 0 && (
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="text-xs">
                   <Icon name="Percent" className="h-3 w-3 mr-1" />
                   Скидка {contract.discountPercent}%
                 </Badge>
               )}
               {contract.financingAvailable && (
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="text-xs">
                   <Icon name="CreditCard" className="h-3 w-3 mr-1" />
                   Финансирование
                 </Badge>
@@ -111,20 +102,18 @@ export default function ContractCard({
             </div>
           )}
 
-          <div className="pt-3 border-t">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Icon name="User" className="h-4 w-4" />
-                <span>{contract.sellerFirstName} {contract.sellerLastName}</span>
-                <div className="flex items-center gap-1">
-                  <Icon name="Star" className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  <span>{contract.sellerRating.toFixed(1)}</span>
-                </div>
+          <div className="flex items-center justify-between pt-2 border-t text-xs">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Icon name="Building2" className="h-3 w-3 text-muted-foreground shrink-0" />
+              <span className="truncate font-medium">{orgName}</span>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Icon name="ShieldCheck" className="h-3 w-3 text-emerald-500" />
+                <span className="text-emerald-600 font-medium">{contract.sellerRating.toFixed(1)}</span>
               </div>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Icon name="Eye" className="h-4 w-4" />
-                <span>{contract.viewsCount}</span>
-              </div>
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground shrink-0">
+              <Icon name="Eye" className="h-3 w-3" />
+              <span>{contract.viewsCount}</span>
             </div>
           </div>
         </div>
