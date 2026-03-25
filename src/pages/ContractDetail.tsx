@@ -276,6 +276,13 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
             responses={responses}
             isSeller={isSeller}
             contractStatus={contract.status}
+            contractTitle={contract.title}
+            onRefresh={() => {
+              const userId = localStorage.getItem('userId');
+              if (userId && contract.sellerId === Number(userId)) {
+                loadResponses(contract.id, userId);
+              }
+            }}
           />
 
           {/* Кнопка отклика снизу */}

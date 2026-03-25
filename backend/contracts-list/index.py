@@ -49,10 +49,68 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     user_id_raw = req_headers.get('X-User-Id') or req_headers.get('x-user-id')
     user_id = int(user_id_raw) if user_id_raw and str(user_id_raw).isdigit() else None
 
-    if method not in ('GET', 'OPTIONS'):
+    params = event.get('queryStringParameters', {}) or {}
+
+    # ── POST — чат и подтверждение ─────────────────────────────────────────────
+    if method == 'POST':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+        action = params.get('action')
+        body = json.loads(event.get('body') or '{}')
+        response_id_raw = body.get('responseId') or params.get('responseId')
+        if not response_id_raw:
+            return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'responseId обязателен'}), 'isBase64Encoded': False}
+        response_id = int(response_id_raw)
+
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT cr.*, c.seller_id, c.id as c_id FROM contract_responses cr JOIN contracts c ON cr.contract_id = c.id WHERE cr.id = %s', (response_id,))
+                resp = cur.fetchone()
+                if not resp:
+                    return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Отклик не найден'}), 'isBase64Encoded': False}
+                resp = dict(resp)
+                is_seller = resp['seller_id'] == user_id
+                is_buyer = resp['user_id'] == user_id
+                if not is_seller and not is_buyer:
+                    return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
+
+                if action == 'confirm':
+                    if resp['status'] == 'confirmed':
+                        return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт уже подтверждён'}), 'isBase64Encoded': False}
+                    if is_seller:
+                        cur.execute('UPDATE contract_responses SET seller_confirmed = TRUE, updated_at = NOW() WHERE id = %s', (response_id,))
+                    else:
+                        cur.execute('UPDATE contract_responses SET buyer_confirmed = TRUE, updated_at = NOW() WHERE id = %s', (response_id,))
+                    cur.execute('SELECT seller_confirmed, buyer_confirmed FROM contract_responses WHERE id = %s', (response_id,))
+                    updated = cur.fetchone()
+                    both = updated['seller_confirmed'] and updated['buyer_confirmed']
+                    if both:
+                        cur.execute("UPDATE contract_responses SET status = 'confirmed', confirmed_at = NOW() WHERE id = %s", (response_id,))
+                        cur.execute("UPDATE contracts SET status = 'signed', buyer_id = %s WHERE id = %s", (resp['user_id'], resp['c_id']))
+                    conn.commit()
+                    return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True, 'bothConfirmed': both}), 'isBase64Encoded': False}
+
+                if action == 'cancel':
+                    cur.execute("UPDATE contract_responses SET status = 'cancelled', updated_at = NOW() WHERE id = %s", (response_id,))
+                    conn.commit()
+                    return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
+
+                # Отправить сообщение в чат
+                text = (body.get('text') or '').strip()
+                if not text:
+                    return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Текст обязателен'}), 'isBase64Encoded': False}
+                cur.execute('INSERT INTO contract_messages (contract_id, response_id, sender_id, text, attachments, created_at) VALUES (%s, %s, %s, %s, %s, NOW()) RETURNING id, created_at',
+                            (resp['c_id'], response_id, user_id, text, json.dumps([])))
+                row = cur.fetchone()
+                conn.commit()
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': row['id'], 'createdAt': str(row['created_at'])}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
+    if method != 'GET':
         return {'statusCode': 405, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Method not allowed'}), 'isBase64Encoded': False}
 
-    params = event.get('queryStringParameters', {}) or {}
 
     # ── GET ?action=respond — создать отклик на контракт ─────────────────────
     if params.get('action') == 'respond':
@@ -152,15 +210,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute('''
-                    SELECT c.*, cr.price_per_unit as my_price, cr.total_amount as my_total, cr.comment as my_comment, cr.status as my_response_status,
+                    SELECT c.*, cr.id as response_id, cr.price_per_unit as my_price, cr.total_amount as my_total, cr.comment as my_comment, cr.status as my_response_status,
+                        cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at,
                         s.first_name as seller_first_name, s.last_name as seller_last_name, s.company_name as seller_company_name,
+                        me.first_name as my_first_name, me.last_name as my_last_name,
                         COALESCE(AVG(r.rating), 0) as seller_rating
                     FROM contract_responses cr
                     JOIN contracts c ON cr.contract_id = c.id
                     LEFT JOIN users s ON c.seller_id = s.id
+                    LEFT JOIN users me ON cr.user_id = me.id
                     LEFT JOIN reviews r ON r.reviewed_user_id = c.seller_id
                     WHERE cr.user_id = %s
-                    GROUP BY c.id, cr.price_per_unit, cr.total_amount, cr.comment, cr.status, s.first_name, s.last_name, s.company_name
+                    GROUP BY c.id, cr.id, s.first_name, s.last_name, s.company_name, me.first_name, me.last_name
                     ORDER BY cr.created_at DESC
                 ''', (user_id,))
                 rows = cur.fetchall()
@@ -180,6 +241,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d['myTotal'] = d.pop('my_total', 0)
                     d['myComment'] = d.pop('my_comment', '')
                     d['myResponseStatus'] = d.pop('my_response_status', 'pending')
+                    d['responseId'] = d.pop('response_id', None)
+                    d['sellerConfirmed'] = d.pop('seller_confirmed', False)
+                    d['buyerConfirmed'] = d.pop('buyer_confirmed', False)
+                    d['confirmedAt'] = str(d.pop('confirmed_at', '')) if d.get('confirmed_at') else None
+                    d['respondentFirstName'] = d.pop('my_first_name', '')
+                    d['respondentLastName'] = d.pop('my_last_name', '')
                     d['deliveryDate'] = str(d.pop('delivery_date', ''))
                     d['contractStartDate'] = str(d.pop('contract_start_date', ''))
                     d['contractEndDate'] = str(d.pop('contract_end_date', ''))
@@ -203,6 +270,98 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d['buyerLastName'] = d.pop('buyer_last_name', None)
                     contracts_list.append(d)
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'contracts': contracts_list, 'total': len(contracts_list)}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
+    # GET ?action=chatStatus&responseId=N — статус отклика для чата
+    if params.get('action') == 'chatStatus':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+        response_id_raw = params.get('responseId')
+        if not response_id_raw:
+            return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'responseId обязателен'}), 'isBase64Encoded': False}
+        response_id = int(response_id_raw)
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('''
+                    SELECT cr.*, c.seller_id, u.first_name, u.last_name,
+                           s.first_name as s_first, s.last_name as s_last,
+                           c.title, c.product_name, c.total_amount, c.currency,
+                           c.contract_type, c.quantity, c.unit, c.price_per_unit,
+                           c.delivery_date, c.contract_start_date, c.contract_end_date,
+                           c.delivery_address, c.terms_conditions
+                    FROM contract_responses cr
+                    JOIN contracts c ON cr.contract_id = c.id
+                    JOIN users u ON cr.user_id = u.id
+                    JOIN users s ON c.seller_id = s.id
+                    WHERE cr.id = %s
+                ''', (response_id,))
+                row = cur.fetchone()
+                if not row:
+                    return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Отклик не найден'}), 'isBase64Encoded': False}
+                d = decimal_to_float(dict(row))
+                if d['seller_id'] != user_id and d['user_id'] != user_id:
+                    return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
+                result = {
+                    'id': d['id'], 'contractId': d['contract_id'], 'status': d['status'],
+                    'sellerConfirmed': d.get('seller_confirmed', False),
+                    'buyerConfirmed': d.get('buyer_confirmed', False),
+                    'confirmedAt': str(d['confirmed_at']) if d.get('confirmed_at') else None,
+                    'pricePerUnit': d.get('price_per_unit', 0),
+                    'totalAmount': d.get('total_amount', 0),
+                    'comment': d.get('comment', ''),
+                    'respondentFirstName': d.get('first_name', ''),
+                    'respondentLastName': d.get('last_name', ''),
+                    'sellerFirstName': d.get('s_first', ''),
+                    'sellerLastName': d.get('s_last', ''),
+                    'sellerId': d['seller_id'], 'respondentId': d['user_id'],
+                    'contract': {
+                        'title': d.get('title', ''), 'productName': d.get('product_name', ''),
+                        'totalAmount': d.get('total_amount', 0), 'currency': d.get('currency', 'RUB'),
+                        'contractType': d.get('contract_type', ''), 'quantity': d.get('quantity', 0),
+                        'unit': d.get('unit', ''), 'pricePerUnit': d.get('price_per_unit', 0),
+                        'deliveryDate': str(d.get('delivery_date', '')),
+                        'contractStartDate': str(d.get('contract_start_date', '')),
+                        'contractEndDate': str(d.get('contract_end_date', '')),
+                        'deliveryAddress': d.get('delivery_address', ''),
+                        'termsConditions': d.get('terms_conditions', ''),
+                    }
+                }
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps(result), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
+    # GET ?action=chatMessages&responseId=N — сообщения чата
+    if params.get('action') == 'chatMessages':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+        response_id_raw = params.get('responseId')
+        if not response_id_raw:
+            return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'responseId обязателен'}), 'isBase64Encoded': False}
+        response_id = int(response_id_raw)
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT cr.user_id, c.seller_id FROM contract_responses cr JOIN contracts c ON cr.contract_id = c.id WHERE cr.id = %s', (response_id,))
+                resp = cur.fetchone()
+                if not resp:
+                    return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Отклик не найден'}), 'isBase64Encoded': False}
+                if resp['seller_id'] != user_id and resp['user_id'] != user_id:
+                    return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
+                cur.execute('''
+                    SELECT cm.id, cm.sender_id, cm.text, cm.attachments, cm.created_at,
+                           u.first_name, u.last_name
+                    FROM contract_messages cm
+                    JOIN users u ON cm.sender_id = u.id
+                    WHERE cm.response_id = %s ORDER BY cm.created_at ASC
+                ''', (response_id,))
+                rows = cur.fetchall()
+                messages = [{'id': str(r['id']), 'senderId': str(r['sender_id']),
+                             'senderName': f"{r['first_name']} {r['last_name']}".strip(),
+                             'text': r['text'] or '', 'attachments': r['attachments'] or [],
+                             'timestamp': str(r['created_at'])} for r in rows]
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'messages': messages}), 'isBase64Encoded': False}
         finally:
             conn.close()
 
