@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { DeliveryType, Offer, TransportWaypoint } from '@/types/offer';
 import { useToast } from '@/hooks/use-toast';
+import { compressImage } from '@/utils/imageCompression';
 
 interface FormData {
   title: string;
@@ -284,7 +285,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     
     if (images.length + files.length > 10) {
@@ -296,22 +297,31 @@ export function useCreateOfferForm(editOffer?: Offer) {
       return;
     }
 
-    // Проверка размера каждого файла (макс 5 МБ)
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB — разрешаем большие файлы, сожмём сами
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
         toast({
           title: 'Файл слишком большой',
-          description: `Файл ${file.name} превышает 5 МБ. Пожалуйста, уменьшите размер изображения.`,
+          description: `Файл ${file.name} превышает 15 МБ`,
           variant: 'destructive',
         });
         return;
       }
     }
 
-    setImages(prev => [...prev, ...files]);
+    const compressedFiles: File[] = [];
+    for (const file of files) {
+      try {
+        const compressed = await compressImage(file, 4, 1920);
+        compressedFiles.push(compressed);
+      } catch {
+        compressedFiles.push(file);
+      }
+    }
+
+    setImages(prev => [...prev, ...compressedFiles]);
     
-    files.forEach(file => {
+    compressedFiles.forEach(file => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreviews(prev => [...prev, reader.result as string]);
