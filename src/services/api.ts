@@ -514,7 +514,7 @@ export const offersAPI = {
     return response.json();
   },
 
-  async adminEditOffer(offerId: string, data: { title?: string; pricePerUnit?: number; quantity?: number }): Promise<{ success: boolean }> {
+  async adminEditOffer(offerId: string, data: { title?: string; pricePerUnit?: number; quantity?: number; expiryDate?: string | null; transportDateTime?: string | null }): Promise<{ success: boolean }> {
     const userId = getUserId();
     const response = await fetchWithRetry(ADMIN_OFFERS_API, {
       method: 'PUT',
@@ -739,6 +739,27 @@ export const requestsAPI = {
 
     if (!response.ok) {
       throw new Error('Failed to edit request title');
+    }
+
+    invalidateCache(`id=${requestId}`);
+    invalidateCache('requests');
+
+    return response.json();
+  },
+
+  async adminEditRequest(requestId: string, data: { expiryDate?: string | null; transportDepartureDateTime?: string | null }): Promise<{ success: boolean }> {
+    const userId = getUserId();
+    const response = await fetchWithRetry(ADMIN_REQUESTS_API, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId || 'anonymous',
+      },
+      body: JSON.stringify({ requestId, action: 'edit_request', ...data }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to edit request');
     }
 
     invalidateCache(`id=${requestId}`);

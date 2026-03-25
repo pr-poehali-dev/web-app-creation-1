@@ -138,6 +138,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     o.unit,
                     o.status,
                     o.created_at,
+                    o.expiry_date,
+                    o.transport_date_time,
+                    o.transport_service_type,
                     o.user_id as seller_id,
                     CASE 
                         WHEN u.company_name IS NOT NULL AND u.company_name != '' THEN u.company_name
@@ -165,6 +168,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 seller_id = offer_dict.get('seller_id')
                 seller_name = offer_dict.get('seller_name') or f'ID: {seller_id}' if seller_id else 'Неизвестный пользователь'
                 
+                expiry_date = offer_dict.get('expiry_date')
+                transport_date_time = offer_dict.get('transport_date_time')
                 offers_list.append({
                     'id': str(offer_dict['id']),
                     'title': offer_dict['title'] or offer_dict['product_name'],
@@ -177,7 +182,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'reserved_quantity': offer_dict.get('reserved_quantity', 0) or 0,
                     'unit': offer_dict['unit'],
                     'status': offer_dict['status'] or 'open',
-                    'createdAt': offer_dict['created_at'].isoformat() if offer_dict['created_at'] else None
+                    'createdAt': offer_dict['created_at'].isoformat() if offer_dict['created_at'] else None,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else None,
+                    'transportDateTime': str(transport_date_time) if transport_date_time else None,
+                    'transportServiceType': offer_dict.get('transport_service_type'),
                 })
             
             return {
@@ -247,6 +255,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 new_title = body_data.get('title', '').strip()
                 new_price = body_data.get('pricePerUnit')
                 new_quantity = body_data.get('quantity')
+                new_expiry_date = body_data.get('expiryDate')
+                new_transport_date_time = body_data.get('transportDateTime')
                 if new_title:
                     fields.append('title = %s')
                     values.append(new_title)
@@ -256,6 +266,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if new_quantity is not None:
                     fields.append('quantity = %s')
                     values.append(int(new_quantity))
+                if 'expiryDate' in body_data:
+                    if new_expiry_date:
+                        fields.append('expiry_date = %s')
+                        values.append(new_expiry_date)
+                    else:
+                        fields.append('expiry_date = NULL')
+                if 'transportDateTime' in body_data:
+                    if new_transport_date_time:
+                        fields.append('transport_date_time = %s')
+                        values.append(new_transport_date_time)
+                    else:
+                        fields.append('transport_date_time = NULL')
                 if not fields:
                     return {
                         'statusCode': 400,

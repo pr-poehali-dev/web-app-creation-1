@@ -13,7 +13,7 @@ export function isExpired(item: Offer | Request): boolean {
     if (departureTime < now) return true;
   }
 
-  if ('transportDateTime' in item && item.transportDateTime && 'transportServiceType' in item && item.transportServiceType === 'Пассажирские перевозки') {
+  if ('transportDateTime' in item && item.transportDateTime) {
     const departureTime = new Date(item.transportDateTime);
     if (departureTime < now) return true;
   }

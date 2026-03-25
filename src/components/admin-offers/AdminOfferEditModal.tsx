@@ -15,18 +15,46 @@ interface AdminOfferEditModalProps {
   onSaved: () => void;
 }
 
+function toDatetimeLocal(isoString?: string | null): string {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  } catch {
+    return '';
+  }
+}
+
+function toDateInput(isoString?: string | null): string {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  } catch {
+    return '';
+  }
+}
+
 export default function AdminOfferEditModal({ isOpen, onClose, offer, onSaved }: AdminOfferEditModalProps) {
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [pricePerUnit, setPricePerUnit] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [transportDateTime, setTransportDateTime] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isTransport = !!offer?.transportServiceType;
 
   useEffect(() => {
     if (isOpen && offer) {
       setTitle(offer.title);
       setPricePerUnit(offer.price.toString());
       setQuantity(offer.quantity.toString());
+      setExpiryDate(toDateInput(offer.expiryDate));
+      setTransportDateTime(toDatetimeLocal(offer.transportDateTime));
     }
   }, [isOpen, offer]);
 
@@ -49,7 +77,16 @@ export default function AdminOfferEditModal({ isOpen, onClose, offer, onSaved }:
 
     setIsSubmitting(true);
     try {
-      await offersAPI.adminEditOffer(offer.id, { title: title.trim(), pricePerUnit: price, quantity: qty });
+      const updateData: Record<string, unknown> = {
+        title: title.trim(),
+        pricePerUnit: price,
+        quantity: qty,
+        expiryDate: expiryDate || null,
+      };
+      if (isTransport) {
+        updateData.transportDateTime = transportDateTime || null;
+      }
+      await offersAPI.adminEditOffer(offer.id, updateData as Parameters<typeof offersAPI.adminEditOffer>[1]);
       toast({ title: 'Сохранено', description: 'Предложение обновлено' });
       onSaved();
       onClose();
@@ -110,6 +147,30 @@ export default function AdminOfferEditModal({ isOpen, onClose, offer, onSaved }:
               </p>
             )}
           </div>
+
+          <div>
+            <Label>Дата окончания публикации</Label>
+            <Input
+              type="date"
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+              className="mt-1"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Оставьте пустым — публикация без ограничений</p>
+          </div>
+
+          {isTransport && (
+            <div>
+              <Label>Дата и время выезда</Label>
+              <Input
+                type="datetime-local"
+                value={transportDateTime}
+                onChange={(e) => setTransportDateTime(e.target.value)}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">После истечения этого времени карточка будет скрыта</p>
+            </div>
+          )}
 
           {pricePerUnit && quantity && (
             <div className="bg-muted rounded-lg p-3 text-sm">

@@ -23,6 +23,9 @@ export interface AdminRequest {
   unit: string;
   status: 'active' | 'moderation' | 'rejected' | 'completed' | 'archived' | 'deleted';
   createdAt: string;
+  expiryDate?: string | null;
+  transportDepartureDateTime?: string | null;
+  transportServiceType?: string | null;
 }
 
 interface AdminRequestsTableProps {
@@ -37,6 +40,7 @@ interface AdminRequestsTableProps {
   onApprove: (request: AdminRequest) => void;
   onReject: (request: AdminRequest) => void;
   onDelete: (request: AdminRequest) => void;
+  onEdit?: (request: AdminRequest) => void;
 }
 
 function getStatusBadge(status: string) {
@@ -70,6 +74,7 @@ export default function AdminRequestsTable({
   onApprove,
   onReject,
   onDelete,
+  onEdit,
 }: AdminRequestsTableProps) {
   const navigate = useNavigate();
 
@@ -85,19 +90,20 @@ export default function AdminRequestsTable({
             <TableHead>Количество</TableHead>
             <TableHead>Статус</TableHead>
             <TableHead>Дата создания</TableHead>
+            <TableHead>Срок публикации</TableHead>
             <TableHead className="text-right">Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8">
+              <TableCell colSpan={9} className="text-center py-8">
                 Загрузка...
               </TableCell>
             </TableRow>
           ) : requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                 Запросы не найдены
               </TableCell>
             </TableRow>
@@ -150,6 +156,21 @@ export default function AdminRequestsTable({
               <TableCell>{request.quantity} {request.unit}</TableCell>
               <TableCell>{getStatusBadge(request.status)}</TableCell>
               <TableCell>{new Date(request.createdAt).toLocaleDateString('ru-RU')}</TableCell>
+              <TableCell>
+                {request.transportDepartureDateTime ? (
+                  <span className={`text-xs ${new Date(request.transportDepartureDateTime) < new Date() ? 'text-red-600 font-semibold' : 'text-foreground'}`}>
+                    {new Date(request.transportDepartureDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(request.transportDepartureDateTime) < new Date() && ' ⚠️'}
+                  </span>
+                ) : request.expiryDate ? (
+                  <span className={`text-xs ${new Date(request.expiryDate) < new Date() ? 'text-red-600 font-semibold' : 'text-foreground'}`}>
+                    {new Date(request.expiryDate).toLocaleDateString('ru-RU')}
+                    {new Date(request.expiryDate) < new Date() && ' ⚠️'}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
@@ -160,6 +181,16 @@ export default function AdminRequestsTable({
                   >
                     <Icon name="Pencil" className="h-4 w-4" />
                   </Button>
+                  {onEdit && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onEdit(request)}
+                      title="Редактировать сроки"
+                    >
+                      <Icon name="Calendar" className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"

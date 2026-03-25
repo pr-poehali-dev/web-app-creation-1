@@ -136,6 +136,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     r.unit,
                     r.status,
                     r.created_at,
+                    r.expiry_date,
+                    r.transport_departure_date_time,
+                    r.transport_service_type,
                     r.user_id as buyer_id,
                     CASE 
                         WHEN u.company_name IS NOT NULL AND u.company_name != '' THEN u.company_name
@@ -163,6 +166,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 buyer_id = req_dict.get('buyer_id')
                 buyer_name = req_dict.get('buyer_name') or f'ID: {buyer_id}' if buyer_id else 'Неизвестный пользователь'
                 
+                expiry_date = req_dict.get('expiry_date')
+                transport_dep = req_dict.get('transport_departure_date_time')
                 requests_list.append({
                     'id': str(req_dict['id']),
                     'title': req_dict['title'],
@@ -173,7 +178,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'quantity': req_dict['quantity'] if req_dict['quantity'] else 0,
                     'unit': req_dict['unit'],
                     'status': req_dict['status'] or 'open',
-                    'createdAt': req_dict['created_at'].isoformat() if req_dict['created_at'] else None
+                    'createdAt': req_dict['created_at'].isoformat() if req_dict['created_at'] else None,
+                    'expiryDate': expiry_date.isoformat() if expiry_date else None,
+                    'transportDepartureDateTime': transport_dep.isoformat() if transport_dep else None,
+                    'transportServiceType': req_dict.get('transport_service_type'),
                 })
             
             return {
@@ -234,6 +242,44 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({'success': True, 'message': 'Title updated'}),
+                    'isBase64Encoded': False
+                }
+
+            elif action == 'edit_request':
+                fields = []
+                values = []
+                new_expiry_date = body_data.get('expiryDate')
+                new_transport_dep = body_data.get('transportDepartureDateTime')
+                if 'expiryDate' in body_data:
+                    if new_expiry_date:
+                        fields.append('expiry_date = %s')
+                        values.append(new_expiry_date)
+                    else:
+                        fields.append('expiry_date = NULL')
+                if 'transportDepartureDateTime' in body_data:
+                    if new_transport_dep:
+                        fields.append('transport_departure_date_time = %s')
+                        values.append(new_transport_dep)
+                    else:
+                        fields.append('transport_departure_date_time = NULL')
+                if not fields:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'No fields to update'}),
+                        'isBase64Encoded': False
+                    }
+                fields.append('updated_at = CURRENT_TIMESTAMP')
+                values.append(request_id)
+                cur.execute(
+                    f"UPDATE t_p42562714_web_app_creation_1.requests SET {', '.join(fields)} WHERE id = %s",
+                    tuple(values)
+                )
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'Request updated'}),
                     'isBase64Encoded': False
                 }
 

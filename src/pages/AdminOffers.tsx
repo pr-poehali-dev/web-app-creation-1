@@ -72,7 +72,10 @@ export default function AdminOffers({ isAuthenticated, onLogout }: AdminOffersPr
         reservedQuantity: (offer.reserved_quantity || offer.reservedQuantity || 0) as number,
         unit: (offer.unit as string) || 'шт',
         status: (offer.status as AdminOffer['status']) || 'active',
-        createdAt: (offer.createdAt || offer.created_at) as string
+        createdAt: (offer.createdAt || offer.created_at) as string,
+        expiryDate: (offer.expiryDate || offer.expiry_date) as string | null | undefined,
+        transportDateTime: (offer.transportDateTime || offer.transport_date_time) as string | null | undefined,
+        transportServiceType: (offer.transportServiceType || offer.transport_service_type) as string | null | undefined,
       }));
       
       setAllOffers(mappedOffers);

@@ -11,6 +11,7 @@ import { dataSync } from '@/utils/dataSync';
 import AdminRequestsFilters from '@/components/admin-requests/AdminRequestsFilters';
 import AdminRequestsTable, { type AdminRequest } from '@/components/admin-requests/AdminRequestsTable';
 import AdminRequestsDeleteDialog from '@/components/admin-requests/AdminRequestsDeleteDialog';
+import AdminRequestEditModal from '@/components/admin-requests/AdminRequestEditModal';
 
 interface AdminRequestsProps {
   isAuthenticated: boolean;
@@ -29,6 +30,7 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
   const [isLoading, setIsLoading] = useState(true);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitleValue, setEditingTitleValue] = useState('');
+  const [editingRequest, setEditingRequest] = useState<AdminRequest | null>(null);
 
   useEffect(() => {
     fetchRequests();
@@ -68,7 +70,10 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
         quantity: (req.quantity || 0) as number,
         unit: (req.unit as string) || '',
         status: (req.status as AdminRequest['status']) || 'active',
-        createdAt: req.createdAt as string
+        createdAt: req.createdAt as string,
+        expiryDate: (req.expiryDate || req.expiry_date) as string | null | undefined,
+        transportDepartureDateTime: (req.transportDepartureDateTime || req.transport_departure_date_time) as string | null | undefined,
+        transportServiceType: (req.transportServiceType || req.transport_service_type) as string | null | undefined,
       }));
       
       setAllRequests(mappedRequests);
@@ -205,6 +210,7 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
                   setSelectedRequest(request);
                   setShowDeleteDialog(true);
                 }}
+                onEdit={(request) => setEditingRequest(request)}
               />
             </CardContent>
           </Card>
@@ -216,6 +222,13 @@ export default function AdminRequests({ isAuthenticated, onLogout }: AdminReques
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDeleteRequest}
         requestTitle={selectedRequest?.title}
+      />
+
+      <AdminRequestEditModal
+        isOpen={!!editingRequest}
+        onClose={() => setEditingRequest(null)}
+        request={editingRequest}
+        onSaved={fetchRequests}
       />
 
       <Footer />

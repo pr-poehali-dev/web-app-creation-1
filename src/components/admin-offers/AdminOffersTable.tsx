@@ -24,6 +24,9 @@ export interface AdminOffer {
   unit: string;
   status: 'active' | 'moderation' | 'pending' | 'rejected' | 'completed' | 'deleted' | 'archived' | 'inactive' | string;
   createdAt: string;
+  expiryDate?: string | null;
+  transportDateTime?: string | null;
+  transportServiceType?: string | null;
 }
 
 interface AdminOffersTableProps {
@@ -97,19 +100,20 @@ export default function AdminOffersTable({
             <TableHead>Доступно</TableHead>
             <TableHead>Статус</TableHead>
             <TableHead>Дата создания</TableHead>
+            <TableHead>Срок публикации</TableHead>
             <TableHead className="text-right">Действия</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8">
+              <TableCell colSpan={8} className="text-center py-8">
                 Загрузка...
               </TableCell>
             </TableRow>
           ) : offers.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                 Предложения не найдены
               </TableCell>
             </TableRow>
@@ -179,6 +183,21 @@ export default function AdminOffersTable({
               </TableCell>
               <TableCell>{getStatusBadge(offer.status, offer.quantity, offer.soldQuantity)}</TableCell>
               <TableCell>{new Date(offer.createdAt).toLocaleDateString('ru-RU')}</TableCell>
+              <TableCell>
+                {offer.transportDateTime ? (
+                  <span className={`text-xs ${new Date(offer.transportDateTime) < new Date() ? 'text-red-600 font-semibold' : 'text-foreground'}`}>
+                    {new Date(offer.transportDateTime).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(offer.transportDateTime) < new Date() && ' ⚠️'}
+                  </span>
+                ) : offer.expiryDate ? (
+                  <span className={`text-xs ${new Date(offer.expiryDate) < new Date() ? 'text-red-600 font-semibold' : 'text-foreground'}`}>
+                    {new Date(offer.expiryDate).toLocaleDateString('ru-RU')}
+                    {new Date(offer.expiryDate) < new Date() && ' ⚠️'}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground">—</span>
+                )}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button
