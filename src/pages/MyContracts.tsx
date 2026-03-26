@@ -148,7 +148,11 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Если пришли с параметром ?tab=responses — открыть вкладку откликов
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') || 'active';
+  });
   const [negotiationModal, setNegotiationModal] = useState<{ responseId: number; title: string } | null>(null);
 
   useEffect(() => {
@@ -194,12 +198,15 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
-  const allActiveContracts = contracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
+  // Отклики хранят id контракта в c.id — исключаем их из "Активных" чтобы не было дублей
+  const respondedContractIds = new Set(respondedContracts.map(c => c.id));
+  const myOwnContracts = contracts.filter(c => !respondedContractIds.has(c.id));
+  const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
-  const closedContracts = contracts.filter(c => ['completed', 'cancelled'].includes(c.status));
+  const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
   const currentUserId = currentUser?.userId ?? 0;
-  const allCount = contracts.length + respondedContracts.length;
+  const allCount = myOwnContracts.length + respondedContracts.length;
   const activeCount = allActiveContracts.length;
 
   return (
@@ -214,12 +221,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <Icon name="Loader2" className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : allCount === 0 ? (
-          <div className="text-center py-16 text-muted-foreground">
-            <Icon name="FileSignature" className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">Контрактов пока нет</p>
-            <p className="text-sm mt-1">Здесь будут отображаться все ваши контракты</p>
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -294,6 +295,13 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               )}
             </TabsContent>
           </Tabs>
+        )}
+        {!isLoading && allCount === 0 && (
+          <div className="text-center py-16 text-muted-foreground">
+            <Icon name="FileSignature" className="h-12 w-12 mx-auto mb-3 opacity-30" />
+            <p className="font-medium">Контрактов пока нет</p>
+            <p className="text-sm mt-1">Здесь будут отображаться все ваши контракты</p>
+          </div>
         )}
       </main>
       <Footer />

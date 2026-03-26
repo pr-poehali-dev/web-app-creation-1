@@ -111,6 +111,9 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
           setContract(found);
           if (userId && found.sellerId === Number(userId)) {
             loadResponses(found.id, userId);
+          } else if (userId && found.sellerId !== Number(userId)) {
+            // Проверяем, не откликался ли уже текущий пользователь
+            checkMyResponse(Number(id), userId);
           }
         } else {
           toast({ title: 'Контракт не найден', variant: 'destructive' });
@@ -121,6 +124,23 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
       toast({ title: 'Ошибка загрузки', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkMyResponse = async (contractId: number, userId: string) => {
+    try {
+      const res = await fetch(`${func2url['contracts-list']}?myResponses=true`, {
+        headers: { 'X-User-Id': userId },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const existing = (data.contracts || []).find((c: { id: number }) => c.id === contractId);
+        if (existing) {
+          setAlreadyResponded(true);
+        }
+      }
+    } catch {
+      // тихо игнорируем
     }
   };
 
@@ -203,11 +223,16 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         setAlreadyResponded(true);
         setRespondOpen(false);
         setRespondComment('');
-        toast({ title: 'Отклик отправлен', description: 'Автор контракта получит уведомление' });
+        toast({ title: 'Отклик отправлен', description: 'Переходим в раздел «Мои контракты» → «Мои отклики»' });
+        setTimeout(() => navigate('/my-contracts?tab=responses'), 1500);
       } else if (res.status === 409) {
         setAlreadyResponded(true);
         setRespondOpen(false);
-        toast({ title: 'Вы уже откликнулись', description: 'Ваш отклик на этот контракт уже отправлен' });
+        toast({
+          title: 'Вы уже откликнулись на этот контракт',
+          description: 'Ваш отклик уже отправлен. Перейдите в «Мои контракты» → «Мои отклики».',
+        });
+        setTimeout(() => navigate('/my-contracts?tab=responses'), 2500);
       } else {
         toast({ title: 'Ошибка', description: data.error || 'Не удалось отправить отклик', variant: 'destructive' });
       }
@@ -258,10 +283,17 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               )}
             </div>
             {!isSeller && contract.status === 'open' && (
-              <Button onClick={handleRespond} className="shrink-0" disabled={alreadyResponded}>
-                <Icon name={alreadyResponded ? 'Check' : 'Send'} className="mr-2 h-4 w-4" />
-                {alreadyResponded ? 'Отклик отправлен' : 'Откликнуться'}
-              </Button>
+              alreadyResponded ? (
+                <Button variant="outline" className="shrink-0" onClick={() => navigate('/my-contracts')}>
+                  <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
+                  Мои отклики
+                </Button>
+              ) : (
+                <Button onClick={handleRespond} className="shrink-0">
+                  <Icon name="Send" className="mr-2 h-4 w-4" />
+                  Откликнуться
+                </Button>
+              )
             )}
           </div>
 
@@ -287,10 +319,17 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
           {/* Кнопка отклика снизу */}
           {!isSeller && contract.status === 'open' && (
-            <Button onClick={handleRespond} className="w-full" size="lg" disabled={alreadyResponded}>
-              <Icon name={alreadyResponded ? 'Check' : 'Send'} className="mr-2 h-4 w-4" />
-              {alreadyResponded ? 'Отклик отправлен' : 'Откликнуться на контракт'}
-            </Button>
+            alreadyResponded ? (
+              <Button variant="outline" className="w-full" size="lg" onClick={() => navigate('/my-contracts')}>
+                <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
+                Перейти в Мои отклики
+              </Button>
+            ) : (
+              <Button onClick={handleRespond} className="w-full" size="lg">
+                <Icon name="Send" className="mr-2 h-4 w-4" />
+                Откликнуться на контракт
+              </Button>
+            )
           )}
 
         </div>

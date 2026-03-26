@@ -54,12 +54,18 @@ interface ResponseStatus {
   contract: ContractInfo;
 }
 
+interface MessageAttachment {
+  url: string;
+  name: string;
+  type: string;
+}
+
 interface ChatMessage {
   id: string;
   senderId: string;
   senderName: string;
   text: string;
-  attachments: unknown[];
+  attachments: MessageAttachment[];
   timestamp: string;
 }
 
@@ -78,6 +84,10 @@ function formatDate(d: string) {
 
 function formatAmount(n: number, currency = 'RUB') {
   return new Intl.NumberFormat('ru-RU', { style: 'currency', currency, maximumFractionDigits: 0 }).format(n);
+}
+
+function formatRecordingTime(s: number) {
+  return `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 }
 
 export default function ContractNegotiationModal({
@@ -102,6 +112,16 @@ export default function ContractNegotiationModal({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'preview'>('chat');
+
+  // Медиа
+  const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -141,22 +161,103 @@ export default function ContractNegotiationModal({
   useEffect(() => {
     if (!isOpen || !responseId) return;
     setIsLoading(true);
+    setActiveTab('chat');
     Promise.all([loadStatus(), loadMessages()]).finally(() => setIsLoading(false));
     pollRef.current = setInterval(loadMessages, 5000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [isOpen, responseId, loadStatus, loadMessages]);
 
+  // Запись голоса
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mr = new MediaRecorder(stream);
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mr.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const file = new File([blob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+        const preview = URL.createObjectURL(blob);
+        setPendingFile({ file, preview });
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } catch {
+      toast({ title: 'Нет доступа к микрофону', variant: 'destructive' });
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stream?.getTracks().forEach(t => t.stop());
+      mediaRecorderRef.current.stop();
+    }
+    audioChunksRef.current = [];
+    setIsRecording(false);
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+  };
+
+  const removePendingFile = () => {
+    if (pendingFile) URL.revokeObjectURL(pendingFile.preview);
+    setPendingFile(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isVideo = file.type.startsWith('video/');
+    const isPdf = file.type === 'application/pdf';
+    const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast({
+        title: 'Файл слишком большой',
+        description: isVideo ? 'Лимит видео — 30 МБ' : 'Лимит файла — 20 МБ',
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      return;
+    }
+    const preview = isPdf ? '' : URL.createObjectURL(file);
+    setPendingFile({ file, preview });
+    e.target.value = '';
+  };
+
   const handleSend = async () => {
-    if (!text.trim() || isSending) return;
+    if ((!text.trim() && !pendingFile) || isSending) return;
     setIsSending(true);
     try {
+      const payload: Record<string, unknown> = { responseId, text: text.trim() };
+
+      if (pendingFile) {
+        const reader = new FileReader();
+        const fileData = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve((reader.result as string).split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(pendingFile.file);
+        });
+        payload.fileData = fileData;
+        payload.fileName = pendingFile.file.name;
+        payload.fileType = pendingFile.file.type;
+      }
+
       const res = await fetch(CHAT_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ responseId, text: text.trim() }),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         setText('');
+        removePendingFile();
         await loadMessages();
       } else {
         toast({ title: 'Ошибка', description: 'Не удалось отправить сообщение', variant: 'destructive' });
@@ -228,7 +329,6 @@ export default function ContractNegotiationModal({
   };
 
   const isSeller = status?.sellerId === Number(userId);
-  const isBuyer = status?.respondentId === Number(userId);
   const myConfirmed = isSeller ? status?.sellerConfirmed : status?.buyerConfirmed;
   const otherConfirmed = isSeller ? status?.buyerConfirmed : status?.sellerConfirmed;
   const isConfirmed = status?.status === 'confirmed';
@@ -238,6 +338,9 @@ export default function ContractNegotiationModal({
   const otherName = isSeller
     ? `${status?.respondentFirstName || ''} ${status?.respondentLastName || ''}`.trim() || 'Контрагент'
     : `${status?.sellerFirstName || ''} ${status?.sellerLastName || ''}`.trim() || 'Продавец';
+
+  // Показываем кнопку голоса только если нет текста и нет файла
+  const showMicBtn = !pendingFile && !text.trim() && !isRecording;
 
   return (
     <>
@@ -308,11 +411,33 @@ export default function ContractNegotiationModal({
                       <div className="space-y-3">
                         {messages.map((msg) => {
                           const isOwn = msg.senderId === userId;
+                          const attachments = (msg.attachments || []) as MessageAttachment[];
                           return (
                             <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                               <div className={`max-w-[80%] rounded-lg p-2.5 space-y-1 ${isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                 {!isOwn && <p className="text-xs font-semibold opacity-70">{msg.senderName}</p>}
-                                <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>
+                                {msg.text && <p className="text-sm whitespace-pre-wrap break-words">{msg.text}</p>}
+                                {attachments.map((att, i) => (
+                                  <div key={i} className="mt-1">
+                                    {att.type?.startsWith('audio/') ? (
+                                      <audio src={att.url} controls className="max-w-full h-8" />
+                                    ) : att.type?.startsWith('video/') ? (
+                                      <video src={att.url} controls className="max-w-full rounded max-h-48" />
+                                    ) : att.type?.startsWith('image/') ? (
+                                      <img src={att.url} alt={att.name} className="max-w-full rounded max-h-48 object-cover" />
+                                    ) : (
+                                      <a
+                                        href={att.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={`flex items-center gap-1.5 text-xs underline ${isOwn ? 'text-primary-foreground' : 'text-foreground'}`}
+                                      >
+                                        <Icon name="Paperclip" size={12} />
+                                        {att.name || 'Файл'}
+                                      </a>
+                                    )}
+                                  </div>
+                                ))}
                                 <p className={`text-xs ${isOwn ? 'opacity-70' : 'text-muted-foreground'}`}>
                                   {new Date(msg.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                                 </p>
@@ -327,18 +452,94 @@ export default function ContractNegotiationModal({
                   {!isCancelled && (
                     <>
                       <Separator />
-                      <div className="p-3 flex gap-2">
-                        <Input
-                          value={text}
-                          onChange={(e) => setText(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                          placeholder="Сообщение..."
-                          disabled={isSending}
-                          className="text-sm"
-                        />
-                        <Button onClick={handleSend} disabled={isSending || !text.trim()} size="sm" className="gap-1.5 px-3">
-                          <Icon name="Send" size={14} />
-                        </Button>
+                      <div className="p-3 space-y-2">
+                        {/* Предпросмотр файла */}
+                        {pendingFile && (
+                          <div className="flex items-center gap-2 bg-muted rounded-lg px-2 py-1.5">
+                            {pendingFile.file.type.startsWith('audio/') ? (
+                              <>
+                                <Icon name="Mic" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <audio src={pendingFile.preview} controls className="h-8 flex-1" />
+                              </>
+                            ) : pendingFile.file.type.startsWith('image/') ? (
+                              <img src={pendingFile.preview} alt="preview" className="h-10 w-10 object-cover rounded" />
+                            ) : pendingFile.file.type.startsWith('video/') ? (
+                              <video src={pendingFile.preview} className="h-10 w-10 object-cover rounded" />
+                            ) : (
+                              <>
+                                <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                <span className="text-xs text-muted-foreground flex-1 truncate">{pendingFile.file.name}</span>
+                              </>
+                            )}
+                            {!pendingFile.file.type.startsWith('audio/') && (
+                              <span className="text-xs text-muted-foreground truncate flex-1">{pendingFile.file.name}</span>
+                            )}
+                            <button onClick={removePendingFile} className="text-muted-foreground hover:text-destructive transition-colors ml-auto">
+                              <Icon name="X" size={14} />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Строка ввода */}
+                        {isRecording ? (
+                          <div className="flex gap-2 items-center">
+                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md border border-destructive bg-destructive/5">
+                              <span className="inline-block w-2 h-2 rounded-full bg-destructive animate-pulse" />
+                              <span className="text-sm text-destructive font-medium">Запись {formatRecordingTime(recordingTime)}</span>
+                            </div>
+                            <button
+                              onClick={cancelRecording}
+                              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors"
+                              title="Отменить"
+                            >
+                              <Icon name="X" className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                            <Button size="sm" onClick={stopRecording} className="flex-shrink-0 px-3 bg-destructive hover:bg-destructive/90">
+                              <Icon name="Square" className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*,video/*,.pdf,.doc,.docx"
+                              className="hidden"
+                              onChange={handleFileSelect}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={isSending || !!pendingFile}
+                              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                              title="Прикрепить файл"
+                            >
+                              <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                            {showMicBtn && (
+                              <button
+                                type="button"
+                                onClick={startRecording}
+                                disabled={isSending}
+                                className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                                title="Голосовое сообщение"
+                              >
+                                <Icon name="Mic" className="h-4 w-4 text-muted-foreground" />
+                              </button>
+                            )}
+                            <Input
+                              value={text}
+                              onChange={(e) => setText(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                              placeholder="Сообщение..."
+                              disabled={isSending}
+                              className="text-sm"
+                            />
+                            <Button onClick={handleSend} disabled={isSending || (!text.trim() && !pendingFile)} size="sm" className="gap-1.5 px-3">
+                              {isSending ? <Icon name="Loader2" size={14} className="animate-spin" /> : <Icon name="Send" size={14} />}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -346,9 +547,16 @@ export default function ContractNegotiationModal({
               )}
 
               {/* Preview tab */}
-              {activeTab === 'preview' && status && (
+              {activeTab === 'preview' && (
                 <div className="flex-1 overflow-y-auto p-4">
-                  <ContractPreviewContent status={status} />
+                  {status ? (
+                    <ContractPreviewContent status={status} />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+                      <Icon name="FileText" className="h-10 w-10 mb-2 opacity-30" />
+                      <p className="text-sm">Загрузка данных договора...</p>
+                    </div>
+                  )}
                 </div>
               )}
             </>

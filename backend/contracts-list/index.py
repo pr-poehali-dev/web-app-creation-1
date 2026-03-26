@@ -7,10 +7,14 @@ GET /?responses=true&contractId={id} — список откликов на ко
 
 import json
 import os
+import base64
+import uuid
+import mimetypes
 from typing import Dict, Any
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import boto3
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -96,12 +100,38 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
                     return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
 
-                # Отправить сообщение в чат
+                # Отправить сообщение в чат (с возможным вложением)
                 text = (body.get('text') or '').strip()
-                if not text:
-                    return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Текст обязателен'}), 'isBase64Encoded': False}
+                file_data = body.get('fileData')
+                file_name = body.get('fileName')
+                file_type = body.get('fileType', '')
+                attachments = []
+
+                if file_data:
+                    try:
+                        s3 = boto3.client(
+                            's3',
+                            endpoint_url='https://bucket.poehali.dev',
+                            aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                            aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
+                        )
+                        ext = (file_name or '').rsplit('.', 1)[-1].lower() if file_name and '.' in file_name else ''
+                        if not ext and file_type:
+                            ext = mimetypes.guess_extension(file_type, strict=False) or ''
+                            ext = ext.lstrip('.')
+                        unique_name = f"contract-chat/{resp['c_id']}/{uuid.uuid4()}.{ext}" if ext else f"contract-chat/{resp['c_id']}/{uuid.uuid4()}"
+                        raw = base64.b64decode(file_data)
+                        s3.put_object(Bucket='files', Key=unique_name, Body=raw, ContentType=file_type or 'application/octet-stream')
+                        cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{unique_name}"
+                        attachments.append({'url': cdn_url, 'name': file_name or 'file', 'type': file_type})
+                    except Exception as e:
+                        return {'statusCode': 500, 'headers': RESP_HEADERS, 'body': json.dumps({'error': f'Ошибка загрузки файла: {str(e)}'}), 'isBase64Encoded': False}
+
+                if not text and not attachments:
+                    return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Текст или файл обязателен'}), 'isBase64Encoded': False}
+
                 cur.execute('INSERT INTO contract_messages (contract_id, response_id, sender_id, text, attachments, created_at) VALUES (%s, %s, %s, %s, %s, NOW()) RETURNING id, created_at',
-                            (resp['c_id'], response_id, user_id, text, json.dumps([])))
+                            (resp['c_id'], response_id, user_id, text, json.dumps(attachments)))
                 row = cur.fetchone()
                 conn.commit()
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': row['id'], 'createdAt': str(row['created_at'])}), 'isBase64Encoded': False}
