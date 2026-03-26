@@ -435,11 +435,25 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     s.company_name as seller_company_name,
                     b.first_name   as buyer_first_name,
                     b.last_name    as buyer_last_name,
-                    COALESCE(AVG(r.rating), 0) as seller_rating
+                    COALESCE(AVG(r.rating), 0) as seller_rating,
+                    COUNT(DISTINCT cr.id) FILTER (WHERE cr.status NOT IN ('cancelled','rejected')) as responses_count,
+                    (
+                        SELECT json_agg(json_build_object(
+                            'id', cr2.id,
+                            'firstName', u2.first_name,
+                            'lastName', u2.last_name,
+                            'status', cr2.status,
+                            'createdAt', cr2.created_at
+                        ) ORDER BY cr2.created_at DESC)
+                        FROM contract_responses cr2
+                        JOIN users u2 ON cr2.user_id = u2.id
+                        WHERE cr2.contract_id = c.id AND cr2.status NOT IN ('cancelled','rejected')
+                    ) as recent_respondents
                 FROM contracts c
                 LEFT JOIN users s ON c.seller_id = s.id
                 LEFT JOIN users b ON c.buyer_id  = b.id
                 LEFT JOIN reviews r ON r.reviewed_user_id = c.seller_id
+                LEFT JOIN contract_responses cr ON cr.contract_id = c.id
                 {where_clause}
                 GROUP BY c.id, s.first_name, s.last_name, s.company_name, b.first_name, b.last_name
                 ORDER BY c.created_at DESC
@@ -486,6 +500,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d['updatedAt']          = str(d.pop('updated_at'))
                 d['productImages']      = d.pop('product_images')
                 d['productVideoUrl']    = d.pop('product_video_url')
+                d['responsesCount']     = d.pop('responses_count', 0) or 0
+                d['recentRespondents']  = d.pop('recent_respondents', None) or []
                 contracts_list.append(d)
 
             return {

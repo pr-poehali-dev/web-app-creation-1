@@ -14,6 +14,14 @@ import ContractNegotiationModal from '@/components/contract/ContractNegotiationM
 
 const CONTRACTS_API = func2url['contracts-list'];
 
+interface Respondent {
+  id: number;
+  firstName: string;
+  lastName: string;
+  status: string;
+  createdAt: string;
+}
+
 interface Contract {
   id: number;
   title: string;
@@ -35,6 +43,8 @@ interface Contract {
   buyerFirstName: string;
   buyerLastName: string;
   createdAt: string;
+  responsesCount?: number;
+  recentRespondents?: Respondent[];
   // поля для откликов
   responseId?: number;
   respondentFirstName?: string;
@@ -206,6 +216,9 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
   const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
   const currentUserId = currentUser?.userId ?? 0;
+  // Мои контракты с откликами (я автор, кто-то откликнулся)
+  const contractsWithResponses = myOwnContracts.filter(c => c.sellerId === currentUserId && (c.responsesCount ?? 0) > 0);
+  const totalResponsesCount = contractsWithResponses.reduce((sum, c) => sum + (c.responsesCount ?? 0), 0);
   const allCount = myOwnContracts.length + respondedContracts.length;
   const activeCount = allActiveContracts.length;
 
@@ -224,9 +237,12 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 flex-wrap h-auto gap-1">
               <TabsTrigger value="active">
                 Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
+              </TabsTrigger>
+              <TabsTrigger value="incoming">
+                Отклики {totalResponsesCount > 0 && <span className="ml-1.5 text-xs bg-orange-100 text-orange-700 px-1.5 rounded-full">{totalResponsesCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="closed">
                 Завершённые {closedContracts.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>}
@@ -264,6 +280,23 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                     </div>
                   )}
                 </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="incoming" className="space-y-3">
+              {contractsWithResponses.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Icon name="Inbox" className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p>Откликов на ваши контракты пока нет</p>
+                </div>
+              ) : (
+                contractsWithResponses.map(c => (
+                  <IncomingResponsesCard
+                    key={c.id}
+                    contract={c}
+                    onClick={() => navigate(`/contract/${c.id}`)}
+                  />
+                ))
               )}
             </TabsContent>
 
@@ -332,6 +365,52 @@ const RESPONSE_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destru
   cancelled: 'destructive',
   rejected: 'destructive',
 };
+
+function IncomingResponsesCard({ contract: c, onClick }: { contract: Contract; onClick: () => void }) {
+  const respondents = c.recentRespondents || [];
+  const count = c.responsesCount ?? 0;
+  const statusLabels: Record<string, string> = { pending: 'Ожидает', confirmed: 'Заключён', cancelled: 'Отменён', rejected: 'Отклонён' };
+
+  return (
+    <Card className="hover:shadow-md transition-shadow cursor-pointer border-orange-200" onClick={onClick}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-2">
+              <span className="font-medium text-sm truncate">{c.title || c.productName || `Контракт #${c.id}`}</span>
+              <Badge variant="outline" className="text-xs shrink-0 border-orange-300 text-orange-700 bg-orange-50">
+                <Icon name="Users" size={10} className="mr-1" />
+                {count} {count === 1 ? 'отклик' : count < 5 ? 'отклика' : 'откликов'}
+              </Badge>
+              {c.contractType && CONTRACT_TYPE_LABELS[c.contractType] && (
+                <Badge variant="outline" className="text-xs shrink-0">{CONTRACT_TYPE_LABELS[c.contractType]}</Badge>
+              )}
+            </div>
+            {respondents.length > 0 && (
+              <div className="space-y-1">
+                {respondents.slice(0, 3).map(r => (
+                  <div key={r.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Icon name="User" size={11} />
+                    <span>{r.firstName} {r.lastName}</span>
+                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full">{statusLabels[r.status] ?? r.status}</span>
+                  </div>
+                ))}
+                {count > 3 && <p className="text-xs text-muted-foreground">и ещё {count - 3}...</p>}
+              </div>
+            )}
+          </div>
+          <div className="text-right shrink-0">
+            <div className="font-semibold text-sm">{c.totalAmount ? formatAmount(c.totalAmount, c.currency) : 'Договорная'}</div>
+            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <Icon name="ChevronRight" size={12} />
+              Смотреть
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function ResponseCard({ contract: c, onClick }: { contract: Contract; onClick: () => void }) {
   const sellerName = `${c.sellerFirstName || ''} ${c.sellerLastName || ''}`.trim() || 'Продавец';

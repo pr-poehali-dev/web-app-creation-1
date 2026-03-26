@@ -17,15 +17,71 @@ def get_conn():
 
 def handler(event: dict, context) -> dict:
     """
-    Сохранение контракта в БД после генерации документа.
+    Сохранение и обновление контракта.
     POST / — создать контракт (status='draft') или опубликовать (status='open')
-    Body: { contractType, title, category, productName, quantity, unit, pricePerUnit,
-            deliveryDate, contractStartDate, contractEndDate, deliveryAddress, deliveryMethod,
-            prepaymentPercent, prepaymentAmount, totalAmount, termsConditions, documentUrl,
-            publish (bool), productNameB, quantityB, unitB, categoryB }
+    PUT / — обновить существующий контракт (body.contractId обязателен, только автор)
     """
     if event.get('httpMethod') == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS, 'body': ''}
+
+    if event.get('httpMethod') == 'PUT':
+        user_id = (event.get('headers') or {}).get('X-User-Id') or (event.get('headers') or {}).get('x-user-id')
+        if not user_id:
+            return {'statusCode': 401, 'headers': {**CORS, 'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Unauthorized'})}
+        body = json.loads(event.get('body') or '{}')
+        contract_id = body.get('contractId')
+        if not contract_id:
+            return {'statusCode': 400, 'headers': {**CORS, 'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'contractId обязателен'})}
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute('SELECT seller_id, status FROM contracts WHERE id = %s', (int(contract_id),))
+        row = cur.fetchone()
+        if not row:
+            cur.close(); conn.close()
+            return {'statusCode': 404, 'headers': {**CORS, 'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Контракт не найден'})}
+        if str(row[0]) != str(user_id):
+            cur.close(); conn.close()
+            return {'statusCode': 403, 'headers': {**CORS, 'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Нет доступа'})}
+        product_name = body.get('productName', '').strip()
+        title = body.get('title', '').strip() or f"{product_name} {body.get('quantity', '')} {body.get('unit', '')}"
+        contract_type = body.get('contractType', 'forward')
+        product_specs = None
+        if contract_type == 'barter':
+            product_specs = json.dumps({
+                'productNameB': body.get('productNameB', ''),
+                'quantityB': body.get('quantityB', ''),
+                'unitB': body.get('unitB', ''),
+                'categoryB': body.get('categoryB', ''),
+            })
+        publish = body.get('publish', False)
+        new_status = 'open' if publish else (row[1] if row[1] in ('draft', 'open') else row[1])
+        cur.execute("""
+            UPDATE contracts SET
+                contract_type=%s, title=%s, category=%s, product_name=%s, product_specs=%s,
+                quantity=%s, unit=%s, price_per_unit=%s, total_amount=%s,
+                delivery_date=%s, contract_start_date=%s, contract_end_date=%s,
+                delivery_address=%s, delivery_method=%s,
+                prepayment_percent=%s, prepayment_amount=%s,
+                terms_conditions=%s, status=%s, updated_at=NOW()
+            WHERE id=%s
+        """, (
+            contract_type, title, body.get('category', 'other'), product_name, product_specs,
+            float(body.get('quantity') or 0), body.get('unit', 'шт'),
+            float(body.get('pricePerUnit') or 0), float(body.get('totalAmount') or 0),
+            body.get('deliveryDate') or None, body.get('contractStartDate') or None, body.get('contractEndDate') or None,
+            body.get('deliveryAddress', ''), body.get('deliveryMethod', ''),
+            float(body.get('prepaymentPercent') or 0), float(body.get('prepaymentAmount') or 0),
+            body.get('termsConditions', ''), new_status,
+            int(contract_id),
+        ))
+        conn.commit()
+        cur.close(); conn.close()
+        return {'statusCode': 200, 'headers': {**CORS, 'Content-Type': 'application/json'},
+                'body': json.dumps({'success': True, 'contractId': int(contract_id), 'status': new_status})}
 
     if event.get('httpMethod') != 'POST':
         return {'statusCode': 405, 'headers': {**CORS, 'Content-Type': 'application/json'},

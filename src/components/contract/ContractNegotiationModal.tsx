@@ -667,12 +667,20 @@ export default function ContractNegotiationModal({
 
 function ContractPreviewContent({ status }: { status: ResponseStatus }) {
   const c = status.contract;
+  if (!c) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+        <Icon name="FileText" className="h-10 w-10 mb-2 opacity-30" />
+        <p className="text-sm">Данные договора недоступны</p>
+      </div>
+    );
+  }
   const formatMoney = (n: number) => formatAmount(n, c.currency || 'RUB');
 
   return (
     <div className="space-y-4 text-sm">
       <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-        <h3 className="font-semibold text-base">{c.title || c.productName}</h3>
+        <h3 className="font-semibold text-base">{c.title || c.productName || 'Договор'}</h3>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
           <div>
             <span className="text-muted-foreground">Товар: </span>

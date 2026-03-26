@@ -282,19 +282,27 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
                 <p className="text-muted-foreground mt-1">{contract.description}</p>
               )}
             </div>
-            {!isSeller && contract.status === 'open' && (
-              alreadyResponded ? (
-                <Button variant="outline" className="shrink-0" onClick={() => navigate('/my-contracts')}>
-                  <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
-                  Мои отклики
+            <div className="flex gap-2 shrink-0">
+              {isSeller && ['draft', 'open'].includes(contract.status) && (
+                <Button variant="outline" onClick={() => navigate(`/edit-contract/${contract.id}`)}>
+                  <Icon name="Pencil" className="mr-2 h-4 w-4" />
+                  Редактировать
                 </Button>
-              ) : (
-                <Button onClick={handleRespond} className="shrink-0">
-                  <Icon name="Send" className="mr-2 h-4 w-4" />
-                  Откликнуться
-                </Button>
-              )
-            )}
+              )}
+              {!isSeller && contract.status === 'open' && (
+                alreadyResponded ? (
+                  <Button variant="outline" onClick={() => navigate('/my-contracts')}>
+                    <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
+                    Мои отклики
+                  </Button>
+                ) : (
+                  <Button onClick={handleRespond}>
+                    <Icon name="Send" className="mr-2 h-4 w-4" />
+                    Откликнуться
+                  </Button>
+                )
+              )}
+            </div>
           </div>
 
           <ContractDetailInfo
