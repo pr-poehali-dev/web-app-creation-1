@@ -20,6 +20,7 @@ interface Contract {
   sellerLastName: string;
   sellerCompanyName?: string;
   sellerRating: number;
+  reliabilityScore?: number | null;
   discountPercent: number;
   financingAvailable: boolean;
   viewsCount: number;
@@ -107,10 +108,17 @@ export default function ContractCard({
             <div className="flex items-center gap-1.5 min-w-0">
               <Icon name="Building2" className="h-3 w-3 text-muted-foreground shrink-0" />
               <span className="truncate font-medium">{orgName}</span>
-              <div className="flex items-center gap-0.5 shrink-0">
-                <Icon name="ShieldCheck" className="h-3 w-3 text-emerald-500" />
-                <span className="text-emerald-600 font-medium">{contract.sellerRating.toFixed(1)}</span>
-              </div>
+              {contract.reliabilityScore != null ? (
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <Icon name="ShieldCheck" className="h-3 w-3 text-emerald-500" />
+                  <span className="text-emerald-600 font-medium">{contract.reliabilityScore}%</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <Icon name="ShieldCheck" className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-muted-foreground font-medium text-[10px]">нет сделок</span>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-1 text-muted-foreground shrink-0">
               <Icon name="Eye" className="h-3 w-3" />

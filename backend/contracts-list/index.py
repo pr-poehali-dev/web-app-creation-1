@@ -34,7 +34,8 @@ def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    method: str = event.get('httpMethod', 'GET')
+    raw_method = event.get('httpMethod') or event.get('requestContext', {}).get('httpMethod') or ''
+    method: str = raw_method.upper() if raw_method else 'GET'
     
     if method == 'OPTIONS':
         return {
@@ -130,8 +131,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not text and not attachments:
                     return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Текст или файл обязателен'}), 'isBase64Encoded': False}
 
+                from psycopg2.extras import Json as PgJson
                 cur.execute('INSERT INTO contract_messages (contract_id, response_id, sender_id, text, attachments, created_at) VALUES (%s, %s, %s, %s, %s, NOW()) RETURNING id, created_at',
-                            (resp['c_id'], response_id, user_id, text, json.dumps(attachments)))
+                            (resp['c_id'], response_id, user_id, text, PgJson(attachments)))
                 row = cur.fetchone()
                 conn.commit()
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': row['id'], 'createdAt': str(row['created_at'])}), 'isBase64Encoded': False}
@@ -436,6 +438,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     b.first_name   as buyer_first_name,
                     b.last_name    as buyer_last_name,
                     COALESCE(AVG(r.rating), 0) as seller_rating,
+                    (
+                        SELECT CASE
+                            WHEN COUNT(*) FILTER (WHERE status IN ('completed','cancelled')) = 0 THEN NULL
+                            ELSE ROUND(100.0 * COUNT(*) FILTER (WHERE status = 'completed') / COUNT(*) FILTER (WHERE status IN ('completed','cancelled')))
+                        END
+                        FROM contracts sc WHERE sc.seller_id = c.seller_id
+                    ) as reliability_score,
                     COUNT(DISTINCT cr.id) FILTER (WHERE cr.status NOT IN ('cancelled','rejected')) as responses_count,
                     (
                         SELECT json_agg(json_build_object(
@@ -502,6 +511,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d['productVideoUrl']    = d.pop('product_video_url')
                 d['responsesCount']     = d.pop('responses_count', 0) or 0
                 d['recentRespondents']  = d.pop('recent_respondents', None) or []
+                d['reliabilityScore']   = d.pop('reliability_score', None)
                 contracts_list.append(d)
 
             return {

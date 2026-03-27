@@ -9,15 +9,7 @@
       "expectedBody": {"limit": 50, "offset": 0}
     },
     {
-      "name": "Get contracts by status open",
-      "method": "GET",
-      "path": "/?status=open",
-      "expectedStatus": 200,
-      "bodyMatcher": "partial",
-      "expectedBody": {"limit": 50, "offset": 0}
-    },
-    {
-      "name": "GET open contracts returns list",
+      "name": "GET open contracts by limit",
       "method": "GET",
       "path": "/?status=open&limit=5",
       "expectedStatus": 200,
