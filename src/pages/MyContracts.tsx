@@ -4,6 +4,7 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
@@ -18,8 +19,15 @@ interface Respondent {
   id: number;
   firstName: string;
   lastName: string;
+  phone?: string;
+  email?: string;
+  pricePerUnit?: number;
+  totalAmount?: number;
+  comment?: string;
   status: string;
   createdAt: string;
+  sellerConfirmed?: boolean;
+  buyerConfirmed?: boolean;
 }
 
 interface Contract {
@@ -157,6 +165,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
+  const [incomingResponses, setIncomingResponses] = useState<Record<number, Respondent[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     // Если пришли с параметром ?tab=responses — открыть вкладку откликов
@@ -176,22 +185,35 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const loadContracts = async () => {
     setIsLoading(true);
     try {
-      const userId = String(currentUser!.userId);
+      const userId = String(currentUser!.id ?? currentUser!.userId ?? '');
       // Мои контракты (я автор)
       const resp = await fetch(`${CONTRACTS_API}?user_id=${userId}`, {
         headers: { 'X-User-Id': userId },
       });
       if (!resp.ok) throw new Error('Ошибка загрузки');
       const data = await resp.json();
-      setContracts(data.contracts || []);
+      const allContracts: Contract[] = data.contracts || [];
+      setContracts(allContracts);
 
-      // Контракты на которые я откликнулся — загружаем отклики и потом сами контракты
-      const respResp = await fetch(`${CONTRACTS_API}?responses=true&contractId=all`, {
-        headers: { 'X-User-Id': userId },
-      }).catch(() => null);
-      // responses=true&contractId=all не поддерживается — используем user_responses
-      // Получаем все открытые контракты и фильтруем по наличию моего отклика
-      // Более простой способ: бэкенд вернёт контракты где user_id = buyer_id через user_responses
+      // Загружаем детальные отклики для контрактов где я автор и есть отклики
+      const contractsWithR = allContracts.filter(
+        c => c.sellerId === Number(userId) && (c.responsesCount ?? 0) > 0
+      );
+      if (contractsWithR.length > 0) {
+        const responsesMap: Record<number, Respondent[]> = {};
+        await Promise.all(contractsWithR.map(async c => {
+          const r = await fetch(`${CONTRACTS_API}?responses=true&contractId=${c.id}`, {
+            headers: { 'X-User-Id': userId },
+          }).catch(() => null);
+          if (r && r.ok) {
+            const d = await r.json();
+            responsesMap[c.id] = d.responses || [];
+          }
+        }));
+        setIncomingResponses(responsesMap);
+      }
+
+      // Контракты на которые я сам откликнулся
       const myResponsesResp = await fetch(`${CONTRACTS_API}?myResponses=true`, {
         headers: { 'X-User-Id': userId },
       }).catch(() => null);
@@ -208,7 +230,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
-  const currentUserId = currentUser?.userId ?? 0;
+  const currentUserId = (currentUser?.id as number | undefined) ?? 0;
   // Мои контракты — только те где я автор (seller)
   const myOwnContracts = contracts.filter(c => c.sellerId === currentUserId);
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
@@ -282,20 +304,81 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               )}
             </TabsContent>
 
-            <TabsContent value="incoming" className="space-y-3">
+            <TabsContent value="incoming" className="space-y-4">
               {contractsWithResponses.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Icon name="Inbox" className="h-10 w-10 mx-auto mb-2 opacity-30" />
                   <p>Откликов на ваши контракты пока нет</p>
                 </div>
               ) : (
-                contractsWithResponses.map(c => (
-                  <IncomingResponsesCard
-                    key={c.id}
-                    contract={c}
-                    onClick={() => navigate(`/contract/${c.id}`)}
-                  />
-                ))
+                contractsWithResponses.map(c => {
+                  const responses = incomingResponses[c.id] || [];
+                  return (
+                    <Card key={c.id}>
+                      <CardContent className="p-4 space-y-3">
+                        <div
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => navigate(`/contract/${c.id}`)}
+                        >
+                          <span className="font-medium text-sm">{c.title || c.productName || `Контракт #${c.id}`}</span>
+                          <Badge variant="outline" className="text-xs border-orange-300 text-orange-700 bg-orange-50 shrink-0">
+                            <Icon name="Users" size={10} className="mr-1" />
+                            {c.responsesCount} {(c.responsesCount ?? 0) === 1 ? 'отклик' : (c.responsesCount ?? 0) < 5 ? 'отклика' : 'откликов'}
+                          </Badge>
+                        </div>
+                        {responses.length > 0 ? (
+                          <div className="space-y-2">
+                            {responses.map(r => {
+                              const isConfirmed = r.status === 'confirmed';
+                              const isCancelled = r.status === 'cancelled' || r.status === 'rejected';
+                              return (
+                                <div key={r.id} className="border rounded-lg p-3 space-y-1.5 text-sm">
+                                  <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium">{r.firstName} {r.lastName}</span>
+                                      <Badge
+                                        variant={isConfirmed ? 'default' : isCancelled ? 'destructive' : 'outline'}
+                                        className={`text-xs ${isConfirmed ? 'bg-green-100 text-green-700 border-green-200' : ''}`}
+                                      >
+                                        {RESPONSE_STATUS_LABELS[r.status] ?? r.status}
+                                      </Badge>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString('ru-RU')}</span>
+                                  </div>
+                                  {(r.pricePerUnit ?? 0) > 0 && (
+                                    <div className="text-muted-foreground">
+                                      <span>Цена: </span><span className="font-medium text-foreground">{formatAmount(r.pricePerUnit!, c.currency)}</span>
+                                      <span className="ml-2">Итого: </span><span className="font-medium text-foreground">{formatAmount(r.totalAmount!, c.currency)}</span>
+                                    </div>
+                                  )}
+                                  {r.comment && <p className="text-muted-foreground">{r.comment}</p>}
+                                  <div className="flex items-center justify-between pt-1">
+                                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                      {r.phone && <span className="flex items-center gap-1"><Icon name="Phone" size={12} />{r.phone}</span>}
+                                    </div>
+                                    {!isCancelled && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="gap-1.5 h-7 text-xs"
+                                        onClick={() => setNegotiationModal({ responseId: r.id, title: c.title || c.productName || `Контракт #${c.id}` })}
+                                      >
+                                        <Icon name="MessageSquare" size={12} />
+                                        Переговоры
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground text-center py-2">Загрузка откликов...</div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </TabsContent>
 

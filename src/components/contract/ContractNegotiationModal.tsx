@@ -38,7 +38,7 @@ export default function ContractNegotiationModal({
 }: ContractNegotiationModalProps) {
   const { toast } = useToast();
   const currentUser = getSession();
-  const userId = String(currentUser?.userId ?? '');
+  const userId = String(currentUser?.id ?? '');
 
   const [status, setStatus] = useState<ResponseStatus | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
