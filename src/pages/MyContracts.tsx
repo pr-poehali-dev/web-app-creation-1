@@ -185,7 +185,13 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const loadContracts = async () => {
     setIsLoading(true);
     try {
-      const userId = String(currentUser!.id ?? currentUser!.userId ?? '');
+      const rawId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? Number(localStorage.getItem('userId') || '0') || undefined;
+      const userId = rawId ? String(rawId) : '';
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
+      const numUserId = Number(userId);
       // Мои контракты (я автор)
       const resp = await fetch(`${CONTRACTS_API}?user_id=${userId}`, {
         headers: { 'X-User-Id': userId },
@@ -197,7 +203,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
 
       // Загружаем детальные отклики для контрактов где я автор и есть отклики
       const contractsWithR = allContracts.filter(
-        c => c.sellerId === Number(userId) && (c.responsesCount ?? 0) > 0
+        c => Number(c.sellerId) === numUserId && (c.responsesCount ?? 0) > 0
       );
       if (contractsWithR.length > 0) {
         const responsesMap: Record<number, Respondent[]> = {};
@@ -230,9 +236,10 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
-  const currentUserId = (currentUser?.id as number | undefined) ?? 0;
+  const rawCurrentId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? Number(localStorage.getItem('userId') || '0') || undefined;
+  const currentUserId = Number(rawCurrentId ?? 0);
   // Мои контракты — только те где я автор (seller)
-  const myOwnContracts = contracts.filter(c => c.sellerId === currentUserId);
+  const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');

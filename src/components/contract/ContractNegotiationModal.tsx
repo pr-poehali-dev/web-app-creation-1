@@ -38,7 +38,8 @@ export default function ContractNegotiationModal({
 }: ContractNegotiationModalProps) {
   const { toast } = useToast();
   const currentUser = getSession();
-  const userId = String(currentUser?.id ?? '');
+  const rawUserId = (currentUser as { id?: number; userId?: number } | null)?.id ?? (currentUser as { id?: number; userId?: number } | null)?.userId ?? Number(localStorage.getItem('userId') || '0') || undefined;
+  const userId = rawUserId ? String(rawUserId) : '';
 
   const [status, setStatus] = useState<ResponseStatus | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -172,6 +173,10 @@ export default function ContractNegotiationModal({
 
   const handleSend = async () => {
     if ((!text.trim() && !pendingFile) || isSending) return;
+    if (!userId) {
+      toast({ title: 'Ошибка', description: 'Не удалось определить пользователя. Обновите страницу и войдите снова.', variant: 'destructive' });
+      return;
+    }
     setIsSending(true);
     try {
       const payload: Record<string, unknown> = { responseId, text: text.trim() };
