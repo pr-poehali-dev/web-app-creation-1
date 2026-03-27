@@ -224,7 +224,7 @@ const PhotoBankFoldersList = ({
                             )}
                           </Button>
                         )}
-                        {onOpenFolderChats && !folder.client_id && (folder.total_messages_count ?? 0) > 0 && (
+                        {onOpenFolderChats && !folder.client_id && ((folder.total_messages_count ?? 0) > 0) && (
                           <Button
                             variant="ghost"
                             size="icon"

@@ -47,7 +47,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const loadContracts = async () => {
     setIsLoading(true);
     try {
-      const rawId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? Number(localStorage.getItem('userId') || '0') || undefined;
+      const rawId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? (Number(localStorage.getItem('userId') || '0') || undefined);
       const userId = rawId ? String(rawId) : '';
       if (!userId) {
         setIsLoading(false);
@@ -95,7 +95,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
-  const rawCurrentId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? Number(localStorage.getItem('userId') || '0') || undefined;
+  const rawCurrentId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? (Number(localStorage.getItem('userId') || '0') || undefined);
   const currentUserId = Number(rawCurrentId ?? 0);
 
   const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);

@@ -39,7 +39,7 @@ export default function ContractNegotiationModal({
   const { toast } = useToast();
   const userId = (() => {
     const s = getSession() as { id?: number; userId?: number } | null;
-    const raw = s?.id ?? s?.userId ?? Number(localStorage.getItem('userId') || '0') || undefined;
+    const raw = s?.id ?? s?.userId ?? (Number(localStorage.getItem('userId') || '0') || undefined);
     return raw ? String(raw) : '';
   })();
 
