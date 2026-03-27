@@ -3,158 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
 import ContractNegotiationModal from '@/components/contract/ContractNegotiationModal';
+import ContractCard, { Contract, Respondent } from '@/components/contract/ContractCard';
+import ResponseCard from '@/components/contract/ResponseCard';
+import IncomingResponsesTab from '@/components/contract/IncomingResponsesTab';
 
 const CONTRACTS_API = func2url['contracts-list'];
-
-interface Respondent {
-  id: number;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  email?: string;
-  pricePerUnit?: number;
-  totalAmount?: number;
-  comment?: string;
-  status: string;
-  createdAt: string;
-  sellerConfirmed?: boolean;
-  buyerConfirmed?: boolean;
-}
-
-interface Contract {
-  id: number;
-  title: string;
-  description: string;
-  status: string;
-  contractType: string;
-  category: string;
-  productName: string;
-  totalAmount: number;
-  currency: string;
-  quantity: number;
-  unit: string;
-  contractStartDate: string;
-  contractEndDate: string;
-  sellerId: number;
-  buyerId: number;
-  sellerFirstName: string;
-  sellerLastName: string;
-  buyerFirstName: string;
-  buyerLastName: string;
-  createdAt: string;
-  responsesCount?: number;
-  recentRespondents?: Respondent[];
-  // поля для откликов
-  responseId?: number;
-  respondentFirstName?: string;
-  respondentLastName?: string;
-  myResponseStatus?: string;
-  sellerConfirmed?: boolean;
-  buyerConfirmed?: boolean;
-}
 
 interface MyContractsProps {
   isAuthenticated: boolean;
   onLogout: () => void;
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  open: 'Открыт',
-  draft: 'Черновик',
-  signed: 'Подписан',
-  in_progress: 'В работе',
-  completed: 'Завершён',
-  cancelled: 'Отменён',
-};
-
-const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  open: 'default',
-  draft: 'outline',
-  signed: 'default',
-  in_progress: 'default',
-  completed: 'secondary',
-  cancelled: 'destructive',
-};
-
-function formatAmount(amount: number, currency = 'RUB') {
-  return new Intl.NumberFormat('ru-RU', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount);
-}
-
-function formatDate(dateStr: string) {
-  if (!dateStr || dateStr === 'None' || dateStr === 'null') return '—';
-  try {
-    return new Date(dateStr).toLocaleDateString('ru-RU');
-  } catch {
-    return '—';
-  }
-}
-
-const CONTRACT_TYPE_LABELS: Record<string, string> = {
-  forward: 'Предложение',
-  'forward-request': 'Запрос на закупку',
-  barter: 'Бартер',
-};
-
-function ContractCard({ contract, currentUserId, onClick }: { contract: Contract; currentUserId: number; onClick: () => void }) {
-  const isSeller = contract.sellerId === currentUserId;
-  const isRequest = contract.contractType === 'forward-request';
-  const counterparty = isSeller
-    ? `${contract.buyerFirstName || ''} ${contract.buyerLastName || ''}`.trim() || (isRequest ? 'Поставщик' : 'Покупатель')
-    : `${contract.sellerFirstName || ''} ${contract.sellerLastName || ''}`.trim() || (isRequest ? 'Покупатель' : 'Продавец');
-
-  return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="font-medium text-sm truncate">{contract.title || contract.productName || `Контракт #${contract.id}`}</span>
-              <Badge variant={STATUS_VARIANTS[contract.status] ?? 'outline'} className="text-xs shrink-0">
-                {STATUS_LABELS[contract.status] ?? contract.status}
-              </Badge>
-              {contract.contractType && CONTRACT_TYPE_LABELS[contract.contractType] && (
-                <Badge variant="outline" className="text-xs shrink-0">
-                  {CONTRACT_TYPE_LABELS[contract.contractType]}
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{contract.description || '—'}</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Icon name="User" size={12} />
-                {isSeller ? (isRequest ? 'Поставщик' : 'Покупатель') : (isRequest ? 'Покупатель' : 'Продавец')}: {counterparty}
-              </span>
-              <span className="flex items-center gap-1">
-                <Icon name="Package" size={12} />
-                {contract.quantity} {contract.unit}
-              </span>
-              <span className="flex items-center gap-1">
-                <Icon name="Calendar" size={12} />
-                с {formatDate(contract.contractStartDate)}
-              </span>
-              <span className="flex items-center gap-1">
-                <Icon name="Calendar" size={12} />
-                по {formatDate(contract.contractEndDate)}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="font-semibold text-sm">{contract.totalAmount ? formatAmount(contract.totalAmount, contract.currency) : 'Договорная'}</div>
-            <div className="text-xs text-muted-foreground mt-1">{isSeller ? (isRequest ? 'Инициатор' : 'Продавец') : (isRequest ? 'Поставщик' : 'Покупатель')}</div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 export default function MyContracts({ isAuthenticated, onLogout }: MyContractsProps) {
@@ -168,7 +32,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const [incomingResponses, setIncomingResponses] = useState<Record<number, Respondent[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
-    // Если пришли с параметром ?tab=responses — открыть вкладку откликов
     const params = new URLSearchParams(window.location.search);
     return params.get('tab') || 'active';
   });
@@ -192,7 +55,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
         return;
       }
       const numUserId = Number(userId);
-      // Мои контракты (я автор)
       const resp = await fetch(`${CONTRACTS_API}?user_id=${userId}`, {
         headers: { 'X-User-Id': userId },
       });
@@ -201,7 +63,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       const allContracts: Contract[] = data.contracts || [];
       setContracts(allContracts);
 
-      // Загружаем детальные отклики для контрактов где я автор и есть отклики
       const contractsWithR = allContracts.filter(
         c => Number(c.sellerId) === numUserId && (c.responsesCount ?? 0) > 0
       );
@@ -219,7 +80,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
         setIncomingResponses(responsesMap);
       }
 
-      // Контракты на которые я сам откликнулся
       const myResponsesResp = await fetch(`${CONTRACTS_API}?myResponses=true`, {
         headers: { 'X-User-Id': userId },
       }).catch(() => null);
@@ -238,13 +98,12 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
 
   const rawCurrentId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? Number(localStorage.getItem('userId') || '0') || undefined;
   const currentUserId = Number(rawCurrentId ?? 0);
-  // Мои контракты — только те где я автор (seller)
+
   const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
   const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
-  // Мои контракты с откликами (я автор, кто-то откликнулся)
   const contractsWithResponses = myOwnContracts.filter(c => (c.responsesCount ?? 0) > 0);
   const totalResponsesCount = contractsWithResponses.reduce((sum, c) => sum + (c.responsesCount ?? 0), 0);
   const allCount = myOwnContracts.length + respondedContracts.length;
@@ -312,81 +171,11 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
             </TabsContent>
 
             <TabsContent value="incoming" className="space-y-4">
-              {contractsWithResponses.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Icon name="Inbox" className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p>Откликов на ваши контракты пока нет</p>
-                </div>
-              ) : (
-                contractsWithResponses.map(c => {
-                  const responses = incomingResponses[c.id] || [];
-                  return (
-                    <Card key={c.id}>
-                      <CardContent className="p-4 space-y-3">
-                        <div
-                          className="flex items-center justify-between cursor-pointer"
-                          onClick={() => navigate(`/contract/${c.id}`)}
-                        >
-                          <span className="font-medium text-sm">{c.title || c.productName || `Контракт #${c.id}`}</span>
-                          <Badge variant="outline" className="text-xs border-orange-300 text-orange-700 bg-orange-50 shrink-0">
-                            <Icon name="Users" size={10} className="mr-1" />
-                            {c.responsesCount} {(c.responsesCount ?? 0) === 1 ? 'отклик' : (c.responsesCount ?? 0) < 5 ? 'отклика' : 'откликов'}
-                          </Badge>
-                        </div>
-                        {responses.length > 0 ? (
-                          <div className="space-y-2">
-                            {responses.map(r => {
-                              const isConfirmed = r.status === 'confirmed';
-                              const isCancelled = r.status === 'cancelled' || r.status === 'rejected';
-                              return (
-                                <div key={r.id} className="border rounded-lg p-3 space-y-1.5 text-sm">
-                                  <div className="flex items-center justify-between flex-wrap gap-2">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-medium">{r.firstName} {r.lastName}</span>
-                                      <Badge
-                                        variant={isConfirmed ? 'default' : isCancelled ? 'destructive' : 'outline'}
-                                        className={`text-xs ${isConfirmed ? 'bg-green-100 text-green-700 border-green-200' : ''}`}
-                                      >
-                                        {RESPONSE_STATUS_LABELS[r.status] ?? r.status}
-                                      </Badge>
-                                    </div>
-                                    <span className="text-xs text-muted-foreground">{new Date(r.createdAt).toLocaleDateString('ru-RU')}</span>
-                                  </div>
-                                  {(r.pricePerUnit ?? 0) > 0 && (
-                                    <div className="text-muted-foreground">
-                                      <span>Цена: </span><span className="font-medium text-foreground">{formatAmount(r.pricePerUnit!, c.currency)}</span>
-                                      <span className="ml-2">Итого: </span><span className="font-medium text-foreground">{formatAmount(r.totalAmount!, c.currency)}</span>
-                                    </div>
-                                  )}
-                                  {r.comment && <p className="text-muted-foreground">{r.comment}</p>}
-                                  <div className="flex items-center justify-between pt-1">
-                                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                      {r.phone && <span className="flex items-center gap-1"><Icon name="Phone" size={12} />{r.phone}</span>}
-                                    </div>
-                                    {!isCancelled && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="gap-1.5 h-7 text-xs"
-                                        onClick={() => setNegotiationModal({ responseId: r.id, title: c.title || c.productName || `Контракт #${c.id}` })}
-                                      >
-                                        <Icon name="MessageSquare" size={12} />
-                                        Переговоры
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-muted-foreground text-center py-2">Загрузка откликов...</div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })
-              )}
+              <IncomingResponsesTab
+                contractsWithResponses={contractsWithResponses}
+                incomingResponses={incomingResponses}
+                onOpenNegotiation={(responseId, title) => setNegotiationModal({ responseId, title })}
+              />
             </TabsContent>
 
             <TabsContent value="closed" className="space-y-3">
@@ -438,77 +227,5 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
         />
       )}
     </div>
-  );
-}
-
-const RESPONSE_STATUS_LABELS: Record<string, string> = {
-  pending: 'Ожидает',
-  confirmed: 'Заключён',
-  cancelled: 'Отменён',
-  rejected: 'Отклонён',
-};
-
-const RESPONSE_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  pending: 'outline',
-  confirmed: 'default',
-  cancelled: 'destructive',
-  rejected: 'destructive',
-};
-
-
-
-function ResponseCard({ contract: c, onClick }: { contract: Contract; onClick: () => void }) {
-  const sellerName = `${c.sellerFirstName || ''} ${c.sellerLastName || ''}`.trim() || 'Продавец';
-  const myName = `${c.respondentFirstName || ''} ${c.respondentLastName || ''}`.trim() || 'Вы';
-  const rStatus = c.myResponseStatus || 'pending';
-  const isConfirmed = rStatus === 'confirmed';
-
-  return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className="font-medium text-sm truncate">{c.title || c.productName || `Контракт #${c.id}`}</span>
-              <Badge variant={RESPONSE_STATUS_VARIANTS[rStatus] ?? 'outline'} className="text-xs shrink-0">
-                {RESPONSE_STATUS_LABELS[rStatus] ?? rStatus}
-              </Badge>
-              {isConfirmed && (
-                <Badge className="text-xs shrink-0 bg-green-100 text-green-700 border-green-200">
-                  <Icon name="ShieldCheck" size={10} className="mr-1" />
-                  Согласован
-                </Badge>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Icon name="User" size={12} />
-                Вы: {myName}
-              </span>
-              <span className="flex items-center gap-1">
-                <Icon name="Store" size={12} />
-                Продавец: {sellerName}
-              </span>
-              <span className="flex items-center gap-1">
-                <Icon name="Package" size={12} />
-                {c.quantity} {c.unit}
-              </span>
-              <span className="flex items-center gap-1">
-                <Icon name="MessageSquare" size={12} />
-                {c.responseId ? 'Нажмите для переговоров' : 'Открыть контракт'}
-              </span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="font-semibold text-sm">{c.totalAmount ? formatAmount(c.totalAmount, c.currency) : 'Договорная'}</div>
-            <div className="text-xs text-muted-foreground mt-1">
-              {isConfirmed
-                ? (c.sellerConfirmed && c.buyerConfirmed ? '✓ Оба подтвердили' : '○ Ожидание')
-                : 'Покупатель'}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
