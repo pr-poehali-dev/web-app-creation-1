@@ -167,7 +167,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
           });
           return;
         }
-      } catch (e) { /* network unavailable, use cached status */ }
+      } catch { /* network unavailable, use cached status */ }
     }
 
     if (verificationStatus === 'pending') {
