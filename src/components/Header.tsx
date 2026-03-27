@@ -25,7 +25,7 @@ const DistrictsFilter = memo(({
   setSelectedDistricts 
 }: {
   selectedDistricts: string[];
-  districts: any[];
+  districts: { id: string; name: string; regionId: string }[];
   toggleDistrict: (id: string) => void;
   setSelectedDistricts: (districts: string[]) => void;
 }) => (
@@ -84,10 +84,10 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [regionModalOpen, setRegionModalOpen] = useState(false);
-  const [listingsCount, setListingsCount] = useState(0);
-  const [ordersCount, setOrdersCount] = useState(0);
+  const [, setListingsCount] = useState(0);
+  const [, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity, selectedRegion, regions, detectedDistrictId } = useDistrict();
+  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity, selectedRegion, regions } = useDistrict();
   const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -137,7 +137,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         if (storedOrders) {
           const ordersData = JSON.parse(storedOrders);
           const userOrders = ordersData.filter(
-            (order: any) => order.buyerId === currentUser.id?.toString() || order.sellerId === currentUser.id?.toString()
+            (order: { buyerId: string; sellerId: string }) => order.buyerId === currentUser.id?.toString() || order.sellerId === currentUser.id?.toString()
           );
           setOrdersCount(userOrders.length);
         }
