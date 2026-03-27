@@ -68,16 +68,6 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
     });
   }, [districts, searchQuery, selectedDistricts]);
 
-  const districtCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    
-    districts.forEach(district => {
-      counts[district.id] = 0;
-    });
-    
-    return counts;
-  }, [districts]);
-
   const handleToggleDistrict = (districtId: string) => {
     toggleDistrict(districtId);
   };
@@ -248,7 +238,6 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                       <CommandGroup heading={`Районы: ${selectedRegionData?.name || ''}`}>
                         {filteredDistricts.map((district) => {
                           const isSelected = selectedDistricts.includes(district.id);
-                          const count = districtCounts[district.id] || 0;
                           return (
                             <CommandItem
                               key={district.id}
@@ -265,11 +254,6 @@ export default function RegionDistrictSelector({ className = '', showBadges = tr
                                   <Icon name="MapPin" className="h-4 w-4 text-muted-foreground" />
                                   <span>{district.name}</span>
                                 </div>
-                                {count > 0 && (
-                                  <Badge variant="secondary" className="ml-auto text-xs">
-                                    {count}
-                                  </Badge>
-                                )}
                               </div>
                             </CommandItem>
                           );
