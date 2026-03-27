@@ -23,7 +23,7 @@ const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
     try {
       const component = await componentImport();
       return component as { default: React.ComponentType };
-    } catch (error) {
+    } catch {
       return { 
         default: () => (
           <div className="flex items-center justify-center min-h-screen p-4">
