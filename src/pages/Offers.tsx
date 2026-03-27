@@ -167,7 +167,7 @@ function Offers({ isAuthenticated, onLogout }: OffersProps) {
           const parsed = JSON.parse(ev);
           return parsed.type === 'offer_updated' && Date.now() - parsed.timestamp < 30000;
         }
-      } catch (_e) { /* ignore */ }
+      } catch { /* ignore */ }
       return false;
     })();
     loadData(hasPendingUpdate);

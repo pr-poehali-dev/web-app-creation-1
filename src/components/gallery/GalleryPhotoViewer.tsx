@@ -88,7 +88,7 @@ export default function GalleryPhotoViewer({
       } else if (el.webkitRequestFullscreen) {
         await el.webkitRequestFullscreen();
       }
-    } catch (_) { /* browser denied */ }
+    } catch { /* browser denied */ }
   }, []);
 
   const exitFullscreen = useCallback(async () => {
@@ -99,7 +99,7 @@ export default function GalleryPhotoViewer({
       } else if (doc.webkitExitFullscreen && doc.webkitFullscreenElement) {
         await doc.webkitExitFullscreen();
       }
-    } catch (_) { /* ignore */ }
+    } catch { /* ignore */ }
   }, []);
 
   // Устанавливаем --dvh CSS-переменную для корректного vh на мобиле (адресбар iOS/Android)
