@@ -455,51 +455,7 @@ const RESPONSE_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destru
   rejected: 'destructive',
 };
 
-function IncomingResponsesCard({ contract: c, onClick }: { contract: Contract; onClick: () => void }) {
-  const respondents = c.recentRespondents || [];
-  const count = c.responsesCount ?? 0;
-  const statusLabels: Record<string, string> = { pending: 'Ожидает', confirmed: 'Заключён', cancelled: 'Отменён', rejected: 'Отклонён' };
 
-  return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer border-orange-200" onClick={onClick}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className="font-medium text-sm truncate">{c.title || c.productName || `Контракт #${c.id}`}</span>
-              <Badge variant="outline" className="text-xs shrink-0 border-orange-300 text-orange-700 bg-orange-50">
-                <Icon name="Users" size={10} className="mr-1" />
-                {count} {count === 1 ? 'отклик' : count < 5 ? 'отклика' : 'откликов'}
-              </Badge>
-              {c.contractType && CONTRACT_TYPE_LABELS[c.contractType] && (
-                <Badge variant="outline" className="text-xs shrink-0">{CONTRACT_TYPE_LABELS[c.contractType]}</Badge>
-              )}
-            </div>
-            {respondents.length > 0 && (
-              <div className="space-y-1">
-                {respondents.slice(0, 3).map(r => (
-                  <div key={r.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Icon name="User" size={11} />
-                    <span>{r.firstName} {r.lastName}</span>
-                    <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded-full">{statusLabels[r.status] ?? r.status}</span>
-                  </div>
-                ))}
-                {count > 3 && <p className="text-xs text-muted-foreground">и ещё {count - 3}...</p>}
-              </div>
-            )}
-          </div>
-          <div className="text-right shrink-0">
-            <div className="font-semibold text-sm">{c.totalAmount ? formatAmount(c.totalAmount, c.currency) : 'Договорная'}</div>
-            <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <Icon name="ChevronRight" size={12} />
-              Смотреть
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function ResponseCard({ contract: c, onClick }: { contract: Contract; onClick: () => void }) {
   const sellerName = `${c.sellerFirstName || ''} ${c.sellerLastName || ''}`.trim() || 'Продавец';
