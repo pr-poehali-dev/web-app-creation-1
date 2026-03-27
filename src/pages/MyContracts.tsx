@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
