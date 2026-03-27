@@ -208,16 +208,15 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
-  // Отклики хранят id контракта в c.id — исключаем их из "Активных" чтобы не было дублей
-  const respondedContractIds = new Set(respondedContracts.map(c => c.id));
-  const myOwnContracts = contracts.filter(c => !respondedContractIds.has(c.id));
+  const currentUserId = currentUser?.userId ?? 0;
+  // Мои контракты — только те где я автор (seller)
+  const myOwnContracts = contracts.filter(c => c.sellerId === currentUserId);
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
   const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
-  const currentUserId = currentUser?.userId ?? 0;
   // Мои контракты с откликами (я автор, кто-то откликнулся)
-  const contractsWithResponses = myOwnContracts.filter(c => c.sellerId === currentUserId && (c.responsesCount ?? 0) > 0);
+  const contractsWithResponses = myOwnContracts.filter(c => (c.responsesCount ?? 0) > 0);
   const totalResponsesCount = contractsWithResponses.reduce((sum, c) => sum + (c.responsesCount ?? 0), 0);
   const allCount = myOwnContracts.length + respondedContracts.length;
   const activeCount = allActiveContracts.length;
