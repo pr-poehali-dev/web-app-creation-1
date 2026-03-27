@@ -128,7 +128,7 @@ export function useRequestsData() {
       try {
         const response = await ordersAPI.getAll('all');
         setOrders(response.orders || []);
-      } catch (_e) { /* тихо игнорируем */ }
+      } catch { /* тихо игнорируем */ }
     };
     const intervalId = setInterval(pollOrders, 10000);
     return () => clearInterval(intervalId);

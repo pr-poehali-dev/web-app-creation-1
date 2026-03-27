@@ -153,7 +153,7 @@ export function useGalleryHandlers(params: GalleryHandlersParams) {
           }
         }
       }
-    } catch (e) { void e; }
+    } catch { /* ignore */ }
   }, [clientData, code, gallery, setClientData]);
 
   useEffect(() => {

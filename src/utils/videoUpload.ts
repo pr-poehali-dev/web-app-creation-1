@@ -42,7 +42,7 @@ export async function uploadVideoMultipart(
 
     if (!resp.ok) {
       let msg = `Ошибка загрузки части ${i + 1}`;
-      try { const e = await resp.json(); msg = e.error || msg; } catch (_) { /* ignore */ }
+      try { const e = await resp.json(); msg = e.error || msg; } catch { /* ignore */ }
       throw new Error(msg);
     }
 
@@ -60,7 +60,7 @@ export async function uploadVideoMultipart(
 
   if (!completeResp.ok) {
     let msg = 'Ошибка финализации загрузки';
-    try { const e = await completeResp.json(); msg = e.error || msg; } catch (_) { /* ignore */ }
+    try { const e = await completeResp.json(); msg = e.error || msg; } catch { /* ignore */ }
     throw new Error(msg);
   }
 

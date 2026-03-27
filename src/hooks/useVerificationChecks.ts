@@ -69,13 +69,13 @@ export const useVerificationChecks = ({
         try {
           const session = JSON.parse(authSession);
           userEmail = session.userEmail;
-        } catch (_e) { /* ignore parse error */ }
+        } catch { /* ignore parse error */ }
       }
       
       if (vkUser) {
         try {
           vkUserData = JSON.parse(vkUser);
-        } catch (_e) { /* ignore parse error */ }
+        } catch { /* ignore parse error */ }
       }
       
       if (isAdminUser(userEmail, vkUserData)) {
