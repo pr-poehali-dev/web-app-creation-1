@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
@@ -95,6 +95,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const [alreadyResponded, setAlreadyResponded] = useState(locationState?.alreadyResponded ?? false);
   const [myResponseId, setMyResponseId] = useState<number | null>(locationState?.responseId ?? null);
   const [negotiationOpen, setNegotiationOpen] = useState(false);
+  const negotiationResponseId = useRef<number | null>(locationState?.responseId ?? null);
   const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
 
   useEffect(() => {
@@ -137,7 +138,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
     }
   };
 
-  const checkMyResponse = async (contractId: number, userId: string) => {
+  const checkMyResponse = async (contractId: number, userId: string): Promise<number | null> => {
     try {
       const res = await fetch(`${func2url['contracts-list']}?my_responses=true`, {
         headers: { 'X-User-Id': userId },
@@ -147,12 +148,15 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         const existing = (data.contracts || []).find((c: { id: number; responseId?: number }) => c.id === contractId);
         if (existing) {
           setAlreadyResponded(true);
-          if (existing.responseId) setMyResponseId(existing.responseId);
+          const rid = existing.responseId ?? null;
+          if (rid) { setMyResponseId(rid); negotiationResponseId.current = rid; }
+          return rid;
         }
       }
     } catch {
       // тихо игнорируем
     }
+    return null;
   };
 
   const loadResponses = async (contractId: number, userId: string) => {
@@ -302,7 +306,15 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               )}
               {!isSeller && contract.status === 'open' && (
                 alreadyResponded ? (
-                  <Button variant="default" onClick={() => setNegotiationOpen(true)} disabled={!myResponseId}>
+                  <Button variant="default" onClick={async () => {
+                    let rid = negotiationResponseId.current;
+                    if (!rid) {
+                      const userId = localStorage.getItem('userId');
+                      if (userId) rid = await checkMyResponse(Number(id), userId);
+                    }
+                    if (rid) { negotiationResponseId.current = rid; setMyResponseId(rid); setNegotiationOpen(true); }
+                    else toast({ title: 'Не удалось найти ваш отклик', variant: 'destructive' });
+                  }}>
                     <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
                     Переговоры
                   </Button>
@@ -370,7 +382,15 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               {/* Кнопка отклика снизу */}
               {contract.status === 'open' && (
                 alreadyResponded ? (
-                  <Button className="w-full" size="lg" onClick={() => setNegotiationOpen(true)} disabled={!myResponseId}>
+                  <Button className="w-full" size="lg" onClick={async () => {
+                    let rid = negotiationResponseId.current;
+                    if (!rid) {
+                      const userId = localStorage.getItem('userId');
+                      if (userId) rid = await checkMyResponse(Number(id), userId);
+                    }
+                    if (rid) { negotiationResponseId.current = rid; setMyResponseId(rid); setNegotiationOpen(true); }
+                    else toast({ title: 'Не удалось найти ваш отклик', variant: 'destructive' });
+                  }}>
                     <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
                     Перейти на переговоры
                   </Button>
@@ -404,11 +424,11 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         formatPrice={formatPrice}
       />
 
-      {negotiationOpen && myResponseId && (
+      {negotiationOpen && negotiationResponseId.current && (
         <ContractNegotiationModal
           isOpen={true}
           onClose={() => setNegotiationOpen(false)}
-          responseId={myResponseId}
+          responseId={negotiationResponseId.current}
           contractTitle={contract.title || contract.productName || `Контракт #${contract.id}`}
           onStatusChange={loadContract}
         />
