@@ -447,6 +447,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
             where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
+            my_response_subq = f"(SELECT id FROM contract_responses WHERE contract_id = c.id AND user_id = {user_id} LIMIT 1)" if user_id else "NULL"
             query = f"""
                 SELECT
                     c.*,
@@ -475,7 +476,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         FROM contract_responses cr2
                         JOIN users u2 ON cr2.user_id = u2.id
                         WHERE cr2.contract_id = c.id AND cr2.status NOT IN ('cancelled','rejected')
-                    ) as recent_respondents
+                    ) as recent_respondents,
+                    {my_response_subq} as my_response_id
                 FROM contracts c
                 LEFT JOIN users s ON c.seller_id = s.id
                 LEFT JOIN users b ON c.buyer_id  = b.id
@@ -530,6 +532,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d['responsesCount']     = d.pop('responses_count', 0) or 0
                 d['recentRespondents']  = d.pop('recent_respondents', None) or []
                 d['reliabilityScore']   = d.pop('reliability_score', None)
+                d['responseId']         = d.pop('my_response_id', None)
                 contracts_list.append(d)
 
             return {

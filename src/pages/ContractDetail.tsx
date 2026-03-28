@@ -57,6 +57,7 @@ interface Contract {
   createdAt: string;
   productImages?: string[];
   productVideoUrl?: string;
+  responseId?: number;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -121,8 +122,12 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
           if (userId && found.sellerId === Number(userId)) {
             loadResponses(found.id, userId);
           } else if (userId && found.sellerId !== Number(userId)) {
-            // Если responseId уже известен из navigation state — не делаем лишний запрос
-            if (!locationState?.responseId) {
+            // responseId теперь приходит прямо в объекте контракта
+            if (found.responseId) {
+              setAlreadyResponded(true);
+              setMyResponseId(found.responseId);
+              negotiationResponseId.current = found.responseId;
+            } else if (!locationState?.responseId) {
               checkMyResponse(Number(id), userId);
             }
           }
