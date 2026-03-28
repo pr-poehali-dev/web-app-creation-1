@@ -167,11 +167,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                     key={c.responseId ?? c.id}
                     contract={c}
                     onClick={() => {
-                      if (c.responseId) {
-                        setNegotiationModal({ responseId: c.responseId, title: c.title || c.productName || `Контракт #${c.id}` });
-                      } else {
-                        navigate(`/contract/${c.id}`);
-                      }
+                      navigate(`/contract/${c.id}`, { state: { responseId: c.responseId, alreadyResponded: true } });
                     }}
                   />
                 ))

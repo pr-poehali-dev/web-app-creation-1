@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -79,8 +79,11 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   useScrollToTop();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const session = getSession();
+
+  const locationState = location.state as { responseId?: number; alreadyResponded?: boolean } | null;
 
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,8 +92,8 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const [respondComment, setRespondComment] = useState('');
   const [respondPrice, setRespondPrice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [alreadyResponded, setAlreadyResponded] = useState(false);
-  const [myResponseId, setMyResponseId] = useState<number | null>(null);
+  const [alreadyResponded, setAlreadyResponded] = useState(locationState?.alreadyResponded ?? false);
+  const [myResponseId, setMyResponseId] = useState<number | null>(locationState?.responseId ?? null);
   const [negotiationOpen, setNegotiationOpen] = useState(false);
   const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
 
