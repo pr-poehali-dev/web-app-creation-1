@@ -106,11 +106,11 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4 flex-wrap h-auto gap-1">
-              <TabsTrigger value="responses">
-                Мои отклики {respondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{respondedContracts.length}</span>}
-              </TabsTrigger>
               <TabsTrigger value="active">
                 Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
+              </TabsTrigger>
+              <TabsTrigger value="responses">
+                Мои отклики {respondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{respondedContracts.length}</span>}
               </TabsTrigger>
               <TabsTrigger value="closed">
                 Завершённые {closedContracts.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>}
