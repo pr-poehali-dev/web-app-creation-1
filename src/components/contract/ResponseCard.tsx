@@ -77,7 +77,7 @@ export default function ResponseCard({ contract: c, onClick, onNegotiate }: Resp
           </div>
         </div>
 
-        {c.responseId && onNegotiate && (
+        {onNegotiate && (
           <div className="mt-3 pt-3 border-t">
             <Button
               size="sm"

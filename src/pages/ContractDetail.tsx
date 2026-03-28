@@ -122,12 +122,13 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
           if (userId && found.sellerId === Number(userId)) {
             loadResponses(found.id, userId);
           } else if (userId && found.sellerId !== Number(userId)) {
-            // responseId теперь приходит прямо в объекте контракта
+            // responseId приходит прямо в объекте контракта (если бэкенд актуален)
             if (found.responseId) {
               setAlreadyResponded(true);
               setMyResponseId(found.responseId);
               negotiationResponseId.current = found.responseId;
-            } else if (!locationState?.responseId) {
+            } else {
+              // fallback: запрашиваем через отдельную надёжную функцию
               checkMyResponse(Number(id), userId);
             }
           }
@@ -145,18 +146,18 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
   const checkMyResponse = async (contractId: number, userId: string): Promise<number | null> => {
     try {
-      const res = await fetch(`${func2url['contracts-list']}?my_responses=true`, {
+      const res = await fetch(`${func2url['contract-response-id']}?contractId=${contractId}`, {
         headers: { 'X-User-Id': userId },
       });
       if (res.ok) {
         const data = await res.json();
-        const existing = (data.contracts || []).find((c: { id: number; responseId?: number }) => c.id === contractId);
-        if (existing) {
+        const rid = data.responseId ?? null;
+        if (rid) {
           setAlreadyResponded(true);
-          const rid = existing.responseId ?? null;
-          if (rid) { setMyResponseId(rid); negotiationResponseId.current = rid; }
-          return rid;
+          setMyResponseId(rid);
+          negotiationResponseId.current = rid;
         }
+        return rid;
       }
     } catch {
       // тихо игнорируем

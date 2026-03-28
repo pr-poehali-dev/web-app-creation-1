@@ -3,7 +3,7 @@
 Если передан user_id — возвращает контракты, где пользователь продавец или покупатель.
 POST / — создать отклик на контракт (v2), отправить сообщение в чат, подтверждение/отмена
 GET /?responses=true&contractId={id} — список откликов на контракт (только для автора)
-GET /?my_responses=true — контракты на которые пользователь откликнулся
+GET /?my_responses=true — контракты на которые пользователь откликнулся (v2)
 GET /?action=chatMessages&responseId={id} — сообщения чата
 '''
 
@@ -322,6 +322,24 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
         return get_my_responses(user_id)
+
+    # GET ?action=getMyResponseId&contractId=N — получить responseId текущего пользователя для контракта
+    if params.get('action') == 'getMyResponseId':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+        contract_id_raw = params.get('contractId')
+        if not contract_id_raw:
+            return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id FROM contract_responses WHERE contract_id = %s AND user_id = %s LIMIT 1', (int(contract_id_raw), user_id))
+                row = cur.fetchone()
+                if row:
+                    return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'responseId': row['id']}), 'isBase64Encoded': False}
+                return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'responseId': None}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
 
     # GET ?action=chatStatus&responseId=N — статус отклика для чата
     if params.get('action') == 'chatStatus':

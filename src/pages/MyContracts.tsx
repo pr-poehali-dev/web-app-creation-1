@@ -13,6 +13,7 @@ import ContractCard, { Contract } from '@/components/contract/ContractCard';
 import ResponseCard from '@/components/contract/ResponseCard';
 
 const CONTRACTS_API = func2url['contracts-list'];
+const RESPONSE_ID_API = func2url['contract-response-id'];
 
 interface MyContractsProps {
   isAuthenticated: boolean;
@@ -164,12 +165,23 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               ) : (
                 respondedContracts.map(c => (
                   <ResponseCard
-                    key={c.responseId ?? c.id}
+                    key={c.id}
                     contract={c}
                     onClick={() => {
-                      navigate(`/contract/${c.id}`, { state: { responseId: c.responseId, alreadyResponded: true } });
+                      navigate(`/contract/${c.id}`, { state: { alreadyResponded: true } });
                     }}
-                    onNegotiate={c.responseId ? () => setNegotiationModal({ responseId: c.responseId!, title: c.title || c.productName || `Контракт #${c.id}` }) : undefined}
+                    onNegotiate={async () => {
+                      const userId = String((currentUser as {id?:number;userId?:number})?.id ?? (currentUser as {id?:number;userId?:number})?.userId ?? localStorage.getItem('userId') ?? '');
+                      const res = await fetch(`${RESPONSE_ID_API}?contractId=${c.id}`, { headers: { 'X-User-Id': userId } });
+                      if (res.ok) {
+                        const data = await res.json();
+                        if (data.responseId) {
+                          setNegotiationModal({ responseId: data.responseId, title: c.title || c.productName || `Контракт #${c.id}` });
+                          return;
+                        }
+                      }
+                      toast({ title: 'Не удалось найти отклик', variant: 'destructive' });
+                    }}
                   />
                 ))
               )}
