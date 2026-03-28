@@ -26,7 +26,7 @@ interface ResponseCardProps {
 
 export default function ResponseCard({ contract: c, onClick, onNegotiate }: ResponseCardProps) {
   const sellerName = `${c.sellerFirstName || ''} ${c.sellerLastName || ''}`.trim() || 'Продавец';
-  const myName = `${c.respondentFirstName || ''} ${c.respondentLastName || ''}`.trim() || 'Вы';
+  const myName = `${c.respondentFirstName || ''} ${c.respondentLastName || ''}`.trim();
   const rStatus = c.myResponseStatus || 'pending';
   const isConfirmed = rStatus === 'confirmed';
 
@@ -51,10 +51,12 @@ export default function ResponseCard({ contract: c, onClick, onNegotiate }: Resp
               )}
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Icon name="User" size={12} />
-                Вы: {myName}
-              </span>
+              {myName && (
+                <span className="flex items-center gap-1">
+                  <Icon name="User" size={12} />
+                  {myName}
+                </span>
+              )}
               <span className="flex items-center gap-1">
                 <Icon name="Store" size={12} />
                 Продавец: {sellerName}
