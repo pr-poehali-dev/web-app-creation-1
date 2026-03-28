@@ -244,18 +244,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             with conn.cursor() as cur:
                 cur.execute('''
                     SELECT c.*, cr.id as response_id, cr.price_per_unit as my_price, cr.total_amount as my_total, cr.comment as my_comment, cr.status as my_response_status,
-                        cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at,
+                        cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at, cr.created_at as cr_created_at,
                         s.first_name as seller_first_name, s.last_name as seller_last_name, s.company_name as seller_company_name,
                         me.first_name as my_first_name, me.last_name as my_last_name,
-                        COALESCE(AVG(r.rating), 0) as seller_rating
+                        COALESCE((SELECT AVG(rating) FROM reviews WHERE reviewed_user_id = c.seller_id), 0) as seller_rating
                     FROM contract_responses cr
                     JOIN contracts c ON cr.contract_id = c.id
                     LEFT JOIN users s ON c.seller_id = s.id
                     LEFT JOIN users me ON cr.user_id = me.id
-                    LEFT JOIN reviews r ON r.reviewed_user_id = c.seller_id
                     WHERE cr.user_id = %s
-                    GROUP BY c.id, cr.id, s.first_name, s.last_name, s.company_name, me.first_name, me.last_name
-                    ORDER BY cr.created_at DESC
+                    ORDER BY cr_created_at DESC
                 ''', (user_id,))
                 rows = cur.fetchall()
                 contracts_list = []
@@ -302,6 +300,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d['productVideoUrl'] = d.pop('product_video_url', None)
                     d['buyerFirstName'] = d.pop('buyer_first_name', None)
                     d['buyerLastName'] = d.pop('buyer_last_name', None)
+                    d.pop('cr_created_at', None)
                     contracts_list.append(d)
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'contracts': contracts_list, 'total': len(contracts_list)}), 'isBase64Encoded': False}
         finally:
