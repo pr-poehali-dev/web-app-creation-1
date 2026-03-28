@@ -15,6 +15,7 @@ import func2url from '../../backend/func2url.json';
 import ContractDetailInfo from '@/components/contract-detail/ContractDetailInfo';
 import ContractDetailResponses from '@/components/contract-detail/ContractDetailResponses';
 import ContractRespondDialog from '@/components/contract-detail/ContractRespondDialog';
+import ContractNegotiationModal from '@/components/contract/ContractNegotiationModal';
 
 interface ContractDetailProps {
   isAuthenticated: boolean;
@@ -89,6 +90,8 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const [respondPrice, setRespondPrice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [alreadyResponded, setAlreadyResponded] = useState(false);
+  const [myResponseId, setMyResponseId] = useState<number | null>(null);
+  const [negotiationOpen, setNegotiationOpen] = useState(false);
   const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
 
   useEffect(() => {
@@ -136,9 +139,10 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
       });
       if (res.ok) {
         const data = await res.json();
-        const existing = (data.contracts || []).find((c: { id: number }) => c.id === contractId);
+        const existing = (data.contracts || []).find((c: { id: number; responseId?: number }) => c.id === contractId);
         if (existing) {
           setAlreadyResponded(true);
+          if (existing.responseId) setMyResponseId(existing.responseId);
         }
       }
     } catch {
@@ -293,9 +297,9 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               )}
               {!isSeller && contract.status === 'open' && (
                 alreadyResponded ? (
-                  <Button variant="outline" onClick={() => navigate('/my-contracts?tab=responses')}>
+                  <Button variant="default" onClick={() => setNegotiationOpen(true)} disabled={!myResponseId}>
                     <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
-                    Мои отклики
+                    Переговоры
                   </Button>
                 ) : (
                   <Button onClick={handleRespond}>
@@ -361,9 +365,9 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               {/* Кнопка отклика снизу */}
               {contract.status === 'open' && (
                 alreadyResponded ? (
-                  <Button variant="outline" className="w-full" size="lg" onClick={() => navigate('/my-contracts?tab=responses')}>
+                  <Button className="w-full" size="lg" onClick={() => setNegotiationOpen(true)} disabled={!myResponseId}>
                     <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
-                    Перейти в Мои отклики
+                    Перейти на переговоры
                   </Button>
                 ) : (
                   <Button onClick={handleRespond} className="w-full" size="lg">
@@ -394,6 +398,16 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         contractQuantity={contract.quantity}
         formatPrice={formatPrice}
       />
+
+      {negotiationOpen && myResponseId && (
+        <ContractNegotiationModal
+          isOpen={true}
+          onClose={() => setNegotiationOpen(false)}
+          responseId={myResponseId}
+          contractTitle={contract.title || contract.productName || `Контракт #${contract.id}`}
+          onStatusChange={loadContract}
+        />
+      )}
     </div>
   );
 }
