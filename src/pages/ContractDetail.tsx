@@ -131,7 +131,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
   const checkMyResponse = async (contractId: number, userId: string) => {
     try {
-      const res = await fetch(`${func2url['contracts-list']}?myResponses=true`, {
+      const res = await fetch(`${func2url['contracts-list']}?my_responses=true`, {
         headers: { 'X-User-Id': userId },
       });
       if (res.ok) {

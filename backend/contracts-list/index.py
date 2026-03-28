@@ -317,8 +317,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
-    # GET ?myResponses=true — контракты на которые пользователь откликнулся
-    if params.get('myResponses') == 'true':
+    # GET ?myResponses=true или ?my_responses=true — контракты на которые пользователь откликнулся
+    if params.get('myResponses') == 'true' or params.get('my_responses') == 'true':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
         return get_my_responses(user_id)

@@ -59,7 +59,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       const allContracts: Contract[] = data.contracts || [];
       setContracts(allContracts);
 
-      const myResponsesResp = await fetch(`${CONTRACTS_API}?myResponses=true`, {
+      const myResponsesResp = await fetch(`${CONTRACTS_API}?my_responses=true`, {
         headers: { 'X-User-Id': userId },
       }).catch(() => null);
       if (myResponsesResp) {
