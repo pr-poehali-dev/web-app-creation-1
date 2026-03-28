@@ -9,9 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
 import ContractNegotiationModal from '@/components/contract/ContractNegotiationModal';
-import ContractCard, { Contract, Respondent } from '@/components/contract/ContractCard';
+import ContractCard, { Contract } from '@/components/contract/ContractCard';
 import ResponseCard from '@/components/contract/ResponseCard';
-import IncomingResponsesTab from '@/components/contract/IncomingResponsesTab';
 
 const CONTRACTS_API = func2url['contracts-list'];
 
@@ -28,7 +27,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
-  const [incomingResponses, setIncomingResponses] = useState<Record<number, Respondent[]>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -53,7 +51,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
         setIsLoading(false);
         return;
       }
-      const numUserId = Number(userId);
       const resp = await fetch(`${CONTRACTS_API}?user_id=${userId}`, {
         headers: { 'X-User-Id': userId },
       });
@@ -61,23 +58,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       const data = await resp.json();
       const allContracts: Contract[] = data.contracts || [];
       setContracts(allContracts);
-
-      const contractsWithR = allContracts.filter(
-        c => Number(c.sellerId) === numUserId && (c.responsesCount ?? 0) > 0
-      );
-      if (contractsWithR.length > 0) {
-        const responsesMap: Record<number, Respondent[]> = {};
-        await Promise.all(contractsWithR.map(async c => {
-          const r = await fetch(`${CONTRACTS_API}?responses=true&contractId=${c.id}`, {
-            headers: { 'X-User-Id': userId },
-          }).catch(() => null);
-          if (r && r.ok) {
-            const d = await r.json();
-            responsesMap[c.id] = d.responses || [];
-          }
-        }));
-        setIncomingResponses(responsesMap);
-      }
 
       const myResponsesResp = await fetch(`${CONTRACTS_API}?myResponses=true`, {
         headers: { 'X-User-Id': userId },
@@ -107,8 +87,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
   const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
-  const contractsWithResponses = myOwnContracts.filter(c => (c.responsesCount ?? 0) > 0);
-  const totalResponsesCount = contractsWithResponses.reduce((sum, c) => sum + (c.responsesCount ?? 0), 0);
   const allCount = myOwnContracts.length + respondedContracts.length;
   const activeCount = allActiveContracts.length;
 
@@ -130,9 +108,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
             <TabsList className="mb-4 flex-wrap h-auto gap-1">
               <TabsTrigger value="active">
                 Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
-              </TabsTrigger>
-              <TabsTrigger value="incoming">
-                Отклики {totalResponsesCount > 0 && <span className="ml-1.5 text-xs bg-orange-100 text-orange-700 px-1.5 rounded-full">{totalResponsesCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="closed">
                 Завершённые {closedContracts.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>}
@@ -173,13 +148,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               )}
             </TabsContent>
 
-            <TabsContent value="incoming" className="space-y-4">
-              <IncomingResponsesTab
-                contractsWithResponses={contractsWithResponses}
-                incomingResponses={incomingResponses}
-                onOpenNegotiation={(responseId, title) => setNegotiationModal({ responseId, title })}
-              />
-            </TabsContent>
+
 
             <TabsContent value="closed" className="space-y-3">
               {closedContracts.length === 0 ? (
