@@ -235,7 +235,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
-    # GET ?myResponses=true — контракты на которые пользователь откликнулся
+    # GET ?myResponses=true — контракты на которые пользователь откликнулся (v2: без GROUP BY)
     if params.get('myResponses') == 'true':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
@@ -243,19 +243,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
-                cur.execute('''
-                    SELECT c.*, cr.id as response_id, cr.price_per_unit as my_price, cr.total_amount as my_total, cr.comment as my_comment, cr.status as my_response_status,
-                        cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at, cr.created_at as cr_created_at,
-                        s.first_name as seller_first_name, s.last_name as seller_last_name, s.company_name as seller_company_name,
-                        me.first_name as my_first_name, me.last_name as my_last_name,
-                        COALESCE((SELECT AVG(rating) FROM reviews WHERE reviewed_user_id = c.seller_id), 0) as seller_rating
-                    FROM contract_responses cr
-                    JOIN contracts c ON cr.contract_id = c.id
-                    LEFT JOIN users s ON c.seller_id = s.id
-                    LEFT JOIN users me ON cr.user_id = me.id
-                    WHERE cr.user_id = %s
-                    ORDER BY cr_created_at DESC
-                ''', (user_id,))
+                cur.execute(
+                    'SELECT c.id, c.title, c.product_name, c.contract_type, c.category,'
+                    ' c.quantity, c.unit, c.price_per_unit, c.total_amount, c.currency,'
+                    ' c.status, c.seller_id, c.buyer_id, c.delivery_date, c.contract_start_date, c.contract_end_date,'
+                    ' c.delivery_address, c.delivery_method, c.logistics_partner_id,'
+                    ' c.prepayment_percent, c.prepayment_amount, c.financing_available,'
+                    ' c.terms_conditions, c.min_purchase_quantity, c.discount_percent,'
+                    ' c.views_count, c.created_at, c.updated_at, c.product_images, c.product_video_url,'
+                    ' c.product_specs, c.description,'
+                    ' cr.id AS response_id, cr.price_per_unit AS my_price, cr.total_amount AS my_total,'
+                    ' cr.comment AS my_comment, cr.status AS my_response_status,'
+                    ' cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at, cr.created_at AS cr_created_at,'
+                    ' s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.company_name AS seller_company_name,'
+                    ' me.first_name AS my_first_name, me.last_name AS my_last_name,'
+                    ' COALESCE((SELECT AVG(rating) FROM reviews WHERE reviewed_user_id = c.seller_id), 0) AS seller_rating'
+                    ' FROM contract_responses cr'
+                    ' JOIN contracts c ON cr.contract_id = c.id'
+                    ' LEFT JOIN users s ON c.seller_id = s.id'
+                    ' LEFT JOIN users me ON cr.user_id = me.id'
+                    ' WHERE cr.user_id = %s'
+                    ' ORDER BY cr.created_at DESC',
+                    (user_id,)
+                )
                 rows = cur.fetchall()
                 contracts_list = []
                 for row in rows:
