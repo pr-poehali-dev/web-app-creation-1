@@ -93,23 +93,21 @@ export default function ContractDetailResponses({ responses, isSeller, contractS
                   </div>
                 )}
                 {r.comment && <p className="text-sm text-muted-foreground">{r.comment}</p>}
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    {r.phone && <span className="flex items-center gap-1"><Icon name="Phone" size={12} />{r.phone}</span>}
-                    {r.email && <span className="flex items-center gap-1"><Icon name="Mail" size={12} />{r.email}</span>}
-                  </div>
-                  {r.status !== 'cancelled' && r.status !== 'rejected' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5 h-7 text-xs"
-                      onClick={() => setNegotiationModal({ responseId: r.id, responderName: `${r.firstName} ${r.lastName}` })}
-                    >
-                      <Icon name="MessageSquare" size={12} />
-                      Переговоры
-                    </Button>
-                  )}
+                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-1">
+                  {r.phone && <span className="flex items-center gap-1"><Icon name="Phone" size={12} />{r.phone}</span>}
+                  {r.email && <span className="flex items-center gap-1 min-w-0 truncate"><Icon name="Mail" size={12} className="shrink-0" />{r.email}</span>}
                 </div>
+                {r.status !== 'cancelled' && r.status !== 'rejected' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-2 h-9 text-sm mt-1"
+                    onClick={() => setNegotiationModal({ responseId: r.id, responderName: `${r.firstName} ${r.lastName}` })}
+                  >
+                    <Icon name="MessageSquare" size={14} />
+                    Переговоры
+                  </Button>
+                )}
               </div>
             );
           })}
