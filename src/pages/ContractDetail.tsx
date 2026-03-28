@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
@@ -82,6 +83,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('details');
   const [respondOpen, setRespondOpen] = useState(false);
   const [respondComment, setRespondComment] = useState('');
   const [respondPrice, setRespondPrice] = useState('');
@@ -305,39 +307,72 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
             </div>
           </div>
 
-          <ContractDetailInfo
-            contract={contract}
-            isBarter={isBarter}
-            formatDate={formatDate}
-            formatPrice={formatPrice}
-          />
+          {isSeller ? (
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full">
+                <TabsTrigger value="details" className="flex-1">
+                  <Icon name="FileText" size={14} className="mr-1.5" />
+                  Детали
+                </TabsTrigger>
+                <TabsTrigger value="responses" className="flex-1">
+                  <Icon name="Users" size={14} className="mr-1.5" />
+                  Отклики
+                  {responses.length > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold min-w-[18px] h-[18px] px-1">
+                      {responses.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
 
-          <ContractDetailResponses
-            responses={responses}
-            isSeller={isSeller}
-            contractStatus={contract.status}
-            contractTitle={contract.title}
-            onRefresh={() => {
-              const userId = localStorage.getItem('userId');
-              if (userId && contract.sellerId === Number(userId)) {
-                loadResponses(contract.id, userId);
-              }
-            }}
-          />
+              <TabsContent value="details" className="mt-4 space-y-6">
+                <ContractDetailInfo
+                  contract={contract}
+                  isBarter={isBarter}
+                  formatDate={formatDate}
+                  formatPrice={formatPrice}
+                />
+              </TabsContent>
 
-          {/* Кнопка отклика снизу */}
-          {!isSeller && contract.status === 'open' && (
-            alreadyResponded ? (
-              <Button variant="outline" className="w-full" size="lg" onClick={() => navigate('/my-contracts')}>
-                <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
-                Перейти в Мои отклики
-              </Button>
-            ) : (
-              <Button onClick={handleRespond} className="w-full" size="lg">
-                <Icon name="Send" className="mr-2 h-4 w-4" />
-                Откликнуться на контракт
-              </Button>
-            )
+              <TabsContent value="responses" className="mt-4">
+                <ContractDetailResponses
+                  responses={responses}
+                  isSeller={isSeller}
+                  contractStatus={contract.status}
+                  contractTitle={contract.title}
+                  onRefresh={() => {
+                    const userId = localStorage.getItem('userId');
+                    if (userId && contract.sellerId === Number(userId)) {
+                      loadResponses(contract.id, userId);
+                    }
+                  }}
+                />
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <>
+              <ContractDetailInfo
+                contract={contract}
+                isBarter={isBarter}
+                formatDate={formatDate}
+                formatPrice={formatPrice}
+              />
+
+              {/* Кнопка отклика снизу */}
+              {contract.status === 'open' && (
+                alreadyResponded ? (
+                  <Button variant="outline" className="w-full" size="lg" onClick={() => navigate('/my-contracts')}>
+                    <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
+                    Перейти в Мои отклики
+                  </Button>
+                ) : (
+                  <Button onClick={handleRespond} className="w-full" size="lg">
+                    <Icon name="Send" className="mr-2 h-4 w-4" />
+                    Откликнуться на контракт
+                  </Button>
+                )
+              )}
+            </>
           )}
 
         </div>
