@@ -277,7 +277,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d['responseId'] = d.pop('response_id', None)
                     d['sellerConfirmed'] = d.pop('seller_confirmed', False)
                     d['buyerConfirmed'] = d.pop('buyer_confirmed', False)
-                    d['confirmedAt'] = str(d.pop('confirmed_at', '')) if d.get('confirmed_at') else None
+                    _confirmed_at = d.pop('confirmed_at', None)
+                    d['confirmedAt'] = str(_confirmed_at) if _confirmed_at else None
                     d['respondentFirstName'] = d.pop('my_first_name', '')
                     d['respondentLastName'] = d.pop('my_last_name', '')
                     d['deliveryDate'] = str(d.pop('delivery_date', ''))

@@ -82,9 +82,13 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       const myResponsesResp = await fetch(`${CONTRACTS_API}?myResponses=true`, {
         headers: { 'X-User-Id': userId },
       }).catch(() => null);
-      if (myResponsesResp && myResponsesResp.ok) {
-        const myRespData = await myResponsesResp.json();
-        setRespondedContracts(myRespData.contracts || []);
+      if (myResponsesResp) {
+        if (myResponsesResp.ok) {
+          const myRespData = await myResponsesResp.json();
+          setRespondedContracts(myRespData.contracts || []);
+        } else {
+          console.error('myResponses error:', myResponsesResp.status, await myResponsesResp.text().catch(() => ''));
+        }
       }
     } catch (err) {
       console.error(err);
@@ -206,7 +210,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
             </TabsContent>
           </Tabs>
         )}
-        {!isLoading && allCount === 0 && (
+        {!isLoading && allCount === 0 && respondedContracts.length === 0 && activeTab !== 'responses' && (
           <div className="text-center py-16 text-muted-foreground">
             <Icon name="FileSignature" className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">Контрактов пока нет</p>

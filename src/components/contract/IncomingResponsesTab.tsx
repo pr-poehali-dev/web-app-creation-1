@@ -94,7 +94,7 @@ export default function IncomingResponsesTab({ contractsWithResponses, incomingR
                   })}
                 </div>
               ) : (
-                <div className="text-xs text-muted-foreground text-center py-2">Загрузка откликов...</div>
+                <div className="text-xs text-muted-foreground text-center py-2">Нет откликов</div>
               )}
             </CardContent>
           </Card>
