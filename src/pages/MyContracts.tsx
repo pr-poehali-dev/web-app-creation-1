@@ -169,6 +169,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                     onClick={() => {
                       navigate(`/contract/${c.id}`, { state: { responseId: c.responseId, alreadyResponded: true } });
                     }}
+                    onNegotiate={c.responseId ? () => setNegotiationModal({ responseId: c.responseId!, title: c.title || c.productName || `Контракт #${c.id}` }) : undefined}
                   />
                 ))
               )}

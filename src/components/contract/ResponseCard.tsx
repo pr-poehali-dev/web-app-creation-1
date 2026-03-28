@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
 import { Contract, formatAmount } from './ContractCard';
@@ -17,16 +18,25 @@ const RESPONSE_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destru
   rejected: 'destructive',
 };
 
-export default function ResponseCard({ contract: c, onClick }: { contract: Contract; onClick: () => void }) {
+interface ResponseCardProps {
+  contract: Contract;
+  onClick: () => void;
+  onNegotiate?: () => void;
+}
+
+export default function ResponseCard({ contract: c, onClick, onNegotiate }: ResponseCardProps) {
   const sellerName = `${c.sellerFirstName || ''} ${c.sellerLastName || ''}`.trim() || 'Продавец';
   const myName = `${c.respondentFirstName || ''} ${c.respondentLastName || ''}`.trim() || 'Вы';
   const rStatus = c.myResponseStatus || 'pending';
   const isConfirmed = rStatus === 'confirmed';
 
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={onClick}>
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
+        <div
+          className="flex items-start justify-between gap-3 cursor-pointer"
+          onClick={onClick}
+        >
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="font-medium text-sm truncate">{c.title || c.productName || `Контракт #${c.id}`}</span>
@@ -53,10 +63,6 @@ export default function ResponseCard({ contract: c, onClick }: { contract: Contr
                 <Icon name="Package" size={12} />
                 {c.quantity} {c.unit}
               </span>
-              <span className="flex items-center gap-1">
-                <Icon name="MessageSquare" size={12} />
-                {c.responseId ? 'Нажмите для переговоров' : 'Открыть контракт'}
-              </span>
             </div>
           </div>
           <div className="text-right shrink-0">
@@ -68,6 +74,22 @@ export default function ResponseCard({ contract: c, onClick }: { contract: Contr
             </div>
           </div>
         </div>
+
+        {c.responseId && onNegotiate && (
+          <div className="mt-3 pt-3 border-t">
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNegotiate();
+              }}
+            >
+              <Icon name="MessageSquare" size={14} className="mr-2" />
+              Переговоры
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
