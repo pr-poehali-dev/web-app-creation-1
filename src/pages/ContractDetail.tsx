@@ -293,7 +293,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               )}
               {!isSeller && contract.status === 'open' && (
                 alreadyResponded ? (
-                  <Button variant="outline" onClick={() => navigate('/my-contracts')}>
+                  <Button variant="outline" onClick={() => navigate('/my-contracts?tab=responses')}>
                     <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
                     Мои отклики
                   </Button>
@@ -361,7 +361,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               {/* Кнопка отклика снизу */}
               {contract.status === 'open' && (
                 alreadyResponded ? (
-                  <Button variant="outline" className="w-full" size="lg" onClick={() => navigate('/my-contracts')}>
+                  <Button variant="outline" className="w-full" size="lg" onClick={() => navigate('/my-contracts?tab=responses')}>
                     <Icon name="MessageSquare" className="mr-2 h-4 w-4" />
                     Перейти в Мои отклики
                   </Button>
