@@ -35,6 +35,88 @@ def decimal_to_float(obj):
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
+
+def get_my_responses(user_id: int) -> dict:
+    """Возвращает контракты на которые пользователь откликнулся."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                'SELECT c.id, c.title, c.product_name, c.contract_type, c.category,'
+                ' c.quantity, c.unit, c.price_per_unit, c.total_amount, c.currency,'
+                ' c.status, c.seller_id, c.buyer_id, c.delivery_date, c.contract_start_date, c.contract_end_date,'
+                ' c.delivery_address, c.delivery_method, c.logistics_partner_id,'
+                ' c.prepayment_percent, c.prepayment_amount, c.financing_available,'
+                ' c.terms_conditions, c.min_purchase_quantity, c.discount_percent,'
+                ' c.views_count, c.created_at, c.updated_at, c.product_images, c.product_video_url,'
+                ' c.product_specs, c.description,'
+                ' cr.id AS response_id, cr.price_per_unit AS my_price, cr.total_amount AS my_total,'
+                ' cr.comment AS my_comment, cr.status AS my_response_status,'
+                ' cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at,'
+                ' s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.company_name AS seller_company_name,'
+                ' me.first_name AS my_first_name, me.last_name AS my_last_name,'
+                ' COALESCE((SELECT AVG(rating) FROM reviews WHERE reviewed_user_id = c.seller_id), 0) AS seller_rating'
+                ' FROM contract_responses cr'
+                ' JOIN contracts c ON cr.contract_id = c.id'
+                ' LEFT JOIN users s ON c.seller_id = s.id'
+                ' LEFT JOIN users me ON cr.user_id = me.id'
+                ' WHERE cr.user_id = %s'
+                ' ORDER BY cr.created_at DESC',
+                (user_id,)
+            )
+            rows = cur.fetchall()
+            contracts_list = []
+            for row in rows:
+                d = decimal_to_float(dict(row))
+                d['sellerFirstName'] = d.pop('seller_first_name', '')
+                d['sellerLastName'] = d.pop('seller_last_name', '')
+                d['sellerCompanyName'] = d.pop('seller_company_name', None)
+                d['sellerRating'] = float(d.pop('seller_rating', 0) or 0)
+                d['contractType'] = d.pop('contract_type', '')
+                d['productName'] = d.pop('product_name', '')
+                d['productSpecs'] = d.pop('product_specs', None)
+                d['pricePerUnit'] = float(d.pop('price_per_unit', 0) or 0)
+                d['totalAmount'] = float(d.pop('total_amount', 0) or 0)
+                d['myPrice'] = float(d.pop('my_price', 0) or 0)
+                d['myTotal'] = float(d.pop('my_total', 0) or 0)
+                d['myComment'] = d.pop('my_comment', '') or ''
+                d['myResponseStatus'] = d.pop('my_response_status', 'pending')
+                d['responseId'] = d.pop('response_id', None)
+                d['sellerConfirmed'] = d.pop('seller_confirmed', False)
+                d['buyerConfirmed'] = d.pop('buyer_confirmed', False)
+                _ca = d.pop('confirmed_at', None)
+                d['confirmedAt'] = str(_ca) if _ca else None
+                d['respondentFirstName'] = d.pop('my_first_name', '')
+                d['respondentLastName'] = d.pop('my_last_name', '')
+                d['deliveryDate'] = str(d.pop('delivery_date', '') or '')
+                d['contractStartDate'] = str(d.pop('contract_start_date', '') or '')
+                d['contractEndDate'] = str(d.pop('contract_end_date', '') or '')
+                d['sellerId'] = d.pop('seller_id', None)
+                d['buyerId'] = d.pop('buyer_id', None)
+                d['deliveryAddress'] = d.pop('delivery_address', '') or ''
+                d['deliveryMethod'] = d.pop('delivery_method', '') or ''
+                d['logisticsPartnerId'] = d.pop('logistics_partner_id', None)
+                d['prepaymentPercent'] = float(d.pop('prepayment_percent', 0) or 0)
+                d['prepaymentAmount'] = float(d.pop('prepayment_amount', 0) or 0)
+                d['financingAvailable'] = d.pop('financing_available', False)
+                d['termsConditions'] = d.pop('terms_conditions', '') or ''
+                d['minPurchaseQuantity'] = float(d.pop('min_purchase_quantity', 0) or 0)
+                d['discountPercent'] = float(d.pop('discount_percent', 0) or 0)
+                d['viewsCount'] = d.pop('views_count', 0) or 0
+                d['createdAt'] = str(d.pop('created_at', '') or '')
+                d['updatedAt'] = str(d.pop('updated_at', '') or '')
+                d['productImages'] = d.pop('product_images', None)
+                d['productVideoUrl'] = d.pop('product_video_url', None)
+                d['buyerFirstName'] = d.pop('buyer_first_name', None)
+                d['buyerLastName'] = d.pop('buyer_last_name', None)
+                contracts_list.append(d)
+            return {'statusCode': 200, 'headers': RESP_HEADERS,
+                    'body': json.dumps({'contracts': contracts_list, 'total': len(contracts_list)}),
+                    'isBase64Encoded': False}
+    finally:
+        conn.close()
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     raw_method = event.get('httpMethod') or event.get('requestContext', {}).get('httpMethod') or ''
     method: str = raw_method.upper() if raw_method else 'GET'
@@ -235,87 +317,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
-    # GET ?myResponses=true — контракты на которые пользователь откликнулся (v3: явные поля)
+    # GET ?myResponses=true — контракты на которые пользователь откликнулся
     if params.get('myResponses') == 'true':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
-
-        conn = get_db_connection()
-        try:
-            with conn.cursor() as cur:
-                cur.execute(
-                    'SELECT c.id, c.title, c.product_name, c.contract_type, c.category,'
-                    ' c.quantity, c.unit, c.price_per_unit, c.total_amount, c.currency,'
-                    ' c.status, c.seller_id, c.buyer_id, c.delivery_date, c.contract_start_date, c.contract_end_date,'
-                    ' c.delivery_address, c.delivery_method, c.logistics_partner_id,'
-                    ' c.prepayment_percent, c.prepayment_amount, c.financing_available,'
-                    ' c.terms_conditions, c.min_purchase_quantity, c.discount_percent,'
-                    ' c.views_count, c.created_at, c.updated_at, c.product_images, c.product_video_url,'
-                    ' c.product_specs, c.description,'
-                    ' cr.id AS response_id, cr.price_per_unit AS my_price, cr.total_amount AS my_total,'
-                    ' cr.comment AS my_comment, cr.status AS my_response_status,'
-                    ' cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at, cr.created_at AS cr_created_at,'
-                    ' s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.company_name AS seller_company_name,'
-                    ' me.first_name AS my_first_name, me.last_name AS my_last_name,'
-                    ' COALESCE((SELECT AVG(rating) FROM reviews WHERE reviewed_user_id = c.seller_id), 0) AS seller_rating'
-                    ' FROM contract_responses cr'
-                    ' JOIN contracts c ON cr.contract_id = c.id'
-                    ' LEFT JOIN users s ON c.seller_id = s.id'
-                    ' LEFT JOIN users me ON cr.user_id = me.id'
-                    ' WHERE cr.user_id = %s'
-                    ' ORDER BY cr.created_at DESC',
-                    (user_id,)
-                )
-                rows = cur.fetchall()
-                contracts_list = []
-                for row in rows:
-                    d = decimal_to_float(dict(row))
-                    d['sellerFirstName'] = d.pop('seller_first_name', '')
-                    d['sellerLastName'] = d.pop('seller_last_name', '')
-                    d['sellerCompanyName'] = d.pop('seller_company_name', None)
-                    d['sellerRating'] = d.pop('seller_rating', 0)
-                    d['contractType'] = d.pop('contract_type', '')
-                    d['productName'] = d.pop('product_name', '')
-                    d['productSpecs'] = d.pop('product_specs', None)
-                    d['pricePerUnit'] = d.pop('price_per_unit', 0)
-                    d['totalAmount'] = d.pop('total_amount', 0)
-                    d['myPrice'] = d.pop('my_price', 0)
-                    d['myTotal'] = d.pop('my_total', 0)
-                    d['myComment'] = d.pop('my_comment', '')
-                    d['myResponseStatus'] = d.pop('my_response_status', 'pending')
-                    d['responseId'] = d.pop('response_id', None)
-                    d['sellerConfirmed'] = d.pop('seller_confirmed', False)
-                    d['buyerConfirmed'] = d.pop('buyer_confirmed', False)
-                    _confirmed_at = d.pop('confirmed_at', None)
-                    d['confirmedAt'] = str(_confirmed_at) if _confirmed_at else None
-                    d['respondentFirstName'] = d.pop('my_first_name', '')
-                    d['respondentLastName'] = d.pop('my_last_name', '')
-                    d['deliveryDate'] = str(d.pop('delivery_date', ''))
-                    d['contractStartDate'] = str(d.pop('contract_start_date', ''))
-                    d['contractEndDate'] = str(d.pop('contract_end_date', ''))
-                    d['sellerId'] = d.pop('seller_id', None)
-                    d['buyerId'] = d.pop('buyer_id', None)
-                    d['deliveryAddress'] = d.pop('delivery_address', '')
-                    d['deliveryMethod'] = d.pop('delivery_method', '')
-                    d['logisticsPartnerId'] = d.pop('logistics_partner_id', None)
-                    d['prepaymentPercent'] = d.pop('prepayment_percent', 0) or 0
-                    d['prepaymentAmount'] = d.pop('prepayment_amount', 0) or 0
-                    d['financingAvailable'] = d.pop('financing_available', False)
-                    d['termsConditions'] = d.pop('terms_conditions', '')
-                    d['minPurchaseQuantity'] = d.pop('min_purchase_quantity', 0) or 0
-                    d['discountPercent'] = d.pop('discount_percent', 0) or 0
-                    d['viewsCount'] = d.pop('views_count', 0)
-                    d['createdAt'] = str(d.pop('created_at', ''))
-                    d['updatedAt'] = str(d.pop('updated_at', ''))
-                    d['productImages'] = d.pop('product_images', None)
-                    d['productVideoUrl'] = d.pop('product_video_url', None)
-                    d['buyerFirstName'] = d.pop('buyer_first_name', None)
-                    d['buyerLastName'] = d.pop('buyer_last_name', None)
-                    d.pop('cr_created_at', None)
-                    contracts_list.append(d)
-                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'contracts': contracts_list, 'total': len(contracts_list)}), 'isBase64Encoded': False}
-        finally:
-            conn.close()
+        return get_my_responses(user_id)
 
     # GET ?action=chatStatus&responseId=N — статус отклика для чата
     if params.get('action') == 'chatStatus':
