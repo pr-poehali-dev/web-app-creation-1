@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 import { ChatMessage, MessageAttachment, formatRecordingTime } from './NegotiationTypes';
@@ -48,7 +47,7 @@ export default function NegotiationChatTab({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
             <Icon name="MessageCircle" className="h-10 w-10 mb-2 opacity-30" />
@@ -94,7 +93,7 @@ export default function NegotiationChatTab({
             })}
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       {!isCancelled && (
         <>

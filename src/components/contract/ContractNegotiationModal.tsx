@@ -62,6 +62,7 @@ export default function ContractNegotiationModal({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isCancelRecordingRef = useRef(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -109,21 +110,60 @@ export default function ContractNegotiationModal({
   }, [isOpen, responseId, loadStatus, loadMessages]);
 
   // Запись голоса
+  const sendVoiceBlob = async (blob: Blob, mimeType: string) => {
+    if (!userId) return;
+    const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+    setIsSending(true);
+    try {
+      const reader = new FileReader();
+      const fileData = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      const res = await fetch(CHAT_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({
+          responseId,
+          text: '',
+          fileData,
+          fileName: `voice_${Date.now()}.${ext}`,
+          fileType: mimeType,
+        }),
+      });
+      if (res.ok) {
+        await loadMessages();
+      } else {
+        toast({ title: 'Ошибка отправки голосового', variant: 'destructive' });
+      }
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
-      const mr = new MediaRecorder(stream);
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+        .find(t => MediaRecorder.isTypeSupported(t)) || '';
+      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      const usedMime = mr.mimeType || mimeType || 'audio/webm';
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const file = new File([blob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
-        const preview = URL.createObjectURL(blob);
-        setPendingFile({ file, preview });
+        if (audioChunksRef.current.length === 0) return;
+        const blob = new Blob(audioChunksRef.current, { type: usedMime });
+        if (isCancelRecordingRef.current) {
+          isCancelRecordingRef.current = false;
+          return;
+        }
+        sendVoiceBlob(blob, usedMime);
       };
       mr.start();
       mediaRecorderRef.current = mr;
+      isCancelRecordingRef.current = false;
       setIsRecording(true);
       setRecordingTime(0);
       recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
@@ -139,6 +179,7 @@ export default function ContractNegotiationModal({
   };
 
   const cancelRecording = () => {
+    isCancelRecordingRef.current = true;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stream?.getTracks().forEach(t => t.stop());
       mediaRecorderRef.current.stop();
@@ -287,7 +328,7 @@ export default function ContractNegotiationModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden" onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3 border-b">
             <DialogTitle className="flex items-center gap-2 text-base">
               <Icon name="FileSignature" className="h-4 w-4 text-primary" />
