@@ -19,7 +19,7 @@ import NegotiationChatTab from './NegotiationChatTab';
 import NegotiationContractTab from './NegotiationContractTab';
 import { NegotiationFooter, ConfirmDialog, CancelDialog } from './NegotiationDialogs';
 
-const CHAT_API = (func2url as Record<string, string>)['contracts-list'];
+const CHAT_API = (func2url as Record<string, string>)['contract-chat'];
 
 interface ContractNegotiationModalProps {
   isOpen: boolean;
@@ -75,7 +75,7 @@ export default function ContractNegotiationModal({
   const loadStatus = useCallback(async () => {
     if (!responseId) return;
     try {
-      const res = await fetch(`${CHAT_API}?action=chatStatus&responseId=${responseId}`, {
+      const res = await fetch(`${CHAT_API}?action=status&responseId=${responseId}`, {
         headers: { 'X-User-Id': userId },
       });
       if (res.ok) {
@@ -88,7 +88,7 @@ export default function ContractNegotiationModal({
   const loadMessages = useCallback(async () => {
     if (!responseId) return;
     try {
-      const res = await fetch(`${CHAT_API}?action=chatMessages&responseId=${responseId}`, {
+      const res = await fetch(`${CHAT_API}?action=messages&responseId=${responseId}`, {
         headers: { 'X-User-Id': userId },
       });
       if (res.ok) {
