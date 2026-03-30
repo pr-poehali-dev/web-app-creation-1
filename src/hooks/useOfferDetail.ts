@@ -331,6 +331,20 @@ export function useOfferDetail(id: string | undefined) {
         body: JSON.stringify(orderData),
       });
 
+      if (response.status === 409) {
+        const errorData = await response.json().catch(() => ({}));
+        setIsOrderModalOpen(false);
+        toast({
+          title: 'Заказ уже существует',
+          description: 'Вы уже оформляли заказ на это предложение. Перенаправляем на ваш заказ...',
+          duration: 3000,
+        });
+        setTimeout(() => {
+          navigate(`/my-orders?tab=buyer&orderId=${errorData.existingOrderId || ''}`);
+        }, 1000);
+        return;
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Не удалось создать заказ');

@@ -396,20 +396,20 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             'isBase64Encoded': False
         }
     
-    if is_request:
-        cur.execute(
-            f"SELECT id FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}' AND buyer_id = {int(user_id)} AND status NOT IN ('cancelled')"
-        )
-        existing_response = cur.fetchone()
-        if existing_response:
-            cur.close()
-            conn.close()
-            return {
-                'statusCode': 409,
-                'headers': headers,
-                'body': json.dumps({'error': 'Вы уже отправили отклик на этот запрос', 'existingOrderId': str(existing_response['id'])}),
-                'isBase64Encoded': False
-            }
+    cur.execute(
+        f"SELECT id FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}' AND buyer_id = {int(user_id)} AND status NOT IN ('cancelled')"
+    )
+    existing_order = cur.fetchone()
+    if existing_order:
+        cur.close()
+        conn.close()
+        error_msg = 'Вы уже отправили отклик на этот запрос' if is_request else 'Вы уже оформили заказ на это предложение'
+        return {
+            'statusCode': 409,
+            'headers': headers,
+            'body': json.dumps({'error': error_msg, 'existingOrderId': str(existing_order['id'])}),
+            'isBase64Encoded': False
+        }
     
     cur.execute(f"SELECT first_name, last_name, phone, email FROM {schema}.users WHERE id = {seller_id}")
     seller = cur.fetchone()
