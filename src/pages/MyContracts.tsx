@@ -84,11 +84,15 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const currentUserId = Number(rawCurrentId ?? 0);
 
   const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);
+  // Двойная защита: убираем из откликов свои же контракты (где пользователь — автор/продавец)
+  const filteredRespondedContracts = respondedContracts.filter(
+    c => Number(c.sellerId) !== currentUserId && Number(c.buyerId) !== currentUserId
+  );
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
   const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
-  const allCount = myOwnContracts.length + respondedContracts.length;
+  const allCount = myOwnContracts.length + filteredRespondedContracts.length;
   const activeCount = allActiveContracts.length;
 
   return (
@@ -111,7 +115,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                 Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="responses">
-                Мои отклики {respondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{respondedContracts.length}</span>}
+                Мои отклики {filteredRespondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{filteredRespondedContracts.length}</span>}
               </TabsTrigger>
               <TabsTrigger value="closed">
                 Завершённые {closedContracts.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>}
@@ -160,10 +164,10 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
             </TabsContent>
 
             <TabsContent value="responses" className="space-y-3">
-              {respondedContracts.length === 0 ? (
+              {filteredRespondedContracts.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Вы ещё не откликались на контракты</p>
               ) : (
-                respondedContracts.map(c => (
+                filteredRespondedContracts.map(c => (
                   <ResponseCard
                     key={c.id}
                     contract={c}
