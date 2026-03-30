@@ -335,11 +335,24 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   ) : (
                     <>
                       {order.completionRequested ? (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
-                          <Icon name="Clock" className="h-5 w-5 text-yellow-600 flex-shrink-0" />
-                          <p className="text-sm text-yellow-800 font-medium">
-                            Запрос на завершение отправлен — ожидаем подтверждения заказчика
-                          </p>
+                        <div className="space-y-3">
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
+                            <Icon name="Clock" className="h-5 w-5 text-yellow-600 flex-shrink-0" />
+                            <p className="text-sm text-yellow-800 font-medium">
+                              Запрос на завершение отправлен — ожидаем подтверждения заказчика
+                            </p>
+                          </div>
+                          {onCancelOrder && (
+                            <Button
+                              onClick={onCancelClick}
+                              variant="outline"
+                              size="sm"
+                              className="w-full border-destructive text-destructive hover:bg-destructive/10"
+                            >
+                              <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
+                              Отменить заказ
+                            </Button>
+                          )}
                         </div>
                       ) : (
                         <>
