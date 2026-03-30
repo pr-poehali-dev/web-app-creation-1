@@ -243,7 +243,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             </div>
           )}
 
-          {(order.status === 'new' || order.status === 'negotiating') && onCancelOrder && (
+          {(order.status === 'new' || order.status === 'negotiating') && onCancelOrder && !(!isBuyer && !order.isRequest && order.status === 'new') && (
             <Button
               onClick={onCancelClick}
               variant="destructive"
