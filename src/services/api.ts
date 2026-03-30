@@ -25,15 +25,6 @@ export function triggerArchiveExpired() {
   fetch(ARCHIVE_EXPIRED_API).catch(() => {});
 }
 
-// Фоновый пересчёт quantities для предложений пользователя (раз в сессию)
-let recalcCalledAt = 0;
-export function triggerRecalculateQuantities(userId?: string | number) {
-  const now = Date.now();
-  if (now - recalcCalledAt < 10 * 60 * 1000) return;
-  recalcCalledAt = now;
-  const url = userId ? `${OFFERS_API}?action=recalculate-quantities&userId=${userId}` : `${OFFERS_API}?action=recalculate-quantities`;
-  fetch(url).catch(() => {});
-}
 
 // Продвинутое кэширование с разными TTL для разных типов данных
 interface CacheEntry {
