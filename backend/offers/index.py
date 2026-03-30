@@ -108,6 +108,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not image_id:
                     return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'image_id required'}), 'isBase64Encoded': False}
                 return rotate_image(image_id, degrees, headers)
+            elif action == 'recalculate-quantities':
+                return recalculate_quantities(query_params.get('userId'), headers)
             elif offer_id:
                 return get_offer_by_id(offer_id, headers)
             else:
@@ -1414,6 +1416,61 @@ def rotate_image(image_id: str, degrees: int, headers: Dict[str, str]) -> Dict[s
     except Exception as e:
         cur.close()
         conn.close()
+        return {
+            'statusCode': 500,
+            'headers': headers,
+            'body': json.dumps({'error': str(e)}),
+            'isBase64Encoded': False
+        }
+
+
+def recalculate_quantities(user_id, headers):
+    """Пересчёт reserved_quantity и sold_quantity для предложений пользователя по реальным заказам"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    schema = 't_p42562714_web_app_creation_1'
+
+    try:
+        if user_id:
+            offer_filter = f"AND o.user_id = {int(user_id)}"
+        else:
+            offer_filter = ""
+
+        cur.execute(f"""
+            UPDATE {schema}.offers o
+            SET
+                reserved_quantity = COALESCE((
+                    SELECT SUM(ord.quantity)
+                    FROM {schema}.orders ord
+                    WHERE ord.offer_id = o.id
+                      AND ord.status IN ('new', 'pending', 'negotiating')
+                ), 0),
+                sold_quantity = COALESCE((
+                    SELECT SUM(ord.quantity)
+                    FROM {schema}.orders ord
+                    WHERE ord.offer_id = o.id
+                      AND ord.status = 'accepted'
+                ), 0)
+            WHERE true {offer_filter}
+        """)
+        updated = cur.rowcount
+        conn.commit()
+        print(f"[RECALC] Recalculated quantities for {updated} offers (user_id={user_id})")
+        offers_cache.clear()
+
+        cur.close()
+        conn.close()
+        return {
+            'statusCode': 200,
+            'headers': headers,
+            'body': json.dumps({'success': True, 'updated': updated}),
+            'isBase64Encoded': False
+        }
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        print(f"[RECALC] Error: {e}")
         return {
             'statusCode': 500,
             'headers': headers,

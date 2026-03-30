@@ -3,7 +3,7 @@
     {
       "name": "Get offer by UUID",
       "method": "GET",
-      "path": "/?id=595b8657-ae7a-4777-bf1e-827a29f14b02",
+      "path": "/?id=7e66a68c-2480-48bf-8f69-dd350fa2f21d",
       "expectedStatus": 200
     },
     {
@@ -11,6 +11,14 @@
       "method": "GET",
       "path": "/?status=active",
       "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Recalculate quantities",
+      "method": "GET",
+      "path": "/?action=recalculate-quantities",
+      "expectedStatus": 200,
+      "expectedBody": {"success": true},
       "bodyMatcher": "partial"
     }
   ]

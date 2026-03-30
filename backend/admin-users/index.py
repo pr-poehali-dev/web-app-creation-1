@@ -158,8 +158,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 params.extend([search_pattern, search_pattern, search_pattern, search_pattern])
             
             if status_filter != 'all' and not show_deleted:
-                where_clauses.append("status = %s")
-                params.append(status_filter)
+                if status_filter == 'active':
+                    where_clauses.append("(u.is_active = true AND (u.locked_until IS NULL OR u.locked_until <= NOW()))")
+                elif status_filter == 'blocked':
+                    where_clauses.append("(u.is_active = false OR (u.locked_until IS NOT NULL AND u.locked_until > NOW()))")
             
             if type_filter != 'all':
                 where_clauses.append("u.user_type = %s")
