@@ -454,6 +454,7 @@ export function useOfferDetail(id: string | undefined) {
         comment: fullOrderData.buyer_comment,
         status: fullOrderData.status,
         createdAt: new Date(fullOrderData.createdAt || fullOrderData.created_at),
+        noNegotiation: fullOrderData.noNegotiation || fullOrderData.no_negotiation || offer.noNegotiation || false,
       };
       
       setIsOrderModalOpen(false);

@@ -768,8 +768,10 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         offer = cur.fetchone()
         
         if offer:
-            available = offer['quantity'] - (offer.get('sold_quantity', 0) or 0) - (offer.get('reserved_quantity', 0) or 0)
             order_quantity = order['quantity']
+            # reserved_quantity уже содержит количество этого заказа (добавлено при создании),
+            # поэтому вычитаем его обратно, чтобы не было двойного счёта
+            available = offer['quantity'] - (offer.get('sold_quantity', 0) or 0) - (offer.get('reserved_quantity', 0) or 0) + order_quantity
             
             if available < order_quantity:
                 cur.close()

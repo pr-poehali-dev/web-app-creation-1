@@ -121,6 +121,7 @@ export function useOrdersData(
       sellerAvgReviewRating: orderData.sellerAvgReviewRating != null ? orderData.sellerAvgReviewRating : undefined,
       buyerAvgReviewRating: orderData.buyerAvgReviewRating != null ? orderData.buyerAvgReviewRating : undefined,
       offerImageUrl: orderData.offerImageUrl || orderData.offer_image_url,
+      noNegotiation: orderData.no_negotiation || orderData.noNegotiation || false,
     };
   };
 
