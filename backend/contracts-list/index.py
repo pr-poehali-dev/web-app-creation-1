@@ -60,9 +60,9 @@ def get_my_responses(user_id: int) -> dict:
                 ' JOIN contracts c ON cr.contract_id = c.id'
                 ' LEFT JOIN users s ON c.seller_id = s.id'
                 ' LEFT JOIN users me ON cr.user_id = me.id'
-                ' WHERE cr.user_id = %s'
+                ' WHERE cr.user_id = %s AND c.seller_id != %s AND COALESCE(c.buyer_id, 0) != %s'
                 ' ORDER BY cr.created_at DESC',
-                (user_id,)
+                (user_id, user_id, user_id)
             )
             rows = cur.fetchall()
             contracts_list = []
