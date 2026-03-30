@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { useOffers } from '@/contexts/OffersContext';
 import type { Offer } from '@/types/offer';
-import { offersAPI, triggerRecalculateQuantities } from '@/services/api';
+import { offersAPI } from '@/services/api';
 import MyOfferCard from '@/components/my-offers/MyOfferCard';
 import MyOffersStats from '@/components/my-offers/MyOffersStats';
 import MyOffersDialogs from '@/components/my-offers/MyOffersDialogs';
@@ -55,8 +55,6 @@ export default function MyOffers({ isAuthenticated, onLogout }: MyOffersProps) {
       navigate('/login');
       return;
     }
-
-    triggerRecalculateQuantities(currentUser.id);
 
     const loadMyOffers = async () => {
       try {
