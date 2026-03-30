@@ -101,14 +101,14 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
             <DialogDescription asChild>
               <div className="space-y-3">
                 {showRatingWarning && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                    <Icon name="AlertTriangle" className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-amber-800">
-                      <p className="font-semibold mb-1">Внимание! Это повлияет на ваш рейтинг</p>
+                  <div className="bg-red-50 border-2 border-red-400 rounded-lg p-3 flex items-start gap-2">
+                    <Icon name="AlertTriangle" className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-red-800">
+                      <p className="font-bold mb-1">⚠️ Рейтинг надёжности снизится на 5%!</p>
                       <p>
                         {isTransportOrder && departureNotYet
                           ? `Отмена принятого заказа до даты и времени ${isFreightTransport ? 'выполнения рейса' : 'выезда'} приведёт к понижению рейтинга надёжности. Это может негативно повлиять на доверие ${isBuyer ? 'исполнителей' : 'пассажиров'} в будущих заказах.`
-                          : 'Отмена принятого заказа приведёт к понижению рейтинга надёжности.'}
+                          : 'Отмена принятого заказа приведёт к понижению рейтинга надёжности. Это может негативно повлиять на доверие контрагентов.'}
                       </p>
                     </div>
                   </div>
