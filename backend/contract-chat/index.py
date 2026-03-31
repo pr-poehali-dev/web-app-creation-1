@@ -1,6 +1,7 @@
 '''
 Чат переговоров по контракту.
-POST / — отправить сообщение (action не задан), подтвердить (action=confirm), отменить (action=cancel)
+POST / — отправить сообщение (action не задан), подтвердить (action=confirm), отменить (action=cancel),
+         сохранить условия договора (action=save_terms), запросить поправки (action=request_amend)
 GET /?action=messages&responseId={id} — получить сообщения чата
 GET /?action=status&responseId={id} — получить статус отклика
 '''
@@ -38,7 +39,7 @@ def get_db():
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    '''Чат переговоров: отправка сообщений, подтверждение и отмена контракта'''
+    '''Чат переговоров: отправка сообщений, подтверждение, отмена, условия договора'''
     method = (event.get('httpMethod') or '').upper()
 
     if method == 'OPTIONS':
@@ -73,7 +74,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = get_db()
         try:
             with conn.cursor() as cur:
-                cur.execute('SELECT cr.*, c.seller_id, c.id as c_id, c.title FROM contract_responses cr JOIN contracts c ON cr.contract_id = c.id WHERE cr.id = %s', (response_id,))
+                cur.execute('''
+                    SELECT cr.*, c.seller_id, c.id as c_id, c.title,
+                           c.product_name, c.quantity, c.unit, c.currency,
+                           c.price_per_unit as base_price_per_unit,
+                           c.total_amount as base_total_amount,
+                           c.delivery_date, c.contract_start_date, c.contract_end_date,
+                           c.delivery_address, c.delivery_method, c.terms_conditions,
+                           c.contract_type
+                    FROM contract_responses cr
+                    JOIN contracts c ON cr.contract_id = c.id
+                    WHERE cr.id = %s
+                ''', (response_id,))
                 resp = cur.fetchone()
                 if not resp:
                     return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Отклик не найден'}), 'isBase64Encoded': False}
@@ -88,20 +100,58 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     buyer = cur.fetchone() or {}
                     cur.execute('SELECT u.first_name, u.last_name, u.company_name FROM users u WHERE u.id = %s', (resp['seller_id'],))
                     seller = cur.fetchone() or {}
+
+                    # Согласованные условия (из отклика) или базовые (из контракта)
+                    neg_price = resp.get('negotiated_price_per_unit')
+                    base_price = resp.get('price_per_unit') or resp.get('base_price_per_unit')
+                    price_per_unit = float(neg_price) if neg_price is not None else float(base_price or 0)
+                    quantity = float(resp.get('quantity') or 0)
+                    total_amount = price_per_unit * quantity if price_per_unit and quantity else float(resp.get('total_amount') or resp.get('base_total_amount') or 0)
+
                     result = {
+                        'id': resp['id'],
                         'status': resp['status'],
                         'sellerConfirmed': resp.get('seller_confirmed', False),
                         'buyerConfirmed': resp.get('buyer_confirmed', False),
+                        'confirmedAt': str(resp['confirmed_at']) if resp.get('confirmed_at') else None,
                         'isSeller': is_seller,
-                        'pricePerUnit': float(resp.get('price_per_unit') or 0),
-                        'totalAmount': float(resp.get('total_amount') or 0),
-                        'contractTitle': resp.get('title', ''),
-                        'buyerName': f"{buyer.get('first_name', '')} {buyer.get('last_name', '')}".strip() or buyer.get('company_name', ''),
-                        'sellerName': f"{seller.get('first_name', '')} {seller.get('last_name', '')}".strip() or seller.get('company_name', ''),
+                        'pricePerUnit': price_per_unit,
+                        'totalAmount': total_amount,
+                        'sellerId': resp['seller_id'],
+                        'respondentId': resp['user_id'],
+                        'respondentFirstName': (buyer.get('first_name') or '').strip(),
+                        'respondentLastName': (buyer.get('last_name') or '').strip(),
+                        'sellerFirstName': (seller.get('first_name') or '').strip(),
+                        'sellerLastName': (seller.get('last_name') or '').strip(),
+                        'sellerWantsAmend': resp.get('seller_wants_amend', False),
+                        'buyerWantsAmend': resp.get('buyer_wants_amend', False),
+                        'contract': {
+                            'title': resp.get('title') or '',
+                            'productName': resp.get('product_name') or '',
+                            'quantity': float(resp.get('quantity') or 0),
+                            'unit': resp.get('unit') or '',
+                            'currency': resp.get('currency') or 'RUB',
+                            'contractType': resp.get('contract_type') or '',
+                            'pricePerUnit': price_per_unit,
+                            'totalAmount': total_amount,
+                            'deliveryDate': str(resp['negotiated_delivery_date']) if resp.get('negotiated_delivery_date') else (str(resp['delivery_date']) if resp.get('delivery_date') else ''),
+                            'contractStartDate': str(resp['contract_start_date']) if resp.get('contract_start_date') else '',
+                            'contractEndDate': str(resp['contract_end_date']) if resp.get('contract_end_date') else '',
+                            'deliveryAddress': resp.get('delivery_address') or '',
+                            'deliveryConditions': resp.get('negotiated_delivery_conditions') or resp.get('delivery_method') or '',
+                            'specialTerms': resp.get('negotiated_special_terms') or '',
+                            'termsConditions': resp.get('terms_conditions') or '',
+                        },
+                        'negotiatedTerms': {
+                            'pricePerUnit': float(resp['negotiated_price_per_unit']) if resp.get('negotiated_price_per_unit') is not None else None,
+                            'deliveryDate': str(resp['negotiated_delivery_date']) if resp.get('negotiated_delivery_date') else None,
+                            'deliveryConditions': resp.get('negotiated_delivery_conditions'),
+                            'specialTerms': resp.get('negotiated_special_terms'),
+                        },
                     }
                     return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps(result), 'isBase64Encoded': False}
 
-                # action == 'messages' или не задан
+                # action == 'messages'
                 cur.execute('''
                     SELECT cm.id, cm.sender_id, cm.text, cm.attachments, cm.created_at,
                            u.first_name, u.last_name, u.company_name
@@ -127,7 +177,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
-    # ── POST — отправить, подтвердить, отменить ────────────────────────────────
+    # ── POST ───────────────────────────────────────────────────────────────────
     if method == 'POST':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
@@ -141,7 +191,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = get_db()
         try:
             with conn.cursor() as cur:
-                cur.execute('SELECT cr.*, c.seller_id, c.id as c_id FROM contract_responses cr JOIN contracts c ON cr.contract_id = c.id WHERE cr.id = %s', (response_id,))
+                cur.execute('''
+                    SELECT cr.*, c.seller_id, c.id as c_id, c.quantity
+                    FROM contract_responses cr
+                    JOIN contracts c ON cr.contract_id = c.id
+                    WHERE cr.id = %s
+                ''', (response_id,))
                 resp = cur.fetchone()
                 if not resp:
                     return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Отклик не найден'}), 'isBase64Encoded': False}
@@ -151,6 +206,63 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if not is_seller and not is_buyer:
                     return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
 
+                # ── Сохранить условия договора ─────────────────────────────
+                if action == 'save_terms':
+                    if resp['status'] == 'confirmed':
+                        return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Договор подтверждён и не может быть изменён'}), 'isBase64Encoded': False}
+                    price_raw = body.get('pricePerUnit')
+                    delivery_date = body.get('deliveryDate') or None
+                    delivery_conditions = body.get('deliveryConditions') or None
+                    special_terms = body.get('specialTerms') or None
+
+                    neg_price = float(price_raw) if price_raw is not None else None
+                    quantity = float(resp.get('quantity') or 0)
+                    neg_total = neg_price * quantity if neg_price is not None and quantity else None
+
+                    cur.execute('''
+                        UPDATE contract_responses SET
+                            negotiated_price_per_unit = %s,
+                            negotiated_delivery_date = %s,
+                            negotiated_delivery_conditions = %s,
+                            negotiated_special_terms = %s,
+                            seller_confirmed = FALSE,
+                            buyer_confirmed = FALSE,
+                            updated_at = NOW()
+                        WHERE id = %s
+                    ''', (neg_price, delivery_date, delivery_conditions, special_terms, response_id))
+                    if neg_total is not None:
+                        cur.execute('UPDATE contract_responses SET total_amount = %s WHERE id = %s', (neg_total, response_id))
+                    conn.commit()
+                    return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
+
+                # ── Запросить поправки к уже подтверждённому договору ──────
+                if action == 'request_amend':
+                    if resp['status'] != 'confirmed':
+                        return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Договор ещё не подтверждён'}), 'isBase64Encoded': False}
+                    if is_seller:
+                        cur.execute('UPDATE contract_responses SET seller_wants_amend = TRUE, updated_at = NOW() WHERE id = %s', (response_id,))
+                    else:
+                        cur.execute('UPDATE contract_responses SET buyer_wants_amend = TRUE, updated_at = NOW() WHERE id = %s', (response_id,))
+                    # Если оба хотят поправки — разблокируем
+                    cur.execute('SELECT seller_wants_amend, buyer_wants_amend FROM contract_responses WHERE id = %s', (response_id,))
+                    updated = cur.fetchone()
+                    both_amend = updated['seller_wants_amend'] and updated['buyer_wants_amend']
+                    if both_amend:
+                        cur.execute('''
+                            UPDATE contract_responses SET
+                                status = 'negotiating',
+                                seller_confirmed = FALSE,
+                                buyer_confirmed = FALSE,
+                                seller_wants_amend = FALSE,
+                                buyer_wants_amend = FALSE,
+                                updated_at = NOW()
+                            WHERE id = %s
+                        ''', (response_id,))
+                        cur.execute("UPDATE contracts SET status = 'open' WHERE id = %s", (resp['c_id'],))
+                    conn.commit()
+                    return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True, 'bothWantAmend': both_amend}), 'isBase64Encoded': False}
+
+                # ── Подтвердить контракт ───────────────────────────────────
                 if action == 'confirm':
                     if resp['status'] == 'confirmed':
                         return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт уже подтверждён'}), 'isBase64Encoded': False}
@@ -167,12 +279,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     conn.commit()
                     return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True, 'bothConfirmed': both}), 'isBase64Encoded': False}
 
+                # ── Отменить отклик ────────────────────────────────────────
                 if action == 'cancel':
                     cur.execute("UPDATE contract_responses SET status = 'cancelled', updated_at = NOW() WHERE id = %s", (response_id,))
                     conn.commit()
                     return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
 
-                # Отправить сообщение
+                # ── Отправить сообщение ────────────────────────────────────
                 text = (body.get('text') or '').strip()
                 file_data = body.get('fileData')
                 file_name = body.get('fileName')

@@ -11,7 +11,16 @@ export interface ContractInfo {
   contractStartDate: string;
   contractEndDate: string;
   deliveryAddress: string;
+  deliveryConditions: string;
+  specialTerms: string;
   termsConditions: string;
+}
+
+export interface NegotiatedTerms {
+  pricePerUnit: number | null;
+  deliveryDate: string | null;
+  deliveryConditions: string | null;
+  specialTerms: string | null;
 }
 
 export interface ResponseStatus {
@@ -30,7 +39,11 @@ export interface ResponseStatus {
   sellerLastName: string;
   sellerId: number;
   respondentId: number;
+  isSeller: boolean;
+  sellerWantsAmend: boolean;
+  buyerWantsAmend: boolean;
   contract: ContractInfo;
+  negotiatedTerms: NegotiatedTerms;
 }
 
 export interface MessageAttachment {
@@ -96,8 +109,10 @@ ${stamp}
 <tr><th>Дата поставки</th><td>${formatDate(c.deliveryDate)}</td></tr>
 <tr><th>Срок действия</th><td>${formatDate(c.contractStartDate)} — ${formatDate(c.contractEndDate)}</td></tr>
 ${c.deliveryAddress ? `<tr><th>Адрес поставки</th><td>${c.deliveryAddress}</td></tr>` : ''}
+${c.deliveryConditions ? `<tr><th>Условия доставки</th><td>${c.deliveryConditions}</td></tr>` : ''}
 </table>
-${c.termsConditions ? `<h2>2. Условия</h2><p>${c.termsConditions}</p>` : ''}
+${c.termsConditions ? `<h2>2. Базовые условия</h2><p>${c.termsConditions}</p>` : ''}
+${c.specialTerms ? `<h2>${c.termsConditions ? '3' : '2'}. Дополнительные оговорки</h2><p style="white-space:pre-wrap">${c.specialTerms}</p>` : ''}
 <h2>Подписи сторон</h2>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:16px">
 <div><p><strong>Продавец:</strong></p><p style="border-top:1px solid #000;padding-top:4px;margin-top:32px">${status.sellerFirstName} ${status.sellerLastName}</p></div>

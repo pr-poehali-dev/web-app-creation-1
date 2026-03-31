@@ -402,7 +402,7 @@ export default function ContractNegotiationModal({
                 />
               )}
               {activeTab === 'preview' && (
-                <NegotiationContractTab status={status} />
+                <NegotiationContractTab status={status} userId={userId} onStatusChange={() => { loadStatus(); onStatusChange?.(); }} />
               )}
             </>
           )}
