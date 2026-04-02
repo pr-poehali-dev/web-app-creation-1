@@ -6,6 +6,7 @@ import { Contract, formatAmount } from './ContractCard';
 
 const RESPONSE_STATUS_LABELS: Record<string, string> = {
   pending: 'Ожидает',
+  negotiating: 'Переговоры',
   confirmed: 'Заключён',
   cancelled: 'Отменён',
   rejected: 'Отклонён',
@@ -13,6 +14,7 @@ const RESPONSE_STATUS_LABELS: Record<string, string> = {
 
 const RESPONSE_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   pending: 'outline',
+  negotiating: 'secondary',
   confirmed: 'default',
   cancelled: 'destructive',
   rejected: 'destructive',

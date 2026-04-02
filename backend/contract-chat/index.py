@@ -227,6 +227,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             negotiated_special_terms = %s,
                             seller_confirmed = FALSE,
                             buyer_confirmed = FALSE,
+                            status = 'negotiating',
                             updated_at = NOW()
                         WHERE id = %s
                     ''', (neg_price, delivery_date, delivery_conditions, special_terms, response_id))
