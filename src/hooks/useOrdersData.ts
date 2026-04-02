@@ -581,10 +581,11 @@ export function useOrdersData(
       if (selectedOrder?.id === orderToComplete) {
         setSelectedOrder(order);
       }
-      
+
+      const errMsg = error instanceof Error ? error.message : String(error);
       toast({
         title: 'Ошибка',
-        description: 'Не удалось завершить заказ',
+        description: errMsg || 'Не удалось завершить заказ',
         variant: 'destructive',
       });
     }

@@ -284,7 +284,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           onCounterOffer={handleCounterOffer}
           onAcceptCounter={handleAcceptCounter}
           onCancelOrder={handleCancelOrder}
-          onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? handleCompleteOrder : undefined}
+          onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? () => handleCompleteOrder(selectedOrder.id) : undefined}
           onRequestCompletion={currentUser?.id?.toString() === selectedOrder.sellerId ? handleRequestCompletion : undefined}
           onCancelTrip={currentUser?.id?.toString() === selectedOrder.sellerId ? handleCancelTrip : undefined}
         />

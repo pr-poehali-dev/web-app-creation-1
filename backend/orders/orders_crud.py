@@ -576,6 +576,9 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
 def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     '''Обновить статус заказа, встречное предложение или принять заказ'''
     body = json.loads(event.get('body', '{}'))
+    user_headers = event.get('headers', {})
+    user_id_log = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+    print(f"[UPDATE_ORDER] order_id={order_id}, user_id={user_id_log}, body={body}")
     
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
