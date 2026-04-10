@@ -74,7 +74,8 @@ export default function EditContract({ isAuthenticated, onLogout }: EditContract
 
   const loadContract = async () => {
     try {
-      const userId = String(session?.userId || '');
+      const rawId = (session as { id?: number; userId?: number })?.id ?? (session as { id?: number; userId?: number })?.userId ?? Number(localStorage.getItem('userId') || '0');
+      const userId = String(rawId || '');
       const res = await fetch(`${func2url['contracts-list']}?id=${id}`, {
         headers: { 'X-User-Id': userId },
       });
@@ -82,7 +83,7 @@ export default function EditContract({ isAuthenticated, onLogout }: EditContract
       const data = await res.json();
       const c = (data.contracts || []).find((x: { id: number }) => x.id === Number(id));
       if (!c) { toast({ title: 'Контракт не найден', variant: 'destructive' }); navigate(-1); return; }
-      if (c.sellerId !== session?.userId) { toast({ title: 'Нет доступа', variant: 'destructive' }); navigate(-1); return; }
+      if (Number(c.sellerId) !== Number(rawId)) { toast({ title: 'Нет доступа', variant: 'destructive' }); navigate(-1); return; }
       setForm({
         contractType: c.contractType || 'forward',
         title: c.title || '',
@@ -115,7 +116,7 @@ export default function EditContract({ isAuthenticated, onLogout }: EditContract
     if (!form.productName.trim()) { toast({ title: 'Укажите название товара', variant: 'destructive' }); return; }
     if (publish) { setIsPublishing(true); } else { setIsSaving(true); }
     try {
-      const userId = String(session?.userId || '');
+      const userId = String((session as { id?: number; userId?: number })?.id ?? (session as { id?: number; userId?: number })?.userId ?? localStorage.getItem('userId') ?? '');
       const res = await fetch(func2url['save-contract'], {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },

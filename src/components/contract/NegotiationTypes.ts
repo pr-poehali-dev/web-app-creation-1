@@ -216,10 +216,18 @@ ${c.termsConditions ? `\n<p class="section">БАЗОВЫЕ УСЛОВИЯ КОН
   .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 32px; }
   .party { border-top: 1px solid #000; padding-top: 8px; }
   .party-label { font-size: 10pt; text-transform: uppercase; color: #555; letter-spacing: 0.05em; font-weight: bold; margin-bottom: 4px; }
-  @media print { body { margin: 0 20px; } button { display: none; } }
+  .toolbar { position: fixed; top: 12px; right: 12px; display: flex; gap: 8px; z-index: 999; }
+  .toolbar button { padding: 8px 14px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: sans-serif; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .btn-print { background: #2563eb; color: #fff; }
+  .btn-close { background: #fff; color: #111; border: 1px solid #e5e7eb !important; }
+  @media print { body { margin: 0 20px; } .toolbar { display: none; } }
 </style>
 </head>
 <body>
+<div class="toolbar">
+  <button class="btn-print" onclick="window.print()">🖨 Печать / PDF</button>
+  <button class="btn-close" onclick="window.close()">✕ Закрыть</button>
+</div>
 ${stamp}
 <h1>${title}</h1>
 <h2>${subtitle}</h2>
