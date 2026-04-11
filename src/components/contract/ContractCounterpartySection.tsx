@@ -11,14 +11,20 @@ interface ContractCounterpartySectionProps {
   formData: ContractFormData;
   set: (field: string, value: string) => void;
   isGenerating: boolean;
-  onGenerate: () => void;
+  isSubmitting: boolean;
+  isPublishing: boolean;
+  onSave: () => void;
+  onPublish: () => void;
 }
 
 export default function ContractCounterpartySection({
   formData,
   set,
   isGenerating,
-  onGenerate,
+  isSubmitting,
+  isPublishing,
+  onSave,
+  onPublish,
 }: ContractCounterpartySectionProps) {
   const navigate = useNavigate();
   const isBarter = formData.contractType === 'barter';
@@ -85,15 +91,26 @@ export default function ContractCounterpartySection({
         </CardContent>
       </Card>
 
-      <div className="flex gap-3 pb-4">
-        <Button onClick={onGenerate} disabled={isGenerating} className="flex-1">
-          {isGenerating ? (
-            <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Формирую документ...</>
-          ) : (
-            <><Icon name="FileDown" className="mr-2 h-4 w-4" />Сформировать контракт</>
-          )}
+      <div className="flex flex-col gap-3 pb-4">
+        <div className="flex gap-3">
+          <Button onClick={onSave} disabled={isGenerating || isSubmitting || isPublishing} variant="outline" className="flex-1">
+            {isSubmitting ? (
+              <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Сохраняю...</>
+            ) : (
+              <><Icon name="Save" className="mr-2 h-4 w-4" />Сохранить черновик</>
+            )}
+          </Button>
+          <Button onClick={onPublish} disabled={isGenerating || isSubmitting || isPublishing} className="flex-1">
+            {isPublishing ? (
+              <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Публикую...</>
+            ) : (
+              <><Icon name="Globe" className="mr-2 h-4 w-4" />Опубликовать</>
+            )}
+          </Button>
+        </div>
+        <Button type="button" variant="ghost" onClick={() => navigate('/trading')} className="text-muted-foreground">
+          Отмена
         </Button>
-        <Button type="button" variant="outline" onClick={() => navigate('/trading')}>Отмена</Button>
       </div>
     </>
   );

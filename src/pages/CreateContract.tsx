@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { useContractData } from '@/hooks/useContractData';
 import ContractFormFields from '@/components/contract/ContractFormFields';
-import ContractPreview from '@/components/contract/ContractPreview';
 
 interface CreateContractProps {
   isAuthenticated: boolean;
@@ -26,17 +25,10 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
     handleProductNameBChange,
     totalAmount,
     prepaymentAmount,
-    step,
-    setStep,
     isCheckingVerification,
     isGenerating,
     isSubmitting,
     isPublishing,
-    generatedDocx,
-    contractHtml,
-    handleGenerate,
-    downloadPdf,
-    downloadDocx,
     handleSaveToContracts,
     handlePublishContract,
   } = useContractData(isAuthenticated);
@@ -61,47 +53,31 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
         <div className="max-w-4xl mx-auto space-y-6">
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => step === 'preview' ? setStep('form') : navigate(-1)}>
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
               <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
-              {step === 'preview' ? 'К форме' : 'Назад'}
+              Назад
             </Button>
             <div>
               <h1 className="text-2xl font-bold">Создание контракта</h1>
-              <p className="text-sm text-muted-foreground">
-                {step === 'form' ? 'Заполните данные — документ сформируется автоматически по ГК РФ' : 'Документ сформирован — скачайте и подпишите'}
-              </p>
+              <p className="text-sm text-muted-foreground">Заполните данные — документ сформируется автоматически по ГК РФ</p>
             </div>
           </div>
 
-          {step === 'form' && (
-            <ContractFormFields
-              formData={formData}
-              set={set}
-              setArray={setArray}
-              setImages={setImages}
-              handleProductNameChange={handleProductNameChange}
-              handleProductNameBChange={handleProductNameBChange}
-              totalAmount={totalAmount}
-              prepaymentAmount={prepaymentAmount}
-              isGenerating={isGenerating}
-              onGenerate={handleGenerate}
-            />
-          )}
-
-          {step === 'preview' && contractHtml && (
-            <ContractPreview
-              formData={formData}
-              totalAmount={totalAmount}
-              generatedDocx={generatedDocx}
-              isSubmitting={isSubmitting}
-              isPublishing={isPublishing}
-              onDownloadPdf={downloadPdf}
-              onDownloadDocx={downloadDocx}
-              onSave={handleSaveToContracts}
-              onPublish={handlePublishContract}
-              onEdit={() => setStep('form')}
-            />
-          )}
+          <ContractFormFields
+            formData={formData}
+            set={set}
+            setArray={setArray}
+            setImages={setImages}
+            handleProductNameChange={handleProductNameChange}
+            handleProductNameBChange={handleProductNameBChange}
+            totalAmount={totalAmount}
+            prepaymentAmount={prepaymentAmount}
+            isGenerating={isGenerating}
+            isSubmitting={isSubmitting}
+            isPublishing={isPublishing}
+            onSave={handleSaveToContracts}
+            onPublish={handlePublishContract}
+          />
 
         </div>
       </main>

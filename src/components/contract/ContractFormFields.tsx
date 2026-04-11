@@ -16,7 +16,10 @@ interface ContractFormFieldsProps {
   totalAmount: number;
   prepaymentAmount: number;
   isGenerating: boolean;
-  onGenerate: () => void;
+  isSubmitting: boolean;
+  isPublishing: boolean;
+  onSave: () => void;
+  onPublish: () => void;
 }
 
 export default function ContractFormFields({
@@ -29,7 +32,10 @@ export default function ContractFormFields({
   totalAmount,
   prepaymentAmount,
   isGenerating,
-  onGenerate,
+  isSubmitting,
+  isPublishing,
+  onSave,
+  onPublish,
 }: ContractFormFieldsProps) {
   const isForwardRequest = formData.contractType === 'forward-request';
 
@@ -113,7 +119,10 @@ export default function ContractFormFields({
         formData={formData}
         set={set}
         isGenerating={isGenerating}
-        onGenerate={onGenerate}
+        isSubmitting={isSubmitting}
+        isPublishing={isPublishing}
+        onSave={onSave}
+        onPublish={onPublish}
       />
     </div>
   );
