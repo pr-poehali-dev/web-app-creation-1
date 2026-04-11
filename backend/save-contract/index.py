@@ -66,12 +66,15 @@ def handler(event: dict, context) -> dict:
                 existing_specs = json.loads(product_specs) if product_specs else {}
                 existing_specs['productImagesB'] = product_images_b
                 product_specs = json.dumps(existing_specs)
+        upd_delivery_types = body.get('deliveryTypes') or []
+        upd_delivery_method = ', '.join(upd_delivery_types) if upd_delivery_types else body.get('deliveryMethod', '')
+        upd_delivery_districts = json.dumps(body.get('deliveryDistricts') or [])
         cur.execute("""
             UPDATE contracts SET
                 contract_type=%s, title=%s, category=%s, product_name=%s, product_specs=%s,
                 quantity=%s, unit=%s, price_per_unit=%s, total_amount=%s,
                 delivery_date=%s, contract_start_date=%s, contract_end_date=%s,
-                delivery_address=%s, delivery_method=%s,
+                delivery_address=%s, delivery_method=%s, delivery_districts=%s,
                 prepayment_percent=%s, prepayment_amount=%s,
                 terms_conditions=%s, status=%s, product_images=%s, updated_at=NOW()
             WHERE id=%s
@@ -80,7 +83,7 @@ def handler(event: dict, context) -> dict:
             float(body.get('quantity') or 0), body.get('unit', 'шт'),
             float(body.get('pricePerUnit') or 0), float(body.get('totalAmount') or 0),
             body.get('deliveryDate') or None, body.get('contractStartDate') or None, body.get('contractEndDate') or None,
-            body.get('deliveryAddress', ''), body.get('deliveryMethod', ''),
+            body.get('deliveryAddress', ''), upd_delivery_method, upd_delivery_districts,
             float(body.get('prepaymentPercent') or 0), float(body.get('prepaymentAmount') or 0),
             body.get('termsConditions', ''), new_status, product_images,
             int(contract_id),
@@ -115,7 +118,9 @@ def handler(event: dict, context) -> dict:
     contract_start_date = body.get('contractStartDate') or None
     contract_end_date = body.get('contractEndDate') or None
     delivery_address = body.get('deliveryAddress', '')
-    delivery_method = body.get('deliveryMethod', '')
+    delivery_types = body.get('deliveryTypes') or []
+    delivery_method = ', '.join(delivery_types) if delivery_types else body.get('deliveryMethod', '')
+    delivery_districts = body.get('deliveryDistricts') or []
     terms_conditions = body.get('termsConditions', '')
     document_url = body.get('documentUrl') or None
     publish = body.get('publish', False)
@@ -151,7 +156,7 @@ def handler(event: dict, context) -> dict:
              quantity, unit, price_per_unit, total_amount, currency,
              delivery_date, contract_start_date, contract_end_date,
              seller_id, status,
-             delivery_address, delivery_method,
+             delivery_address, delivery_method, delivery_districts,
              prepayment_percent, prepayment_amount,
              terms_conditions, product_video_url, product_images,
              created_at, updated_at)
@@ -160,7 +165,7 @@ def handler(event: dict, context) -> dict:
              %s, %s, %s, %s, 'RUB',
              %s, %s, %s,
              %s, %s,
-             %s, %s,
+             %s, %s, %s,
              %s, %s,
              %s, %s, %s,
              NOW(), NOW())
@@ -170,7 +175,7 @@ def handler(event: dict, context) -> dict:
         quantity, unit, price_per_unit, total_amount,
         delivery_date, contract_start_date, contract_end_date,
         int(user_id), status,
-        delivery_address, delivery_method,
+        delivery_address, delivery_method, json.dumps(delivery_districts),
         prepayment_percent, prepayment_amount,
         terms_conditions, document_url, product_images,
     ))

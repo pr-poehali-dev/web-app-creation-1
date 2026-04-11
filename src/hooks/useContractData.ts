@@ -47,6 +47,8 @@ export interface ContractFormData {
   contractEndDate: string;
   deliveryAddress: string;
   deliveryMethod: string;
+  deliveryTypes: string[];
+  deliveryDistricts: string[];
   prepaymentPercent: string;
   termsConditions: string;
   productNameB: string;
@@ -77,7 +79,9 @@ const initialFormData: ContractFormData = {
   contractStartDate: new Date().toISOString().split('T')[0],
   contractEndDate: '',
   deliveryAddress: '',
-  deliveryMethod: 'автомобильный транспорт',
+  deliveryMethod: '',
+  deliveryTypes: [],
+  deliveryDistricts: [],
   prepaymentPercent: '0',
   termsConditions: '',
   productNameB: '',
@@ -177,6 +181,9 @@ export function useContractData(isAuthenticated: boolean) {
 
   const set = (field: string, value: string) =>
     setFormData(prev => ({ ...prev, [field]: value }));
+
+  const setArray = (field: 'deliveryTypes' | 'deliveryDistricts', values: string[]) =>
+    setFormData(prev => ({ ...prev, [field]: values }));
 
   const setImages = (field: 'productImages' | 'productImagesB', urls: string[]) =>
     setFormData(prev => ({ ...prev, [field]: urls }));
@@ -321,6 +328,7 @@ export function useContractData(isAuthenticated: boolean) {
   return {
     formData,
     set,
+    setArray,
     handleProductNameChange,
     handleProductNameBChange,
     totalAmount,

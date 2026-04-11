@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,6 +12,7 @@ import Icon from '@/components/ui/icon';
 import { CATEGORIES, UNITS } from '@/hooks/useContractData';
 import type { ContractFormData } from '@/hooks/useContractData';
 import { uploadMultipleFiles } from '@/utils/fileUpload';
+import { DISTRICTS } from '@/data/districts';
 
 interface PhotoUploadProps {
   images: string[];
@@ -117,6 +119,7 @@ function PhotoUpload({ images, onChange, label, maxImages = 5 }: PhotoUploadProp
 interface ContractFormFieldsProps {
   formData: ContractFormData;
   set: (field: string, value: string) => void;
+  setArray: (field: 'deliveryTypes' | 'deliveryDistricts', values: string[]) => void;
   setImages: (field: 'productImages' | 'productImagesB', urls: string[]) => void;
   handleProductNameChange: (value: string) => void;
   handleProductNameBChange: (value: string) => void;
@@ -129,6 +132,7 @@ interface ContractFormFieldsProps {
 export default function ContractFormFields({
   formData,
   set,
+  setArray,
   setImages,
   handleProductNameChange,
   handleProductNameBChange,
@@ -141,6 +145,22 @@ export default function ContractFormFields({
   const isBarter = formData.contractType === 'barter';
   const isForwardRequest = formData.contractType === 'forward-request';
   const categoryLabel = CATEGORIES.find(c => c.value === formData.category)?.label || '';
+
+  const deliveryDistricts = useMemo(() => {
+    return DISTRICTS.filter(d => d.id !== 'all');
+  }, []);
+
+  const toggleDeliveryType = (type: string) => {
+    const current = formData.deliveryTypes;
+    const next = current.includes(type) ? current.filter(t => t !== type) : [...current, type];
+    setArray('deliveryTypes', next);
+    if (!next.includes('delivery')) setArray('deliveryDistricts', []);
+  };
+
+  const toggleDistrict = (id: string) => {
+    const current = formData.deliveryDistricts;
+    setArray('deliveryDistricts', current.includes(id) ? current.filter(d => d !== id) : [...current, id]);
+  };
 
   return (
     <div className="space-y-6">
@@ -377,26 +397,65 @@ export default function ContractFormFields({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
-              <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
-            </div>
-            <div className="space-y-1">
-              <Label>Способ доставки</Label>
-              <Select value={formData.deliveryMethod} onValueChange={v => set('deliveryMethod', v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="автомобильный транспорт">Автомобильный транспорт</SelectItem>
-                  <SelectItem value="железнодорожный транспорт">Железнодорожный транспорт</SelectItem>
-                  <SelectItem value="самовывоз">Самовывоз</SelectItem>
-                  <SelectItem value="авиатранспорт">Авиатранспорт</SelectItem>
-                  <SelectItem value="морской/речной транспорт">Морской / речной транспорт</SelectItem>
-                  <SelectItem value="смешанная перевозка">Смешанная перевозка</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-1">
+            <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
+            <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
           </div>
+
+          <div className="space-y-2">
+            <Label>Способ доставки</Label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="dt-pickup"
+                  checked={formData.deliveryTypes.includes('pickup')}
+                  onCheckedChange={() => toggleDeliveryType('pickup')}
+                />
+                <label htmlFor="dt-pickup" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
+                  <Icon name="Store" size={15} />
+                  Самовывоз
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="dt-delivery"
+                  checked={formData.deliveryTypes.includes('delivery')}
+                  onCheckedChange={() => toggleDeliveryType('delivery')}
+                />
+                <label htmlFor="dt-delivery" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
+                  <Icon name="Truck" size={15} />
+                  С доставкой
+                </label>
+              </div>
+            </div>
+            {formData.deliveryTypes.length === 0 && (
+              <p className="text-xs text-destructive">Выберите хотя бы один способ</p>
+            )}
+          </div>
+
+          {formData.deliveryTypes.includes('delivery') && (
+            <div className="space-y-2">
+              <Label>Районы доставки</Label>
+              {deliveryDistricts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Нет доступных районов</p>
+              ) : (
+                <div className="border rounded-lg p-3 max-h-56 overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {deliveryDistricts.map(d => (
+                      <div key={d.id} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`dd-${d.id}`}
+                          checked={formData.deliveryDistricts.includes(d.id)}
+                          onCheckedChange={() => toggleDistrict(d.id)}
+                        />
+                        <label htmlFor={`dd-${d.id}`} className="text-sm cursor-pointer leading-tight">{d.name}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {!isBarter && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">

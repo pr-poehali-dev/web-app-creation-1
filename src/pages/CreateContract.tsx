@@ -20,6 +20,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
   const {
     formData,
     set,
+    setArray,
     setImages,
     handleProductNameChange,
     handleProductNameBChange,
@@ -76,6 +77,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
             <ContractFormFields
               formData={formData}
               set={set}
+              setArray={setArray}
               setImages={setImages}
               handleProductNameChange={handleProductNameChange}
               handleProductNameBChange={handleProductNameBChange}
