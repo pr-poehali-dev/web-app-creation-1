@@ -63,10 +63,7 @@ export default function ContractDeliverySection({
               <Input type="date" value={formData.contractStartDate} onChange={e => set('contractStartDate', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label className="flex items-center gap-1">
-                {isForwardRequest ? 'Период исполнения (поставки / оказания услуги) *' : 'Период поставки *'}
-                <span className="text-xs text-muted-foreground font-normal">(конечная дата = дата окончания контракта)</span>
-              </Label>
+              <Label>{isForwardRequest ? 'Период исполнения *' : 'Период поставки *'}</Label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 space-y-1">
                   <span className="text-xs text-muted-foreground">Начало</span>
@@ -74,7 +71,7 @@ export default function ContractDeliverySection({
                 </div>
                 <Icon name="ArrowRight" size={16} className="text-muted-foreground mt-5 shrink-0" />
                 <div className="flex-1 space-y-1">
-                  <span className="text-xs text-muted-foreground">Конец (дата окончания контракта) *</span>
+                  <span className="text-xs text-muted-foreground">Окончание *</span>
                   <Input
                     type="date"
                     value={formData.contractEndDate}
