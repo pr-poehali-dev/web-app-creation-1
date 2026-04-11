@@ -60,6 +60,8 @@ export interface ContractFormData {
   counterpartyPhone: string;
   counterpartyEmail: string;
   counterpartyType: string;
+  productImages: string[];
+  productImagesB: string[];
 }
 
 const initialFormData: ContractFormData = {
@@ -89,6 +91,8 @@ const initialFormData: ContractFormData = {
   counterpartyPhone: '',
   counterpartyEmail: '',
   counterpartyType: 'individual',
+  productImages: [],
+  productImagesB: [],
 };
 
 export function useContractData(isAuthenticated: boolean) {
@@ -173,6 +177,9 @@ export function useContractData(isAuthenticated: boolean) {
 
   const set = (field: string, value: string) =>
     setFormData(prev => ({ ...prev, [field]: value }));
+
+  const setImages = (field: 'productImages' | 'productImagesB', urls: string[]) =>
+    setFormData(prev => ({ ...prev, [field]: urls }));
 
   const handleProductNameChange = (value: string) => {
     setFormData(prev => ({
@@ -331,5 +338,6 @@ export function useContractData(isAuthenticated: boolean) {
     downloadDocx,
     handleSaveToContracts,
     handlePublishContract,
+    setImages,
   };
 }

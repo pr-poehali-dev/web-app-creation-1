@@ -59,6 +59,13 @@ def handler(event: dict, context) -> dict:
             })
         publish = body.get('publish', False)
         new_status = 'open' if publish else (row[1] if row[1] in ('draft', 'open') else row[1])
+        product_images = body.get('productImages') or []
+        product_images_b = body.get('productImagesB') or []
+        if product_type := body.get('contractType', contract_type):
+            if product_type == 'barter' and product_images_b:
+                existing_specs = json.loads(product_specs) if product_specs else {}
+                existing_specs['productImagesB'] = product_images_b
+                product_specs = json.dumps(existing_specs)
         cur.execute("""
             UPDATE contracts SET
                 contract_type=%s, title=%s, category=%s, product_name=%s, product_specs=%s,
@@ -66,7 +73,7 @@ def handler(event: dict, context) -> dict:
                 delivery_date=%s, contract_start_date=%s, contract_end_date=%s,
                 delivery_address=%s, delivery_method=%s,
                 prepayment_percent=%s, prepayment_amount=%s,
-                terms_conditions=%s, status=%s, updated_at=NOW()
+                terms_conditions=%s, status=%s, product_images=%s, updated_at=NOW()
             WHERE id=%s
         """, (
             contract_type, title, body.get('category', 'other'), product_name, product_specs,
@@ -75,7 +82,7 @@ def handler(event: dict, context) -> dict:
             body.get('deliveryDate') or None, body.get('contractStartDate') or None, body.get('contractEndDate') or None,
             body.get('deliveryAddress', ''), body.get('deliveryMethod', ''),
             float(body.get('prepaymentPercent') or 0), float(body.get('prepaymentAmount') or 0),
-            body.get('termsConditions', ''), new_status,
+            body.get('termsConditions', ''), new_status, product_images,
             int(contract_id),
         ))
         conn.commit()
@@ -113,6 +120,8 @@ def handler(event: dict, context) -> dict:
     document_url = body.get('documentUrl') or None
     publish = body.get('publish', False)
 
+    product_images = body.get('productImages') or []
+    product_images_b = body.get('productImagesB') or []
     product_specs = None
     if contract_type == 'barter':
         product_specs = json.dumps({
@@ -121,6 +130,7 @@ def handler(event: dict, context) -> dict:
             'unitB': body.get('unitB', ''),
             'categoryB': body.get('categoryB', ''),
             'totalAmountB': body.get('totalAmountB', ''),
+            'productImagesB': product_images_b,
         })
 
     status = 'open' if publish else 'draft'
@@ -143,7 +153,7 @@ def handler(event: dict, context) -> dict:
              seller_id, status,
              delivery_address, delivery_method,
              prepayment_percent, prepayment_amount,
-             terms_conditions, product_video_url,
+             terms_conditions, product_video_url, product_images,
              created_at, updated_at)
         VALUES
             (%s, %s, %s, %s, %s,
@@ -152,7 +162,7 @@ def handler(event: dict, context) -> dict:
              %s, %s,
              %s, %s,
              %s, %s,
-             %s, %s,
+             %s, %s, %s,
              NOW(), NOW())
         RETURNING id
     """, (
@@ -162,7 +172,7 @@ def handler(event: dict, context) -> dict:
         int(user_id), status,
         delivery_address, delivery_method,
         prepayment_percent, prepayment_amount,
-        terms_conditions, document_url,
+        terms_conditions, document_url, product_images,
     ))
 
     contract_id = cur.fetchone()[0]

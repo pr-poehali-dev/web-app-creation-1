@@ -20,6 +20,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
   const {
     formData,
     set,
+    setImages,
     handleProductNameChange,
     handleProductNameBChange,
     totalAmount,
@@ -75,6 +76,7 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
             <ContractFormFields
               formData={formData}
               set={set}
+              setImages={setImages}
               handleProductNameChange={handleProductNameChange}
               handleProductNameBChange={handleProductNameBChange}
               totalAmount={totalAmount}
