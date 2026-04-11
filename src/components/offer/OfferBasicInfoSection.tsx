@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
+import AIAssistButton from './AIAssistButton';
 
 interface OfferBasicInfoSectionProps {
   formData: {
@@ -167,7 +168,18 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
         {!isTransport && !isAutoSale && (
           <>
             <div>
-              <Label htmlFor="title">Название предложения *</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="title">Название предложения *</Label>
+                {formData.title.length >= 3 && (
+                  <AIAssistButton
+                    action="improve_title"
+                    title={formData.title}
+                    category={formData.category}
+                    onResult={(text) => onInputChange('title', text.slice(0, 100))}
+                    label="Улучшить"
+                  />
+                )}
+              </div>
               <Input
                 id="title"
                 value={formData.title}
@@ -182,7 +194,30 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
             </div>
 
             <div>
-              <Label htmlFor="description">Описание *</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="description">Описание *</Label>
+                <div className="flex gap-1.5">
+                  {formData.title.length >= 3 && formData.description.length === 0 && (
+                    <AIAssistButton
+                      action="suggest_description"
+                      title={formData.title}
+                      category={formData.category}
+                      onResult={(text) => onInputChange('description', text.slice(0, 1000))}
+                      label="Сгенерировать"
+                    />
+                  )}
+                  {formData.description.length >= 10 && (
+                    <AIAssistButton
+                      action="improve_description"
+                      title={formData.title}
+                      description={formData.description}
+                      category={formData.category}
+                      onResult={(text) => onInputChange('description', text.slice(0, 1000))}
+                      label="Улучшить"
+                    />
+                  )}
+                </div>
+              </div>
               <Textarea
                 id="description"
                 value={formData.description}
