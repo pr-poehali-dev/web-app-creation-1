@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { ContractFormData } from '@/hooks/useContractData';
 
@@ -27,50 +26,9 @@ export default function ContractCounterpartySection({
   onPublish,
 }: ContractCounterpartySectionProps) {
   const navigate = useNavigate();
-  const isBarter = formData.contractType === 'barter';
-  const isForwardRequest = formData.contractType === 'forward-request';
 
   return (
     <>
-      {/* Контрагент */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Icon name="Users" size={18} />
-            Контрагент ({isBarter ? 'Сторона 2' : isForwardRequest ? 'Поставщик' : 'Покупатель'})
-          </CardTitle>
-          <CardDescription>Заполните, если контрагент уже известен. Можно оставить пустым — поля будут для ручного заполнения.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>ФИО / Наименование</Label>
-              <Input value={formData.counterpartyName} onChange={e => set('counterpartyName', e.target.value)} placeholder="Иванов Иван Иванович / ООО «Ромашка»" />
-            </div>
-            <div className="space-y-1">
-              <Label>ИНН</Label>
-              <Input value={formData.counterpartyInn} onChange={e => set('counterpartyInn', e.target.value)} placeholder="123456789012" maxLength={12} />
-            </div>
-            <div className="space-y-1">
-              <Label>Организация</Label>
-              <Input value={formData.counterpartyCompany} onChange={e => set('counterpartyCompany', e.target.value)} placeholder="ООО «Компания»" />
-            </div>
-            <div className="space-y-1">
-              <Label>Город</Label>
-              <Input value={formData.counterpartyCity} onChange={e => set('counterpartyCity', e.target.value)} placeholder="Москва" />
-            </div>
-            <div className="space-y-1">
-              <Label>Телефон</Label>
-              <Input value={formData.counterpartyPhone} onChange={e => set('counterpartyPhone', e.target.value)} placeholder="+7 (900) 123-45-67" />
-            </div>
-            <div className="space-y-1">
-              <Label>Email</Label>
-              <Input type="email" value={formData.counterpartyEmail} onChange={e => set('counterpartyEmail', e.target.value)} placeholder="partner@example.com" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Доп. условия */}
       <Card>
         <CardHeader>
