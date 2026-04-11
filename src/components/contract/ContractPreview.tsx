@@ -6,11 +6,11 @@ import type { ContractFormData } from '@/hooks/useContractData';
 interface ContractPreviewProps {
   formData: ContractFormData;
   totalAmount: number;
-  generatedDocx: { base64: string; url: string; filename: string } | null;
+  generatedDocx?: { base64: string; url: string; filename: string } | null;
   isSubmitting: boolean;
   isPublishing: boolean;
-  onDownloadPdf: () => void;
-  onDownloadDocx: () => void;
+  onDownloadPdf?: () => void;
+  onDownloadDocx?: () => void;
   onSave: () => void;
   onPublish: () => void;
   onEdit: () => void;
@@ -19,11 +19,8 @@ interface ContractPreviewProps {
 export default function ContractPreview({
   formData,
   totalAmount,
-  generatedDocx,
   isSubmitting,
   isPublishing,
-  onDownloadPdf,
-  onDownloadDocx,
   onSave,
   onPublish,
   onEdit,
@@ -38,8 +35,8 @@ export default function ContractPreview({
           Документ сформирован
         </CardTitle>
         <CardDescription>
-          {isBarter ? 'Договор мены (бартера)' : 'Форвардный контракт'} по ГК РФ готов.
-          Распечатайте/скачайте, подпишите и сохраните в «Мои контракты».
+          {isBarter ? 'Договор мены (бартера)' : 'Форвардный контракт'} по ГК РФ сформирован.
+          Опубликуйте контракт — скачать и распечатать договор можно после согласия обеих сторон.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -53,17 +50,6 @@ export default function ContractPreview({
           {isBarter && <div><span className="font-medium">В обмен:</span> {formData.productNameB} — {formData.quantityB} {formData.unitB}</div>}
           {!isBarter && <div><span className="font-medium">Сумма:</span> {totalAmount.toLocaleString('ru-RU')} ₽</div>}
           <div><span className="font-medium">Дата поставки:</span> {formData.deliveryDate}</div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Button onClick={onDownloadPdf} className="w-full">
-            <Icon name="Printer" className="mr-2 h-4 w-4" />
-            Скачать / Распечатать PDF
-          </Button>
-          <Button onClick={onDownloadDocx} variant="outline" className="w-full" disabled={!generatedDocx}>
-            <Icon name="FileDown" className="mr-2 h-4 w-4" />
-            {generatedDocx ? 'Скачать DOCX (Word)' : 'DOCX формируется...'}
-          </Button>
         </div>
 
         <div className="border-t pt-4 space-y-3">
