@@ -41,11 +41,11 @@ def call_gigachat(prompt: str, access_token: str) -> str:
         json={
             "model": "GigaChat",
             "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 500,
+            "max_tokens": 250,
             "temperature": 0.7,
         },
         verify=False,
-        timeout=30,
+        timeout=20,
     )
     response.raise_for_status()
     return response.json()["choices"][0]["message"]["content"].strip()
