@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ResponseStatus, formatDate, formatAmount, buildContractHtml } from './NegotiationTypes';
+import ContractPreviewModal from './ContractPreviewModal';
 import func2url from '../../../backend/func2url.json';
 
 const CHAT_API = (func2url as Record<string, string>)['contract-chat'];
@@ -16,16 +17,8 @@ interface NegotiationContractTabProps {
   onStatusChange?: () => void;
 }
 
-function openContractPreview(status: ResponseStatus) {
-  const c = status.contract;
-  const html = buildContractHtml(status, c);
-  const blob = new Blob([html], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  window.open(url, '_blank');
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
-}
-
 export default function NegotiationContractTab({ status, userId, onStatusChange }: NegotiationContractTabProps) {
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const { toast } = useToast();
   const [price, setPrice] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -286,12 +279,16 @@ export default function NegotiationContractTab({ status, userId, onStatusChange 
       {/* Ссылка на шаблон договора */}
       {c.productName && (
         <button
-          onClick={() => openContractPreview(status)}
+          onClick={() => setPreviewHtml(buildContractHtml(status, c))}
           className="w-full flex items-center justify-center gap-2 text-xs text-primary hover:text-primary/80 underline underline-offset-2 py-1"
         >
           <Icon name="FileText" size={13} />
           Просмотреть текстовый шаблон договора
         </button>
+      )}
+
+      {previewHtml && (
+        <ContractPreviewModal html={previewHtml} onClose={() => setPreviewHtml(null)} />
       )}
     </div>
   );

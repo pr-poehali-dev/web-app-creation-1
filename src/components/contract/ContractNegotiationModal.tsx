@@ -18,6 +18,7 @@ import {
 import NegotiationChatTab from './NegotiationChatTab';
 import NegotiationContractTab from './NegotiationContractTab';
 import { NegotiationFooter, ConfirmDialog, CancelDialog } from './NegotiationDialogs';
+import ContractPreviewModal from './ContractPreviewModal';
 
 const CHAT_API = (func2url as Record<string, string>)['contract-chat'];
 
@@ -54,6 +55,7 @@ export default function ContractNegotiationModal({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'preview'>('chat');
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
 
   // Медиа
   const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
@@ -304,14 +306,7 @@ export default function ContractNegotiationModal({
   const handleDownloadContract = () => {
     if (!status) return;
     const c = status.contract;
-    const html = buildContractHtml(status, c);
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const w = window.open(url, '_blank');
-    if (w) {
-      w.onload = () => { w.print(); };
-    }
-    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    setPreviewHtml(buildContractHtml(status, c));
   };
 
   const isSeller = status?.sellerId === Number(userId);
@@ -434,6 +429,10 @@ export default function ContractNegotiationModal({
         isCancelling={isCancelling}
         onCancel={handleCancel}
       />
+
+      {previewHtml && (
+        <ContractPreviewModal html={previewHtml} onClose={() => setPreviewHtml(null)} />
+      )}
     </>
   );
 }
