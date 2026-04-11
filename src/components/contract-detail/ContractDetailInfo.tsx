@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
@@ -11,7 +12,7 @@ interface Contract {
   contractType: string;
   category: string;
   productName: string;
-  productSpecs?: Record<string, string>;
+  productSpecs?: Record<string, string | string[]>;
   quantity: number;
   unit: string;
   pricePerUnit: number;
@@ -47,7 +48,36 @@ interface ContractDetailInfoProps {
   formatPrice: (p: number) => string;
 }
 
+function PhotoGallery({ images, title }: { images: string[]; title: string }) {
+  const [lightbox, setLightbox] = useState<string | null>(null);
+  if (!images.length) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{title}</p>
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        {images.map((url, i) => (
+          <button key={i} type="button" onClick={() => setLightbox(url)} className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity">
+            <img src={url} alt={`${title} ${i + 1}`} className="w-full h-full object-cover" />
+          </button>
+        ))}
+      </div>
+      {lightbox && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center" onClick={() => setLightbox(null)}>
+          <button type="button" className="absolute top-4 right-4 text-white" onClick={() => setLightbox(null)}>
+            <Icon name="X" size={28} />
+          </button>
+          <img src={lightbox} alt="Фото" className="max-w-full max-h-full object-contain rounded-lg" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ContractDetailInfo({ contract, isBarter, formatDate, formatPrice }: ContractDetailInfoProps) {
+  const imagesB = Array.isArray(contract.productSpecs?.productImagesB)
+    ? (contract.productSpecs!.productImagesB as string[])
+    : [];
+
   return (
     <>
       {/* Товар */}
@@ -88,6 +118,14 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
               </>
             )}
           </div>
+
+          {/* Фото товаров */}
+          {(contract.productImages?.length || imagesB.length) ? (
+            <div className="pt-2 space-y-4 border-t mt-3">
+              <PhotoGallery images={contract.productImages || []} title="Фото товара А" />
+              {isBarter && <PhotoGallery images={imagesB} title="Фото товара Б" />}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
