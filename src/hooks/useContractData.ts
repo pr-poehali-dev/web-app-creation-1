@@ -57,13 +57,6 @@ export interface ContractFormData {
   quantityB: string;
   unitB: string;
   categoryB: string;
-  counterpartyName: string;
-  counterpartyCompany: string;
-  counterpartyInn: string;
-  counterpartyCity: string;
-  counterpartyPhone: string;
-  counterpartyEmail: string;
-  counterpartyType: string;
   productImages: string[];
   productImagesB: string[];
 }
@@ -90,13 +83,6 @@ const initialFormData: ContractFormData = {
   quantityB: '',
   unitB: 'т',
   categoryB: '',
-  counterpartyName: '',
-  counterpartyCompany: '',
-  counterpartyInn: '',
-  counterpartyCity: '',
-  counterpartyPhone: '',
-  counterpartyEmail: '',
-  counterpartyType: 'individual',
   productImages: [],
   productImagesB: [],
 };
@@ -232,14 +218,14 @@ export function useContractData(isAuthenticated: boolean) {
     setIsGenerating(true);
 
     const buyer = {
-      firstName: formData.counterpartyName,
+      firstName: '',
       lastName: '',
-      companyName: formData.counterpartyCompany,
-      inn: formData.counterpartyInn,
-      city: formData.counterpartyCity,
-      phone: formData.counterpartyPhone,
-      email: formData.counterpartyEmail,
-      userType: formData.counterpartyType,
+      companyName: '',
+      inn: '',
+      city: '',
+      phone: '',
+      email: '',
+      userType: 'individual',
     };
 
     const html = generateContractHtml(

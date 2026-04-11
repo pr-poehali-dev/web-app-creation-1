@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { ContractFormData } from '@/hooks/useContractData';
 import { DISTRICTS } from '@/data/districts';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface ContractDeliverySectionProps {
   formData: ContractFormData;
@@ -22,10 +23,16 @@ export default function ContractDeliverySection({
 }: ContractDeliverySectionProps) {
   const isBarter = formData.contractType === 'barter';
   const isForwardRequest = formData.contractType === 'forward-request';
+  const { selectedRegion } = useDistrict();
+  const [noDeliveryOutside, setNoDeliveryOutside] = useState(false);
 
   const deliveryDistricts = useMemo(() => {
+    const regionId = selectedRegion && selectedRegion !== 'all' ? selectedRegion : null;
+    if (regionId) {
+      return DISTRICTS.filter(d => d.regionId === regionId && d.id !== 'all');
+    }
     return DISTRICTS.filter(d => d.id !== 'all');
-  }, []);
+  }, [selectedRegion]);
 
   const toggleDeliveryType = (type: string) => {
     const current = formData.deliveryTypes;
@@ -147,6 +154,17 @@ export default function ContractDeliverySection({
                   </div>
                 </div>
               )}
+
+              <div className="flex items-center gap-2 pt-1">
+                <Checkbox
+                  id="no-delivery-outside"
+                  checked={noDeliveryOutside}
+                  onCheckedChange={v => setNoDeliveryOutside(!!v)}
+                />
+                <label htmlFor="no-delivery-outside" className="text-sm cursor-pointer text-muted-foreground">
+                  Доставка только в выбранные районы
+                </label>
+              </div>
             </div>
           )}
 
