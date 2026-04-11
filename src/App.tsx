@@ -15,7 +15,7 @@ import { TimezoneProvider } from "./contexts/TimezoneContext";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
 import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
-import TopLoadingBar from "./components/TopLoadingBar";
+import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
 
 // Ленивая загрузка страниц
 const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
@@ -220,14 +220,20 @@ const App = () => {
   };
 
   const handleGlobalRefresh = async () => {
-    // Инвалидируем in-memory кэш API без перезагрузки страницы
-    clearCache();
-    SmartCache.invalidateAll('orders');
-    SmartCache.invalidateAll('requests');
-    SmartCache.invalidateAll('offers');
-    SmartCache.invalidateAll('auctions');
-    // Сигнализируем компонентам о необходимости перезагрузить данные
-    window.dispatchEvent(new CustomEvent('globalRefresh'));
+    showLoading();
+    try {
+      // Инвалидируем in-memory кэш API без перезагрузки страницы
+      clearCache();
+      SmartCache.invalidateAll('orders');
+      SmartCache.invalidateAll('requests');
+      SmartCache.invalidateAll('offers');
+      SmartCache.invalidateAll('auctions');
+      // Сигнализируем компонентам о необходимости перезагрузить данные
+      window.dispatchEvent(new CustomEvent('globalRefresh'));
+      await new Promise(r => setTimeout(r, 600));
+    } finally {
+      hideLoading();
+    }
   };
 
 

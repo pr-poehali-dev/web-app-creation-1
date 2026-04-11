@@ -8,6 +8,7 @@ import { getSession } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { safeGetTime } from '@/utils/dateUtils';
 import { dataSync } from '@/utils/dataSync';
+import { showLoading, hideLoading } from '@/components/TopLoadingBar';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -68,6 +69,7 @@ export function useAuctionsPageData(isAuthenticated: boolean) {
   const loadAuctions = async (silent = false) => {
     if (!silent) setIsLoading(true);
     if (silent) setIsRefreshing(true);
+    if (!silent) showLoading();
     try {
       const loadedAuctions = await auctionsAPI.getAllAuctions();
       if (silent) {
@@ -92,6 +94,7 @@ export function useAuctionsPageData(isAuthenticated: boolean) {
       if (!silent) setAuctions([]);
     } finally {
       if (!silent) setIsLoading(false);
+      if (!silent) hideLoading();
       if (silent) setTimeout(() => setIsRefreshing(false), 500);
     }
   };

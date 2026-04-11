@@ -14,6 +14,7 @@ import func2url from '../../backend/func2url.json';
 
 import ContractCard from '@/components/trading/ContractCard';
 import PullToRefresh from '@/components/PullToRefresh';
+import { showLoading, hideLoading } from '@/components/TopLoadingBar';
 import TradingPlatformHeader from '@/components/trading/TradingPlatformHeader';
 import TradingVerificationDialog from '@/components/trading/TradingVerificationDialog';
 import ForwardInfoDialog from '@/components/trading/ForwardInfoDialog';
@@ -65,6 +66,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [currentUser, setCurrentUser] = useState(getSession());
 
   const loadContracts = async () => {
+    showLoading();
     try {
       setLoading(true);
       const userId = localStorage.getItem('userId');
@@ -79,6 +81,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       console.error('Failed to load contracts:', error);
     } finally {
       setLoading(false);
+      hideLoading();
     }
   };
 
