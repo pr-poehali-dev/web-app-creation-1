@@ -1,5 +1,5 @@
 """
-ИИ-помощник для заполнения формы предложений через YandexGPT API. v3
+ИИ-помощник для заполнения формы предложений через Gemini API.
 POST /ai-assist
 Body: { action: "improve_title"|"improve_description"|"suggest_description", title?: string, description?: string, category?: string }
 Возвращает: { result: string }
@@ -9,36 +9,27 @@ import os
 import requests
 
 
-def call_yandex_gpt(prompt: str) -> str:
-    api_key = os.environ["YANDEX_API_KEY"]
-    folder_id = os.environ["YANDEX_FOLDER_ID"]
+def call_gemini(prompt: str) -> str:
+    api_key = os.environ["GEMINI_API_KEY"]
     response = requests.post(
-        "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Api-Key {api_key}",
-            "x-folder-id": folder_id,
-        },
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}",
+        headers={"Content-Type": "application/json"},
         json={
-            "modelUri": f"gpt://{folder_id}/yandexgpt-lite",
-            "completionOptions": {
-                "stream": False,
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {
                 "temperature": 0.7,
-                "maxTokens": 400,
+                "maxOutputTokens": 400,
             },
-            "messages": [
-                {"role": "user", "text": prompt}
-            ],
         },
         timeout=25,
     )
     response.raise_for_status()
-    return response.json()["result"]["alternatives"][0]["message"]["text"].strip()
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
 def handler(event: dict, context) -> dict:
     """
-    ИИ-помощник для улучшения текстов в форме предложений (YandexGPT).
+    ИИ-помощник для улучшения текстов в форме предложений (Gemini).
     """
     cors = {
         "Access-Control-Allow-Origin": "*",
@@ -92,7 +83,7 @@ def handler(event: dict, context) -> dict:
     else:
         return {"statusCode": 400, "headers": cors, "body": json.dumps({"error": "unknown action"})}
 
-    result = call_yandex_gpt(prompt)
+    result = call_gemini(prompt)
 
     return {
         "statusCode": 200,
