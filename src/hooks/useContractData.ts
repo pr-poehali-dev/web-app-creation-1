@@ -59,6 +59,7 @@ export interface ContractFormData {
   categoryB: string;
   productImages: string[];
   productImagesB: string[];
+  deliveryNotes: string;
 }
 
 const initialFormData: ContractFormData = {
@@ -85,6 +86,7 @@ const initialFormData: ContractFormData = {
   categoryB: '',
   productImages: [],
   productImagesB: [],
+  deliveryNotes: '',
 };
 
 export function useContractData(isAuthenticated: boolean) {

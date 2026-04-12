@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import type { ContractFormData } from '@/hooks/useContractData';
 import { DISTRICTS } from '@/data/districts';
 import { useDistrict } from '@/contexts/DistrictContext';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 
 interface ContractDeliverySectionProps {
   formData: ContractFormData;
@@ -24,7 +26,6 @@ export default function ContractDeliverySection({
   const isBarter = formData.contractType === 'barter';
   const isForwardRequest = formData.contractType === 'forward-request';
   const { selectedRegion } = useDistrict();
-  const [noDeliveryOutside, setNoDeliveryOutside] = useState(false);
 
   const deliveryDistricts = useMemo(() => {
     const regionId = selectedRegion && selectedRegion !== 'all' ? selectedRegion : null;
@@ -95,51 +96,99 @@ export default function ContractDeliverySection({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">
-            <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
+            <div className="flex items-center justify-between">
+              <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
+              {formData.deliveryAddress.length >= 3 && (
+                <AIAssistButton
+                  action="improve_title"
+                  title={formData.deliveryAddress}
+                  onResult={text => set('deliveryAddress', text.slice(0, 300))}
+                  label="Улучшить"
+                />
+              )}
+            </div>
             <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
           </div>
 
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <Label>Особые условия доставки</Label>
+              {formData.deliveryNotes && formData.deliveryNotes.length >= 3 ? (
+                <AIAssistButton
+                  action="improve_description"
+                  title={formData.deliveryAddress}
+                  description={formData.deliveryNotes}
+                  onResult={text => set('deliveryNotes', text.slice(0, 1000))}
+                  label="Улучшить"
+                />
+              ) : (!formData.deliveryNotes || formData.deliveryNotes.length === 0) && formData.deliveryAddress.length >= 3 ? (
+                <AIAssistButton
+                  action="suggest_description"
+                  title={`Условия доставки: ${formData.deliveryAddress}`}
+                  onResult={text => set('deliveryNotes', text.slice(0, 1000))}
+                  label="Сгенерировать"
+                />
+              ) : null}
+            </div>
+            <Textarea
+              value={formData.deliveryNotes || ''}
+              onChange={e => set('deliveryNotes', e.target.value)}
+              rows={2}
+              placeholder="Особые требования к доставке, упаковке, режим работы склада..."
+            />
+          </div>
+
           <div className="space-y-2">
-            <Label>Способ доставки</Label>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
+            <Label className="block mb-1">Способы получения *</Label>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="dt-pickup"
                   checked={formData.deliveryTypes.includes('pickup')}
                   onCheckedChange={() => toggleDeliveryType('pickup')}
                 />
-                <label htmlFor="dt-pickup" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
-                  <Icon name="Store" size={15} />
+                <label htmlFor="dt-pickup" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                  <Icon name="Store" size={16} />
                   Самовывоз
                 </label>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="dt-delivery"
                   checked={formData.deliveryTypes.includes('delivery')}
                   onCheckedChange={() => toggleDeliveryType('delivery')}
                 />
-                <label htmlFor="dt-delivery" className="text-sm font-medium flex items-center gap-1.5 cursor-pointer">
-                  <Icon name="Truck" size={15} />
-                  С доставкой
+                <label htmlFor="dt-delivery" className="text-sm font-medium flex items-center gap-2 cursor-pointer">
+                  <Icon name="Truck" size={16} />
+                  Доставка
                 </label>
               </div>
             </div>
             {formData.deliveryTypes.length === 0 && (
-              <p className="text-xs text-destructive">Выберите хотя бы один способ</p>
+              <p className="text-xs text-destructive mt-1">Выберите хотя бы один способ получения</p>
             )}
           </div>
 
           {formData.deliveryTypes.includes('delivery') && (
             <div className="space-y-2">
-              <Label>Районы доставки</Label>
+              <Label>Доставка в другие районы:</Label>
               {deliveryDistricts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Нет доступных районов</p>
               ) : (
-                <div className="border rounded-lg p-3 max-h-56 overflow-y-auto">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  {/* Нет */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="dd-none"
+                      checked={formData.deliveryDistricts.length === 0}
+                      onCheckedChange={() => setArray('deliveryDistricts', [])}
+                    />
+                    <label htmlFor="dd-none" className="text-sm cursor-pointer">Нет</label>
+                  </div>
+                  {/* Список районов — 3 колонки */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
                     {deliveryDistricts.map(d => (
-                      <div key={d.id} className="flex items-center gap-2">
+                      <div key={d.id} className="flex items-center space-x-2">
                         <Checkbox
                           id={`dd-${d.id}`}
                           checked={formData.deliveryDistricts.includes(d.id)}
@@ -151,17 +200,6 @@ export default function ContractDeliverySection({
                   </div>
                 </div>
               )}
-
-              <div className="flex items-center gap-2 pt-1">
-                <Checkbox
-                  id="no-delivery-outside"
-                  checked={noDeliveryOutside}
-                  onCheckedChange={v => setNoDeliveryOutside(!!v)}
-                />
-                <label htmlFor="no-delivery-outside" className="text-sm cursor-pointer text-muted-foreground">
-                  Доставка только в выбранные районы
-                </label>
-              </div>
             </div>
           )}
 
