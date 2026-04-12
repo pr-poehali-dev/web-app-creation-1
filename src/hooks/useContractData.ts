@@ -221,7 +221,7 @@ export function useContractData(isAuthenticated: boolean) {
     if (formData.contractType === 'barter' && !formData.productNameB) {
       toast({ title: 'Ошибка', description: 'Укажите товар для обмена (Товар Б)', variant: 'destructive' }); return false;
     }
-    if (!formData.deliveryDate) { toast({ title: 'Ошибка', description: 'Укажите дату поставки', variant: 'destructive' }); return false; }
+    if (formData.contractType !== 'barter' && !formData.deliveryDate) { toast({ title: 'Ошибка', description: 'Укажите дату поставки', variant: 'destructive' }); return false; }
     if (!formData.category) { toast({ title: 'Ошибка', description: 'Выберите категорию товара', variant: 'destructive' }); return false; }
     return true;
   };
