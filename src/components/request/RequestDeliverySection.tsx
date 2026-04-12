@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils';
 import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
 import { useDistrict, type District } from '@/contexts/DistrictContext';
 import { DISTRICTS } from '@/data/districts';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const MapModal = lazy(() => import('@/components/auction/MapModal'));
 
@@ -42,6 +41,7 @@ export default function RequestDeliverySection({
   const [districtInput, setDistrictInput] = useState('');
   const [addressInput, setAddressInput] = useState(formData.deliveryAddress);
   const [isDistrictsOpen, setIsDistrictsOpen] = useState(false);
+  const [districtFilter, setDistrictFilter] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
   const [allDistrictsSelected, setAllDistrictsSelected] = useState(false);
 
@@ -225,54 +225,37 @@ export default function RequestDeliverySection({
           )}
         </div>
 
-        <Collapsible open={isDistrictsOpen} onOpenChange={setIsDistrictsOpen}>
-          <div className="flex items-center gap-2 flex-wrap mb-3">
-            <Label>Принимаются отклики из районов</Label>
-            <CollapsibleTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 w-8 p-0 border-2"
-                type="button"
-              >
-                <Icon 
-                  name={isDistrictsOpen ? "ChevronUp" : "ChevronDown"} 
-                  className="h-5 w-5"
-                />
-              </Button>
-            </CollapsibleTrigger>
-            {allDistrictsSelected && (
-              <button
-                type="button"
-                onClick={handleAllDistrictsToggle}
-                className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
-              >
-                Все районы
-                <Icon name="X" className="h-3 w-3" />
-              </button>
-            )}
-            {!allDistrictsSelected && formData.availableDistricts
-              .filter(districtId => districtId !== 'all')
-              .map(districtId => {
-                const district = districts.find(d => d.id === districtId);
-                if (!district) return null;
-                return (
-                  <button
-                    key={districtId}
-                    type="button"
-                    onClick={() => onDistrictToggle(districtId)}
-                    className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
-                  >
-                    {district.name}
-                    <Icon name="X" className="h-3 w-3" />
-                  </button>
-                );
-              })
-            }
-          </div>
-          <CollapsibleContent>
-            <div className="mb-3">
-              <div className="flex items-center space-x-2">
+        <div className="space-y-3">
+          <Label>Принимаются отклики из районов</Label>
+
+          {/* Кнопка открыть/скрыть */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsDistrictsOpen(v => !v)}
+            className="gap-1.5 text-xs"
+          >
+            <Icon name={isDistrictsOpen ? 'ChevronUp' : 'ChevronDown'} size={14} />
+            {isDistrictsOpen
+              ? 'Скрыть список районов'
+              : allDistrictsSelected
+                ? 'Все районы выбраны'
+                : formData.availableDistricts.length > 0
+                  ? `Выбрано районов: ${formData.availableDistricts.length}`
+                  : 'Выбрать районы'}
+          </Button>
+
+          {isDistrictsOpen && (
+            <div className="border rounded-lg p-3 space-y-3">
+              <Input
+                placeholder="Поиск района..."
+                value={districtFilter}
+                onChange={e => setDistrictFilter(e.target.value)}
+                className="h-8 text-sm"
+              />
+              {/* Все районы */}
+              <div className="flex items-center space-x-2 border-b pb-2">
                 <Checkbox
                   id="all-districts"
                   checked={allDistrictsSelected}
@@ -285,26 +268,58 @@ export default function RequestDeliverySection({
                   Все районы
                 </label>
               </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                {districts
+                  .filter(d => d.id !== 'all' && d.name.toLowerCase().includes(districtFilter.toLowerCase()))
+                  .map(district => (
+                    <div key={district.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`district-${district.id}`}
+                        checked={formData.availableDistricts.includes(district.id)}
+                        onCheckedChange={() => onDistrictToggle(district.id)}
+                      />
+                      <label
+                        htmlFor={`district-${district.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {district.name}
+                      </label>
+                    </div>
+                  ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {districts.filter(d => d.id !== 'all').map(district => (
-                <div key={district.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`district-${district.id}`}
-                    checked={formData.availableDistricts.includes(district.id)}
-                    onCheckedChange={() => onDistrictToggle(district.id)}
-                  />
-                  <label
-                    htmlFor={`district-${district.id}`}
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {district.name}
-                  </label>
-                </div>
-              ))}
+          )}
+
+          {/* Теги выбранных */}
+          {!isDistrictsOpen && formData.availableDistricts.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {allDistrictsSelected ? (
+                <button
+                  type="button"
+                  onClick={handleAllDistrictsToggle}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+                >
+                  Все районы <Icon name="X" size={12} />
+                </button>
+              ) : (
+                formData.availableDistricts.filter(id => id !== 'all').map(districtId => {
+                  const district = districts.find(d => d.id === districtId);
+                  if (!district) return null;
+                  return (
+                    <button
+                      key={districtId}
+                      type="button"
+                      onClick={() => onDistrictToggle(districtId)}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+                    >
+                      {district.name} <Icon name="X" size={12} />
+                    </button>
+                  );
+                })
+              )}
             </div>
-          </CollapsibleContent>
-        </Collapsible>
+          )}
+        </div>
       </CardContent>
 
       {showMapModal && (

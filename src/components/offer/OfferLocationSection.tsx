@@ -51,6 +51,8 @@ export default function OfferLocationSection({
   });
   const [addressInput, setAddressInput] = useState(formData.fullAddress);
   const [showDistrictDelivery, setShowDistrictDelivery] = useState(true);
+  const [districtsOpen, setDistrictsOpen] = useState(false);
+  const [districtFilter, setDistrictFilter] = useState('');
   const [showMapModal, setShowMapModal] = useState(false);
 
   // Автоопределение района по геолокации при первой загрузке
@@ -244,11 +246,18 @@ export default function OfferLocationSection({
           <div>
             <Label className="mb-3 block">Доставка в другие районы:</Label>
             <div className="space-y-3">
+              {/* Нет */}
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="district-delivery-no"
                   checked={!showDistrictDelivery}
-                  onCheckedChange={(checked) => setShowDistrictDelivery(!checked)}
+                  onCheckedChange={(checked) => {
+                    setShowDistrictDelivery(!checked);
+                    if (checked) {
+                      setDistrictsOpen(false);
+                      formData.availableDistricts.forEach(id => onDistrictToggle(id));
+                    }
+                  }}
                 />
                 <label
                   htmlFor="district-delivery-no"
@@ -257,7 +266,7 @@ export default function OfferLocationSection({
                   Нет
                 </label>
               </div>
-              
+
               {showDistrictDelivery && (
                 <>
                   {deliveryDistricts.length === 0 ? (
@@ -265,22 +274,52 @@ export default function OfferLocationSection({
                       Сначала выберите район местоположения, чтобы указать районы доставки
                     </p>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {deliveryDistricts.map(district => (
-                        <div key={district.id} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`district-${district.id}`}
-                            checked={formData.availableDistricts.includes(district.id)}
-                            onCheckedChange={() => onDistrictToggle(district.id)}
+                    <div className="space-y-3">
+                      {/* Кнопка открыть/скрыть */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDistrictsOpen(v => !v)}
+                        className="gap-1.5 text-xs"
+                      >
+                        <Icon name={districtsOpen ? 'ChevronUp' : 'ChevronDown'} size={14} />
+                        {districtsOpen
+                          ? 'Скрыть список районов'
+                          : formData.availableDistricts.length > 0
+                            ? `Выбрано районов: ${formData.availableDistricts.length}`
+                            : 'Выбрать районы доставки'}
+                      </Button>
+
+                      {districtsOpen && (
+                        <div className="border rounded-lg p-3 space-y-3">
+                          <Input
+                            placeholder="Поиск района..."
+                            value={districtFilter}
+                            onChange={e => setDistrictFilter(e.target.value)}
+                            className="h-8 text-sm"
                           />
-                          <label
-                            htmlFor={`district-${district.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {district.name}
-                          </label>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+                            {deliveryDistricts
+                              .filter(d => d.name.toLowerCase().includes(districtFilter.toLowerCase()))
+                              .map(district => (
+                                <div key={district.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`district-${district.id}`}
+                                    checked={formData.availableDistricts.includes(district.id)}
+                                    onCheckedChange={() => onDistrictToggle(district.id)}
+                                  />
+                                  <label
+                                    htmlFor={`district-${district.id}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    {district.name}
+                                  </label>
+                                </div>
+                              ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
                 </>
