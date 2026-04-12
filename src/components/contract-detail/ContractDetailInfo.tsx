@@ -1,8 +1,102 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { formatOrgName } from '@/lib/formatOrgName';
+
+function MapModal({ address, onClose }: { address: string; onClose: () => void }) {
+  const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ lat: string; lon: string } | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const didFetch = useRef(false);
+
+  useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
+    const q = encodeURIComponent(address);
+    fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+      headers: { 'Accept-Language': 'ru' },
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data && data[0]) {
+          const { lat, lon } = data[0];
+          setCoords({ lat, lon });
+          setMapUrl(
+            `https://www.openstreetmap.org/export/embed.html?bbox=${Number(lon) - 0.015},${Number(lat) - 0.015},${Number(lon) + 0.015},${Number(lat) + 0.015}&layer=mapnik&marker=${lat},${lon}`
+          );
+        } else {
+          setNotFound(true);
+        }
+      })
+      .catch(() => setNotFound(true));
+  }, [address]);
+
+  const routeUrl = coords
+    ? `https://yandex.ru/maps/?rtext=~${coords.lat},${coords.lon}&rtt=auto`
+    : `https://yandex.ru/maps/?text=${encodeURIComponent(address)}`;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-background rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div className="flex items-center gap-2">
+            <Icon name="MapPin" size={16} className="text-primary" />
+            <span className="font-semibold text-sm">Местоположение</span>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1 rounded-full">
+            <Icon name="X" size={18} />
+          </button>
+        </div>
+
+        <div className="px-4 py-2 text-sm text-muted-foreground border-b">{address}</div>
+
+        <div className="relative bg-muted" style={{ height: 320 }}>
+          {mapUrl ? (
+            <iframe
+              src={mapUrl}
+              width="100%"
+              height="320"
+              style={{ border: 0, display: 'block' }}
+              loading="lazy"
+              title="Карта"
+            />
+          ) : notFound ? (
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground text-sm">
+              <Icon name="MapPinOff" size={32} />
+              <span>Адрес не найден на карте</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full gap-2 text-muted-foreground text-sm">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+              Загрузка карты...
+            </div>
+          )}
+        </div>
+
+        <div className="p-4 flex gap-2">
+          <Button
+            className="flex-1"
+            onClick={() => window.open(routeUrl, '_blank')}
+          >
+            <Icon name="Navigation" size={16} className="mr-2" />
+            Проложить маршрут
+          </Button>
+          <Button variant="outline" onClick={onClose}>
+            Закрыть
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface Contract {
   id: number;
@@ -77,6 +171,7 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
   const imagesB = Array.isArray(contract.productSpecs?.productImagesB)
     ? (contract.productSpecs!.productImagesB as string[])
     : [];
+  const [mapModalOpen, setMapModalOpen] = useState(false);
 
   return (
     <>
@@ -149,8 +244,20 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
             {contract.deliveryAddress && (
               <div className="col-span-2">
                 <div className="text-muted-foreground">Адрес доставки</div>
-                <div className="font-medium">{contract.deliveryAddress}</div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="font-medium">{contract.deliveryAddress}</div>
+                  <button
+                    onClick={() => setMapModalOpen(true)}
+                    className="shrink-0 flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
+                  >
+                    <Icon name="MapPin" size={13} />
+                    На карте
+                  </button>
+                </div>
               </div>
+            )}
+            {mapModalOpen && contract.deliveryAddress && (
+              <MapModal address={contract.deliveryAddress} onClose={() => setMapModalOpen(false)} />
             )}
             {contract.deliveryMethod && (
               <div>
