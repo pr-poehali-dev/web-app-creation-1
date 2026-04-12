@@ -1,5 +1,5 @@
 """
-ИИ-помощник для заполнения формы предложений через Google Gemini API. v2
+ИИ-помощник для заполнения формы предложений через OpenAI API.
 POST /ai-assist
 Body: { action: "improve_title"|"improve_description"|"suggest_description", title?: string, description?: string, category?: string }
 Возвращает: { result: string }
@@ -9,27 +9,32 @@ import os
 import requests
 
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 
 
-def call_gemini(prompt: str) -> str:
-    api_key = os.environ["GEMINI_API_KEY"]
+def call_openai(prompt: str) -> str:
+    api_key = os.environ["OPENAI_API_KEY"]
     response = requests.post(
-        f"{GEMINI_API_URL}?key={api_key}",
-        headers={"Content-Type": "application/json"},
+        OPENAI_API_URL,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
         json={
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"maxOutputTokens": 400, "temperature": 0.7},
+            "model": "gpt-4o-mini",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 400,
+            "temperature": 0.7,
         },
         timeout=20,
     )
     response.raise_for_status()
-    return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+    return response.json()["choices"][0]["message"]["content"].strip()
 
 
 def handler(event: dict, context) -> dict:
     """
-    ИИ-помощник для улучшения текстов в форме предложений (Gemini).
+    ИИ-помощник для улучшения текстов в форме предложений (OpenAI).
     """
     cors = {
         "Access-Control-Allow-Origin": "*",
@@ -83,7 +88,7 @@ def handler(event: dict, context) -> dict:
     else:
         return {"statusCode": 400, "headers": cors, "body": json.dumps({"error": "unknown action"})}
 
-    result = call_gemini(prompt)
+    result = call_openai(prompt)
 
     return {
         "statusCode": 200,
