@@ -121,7 +121,15 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ru-RU');
+    if (!dateString || dateString === 'None' || dateString === 'null') return '—';
+    try {
+      const d = new Date(dateString);
+      const y = d.getFullYear();
+      if (y <= 2000 || y >= 2099) return '—';
+      return d.toLocaleDateString('ru-RU');
+    } catch {
+      return '—';
+    }
   };
 
   const formatPrice = (price: number) => {

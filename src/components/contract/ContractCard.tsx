@@ -79,7 +79,10 @@ export function formatAmount(amount: number, currency = 'RUB') {
 export function formatDate(dateStr: string) {
   if (!dateStr || dateStr === 'None' || dateStr === 'null') return '—';
   try {
-    return new Date(dateStr).toLocaleDateString('ru-RU');
+    const d = new Date(dateStr);
+    const y = d.getFullYear();
+    if (y <= 2000 || y >= 2099) return '—';
+    return d.toLocaleDateString('ru-RU');
   } catch {
     return '—';
   }
@@ -129,7 +132,9 @@ export default function ContractCard({ contract, currentUserId, onClick }: { con
             </div>
           </div>
           <div className="text-right shrink-0">
-            <div className="font-semibold text-sm">{contract.totalAmount ? formatAmount(contract.totalAmount, contract.currency) : 'Договорная'}</div>
+            <div className="font-semibold text-sm">
+              {contract.contractType === 'barter' ? 'Бартер' : (contract.totalAmount ? formatAmount(contract.totalAmount, contract.currency) : 'Договорная')}
+            </div>
             <div className="text-xs text-muted-foreground mt-1">{isSeller ? (isRequest ? 'Инициатор' : 'Продавец') : (isRequest ? 'Поставщик' : 'Покупатель')}</div>
           </div>
         </div>

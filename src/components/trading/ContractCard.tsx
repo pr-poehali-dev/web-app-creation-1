@@ -70,22 +70,33 @@ export default function ContractCard({
               <Icon name="Package" className="h-3 w-3 shrink-0" />
               <span>{contract.productName} · {contract.quantity} {contract.unit}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <Icon name="Calendar" className="h-3 w-3 shrink-0" />
-              <span>Поставка: {formatDate(contract.deliveryDate)}</span>
-            </div>
+            {contract.contractType !== 'barter' && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Icon name="Calendar" className="h-3 w-3 shrink-0" />
+                <span>Поставка: {formatDate(contract.deliveryDate)}</span>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t">
-            <div>
-              <div className="text-xs text-muted-foreground">За единицу</div>
-              <div className="text-sm font-semibold">{formatPrice(contract.pricePerUnit)}</div>
+          {contract.contractType === 'barter' ? (
+            <div className="flex items-center justify-between pt-2 border-t">
+              <Badge variant="secondary" className="text-sm font-semibold">
+                <Icon name="ArrowLeftRight" className="h-3.5 w-3.5 mr-1.5" />
+                Обмен товарами
+              </Badge>
             </div>
-            <div className="text-right">
-              <div className="text-xs text-muted-foreground">Итого</div>
-              <div className="font-bold text-base">{formatPrice(contract.totalAmount)}</div>
+          ) : (
+            <div className="flex items-center justify-between pt-2 border-t">
+              <div>
+                <div className="text-xs text-muted-foreground">За единицу</div>
+                <div className="text-sm font-semibold">{formatPrice(contract.pricePerUnit)}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-muted-foreground">Итого</div>
+                <div className="font-bold text-base">{formatPrice(contract.totalAmount)}</div>
+              </div>
             </div>
-          </div>
+          )}
 
           {(contract.discountPercent > 0 || contract.financingAvailable) && (
             <div className="flex gap-1.5 flex-wrap">

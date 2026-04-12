@@ -179,7 +179,15 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
     }
   };
 
-  const formatDate = (d: string) => d ? new Date(d).toLocaleDateString('ru-RU') : '—';
+  const formatDate = (d: string) => {
+    if (!d || d === 'None' || d === 'null') return '—';
+    try {
+      const dt = new Date(d);
+      const y = dt.getFullYear();
+      if (y <= 2000 || y >= 2099) return '—';
+      return dt.toLocaleDateString('ru-RU');
+    } catch { return '—'; }
+  };
   const formatPrice = (p: number) =>
     new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(p || 0);
 

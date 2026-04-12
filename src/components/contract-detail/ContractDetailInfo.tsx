@@ -134,14 +134,18 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
         <CardHeader><CardTitle className="text-base">Сроки и доставка</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <div className="text-muted-foreground">Дата поставки</div>
-              <div className="font-medium">{formatDate(contract.deliveryDate)}</div>
-            </div>
-            <div>
-              <div className="text-muted-foreground">Срок контракта</div>
-              <div className="font-medium">{formatDate(contract.contractStartDate)} — {formatDate(contract.contractEndDate)}</div>
-            </div>
+            {!isBarter && (
+              <div>
+                <div className="text-muted-foreground">Дата поставки</div>
+                <div className="font-medium">{formatDate(contract.deliveryDate)}</div>
+              </div>
+            )}
+            {!isBarter && (
+              <div>
+                <div className="text-muted-foreground">Срок контракта</div>
+                <div className="font-medium">{formatDate(contract.contractStartDate)} — {formatDate(contract.contractEndDate)}</div>
+              </div>
+            )}
             {contract.deliveryAddress && (
               <div className="col-span-2">
                 <div className="text-muted-foreground">Адрес доставки</div>
