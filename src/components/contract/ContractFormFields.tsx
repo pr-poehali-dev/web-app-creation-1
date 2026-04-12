@@ -20,6 +20,8 @@ interface ContractFormFieldsProps {
   isPublishing: boolean;
   onSave: () => void;
   onPublish: () => void;
+  categoryManuallySet: boolean;
+  categoryBManuallySet: boolean;
 }
 
 export default function ContractFormFields({
@@ -36,6 +38,8 @@ export default function ContractFormFields({
   isPublishing,
   onSave,
   onPublish,
+  categoryManuallySet,
+  categoryBManuallySet,
 }: ContractFormFieldsProps) {
   const isForwardRequest = formData.contractType === 'forward-request';
 
@@ -106,6 +110,8 @@ export default function ContractFormFields({
         handleProductNameChange={handleProductNameChange}
         handleProductNameBChange={handleProductNameBChange}
         totalAmount={totalAmount}
+        categoryManuallySet={categoryManuallySet}
+        categoryBManuallySet={categoryBManuallySet}
       />
 
       <ContractDeliverySection

@@ -189,7 +189,7 @@ export function useContractData(isAuthenticated: boolean) {
       return {
         ...prev,
         productName: value,
-        category: autoCategory || prev.category,
+        category: categoryManuallySet ? prev.category : (autoCategory || prev.category),
         title: prev.title || (value ? (prev.contractType === 'forward-request' ? `Запрос: ${value}` : `Поставка: ${value}`) : ''),
       };
     });
@@ -201,7 +201,7 @@ export function useContractData(isAuthenticated: boolean) {
       return {
         ...prev,
         productNameB: value,
-        categoryB: autoCategory || prev.categoryB,
+        categoryB: categoryBManuallySet ? prev.categoryB : (autoCategory || prev.categoryB),
       };
     });
   };
@@ -348,5 +348,7 @@ export function useContractData(isAuthenticated: boolean) {
     handleSaveToContracts,
     handlePublishContract,
     setImages,
+    categoryManuallySet,
+    categoryBManuallySet,
   };
 }

@@ -15,6 +15,8 @@ interface ContractProductSectionProps {
   handleProductNameChange: (value: string) => void;
   handleProductNameBChange: (value: string) => void;
   totalAmount: number;
+  categoryManuallySet: boolean;
+  categoryBManuallySet: boolean;
 }
 
 export default function ContractProductSection({
@@ -24,12 +26,14 @@ export default function ContractProductSection({
   handleProductNameChange,
   handleProductNameBChange,
   totalAmount,
+  categoryManuallySet,
+  categoryBManuallySet,
 }: ContractProductSectionProps) {
   const isBarter = formData.contractType === 'barter';
   const isForwardRequest = formData.contractType === 'forward-request';
   const categoryLabel = CATEGORIES.find(c => c.value === formData.category)?.label || '';
   const autoDetectedCategory = detectCategory(formData.productName);
-  const isCategoryAutoDetected = !!autoDetectedCategory && autoDetectedCategory === formData.category;
+  const isCategoryAutoDetected = !categoryManuallySet && !!autoDetectedCategory && autoDetectedCategory === formData.category;
 
   return (
     <>

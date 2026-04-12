@@ -31,6 +31,8 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
     isPublishing,
     handleSaveToContracts,
     handlePublishContract,
+    categoryManuallySet,
+    categoryBManuallySet,
   } = useContractData(isAuthenticated);
 
   if (isCheckingVerification) {
@@ -77,6 +79,8 @@ export default function CreateContract({ isAuthenticated, onLogout }: CreateCont
             isPublishing={isPublishing}
             onSave={handleSaveToContracts}
             onPublish={handlePublishContract}
+            categoryManuallySet={categoryManuallySet}
+            categoryBManuallySet={categoryBManuallySet}
           />
 
         </div>
