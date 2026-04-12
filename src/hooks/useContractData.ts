@@ -102,6 +102,8 @@ export function useContractData(isAuthenticated: boolean) {
   const [step, setStep] = useState<'form' | 'preview'>('form');
   const [sellerProfile, setSellerProfile] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<ContractFormData>(initialFormData);
+  const [categoryManuallySet, setCategoryManuallySet] = useState(false);
+  const [categoryBManuallySet, setCategoryBManuallySet] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
@@ -169,8 +171,11 @@ export function useContractData(isAuthenticated: boolean) {
     setIsCheckingVerification(false);
   };
 
-  const set = (field: string, value: string) =>
+  const set = (field: string, value: string) => {
+    if (field === 'category') setCategoryManuallySet(true);
+    if (field === 'categoryB') setCategoryBManuallySet(true);
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const setArray = (field: 'deliveryTypes' | 'deliveryDistricts', values: string[]) =>
     setFormData(prev => ({ ...prev, [field]: values }));
