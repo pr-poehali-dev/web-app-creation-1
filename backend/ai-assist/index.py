@@ -1,5 +1,5 @@
 """
-ИИ-помощник для заполнения формы предложений через OpenAI API.
+ИИ-помощник для заполнения формы предложений через YandexGPT API.
 POST /ai-assist
 Body: { action: "improve_title"|"improve_description"|"suggest_description", title?: string, description?: string, category?: string }
 Возвращает: { result: string }
@@ -9,32 +9,36 @@ import os
 import requests
 
 
-OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
-
-
-def call_openai(prompt: str) -> str:
-    api_key = os.environ["OPENAI_API_KEY"]
+def call_yandex_gpt(prompt: str) -> str:
+    api_key = os.environ["YANDEX_API_KEY"]
+    folder_id = os.environ["YANDEX_FOLDER_ID"]
     response = requests.post(
-        OPENAI_API_URL,
+        "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Api-Key {api_key}",
+            "x-folder-id": folder_id,
         },
         json={
-            "model": "gpt-4o-mini",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 400,
-            "temperature": 0.7,
+            "modelUri": f"gpt://{folder_id}/yandexgpt-lite",
+            "completionOptions": {
+                "stream": False,
+                "temperature": 0.7,
+                "maxTokens": 400,
+            },
+            "messages": [
+                {"role": "user", "text": prompt}
+            ],
         },
-        timeout=20,
+        timeout=25,
     )
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"].strip()
+    return response.json()["result"]["alternatives"][0]["message"]["text"].strip()
 
 
 def handler(event: dict, context) -> dict:
     """
-    ИИ-помощник для улучшения текстов в форме предложений (OpenAI).
+    ИИ-помощник для улучшения текстов в форме предложений (YandexGPT).
     """
     cors = {
         "Access-Control-Allow-Origin": "*",
@@ -88,7 +92,7 @@ def handler(event: dict, context) -> dict:
     else:
         return {"statusCode": 400, "headers": cors, "body": json.dumps({"error": "unknown action"})}
 
-    result = call_openai(prompt)
+    result = call_yandex_gpt(prompt)
 
     return {
         "statusCode": 200,
