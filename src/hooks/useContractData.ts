@@ -179,20 +179,26 @@ export function useContractData(isAuthenticated: boolean) {
     setFormData(prev => ({ ...prev, [field]: urls }));
 
   const handleProductNameChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      productName: value,
-      category: prev.category || detectCategory(value),
-      title: prev.title || (value ? (prev.contractType === 'forward-request' ? `Запрос: ${value}` : `Поставка: ${value}`) : ''),
-    }));
+    setFormData(prev => {
+      const autoCategory = detectCategory(value);
+      return {
+        ...prev,
+        productName: value,
+        category: autoCategory || prev.category,
+        title: prev.title || (value ? (prev.contractType === 'forward-request' ? `Запрос: ${value}` : `Поставка: ${value}`) : ''),
+      };
+    });
   };
 
   const handleProductNameBChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      productNameB: value,
-      categoryB: prev.categoryB || detectCategory(value),
-    }));
+    setFormData(prev => {
+      const autoCategory = detectCategory(value);
+      return {
+        ...prev,
+        productNameB: value,
+        categoryB: autoCategory || prev.categoryB,
+      };
+    });
   };
 
   const totalAmount = formData.quantity && formData.pricePerUnit

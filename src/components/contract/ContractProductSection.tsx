@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
-import { CATEGORIES, UNITS } from '@/hooks/useContractData';
+import { CATEGORIES, UNITS, detectCategory } from '@/hooks/useContractData';
 import type { ContractFormData } from '@/hooks/useContractData';
 import ContractPhotoUpload from './ContractPhotoUpload';
 import AIAssistButton from '@/components/offer/AIAssistButton';
@@ -28,6 +28,8 @@ export default function ContractProductSection({
   const isBarter = formData.contractType === 'barter';
   const isForwardRequest = formData.contractType === 'forward-request';
   const categoryLabel = CATEGORIES.find(c => c.value === formData.category)?.label || '';
+  const autoDetectedCategory = detectCategory(formData.productName);
+  const isCategoryAutoDetected = !!autoDetectedCategory && autoDetectedCategory === formData.category;
 
   return (
     <>
@@ -59,7 +61,7 @@ export default function ContractProductSection({
                 onChange={e => handleProductNameChange(e.target.value)}
                 placeholder={isForwardRequest ? 'Молоко цельное, монтажные работы, зерно пшеницы...' : 'Молоко цельное, пшеница 3 кл., кирпич М150...'}
               />
-              {formData.category && (
+              {isCategoryAutoDetected && (
                 <p className="text-xs text-primary flex items-center gap-1">
                   <Icon name="Sparkles" size={12} />
                   Категория определена автоматически: {categoryLabel}
