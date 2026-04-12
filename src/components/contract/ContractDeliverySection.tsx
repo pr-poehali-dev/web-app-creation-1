@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,37 @@ export default function ContractDeliverySection({
   const { selectedRegion } = useDistrict();
   const [districtFilter, setDistrictFilter] = useState('');
   const [districtsOpen, setDistrictsOpen] = useState(false);
+  const [mapUrl, setMapUrl] = useState<string | null>(null);
+  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasPickup = formData.deliveryTypes.includes('pickup');
+
+  useEffect(() => {
+    if (!hasPickup || !formData.deliveryAddress || formData.deliveryAddress.length < 5) {
+      setMapUrl(null);
+      return;
+    }
+    if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    geocodeTimer.current = setTimeout(async () => {
+      try {
+        const q = encodeURIComponent(formData.deliveryAddress);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+          headers: { 'Accept-Language': 'ru' },
+        });
+        const data = await res.json();
+        if (data && data[0]) {
+          const { lat, lon } = data[0];
+          const url = `https://www.openstreetmap.org/export/embed.html?bbox=${Number(lon)-0.01},${Number(lat)-0.01},${Number(lon)+0.01},${Number(lat)+0.01}&layer=mapnik&marker=${lat},${lon}`;
+          setMapUrl(url);
+        } else {
+          setMapUrl(null);
+        }
+      } catch {
+        setMapUrl(null);
+      }
+    }, 1000);
+    return () => { if (geocodeTimer.current) clearTimeout(geocodeTimer.current); };
+  }, [formData.deliveryAddress, hasPickup]);
 
   const deliveryDistricts = useMemo(() => {
     const regionId = selectedRegion && selectedRegion !== 'all' ? selectedRegion : null;
@@ -112,6 +143,34 @@ export default function ContractDeliverySection({
             </div>
             <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
           </div>
+
+          {hasPickup && formData.deliveryAddress.length >= 5 && (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground flex items-center gap-1">
+                <Icon name="MapPin" size={13} />
+                {mapUrl ? 'Местоположение на карте (самовывоз)' : 'Определяю местоположение...'}
+              </Label>
+              {mapUrl ? (
+                <div className="rounded-lg overflow-hidden border border-border">
+                  <iframe
+                    src={mapUrl}
+                    width="100%"
+                    height="220"
+                    style={{ border: 0, display: 'block' }}
+                    loading="lazy"
+                    title="Карта местоположения"
+                  />
+                </div>
+              ) : (
+                <div className="h-[220px] rounded-lg border border-border bg-muted flex items-center justify-center">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                    Загрузка карты...
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="space-y-1">
             <div className="flex items-center justify-between">
