@@ -89,11 +89,11 @@ const initialFormData: ContractFormData = {
   deliveryNotes: '',
 };
 
-export function useContractData(isAuthenticated: boolean) {
+export function useContractData(isAuthenticated: boolean, skipVerificationCheck = false) {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [isCheckingVerification, setIsCheckingVerification] = useState(true);
+  const [isCheckingVerification, setIsCheckingVerification] = useState(!skipVerificationCheck);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -107,9 +107,11 @@ export function useContractData(isAuthenticated: boolean) {
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
-    checkVerification();
+    if (!skipVerificationCheck) {
+      checkVerification();
+    }
     loadProfile();
-  }, [isAuthenticated]);
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadProfile = async () => {
     try {
@@ -285,17 +287,56 @@ export function useContractData(isAuthenticated: boolean) {
     URL.revokeObjectURL(url);
   };
 
-  const saveContract = async (publish: boolean) => {
+  const prefillFormData = (c: Record<string, unknown>) => {
+    const specs = (c.productSpecs as Record<string, string | string[]>) || {};
+    const safeDate = (d: unknown) => {
+      if (!d || d === 'None' || d === 'null') return '';
+      const s = String(d).split('T')[0];
+      const y = parseInt(s.split('-')[0] || '0');
+      if (y <= 2000 || y >= 2099) return '';
+      return s;
+    };
+    setFormData({
+      contractType: String(c.contractType || 'forward'),
+      category: String(c.category || 'other'),
+      title: String(c.title || ''),
+      description: String(c.description || ''),
+      productName: String(c.productName || ''),
+      quantity: c.quantity ? String(c.quantity) : '',
+      unit: String(c.unit || 'т'),
+      pricePerUnit: c.pricePerUnit ? String(c.pricePerUnit) : '',
+      deliveryDate: safeDate(c.deliveryDate),
+      contractStartDate: safeDate(c.contractStartDate) || new Date().toISOString().split('T')[0],
+      contractEndDate: safeDate(c.contractEndDate),
+      deliveryAddress: String(c.deliveryAddress || ''),
+      deliveryMethod: String(c.deliveryMethod || ''),
+      deliveryTypes: c.deliveryMethod ? String(c.deliveryMethod).split(', ').filter(Boolean) : [],
+      deliveryDistricts: Array.isArray(c.deliveryDistricts) ? (c.deliveryDistricts as string[]) : [],
+      prepaymentPercent: c.prepaymentPercent ? String(c.prepaymentPercent) : '0',
+      termsConditions: String(c.termsConditions || ''),
+      productNameB: String(specs.productNameB || ''),
+      quantityB: String(specs.quantityB || ''),
+      unitB: String(specs.unitB || 'т'),
+      categoryB: String(specs.categoryB || ''),
+      productImages: Array.isArray(c.productImages) ? (c.productImages as string[]) : [],
+      productImagesB: Array.isArray(specs.productImagesB) ? (specs.productImagesB as string[]) : [],
+      deliveryNotes: '',
+    });
+  };
+
+  const saveContract = async (publish: boolean, editId?: number) => {
     if (!validate()) return;
     const setLoading = publish ? setIsPublishing : setIsSubmitting;
     setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
       const url = (func2url as Record<string, string>)['save-contract'];
+      const isEdit = !!editId;
       const res = await fetch(url, {
-        method: 'POST',
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId || '' },
         body: JSON.stringify({
+          ...(isEdit ? { contractId: editId } : {}),
           ...formData,
           totalAmount,
           prepaymentAmount,
@@ -305,13 +346,14 @@ export function useContractData(isAuthenticated: boolean) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        notifyContractUpdated(data.contractId);
+        const contractId = editId || data.contractId;
+        notifyContractUpdated(contractId);
         if (publish) {
           toast({ title: 'Контракт опубликован', description: 'Контракт виден другим участникам платформы' });
         } else {
-          toast({ title: 'Черновик сохранён', description: 'Контракт добавлен в раздел «Мои контракты»' });
+          toast({ title: isEdit ? 'Изменения сохранены' : 'Черновик сохранён', description: isEdit ? '' : 'Контракт добавлен в раздел «Мои контракты»' });
         }
-        navigate('/trading');
+        navigate(isEdit ? `/contract/${contractId}` : '/trading');
       } else {
         toast({ title: 'Ошибка', description: data.error || 'Не удалось сохранить контракт', variant: 'destructive' });
       }
@@ -323,8 +365,8 @@ export function useContractData(isAuthenticated: boolean) {
     }
   };
 
-  const handleSaveToContracts = () => saveContract(false);
-  const handlePublishContract = () => saveContract(true);
+  const handleSaveToContracts = (editId?: number) => saveContract(false, editId);
+  const handlePublishContract = (editId?: number) => saveContract(true, editId);
 
   return {
     formData,
@@ -350,5 +392,7 @@ export function useContractData(isAuthenticated: boolean) {
     setImages,
     categoryManuallySet,
     categoryBManuallySet,
+    prefillFormData,
+    setIsCheckingVerification,
   };
 }
