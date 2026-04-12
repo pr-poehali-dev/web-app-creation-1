@@ -1,5 +1,5 @@
 """
-ИИ-помощник для заполнения формы предложений через GigaChat API.
+ИИ-помощник для заполнения формы предложений через Google Gemini API.
 POST /ai-assist
 Body: { action: "improve_title"|"improve_description"|"suggest_description", title?: string, description?: string, category?: string }
 Возвращает: { result: string }
@@ -7,53 +7,29 @@ Body: { action: "improve_title"|"improve_description"|"suggest_description", tit
 import json
 import os
 import requests
-import uuid
 
 
-GIGACHAT_AUTH_URL = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
-GIGACHAT_API_URL = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 
-def get_access_token() -> str:
-    auth_key = os.environ["OPENAI_API_KEY"]
+def call_gemini(prompt: str) -> str:
+    api_key = os.environ["GEMINI_API_KEY"]
     response = requests.post(
-        GIGACHAT_AUTH_URL,
-        headers={
-            "Authorization": f"Basic {auth_key}",
-            "RqUID": str(uuid.uuid4()),
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        data={"scope": "GIGACHAT_API_PERS"},
-        verify=False,
-        timeout=15,
-    )
-    response.raise_for_status()
-    return response.json()["access_token"]
-
-
-def call_gigachat(prompt: str, access_token: str) -> str:
-    response = requests.post(
-        GIGACHAT_API_URL,
-        headers={
-            "Authorization": f"Bearer {access_token}",
-            "Content-Type": "application/json",
-        },
+        f"{GEMINI_API_URL}?key={api_key}",
+        headers={"Content-Type": "application/json"},
         json={
-            "model": "GigaChat",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 250,
-            "temperature": 0.7,
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"maxOutputTokens": 400, "temperature": 0.7},
         },
-        verify=False,
         timeout=20,
     )
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"].strip()
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
 
 
 def handler(event: dict, context) -> dict:
     """
-    ИИ-помощник для улучшения текстов в форме предложений (GigaChat).
+    ИИ-помощник для улучшения текстов в форме предложений (Gemini).
     """
     cors = {
         "Access-Control-Allow-Origin": "*",
@@ -107,8 +83,7 @@ def handler(event: dict, context) -> dict:
     else:
         return {"statusCode": 400, "headers": cors, "body": json.dumps({"error": "unknown action"})}
 
-    access_token = get_access_token()
-    result = call_gigachat(prompt, access_token)
+    result = call_gemini(prompt)
 
     return {
         "statusCode": 200,
