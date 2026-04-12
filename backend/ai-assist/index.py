@@ -1,5 +1,5 @@
 """
-ИИ-помощник для улучшения текстов в предложениях и контрактах через YandexGPT API.
+ИИ-помощник для улучшения текстов в предложениях и контрактах через YandexGPT API. v2
 POST /ai-assist
 Body: { action: string, title?: string, description?: string, category?: string,
         productName?: string, termsConditions?: string, contractType?: string }
