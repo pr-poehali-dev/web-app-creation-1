@@ -1,5 +1,5 @@
 """
-ИИ-помощник для улучшения текстов в предложениях и контрактах через OpenAI API.
+ИИ-помощник для улучшения текстов в предложениях и контрактах через YandexGPT API.
 POST /ai-assist
 Body: { action: string, title?: string, description?: string, category?: string,
         productName?: string, termsConditions?: string, contractType?: string }
@@ -10,32 +10,40 @@ import os
 import requests
 
 
-def call_openai(prompt: str, max_tokens: int = 400) -> str:
-    api_key = os.environ["OPENAI_API_KEY"]
+def call_yandex_gpt(prompt: str, max_tokens: int = 400) -> str:
+    api_key = os.environ["YANDEX_API_KEY"]
+    folder_id = os.environ["YANDEX_FOLDER_ID"]
     response = requests.post(
-        "https://api.openai.com/v1/chat/completions",
+        "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Api-Key {api_key}",
+            "x-folder-id": folder_id,
         },
         json={
-            "model": "gpt-4o-mini",
+            "modelUri": f"gpt://{folder_id}/yandexgpt-lite",
+            "completionOptions": {
+                "stream": False,
+                "temperature": 0.7,
+                "maxTokens": max_tokens,
+            },
             "messages": [
-                {"role": "system", "content": "Ты помощник для торговой платформы ЕРТТП (Единая Российская Торговая Площадка). Отвечай кратко, строго по заданию, без лишних пояснений."},
-                {"role": "user", "content": prompt},
+                {
+                    "role": "system",
+                    "text": "Ты помощник для торговой платформы ЕРТТП (Единая Российская Торговая Площадка). Отвечай кратко, строго по заданию, без лишних пояснений."
+                },
+                {"role": "user", "text": prompt}
             ],
-            "temperature": 0.7,
-            "max_tokens": max_tokens,
         },
         timeout=25,
     )
     response.raise_for_status()
-    return response.json()["choices"][0]["message"]["content"].strip()
+    return response.json()["result"]["alternatives"][0]["message"]["text"].strip()
 
 
 def handler(event: dict, context) -> dict:
     """
-    ИИ-помощник для улучшения текстов в форме предложений и контрактов (OpenAI).
+    ИИ-помощник для улучшения текстов в форме предложений и контрактов (YandexGPT).
     """
     cors = {
         "Access-Control-Allow-Origin": "*",
@@ -152,7 +160,7 @@ def handler(event: dict, context) -> dict:
     else:
         return {"statusCode": 400, "headers": cors, "body": json.dumps({"error": "unknown action"})}
 
-    result = call_openai(prompt, max_tokens)
+    result = call_yandex_gpt(prompt, max_tokens)
 
     return {
         "statusCode": 200,
