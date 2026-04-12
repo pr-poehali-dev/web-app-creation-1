@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import type { ContractFormData } from '@/hooks/useContractData';
 import { DISTRICTS } from '@/data/districts';
@@ -26,6 +27,8 @@ export default function ContractDeliverySection({
   const isBarter = formData.contractType === 'barter';
   const isForwardRequest = formData.contractType === 'forward-request';
   const { selectedRegion } = useDistrict();
+  const [districtFilter, setDistrictFilter] = useState('');
+  const [districtsOpen, setDistrictsOpen] = useState(false);
 
   const deliveryDistricts = useMemo(() => {
     const regionId = selectedRegion && selectedRegion !== 'all' ? selectedRegion : null;
@@ -175,29 +178,61 @@ export default function ContractDeliverySection({
               {deliveryDistricts.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Нет доступных районов</p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {/* Нет */}
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="dd-none"
                       checked={formData.deliveryDistricts.length === 0}
-                      onCheckedChange={() => setArray('deliveryDistricts', [])}
+                      onCheckedChange={() => {
+                        setArray('deliveryDistricts', []);
+                        setDistrictsOpen(false);
+                      }}
                     />
                     <label htmlFor="dd-none" className="text-sm cursor-pointer">Нет</label>
                   </div>
-                  {/* Список районов — 3 колонки */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2">
-                    {deliveryDistricts.map(d => (
-                      <div key={d.id} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`dd-${d.id}`}
-                          checked={formData.deliveryDistricts.includes(d.id)}
-                          onCheckedChange={() => toggleDistrict(d.id)}
-                        />
-                        <label htmlFor={`dd-${d.id}`} className="text-sm cursor-pointer leading-tight">{d.name}</label>
+
+                  {/* Кнопка открыть/скрыть список */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDistrictsOpen(v => !v)}
+                    className="gap-1.5 text-xs"
+                  >
+                    <Icon name={districtsOpen ? 'ChevronUp' : 'ChevronDown'} size={14} />
+                    {districtsOpen
+                      ? 'Скрыть список районов'
+                      : formData.deliveryDistricts.length > 0
+                        ? `Выбрано районов: ${formData.deliveryDistricts.length}`
+                        : 'Выбрать районы доставки'}
+                  </Button>
+
+                  {/* Список районов с фильтром */}
+                  {districtsOpen && (
+                    <div className="border rounded-lg p-3 space-y-3">
+                      <Input
+                        placeholder="Поиск района..."
+                        value={districtFilter}
+                        onChange={e => setDistrictFilter(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2 max-h-60 overflow-y-auto">
+                        {deliveryDistricts
+                          .filter(d => d.name.toLowerCase().includes(districtFilter.toLowerCase()))
+                          .map(d => (
+                            <div key={d.id} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`dd-${d.id}`}
+                                checked={formData.deliveryDistricts.includes(d.id)}
+                                onCheckedChange={() => toggleDistrict(d.id)}
+                              />
+                              <label htmlFor={`dd-${d.id}`} className="text-sm cursor-pointer leading-tight">{d.name}</label>
+                            </div>
+                          ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
