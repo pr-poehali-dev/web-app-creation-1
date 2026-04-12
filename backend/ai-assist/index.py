@@ -1,5 +1,5 @@
 """
-ИИ-помощник для заполнения формы предложений через Google Gemini API.
+ИИ-помощник для заполнения формы предложений через Google Gemini API. v2
 POST /ai-assist
 Body: { action: "improve_title"|"improve_description"|"suggest_description", title?: string, description?: string, category?: string }
 Возвращает: { result: string }
