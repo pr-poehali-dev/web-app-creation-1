@@ -248,12 +248,23 @@ export default function RequestDeliverySection({
 
           {isDistrictsOpen && (
             <div className="border rounded-lg p-3 space-y-3">
-              <Input
-                placeholder="Поиск района..."
-                value={districtFilter}
-                onChange={e => setDistrictFilter(e.target.value)}
-                className="h-8 text-sm"
-              />
+              <div className="relative">
+                <Input
+                  placeholder="Поиск района..."
+                  value={districtFilter}
+                  onChange={e => setDistrictFilter(e.target.value)}
+                  className="h-8 text-sm pr-7"
+                />
+                {districtFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setDistrictFilter('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <Icon name="X" size={14} />
+                  </button>
+                )}
+              </div>
               {/* Все районы */}
               <div className="flex items-center space-x-2 border-b pb-2">
                 <Checkbox

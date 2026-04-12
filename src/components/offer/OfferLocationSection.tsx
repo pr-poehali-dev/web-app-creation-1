@@ -293,12 +293,23 @@ export default function OfferLocationSection({
 
                       {districtsOpen && (
                         <div className="border rounded-lg p-3 space-y-3">
-                          <Input
-                            placeholder="Поиск района..."
-                            value={districtFilter}
-                            onChange={e => setDistrictFilter(e.target.value)}
-                            className="h-8 text-sm"
-                          />
+                          <div className="relative">
+                            <Input
+                              placeholder="Поиск района..."
+                              value={districtFilter}
+                              onChange={e => setDistrictFilter(e.target.value)}
+                              className="h-8 text-sm pr-7"
+                            />
+                            {districtFilter && (
+                              <button
+                                type="button"
+                                onClick={() => setDistrictFilter('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                              >
+                                <Icon name="X" size={14} />
+                              </button>
+                            )}
+                          </div>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-60 overflow-y-auto">
                             {deliveryDistricts
                               .filter(d => d.name.toLowerCase().includes(districtFilter.toLowerCase()))
