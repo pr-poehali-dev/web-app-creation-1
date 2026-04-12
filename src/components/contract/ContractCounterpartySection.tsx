@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import type { ContractFormData } from '@/hooks/useContractData';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 
 interface ContractCounterpartySectionProps {
   formData: ContractFormData;
@@ -40,11 +41,39 @@ export default function ContractCounterpartySection({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">
-            <Label>Название контракта (для «Моих контрактов»)</Label>
+            <div className="flex items-center justify-between">
+              <Label>Название контракта (для «Моих контрактов»)</Label>
+              {formData.title.length >= 3 && (
+                <AIAssistButton
+                  action="improve_title"
+                  title={formData.title}
+                  onResult={text => set('title', text.slice(0, 150))}
+                  label="Улучшить"
+                />
+              )}
+            </div>
             <Input value={formData.title} onChange={e => set('title', e.target.value)} placeholder="Например: Поставка молока, октябрь 2026" />
           </div>
           <div className="space-y-1">
-            <Label>Дополнительные условия (будут добавлены в контракт)</Label>
+            <div className="flex items-center justify-between">
+              <Label>Дополнительные условия (будут добавлены в контракт)</Label>
+              {formData.termsConditions.length >= 3 ? (
+                <AIAssistButton
+                  action="improve_description"
+                  title={formData.title}
+                  description={formData.termsConditions}
+                  onResult={text => set('termsConditions', text.slice(0, 2000))}
+                  label="Улучшить"
+                />
+              ) : formData.title.length >= 3 && formData.termsConditions.length === 0 ? (
+                <AIAssistButton
+                  action="suggest_description"
+                  title={formData.title}
+                  onResult={text => set('termsConditions', text.slice(0, 2000))}
+                  label="Сгенерировать"
+                />
+              ) : null}
+            </div>
             <Textarea value={formData.termsConditions} onChange={e => set('termsConditions', e.target.value)} rows={3} placeholder="Особые требования к качеству, упаковке, документации..." />
           </div>
         </CardContent>

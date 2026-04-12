@@ -6,6 +6,7 @@ import Icon from '@/components/ui/icon';
 import { CATEGORIES, UNITS } from '@/hooks/useContractData';
 import type { ContractFormData } from '@/hooks/useContractData';
 import ContractPhotoUpload from './ContractPhotoUpload';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 
 interface ContractProductSectionProps {
   formData: ContractFormData;
@@ -41,7 +42,18 @@ export default function ContractProductSection({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label>{isForwardRequest ? 'Название товара / услуги *' : 'Название товара *'}</Label>
+              <div className="flex items-center justify-between">
+                <Label>{isForwardRequest ? 'Название товара / услуги *' : 'Название товара *'}</Label>
+                {formData.productName.length >= 3 && (
+                  <AIAssistButton
+                    action="improve_title"
+                    title={formData.productName}
+                    category={formData.category}
+                    onResult={text => handleProductNameChange(text.slice(0, 200))}
+                    label="Улучшить"
+                  />
+                )}
+              </div>
               <Input
                 value={formData.productName}
                 onChange={e => handleProductNameChange(e.target.value)}
@@ -112,7 +124,18 @@ export default function ContractProductSection({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label>Название товара Б *</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Название товара Б *</Label>
+                  {formData.productNameB.length >= 3 && (
+                    <AIAssistButton
+                      action="improve_title"
+                      title={formData.productNameB}
+                      category={formData.categoryB}
+                      onResult={text => handleProductNameBChange(text.slice(0, 200))}
+                      label="Улучшить"
+                    />
+                  )}
+                </div>
                 <Input
                   value={formData.productNameB}
                   onChange={e => handleProductNameBChange(e.target.value)}
