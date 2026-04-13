@@ -39,7 +39,8 @@ function formatAddress(result: NominatimResult): string {
   }
 
   const city = a.city || a.town || a.village || a.suburb || '';
-  const street = a.road || a.pedestrian || '';
+  const rawStreet = a.road || a.pedestrian || '';
+  const street = rawStreet.replace(/\bулица\b/gi, 'ул.').replace(/\bпроспект\b/gi, 'пр-т').replace(/\bпереулок\b/gi, 'пер.').replace(/\bбульвар\b/gi, 'б-р').replace(/\bшоссе\b/gi, 'ш.').replace(/\bплощадь\b/gi, 'пл.');
   const house = a.house_number || '';
 
   const cityFmt = city ? `г. ${city}` : '';
@@ -51,7 +52,8 @@ function formatAddressLabel(result: NominatimResult): string {
   const a = result.address;
   if (!a) return result.display_name;
   const city = a.city || a.town || a.village || a.suburb || '';
-  const street = a.road || a.pedestrian || '';
+  const rawStreet = a.road || a.pedestrian || '';
+  const street = rawStreet.replace(/\bулица\b/gi, 'ул.').replace(/\bпроспект\b/gi, 'пр-т').replace(/\bпереулок\b/gi, 'пер.').replace(/\bбульвар\b/gi, 'б-р').replace(/\bшоссе\b/gi, 'ш.').replace(/\bплощадь\b/gi, 'пл.');
   const house = a.house_number || '';
   const cityFmt = city ? `г. ${city}` : '';
   return [cityFmt, street, house].filter(Boolean).join(', ');
