@@ -13,6 +13,7 @@ interface OfferAdditionalSectionProps {
     publicationStartDate: string;
     publicationDuration: string;
     category?: string;
+    subcategory?: string;
     transportServiceType?: string;
     transportDepartureDateTime?: string;
   };
@@ -21,6 +22,7 @@ interface OfferAdditionalSectionProps {
 
 export default function OfferAdditionalSection({ formData, onInputChange }: OfferAdditionalSectionProps) {
   const isTransport = formData.category === 'transport';
+  const isWorks = formData.subcategory === 'works';
   const isPassenger = formData.transportServiceType === 'Пассажирские перевозки';
   const departureDateMax = isPassenger && formData.transportDepartureDateTime
     ? formData.transportDepartureDateTime.split('T')[0]
@@ -31,7 +33,7 @@ export default function OfferAdditionalSection({ formData, onInputChange }: Offe
         <CardTitle>Дополнительно</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!isTransport && (
+        {!isTransport && !isWorks && (
           <>
             <div>
               <Label htmlFor="deliveryTime">Срок доставки/поставки (необязательно)</Label>

@@ -13,6 +13,7 @@ interface OfferMediaSectionProps {
   onVideoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemoveVideo: () => void;
   isAutoSale?: boolean;
+  isWorks?: boolean;
 }
 
 export default function OfferMediaSection({
@@ -25,6 +26,7 @@ export default function OfferMediaSection({
   onVideoUpload,
   onRemoveVideo,
   isAutoSale = false,
+  isWorks = false,
 }: OfferMediaSectionProps) {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
@@ -59,9 +61,11 @@ export default function OfferMediaSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Медиа</CardTitle>
+        <CardTitle>{isWorks ? 'Наши работы' : 'Медиа'}</CardTitle>
         <CardDescription>
-          Загрузите фотографии и видео (до 10 фото + 1 видео)
+          {isWorks
+            ? 'Загрузите фотографии выполненных работ (до 10 фото + 1 видео)'
+            : 'Загрузите фотографии и видео (до 10 фото + 1 видео)'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

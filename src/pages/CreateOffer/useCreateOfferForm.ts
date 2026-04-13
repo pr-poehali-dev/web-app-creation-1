@@ -118,6 +118,8 @@ export function useCreateOfferForm(editOffer?: Offer) {
     unit: 'шт',
     pricePerUnit: '',
     deadline: '',
+    deadlineStart: '',
+    deadlineEnd: '',
     negotiableDeadline: false,
     budget: '',
     negotiableBudget: false,

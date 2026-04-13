@@ -6,6 +6,7 @@ import OfferMediaSection from '@/components/offer/OfferMediaSection';
 import OfferTransportSection from '@/components/offer/OfferTransportSection';
 import OfferAdditionalSection from '@/components/offer/OfferAdditionalSection';
 import OfferAutoSection from '@/components/offer/OfferAutoSection';
+import Icon from '@/components/ui/icon';
 import type { DeliveryType, TransportWaypoint } from '@/types/offer';
 
 interface District {
@@ -23,6 +24,8 @@ interface FormData {
   unit: string;
   pricePerUnit: string;
   deadline: string;
+  deadlineStart: string;
+  deadlineEnd: string;
   negotiableDeadline: boolean;
   budget: string;
   negotiableBudget: boolean;
@@ -150,7 +153,23 @@ export default function CreateOfferFormFields({
         />
       )}
 
-      {formData.category !== 'transport' && formData.category !== 'auto-sale' && (
+      {formData.subcategory === 'works' && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="pt-5 pb-5">
+            <div className="flex gap-3 items-start">
+              <Icon name="Info" className="text-blue-500 mt-0.5 shrink-0" size={18} />
+              <div>
+                <p className="font-medium text-blue-800 text-sm">Цены и сроки — договорные</p>
+                <p className="text-blue-700 text-sm mt-1">
+                  Это предложение на оказание услуг. Стоимость и сроки выполнения обсуждаются индивидуально с каждым заказчиком.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {formData.category !== 'transport' && formData.category !== 'auto-sale' && formData.subcategory !== 'works' && (
         <OfferPricingSection
           formData={{
             quantity: formData.quantity,
@@ -160,6 +179,8 @@ export default function CreateOfferFormFields({
             noNegotiation: formData.noNegotiation,
             category: formData.category,
             deadline: formData.deadline,
+            deadlineStart: formData.deadlineStart,
+            deadlineEnd: formData.deadlineEnd,
             negotiableDeadline: formData.negotiableDeadline,
             budget: formData.budget,
             negotiableBudget: formData.negotiableBudget,
@@ -168,7 +189,7 @@ export default function CreateOfferFormFields({
         />
       )}
 
-      {formData.category !== 'transport' && formData.category !== 'auto-sale' && (
+      {formData.category !== 'transport' && formData.category !== 'auto-sale' && formData.subcategory !== 'works' && (
         <OfferLocationSection
           formData={{
             district: formData.district,
@@ -217,6 +238,7 @@ export default function CreateOfferFormFields({
         onVideoUpload={onVideoUpload}
         onRemoveVideo={onRemoveVideo}
         isAutoSale={formData.category === 'auto-sale'}
+        isWorks={formData.subcategory === 'works'}
       />
 
       {isUploadingVideo && (
@@ -274,6 +296,7 @@ export default function CreateOfferFormFields({
             publicationStartDate: formData.publicationStartDate,
             publicationDuration: formData.publicationDuration,
             category: formData.category,
+            subcategory: formData.subcategory,
             transportServiceType: formData.transportServiceType,
             transportDepartureDateTime: formData.transportDepartureDateTime || '',
           }}
