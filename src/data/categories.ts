@@ -79,7 +79,9 @@ export const CATEGORIES: Category[] = [
   {
     id: 'utilities',
     name: 'Услуги',
-    subcategories: [],
+    subcategories: [
+      { id: 'works', name: 'Работы' },
+    ],
   },
   {
     id: 'other',

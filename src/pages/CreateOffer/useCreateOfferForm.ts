@@ -13,6 +13,8 @@ interface FormData {
   unit: string;
   pricePerUnit: string;
   deadline: string;
+  deadlineStart: string;
+  deadlineEnd: string;
   negotiableDeadline: boolean;
   budget: string;
   negotiableBudget: boolean;
@@ -67,6 +69,8 @@ export function useCreateOfferForm(editOffer?: Offer) {
     unit: editOffer.unit || 'шт',
     pricePerUnit: String(editOffer.pricePerUnit || ''),
     deadline: '',
+    deadlineStart: '',
+    deadlineEnd: '',
     negotiableDeadline: false,
     budget: '',
     negotiableBudget: false,
