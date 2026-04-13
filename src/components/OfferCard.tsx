@@ -234,7 +234,11 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
           ) : (
             <>
               <div className="flex items-baseline gap-1">
-                {isService ? (
+                {isWorks ? (
+                  <Badge variant="secondary" className="text-xs h-5 px-2">
+                    Цена договорная
+                  </Badge>
+                ) : isService ? (
                   <>
                     {offer.budget ? (
                       <span className="font-bold text-primary text-lg">
@@ -252,7 +256,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
                   </span>
                 ) : null}
               </div>
-              {!isService && !isAutoSale && offer.quantity != null && (
+              {!isService && !isWorks && !isAutoSale && offer.quantity != null && (
                 <div className="flex items-center gap-1.5">
                   <Icon name="Package" className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                   <span className="text-xs text-muted-foreground">

@@ -84,6 +84,8 @@ export default function MyOfferCard({
     [offer]
   );
 
+  const isWorks = offer.subcategory === 'works';
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader className="p-0">
@@ -126,9 +128,13 @@ export default function MyOfferCard({
 
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Цена:</span>
-          <span className="font-bold text-lg text-primary">
-            {offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString() : '—'} ₽
-          </span>
+          {isWorks ? (
+            <Badge variant="secondary" className="text-xs">Договорная</Badge>
+          ) : (
+            <span className="font-bold text-lg text-primary">
+              {offer.pricePerUnit != null ? Number(offer.pricePerUnit).toLocaleString() : '—'} ₽
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-2 pt-2 border-t text-sm">
