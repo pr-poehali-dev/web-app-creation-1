@@ -99,17 +99,7 @@ export default function ContractDeliverySection({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
-              {formData.deliveryAddress.length >= 3 && (
-                <AIAssistButton
-                  action="improve_title"
-                  title={formData.deliveryAddress}
-                  onResult={text => set('deliveryAddress', text.slice(0, 300))}
-                  label="Улучшить"
-                />
-              )}
-            </div>
+            <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
             <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
           </div>
 
