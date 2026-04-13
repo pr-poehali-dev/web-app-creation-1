@@ -76,16 +76,6 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
   const [locating, setLocating] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const normalizedOnce = useRef(false);
-
-  // Нормализуем уже сохранённое значение один раз при монтировании
-  useEffect(() => {
-    if (!normalizedOnce.current && value) {
-      normalizedOnce.current = true;
-      const normalized = abbreviateStreetTypes(value);
-      if (normalized !== value) onChange(normalized);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
