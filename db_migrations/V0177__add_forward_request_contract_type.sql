@@ -1,0 +1,2 @@
+ALTER TABLE contracts DROP CONSTRAINT IF EXISTS contracts_contract_type_check;
+ALTER TABLE contracts ADD CONSTRAINT contracts_contract_type_check CHECK (contract_type IN ('forward', 'barter', 'forward-request'));

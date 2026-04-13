@@ -63,6 +63,7 @@ export default function OfferInfoFields({
 }: OfferInfoFieldsProps) {
   const isTransport = offer.category === 'transport';
   const isAutoSale = offer.category === 'auto-sale';
+  const isWorks = offer.subcategory === 'works';
 
   const handleShare = async () => {
     let shareText: string;
@@ -139,6 +140,7 @@ export default function OfferInfoFields({
                 offer={offer}
                 editData={editData}
                 isSaving={isSaving}
+                isWorks={isWorks}
                 onEditDataChange={onEditDataChange}
               />
             )}

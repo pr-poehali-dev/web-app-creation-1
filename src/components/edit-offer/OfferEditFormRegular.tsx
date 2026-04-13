@@ -36,10 +36,11 @@ interface OfferEditFormRegularProps {
   offer: Offer;
   editData: EditData;
   isSaving: boolean;
+  isWorks?: boolean;
   onEditDataChange: (data: EditData) => void;
 }
 
-export default function OfferEditFormRegular({ offer, editData, isSaving, onEditDataChange }: OfferEditFormRegularProps) {
+export default function OfferEditFormRegular({ offer, editData, isSaving, isWorks = false, onEditDataChange }: OfferEditFormRegularProps) {
   return (
     <>
       <div className="space-y-2">
@@ -53,53 +54,57 @@ export default function OfferEditFormRegular({ offer, editData, isSaving, onEdit
           placeholder="Опишите ваше предложение"
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="pricePerUnit">Цена за единицу (₽)</Label>
-        <Input
-          id="pricePerUnit"
-          type="number"
-          value={editData.pricePerUnit}
-          onChange={(e) => onEditDataChange({ ...editData, pricePerUnit: e.target.value })}
-          disabled={isSaving}
-          min="0"
-          step="0.01"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="quantity">Доступное количество ({offer.unit})</Label>
-        <Input
-          id="quantity"
-          type="number"
-          value={editData.quantity}
-          onChange={(e) => onEditDataChange({ ...editData, quantity: e.target.value })}
-          disabled={isSaving}
-          min="1"
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="minOrderQuantity">Минимальное количество для заказа ({offer.unit})</Label>
-        <Input
-          id="minOrderQuantity"
-          type="number"
-          value={editData.minOrderQuantity}
-          onChange={(e) => onEditDataChange({ ...editData, minOrderQuantity: e.target.value })}
-          disabled={isSaving}
-          min="0"
-          placeholder="Не задано"
-        />
-      </div>
-      <div className="flex items-center space-x-2 pt-1">
-        <Checkbox
-          id="noNegotiation"
-          checked={editData.noNegotiation}
-          onCheckedChange={(checked) => onEditDataChange({ ...editData, noNegotiation: checked as boolean })}
-          disabled={isSaving}
-        />
-        <div className="grid gap-0.5 leading-none">
-          <label htmlFor="noNegotiation" className="text-sm font-medium cursor-pointer">Без торга</label>
-          <p className="text-xs text-muted-foreground">Цена фиксирована, переговоры не предусмотрены</p>
-        </div>
-      </div>
+      {!isWorks && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="pricePerUnit">Цена за единицу (₽)</Label>
+            <Input
+              id="pricePerUnit"
+              type="number"
+              value={editData.pricePerUnit}
+              onChange={(e) => onEditDataChange({ ...editData, pricePerUnit: e.target.value })}
+              disabled={isSaving}
+              min="0"
+              step="0.01"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Доступное количество ({offer.unit})</Label>
+            <Input
+              id="quantity"
+              type="number"
+              value={editData.quantity}
+              onChange={(e) => onEditDataChange({ ...editData, quantity: e.target.value })}
+              disabled={isSaving}
+              min="1"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="minOrderQuantity">Минимальное количество для заказа ({offer.unit})</Label>
+            <Input
+              id="minOrderQuantity"
+              type="number"
+              value={editData.minOrderQuantity}
+              onChange={(e) => onEditDataChange({ ...editData, minOrderQuantity: e.target.value })}
+              disabled={isSaving}
+              min="0"
+              placeholder="Не задано"
+            />
+          </div>
+          <div className="flex items-center space-x-2 pt-1">
+            <Checkbox
+              id="noNegotiation"
+              checked={editData.noNegotiation}
+              onCheckedChange={(checked) => onEditDataChange({ ...editData, noNegotiation: checked as boolean })}
+              disabled={isSaving}
+            />
+            <div className="grid gap-0.5 leading-none">
+              <label htmlFor="noNegotiation" className="text-sm font-medium cursor-pointer">Без торга</label>
+              <p className="text-xs text-muted-foreground">Цена фиксирована, переговоры не предусмотрены</p>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="space-y-2">
         <Label>Период поставки</Label>

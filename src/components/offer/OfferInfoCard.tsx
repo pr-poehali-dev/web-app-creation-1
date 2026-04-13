@@ -146,6 +146,7 @@ export default function OfferInfoCard({
 
   const detailsProps = {
     category,
+    subcategory,
     remainingQuantity,
     unit,
     description,

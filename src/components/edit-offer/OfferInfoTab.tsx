@@ -84,19 +84,20 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
 
   const handleSave = async () => {
     const isTransport = offer.category === 'transport';
-    const pricePerUnit = isTransport ? 0 : parseFloat(editData.pricePerUnit);
-    const quantity = isTransport ? parseInt(editData.transportCapacity) || 0 : parseInt(editData.quantity);
+    const isWorks = offer.subcategory === 'works';
+    const pricePerUnit = (isTransport || isWorks) ? 0 : parseFloat(editData.pricePerUnit);
+    const quantity = isTransport ? parseInt(editData.transportCapacity) || 0 : isWorks ? 0 : parseInt(editData.quantity);
     const minOrderQuantity = editData.minOrderQuantity ? parseInt(editData.minOrderQuantity) : undefined;
 
-    if (!isTransport && (isNaN(pricePerUnit) || pricePerUnit <= 0)) {
+    if (!isTransport && !isWorks && (isNaN(pricePerUnit) || pricePerUnit <= 0)) {
       toast({ title: 'Ошибка', description: 'Укажите корректную цену', variant: 'destructive' });
       return;
     }
-    if (!isTransport && (isNaN(quantity) || quantity <= 0)) {
+    if (!isTransport && !isWorks && (isNaN(quantity) || quantity <= 0)) {
       toast({ title: 'Ошибка', description: 'Укажите корректное количество', variant: 'destructive' });
       return;
     }
-    if (minOrderQuantity && (isNaN(minOrderQuantity) || minOrderQuantity <= 0 || minOrderQuantity > quantity)) {
+    if (!isWorks && minOrderQuantity && (isNaN(minOrderQuantity) || minOrderQuantity <= 0 || minOrderQuantity > quantity)) {
       toast({ title: 'Ошибка', description: 'Минимальное количество должно быть больше 0 и не превышать общее количество', variant: 'destructive' });
       return;
     }

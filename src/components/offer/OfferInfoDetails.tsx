@@ -8,6 +8,7 @@ import OfferInfoTransportDetails from './OfferInfoTransportDetails';
 
 interface OfferInfoDetailsProps {
   category: string;
+  subcategory?: string;
   remainingQuantity: number;
   unit: string;
   description: string;
@@ -44,6 +45,7 @@ interface OfferInfoDetailsProps {
 
 export default function OfferInfoDetails({
   category,
+  subcategory,
   remainingQuantity,
   unit,
   description,
@@ -79,6 +81,7 @@ export default function OfferInfoDetails({
 }: OfferInfoDetailsProps) {
   const isTransport = category === 'transport';
   const isAutoSale = category === 'auto-sale';
+  const isWorks = subcategory === 'works';
 
   const activeWaypoints = transportWaypoints.filter(w => w.isActive && (w.price ?? 0) > 0);
 
@@ -165,7 +168,7 @@ export default function OfferInfoDetails({
         </>
       )}
 
-      {!isTransport && !isAutoSale && availableDistrictNames.length > 0 && (
+      {!isTransport && !isAutoSale && !isWorks && availableDistrictNames.length > 0 && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Доступно в районах</p>
           <div className="flex flex-wrap gap-1">
@@ -176,7 +179,7 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      {!isTransport && !isAutoSale && (
+      {!isTransport && !isAutoSale && !isWorks && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Способы получения</p>
           <div className="flex gap-2">
@@ -196,7 +199,7 @@ export default function OfferInfoDetails({
         </div>
       )}
 
-      {!isTransport && !isAutoSale && availableDeliveryTypes.includes('pickup') && streetAddress && (
+      {!isTransport && !isAutoSale && !isWorks && availableDeliveryTypes.includes('pickup') && streetAddress && (
         <div>
           <p className="text-xs text-muted-foreground mb-1">Место самовывоза</p>
           <div className="flex items-center gap-1.5">
