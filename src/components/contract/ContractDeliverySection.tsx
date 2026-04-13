@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,110 @@ import type { ContractFormData } from '@/hooks/useContractData';
 import { DISTRICTS } from '@/data/districts';
 import { useDistrict } from '@/contexts/DistrictContext';
 import AIAssistButton from '@/components/offer/AIAssistButton';
+
+interface NominatimResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
+function AddressInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current);
+    if (value.length < 3) { setSuggestions([]); setOpen(false); return; }
+    setLoading(true);
+    timer.current = setTimeout(async () => {
+      try {
+        const q = encodeURIComponent(value);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=5&addressdetails=1`, {
+          headers: { 'Accept-Language': 'ru' },
+        });
+        const data: NominatimResult[] = await res.json();
+        setSuggestions(data);
+        setOpen(data.length > 0);
+      } catch { setSuggestions([]); }
+      setLoading(false);
+    }, 600);
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [value]);
+
+  useEffect(() => {
+    function handle(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  function locate() {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(async pos => {
+      try {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, {
+          headers: { 'Accept-Language': 'ru' },
+        });
+        const data = await res.json();
+        if (data?.display_name) onChange(data.display_name);
+      } catch (e) { console.error(e); }
+      setLocating(false);
+    }, () => setLocating(false));
+  }
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Input
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+            onFocus={() => suggestions.length > 0 && setOpen(true)}
+          />
+          {loading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={locate}
+          disabled={locating}
+          title="Определить моё местоположение"
+          className="shrink-0 flex items-center justify-center w-10 h-10 rounded-md border border-input bg-background hover:bg-accent transition-colors disabled:opacity-50"
+        >
+          {locating
+            ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+            : <Icon name="LocateFixed" size={16} />
+          }
+        </button>
+      </div>
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full bg-background border border-border rounded-md shadow-lg overflow-hidden">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors border-b border-border last:border-0"
+              onMouseDown={() => { onChange(s.display_name); setSuggestions([]); setOpen(false); }}
+            >
+              {s.display_name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface ContractDeliverySectionProps {
   formData: ContractFormData;
@@ -100,7 +204,11 @@ export default function ContractDeliverySection({
         <CardContent className="space-y-4">
           <div className="space-y-1">
             <Label>{isForwardRequest ? 'Адрес получения / место исполнения' : 'Адрес доставки'}</Label>
-            <Input value={formData.deliveryAddress} onChange={e => set('deliveryAddress', e.target.value)} placeholder="г. Москва, ул. Промышленная, 1" />
+            <AddressInput
+              value={formData.deliveryAddress}
+              onChange={v => set('deliveryAddress', v)}
+              placeholder="г. Москва, ул. Промышленная, 1"
+            />
           </div>
 
           <div className="space-y-1">
