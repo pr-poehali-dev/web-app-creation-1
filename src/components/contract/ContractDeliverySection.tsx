@@ -48,6 +48,16 @@ function formatAddress(result: NominatimResult): string {
   return parts.join(', ');
 }
 
+function abbreviateStreetTypes(s: string): string {
+  return s
+    .replace(/\bулица\b/gi, 'ул.')
+    .replace(/\bпроспект\b/gi, 'пр-т')
+    .replace(/\bпереулок\b/gi, 'пер.')
+    .replace(/\bбульвар\b/gi, 'б-р')
+    .replace(/\bшоссе\b/gi, 'ш.')
+    .replace(/\bплощадь\b/gi, 'пл.');
+}
+
 function formatAddressLabel(result: NominatimResult): string {
   const a = result.address;
   if (!a) return result.display_name;
@@ -115,7 +125,7 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Input
-            value={value}
+            value={abbreviateStreetTypes(value)}
             onChange={e => onChange(e.target.value)}
             placeholder={placeholder}
             onFocus={() => suggestions.length > 0 && setOpen(true)}
