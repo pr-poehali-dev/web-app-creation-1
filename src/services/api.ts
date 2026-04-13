@@ -1228,7 +1228,7 @@ export const auctionsAPI = {
     };
   },
 
-  async deleteAuction(auctionId: string): Promise<void> {
+  async deleteAuction(auctionId: string, adminDelete = false): Promise<void> {
     const userId = getUserId();
     if (!userId) {
       throw new Error('User not authenticated');
@@ -1240,7 +1240,7 @@ export const auctionsAPI = {
         'X-User-Id': userId,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ auctionId }),
+      body: JSON.stringify({ auctionId, adminDelete }),
     });
     
     if (!response.ok) {

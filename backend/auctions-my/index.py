@@ -61,6 +61,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         if method == 'DELETE':
             body = json.loads(event.get('body', '{}'))
             auction_id = body.get('auctionId')
+            admin_delete = body.get('adminDelete', False)
             
             if not auction_id:
                 return {
@@ -70,15 +71,31 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'isBase64Encoded': False
                 }
             
-            cur.execute("""
-                UPDATE t_p42562714_web_app_creation_1.auctions
-                SET status = 'cancelled'
-                WHERE id = CAST(%s AS INTEGER) AND user_id = CAST(%s AS INTEGER)
-            """, (auction_id, user_id))
+            if admin_delete:
+                cur.execute("""
+                    UPDATE t_p42562714_web_app_creation_1.auctions
+                    SET status = 'cancelled'
+                    WHERE id = CAST(%s AS INTEGER)
+                """, (auction_id,))
+            else:
+                cur.execute("""
+                    UPDATE t_p42562714_web_app_creation_1.auctions
+                    SET status = 'cancelled'
+                    WHERE id = CAST(%s AS INTEGER) AND user_id = CAST(%s AS INTEGER)
+                """, (auction_id, user_id))
             
+            affected = cur.rowcount
             conn.commit()
             cur.close()
             conn.close()
+            
+            if affected == 0:
+                return {
+                    'statusCode': 404,
+                    'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+                    'body': json.dumps({'error': 'Auction not found or access denied'}),
+                    'isBase64Encoded': False
+                }
             
             return {
                 'statusCode': 200,
