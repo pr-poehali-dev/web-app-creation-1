@@ -11,21 +11,50 @@ import { DISTRICTS } from '@/data/districts';
 import { useDistrict } from '@/contexts/DistrictContext';
 import AIAssistButton from '@/components/offer/AIAssistButton';
 
+interface NominatimAddress {
+  house_number?: string;
+  road?: string;
+  pedestrian?: string;
+  city?: string;
+  town?: string;
+  village?: string;
+  suburb?: string;
+  county?: string;
+  state?: string;
+}
+
 interface NominatimResult {
   display_name: string;
   lat: string;
   lon: string;
+  address?: NominatimAddress;
 }
 
-function formatAddress(display_name: string): string {
-  const parts = display_name.split(', ');
-  const skip = ['Россия', 'Russia', 'Российская Федерация'];
-  const filtered = parts.filter(p => {
-    if (skip.includes(p.trim())) return false;
-    if (/^\d{6}$/.test(p.trim())) return false; // почтовый индекс
-    return true;
-  });
-  return filtered.slice(0, 6).join(', ');
+function formatAddress(result: NominatimResult): string {
+  const a = result.address;
+  if (!a) {
+    // fallback: убрать страну, индекс, округ
+    const skip = ['Россия', 'Russia', 'Российская Федерация', 'Дальневосточный федеральный округ', 'Сибирский федеральный округ', 'Центральный федеральный округ', 'Приволжский федеральный округ', 'Уральский федеральный округ', 'Северо-Западный федеральный округ', 'Южный федеральный округ', 'Северо-Кавказский федеральный округ'];
+    return result.display_name.split(', ').filter(p => !skip.includes(p.trim()) && !/^\d{6}$/.test(p.trim()) && !p.includes('поселение') && !p.includes('улус') && !p.includes('район')).slice(0, 4).join(', ');
+  }
+
+  const city = a.city || a.town || a.village || a.suburb || '';
+  const street = a.road || a.pedestrian || '';
+  const house = a.house_number || '';
+
+  const cityFmt = city ? `г. ${city}` : '';
+  const parts = [cityFmt, street, house].filter(Boolean);
+  return parts.join(', ');
+}
+
+function formatAddressLabel(result: NominatimResult): string {
+  const a = result.address;
+  if (!a) return result.display_name;
+  const city = a.city || a.town || a.village || a.suburb || '';
+  const street = a.road || a.pedestrian || '';
+  const house = a.house_number || '';
+  const cityFmt = city ? `г. ${city}` : '';
+  return [cityFmt, street, house].filter(Boolean).join(', ');
 }
 
 function AddressInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
@@ -73,7 +102,7 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
           headers: { 'Accept-Language': 'ru' },
         });
         const data = await res.json();
-        if (data?.display_name) onChange(formatAddress(data.display_name));
+        if (data?.display_name) onChange(formatAddress(data));
       } catch (e) { console.error(e); }
       setLocating(false);
     }, () => setLocating(false));
@@ -115,9 +144,9 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
               key={i}
               type="button"
               className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors border-b border-border last:border-0"
-              onMouseDown={() => { onChange(formatAddress(s.display_name)); setSuggestions([]); setOpen(false); }}
+              onMouseDown={() => { onChange(formatAddress(s)); setSuggestions([]); setOpen(false); }}
             >
-              {s.display_name}
+              {formatAddressLabel(s)}
             </button>
           ))}
         </div>
