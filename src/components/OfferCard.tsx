@@ -49,6 +49,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
   const districtName = DISTRICTS.find(d => d.id === offer.district)?.name;
   const expirationInfo = getExpirationStatus(offer);
   const isService = offer.category === 'utilities';
+  const isWorks = offer.subcategory === 'works';
   const isTransport = offer.category === 'transport';
   const isAutoSale = offer.category === 'auto-sale';
   

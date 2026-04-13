@@ -3,6 +3,7 @@ import Icon from '@/components/ui/icon';
 
 interface OfferInfoSummaryProps {
   category: string;
+  subcategory?: string;
   quantity: number;
   minOrderQuantity?: number;
   unit: string;
@@ -28,6 +29,7 @@ interface OfferInfoSummaryProps {
 
 export default function OfferInfoSummary({
   category,
+  subcategory,
   quantity,
   minOrderQuantity,
   unit,
@@ -52,6 +54,7 @@ export default function OfferInfoSummary({
 }: OfferInfoSummaryProps) {
   const isTransport = category === 'transport';
   const isService = category === 'utilities' || isTransport;
+  const isWorks = subcategory === 'works';
 
   return (
     <>
@@ -124,6 +127,11 @@ export default function OfferInfoSummary({
               <p className="font-semibold">{new Date(expiryDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
             </div>
           )}
+        </div>
+      ) : isWorks ? (
+        <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
+          <Icon name="Info" className="h-4 w-4 text-blue-500 shrink-0" />
+          <p className="text-sm text-blue-700">Цены и сроки — договорные. Обсуждаются индивидуально.</p>
         </div>
       ) : isService ? (
         <div className="space-y-3">

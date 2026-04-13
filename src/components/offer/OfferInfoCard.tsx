@@ -191,6 +191,7 @@ export default function OfferInfoCard({
 
         <OfferInfoSummary
           category={category}
+          subcategory={subcategory}
           quantity={quantity}
           minOrderQuantity={minOrderQuantity}
           unit={unit}
