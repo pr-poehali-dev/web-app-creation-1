@@ -17,6 +17,17 @@ interface NominatimResult {
   lon: string;
 }
 
+function formatAddress(display_name: string): string {
+  const parts = display_name.split(', ');
+  const skip = ['Россия', 'Russia', 'Российская Федерация'];
+  const filtered = parts.filter(p => {
+    if (skip.includes(p.trim())) return false;
+    if (/^\d{6}$/.test(p.trim())) return false; // почтовый индекс
+    return true;
+  });
+  return filtered.slice(0, 6).join(', ');
+}
+
 function AddressInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
   const [open, setOpen] = useState(false);
@@ -62,7 +73,7 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
           headers: { 'Accept-Language': 'ru' },
         });
         const data = await res.json();
-        if (data?.display_name) onChange(data.display_name);
+        if (data?.display_name) onChange(formatAddress(data.display_name));
       } catch (e) { console.error(e); }
       setLocating(false);
     }, () => setLocating(false));
@@ -104,7 +115,7 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
               key={i}
               type="button"
               className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors border-b border-border last:border-0"
-              onMouseDown={() => { onChange(s.display_name); setSuggestions([]); setOpen(false); }}
+              onMouseDown={() => { onChange(formatAddress(s.display_name)); setSuggestions([]); setOpen(false); }}
             >
               {s.display_name}
             </button>
