@@ -76,6 +76,16 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
   const [locating, setLocating] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const normalizedOnce = useRef(false);
+
+  // Нормализуем уже сохранённое значение один раз при монтировании
+  useEffect(() => {
+    if (!normalizedOnce.current && value) {
+      normalizedOnce.current = true;
+      const normalized = abbreviateStreetTypes(value);
+      if (normalized !== value) onChange(normalized);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -125,8 +135,8 @@ function AddressInput({ value, onChange, placeholder }: { value: string; onChang
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Input
-            value={abbreviateStreetTypes(value)}
-            onChange={e => onChange(e.target.value)}
+            value={value}
+            onChange={e => onChange(abbreviateStreetTypes(e.target.value))}
             placeholder={placeholder}
             onFocus={() => suggestions.length > 0 && setOpen(true)}
           />
