@@ -1,0 +1,2 @@
+ALTER TABLE t_p42562714_web_app_creation_1.contracts DROP CONSTRAINT IF EXISTS contracts_status_check;
+ALTER TABLE t_p42562714_web_app_creation_1.contracts ADD CONSTRAINT contracts_status_check CHECK (status IN ('draft', 'open', 'in_progress', 'completed', 'cancelled'));

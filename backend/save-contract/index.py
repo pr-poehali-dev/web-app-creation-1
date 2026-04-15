@@ -70,9 +70,10 @@ def handler(event: dict, context) -> dict:
         upd_delivery_method = ', '.join(upd_delivery_types) if upd_delivery_types else body.get('deliveryMethod', '')
         upd_delivery_districts = json.dumps(body.get('deliveryDistricts') or [])
         upd_is_barter = contract_type == 'barter'
-        upd_delivery_date = body.get('deliveryDate') or ('2099-12-31' if upd_is_barter else None)
-        upd_start_date = body.get('contractStartDate') or ('2000-01-01' if upd_is_barter else None)
-        upd_end_date = body.get('contractEndDate') or ('2099-12-31' if upd_is_barter else None)
+        upd_needs_default_dates = upd_is_barter or contract_type == 'forward-request'
+        upd_delivery_date = body.get('deliveryDate') or ('2099-12-31' if upd_needs_default_dates else None)
+        upd_start_date = body.get('contractStartDate') or ('2000-01-01' if upd_needs_default_dates else None)
+        upd_end_date = body.get('contractEndDate') or ('2099-12-31' if upd_needs_default_dates else None)
         cur.execute("""
             UPDATE contracts SET
                 contract_type=%s, title=%s, category=%s, product_name=%s, product_specs=%s,
@@ -115,13 +116,14 @@ def handler(event: dict, context) -> dict:
     quantity = float(body.get('quantity') or 0)
     unit = body.get('unit', 'шт')
     is_barter = contract_type == 'barter'
+    needs_default_dates = is_barter or contract_type == 'forward-request'
     price_per_unit = float(body.get('pricePerUnit') or 0)
     total_amount = float(body.get('totalAmount') or 0)
     prepayment_percent = float(body.get('prepaymentPercent') or 0)
     prepayment_amount = float(body.get('prepaymentAmount') or 0)
-    delivery_date = body.get('deliveryDate') or ('2099-12-31' if is_barter else None)
-    contract_start_date = body.get('contractStartDate') or ('2000-01-01' if is_barter else None)
-    contract_end_date = body.get('contractEndDate') or ('2099-12-31' if is_barter else None)
+    delivery_date = body.get('deliveryDate') or ('2099-12-31' if needs_default_dates else None)
+    contract_start_date = body.get('contractStartDate') or ('2000-01-01' if needs_default_dates else None)
+    contract_end_date = body.get('contractEndDate') or ('2099-12-31' if needs_default_dates else None)
     delivery_address = body.get('deliveryAddress', '')
     delivery_types = body.get('deliveryTypes') or []
     delivery_method = ', '.join(delivery_types) if delivery_types else body.get('deliveryMethod', '')
