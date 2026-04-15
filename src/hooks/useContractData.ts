@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { notifyContractUpdated } from '@/utils/dataSync';
 import { generateContractHtml, printContractAsPdf } from '@/utils/contractGenerator';
+import { getSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
 
 export const CATEGORIES = [
@@ -348,12 +349,18 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
     const setLoading = publish ? setIsPublishing : setIsSubmitting;
     setLoading(true);
     try {
-      const userId = localStorage.getItem('userId');
+      const userId = localStorage.getItem('userId') || String(getSession()?.id || '');
       const url = (func2url as Record<string, string>)['save-contract'];
       const isEdit = !!editId;
+      console.log('[save-contract] userId from localStorage:', userId);
+      if (!userId) {
+        toast({ title: 'Ошибка', description: 'Необходимо войти в систему', variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
       const res = await fetch(url, {
         method: isEdit ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId || '' },
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({
           ...(isEdit ? { contractId: editId } : {}),
           ...formData,
