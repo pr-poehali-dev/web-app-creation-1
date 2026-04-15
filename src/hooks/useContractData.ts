@@ -17,6 +17,10 @@ export const CATEGORIES = [
 ];
 
 export const UNITS = ['т', 'кг', 'л', 'м³', 'м²', 'шт', 'упак', 'пал', 'услуга'];
+export const LUMBER_UNITS = ['шт', 'куб.м'];
+export const CATEGORY_UNITS: Record<string, string[]> = {
+  lumber: LUMBER_UNITS,
+};
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   dairy:        ['молок', 'творог', 'кефир', 'сметан', 'сыр', 'масл', 'ряженк', 'йогурт', 'сливк', 'простоквашн'],
@@ -176,7 +180,15 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
   const set = (field: string, value: string) => {
     if (field === 'category') setCategoryManuallySet(true);
     if (field === 'categoryB') setCategoryBManuallySet(true);
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      if (field === 'category') {
+        const allowedUnits = CATEGORY_UNITS[value] || UNITS;
+        const currentUnit = prev.unit;
+        const newUnit = allowedUnits.includes(currentUnit) ? currentUnit : allowedUnits[0];
+        return { ...prev, category: value, unit: newUnit };
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
   const setArray = (field: 'deliveryTypes' | 'deliveryDistricts', values: string[]) =>
@@ -188,10 +200,14 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
   const handleProductNameChange = (value: string) => {
     setFormData(prev => {
       const autoCategory = detectCategory(value);
+      const newCategory = categoryManuallySet ? prev.category : (autoCategory || prev.category);
+      const allowedUnits = CATEGORY_UNITS[newCategory] || UNITS;
+      const newUnit = allowedUnits.includes(prev.unit) ? prev.unit : allowedUnits[0];
       return {
         ...prev,
         productName: value,
-        category: categoryManuallySet ? prev.category : (autoCategory || prev.category),
+        category: newCategory,
+        unit: newUnit,
         title: prev.title || (value ? (prev.contractType === 'forward-request' ? `Запрос: ${value}` : `Поставка: ${value}`) : ''),
       };
     });
@@ -223,7 +239,7 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
     if (formData.contractType === 'barter' && !formData.productNameB) {
       toast({ title: 'Ошибка', description: 'Укажите товар для обмена (Товар Б)', variant: 'destructive' }); return false;
     }
-    if (formData.contractType !== 'barter' && !formData.deliveryDate) { toast({ title: 'Ошибка', description: 'Укажите дату поставки', variant: 'destructive' }); return false; }
+    if (formData.contractType === 'forward' && !formData.deliveryDate) { toast({ title: 'Ошибка', description: 'Укажите дату поставки', variant: 'destructive' }); return false; }
     if (!formData.category) { toast({ title: 'Ошибка', description: 'Выберите категорию товара', variant: 'destructive' }); return false; }
     return true;
   };

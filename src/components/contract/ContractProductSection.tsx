@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Icon from '@/components/ui/icon';
-import { CATEGORIES, UNITS, detectCategory } from '@/hooks/useContractData';
+import { CATEGORIES, UNITS, CATEGORY_UNITS, detectCategory } from '@/hooks/useContractData';
 import type { ContractFormData } from '@/hooks/useContractData';
 import ContractPhotoUpload from './ContractPhotoUpload';
 import AIAssistButton from '@/components/offer/AIAssistButton';
@@ -34,6 +34,7 @@ export default function ContractProductSection({
   const categoryLabel = CATEGORIES.find(c => c.value === formData.category)?.label || '';
   const autoDetectedCategory = detectCategory(formData.productName);
   const isCategoryAutoDetected = !categoryManuallySet && !!autoDetectedCategory && autoDetectedCategory === formData.category;
+  const availableUnits = CATEGORY_UNITS[formData.category] || UNITS;
 
   return (
     <>
@@ -90,9 +91,9 @@ export default function ContractProductSection({
             </div>
             <div className="space-y-1">
               <Label>Единица</Label>
-              <Select value={formData.unit} onValueChange={v => set('unit', v)}>
+              <Select value={availableUnits.includes(formData.unit) ? formData.unit : availableUnits[0]} onValueChange={v => set('unit', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                <SelectContent>{availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             {!isBarter && (

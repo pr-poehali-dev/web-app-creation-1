@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 import psycopg2
 
 CORS = {
@@ -110,25 +111,34 @@ def handler(event: dict, context) -> dict:
     body = json.loads(event.get('body') or '{}')
 
     contract_type = body.get('contractType', 'forward')
-    title = body.get('title', '').strip()
-    category = body.get('category', 'other')
-    product_name = body.get('productName', '').strip()
+    if contract_type not in ('forward', 'barter', 'forward-request'):
+        contract_type = 'forward'
+    title = (body.get('title') or '').strip()[:255]
+    category = body.get('category') or 'other'
+    product_name = (body.get('productName') or '').strip()
     quantity = float(body.get('quantity') or 0)
-    unit = body.get('unit', 'шт')
+    unit = (body.get('unit') or 'шт')[:50]
     is_barter = contract_type == 'barter'
-    needs_default_dates = is_barter or contract_type == 'forward-request'
+    is_request = contract_type == 'forward-request'
+    needs_default_dates = is_barter or is_request
     price_per_unit = float(body.get('pricePerUnit') or 0)
     total_amount = float(body.get('totalAmount') or 0)
     prepayment_percent = float(body.get('prepaymentPercent') or 0)
     prepayment_amount = float(body.get('prepaymentAmount') or 0)
-    delivery_date = body.get('deliveryDate') or ('2099-12-31' if needs_default_dates else None)
-    contract_start_date = body.get('contractStartDate') or ('2000-01-01' if needs_default_dates else None)
-    contract_end_date = body.get('contractEndDate') or ('2099-12-31' if needs_default_dates else None)
-    delivery_address = body.get('deliveryAddress', '')
+    delivery_date = (body.get('deliveryDate') or '').strip() or ('2099-12-31' if needs_default_dates else None)
+    contract_start_date = (body.get('contractStartDate') or '').strip() or ('2000-01-01' if needs_default_dates else None)
+    contract_end_date = (body.get('contractEndDate') or '').strip() or ('2099-12-31' if needs_default_dates else None)
+    if not delivery_date:
+        delivery_date = '2099-12-31'
+    if not contract_start_date:
+        contract_start_date = '2000-01-01'
+    if not contract_end_date:
+        contract_end_date = '2099-12-31'
+    delivery_address = (body.get('deliveryAddress') or '')
     delivery_types = body.get('deliveryTypes') or []
-    delivery_method = ', '.join(delivery_types) if delivery_types else body.get('deliveryMethod', '')
+    delivery_method = (', '.join(delivery_types) if delivery_types else (body.get('deliveryMethod') or ''))[:100]
     delivery_districts = body.get('deliveryDistricts') or []
-    terms_conditions = body.get('termsConditions', '')
+    terms_conditions = body.get('termsConditions') or ''
     document_url = body.get('documentUrl') or None
     publish = body.get('publish', False)
 
@@ -154,50 +164,63 @@ def handler(event: dict, context) -> dict:
     if not title:
         title = f"{product_name} {quantity} {unit}"
 
+    print(f"[save-contract] INSERT attempt: type={contract_type} status={status} delivery_date={delivery_date} start={contract_start_date} end={contract_end_date} user_id={user_id}")
+
     conn = get_conn()
     cur = conn.cursor()
 
-    cur.execute("""
-        INSERT INTO contracts
-            (contract_type, title, category, product_name, product_specs,
-             quantity, unit, price_per_unit, total_amount, currency,
-             delivery_date, contract_start_date, contract_end_date,
-             seller_id, status,
-             delivery_address, delivery_method, delivery_districts,
-             prepayment_percent, prepayment_amount,
-             terms_conditions, product_video_url, product_images,
-             created_at, updated_at)
-        VALUES
-            (%s, %s, %s, %s, %s,
-             %s, %s, %s, %s, 'RUB',
-             %s, %s, %s,
-             %s, %s,
-             %s, %s, %s,
-             %s, %s,
-             %s, %s, %s,
-             NOW(), NOW())
-        RETURNING id
-    """, (
-        contract_type, title, category, product_name, product_specs,
-        quantity, unit, price_per_unit, total_amount,
-        delivery_date, contract_start_date, contract_end_date,
-        int(user_id), status,
-        delivery_address, delivery_method, json.dumps(delivery_districts),
-        prepayment_percent, prepayment_amount,
-        terms_conditions, document_url, product_images,
-    ))
+    try:
+        cur.execute("""
+            INSERT INTO contracts
+                (contract_type, title, category, product_name, product_specs,
+                 quantity, unit, price_per_unit, total_amount, currency,
+                 delivery_date, contract_start_date, contract_end_date,
+                 seller_id, status,
+                 delivery_address, delivery_method, delivery_districts,
+                 prepayment_percent, prepayment_amount,
+                 terms_conditions, product_video_url, product_images,
+                 created_at, updated_at)
+            VALUES
+                (%s, %s, %s, %s, %s,
+                 %s, %s, %s, %s, 'RUB',
+                 %s, %s, %s,
+                 %s, %s,
+                 %s, %s, %s,
+                 %s, %s,
+                 %s, %s, %s,
+                 NOW(), NOW())
+            RETURNING id
+        """, (
+            contract_type, title, category, product_name, product_specs,
+            quantity, unit, price_per_unit, total_amount,
+            delivery_date, contract_start_date, contract_end_date,
+            int(user_id), status,
+            delivery_address, delivery_method, json.dumps(delivery_districts),
+            prepayment_percent, prepayment_amount,
+            terms_conditions, document_url, product_images,
+        ))
 
-    contract_id = cur.fetchone()[0]
-    conn.commit()
-    cur.close()
-    conn.close()
+        contract_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
 
-    return {
-        'statusCode': 200,
-        'headers': {**CORS, 'Content-Type': 'application/json'},
-        'body': json.dumps({
-            'success': True,
-            'contractId': contract_id,
-            'status': status,
-        }),
-    }
+        return {
+            'statusCode': 200,
+            'headers': {**CORS, 'Content-Type': 'application/json'},
+            'body': json.dumps({
+                'success': True,
+                'contractId': contract_id,
+                'status': status,
+            }),
+        }
+    except Exception as e:
+        conn.rollback()
+        cur.close()
+        conn.close()
+        print(f"[save-contract] DB ERROR: {e}\n{traceback.format_exc()}")
+        return {
+            'statusCode': 500,
+            'headers': {**CORS, 'Content-Type': 'application/json'},
+            'body': json.dumps({'error': f'Ошибка БД: {str(e)}'}),
+        }
