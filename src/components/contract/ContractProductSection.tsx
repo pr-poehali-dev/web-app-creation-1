@@ -96,16 +96,41 @@ export default function ContractProductSection({
                 <SelectContent>{availableUnits.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            {!isBarter && (
+            {!isBarter && !isForwardRequest && (
               <>
                 <div className="space-y-1">
-                  <Label>{isForwardRequest ? `Макс. цена за ${formData.unit} (₽)` : `Цена за ${formData.unit} (₽) *`}</Label>
-                  <Input type="number" step="0.01" min="0" value={formData.pricePerUnit} onChange={e => set('pricePerUnit', e.target.value)} placeholder={isForwardRequest ? 'Не указывать или макс. бюджет' : '15000'} />
+                  <Label>{`Цена за ${formData.unit} (₽) *`}</Label>
+                  <Input type="number" step="0.01" min="0" value={formData.pricePerUnit} onChange={e => set('pricePerUnit', e.target.value)} placeholder="15000" />
                 </div>
                 <div className="space-y-1">
-                  <Label>{isForwardRequest ? 'Макс. бюджет (₽)' : 'Итого (₽)'}</Label>
-                  <Input value={totalAmount ? totalAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : (isForwardRequest ? 'Договорная' : '0')} disabled />
+                  <Label>Итого (₽)</Label>
+                  <Input value={totalAmount ? totalAmount.toLocaleString('ru-RU', { maximumFractionDigits: 2 }) : '0'} disabled />
                 </div>
+              </>
+            )}
+            {isForwardRequest && (
+              <>
+                <div className="space-y-1">
+                  <Label>Тип цены</Label>
+                  <Select value={formData.priceType} onValueChange={v => set('priceType', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="negotiable">Цена договорная</SelectItem>
+                      <SelectItem value="max">Не больше суммы</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {formData.priceType === 'max' ? (
+                  <div className="space-y-1">
+                    <Label>Макс. цена за {formData.unit} (₽)</Label>
+                    <Input type="number" step="0.01" min="0" value={formData.pricePerUnit} onChange={e => set('pricePerUnit', e.target.value)} placeholder="15000" />
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <Label>Бюджет</Label>
+                    <Input value="Договорная" disabled className="text-muted-foreground" />
+                  </div>
+                )}
               </>
             )}
           </div>

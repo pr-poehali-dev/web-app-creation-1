@@ -64,6 +64,7 @@ export interface ContractFormData {
   productImages: string[];
   productImagesB: string[];
   deliveryNotes: string;
+  priceType: 'negotiable' | 'max';
 }
 
 const initialFormData: ContractFormData = {
@@ -91,6 +92,7 @@ const initialFormData: ContractFormData = {
   productImages: [],
   productImagesB: [],
   deliveryNotes: '',
+  priceType: 'negotiable',
 };
 
 export function useContractData(isAuthenticated: boolean, skipVerificationCheck = false) {

@@ -60,7 +60,8 @@ def handler(event: dict, context) -> dict:
             })
         publish = body.get('publish', False)
         new_status = 'open' if publish else (row[1] if row[1] in ('draft', 'open') else row[1])
-        product_images = body.get('productImages') or []
+        product_images_raw = body.get('productImages') or []
+        product_images = product_images_raw if product_images_raw else None
         product_images_b = body.get('productImagesB') or []
         if product_type := body.get('contractType', contract_type):
             if product_type == 'barter' and product_images_b:
@@ -142,8 +143,9 @@ def handler(event: dict, context) -> dict:
     document_url = body.get('documentUrl') or None
     publish = body.get('publish', False)
 
-    product_images = body.get('productImages') or []
+    product_images_raw = body.get('productImages') or []
     product_images_b = body.get('productImagesB') or []
+    product_images = product_images_raw if product_images_raw else None
     product_specs = None
     if contract_type == 'barter':
         product_specs = json.dumps({
@@ -154,6 +156,9 @@ def handler(event: dict, context) -> dict:
             'totalAmountB': body.get('totalAmountB', ''),
             'productImagesB': product_images_b,
         })
+    elif contract_type == 'forward-request':
+        price_type = body.get('priceType', 'negotiable')
+        product_specs = json.dumps({'priceType': price_type})
 
     status = 'open' if publish else 'draft'
 
@@ -164,7 +169,7 @@ def handler(event: dict, context) -> dict:
     if not title:
         title = f"{product_name} {quantity} {unit}"
 
-    print(f"[save-contract] INSERT attempt: type={contract_type} status={status} delivery_date={delivery_date} start={contract_start_date} end={contract_end_date} user_id={user_id}")
+    print(f"[save-contract] INSERT: type={contract_type} status={status} dd={delivery_date} user={user_id} imgs={product_images}")
 
     conn = get_conn()
     cur = conn.cursor()
