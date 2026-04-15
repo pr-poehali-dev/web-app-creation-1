@@ -105,6 +105,7 @@ def handler(event: dict, context) -> dict:
                 'body': json.dumps({'error': 'Method not allowed'})}
 
     user_id = (event.get('headers') or {}).get('X-User-Id') or (event.get('headers') or {}).get('x-user-id')
+    print(f"[save-contract] POST user_id={repr(user_id)} headers_keys={list((event.get('headers') or {}).keys())}")
     if not user_id:
         return {'statusCode': 401, 'headers': {**CORS, 'Content-Type': 'application/json'},
                 'body': json.dumps({'error': 'Unauthorized'})}

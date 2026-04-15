@@ -339,6 +339,7 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
       productImages: Array.isArray(c.productImages) ? (c.productImages as string[]) : [],
       productImagesB: Array.isArray(specs.productImagesB) ? (specs.productImagesB as string[]) : [],
       deliveryNotes: '',
+      priceType: (specs.priceType as 'negotiable' | 'max') || 'negotiable',
     });
   };
 
@@ -362,10 +363,13 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
           publish,
         }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      console.log('[save-contract] status:', res.status, 'body:', text);
+      let data: Record<string, unknown> = {};
+      try { data = JSON.parse(text); } catch { data = {}; }
       if (res.ok && data.success) {
         const contractId = editId || data.contractId;
-        notifyContractUpdated(contractId);
+        notifyContractUpdated(contractId as number);
         if (publish) {
           toast({ title: 'Контракт опубликован', description: 'Контракт виден другим участникам платформы' });
         } else {
@@ -373,10 +377,12 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
         }
         navigate(isEdit ? `/contract/${contractId}` : '/trading');
       } else {
-        toast({ title: 'Ошибка', description: data.error || 'Не удалось сохранить контракт', variant: 'destructive' });
+        const errMsg = (data.error as string) || `Ошибка ${res.status}: ${text.slice(0, 200)}`;
+        console.error('[save-contract] error response:', errMsg);
+        toast({ title: 'Ошибка', description: errMsg, variant: 'destructive' });
       }
     } catch (err) {
-      console.error(err);
+      console.error('[save-contract] fetch exception:', err);
       toast({ title: 'Ошибка', description: 'Не удалось сохранить контракт', variant: 'destructive' });
     } finally {
       setLoading(false);
