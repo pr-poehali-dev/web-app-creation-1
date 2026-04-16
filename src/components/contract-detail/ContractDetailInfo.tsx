@@ -242,13 +242,13 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
           <div className="grid grid-cols-2 gap-3 text-sm">
             {!isBarter && (
               <div>
-                <div className="text-muted-foreground">Дата поставки</div>
-                <div className="font-medium">{formatDate(contract.deliveryDate)}</div>
+                <div className="text-muted-foreground">Дата создания контракта</div>
+                <div className="font-medium">{formatDate(contract.createdAt)}</div>
               </div>
             )}
             {!isBarter && (
               <div>
-                <div className="text-muted-foreground">Срок контракта</div>
+                <div className="text-muted-foreground">Срок поставки</div>
                 <div className="font-medium">{formatDate(contract.contractStartDate)} — {formatDate(contract.contractEndDate)}</div>
               </div>
             )}
@@ -273,7 +273,15 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
             {contract.deliveryMethod && (
               <div>
                 <div className="text-muted-foreground">Способ доставки</div>
-                <div className="font-medium">{contract.deliveryMethod}</div>
+                <div className="font-medium">
+                  {contract.deliveryMethod === 'delivery' ? 'Доставка' :
+                   contract.deliveryMethod === 'pickup' ? 'Самовывоз' :
+                   contract.deliveryMethod === 'courier' ? 'Курьер' :
+                   contract.deliveryMethod === 'transport_company' ? 'Транспортная компания' :
+                   contract.deliveryMethod === 'mail' ? 'Почта' :
+                   contract.deliveryMethod === 'negotiable' ? 'Договорной' :
+                   contract.deliveryMethod}
+                </div>
               </div>
             )}
           </div>
