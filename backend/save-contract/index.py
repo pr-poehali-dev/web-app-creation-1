@@ -147,6 +147,7 @@ def handler(event: dict, context) -> dict:
     product_images_raw = body.get('productImages') or []
     product_images_b = body.get('productImagesB') or []
     product_images = product_images_raw if product_images_raw else None
+    price_type = body.get('priceType', 'fixed')
     product_specs = None
     if contract_type == 'barter':
         product_specs = json.dumps({
@@ -158,7 +159,8 @@ def handler(event: dict, context) -> dict:
             'productImagesB': product_images_b,
         })
     elif contract_type == 'forward-request':
-        price_type = body.get('priceType', 'negotiable')
+        product_specs = json.dumps({'priceType': price_type})
+    elif price_type == 'negotiable':
         product_specs = json.dumps({'priceType': price_type})
 
     status = 'open' if publish else 'draft'

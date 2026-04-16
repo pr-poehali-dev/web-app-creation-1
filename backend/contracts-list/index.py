@@ -551,6 +551,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d['recentRespondents']  = d.pop('recent_respondents', None) or []
                 d['reliabilityScore']   = d.pop('reliability_score', None)
                 d['responseId']         = d.pop('my_response_id', None)
+                # Извлекаем priceType из product_specs или из отдельного поля
+                specs = d.get('productSpecs') or {}
+                if isinstance(specs, str):
+                    try: specs = json.loads(specs)
+                    except: specs = {}
+                d['priceType'] = specs.get('priceType') or d.pop('price_type', 'fixed') or 'fixed'
                 contracts_list.append(d)
 
             return {

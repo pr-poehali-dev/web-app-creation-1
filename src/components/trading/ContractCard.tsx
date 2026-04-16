@@ -14,6 +14,7 @@ interface Contract {
   unit: string;
   pricePerUnit: number;
   totalAmount: number;
+  priceType?: string;
   deliveryDate: string;
   status: string;
   sellerFirstName: string;
@@ -87,14 +88,23 @@ export default function ContractCard({
             </div>
           ) : (
             <div className="flex items-center justify-between pt-2 border-t">
-              <div>
-                <div className="text-xs text-muted-foreground">За единицу</div>
-                <div className="text-sm font-semibold">{formatPrice(contract.pricePerUnit)}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-muted-foreground">Итого</div>
-                <div className="font-bold text-base">{formatPrice(contract.totalAmount)}</div>
-              </div>
+              {contract.priceType === 'negotiable' || (!contract.pricePerUnit && !contract.totalAmount) ? (
+                <div className="flex items-center gap-1.5">
+                  <Icon name="Handshake" className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-semibold text-muted-foreground">Цена договорная</span>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <div className="text-xs text-muted-foreground">За единицу</div>
+                    <div className="text-sm font-semibold">{formatPrice(contract.pricePerUnit)}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-muted-foreground">Итого</div>
+                    <div className="font-bold text-base">{formatPrice(contract.totalAmount)}</div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 
