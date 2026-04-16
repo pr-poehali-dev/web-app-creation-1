@@ -42,6 +42,7 @@ interface Contract {
   sellerLastName: string;
   sellerCompanyName?: string;
   sellerRating: number;
+  prepaymentPercent: number;
   discountPercent: number;
   financingAvailable: boolean;
   viewsCount: number;

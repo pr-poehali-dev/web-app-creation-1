@@ -22,6 +22,7 @@ interface Contract {
   sellerCompanyName?: string;
   sellerRating: number;
   reliabilityScore?: number | null;
+  prepaymentPercent: number;
   discountPercent: number;
   financingAvailable: boolean;
   viewsCount: number;
@@ -108,8 +109,14 @@ export default function ContractCard({
             </div>
           )}
 
-          {(contract.discountPercent > 0 || contract.financingAvailable) && (
+          {(contract.prepaymentPercent > 0 || contract.discountPercent > 0 || contract.financingAvailable) && (
             <div className="flex gap-1.5 flex-wrap">
+              {contract.prepaymentPercent > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  <Icon name="Wallet" className="h-3 w-3 mr-1" />
+                  Предоплата {contract.prepaymentPercent}%
+                </Badge>
+              )}
               {contract.discountPercent > 0 && (
                 <Badge variant="secondary" className="text-xs">
                   <Icon name="Percent" className="h-3 w-3 mr-1" />
