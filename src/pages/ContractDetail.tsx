@@ -35,6 +35,7 @@ interface Contract {
   unit: string;
   pricePerUnit: number;
   totalAmount: number;
+  priceType?: string;
   currency: string;
   deliveryDate: string;
   contractStartDate: string;

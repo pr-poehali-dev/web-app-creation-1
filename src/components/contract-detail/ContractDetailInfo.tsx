@@ -111,6 +111,7 @@ interface Contract {
   unit: string;
   pricePerUnit: number;
   totalAmount: number;
+  priceType?: string;
   currency: string;
   deliveryDate: string;
   contractStartDate: string;
@@ -172,6 +173,7 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
     ? (contract.productSpecs!.productImagesB as string[])
     : [];
   const [mapModalOpen, setMapModalOpen] = useState(false);
+  const isNegotiable = contract.priceType === 'negotiable' || (contract.productSpecs?.priceType === 'negotiable') || (!contract.pricePerUnit && !contract.totalAmount && !isBarter);
 
   return (
     <>
@@ -189,16 +191,25 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
               <div className="font-medium">{contract.quantity} {contract.unit}</div>
             </div>
             {!isBarter && (
-              <>
-                <div>
-                  <div className="text-muted-foreground">Цена за единицу</div>
-                  <div className="font-medium">{formatPrice(contract.pricePerUnit)}</div>
+              isNegotiable ? (
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2 py-1">
+                    <Icon name="Handshake" size={16} className="text-muted-foreground" />
+                    <span className="font-medium text-muted-foreground">Цена договорная — обсуждается с продавцом</span>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-muted-foreground">Общая сумма</div>
-                  <div className="font-bold text-lg">{formatPrice(contract.totalAmount)}</div>
-                </div>
-              </>
+              ) : (
+                <>
+                  <div>
+                    <div className="text-muted-foreground">Цена за единицу</div>
+                    <div className="font-medium">{formatPrice(contract.pricePerUnit)}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Общая сумма</div>
+                    <div className="font-bold text-lg">{formatPrice(contract.totalAmount)}</div>
+                  </div>
+                </>
+              )
             )}
             {isBarter && contract.productSpecs && (
               <>
@@ -283,7 +294,14 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
                   </div>
                   <div>
                     <div className="text-muted-foreground">Сумма предоплаты</div>
-                    <div className="font-medium">{formatPrice(contract.prepaymentAmount)}</div>
+                    {isNegotiable ? (
+                      <div className="flex items-center gap-1.5 font-medium text-muted-foreground">
+                        <Icon name="Handshake" size={14} />
+                        Договорная
+                      </div>
+                    ) : (
+                      <div className="font-medium">{formatPrice(contract.prepaymentAmount)}</div>
+                    )}
                   </div>
                 </>
               )}
