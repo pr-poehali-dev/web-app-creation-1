@@ -35,6 +35,31 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const isTransport = request.category === 'transport';
   const isCargo = isTransport && (request.transportServiceType === 'cargo' || request.transportServiceType === 'Грузоперевозки');
   const isPassenger = isTransport && (request.transportServiceType === 'passenger' || request.transportServiceType === 'Пассажирские перевозки');
+
+  const getCategoryIcon = (category: string): { icon: string; label: string } => {
+    const map: Record<string, { icon: string; label: string }> = {
+      'dairy': { icon: 'Milk', label: 'МОЛОЧНОЕ' },
+      'meat': { icon: 'Beef', label: 'МЯСО' },
+      'semifinished': { icon: 'BoxOpen', label: 'ПОЛУФАБРИКАТЫ' },
+      'fruits-vegetables': { icon: 'Apple', label: 'ОВОЩИ И ФРУКТЫ' },
+      'animal-feed': { icon: 'PawPrint', label: 'КОРМА' },
+      'lumber': { icon: 'Trees', label: 'ПИЛОМАТЕРИАЛЫ' },
+      'raw-materials': { icon: 'Brick', label: 'СТРОЙМАТЕРИАЛЫ' },
+      'solid-fuel': { icon: 'Flame', label: 'ТВЁРДОЕ ТОПЛИВО' },
+      'energy': { icon: 'Droplet', label: 'ГСМ' },
+      'essentials': { icon: 'ShoppingBag', label: 'ТОВАРЫ' },
+      'household-chemicals': { icon: 'TestTube', label: 'БЫТ. ХИМИЯ' },
+      'household-appliances': { icon: 'Sofa', label: 'ТЕХНИКА И МЕБЕЛЬ' },
+      'equipment': { icon: 'Wrench', label: 'ОБОРУДОВАНИЕ' },
+      'auto-sale': { icon: 'Car', label: 'АВТО' },
+      'utilities': { icon: 'Briefcase', label: 'УСЛУГИ' },
+      'works': { icon: 'HardHat', label: 'РАБОТЫ' },
+      'other': { icon: 'Package', label: 'ПРОЧЕЕ' },
+    };
+    return map[category] || { icon: 'Package', label: 'ПРОЧЕЕ' };
+  };
+
+  const categoryDisplay = getCategoryIcon(request.category);
   
   const transportTitle = isCargo ? 'Грузоперевозки' : isPassenger ? 'Пассажирские перевозки' : request.title;
 
@@ -100,15 +125,9 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 opacity-30">
-                    <div className="h-16 w-16 overflow-hidden rounded-md flex items-center justify-center">
-                      <img 
-                        src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" 
-                        alt="ЕРТТП" 
-                        className="h-full w-full scale-[2.5] brightness-125 contrast-125"
-                        style={{ filter: 'brightness(1.3) contrast(1.3) drop-shadow(0 0 2px white) drop-shadow(0 0 4px white)', transform: 'scaleX(-1)' }}
-                      />
-                    </div>
+                  <div className="flex flex-col items-center gap-1 opacity-40">
+                    <Icon name={categoryDisplay.icon} className="h-12 w-12 text-primary" />
+                    <span className="text-[11px] font-bold text-primary tracking-wider">{categoryDisplay.label}</span>
                   </div>
                 )}
               </div>
