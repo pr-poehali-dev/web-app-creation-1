@@ -23,6 +23,34 @@
       "expectedStatus": 401,
       "expectedBody": {"error": "Unauthorized"},
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST draft contract with user id",
+      "method": "POST",
+      "path": "/",
+      "headers": {"X-User-Id": "4"},
+      "body": {
+        "contractType": "forward",
+        "productName": "Тестовый товар",
+        "quantity": "10",
+        "unit": "шт",
+        "pricePerUnit": "100",
+        "category": "other",
+        "publish": false,
+        "deliveryDate": "2026-06-01",
+        "contractStartDate": "2026-04-16",
+        "contractEndDate": "2026-06-30",
+        "deliveryAddress": "г. Тест",
+        "deliveryTypes": ["pickup"],
+        "deliveryDistricts": [],
+        "prepaymentPercent": "0",
+        "termsConditions": "",
+        "totalAmount": 1000,
+        "prepaymentAmount": 0
+      },
+      "expectedStatus": 200,
+      "expectedBody": {"success": true},
+      "bodyMatcher": "partial"
     }
   ]
 }

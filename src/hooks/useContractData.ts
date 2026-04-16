@@ -234,6 +234,7 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
   const prepaymentAmount = totalAmount * (parseFloat(formData.prepaymentPercent || '0') / 100);
 
   const validate = () => {
+    console.log('[validate] contractType:', formData.contractType, 'productName:', formData.productName, 'quantity:', formData.quantity, 'pricePerUnit:', formData.pricePerUnit, 'category:', formData.category, 'deliveryDate:', formData.deliveryDate, 'contractEndDate:', formData.contractEndDate);
     if (!formData.productName) { toast({ title: 'Ошибка', description: 'Укажите название товара', variant: 'destructive' }); return false; }
     if (!formData.quantity || parseFloat(formData.quantity) <= 0) { toast({ title: 'Ошибка', description: 'Укажите количество товара', variant: 'destructive' }); return false; }
     if (formData.contractType === 'forward' && (!formData.pricePerUnit || parseFloat(formData.pricePerUnit) <= 0)) {
@@ -242,7 +243,6 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
     if (formData.contractType === 'barter' && !formData.productNameB) {
       toast({ title: 'Ошибка', description: 'Укажите товар для обмена (Товар Б)', variant: 'destructive' }); return false;
     }
-    if (formData.contractType === 'forward' && !formData.deliveryDate) { toast({ title: 'Ошибка', description: 'Укажите дату поставки', variant: 'destructive' }); return false; }
     if (!formData.category) { toast({ title: 'Ошибка', description: 'Выберите категорию товара', variant: 'destructive' }); return false; }
     return true;
   };
@@ -352,9 +352,14 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
       const userId = localStorage.getItem('userId') || String(getSession()?.id || '');
       const url = (func2url as Record<string, string>)['save-contract'];
       const isEdit = !!editId;
-      console.log('[save-contract] userId from localStorage:', userId);
+      console.log('[save-contract] userId:', userId, 'url:', url, 'publish:', publish, 'editId:', editId);
       if (!userId) {
         toast({ title: 'Ошибка', description: 'Необходимо войти в систему', variant: 'destructive' });
+        setLoading(false);
+        return;
+      }
+      if (!url) {
+        toast({ title: 'Ошибка', description: 'Ошибка конфигурации: URL не найден', variant: 'destructive' });
         setLoading(false);
         return;
       }
@@ -389,8 +394,9 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
         toast({ title: 'Ошибка', description: errMsg, variant: 'destructive' });
       }
     } catch (err) {
-      console.error('[save-contract] fetch exception:', err);
-      toast({ title: 'Ошибка', description: 'Не удалось сохранить контракт', variant: 'destructive' });
+      const errStr = err instanceof Error ? err.message : String(err);
+      console.error('[save-contract] fetch exception:', errStr);
+      toast({ title: 'Ошибка сети', description: `Не удалось отправить запрос: ${errStr}`, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
