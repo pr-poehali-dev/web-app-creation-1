@@ -249,7 +249,7 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
             {!isBarter && (
               <div>
                 <div className="text-muted-foreground">Срок поставки</div>
-                <div className="font-medium">{formatDate(contract.contractStartDate)} — {formatDate(contract.contractEndDate)}</div>
+                <div className="font-medium">{formatDate(contract.deliveryDate)} — {formatDate(contract.contractEndDate)}</div>
               </div>
             )}
             {contract.deliveryAddress && (
