@@ -6,6 +6,8 @@ import BackButton from '@/components/BackButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 
@@ -64,6 +66,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [showForwardInfo, setShowForwardInfo] = useState(false);
   const [showBarterInfo, setShowBarterInfo] = useState(false);
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
   const [currentUser, setCurrentUser] = useState(getSession());
 
   const loadContracts = async () => {
@@ -87,12 +90,8 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   };
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
     loadContracts();
-  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);  
 
   const getContractTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -152,7 +151,15 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     return matchesSearch && matchesCategory && matchesType;
   });
 
+  const handleGuestAction = () => {
+    setShowGuestDialog(true);
+  };
+
   const handleCreateContract = async () => {
+    if (!isAuthenticated) {
+      handleGuestAction();
+      return;
+    }
     let verificationStatus = currentUser?.verificationStatus;
 
     const userId = localStorage.getItem('userId');
@@ -234,7 +241,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
                 <ContractCard
                   key={contract.id}
                   contract={contract}
-                  onCardClick={(id) => navigate(`/contract/${id}`)}
+                  onCardClick={(id) => isAuthenticated ? navigate(`/contract/${id}`) : handleGuestAction()}
                   getContractTypeLabel={getContractTypeLabel}
                   getStatusBadge={getStatusBadge}
                   formatDate={formatDate}
@@ -248,6 +255,21 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       </PullToRefresh>
 
       <Footer />
+
+      <Dialog open={showGuestDialog} onOpenChange={setShowGuestDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Войдите, чтобы продолжить</DialogTitle>
+            <DialogDescription>
+              Для просмотра деталей контрактов и совершения сделок необходимо войти в аккаунт.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button onClick={() => navigate('/login')} className="w-full">Войти</Button>
+            <Button variant="outline" onClick={() => navigate('/register')} className="w-full">Зарегистрироваться</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <TradingVerificationDialog
         open={showVerificationDialog}
