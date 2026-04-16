@@ -64,6 +64,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [verificationDialogMode, setVerificationDialogMode] = useState<'not-verified' | 'restricted-type'>('not-verified');
   const [showForwardInfo, setShowForwardInfo] = useState(false);
   const [showBarterInfo, setShowBarterInfo] = useState(false);
   const [showGuestDialog, setShowGuestDialog] = useState(false);
@@ -179,25 +180,20 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
         const userType = data.userType;
         const restrictedTypes = ['individual', 'self-employed'];
         if (verificationStatus === 'verified' && userType && restrictedTypes.includes(userType)) {
-          toast({
-            title: 'Создание контрактов недоступно',
-            description: 'Создавать форвардные и бартерные контракты могут только ИП и юридические лица. Вы можете принимать предложения по контрактам.',
-            duration: 8000,
-          });
+          setVerificationDialogMode('restricted-type');
+          setShowVerificationDialog(true);
           return;
         }
       } catch { /* network unavailable, use cached status */ }
     }
 
     if (verificationStatus === 'pending') {
-      toast({
-        title: 'Верификация на рассмотрении',
-        description: 'Верификация вашей учётной записи на рассмотрении. После одобрения верификации или отказа вы получите соответствующее уведомление. После успешной верификации вам будут доступны все возможности на ЕРТТП.',
-        duration: 8000,
-      });
+      setVerificationDialogMode('not-verified');
+      setShowVerificationDialog(true);
       return;
     }
     if (verificationStatus !== 'verified') {
+      setVerificationDialogMode('not-verified');
       setShowVerificationDialog(true);
       return;
     }
@@ -274,6 +270,7 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
       <TradingVerificationDialog
         open={showVerificationDialog}
         onOpenChange={setShowVerificationDialog}
+        mode={verificationDialogMode}
       />
 
       <ForwardInfoDialog

@@ -16,6 +16,7 @@ import func2url from '../../backend/func2url.json';
 import ContractDetailInfo from '@/components/contract-detail/ContractDetailInfo';
 import ContractDetailResponses from '@/components/contract-detail/ContractDetailResponses';
 import ContractRespondDialog from '@/components/contract-detail/ContractRespondDialog';
+import ContractRespondVerificationDialog from '@/components/contract-detail/ContractRespondVerificationDialog';
 import ContractNegotiationModal from '@/components/contract/ContractNegotiationModal';
 
 interface ContractDetailProps {
@@ -102,6 +103,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
 
   const [showGuestDialog, setShowGuestDialog] = useState(false);
+  const [respondVerifDialog, setRespondVerifDialog] = useState<{ open: boolean; mode: 'not-verified' | 'pending' | 'barter-restricted' }>({ open: false, mode: 'not-verified' });
 
   useEffect(() => {
     loadContract();
@@ -206,17 +208,16 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         const data = await res.json();
         const status = data.verificationStatus || data.verification_status;
         if (status === 'pending') {
-          toast({ title: 'Верификация на рассмотрении', description: 'После одобрения верификации вам будет доступен отклик на контракты.', duration: 6000 });
+          setRespondVerifDialog({ open: true, mode: 'pending' });
           return;
         }
         if (status !== 'verified') {
-          toast({ title: 'Необходима верификация', description: 'Для отклика на контракт необходимо пройти верификацию.', variant: 'destructive' });
-          navigate('/verification');
+          setRespondVerifDialog({ open: true, mode: 'not-verified' });
           return;
         }
         const userType = data.userType;
         if (contract?.contractType === 'barter' && userType && ['individual', 'self-employed'].includes(userType)) {
-          toast({ title: 'Участие в бартере недоступно', description: 'Участвовать в бартерных контрактах могут только ИП и юридические лица.', duration: 8000 });
+          setRespondVerifDialog({ open: true, mode: 'barter-restricted' });
           return;
         }
       }
@@ -462,6 +463,12 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
           </div>
         </DialogContent>
       </Dialog>
+
+      <ContractRespondVerificationDialog
+        open={respondVerifDialog.open}
+        onOpenChange={(open) => setRespondVerifDialog((prev) => ({ ...prev, open }))}
+        mode={respondVerifDialog.mode}
+      />
 
       {negotiationOpen && negotiationResponseId.current && (
         <ContractNegotiationModal
