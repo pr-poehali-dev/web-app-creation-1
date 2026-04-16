@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
@@ -100,11 +101,9 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const negotiationResponseId = useRef<number | null>(locationState?.responseId ?? null);
   const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
 
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
+
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
     loadContract();
   }, [id, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -320,7 +319,12 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
                 </Button>
               )}
               {!isSeller && contract.status === 'open' && (
-                alreadyResponded ? (
+                !isAuthenticated ? (
+                  <Button onClick={() => setShowGuestDialog(true)}>
+                    <Icon name="Send" className="mr-2 h-4 w-4" />
+                    Откликнуться
+                  </Button>
+                ) : alreadyResponded ? (
                   <Button variant="default" onClick={async () => {
                     let rid = negotiationResponseId.current;
                     if (!rid) {
@@ -396,7 +400,12 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
               {/* Кнопка отклика снизу */}
               {contract.status === 'open' && (
-                alreadyResponded ? (
+                !isAuthenticated ? (
+                  <Button onClick={() => setShowGuestDialog(true)} className="w-full" size="lg">
+                    <Icon name="Send" className="mr-2 h-4 w-4" />
+                    Откликнуться на контракт
+                  </Button>
+                ) : alreadyResponded ? (
                   <Button className="w-full" size="lg" onClick={async () => {
                     let rid = negotiationResponseId.current;
                     if (!rid) {
@@ -438,6 +447,21 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
         contractQuantity={contract.quantity}
         formatPrice={formatPrice}
       />
+
+      <Dialog open={showGuestDialog} onOpenChange={setShowGuestDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Войдите, чтобы откликнуться</DialogTitle>
+            <DialogDescription>
+              Для отклика на контракт и участия в переговорах необходимо войти в аккаунт.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button onClick={() => navigate('/login')} className="w-full">Войти</Button>
+            <Button variant="outline" onClick={() => navigate('/register')} className="w-full">Зарегистрироваться</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {negotiationOpen && negotiationResponseId.current && (
         <ContractNegotiationModal
