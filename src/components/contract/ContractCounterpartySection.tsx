@@ -81,14 +81,14 @@ export default function ContractCounterpartySection({
 
       <div className="flex flex-col gap-3 pb-4">
         <div className="flex gap-3">
-          <Button onClick={onSave} disabled={isGenerating || isSubmitting || isPublishing} variant="outline" className="flex-1">
+          <Button onClick={() => onSave()} disabled={isGenerating || isSubmitting || isPublishing} variant="outline" className="flex-1">
             {isSubmitting ? (
               <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Сохраняю...</>
             ) : (
               <><Icon name="Save" className="mr-2 h-4 w-4" />Сохранить черновик</>
             )}
           </Button>
-          <Button onClick={onPublish} disabled={isGenerating || isSubmitting || isPublishing} className="flex-1">
+          <Button onClick={() => onPublish()} disabled={isGenerating || isSubmitting || isPublishing} className="flex-1">
             {isPublishing ? (
               <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Публикую...</>
             ) : (

@@ -363,11 +363,12 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
         setLoading(false);
         return;
       }
+      const safeEditId = typeof editId === 'number' ? editId : undefined;
       const res = await fetch(url, {
-        method: isEdit ? 'PUT' : 'POST',
+        method: safeEditId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({
-          ...(isEdit ? { contractId: editId } : {}),
+          ...(safeEditId ? { contractId: safeEditId } : {}),
           ...formData,
           totalAmount,
           prepaymentAmount,
@@ -402,8 +403,8 @@ export function useContractData(isAuthenticated: boolean, skipVerificationCheck 
     }
   };
 
-  const handleSaveToContracts = (editId?: number) => saveContract(false, editId);
-  const handlePublishContract = (editId?: number) => saveContract(true, editId);
+  const handleSaveToContracts = (editId?: number) => saveContract(false, typeof editId === 'number' ? editId : undefined);
+  const handlePublishContract = (editId?: number) => saveContract(true, typeof editId === 'number' ? editId : undefined);
 
   return {
     formData,
