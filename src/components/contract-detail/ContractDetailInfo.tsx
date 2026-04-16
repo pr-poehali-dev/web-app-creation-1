@@ -274,13 +274,15 @@ export default function ContractDetailInfo({ contract, isBarter, formatDate, for
               <div>
                 <div className="text-muted-foreground">Способ доставки</div>
                 <div className="font-medium">
-                  {contract.deliveryMethod === 'delivery' ? 'Доставка' :
-                   contract.deliveryMethod === 'pickup' ? 'Самовывоз' :
-                   contract.deliveryMethod === 'courier' ? 'Курьер' :
-                   contract.deliveryMethod === 'transport_company' ? 'Транспортная компания' :
-                   contract.deliveryMethod === 'mail' ? 'Почта' :
-                   contract.deliveryMethod === 'negotiable' ? 'Договорной' :
-                   contract.deliveryMethod}
+                  {contract.deliveryMethod.split(',').map(m => {
+                    const v = m.trim();
+                    return v === 'delivery' ? 'Доставка' :
+                           v === 'pickup' ? 'Самовывоз' :
+                           v === 'courier' ? 'Курьер' :
+                           v === 'transport_company' ? 'Транспортная компания' :
+                           v === 'mail' ? 'Почта' :
+                           v === 'negotiable' ? 'Договорной' : v;
+                  }).join(', ')}
                 </div>
               </div>
             )}
