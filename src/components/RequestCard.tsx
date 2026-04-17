@@ -42,7 +42,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
       'meat': { icon: 'Beef', label: 'МЯСО' },
       'semifinished': { icon: 'BoxOpen', label: 'ПОЛУФАБРИКАТЫ' },
       'fruits-vegetables': { icon: 'Apple', label: 'ОВОЩИ И ФРУКТЫ' },
-      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/98c04475-6244-4c71-8ca5-d1d978435127.jpg', label: 'КОРМА С/Х' },
+      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/d6a6e635-6908-4f6f-acd4-bc43e277c0cf.jpg', label: 'КОРМА С/Х' },
       'lumber': { icon: 'Trees', label: 'ПИЛОМАТЕРИАЛЫ' },
       'raw-materials': { icon: 'Brick', label: 'СТРОЙМАТЕРИАЛЫ' },
       'solid-fuel': { icon: 'Flame', label: 'ТВЁРДОЕ ТОПЛИВО' },
@@ -110,7 +110,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               />
             ) : categoryDisplay.image ? (
               <>
-                <img src={categoryDisplay.image} alt={categoryDisplay.label} className="w-full h-full object-contain p-3" />
+                <img src={categoryDisplay.image} alt={categoryDisplay.label} className="w-full h-full object-cover" />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-2 py-1">
                   <span className="text-[11px] font-bold text-white tracking-wider">{categoryDisplay.label}</span>
                 </div>
