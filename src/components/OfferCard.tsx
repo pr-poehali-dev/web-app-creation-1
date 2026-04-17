@@ -60,19 +60,19 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
       return isCargo ? { icon: 'Truck', label: 'ГРУЗОВЫЕ' } : { icon: 'Car', label: 'ТАКСИ' };
     }
     const map: Record<string, { icon?: string; image?: string; label: string }> = {
-      'dairy': { icon: 'Milk', label: 'МОЛОЧНОЕ' },
-      'meat': { icon: 'Beef', label: 'МЯСО' },
+      'dairy': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/c0d6c32a-0f8b-410d-b53f-38b28e60df26.jpg', label: 'МОЛОЧНОЕ' },
+      'meat': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/962ba1a6-4a09-48b1-9e23-6cca3cefed77.jpg', label: 'МЯСО' },
       'semifinished': { icon: 'BoxOpen', label: 'ПОЛУФАБРИКАТЫ' },
-      'fruits-vegetables': { icon: 'Apple', label: 'ОВОЩИ И ФРУКТЫ' },
-      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/98c04475-6244-4c71-8ca5-d1d978435127.jpg', label: 'КОРМА С/Х' },
-      'lumber': { icon: 'Trees', label: 'ПИЛОМАТЕРИАЛЫ' },
-      'raw-materials': { icon: 'Brick', label: 'СТРОЙМАТЕРИАЛЫ' },
-      'solid-fuel': { icon: 'Flame', label: 'ТВЁРДОЕ ТОПЛИВО' },
-      'energy': { icon: 'Droplet', label: 'ГСМ' },
-      'essentials': { icon: 'ShoppingBag', label: 'ТОВАРЫ' },
+      'fruits-vegetables': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/d36465ec-c4ed-426a-af3f-8ae240b08b4e.jpg', label: 'ОВОЩИ И ФРУКТЫ' },
+      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/d6a6e635-6908-4f6f-acd4-bc43e277c0cf.jpg', label: 'КОРМА С/Х' },
+      'lumber': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/e5001a6b-b444-4a2c-9f47-b07c678c1e6d.jpg', label: 'ПИЛОМАТЕРИАЛЫ' },
+      'raw-materials': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/6efdcfdb-94ae-4923-8517-2075e2d54f6e.jpg', label: 'СТРОЙМАТЕРИАЛЫ' },
+      'solid-fuel': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/ab61d417-a247-4efe-a748-37968bb59007.jpg', label: 'ТВЁРДОЕ ТОПЛИВО' },
+      'energy': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/00d3f781-c087-41ea-a1b0-f51bf353581e.jpg', label: 'ГСМ' },
+      'essentials': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/fddd25c5-c858-4970-b1b2-35405bf1a0e1.jpg', label: 'ТОВАРЫ' },
       'household-chemicals': { icon: 'TestTube', label: 'БЫТ. ХИМИЯ' },
       'household-appliances': { icon: 'Sofa', label: 'ТЕХНИКА И МЕБЕЛЬ' },
-      'equipment': { icon: 'Wrench', label: 'ОБОРУДОВАНИЕ' },
+      'equipment': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/4e73da74-1357-45b2-b2ef-733da4290ea4.jpg', label: 'ОБОРУДОВАНИЕ' },
       'auto-sale': { icon: 'Car', label: 'АВТО' },
       'utilities': { icon: 'Briefcase', label: 'УСЛУГИ' },
       'works': { icon: 'HardHat', label: 'РАБОТЫ' },
@@ -223,14 +223,17 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
                 </>
               )}
             </>
+          ) : categoryDisplay.image ? (
+            <>
+              <img src={categoryDisplay.image} alt={categoryDisplay.label} className="w-full h-full object-cover" />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-2 py-1">
+                <span className="text-[11px] font-bold text-white tracking-wider">{categoryDisplay.label}</span>
+              </div>
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex flex-col items-center gap-1 opacity-60">
-                {categoryDisplay.image ? (
-                  <img src={categoryDisplay.image} alt={categoryDisplay.label} className="h-14 w-14 object-cover rounded-lg" />
-                ) : (
-                  <Icon name={categoryDisplay.icon || 'Package'} className="h-12 w-12 text-primary" />
-                )}
+              <div className="flex flex-col items-center gap-1 opacity-40">
+                <Icon name={categoryDisplay.icon || 'Package'} className="h-12 w-12 text-primary" />
                 <span className="text-[11px] font-bold text-primary tracking-wider">{categoryDisplay.label}</span>
               </div>
             </div>
