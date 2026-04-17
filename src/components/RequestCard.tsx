@@ -124,13 +124,16 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
                       </>
                     )}
                   </div>
+                ) : categoryDisplay.image ? (
+                  <>
+                    <img src={categoryDisplay.image} alt={categoryDisplay.label} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-2 py-1">
+                      <span className="text-[11px] font-bold text-white tracking-wider">{categoryDisplay.label}</span>
+                    </div>
+                  </>
                 ) : (
-                  <div className="flex flex-col items-center gap-1 opacity-60">
-                    {categoryDisplay.image ? (
-                      <img src={categoryDisplay.image} alt={categoryDisplay.label} className="h-14 w-14 object-cover rounded-lg" />
-                    ) : (
-                      <Icon name={categoryDisplay.icon || 'Package'} className="h-12 w-12 text-primary" />
-                    )}
+                  <div className="flex flex-col items-center gap-1 opacity-40">
+                    <Icon name={categoryDisplay.icon || 'Package'} className="h-12 w-12 text-primary" />
                     <span className="text-[11px] font-bold text-primary tracking-wider">{categoryDisplay.label}</span>
                   </div>
                 )}
