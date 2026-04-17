@@ -64,7 +64,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
       'meat': { icon: 'Beef', label: 'МЯСО' },
       'semifinished': { icon: 'BoxOpen', label: 'ПОЛУФАБРИКАТЫ' },
       'fruits-vegetables': { icon: 'Apple', label: 'ОВОЩИ И ФРУКТЫ' },
-      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/17cba401-a215-498c-a9fb-c286d526913c.jpg', label: 'КОРМА С/Х' },
+      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/98c04475-6244-4c71-8ca5-d1d978435127.jpg', label: 'КОРМА С/Х' },
       'lumber': { icon: 'Trees', label: 'ПИЛОМАТЕРИАЛЫ' },
       'raw-materials': { icon: 'Brick', label: 'СТРОЙМАТЕРИАЛЫ' },
       'solid-fuel': { icon: 'Flame', label: 'ТВЁРДОЕ ТОПЛИВО' },
