@@ -110,7 +110,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               />
             ) : categoryDisplay.image ? (
               <>
-                <img src={categoryDisplay.image} alt={categoryDisplay.label} className="w-full h-full object-cover" />
+                <img src={categoryDisplay.image} alt={categoryDisplay.label} className="w-full h-full object-contain p-3" />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-2 py-1">
                   <span className="text-[11px] font-bold text-white tracking-wider">{categoryDisplay.label}</span>
                 </div>
