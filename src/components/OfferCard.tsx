@@ -53,18 +53,18 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
   const isTransport = offer.category === 'transport';
   const isAutoSale = offer.category === 'auto-sale';
 
-  const getCategoryIcon = (cat: string, subcat?: string): { icon: string; label: string } => {
+  const getCategoryIcon = (cat: string, subcat?: string): { icon?: string; image?: string; label: string } => {
     if (cat === 'transport') {
       const ts = (offer as Record<string, unknown>).transportServiceType as string | undefined;
       const isCargo = subcat === 'cargo' || ts === 'cargo' || ts === 'Грузоперевозки';
       return isCargo ? { icon: 'Truck', label: 'ГРУЗОВЫЕ' } : { icon: 'Car', label: 'ТАКСИ' };
     }
-    const map: Record<string, { icon: string; label: string }> = {
+    const map: Record<string, { icon?: string; image?: string; label: string }> = {
       'dairy': { icon: 'Milk', label: 'МОЛОЧНОЕ' },
       'meat': { icon: 'Beef', label: 'МЯСО' },
       'semifinished': { icon: 'BoxOpen', label: 'ПОЛУФАБРИКАТЫ' },
       'fruits-vegetables': { icon: 'Apple', label: 'ОВОЩИ И ФРУКТЫ' },
-      'animal-feed': { icon: 'PawPrint', label: 'КОРМА' },
+      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/17cba401-a215-498c-a9fb-c286d526913c.jpg', label: 'КОРМА С/Х' },
       'lumber': { icon: 'Trees', label: 'ПИЛОМАТЕРИАЛЫ' },
       'raw-materials': { icon: 'Brick', label: 'СТРОЙМАТЕРИАЛЫ' },
       'solid-fuel': { icon: 'Flame', label: 'ТВЁРДОЕ ТОПЛИВО' },
@@ -225,8 +225,12 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-              <div className="flex flex-col items-center gap-1 opacity-40">
-                <Icon name={categoryDisplay.icon} className="h-12 w-12 text-primary" />
+              <div className="flex flex-col items-center gap-1 opacity-60">
+                {categoryDisplay.image ? (
+                  <img src={categoryDisplay.image} alt={categoryDisplay.label} className="h-14 w-14 object-cover rounded-lg" />
+                ) : (
+                  <Icon name={categoryDisplay.icon || 'Package'} className="h-12 w-12 text-primary" />
+                )}
                 <span className="text-[11px] font-bold text-primary tracking-wider">{categoryDisplay.label}</span>
               </div>
             </div>
