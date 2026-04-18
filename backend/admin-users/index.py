@@ -218,6 +218,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.is_active,
                         u.locked_until,
                         u.created_at,
+                        u.rating,
                         COALESCE(uv.status = 'approved', false) as verified
                     FROM t_p42562714_web_app_creation_1.users u
                     LEFT JOIN t_p42562714_web_app_creation_1.user_verifications uv ON u.id = uv.user_id
@@ -276,7 +277,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isActive': user.get('is_active', True),
                         'lockedUntil': user['locked_until'].isoformat() if user.get('locked_until') else None,
                         'verified': user['verified'],
-                        'registeredAt': user['created_at'].isoformat() if user['created_at'] else None
+                        'registeredAt': user['created_at'].isoformat() if user['created_at'] else None,
+                        'rating': float(user['rating']) if user.get('rating') is not None else 50.0
                     })
             
             return {
@@ -382,10 +384,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif action == 'update':
                 email = body_data.get('email')
                 verified = body_data.get('verified')
-                
+                rating = body_data.get('rating')
+
                 if email:
                     cur.execute("UPDATE t_p42562714_web_app_creation_1.users SET email = %s WHERE id = %s", (email, user_id))
-                
+
                 if verified is not None:
                     if verified:
                         cur.execute("""
@@ -395,7 +398,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         """, (user_id,))
                     else:
                         cur.execute("DELETE FROM t_p42562714_web_app_creation_1.user_verifications WHERE user_id = %s", (user_id,))
-                
+
+                if rating is not None:
+                    rating_val = max(0, min(100, float(rating)))
+                    cur.execute("UPDATE t_p42562714_web_app_creation_1.users SET rating = %s WHERE id = %s", (rating_val, user_id))
+
                 conn.commit()
                 return {
                     'statusCode': 200,

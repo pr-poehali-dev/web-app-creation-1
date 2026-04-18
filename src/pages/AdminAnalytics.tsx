@@ -37,8 +37,12 @@ interface AdminAnalyticsProps {
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  goods: 'Товары', services: 'Услуги', transport: 'Транспорт', auto: 'Авто',
-  essentials: 'Продукты питания', 'raw-materials': 'Сырьё', Другое: 'Другое',
+  goods: 'Товары', services: 'Услуги', transport: 'Транспорт', auto: 'Автомобили',
+  essentials: 'Продукты питания', 'raw-materials': 'Сырьё и материалы',
+  construction: 'Строительство', equipment: 'Оборудование', electronics: 'Электроника',
+  agriculture: 'Сельское хозяйство', chemicals: 'Химия', clothing: 'Одежда',
+  food: 'Продукты', furniture: 'Мебель', medicine: 'Медицина',
+  other: 'Прочее', Другое: 'Прочее',
 };
 
 export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnalyticsProps) {

@@ -31,6 +31,7 @@ export interface User {
   middleName?: string;
   isActive?: boolean;
   lockedUntil?: string | null;
+  rating?: number;
 }
 
 interface UsersTableProps {
