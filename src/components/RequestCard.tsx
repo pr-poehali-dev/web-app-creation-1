@@ -36,23 +36,22 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
   const isCargo = isTransport && (request.transportServiceType === 'cargo' || request.transportServiceType === 'Грузоперевозки');
   const isPassenger = isTransport && (request.transportServiceType === 'passenger' || request.transportServiceType === 'Пассажирские перевозки');
 
-  const getCategoryIcon = (category: string): { icon?: string; image?: string; label: string } => {
-    const map: Record<string, { icon?: string; image?: string; label: string }> = {
-      'dairy': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/5dae4ccf-ae29-426c-a111-7ccd6aea1078.jpg', label: 'МОЛОЧНОЕ' },
-      'meat': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/760e2d67-0452-4f54-8a18-fa22d57173f7.jpg', label: 'МЯСО' },
+  const getCategoryIcon = (category: string): { icon: string; label: string } => {
+    const map: Record<string, { icon: string; label: string }> = {
+      'dairy': { icon: 'Milk', label: 'МОЛОЧНОЕ' },
+      'meat': { icon: 'Beef', label: 'МЯСО' },
       'semifinished': { icon: 'BoxOpen', label: 'ПОЛУФАБРИКАТЫ' },
-      'fruits-vegetables': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/82cf4c51-d291-4a69-8a4a-34d002614946.jpg', label: 'ОВОЩИ И ФРУКТЫ' },
-      'animal-feed': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/0a4e4498-1cdd-430d-b07c-dbff917fc4f3.jpg', label: 'КОРМА С/Х' },
-      'lumber': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/5d6b7deb-1ff1-4074-824b-481d1106a504.jpg', label: 'ПИЛОМАТЕРИАЛЫ' },
-      'raw-materials': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/9eca645e-6263-4470-9dc6-98436a47538e.jpg', label: 'СТРОЙМАТЕРИАЛЫ' },
-      'solid-fuel': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/8c74487b-d5fa-440a-8523-711475abaa3c.jpg', label: 'ТВЁРДОЕ ТОПЛИВО' },
-      'energy': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/9a7a7961-30d3-47a5-920e-9be6ab4c741d.jpg', label: 'ГСМ' },
-      'essentials': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/fddd25c5-c858-4970-b1b2-35405bf1a0e1.jpg', label: 'ТОВАРЫ' },
+      'fruits-vegetables': { icon: 'Apple', label: 'ОВОЩИ И ФРУКТЫ' },
+      'animal-feed': { icon: 'PawPrint', label: 'КОРМА' },
+      'lumber': { icon: 'Trees', label: 'ПИЛОМАТЕРИАЛЫ' },
+      'raw-materials': { icon: 'Brick', label: 'СТРОЙМАТЕРИАЛЫ' },
+      'solid-fuel': { icon: 'Flame', label: 'ТВЁРДОЕ ТОПЛИВО' },
+      'energy': { icon: 'Droplet', label: 'ГСМ' },
+      'essentials': { icon: 'ShoppingBag', label: 'ТОВАРЫ' },
       'household-chemicals': { icon: 'TestTube', label: 'БЫТ. ХИМИЯ' },
       'household-appliances': { icon: 'Sofa', label: 'ТЕХНИКА И МЕБЕЛЬ' },
-      'equipment': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/87798852-a0fb-45d8-84d3-bbc5e4230042.jpg', label: 'ОБОРУДОВАНИЕ' },
+      'equipment': { icon: 'Wrench', label: 'ОБОРУДОВАНИЕ' },
       'auto-sale': { icon: 'Car', label: 'АВТО' },
-      'transport': { image: 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/431dc84f-9050-4847-9f39-19297fb50aa7.jpg', label: 'ГРУЗОВЫЕ' },
       'utilities': { icon: 'Briefcase', label: 'УСЛУГИ' },
       'works': { icon: 'HardHat', label: 'РАБОТЫ' },
       'other': { icon: 'Package', label: 'ПРОЧЕЕ' },
@@ -109,19 +108,28 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
                 alt={request.images[0].alt || request.title}
                 className="w-full h-full object-cover"
               />
-            ) : categoryDisplay.image ? (
-              <>
-                <img src={categoryDisplay.image} alt={categoryDisplay.label} className="w-full h-full object-cover" />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-2 py-1">
-                  <span className="text-[11px] font-bold text-white tracking-wider">{categoryDisplay.label}</span>
-                </div>
-              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                <div className="flex flex-col items-center gap-1 opacity-40">
-                  <Icon name={categoryDisplay.icon || 'Package'} className="h-12 w-12 text-primary" />
-                  <span className="text-[11px] font-bold text-primary tracking-wider">{categoryDisplay.label}</span>
-                </div>
+                {isTransport ? (
+                  <div className="flex flex-col items-center gap-1 opacity-40">
+                    {isCargo ? (
+                      <>
+                        <Icon name="Truck" className="h-12 w-12 text-primary" />
+                        <span className="text-[11px] font-bold text-primary tracking-wider">ГРУЗОВЫЕ</span>
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="Car" className="h-12 w-12 text-primary" />
+                        <span className="text-[11px] font-bold text-primary tracking-wider">ТАКСИ</span>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 opacity-40">
+                    <Icon name={categoryDisplay.icon} className="h-12 w-12 text-primary" />
+                    <span className="text-[11px] font-bold text-primary tracking-wider">{categoryDisplay.label}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
