@@ -57,26 +57,26 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
     if (cat === 'transport') {
       const ts = (offer as Record<string, unknown>).transportServiceType as string | undefined;
       const isCargo = subcat === 'cargo' || ts === 'cargo' || ts === 'Грузоперевозки';
-      return isCargo ? { icon: 'Truck', label: 'ГРУЗОВЫЕ' } : { icon: 'Car', label: 'ТАКСИ' };
+      return isCargo ? { icon: 'Truck', label: 'Грузоперевозки' } : { icon: 'Car', label: 'Пассажирские перевозки' };
     }
     const map: Record<string, { icon: string; label: string }> = {
-      'dairy': { icon: 'Milk', label: 'МОЛОЧНОЕ' },
-      'meat': { icon: 'Beef', label: 'МЯСО' },
-      'semifinished': { icon: 'BoxOpen', label: 'ПОЛУФАБРИКАТЫ' },
-      'fruits-vegetables': { icon: 'Apple', label: 'ОВОЩИ И ФРУКТЫ' },
-      'animal-feed': { icon: 'PawPrint', label: 'КОРМА' },
-      'lumber': { icon: 'Trees', label: 'ПИЛОМАТЕРИАЛЫ' },
-      'raw-materials': { icon: 'Brick', label: 'СТРОЙМАТЕРИАЛЫ' },
-      'solid-fuel': { icon: 'Flame', label: 'ТВЁРДОЕ ТОПЛИВО' },
+      'dairy': { icon: 'Milk', label: 'Молочная продукция' },
+      'meat': { icon: 'Beef', label: 'Мясная продукция' },
+      'semifinished': { icon: 'BoxOpen', label: 'Полуфабрикаты' },
+      'fruits-vegetables': { icon: 'Apple', label: 'Овощи и фрукты' },
+      'animal-feed': { icon: 'PawPrint', label: 'Корма для животных' },
+      'lumber': { icon: 'Trees', label: 'Пиломатериалы' },
+      'raw-materials': { icon: 'Brick', label: 'Строительные материалы' },
+      'solid-fuel': { icon: 'Flame', label: 'Твердое топливо' },
       'energy': { icon: 'Droplet', label: 'ГСМ' },
-      'essentials': { icon: 'ShoppingBag', label: 'ТОВАРЫ' },
-      'household-chemicals': { icon: 'TestTube', label: 'БЫТ. ХИМИЯ' },
-      'household-appliances': { icon: 'Sofa', label: 'ТЕХНИКА И МЕБЕЛЬ' },
-      'equipment': { icon: 'Wrench', label: 'ОБОРУДОВАНИЕ' },
-      'auto-sale': { icon: 'Car', label: 'АВТО' },
-      'utilities': { icon: 'Briefcase', label: 'УСЛУГИ' },
-      'works': { icon: 'HardHat', label: 'РАБОТЫ' },
-      'other': { icon: 'Package', label: 'ПРОЧЕЕ' },
+      'essentials': { icon: 'ShoppingBag', label: 'Товары' },
+      'household-chemicals': { icon: 'TestTube', label: 'Бытовая химия' },
+      'household-appliances': { icon: 'Sofa', label: 'Бытовая техника и мебель' },
+      'equipment': { icon: 'Wrench', label: 'Техника и оборудование' },
+      'auto-sale': { icon: 'Car', label: 'Авто продажа' },
+      'utilities': { icon: 'Briefcase', label: 'Услуги' },
+      'works': { icon: 'HardHat', label: 'Работы' },
+      'other': { icon: 'Package', label: 'Прочее' },
     };
     return map[cat] || { icon: 'Package', label: 'ПРОЧЕЕ' };
   };
