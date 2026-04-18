@@ -1,5 +1,5 @@
 '''
-Чат переговоров по контракту.
+Чат переговоров по контракту. v2
 POST / — отправить сообщение (action не задан), подтвердить (action=confirm), отменить (action=cancel),
          сохранить условия договора (action=save_terms), запросить поправки (action=request_amend)
 GET /?action=messages&responseId={id} — получить сообщения чата

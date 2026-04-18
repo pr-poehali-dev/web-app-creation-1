@@ -1,6 +1,7 @@
 {
   "ai-assist": "https://functions.poehali.dev/3c3c03a1-545b-4d8f-916e-cfc3b8a7719a",
   "contract-response-id": "https://functions.poehali.dev/6dbabecb-07ef-45e6-9147-9ff93d61a44e",
+  "contract-chat": "https://functions.poehali.dev/89e79d8c-22f8-4351-8e48-c1834f53f2a7",
   "save-contract": "https://functions.poehali.dev/8f4ffbc2-2473-4005-b7ad-2ee7edd3c995",
   "get-upload-url": "https://functions.poehali.dev/0337d155-71d5-48b2-995c-be83c3469396",
   "upload-audio": "https://functions.poehali.dev/2f3a7850-2c10-41c3-af1f-a910c74a416c",
@@ -11,7 +12,7 @@
   "push-send": "https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a",
   "email-notify": "https://functions.poehali.dev/dd3295a9-ffa3-4842-8c95-de00a018ecf0",
   "push-subscribe": "https://functions.poehali.dev/51a6c510-719b-44bb-840d-80b4bfe2484c",
-  "contracts-list": "https://functions.poehali.dev/86936502-59db-4e99-adac-269feae2bee3",
+  "contracts-list": "https://functions.poehali.dev/f1e9dea3-13a0-488b-a042-58b89a19b204",
   "telegram-verify": "https://functions.poehali.dev/885c0745-a68f-48ed-a5a5-66c96a203fa1",
   "admin-search-user": "https://functions.poehali.dev/6a5f6699-1898-49ce-9ac4-b7b746730abf",
   "admin-roles": "https://functions.poehali.dev/b1a886ab-3d4d-4e6b-927f-bfac67ce18e9",
