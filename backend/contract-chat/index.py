@@ -111,9 +111,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
 
                 if action == 'status':
-                    cur.execute('SELECT u.first_name, u.last_name, u.company_name FROM users u WHERE u.id = %s', (resp['user_id'],))
+                    cur.execute('''SELECT u.first_name, u.last_name, u.middle_name, u.company_name,
+                                          u.user_type, u.inn, u.ogrn, u.ogrnip, u.legal_address,
+                                          u.director_name, u.phone, u.email
+                                   FROM users u WHERE u.id = %s''', (resp['user_id'],))
                     buyer = cur.fetchone() or {}
-                    cur.execute('SELECT u.first_name, u.last_name, u.company_name FROM users u WHERE u.id = %s', (resp['seller_id'],))
+                    cur.execute('''SELECT u.first_name, u.last_name, u.middle_name, u.company_name,
+                                          u.user_type, u.inn, u.ogrn, u.ogrnip, u.legal_address,
+                                          u.director_name, u.phone, u.email
+                                   FROM users u WHERE u.id = %s''', (resp['seller_id'],))
                     seller = cur.fetchone() or {}
 
                     # Согласованные условия (из отклика) или базовые (из контракта)
@@ -162,6 +168,34 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'deliveryDate': str(resp['negotiated_delivery_date']) if resp.get('negotiated_delivery_date') else None,
                             'deliveryConditions': resp.get('negotiated_delivery_conditions'),
                             'specialTerms': resp.get('negotiated_special_terms'),
+                        },
+                        'sellerInfo': {
+                            'firstName': (seller.get('first_name') or '').strip(),
+                            'lastName': (seller.get('last_name') or '').strip(),
+                            'middleName': (seller.get('middle_name') or '').strip(),
+                            'companyName': seller.get('company_name') or '',
+                            'userType': seller.get('user_type') or '',
+                            'inn': seller.get('inn') or '',
+                            'ogrn': seller.get('ogrn') or '',
+                            'ogrnip': seller.get('ogrnip') or '',
+                            'legalAddress': seller.get('legal_address') or '',
+                            'directorName': seller.get('director_name') or '',
+                            'phone': seller.get('phone') or '',
+                            'email': seller.get('email') or '',
+                        },
+                        'respondentInfo': {
+                            'firstName': (buyer.get('first_name') or '').strip(),
+                            'lastName': (buyer.get('last_name') or '').strip(),
+                            'middleName': (buyer.get('middle_name') or '').strip(),
+                            'companyName': buyer.get('company_name') or '',
+                            'userType': buyer.get('user_type') or '',
+                            'inn': buyer.get('inn') or '',
+                            'ogrn': buyer.get('ogrn') or '',
+                            'ogrnip': buyer.get('ogrnip') or '',
+                            'legalAddress': buyer.get('legal_address') or '',
+                            'directorName': buyer.get('director_name') or '',
+                            'phone': buyer.get('phone') or '',
+                            'email': buyer.get('email') or '',
                         },
                     }
                     return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps(result), 'isBase64Encoded': False}

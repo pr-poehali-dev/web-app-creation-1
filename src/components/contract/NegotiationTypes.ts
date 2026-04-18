@@ -23,6 +23,21 @@ export interface NegotiatedTerms {
   specialTerms: string | null;
 }
 
+export interface PartyInfo {
+  firstName?: string;
+  lastName?: string;
+  middleName?: string;
+  companyName?: string;
+  userType?: string;
+  inn?: string;
+  ogrn?: string;
+  ogrnip?: string;
+  legalAddress?: string;
+  directorName?: string;
+  phone?: string;
+  email?: string;
+}
+
 export interface ResponseStatus {
   id: number;
   contractId: number;
@@ -44,6 +59,8 @@ export interface ResponseStatus {
   buyerWantsAmend: boolean;
   contract: ContractInfo;
   negotiatedTerms: NegotiatedTerms;
+  sellerInfo?: PartyInfo;
+  respondentInfo?: PartyInfo;
 }
 
 export interface MessageAttachment {
@@ -95,8 +112,45 @@ export function buildContractHtml(status: ResponseStatus, c: ContractInfo): stri
   const isForwardRequest = c.contractType === 'forward-request';
   const isBarter = c.contractType === 'barter';
 
-  const sellerName = `${status.sellerFirstName} ${status.sellerLastName}`.trim() || '___________';
-  const buyerName = `${status.respondentFirstName} ${status.respondentLastName}`.trim() || '___________';
+  function partyDisplayName(info: PartyInfo | undefined, firstName: string, lastName: string): string {
+    if (info?.userType === 'legal-entity' && info?.companyName) return info.companyName;
+    if (info?.userType === 'entrepreneur') {
+      const full = [info.lastName || lastName, info.firstName || firstName, info.middleName].filter(Boolean).join(' ');
+      return `ИП ${full}`;
+    }
+    const full = [info?.lastName || lastName, info?.firstName || firstName, info?.middleName].filter(Boolean).join(' ');
+    return full || '___________';
+  }
+
+  function partyRequisites(info: PartyInfo | undefined, firstName: string, lastName: string, roleLabel: string): string {
+    const fullName = [info?.lastName || lastName, info?.firstName || firstName, info?.middleName].filter(Boolean).join(' ');
+    const lines: string[] = [`<b>${roleLabel}:</b>`];
+    if (info?.userType === 'legal-entity') {
+      lines.push(`<b>${info.companyName || '___________'}</b>`);
+      if (info.ogrn) lines.push(`ОГРН: ${info.ogrn}`);
+      if (info.inn) lines.push(`ИНН: ${info.inn}`);
+      if (info.directorName) lines.push(`Директор: ${info.directorName}`);
+      else if (fullName) lines.push(`Представитель: ${fullName}`);
+    } else if (info?.userType === 'entrepreneur') {
+      lines.push(`ИП ${fullName}`);
+      if (info.ogrnip) lines.push(`ОГРНИП: ${info.ogrnip}`);
+      if (info.inn) lines.push(`ИНН: ${info.inn}`);
+    } else {
+      lines.push(fullName || '___________');
+      if (info?.inn) lines.push(`ИНН: ${info.inn}`);
+    }
+    if (info?.legalAddress) lines.push(`Адрес: ${info.legalAddress}`);
+    if (info?.phone) lines.push(`Тел.: ${info.phone}`);
+    if (info?.email) lines.push(`Email: ${info.email}`);
+    lines.push('<br>Подпись: _______________________');
+    const signName = (info?.userType === 'legal-entity' && info?.directorName) ? info.directorName : fullName || '___________';
+    lines.push(`/${signName}/`);
+    lines.push('<br>М.П.');
+    return lines.join('<br>');
+  }
+
+  const sellerName = partyDisplayName(status.sellerInfo, status.sellerFirstName, status.sellerLastName);
+  const buyerName = partyDisplayName(status.respondentInfo, status.respondentFirstName, status.respondentLastName);
 
   const today_num = new Date();
   const dateSuffix = `${today_num.getFullYear()}${String(today_num.getMonth()+1).padStart(2,'0')}${String(today_num.getDate()).padStart(2,'0')}`;
@@ -242,14 +296,10 @@ ${body}
 <p class="section">${c.specialTerms ? '13' : '12'}. РЕКВИЗИТЫ И ПОДПИСИ СТОРОН</p>
 <div class="parties">
   <div class="party">
-    <div class="party-label">${role1label}</div>
-    <strong>${sellerName}</strong><br>
-    <br>Подпись: _______________________<br>/${sellerName}/<br><br>М.П.
+    ${partyRequisites(status.sellerInfo, status.sellerFirstName, status.sellerLastName, role1label)}
   </div>
   <div class="party">
-    <div class="party-label">${role2label}</div>
-    <strong>${buyerName}</strong><br>
-    <br>Подпись: _______________________<br>/${buyerName}/<br><br>М.П.
+    ${partyRequisites(status.respondentInfo, status.respondentFirstName, status.respondentLastName, role2label)}
   </div>
 </div>
 </body>

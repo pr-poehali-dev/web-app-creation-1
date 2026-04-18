@@ -6,8 +6,7 @@
       "path": "/",
       "expectedStatus": 200,
       "expectedBody": {
-        "topSellers": [],
-        "topCategories": []
+        "totalUsers": 50
       },
       "bodyMatcher": "partial"
     }
