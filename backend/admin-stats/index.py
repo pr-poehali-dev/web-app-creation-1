@@ -108,7 +108,46 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             WHERE status = 'pending'
         """)
         pending_verifications = cur.fetchone()['total']
-        
+
+        # Топ продавцов по завершённым сделкам
+        cur.execute("""
+            SELECT
+                o.seller_id,
+                COALESCE(NULLIF(TRIM(u.company_name), ''),
+                         TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')),
+                         'Пользователь') AS name,
+                COUNT(*) AS deals,
+                COALESCE(SUM(o.total_amount), 0) AS revenue
+            FROM t_p42562714_web_app_creation_1.orders o
+            LEFT JOIN t_p42562714_web_app_creation_1.users u ON u.id = o.seller_id
+            WHERE o.status = 'completed'
+            GROUP BY o.seller_id, u.company_name, u.first_name, u.last_name
+            ORDER BY deals DESC
+            LIMIT 5
+        """)
+        top_sellers = [
+            {'name': r['name'], 'deals': r['deals'], 'revenue': float(r['revenue'])}
+            for r in cur.fetchall()
+        ]
+
+        # Популярные категории по завершённым сделкам
+        cur.execute("""
+            SELECT
+                COALESCE(NULLIF(offer_category, ''), 'Другое') AS category,
+                COUNT(*) AS count
+            FROM t_p42562714_web_app_creation_1.orders
+            WHERE status = 'completed'
+            GROUP BY category
+            ORDER BY count DESC
+            LIMIT 6
+        """)
+        rows = cur.fetchall()
+        total_cat = sum(r['count'] for r in rows) or 1
+        top_categories = [
+            {'name': r['category'], 'count': r['count'], 'percentage': round(r['count'] / total_cat * 100)}
+            for r in rows
+        ]
+
         stats = {
             'totalUsers': total_users,
             'activeUsers': active_users,
@@ -117,7 +156,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'activeRequests': active_requests,
             'activeAuctions': active_auctions,
             'completedOrders': completed_orders,
-            'pendingVerifications': pending_verifications
+            'pendingVerifications': pending_verifications,
+            'topSellers': top_sellers,
+            'topCategories': top_categories,
         }
         
         return {

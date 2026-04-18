@@ -9,6 +9,9 @@ import { useState, useEffect } from 'react';
 const STATS_API = 'https://functions.poehali.dev/a764d5ef-b512-4cbd-b25b-36a52baa08b7';
 const TRACK_API = 'https://functions.poehali.dev/d6fc7d3f-1215-492d-943f-d1cbf3a44bcf';
 
+interface TopSeller { name: string; deals: number; revenue: number; }
+interface TopCategory { name: string; count: number; percentage: number; }
+
 interface PlatformStats {
   totalUsers: number;
   activeUsers: number;
@@ -18,15 +21,12 @@ interface PlatformStats {
   activeAuctions: number;
   completedOrders: number;
   pendingVerifications: number;
+  topSellers: TopSeller[];
+  topCategories: TopCategory[];
 }
 
 interface VisitStats {
-  totals: {
-    today: number; today_uniq: number;
-    week: number; week_uniq: number;
-    month: number; month_uniq: number;
-    total: number; total_uniq: number;
-  };
+  totals: { today: number; today_uniq: number; week: number; week_uniq: number; month: number; month_uniq: number; total: number; total_uniq: number; };
   daily: { day: string; visits: number; unique_visitors: number }[];
   topPages: { page: string; visits: number }[];
 }
@@ -35,6 +35,11 @@ interface AdminAnalyticsProps {
   isAuthenticated: boolean;
   onLogout: () => void;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  goods: 'Товары', services: 'Услуги', transport: 'Транспорт', auto: 'Авто',
+  essentials: 'Продукты питания', 'raw-materials': 'Сырьё', Другое: 'Другое',
+};
 
 export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnalyticsProps) {
   const navigate = useNavigate();
@@ -63,6 +68,12 @@ export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnaly
     { title: 'Активных пользователей', value: platformStats.activeUsers, icon: 'UserCheck', color: 'text-indigo-500' },
   ] : [];
 
+  const formatRevenue = (v: number) => {
+    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}М ₽`;
+    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}К ₽`;
+    return `${v.toLocaleString('ru-RU')} ₽`;
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
@@ -78,25 +89,85 @@ export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnaly
             <p className="text-muted-foreground">Реальные данные о работе платформы</p>
           </div>
 
-          {/* Основные показатели */}
           {loading ? (
             <div className="flex items-center justify-center h-40 text-muted-foreground">
               <Icon name="Loader2" className="animate-spin mr-2" /> Загрузка данных...
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-              {statCards.map((stat, i) => (
-                <Card key={i}>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-                    <Icon name={stat.icon} className={`h-5 w-5 ${stat.color}`} />
+            <>
+              {/* Основные показатели */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                {statCards.map((stat, i) => (
+                  <Card key={i}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
+                      <Icon name={stat.icon} className={`h-5 w-5 ${stat.color}`} />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{stat.value?.toLocaleString('ru-RU') ?? '—'}</div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Топ продавцов и категории */}
+              <div className="grid gap-6 md:grid-cols-2 mb-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Топ продавцов</CardTitle>
+                    <CardDescription>По количеству завершённых сделок</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{stat.value?.toLocaleString('ru-RU') ?? '—'}</div>
+                    {!platformStats?.topSellers?.length ? (
+                      <p className="text-sm text-muted-foreground">Нет завершённых сделок</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {platformStats.topSellers.map((seller, i) => (
+                          <div key={i} className="flex items-center justify-between border-b pb-3 last:border-0">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                                <span className="text-sm font-bold text-primary">{i + 1}</span>
+                              </div>
+                              <div>
+                                <p className="font-medium">{seller.name}</p>
+                                <p className="text-sm text-muted-foreground">{seller.deals} сделок</p>
+                              </div>
+                            </div>
+                            <span className="font-bold text-primary">{formatRevenue(seller.revenue)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Популярные категории</CardTitle>
+                    <CardDescription>По завершённым сделкам</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {!platformStats?.topCategories?.length ? (
+                      <p className="text-sm text-muted-foreground">Нет данных</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {platformStats.topCategories.map((cat, i) => (
+                          <div key={i} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{CATEGORY_LABELS[cat.name] || cat.name}</span>
+                              <span className="text-sm text-muted-foreground">{cat.count}</span>
+                            </div>
+                            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                              <div className="h-full bg-primary transition-all" style={{ width: `${cat.percentage}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </>
           )}
 
           {/* Посещаемость */}
