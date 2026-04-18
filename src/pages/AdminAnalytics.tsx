@@ -11,7 +11,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+const TRACK_API = 'https://functions.poehali.dev/d6fc7d3f-1215-492d-943f-d1cbf3a44bcf';
+
+interface VisitStats {
+  totals: {
+    today: number; today_uniq: number;
+    week: number; week_uniq: number;
+    month: number; month_uniq: number;
+    total: number; total_uniq: number;
+  };
+  daily: { day: string; visits: number; unique_visitors: number }[];
+  topPages: { page: string; visits: number }[];
+}
 
 interface AdminAnalyticsProps {
   isAuthenticated: boolean;
@@ -21,6 +34,16 @@ interface AdminAnalyticsProps {
 export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnalyticsProps) {
   const navigate = useNavigate();
   const [period, setPeriod] = useState('month');
+  const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
+  const [visitLoading, setVisitLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${TRACK_API}?action=stats`)
+      .then(r => r.json())
+      .then(d => setVisitStats(d))
+      .catch(() => { /* ignore */ })
+      .finally(() => setVisitLoading(false));
+  }, []);
 
   const stats = [
     {
@@ -121,7 +144,7 @@ export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnaly
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     {stat.title}
                   </CardTitle>
-                  <Icon name={stat.icon as any} className={`h-5 w-5 ${stat.color}`} />
+                  <Icon name={stat.icon} className={`h-5 w-5 ${stat.color}`} />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
@@ -197,6 +220,75 @@ export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnaly
                   <p className="text-muted-foreground">График будет подключен к реальным данным</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Посещаемость сайта */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon name="Eye" className="h-5 w-5 text-blue-500" />
+                Посещаемость сайта
+              </CardTitle>
+              <CardDescription>Реальные данные о визитах посетителей</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {visitLoading ? (
+                <div className="flex items-center justify-center h-24 text-muted-foreground">
+                  <Icon name="Loader2" className="animate-spin mr-2" /> Загрузка...
+                </div>
+              ) : visitStats ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Сегодня (визиты)', value: visitStats.totals.today, sub: `${visitStats.totals.today_uniq} уникальных` },
+                      { label: 'За 7 дней', value: visitStats.totals.week, sub: `${visitStats.totals.week_uniq} уникальных` },
+                      { label: 'За 30 дней', value: visitStats.totals.month, sub: `${visitStats.totals.month_uniq} уникальных` },
+                      { label: 'Всего', value: visitStats.totals.total, sub: `${visitStats.totals.total_uniq} уникальных` },
+                    ].map((item, i) => (
+                      <div key={i} className="rounded-lg border p-4 text-center">
+                        <div className="text-2xl font-bold text-primary">{item.value}</div>
+                        <div className="text-xs font-medium mt-1">{item.label}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{item.sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {visitStats.topPages.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-3">Топ страниц за 7 дней</p>
+                      <div className="space-y-2">
+                        {visitStats.topPages.map((p, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
+                            <span className="text-muted-foreground font-mono">{p.page || '/'}</span>
+                            <span className="font-semibold">{p.visits} визитов</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {visitStats.daily.length > 0 && (
+                    <div>
+                      <p className="text-sm font-medium mb-3">Последние 30 дней (по дням)</p>
+                      <div className="overflow-x-auto">
+                        <div className="flex gap-1 items-end min-w-max">
+                          {visitStats.daily.map((d, i) => {
+                            const maxV = Math.max(...visitStats.daily.map(x => x.visits), 1);
+                            const h = Math.max(4, Math.round((d.visits / maxV) * 80));
+                            return (
+                              <div key={i} className="flex flex-col items-center gap-1" title={`${d.day}: ${d.visits} визитов`}>
+                                <div className="w-5 bg-primary rounded-t" style={{ height: `${h}px` }} />
+                                {i % 7 === 0 && <span className="text-[9px] text-muted-foreground rotate-45">{d.day.slice(5)}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">Нет данных</p>
+              )}
             </CardContent>
           </Card>
         </div>

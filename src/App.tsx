@@ -205,6 +205,23 @@ const App = () => {
       });
     }
 
+    // Трекинг посетителей — тихо, в фоне
+    setTimeout(() => {
+      try {
+        let sid = sessionStorage.getItem('_vsid');
+        if (!sid) {
+          sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+          sessionStorage.setItem('_vsid', sid);
+        }
+        const session = getSession() as { id?: number } | null;
+        fetch('https://functions.poehali.dev/d6fc7d3f-1215-492d-943f-d1cbf3a44bcf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(session?.id ? { 'X-User-Id': String(session.id) } : {}) },
+          body: JSON.stringify({ sessionId: sid, page: window.location.pathname, referrer: document.referrer || undefined }),
+        }).catch(() => { /* ignore */ });
+      } catch { /* ignore */ }
+    }, 2000);
+
     return () => {};
   }, []);
 
