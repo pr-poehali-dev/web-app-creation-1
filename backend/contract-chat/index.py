@@ -11,11 +11,26 @@ import os
 import base64
 import uuid
 import mimetypes
+import http.client
+import threading
 from typing import Dict, Any
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json as PgJson
 import boto3
+
+PUSH_SEND_PATH = '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+
+
+def send_push(user_id: int, title: str, message: str, url: str = '/my-contracts'):
+    try:
+        data = json.dumps({'userId': user_id, 'title': title, 'message': message, 'url': url})
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=8)
+        conn.request('POST', PUSH_SEND_PATH, data, {'Content-Type': 'application/json'})
+        conn.getresponse()
+        conn.close()
+    except Exception as e:
+        print(f'[PUSH] error: {e}')
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 RESP_HEADERS = {
@@ -318,6 +333,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 )
                 row = cur.fetchone()
                 conn.commit()
+
+                recipient_id = resp['seller_id'] if is_buyer else resp['user_id']
+                cur.execute('SELECT first_name, last_name FROM users WHERE id = %s', (user_id,))
+                sender = cur.fetchone() or {}
+                sender_name = f"{sender.get('first_name', '')} {sender.get('last_name', '')}".strip() or 'Участник'
+                notif_text = text[:60] + '...' if len(text) > 60 else (text or 'Прикреплён файл')
+                threading.Thread(
+                    target=send_push,
+                    args=(recipient_id, f'Сообщение от {sender_name}', notif_text, '/my-contracts'),
+                    daemon=True
+                ).start()
+
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': row['id'], 'createdAt': str(row['created_at'])}), 'isBase64Encoded': False}
         finally:
             conn.close()

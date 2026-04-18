@@ -12,11 +12,26 @@ import os
 import base64
 import uuid
 import mimetypes
+import http.client
+import threading
 from typing import Dict, Any
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import boto3
+
+PUSH_SEND_PATH = '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+
+
+def send_push(user_id: int, title: str, message: str, url: str = '/my-contracts'):
+    try:
+        data = json.dumps({'userId': user_id, 'title': title, 'message': message, 'url': url})
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=8)
+        conn.request('POST', PUSH_SEND_PATH, data, {'Content-Type': 'application/json'})
+        conn.getresponse()
+        conn.close()
+    except Exception as e:
+        print(f'[PUSH] error: {e}')
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -220,6 +235,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             (resp['c_id'], response_id, user_id, text, PgJson(attachments)))
                 row = cur.fetchone()
                 conn.commit()
+
+                recipient_id = resp['seller_id'] if resp['user_id'] == user_id else resp['user_id']
+                cur.execute('SELECT first_name, last_name FROM users WHERE id = %s', (user_id,))
+                sender = cur.fetchone() or {}
+                sender_name = f"{sender.get('first_name', '')} {sender.get('last_name', '')}".strip() or 'Участник'
+                notif_text = text[:60] + '...' if len(text) > 60 else (text or 'Прикреплён файл')
+                threading.Thread(
+                    target=send_push,
+                    args=(recipient_id, f'Сообщение от {sender_name}', notif_text, '/my-contracts'),
+                    daemon=True
+                ).start()
+
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': row['id'], 'createdAt': str(row['created_at'])}), 'isBase64Encoded': False}
         finally:
             conn.close()
@@ -245,7 +272,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
-                cur.execute('SELECT id, seller_id, status, quantity, price_per_unit FROM contracts WHERE id = %s', (contract_id,))
+                cur.execute('SELECT id, seller_id, status, quantity, price_per_unit, title, product_name FROM contracts WHERE id = %s', (contract_id,))
                 contract = cur.fetchone()
                 if not contract:
                     return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт не найден'}), 'isBase64Encoded': False}
@@ -267,6 +294,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 )
                 new_id = cur.fetchone()['id']
                 conn.commit()
+
+                cur.execute('SELECT u.first_name, u.last_name FROM users u WHERE u.id = %s', (user_id,))
+                respondent = cur.fetchone() or {}
+                respondent_name = f"{respondent.get('first_name', '')} {respondent.get('last_name', '')}".strip() or 'Участник'
+                contract_title = contract.get('title') or contract.get('product_name') or f'Контракт #{contract_id}'
+                threading.Thread(
+                    target=send_push,
+                    args=(contract['seller_id'], 'Новый отклик на контракт',
+                          f'{respondent_name} откликнулся на «{contract_title}»',
+                          f'/my-contracts'),
+                    daemon=True
+                ).start()
 
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': new_id, 'message': 'Отклик успешно отправлен'}), 'isBase64Encoded': False}
         finally:
