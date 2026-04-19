@@ -179,7 +179,7 @@ export const useProfileForm = (
         const token = getJwtToken();
         const saveResp = await fetch(func2url.auth, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(token ? { 'X-Authorization': `Bearer ${token}` } : {}) },
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
           body: JSON.stringify({
             action: 'update_profile',
             user_id: currentUser.id,

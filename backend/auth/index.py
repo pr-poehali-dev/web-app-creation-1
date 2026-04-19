@@ -388,6 +388,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             elif action == 'update_profile':
                 auth_user = get_user_from_request(event)
+                headers_debug = event.get('headers', {})
+                print(f'[UPDATE_PROFILE] auth_user={auth_user}, headers_keys={list(headers_debug.keys())}')
                 if not auth_user:
                     return {
                         'statusCode': 401,
@@ -397,6 +399,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 user_id_to_update = body_data.get('user_id')
+                print(f'[UPDATE_PROFILE] jwt_user_id={auth_user["user_id"]} body_user_id={user_id_to_update}')
                 if not user_id_to_update or str(auth_user['user_id']) != str(user_id_to_update):
                     return {
                         'statusCode': 403,
