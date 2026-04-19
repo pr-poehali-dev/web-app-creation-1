@@ -21,6 +21,7 @@ from psycopg2.extras import RealDictCursor
 import boto3
 
 PUSH_SEND_PATH = '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+EMAIL_NOTIFY_PATH = '/dd3295a9-ffa3-4842-8c95-de00a018ecf0'
 
 
 def send_push(user_id: int, title: str, message: str, url: str = '/my-contracts'):
@@ -32,6 +33,18 @@ def send_push(user_id: int, title: str, message: str, url: str = '/my-contracts'
         conn.close()
     except Exception as e:
         print(f'[PUSH] error: {e}')
+
+
+def send_email(user_id: int, title: str, message: str, url: str = '/my-contracts'):
+    try:
+        data = json.dumps({'userId': user_id, 'title': title, 'message': message, 'url': url})
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=8)
+        conn.request('POST', EMAIL_NOTIFY_PATH, data, {'Content-Type': 'application/json'})
+        conn.getresponse()
+        conn.close()
+    except Exception as e:
+        print(f'[EMAIL] error: {e}')
+
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -303,7 +316,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     target=send_push,
                     args=(contract['seller_id'], 'Новый отклик на контракт',
                           f'{respondent_name} откликнулся на «{contract_title}»',
-                          f'/my-contracts'),
+                          '/my-contracts'),
+                    daemon=True
+                ).start()
+                threading.Thread(
+                    target=send_email,
+                    args=(contract['seller_id'], 'Новый отклик на контракт',
+                          f'{respondent_name} откликнулся на «{contract_title}»',
+                          '/my-contracts'),
                     daemon=True
                 ).start()
 

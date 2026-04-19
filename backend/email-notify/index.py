@@ -66,7 +66,7 @@ def handler(event: dict, context) -> dict:
         
         user_id_int = int(user_id)
         cur.execute(f'''
-            SELECT email, email_notifications FROM {schema}.users 
+            SELECT email, email_notifications, notification_email FROM {schema}.users 
             WHERE id = {user_id_int}
         ''')
         
@@ -85,7 +85,9 @@ def handler(event: dict, context) -> dict:
                 'isBase64Encoded': False
             }
         
-        user_email = result[0]
+        # Для физ.лиц: если указан доп.email для уведомлений — используем его, иначе основной
+        notification_email_extra = result[2] if len(result) > 2 else None
+        user_email = notification_email_extra if notification_email_extra else result[0]
         email_enabled = result[1] if len(result) > 1 else True
         
         if not email_enabled:
