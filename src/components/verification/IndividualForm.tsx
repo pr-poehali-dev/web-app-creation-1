@@ -42,6 +42,20 @@ export default function IndividualForm({
   return (
     <>
       <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
+        <Input
+          id="email"
+          type="email"
+          value={formData.email || ''}
+          onChange={(e) => onInputChange('email', e.target.value)}
+          placeholder="Введите email"
+          required
+          className="text-base"
+        />
+        <p className="text-xs text-muted-foreground">На этот адрес будут приходить уведомления</p>
+      </div>
+
+      <div className="space-y-2">
         <Label htmlFor="inn" className="text-sm font-medium">ИНН *</Label>
         <Input
           id="inn"

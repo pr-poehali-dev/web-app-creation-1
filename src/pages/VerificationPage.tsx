@@ -31,7 +31,7 @@ export default function VerificationPage() {
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<string>('');
   const [rejectionReason, setRejectionReason] = useState<string>('');
-  const [existingDocuments, setExistingDocuments] = useState<any>({});
+  const [existingDocuments, setExistingDocuments] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState<VerificationFormData>({
     verificationType: 'individual',
     phone: '',
@@ -94,6 +94,7 @@ export default function VerificationPage() {
           ...prev,
           verificationType,
           phone: data.phone || '',
+          email: data.notificationEmail || data.notification_email || '',
           companyName: data.companyName || '',
           inn: data.inn || '',
           ogrnip: data.ogrnip || '',
@@ -152,6 +153,16 @@ export default function VerificationPage() {
   };
 
   const submitVerification = async () => {
+    if (!formData.email || !formData.email.trim()) {
+      setError('Укажите email — он необходим для получения уведомлений о верификации');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      setError('Укажите корректный email');
+      return;
+    }
+
     setError('');
     setLoading(true);
     setUploadProgress(0);
@@ -194,9 +205,10 @@ export default function VerificationPage() {
         );
       }
 
-      const dataToSend: any = {
+      const dataToSend: Record<string, unknown> = {
         verificationType: formData.verificationType,
         phone: formData.phone,
+        email: formData.email?.trim(),
       };
 
       if (formData.verificationType === 'legal_entity') {

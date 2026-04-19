@@ -25,6 +25,7 @@ export interface UserVerification {
 export interface VerificationFormData {
   verificationType: VerificationType;
   phone: string;
+  email?: string;
   
   // Для физических лиц и самозанятых
   registrationAddress?: string;

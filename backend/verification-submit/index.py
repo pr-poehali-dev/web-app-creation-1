@@ -203,6 +203,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     verification_type = body_data.get('verificationType')
     phone = body_data.get('phone')
+    notification_email = (body_data.get('email') or '').strip() or None
     
     if not verification_type or not phone:
         conn.close()
@@ -317,6 +318,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         update_query = f"""
             UPDATE users 
             SET verification_status = 'pending'
+            {f", notification_email = {escape_sql_string(notification_email)}" if notification_email else ""}
             WHERE id = {escape_sql_string(user_id)}
         """
         cursor.execute(update_query)
