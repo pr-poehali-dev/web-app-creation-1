@@ -45,10 +45,11 @@ export const validateForm = (formData: FormData): { isValid: boolean; errors: Fo
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const needsVerification = ['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || '');
 
-  if (!formData.notificationEmail || !formData.notificationEmail.trim()) {
-    newErrors.notificationEmail = 'Обязательное поле';
-  } else if (!emailRegex.test(formData.notificationEmail.trim())) {
+  if (needsVerification && (!formData.notificationEmail || !formData.notificationEmail.trim())) {
+    newErrors.notificationEmail = 'Email обязателен для верификации';
+  } else if (formData.notificationEmail && formData.notificationEmail.trim() && !emailRegex.test(formData.notificationEmail.trim())) {
     newErrors.notificationEmail = 'Некорректный email';
   }
 

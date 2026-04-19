@@ -206,14 +206,14 @@ export default function ProfileEditForm({
 
         <div className="space-y-2">
           <Label htmlFor="edit-notificationEmail">
-            Email <span className="text-destructive">*</span>
+            Email {['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || currentUserType || '') && <span className="text-destructive">*</span>}
           </Label>
           <Input
             id="edit-notificationEmail"
             type="email"
             value={formData.notificationEmail || ''}
             onChange={(e) => onInputChange('notificationEmail', e.target.value)}
-            placeholder="Введите email"
+            placeholder={['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || currentUserType || '') ? 'Введите email' : 'Введите email (необязательно)'}
             className={errors.notificationEmail ? 'border-destructive' : ''}
           />
           {errors.notificationEmail && (
