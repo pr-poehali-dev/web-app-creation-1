@@ -111,7 +111,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.inn,
                         u.ogrnip,
                         u.ogrn,
-                        u.created_at
+                        u.created_at,
+                        u.notification_email
                     FROM t_p42562714_web_app_creation_1.users u
                     WHERE u.id = %s AND u.removed_at IS NULL
                 """, (user_id_param,))
