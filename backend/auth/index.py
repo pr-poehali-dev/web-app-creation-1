@@ -409,15 +409,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 last_name = body_data.get('lastName', '').strip()
                 middle_name = body_data.get('middleName', '').strip()
                 phone = body_data.get('phone', '').strip()
+                notification_email = (body_data.get('notificationEmail') or '').strip() or None
                 
                 with conn.cursor() as cur:
                     cur.execute(
                         """UPDATE users 
-                           SET first_name = %s, last_name = %s, middle_name = %s, phone = %s 
+                           SET first_name = %s, last_name = %s, middle_name = %s, phone = %s,
+                               notification_email = %s
                            WHERE id = %s
                            RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
-                                     company_name, inn, ogrnip, ogrn, position, director_name, legal_address, created_at""",
-                        (first_name, last_name, middle_name or None, phone, auth_user['user_id'])
+                                     company_name, inn, ogrnip, ogrn, position, director_name, legal_address,
+                                     notification_email, created_at""",
+                        (first_name, last_name, middle_name or None, phone, notification_email, auth_user['user_id'])
                     )
                     user = cur.fetchone()
                     

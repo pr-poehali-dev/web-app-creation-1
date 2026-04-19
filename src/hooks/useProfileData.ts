@@ -19,6 +19,7 @@ export interface User {
   isVerified?: boolean;
   password?: string;
   role?: string;
+  notificationEmail?: string;
 }
 
 const profileCache = new Map<string, { data: User; timestamp: number }>();

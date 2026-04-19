@@ -37,6 +37,7 @@ interface User {
   legalAddress?: string;
   createdAt?: string;
   verificationStatus?: string;
+  notificationEmail?: string;
   reviews?: Array<{
     id: string;
     reviewerId: string;
@@ -83,6 +84,7 @@ const convertUserFromBackend = (backendUser: any): User => {
     reviews: backendUser.reviews,
     averageRating: backendUser.average_rating || backendUser.averageRating,
     reviewsCount: backendUser.reviews_count || backendUser.reviewsCount,
+    notificationEmail: backendUser.notification_email || backendUser.notificationEmail || '',
   };
   
   if (backendUser.role) {

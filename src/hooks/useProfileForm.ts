@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser } from '@/utils/auth';
+import { updateUser, getJwtToken } from '@/utils/auth';
 import { FormData, FormErrors, validateForm, validatePasswordForm } from '@/utils/profileValidation';
 import { User } from './useProfileData';
+import func2url from '../../backend/func2url.json';
 
 export const useProfileForm = (
   currentUser: User | null,
@@ -24,6 +25,7 @@ export const useProfileForm = (
     ogrnip: currentUser?.ogrnip || '',
     companyName: currentUser?.companyName || '',
     ogrn: currentUser?.ogrn || '',
+    notificationEmail: currentUser?.notificationEmail || '',
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -47,6 +49,7 @@ export const useProfileForm = (
         ogrnip: currentUser.ogrnip || '',
         companyName: currentUser.companyName || '',
         ogrn: currentUser.ogrn || '',
+        notificationEmail: currentUser.notificationEmail || '',
       });
     }
   }, [currentUser]);
@@ -82,6 +85,7 @@ export const useProfileForm = (
       ogrnip: currentUser?.ogrnip || '',
       companyName: currentUser?.companyName || '',
       ogrn: currentUser?.ogrn || '',
+      notificationEmail: currentUser?.notificationEmail || '',
     });
     setErrors({});
   };
@@ -167,7 +171,26 @@ export const useProfileForm = (
         ogrnip: formData.ogrnip,
         companyName: formData.companyName,
         ogrn: formData.ogrn,
+        notificationEmail: formData.notificationEmail || '',
       };
+
+      // Сохраняем notificationEmail на сервере для физ.лиц
+      if ((formData.userType || currentUser?.userType) === 'individual' && currentUser?.id) {
+        const token = getJwtToken();
+        await fetch(func2url.auth, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          body: JSON.stringify({
+            action: 'update_profile',
+            user_id: currentUser.id,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            middleName: formData.middleName,
+            phone: formData.phone,
+            notificationEmail: formData.notificationEmail || '',
+          }),
+        });
+      }
 
       if (typeChanged && needsVerification) {
         const finalUser = { ...updatedUser, isVerified: false };

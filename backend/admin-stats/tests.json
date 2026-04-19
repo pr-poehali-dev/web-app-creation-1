@@ -6,7 +6,7 @@
       "path": "/",
       "expectedStatus": 200,
       "expectedBody": {
-        "totalUsers": 50
+        "activeOffers": 8
       },
       "bodyMatcher": "partial"
     }

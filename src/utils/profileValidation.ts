@@ -8,6 +8,7 @@ export interface FormData {
   ogrnip?: string;
   companyName?: string;
   ogrn?: string;
+  notificationEmail?: string;
 }
 
 export interface FormErrors {
@@ -18,6 +19,7 @@ export interface FormErrors {
   ogrnip?: string;
   companyName?: string;
   ogrn?: string;
+  notificationEmail?: string;
 }
 
 export const validatePhone = (phone: string): boolean => {
@@ -40,6 +42,13 @@ export const validateForm = (formData: FormData): { isValid: boolean; errors: Fo
     newErrors.phone = 'Обязательное поле';
   } else if (!validatePhone(formData.phone)) {
     newErrors.phone = 'Некорректный номер телефона';
+  }
+
+  if (formData.notificationEmail && formData.notificationEmail.trim()) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.notificationEmail.trim())) {
+      newErrors.notificationEmail = 'Некорректный email';
+    }
   }
 
   if (formData.userType === 'self-employed') {
