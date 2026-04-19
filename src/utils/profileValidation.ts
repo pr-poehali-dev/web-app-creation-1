@@ -44,8 +44,12 @@ export const validateForm = (formData: FormData): { isValid: boolean; errors: Fo
     newErrors.phone = 'Некорректный номер телефона';
   }
 
-  if (formData.notificationEmail && formData.notificationEmail.trim()) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const needsVerification = ['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || '');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (needsVerification && (!formData.notificationEmail || !formData.notificationEmail.trim())) {
+    newErrors.notificationEmail = 'Email обязателен для верификации';
+  } else if (formData.notificationEmail && formData.notificationEmail.trim()) {
     if (!emailRegex.test(formData.notificationEmail.trim())) {
       newErrors.notificationEmail = 'Некорректный email';
     }
