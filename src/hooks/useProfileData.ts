@@ -25,6 +25,14 @@ export interface User {
 const profileCache = new Map<string, { data: User; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000;
 
+export const clearProfileCache = (userId?: string | number) => {
+  if (userId) {
+    profileCache.delete(String(userId));
+  } else {
+    profileCache.clear();
+  }
+};
+
 export const useProfileData = (isAuthenticated: boolean, viewingUserId: string | null) => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -77,6 +85,7 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
         ogrn: data.ogrn,
         createdAt: data.created_at,
         isVerified: false,
+        notificationEmail: data.notification_email || '',
       };
       
       profileCache.set(userId, { data: userData, timestamp: Date.now() });

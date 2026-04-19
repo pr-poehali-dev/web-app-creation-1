@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { updateUser, getJwtToken, saveSession } from '@/utils/auth';
 import { FormData, FormErrors, validateForm, validatePasswordForm } from '@/utils/profileValidation';
-import { User } from './useProfileData';
+import { User, clearProfileCache } from './useProfileData';
 import func2url from '../../backend/func2url.json';
 
 export const useProfileForm = (
@@ -195,12 +195,10 @@ export const useProfileForm = (
             companyName: formData.companyName || '',
           }),
         });
-        if (!saveResp.ok) {
-          const err = await saveResp.json().catch(() => ({}));
-          throw new Error(err.error || 'Не удалось сохранить профиль');
-        }
-        // Обновляем пользователя из ответа сервера
         const saveData = await saveResp.json().catch(() => null);
+        if (!saveResp.ok) {
+          throw new Error(saveData?.error || 'Не удалось сохранить профиль');
+        }
         if (saveData?.user) {
           const serverUser: User = {
             ...currentUser,
@@ -216,6 +214,7 @@ export const useProfileForm = (
             companyName: saveData.user.company_name || saveData.user.companyName || updatedUser.companyName,
             notificationEmail: saveData.user.notification_email || saveData.user.notificationEmail || '',
           };
+          clearProfileCache(serverUser.id);
           saveSession(serverUser);
           setCurrentUser(serverUser);
           setIsEditing(false);
