@@ -175,6 +175,7 @@ export const useProfileForm = (
       };
 
       // Сохраняем профиль на сервере для всех типов пользователей
+      console.log('[PROFILE SAVE] currentUser.id=', currentUser?.id, 'token=', !!getJwtToken());
       if (currentUser?.id) {
         const token = getJwtToken();
         const saveResp = await fetch(func2url.auth, {
@@ -196,6 +197,7 @@ export const useProfileForm = (
           }),
         });
         const saveData = await saveResp.json().catch(() => null);
+        console.log('[PROFILE SAVE] status=', saveResp.status, 'data=', JSON.stringify(saveData));
         if (!saveResp.ok) {
           throw new Error(saveData?.error || 'Не удалось сохранить профиль');
         }
