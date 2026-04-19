@@ -160,6 +160,7 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               errors={errors}
               isSaving={isSaving}
               userType={currentUser.userType}
+              notificationEmail={currentUser.notificationEmail}
               onEdit={handleEdit}
               onSave={handleSave}
               onCancel={handleCancelEdit}

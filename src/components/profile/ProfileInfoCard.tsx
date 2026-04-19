@@ -24,6 +24,7 @@ interface ProfileInfoCardProps {
   errors: FormErrors;
   isSaving: boolean;
   userType?: string;
+  notificationEmail?: string;
   onEdit: () => void;
   onSave: () => void;
   onCancel: () => void;
@@ -37,6 +38,7 @@ export default function ProfileInfoCard({
   errors,
   isSaving,
   userType,
+  notificationEmail,
   onEdit,
   onSave,
   onCancel,
@@ -145,6 +147,14 @@ export default function ProfileInfoCard({
             <p className="text-sm py-2">{formData.phone || '—'}</p>
           )}
         </div>
+
+        {!isEditing && userType === 'individual' && notificationEmail && (
+          <div className="space-y-2">
+            <Label>Email для уведомлений</Label>
+            <p className="text-sm py-2">{notificationEmail}</p>
+            <p className="text-xs text-muted-foreground">Уведомления о новых заявках и сообщениях</p>
+          </div>
+        )}
 
         {isEditing && (
           <div className="flex gap-2 pt-4">
