@@ -174,12 +174,12 @@ export const useProfileForm = (
         notificationEmail: formData.notificationEmail || '',
       };
 
-      // Сохраняем notificationEmail на сервере для физ.лиц
-      if ((formData.userType || currentUser?.userType) === 'individual' && currentUser?.id) {
+      // Сохраняем профиль на сервере для всех типов пользователей
+      if (currentUser?.id) {
         const token = getJwtToken();
-        await fetch(func2url.auth, {
+        const saveResp = await fetch(func2url.auth, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'X-Authorization': `Bearer ${token}` } : {}) },
           body: JSON.stringify({
             action: 'update_profile',
             user_id: currentUser.id,
@@ -188,8 +188,17 @@ export const useProfileForm = (
             middleName: formData.middleName,
             phone: formData.phone,
             notificationEmail: formData.notificationEmail || '',
+            userType: formData.userType || currentUser.userType,
+            inn: formData.inn || '',
+            ogrnip: formData.ogrnip || '',
+            ogrn: formData.ogrn || '',
+            companyName: formData.companyName || '',
           }),
         });
+        if (!saveResp.ok) {
+          const err = await saveResp.json().catch(() => ({}));
+          throw new Error(err.error || 'Не удалось сохранить профиль');
+        }
       }
 
       if (typeChanged && needsVerification) {

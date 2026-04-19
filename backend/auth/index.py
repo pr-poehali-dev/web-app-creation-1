@@ -410,17 +410,28 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 middle_name = body_data.get('middleName', '').strip()
                 phone = body_data.get('phone', '').strip()
                 notification_email = (body_data.get('notificationEmail') or '').strip() or None
+                user_type = body_data.get('userType', '').strip() or None
+                inn = (body_data.get('inn') or '').strip() or None
+                ogrnip = (body_data.get('ogrnip') or '').strip() or None
+                ogrn = (body_data.get('ogrn') or '').strip() or None
+                company_name = (body_data.get('companyName') or '').strip() or None
                 
                 with conn.cursor() as cur:
                     cur.execute(
                         """UPDATE users 
                            SET first_name = %s, last_name = %s, middle_name = %s, phone = %s,
-                               notification_email = %s
+                               notification_email = %s,
+                               user_type = COALESCE(%s, user_type),
+                               inn = COALESCE(%s, inn),
+                               ogrnip = COALESCE(%s, ogrnip),
+                               ogrn = COALESCE(%s, ogrn),
+                               company_name = COALESCE(%s, company_name)
                            WHERE id = %s
                            RETURNING id, email, first_name, last_name, middle_name, user_type, phone, 
                                      company_name, inn, ogrnip, ogrn, position, director_name, legal_address,
                                      notification_email, created_at""",
-                        (first_name, last_name, middle_name or None, phone, notification_email, auth_user['user_id'])
+                        (first_name, last_name, middle_name or None, phone, notification_email,
+                         user_type, inn, ogrnip, ogrn, company_name, auth_user['user_id'])
                     )
                     user = cur.fetchone()
                     
