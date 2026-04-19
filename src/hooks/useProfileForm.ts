@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { updateUser, getJwtToken } from '@/utils/auth';
+import { updateUser, getJwtToken, saveSession } from '@/utils/auth';
 import { FormData, FormErrors, validateForm, validatePasswordForm } from '@/utils/profileValidation';
 import { User } from './useProfileData';
 import func2url from '../../backend/func2url.json';
@@ -198,6 +198,35 @@ export const useProfileForm = (
         if (!saveResp.ok) {
           const err = await saveResp.json().catch(() => ({}));
           throw new Error(err.error || 'Не удалось сохранить профиль');
+        }
+        // Обновляем пользователя из ответа сервера
+        const saveData = await saveResp.json().catch(() => null);
+        if (saveData?.user) {
+          const serverUser: User = {
+            ...currentUser,
+            id: saveData.user.id,
+            firstName: saveData.user.first_name || saveData.user.firstName || updatedUser.firstName,
+            lastName: saveData.user.last_name || saveData.user.lastName || updatedUser.lastName,
+            middleName: saveData.user.middle_name || saveData.user.middleName || updatedUser.middleName,
+            phone: saveData.user.phone || updatedUser.phone,
+            userType: saveData.user.user_type || saveData.user.userType || updatedUser.userType,
+            inn: saveData.user.inn || updatedUser.inn,
+            ogrnip: saveData.user.ogrnip || updatedUser.ogrnip,
+            ogrn: saveData.user.ogrn || updatedUser.ogrn,
+            companyName: saveData.user.company_name || saveData.user.companyName || updatedUser.companyName,
+            notificationEmail: saveData.user.notification_email || saveData.user.notificationEmail || '',
+          };
+          saveSession(serverUser);
+          setCurrentUser(serverUser);
+          setIsEditing(false);
+          toast({
+            title: '✅ Профиль сохранен!',
+            description: typeChanged && needsVerification
+              ? 'Заявка на верификацию отправлена администратору.'
+              : 'Ваши изменения успешно сохранены',
+            duration: 2000,
+          });
+          return;
         }
       }
 
