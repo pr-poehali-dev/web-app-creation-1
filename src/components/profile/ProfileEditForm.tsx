@@ -204,27 +204,22 @@ export default function ProfileEditForm({
           )}
         </div>
 
-        {(() => {
-          const needsVerification = ['self-employed', 'entrepreneur', 'legal-entity'].includes(formData.userType || currentUserType || '');
-          return (
-            <div className="space-y-2">
-              <Label htmlFor="edit-notificationEmail">
-                Email {needsVerification && <span className="text-destructive">*</span>}
-              </Label>
-              <Input
-                id="edit-notificationEmail"
-                type="email"
-                value={formData.notificationEmail || ''}
-                onChange={(e) => onInputChange('notificationEmail', e.target.value)}
-                placeholder={needsVerification ? 'Введите email' : 'Введите email (необязательно)'}
-                className={errors.notificationEmail ? 'border-destructive' : ''}
-              />
-              {errors.notificationEmail && (
-                <p className="text-sm text-destructive">{errors.notificationEmail}</p>
-              )}
-            </div>
-          );
-        })()}
+        <div className="space-y-2">
+          <Label htmlFor="edit-notificationEmail">
+            Email <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="edit-notificationEmail"
+            type="email"
+            value={formData.notificationEmail || ''}
+            onChange={(e) => onInputChange('notificationEmail', e.target.value)}
+            placeholder="Введите email"
+            className={errors.notificationEmail ? 'border-destructive' : ''}
+          />
+          {errors.notificationEmail && (
+            <p className="text-sm text-destructive">{errors.notificationEmail}</p>
+          )}
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="edit-userType">
