@@ -204,27 +204,20 @@ export default function ProfileEditForm({
           )}
         </div>
 
-        {/* Доп. email для уведомлений — только для физ.лиц */}
-        {(formData.userType || currentUserType) === 'individual' && (
-          <div className="space-y-2">
-            <Label htmlFor="edit-notificationEmail">
-              Email для уведомлений
-            </Label>
-            <Input
-              id="edit-notificationEmail"
-              type="email"
-              value={formData.notificationEmail || ''}
-              onChange={(e) => onInputChange('notificationEmail', e.target.value)}
-              placeholder="Введите email (необязательно)"
-              className={errors.notificationEmail ? 'border-destructive' : ''}
-            />
-            {errors.notificationEmail ? (
-              <p className="text-sm text-destructive">{errors.notificationEmail}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">Будут приходить уведомления о новых заявках и сообщениях</p>
-            )}
-          </div>
-        )}
+        <div className="space-y-2">
+          <Label htmlFor="edit-notificationEmail">Email</Label>
+          <Input
+            id="edit-notificationEmail"
+            type="email"
+            value={formData.notificationEmail || ''}
+            onChange={(e) => onInputChange('notificationEmail', e.target.value)}
+            placeholder="Введите email"
+            className={errors.notificationEmail ? 'border-destructive' : ''}
+          />
+          {errors.notificationEmail && (
+            <p className="text-sm text-destructive">{errors.notificationEmail}</p>
+          )}
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="edit-userType">

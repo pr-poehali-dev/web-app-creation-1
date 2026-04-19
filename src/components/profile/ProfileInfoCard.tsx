@@ -117,14 +117,8 @@ export default function ProfileInfoCard({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <div className="flex items-center gap-2">
-            <Input id="email" value={email} disabled />
-            <Icon name="Lock" className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Email нельзя изменить
-          </p>
+          <Label>Email</Label>
+          <p className="text-sm py-2">{notificationEmail || '—'}</p>
         </div>
 
         <div className="space-y-2">
@@ -147,14 +141,6 @@ export default function ProfileInfoCard({
             <p className="text-sm py-2">{formData.phone || '—'}</p>
           )}
         </div>
-
-        {!isEditing && userType === 'individual' && notificationEmail && (
-          <div className="space-y-2">
-            <Label>Email для уведомлений</Label>
-            <p className="text-sm py-2">{notificationEmail}</p>
-            <p className="text-xs text-muted-foreground">Уведомления о новых заявках и сообщениях</p>
-          </div>
-        )}
 
         {isEditing && (
           <div className="flex gap-2 pt-4">
