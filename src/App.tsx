@@ -175,6 +175,8 @@ const App = () => {
                 inn: data.inn,
                 ogrnip: data.ogrnip,
                 ogrn: data.ogrn,
+                notificationEmail: data.notification_email || session.notificationEmail || '',
+                userType: data.user_type || session.userType,
               };
               
               // Обновляем localStorage с актуальными данными

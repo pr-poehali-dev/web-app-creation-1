@@ -58,14 +58,17 @@ function buildOgProxyUrl(pageUrl: string): string | null {
   const ogProxyBase = (func2url as Record<string, string>)['og-proxy'];
   if (!ogProxyBase) return null;
 
+  // v=3 — сброс кэша WhatsApp/Telegram (меняем при необходимости принудительного обновления)
+  const v = '3';
+
   const offerMatch = pageUrl.match(/\/offer\/([0-9a-f-]{36})/);
-  if (offerMatch) return `${ogProxyBase}?type=offer&id=${offerMatch[1]}`;
+  if (offerMatch) return `${ogProxyBase}?type=offer&id=${offerMatch[1]}&v=${v}`;
 
   const requestMatch = pageUrl.match(/\/request\/([0-9a-f-]{36})/);
-  if (requestMatch) return `${ogProxyBase}?type=request&id=${requestMatch[1]}`;
+  if (requestMatch) return `${ogProxyBase}?type=request&id=${requestMatch[1]}&v=${v}`;
 
   const auctionMatch = pageUrl.match(/\/auction\/([0-9a-f-]{36})/);
-  if (auctionMatch) return `${ogProxyBase}?type=auction&id=${auctionMatch[1]}`;
+  if (auctionMatch) return `${ogProxyBase}?type=auction&id=${auctionMatch[1]}&v=${v}`;
 
   return null;
 }

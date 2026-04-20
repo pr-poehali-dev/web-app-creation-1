@@ -58,6 +58,7 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
     
     // Читаем сессию свежо в момент запроса
     const freshSession = getSession();
+    console.log('[PROFILE] fetchUserProfile userId=', userId, 'freshSession.id=', freshSession?.id);
     
     try {
       const url = `https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${userId}`;
@@ -69,7 +70,7 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Backend error:', response.status, errorText);
+        console.error('[PROFILE] Backend error:', response.status, errorText);
         throw new Error(`Ошибка сервера: ${response.status}`);
       }
       
@@ -124,12 +125,14 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
     
     // Читаем сессию свежо в момент эффекта
     const session = getSession();
+    console.log('[PROFILE] useEffect session=', session?.id, 'viewingUserId=', viewingUserId, 'isAuthenticated=', isAuthenticated);
     
     if (viewingUserId && viewingUserId !== String(session?.id)) {
       fetchUserProfile(viewingUserId);
     } else if (session?.id) {
       fetchUserProfile(String(session.id));
     } else {
+      console.log('[PROFILE] No session.id — showing session data directly');
       setCurrentUser(session);
       setIsLoadingProfile(false);
     }
