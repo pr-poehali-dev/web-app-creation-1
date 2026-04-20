@@ -36,6 +36,7 @@ export const clearProfileCache = (userId?: string | number) => {
 export const useProfileData = (isAuthenticated: boolean, viewingUserId: string | null) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const sessionUser = getSession();
   const isViewingOwnProfile = !viewingUserId || viewingUserId === String(sessionUser?.id);
   
@@ -55,18 +56,21 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
       setCurrentUser(null);
     }
     
+    // Читаем сессию свежо в момент запроса
+    const freshSession = getSession();
+    
     try {
       const url = `https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${userId}`;
       const response = await fetch(url, {
         headers: {
-          'X-User-Id': String(sessionUser?.id || 'anonymous'),
+          'X-User-Id': String(freshSession?.id || 'anonymous'),
         },
       });
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Backend error:', errorText);
-        throw new Error('Failed to fetch user profile');
+        console.error('Backend error:', response.status, errorText);
+        throw new Error(`Ошибка сервера: ${response.status}`);
       }
       
       const data = await response.json();
@@ -92,17 +96,21 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
       setCurrentUser(userData);
       
       // Если это собственный профиль, обновляем localStorage
-      if (userId === String(sessionUser?.id)) {
+      if (userId === String(freshSession?.id)) {
         saveSession(userData);
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось загрузить профиль пользователя',
+        title: 'Ошибка загрузки профиля',
+        description: error instanceof Error ? error.message : 'Не удалось загрузить данные',
         variant: 'destructive',
       });
-      navigate(-1);
+      // Не делаем navigate(-1) — показываем данные из сессии если они есть
+      const fallback = getSession();
+      if (fallback) {
+        setCurrentUser(fallback);
+      }
     } finally {
       setIsLoadingProfile(false);
     }
@@ -114,14 +122,15 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
       return;
     }
     
-    // Всегда загружаем свежие данные с сервера
-    if (viewingUserId && viewingUserId !== String(sessionUser?.id)) {
+    // Читаем сессию свежо в момент эффекта
+    const session = getSession();
+    
+    if (viewingUserId && viewingUserId !== String(session?.id)) {
       fetchUserProfile(viewingUserId);
-    } else if (sessionUser?.id) {
-      // Даже для своего профиля загружаем данные с сервера
-      fetchUserProfile(String(sessionUser.id));
+    } else if (session?.id) {
+      fetchUserProfile(String(session.id));
     } else {
-      setCurrentUser(sessionUser);
+      setCurrentUser(session);
       setIsLoadingProfile(false);
     }
   }, [viewingUserId, isAuthenticated]);

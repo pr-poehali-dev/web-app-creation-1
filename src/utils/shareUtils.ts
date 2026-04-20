@@ -71,18 +71,14 @@ function buildOgProxyUrl(pageUrl: string): string | null {
 }
 
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
-  // og-proxy ссылка — отдаёт HTML с og:image, Telegram читает превью из неё
+  // og-proxy ссылка — отдаёт HTML с og:image, мессенджеры читают превью из неё
   const ogUrl = buildOgProxyUrl(url);
-
-  // Для копирования в буфер укорачиваем og-proxy (или прямую ссылку)
-  const shortUrl = ogUrl ? await shortenUrl(ogUrl) : await shortenUrl(url);
-
-  const directShareUrl = ogUrl || url;
-  const fullText = `🔗 ${directShareUrl}`;
+  const shareUrl = ogUrl || url;
 
   if (navigator.share) {
     try {
-      await navigator.share({ title, text: fullText });
+      // Передаём og-proxy URL через поле url — мессенджеры парсят OG из него
+      await navigator.share({ title, text, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
@@ -90,8 +86,9 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     }
   }
 
-  await copyToClipboard(fullText);
-  toast.success('Скопировано в буфер обмена', {
+  // Десктоп — копируем чистый URL без эмодзи, чтобы Telegram/WhatsApp сделали превью
+  await copyToClipboard(shareUrl);
+  toast.success('Ссылка скопирована', {
     description: 'Вставьте в мессенджер — получатель увидит превью с фото',
   });
 }

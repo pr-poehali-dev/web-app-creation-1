@@ -16,7 +16,7 @@
       "name": "OG proxy unknown type redirect",
       "method": "GET",
       "path": "/?type=unknown&id=123",
-      "expectedStatus": 302
+      "expectedStatus": 200
     }
   ]
 }

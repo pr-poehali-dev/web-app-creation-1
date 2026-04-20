@@ -35,7 +35,7 @@ def html_response(title: str, description: str, image_url: str, page_url: str, r
 <meta name="twitter:title" content="{safe_title}">
 <meta name="twitter:description" content="{safe_desc}">
 <meta name="twitter:image" content="{safe_image}">
-<meta http-equiv="refresh" content="0; url={redirect_url}">
+<script>window.location.replace("{redirect_url}")</script>
 </head>
 <body>
 <p>Перенаправление... <a href="{redirect_url}">Нажмите здесь</a></p>
