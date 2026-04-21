@@ -86,8 +86,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         elif method == 'POST':
             user_headers = event.get('headers', {})
             user_id = user_headers.get('X-User-Id') or user_headers.get('x-user-id')
+            print(f'POST content-management: user_id={user_id}, headers_keys={list(user_headers.keys())}')
             
-            if not is_admin(user_id):
+            admin_check = is_admin(user_id)
+            print(f'is_admin result: {admin_check} for user_id={user_id}')
+            
+            if not admin_check:
                 return {
                     'statusCode': 403,
                     'headers': headers,
