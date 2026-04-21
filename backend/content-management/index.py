@@ -42,11 +42,13 @@ def is_admin(user_id: str) -> bool:
     conn = get_db_connection()
     cur = conn.cursor()
     schema = get_schema()
-    cur.execute(f"SELECT role FROM {schema}.users WHERE id = %s", (user_id,))
+    cur.execute(f"SELECT role, is_root_admin FROM {schema}.users WHERE id = %s", (user_id,))
     user = cur.fetchone()
     cur.close()
     conn.close()
-    return user and user.get('role') == 'admin'
+    if not user:
+        return False
+    return user.get('role') in ('admin', 'superadmin') or user.get('is_root_admin') == True
 
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
