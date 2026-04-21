@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -84,10 +85,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const currentUserId = Number(rawCurrentId ?? 0);
 
   const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);
-  // Двойная защита: убираем из откликов свои же контракты (где пользователь — автор/продавец)
-  const filteredRespondedContracts = respondedContracts.filter(
-    c => Number(c.sellerId) !== currentUserId && Number(c.buyerId) !== currentUserId
-  );
+  const filteredRespondedContracts = respondedContracts;
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
@@ -100,6 +98,9 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       <Header isAuthenticated={isAuthenticated} onLogout={onLogout} />
       <main className="flex-1 container mx-auto px-4 py-6 max-w-3xl">
         <div className="flex items-center gap-3 mb-6">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="p-2">
+            <Icon name="ArrowLeft" className="h-4 w-4" />
+          </Button>
           <Icon name="FileSignature" className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-bold">Мои контракты</h1>
         </div>

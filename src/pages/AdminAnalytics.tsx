@@ -9,6 +9,56 @@ import { useState, useEffect } from 'react';
 const STATS_API = 'https://functions.poehali.dev/a764d5ef-b512-4cbd-b25b-36a52baa08b7';
 const TRACK_API = 'https://functions.poehali.dev/d6fc7d3f-1215-492d-943f-d1cbf3a44bcf';
 
+const PAGE_LABELS: Record<string, string> = {
+  '/': 'Главная',
+  '/home': 'Главная',
+  '/predlozheniya': 'Предложения',
+  '/predlozheniya/': 'Предложения',
+  '/zaprosy': 'Запросы',
+  '/zaprosy/': 'Запросы',
+  '/aukciony': 'Аукционы',
+  '/aukciony/': 'Аукционы',
+  '/kontrakty': 'Контракты',
+  '/my-contracts': 'Мои контракты',
+  '/profile': 'Профиль',
+  '/auth': 'Вход / Регистрация',
+  '/register': 'Регистрация',
+  '/about': 'О нас',
+  '/support': 'Поддержка',
+  '/admin': 'Админ панель',
+  '/admin/panel': 'Админ панель',
+  '/admin/users': 'Пользователи (Админ)',
+  '/admin/analytics': 'Аналитика (Админ)',
+  '/admin/content': 'Контент (Админ)',
+  '/admin/offers': 'Предложения (Админ)',
+  '/admin/requests': 'Запросы (Админ)',
+  '/admin/arbitrage': 'Арбитраж (Админ)',
+  '/admin/verification': 'Верификация (Админ)',
+  '/my-offers': 'Мои предложения',
+  '/my-requests': 'Мои запросы',
+  '/my-auctions': 'Мои аукционы',
+  '/my-orders': 'Мои заказы',
+  '/my-reviews': 'Мои отзывы',
+  '/create-offer': 'Создать предложение',
+  '/create-request': 'Создать запрос',
+  '/create-auction': 'Создать аукцион',
+  '/verification': 'Верификация',
+};
+
+function getPageLabel(page: string): string {
+  if (!page) return '/';
+  const clean = page.split('?')[0];
+  if (PAGE_LABELS[clean]) return PAGE_LABELS[clean];
+  if (clean.startsWith('/offer/')) return 'Карточка предложения';
+  if (clean.startsWith('/request/')) return 'Карточка запроса';
+  if (clean.startsWith('/auction/')) return 'Карточка аукциона';
+  if (clean.startsWith('/contract/')) return 'Карточка контракта';
+  if (clean.startsWith('/profile/')) return 'Профиль пользователя';
+  if (clean.startsWith('/edit-offer/')) return 'Редактировать предложение';
+  if (clean.startsWith('/edit-request/')) return 'Редактировать запрос';
+  return clean;
+}
+
 interface TopSeller { name: string; deals: number; revenue: number; }
 interface TopCategory { name: string; count: number; percentage: number; }
 
@@ -229,8 +279,11 @@ export default function AdminAnalytics({ isAuthenticated, onLogout }: AdminAnaly
                       <div className="space-y-2">
                         {visitStats.topPages.map((p, i) => (
                           <div key={i} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
-                            <span className="text-muted-foreground font-mono">{p.page || '/'}</span>
-                            <span className="font-semibold">{p.visits} визитов</span>
+                            <div>
+                              <span className="font-medium">{getPageLabel(p.page)}</span>
+                              <span className="text-muted-foreground font-mono text-xs ml-2">{p.page || '/'}</span>
+                            </div>
+                            <span className="font-semibold shrink-0 ml-4">{p.visits} визитов</span>
                           </div>
                         ))}
                       </div>
