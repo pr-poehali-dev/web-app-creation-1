@@ -154,7 +154,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
                 'Access-Control-Max-Age': '86400'
             },
@@ -167,6 +167,35 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     user_id = int(user_id_raw) if user_id_raw and str(user_id_raw).isdigit() else None
 
     params = event.get('queryStringParameters', {}) or {}
+
+    # ── POST action=deleteContract — удаление контракта (черновик или без откликов) ──
+    if method == 'POST' and params.get('action') == 'deleteContract':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+        body_raw = json.loads(event.get('body') or '{}')
+        contract_id_raw = body_raw.get('contractId') or params.get('contractId')
+        if not contract_id_raw:
+            return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
+        contract_id = int(contract_id_raw)
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT seller_id, status FROM contracts WHERE id = %s', (contract_id,))
+                contract = cur.fetchone()
+                if not contract:
+                    return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт не найден'}), 'isBase64Encoded': False}
+                if contract['seller_id'] != user_id:
+                    return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
+                cur.execute("SELECT COUNT(*) as cnt FROM contract_responses WHERE contract_id = %s AND status NOT IN ('cancelled', 'rejected')", (contract_id,))
+                resp_count = cur.fetchone()['cnt']
+                if resp_count > 0:
+                    return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нельзя удалить контракт с активными откликами'}), 'isBase64Encoded': False}
+                cur.execute('DELETE FROM contract_responses WHERE contract_id = %s', (contract_id,))
+                cur.execute('DELETE FROM contracts WHERE id = %s', (contract_id,))
+                conn.commit()
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True, 'message': 'Контракт удалён'}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
 
     # ── POST — чат и подтверждение ─────────────────────────────────────────────
     if method == 'POST':
@@ -496,6 +525,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     status = params.get('status')
     category = params.get('category')
     contract_type = params.get('type')
+    contract_id_filter = params.get('id')
     limit = min(int(params.get('limit', '50')), 200)
     offset = int(params.get('offset', '0'))
 
@@ -504,6 +534,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         with conn.cursor() as cur:
             conditions = []
             query_params = []
+
+            if contract_id_filter:
+                conditions.append("c.id = %s")
+                query_params.append(int(contract_id_filter))
 
             explicit_user_filter = params.get('user_id') and user_id
             if explicit_user_filter:

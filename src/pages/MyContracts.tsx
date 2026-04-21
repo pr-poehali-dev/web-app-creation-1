@@ -84,6 +84,27 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const rawCurrentId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? (Number(localStorage.getItem('userId') || '0') || undefined);
   const currentUserId = Number(rawCurrentId ?? 0);
 
+  const handleDeleteContract = async (contractId: number) => {
+    if (!window.confirm('Удалить контракт? Это действие нельзя отменить.')) return;
+    const userId = localStorage.getItem('userId') || '';
+    try {
+      const res = await fetch(`${CONTRACTS_API}?action=deleteContract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ contractId }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast({ title: 'Контракт удалён' });
+        loadContracts();
+      } else {
+        toast({ title: data.error || 'Ошибка удаления', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Ошибка соединения', variant: 'destructive' });
+    }
+  };
+
   const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);
   const filteredRespondedContracts = respondedContracts;
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
@@ -135,7 +156,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Запросы на закупку</span>
                         <span className="text-xs bg-muted px-1.5 rounded-full">{activeRequests.length}</span>
                       </div>
-                      {activeRequests.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)}
+                      {activeRequests.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} onDelete={() => handleDeleteContract(c.id)} />)}
                     </div>
                   )}
                   {activeContracts.length > 0 && (
@@ -147,7 +168,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                           <span className="text-xs bg-muted px-1.5 rounded-full">{activeContracts.length}</span>
                         </div>
                       )}
-                      {activeContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)}
+                      {activeContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} onDelete={() => handleDeleteContract(c.id)} />)}
                     </div>
                   )}
                 </>

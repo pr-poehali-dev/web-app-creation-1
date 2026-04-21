@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 
 export interface Respondent {
@@ -88,9 +89,10 @@ export function formatDate(dateStr: string) {
   }
 }
 
-export default function ContractCard({ contract, currentUserId, onClick }: { contract: Contract; currentUserId: number; onClick: () => void }) {
+export default function ContractCard({ contract, currentUserId, onClick, onDelete }: { contract: Contract; currentUserId: number; onClick: () => void; onDelete?: () => void }) {
   const isSeller = contract.sellerId === currentUserId;
   const isRequest = contract.contractType === 'forward-request';
+  const canDelete = isSeller && ['draft', 'open'].includes(contract.status) && onDelete;
   const counterparty = isSeller
     ? `${contract.buyerFirstName || ''} ${contract.buyerLastName || ''}`.trim() || (isRequest ? 'Поставщик' : 'Покупатель')
     : `${contract.sellerFirstName || ''} ${contract.sellerLastName || ''}`.trim() || (isRequest ? 'Покупатель' : 'Продавец');
@@ -131,11 +133,21 @@ export default function ContractCard({ contract, currentUserId, onClick }: { con
               </span>
             </div>
           </div>
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0 flex flex-col items-end gap-2">
             <div className="font-semibold text-sm">
               {contract.contractType === 'barter' ? 'Бартер' : (contract.totalAmount ? formatAmount(contract.totalAmount, contract.currency) : 'Договорная')}
             </div>
-            <div className="text-xs text-muted-foreground mt-1">{isSeller ? (isRequest ? 'Инициатор' : 'Продавец') : (isRequest ? 'Поставщик' : 'Покупатель')}</div>
+            <div className="text-xs text-muted-foreground">{isSeller ? (isRequest ? 'Инициатор' : 'Продавец') : (isRequest ? 'Поставщик' : 'Покупатель')}</div>
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={e => { e.stopPropagation(); onDelete!(); }}
+              >
+                <Icon name="Trash2" size={14} />
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

@@ -287,8 +287,31 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
   if (!contract) return null;
 
-  const isSeller = session?.id === contract.sellerId;
+  const currentUserId = Number(session?.id ?? localStorage.getItem('userId') ?? 0);
+  const isSeller = currentUserId > 0 && currentUserId === Number(contract.sellerId);
   const isBarter = contract.contractType === 'barter';
+  const canDelete = isSeller && ['draft', 'open'].includes(contract.status);
+
+  const handleDeleteContract = async () => {
+    if (!window.confirm('Удалить контракт? Это действие нельзя отменить.')) return;
+    const userId = localStorage.getItem('userId') || '';
+    try {
+      const res = await fetch(`${func2url['contracts-list']}?action=deleteContract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ contractId: contract.id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast({ title: 'Контракт удалён' });
+        navigate('/my-contracts');
+      } else {
+        toast({ title: data.error || 'Ошибка удаления', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Ошибка соединения', variant: 'destructive' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -313,10 +336,15 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
               )}
             </div>
             <div className="flex gap-2 shrink-0">
-              {isSeller && ['draft', 'open'].includes(contract.status) && (
+              {canDelete && (
                 <Button variant="outline" onClick={() => navigate(`/edit-contract/${contract.id}`)}>
                   <Icon name="Pencil" className="mr-2 h-4 w-4" />
                   Редактировать
+                </Button>
+              )}
+              {canDelete && (
+                <Button variant="outline" className="text-destructive hover:text-destructive border-destructive/30 hover:bg-destructive/10" onClick={handleDeleteContract}>
+                  <Icon name="Trash2" className="h-4 w-4" />
                 </Button>
               )}
               {!isSeller && contract.status === 'open' && (

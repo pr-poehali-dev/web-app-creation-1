@@ -15,6 +15,22 @@
       "expectedStatus": 200,
       "bodyMatcher": "partial",
       "expectedBody": {"limit": 5}
+    },
+    {
+      "name": "GET contract by id",
+      "method": "GET",
+      "path": "/?id=1",
+      "expectedStatus": 200,
+      "bodyMatcher": "partial",
+      "expectedBody": {}
+    },
+    {
+      "name": "DELETE contract without auth returns 401",
+      "method": "POST",
+      "path": "/?action=deleteContract&contractId=999",
+      "expectedStatus": 401,
+      "bodyMatcher": "partial",
+      "expectedBody": {}
     }
   ]
 }
