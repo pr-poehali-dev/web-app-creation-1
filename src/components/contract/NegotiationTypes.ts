@@ -171,16 +171,20 @@ export function buildContractHtml(status: ResponseStatus, c: ContractInfo): stri
   const role1label = isBarter ? 'СТОРОНА 1' : isForwardRequest ? 'ПОКУПАТЕЛЬ' : 'ПОСТАВЩИК';
   const role2label = isBarter ? 'СТОРОНА 2' : isForwardRequest ? 'ПОСТАВЩИК' : 'ПОКУПАТЕЛЬ';
 
-  const price = c.pricePerUnit || 0;
-  const total = c.totalAmount || (price * (c.quantity || 0));
+  const nt = status.negotiatedTerms;
+  const price = (nt?.pricePerUnit != null ? nt.pricePerUnit : c.pricePerUnit) || 0;
   const qty = c.quantity || 0;
+  const total = price * qty || c.totalAmount || 0;
   const unit = c.unit || 'ед.';
   const product = c.productName || '___________';
-  const delivMethod = c.deliveryConditions || 'автомобильный транспорт';
+  const delivMethod = nt?.deliveryConditions || c.deliveryConditions || 'автомобильный транспорт';
   const delivAddr = c.deliveryAddress || 'по месту нахождения Покупателя';
-  const deliveryDate = fmtDateFull(c.deliveryDate);
-  const contractEnd = fmtDateFull(c.contractEndDate || c.deliveryDate);
-  const contractStart = fmtDateFull(c.contractStartDate || c.deliveryDate);
+  const deliveryDate = fmtDateFull(nt?.deliveryDate || c.deliveryDate);
+  const contractStart = fmtDateFull(nt?.contractStartDate || c.contractStartDate || c.deliveryDate);
+  const contractEnd = fmtDateFull(nt?.contractEndDate || c.contractEndDate || c.deliveryDate);
+  const prepaymentPercent = nt?.prepaymentPercent ?? null;
+  const prepaymentAmount = prepaymentPercent != null ? (total * prepaymentPercent / 100) : null;
+  const specialTerms = nt?.specialTerms || c.specialTerms;
 
   const CATEGORY_QUALITY: Record<string, string> = {
     dairy: 'Товар должен соответствовать ГОСТ Р 52090-2003 (молоко), ГОСТ 31453-2013 (творог) или иным применимым ГОСТам. Срок годности на момент передачи — не менее 2/3 от полного срока.',
@@ -212,7 +216,13 @@ export function buildContractHtml(status: ResponseStatus, c: ContractInfo): stri
 <p class="section">2. ЦЕНА И ПОРЯДОК РАСЧЁТОВ</p>
 <p>2.1. Цена Товара: <b>${fmtMoney(price)} руб.</b> за единицу (${unit}), НДС в соответствии с законодательством РФ.</p>
 <p>2.2. Общая стоимость контракта: <b>${fmtMoney(total)} руб.</b></p>
-<p>2.3. Расчёты — в безналичном порядке на расчётный счёт Поставщика.</p>
+${prepaymentPercent != null && prepaymentPercent > 0
+  ? `<p>2.3. Предоплата: <b>${prepaymentPercent}%</b> от суммы контракта — <b>${fmtMoney(prepaymentAmount!)} руб.</b> — перечисляется Покупателем в течение 5 рабочих дней с момента подписания настоящего Контракта.</p>
+<p>2.4. Оставшаяся часть — <b>${fmtMoney(total - prepaymentAmount!)} руб.</b> — оплачивается в течение 10 рабочих дней после поставки Товара и подписания акта приёма-передачи.</p>
+<p>2.5. Расчёты — в безналичном порядке на расчётный счёт Поставщика.</p>`
+  : `<p>2.3. Оплата производится в течение 10 рабочих дней после поставки Товара и подписания акта приёма-передачи.</p>
+<p>2.4. Расчёты — в безналичном порядке на расчётный счёт Поставщика.</p>`
+}
 
 <p class="section">3. СРОКИ И УСЛОВИЯ ПОСТАВКИ</p>
 <p>3.1. Поставка Товара осуществляется в период с <b>${contractStart}</b> по <b>${contractEnd}</b>. Поставка должна быть осуществлена до истечения даты окончания контракта.</p>
@@ -253,7 +263,7 @@ export function buildContractHtml(status: ResponseStatus, c: ContractInfo): stri
 <p>11.1. Контракт составлен в 2 экземплярах, по одному для каждой Стороны.</p>
 <p>11.2. Изменения — только в письменной форме, подписанной обеими Сторонами.</p>
 <p>11.3. Контракт регулируется законодательством РФ (${lawRef}).</p>
-${c.specialTerms ? `\n<p class="section">12. ОСОБЫЕ УСЛОВИЯ</p>\n<p style="text-indent:1.5cm;white-space:pre-wrap">${c.specialTerms}</p>` : ''}
+${specialTerms ? `\n<p class="section">12. ОСОБЫЕ УСЛОВИЯ</p>\n<p style="text-indent:1.5cm;white-space:pre-wrap">${specialTerms}</p>` : ''}
 ${c.termsConditions ? `\n<p class="section">БАЗОВЫЕ УСЛОВИЯ КОНТРАКТА</p>\n<p style="text-indent:1.5cm">${c.termsConditions}</p>` : ''}
 `;
 

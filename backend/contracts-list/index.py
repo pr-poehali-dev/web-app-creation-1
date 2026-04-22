@@ -394,7 +394,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 rows = cur.fetchall()
                 responses = []
                 for r in rows:
-                    d = decimal_to_float(dict(r))
+                    raw = dict(r)
+                    # Конвертируем все date/datetime в строки перед decimal_to_float
+                    for k, v in raw.items():
+                        if hasattr(v, 'isoformat'):
+                            raw[k] = v.isoformat()
+                    d = decimal_to_float(raw)
                     d['firstName'] = d.pop('first_name')
                     d['lastName'] = d.pop('last_name')
                     d['companyName'] = d.pop('company_name', '')
@@ -403,8 +408,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d['totalAmount'] = d.pop('total_amount')
                     d['contractId'] = d.pop('contract_id')
                     d['userId'] = d.pop('user_id')
-                    d['createdAt'] = str(d.pop('created_at'))
-                    d['updatedAt'] = str(d.pop('updated_at'))
+                    d['createdAt'] = str(d.pop('created_at', ''))
+                    d['updatedAt'] = str(d.pop('updated_at', ''))
                     responses.append(d)
 
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'responses': responses, 'total': len(responses)}), 'isBase64Encoded': False}
