@@ -27,7 +27,8 @@
     {
       "name": "DELETE contract without auth returns 401",
       "method": "POST",
-      "path": "/?action=deleteContract&contractId=999",
+      "path": "/",
+      "body": {"action": "deleteContract", "contractId": 999},
       "expectedStatus": 401,
       "bodyMatcher": "partial",
       "expectedBody": {}

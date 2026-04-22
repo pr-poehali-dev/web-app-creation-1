@@ -88,10 +88,10 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     if (!window.confirm('Удалить контракт? Это действие нельзя отменить.')) return;
     const userId = localStorage.getItem('userId') || '';
     try {
-      const res = await fetch(`${CONTRACTS_API}?action=deleteContract`, {
+      const res = await fetch(CONTRACTS_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ contractId }),
+        body: JSON.stringify({ action: 'deleteContract', contractId }),
       });
       const data = await res.json();
       if (res.ok && data.success) {

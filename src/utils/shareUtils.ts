@@ -85,17 +85,14 @@ function toProdUrl(pageUrl: string): string {
   }
 }
 
-export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
-  // Нормализуем URL к боевому домену — мессенджеры парсят OG с него
+export async function shareContent({ title, text, url }: ShareOptions): Promise<void> {
+  // Нормализуем URL к боевому домену erttp.ru
   const prodUrl = toProdUrl(url);
-  // og-proxy ссылка — отдаёт HTML с og:image, мессенджеры читают превью из неё
-  const ogUrl = buildOgProxyUrl(prodUrl);
-  const shareUrl = ogUrl || prodUrl;
 
   if (navigator.share) {
     try {
-      // Передаём og-proxy URL через поле url — мессенджеры парсят OG из него
-      await navigator.share({ title, text, url: shareUrl });
+      // Передаём боевой URL напрямую — мессенджеры сами парсят OG-теги с erttp.ru
+      await navigator.share({ title, text, url: prodUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
@@ -103,8 +100,8 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     }
   }
 
-  // Десктоп — копируем чистый URL без эмодзи, чтобы Telegram/WhatsApp сделали превью
-  await copyToClipboard(shareUrl);
+  // Десктоп — копируем чистый боевой URL, Telegram/WhatsApp сделают превью с фото
+  await copyToClipboard(prodUrl);
   toast.success('Ссылка скопирована', {
     description: 'Вставьте в мессенджер — получатель увидит превью с фото',
   });

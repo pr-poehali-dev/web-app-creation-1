@@ -118,12 +118,14 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
       });
       if (res.ok) {
         const data = await res.json();
-        const found = (data.contracts || []).find((c: Contract) => c.id === Number(id));
+        const contracts = data.contracts || [];
+        const found = contracts.find((c: Contract) => String(c.id) === String(id)) || contracts[0] || null;
+        console.log('[ContractDetail] loadContract', { id, userId, found_sellerId: found?.sellerId, found_id: found?.id, total: contracts.length });
         if (found) {
           setContract(found);
-          if (userId && found.sellerId === Number(userId)) {
+          if (userId && String(found.sellerId) === String(userId)) {
             loadResponses(found.id, userId);
-          } else if (userId && found.sellerId !== Number(userId)) {
+          } else if (userId && String(found.sellerId) !== String(userId)) {
             // responseId приходит прямо в объекте контракта (если бэкенд актуален)
             if (found.responseId) {
               setAlreadyResponded(true);
@@ -288,7 +290,9 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   if (!contract) return null;
 
   const currentUserId = Number(session?.id ?? localStorage.getItem('userId') ?? 0);
-  const isSeller = currentUserId > 0 && currentUserId === Number(contract.sellerId);
+  const storedUserId = localStorage.getItem('userId') || '';
+  const isSeller = (currentUserId > 0 && currentUserId === Number(contract.sellerId)) ||
+                   (storedUserId !== '' && String(storedUserId) === String(contract.sellerId));
   const isBarter = contract.contractType === 'barter';
   const canDelete = isSeller && ['draft', 'open'].includes(contract.status);
 
@@ -296,10 +300,10 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
     if (!window.confirm('Удалить контракт? Это действие нельзя отменить.')) return;
     const userId = localStorage.getItem('userId') || '';
     try {
-      const res = await fetch(`${func2url['contracts-list']}?action=deleteContract`, {
+      const res = await fetch(func2url['contracts-list'], {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ contractId: contract.id }),
+        body: JSON.stringify({ action: 'deleteContract', contractId: contract.id }),
       });
       const data = await res.json();
       if (res.ok && data.success) {

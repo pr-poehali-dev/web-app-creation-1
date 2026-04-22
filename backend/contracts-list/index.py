@@ -169,11 +169,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     params = event.get('queryStringParameters', {}) or {}
 
     # ── POST action=deleteContract — удаление контракта (черновик или без откликов) ──
-    if method == 'POST' and params.get('action') == 'deleteContract':
+    _delete_body_raw = json.loads(event.get('body') or '{}') if method == 'POST' else {}
+    _delete_action = params.get('action') or _delete_body_raw.get('action', '')
+    if method == 'POST' and _delete_action == 'deleteContract':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
-        body_raw = json.loads(event.get('body') or '{}')
-        contract_id_raw = body_raw.get('contractId') or params.get('contractId')
+        contract_id_raw = _delete_body_raw.get('contractId') or params.get('contractId')
         if not contract_id_raw:
             return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
         contract_id = int(contract_id_raw)
