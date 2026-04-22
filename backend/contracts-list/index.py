@@ -14,11 +14,21 @@ import uuid
 import mimetypes
 import http.client
 import threading
+import datetime
 from typing import Dict, Any
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import boto3
+
+
+class SafeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (datetime.date, datetime.datetime)):
+            return obj.isoformat()
+        if isinstance(obj, Decimal):
+            return float(obj)
+        return super().default(obj)
 
 PUSH_SEND_PATH = '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
 EMAIL_NOTIFY_PATH = '/dd3295a9-ffa3-4842-8c95-de00a018ecf0'
@@ -412,7 +422,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d['updatedAt'] = str(d.pop('updated_at', ''))
                     responses.append(d)
 
-                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'responses': responses, 'total': len(responses)}), 'isBase64Encoded': False}
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'responses': responses, 'total': len(responses)}, cls=SafeEncoder), 'isBase64Encoded': False}
         finally:
             conn.close()
 
