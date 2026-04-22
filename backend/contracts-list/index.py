@@ -58,6 +58,8 @@ def decimal_to_float(obj):
         return {k: decimal_to_float(v) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [decimal_to_float(item) for item in obj]
+    elif hasattr(obj, 'isoformat'):
+        return obj.isoformat()
     return obj
 
 def get_db_connection():
