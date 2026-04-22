@@ -21,6 +21,9 @@ export interface NegotiatedTerms {
   deliveryDate: string | null;
   deliveryConditions: string | null;
   specialTerms: string | null;
+  prepaymentPercent: number | null;
+  contractStartDate: string | null;
+  contractEndDate: string | null;
 }
 
 export interface PartyInfo {

@@ -45,7 +45,7 @@ function buildOgProxyUrl(prodUrl: string): string | null {
   const ogProxyBase = (func2url as Record<string, string>)['og-proxy'];
   if (!ogProxyBase) return null;
 
-  const v = '5';
+  const v = '6';
 
   const offerMatch = prodUrl.match(/\/offer\/([0-9a-f-]{36})/);
   if (offerMatch) return `${ogProxyBase}?type=offer&id=${offerMatch[1]}&v=${v}`;

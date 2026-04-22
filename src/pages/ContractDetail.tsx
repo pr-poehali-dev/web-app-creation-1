@@ -174,12 +174,13 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
       const res = await fetch(`${func2url['contracts-list']}?responses=true&contractId=${contractId}`, {
         headers: { 'X-User-Id': userId },
       });
+      const data = await res.json();
+      console.log('[ContractDetail] loadResponses', { contractId, userId, status: res.status, data });
       if (res.ok) {
-        const data = await res.json();
         setResponses(data.responses || []);
       }
-    } catch {
-      // тихо игнорируем
+    } catch (e) {
+      console.error('[ContractDetail] loadResponses error', e);
     }
   };
 

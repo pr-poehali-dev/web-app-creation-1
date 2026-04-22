@@ -24,6 +24,9 @@ export default function NegotiationContractTab({ status, userId, onStatusChange 
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryConditions, setDeliveryConditions] = useState('');
   const [specialTerms, setSpecialTerms] = useState('');
+  const [prepaymentPercent, setPrepaymentPercent] = useState('');
+  const [contractStartDate, setContractStartDate] = useState('');
+  const [contractEndDate, setContractEndDate] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isRequestingAmend, setIsRequestingAmend] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -36,6 +39,9 @@ export default function NegotiationContractTab({ status, userId, onStatusChange 
     setDeliveryDate(nt?.deliveryDate || c.deliveryDate?.split('T')[0] || '');
     setDeliveryConditions(nt?.deliveryConditions || c.deliveryConditions || '');
     setSpecialTerms(nt?.specialTerms || c.specialTerms || '');
+    setPrepaymentPercent(nt?.prepaymentPercent != null ? String(nt.prepaymentPercent) : '');
+    setContractStartDate(nt?.contractStartDate || c.contractStartDate?.split('T')[0] || '');
+    setContractEndDate(nt?.contractEndDate || c.contractEndDate?.split('T')[0] || '');
     setIsDirty(false);
   }, [status?.id]);
 
@@ -73,6 +79,9 @@ export default function NegotiationContractTab({ status, userId, onStatusChange 
           deliveryDate: deliveryDate || null,
           deliveryConditions: deliveryConditions || null,
           specialTerms: specialTerms || null,
+          prepaymentPercent: prepaymentPercent !== '' ? parseFloat(prepaymentPercent) : null,
+          contractStartDate: contractStartDate || null,
+          contractEndDate: contractEndDate || null,
         }),
       });
       if (res.ok) {
@@ -190,6 +199,52 @@ export default function NegotiationContractTab({ status, userId, onStatusChange 
             disabled={isLocked}
             className="h-8 text-sm"
           />
+        </div>
+
+        {/* Даты контракта */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">Начало контракта</Label>
+            <Input
+              type="date"
+              value={contractStartDate}
+              onChange={e => { setContractStartDate(e.target.value); setIsDirty(true); }}
+              disabled={isLocked}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Окончание контракта</Label>
+            <Input
+              type="date"
+              value={contractEndDate}
+              onChange={e => { setContractEndDate(e.target.value); setIsDirty(true); }}
+              disabled={isLocked}
+              className="h-8 text-sm"
+            />
+          </div>
+        </div>
+
+        {/* Предоплата */}
+        <div className="space-y-1">
+          <Label className="text-xs">Предоплата, %</Label>
+          <div className="flex gap-2 items-center">
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              value={prepaymentPercent}
+              onChange={e => { setPrepaymentPercent(e.target.value); setIsDirty(true); }}
+              disabled={isLocked}
+              className="h-8 text-sm"
+              placeholder="0"
+            />
+            {prepaymentPercent && parseFloat(prepaymentPercent) > 0 && quantity > 0 && priceNum > 0 && (
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                = {formatAmount(totalPreview * parseFloat(prepaymentPercent) / 100, c.currency)}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Условия доставки */}

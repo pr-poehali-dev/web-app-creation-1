@@ -181,6 +181,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'deliveryDate': str(resp['negotiated_delivery_date']) if resp.get('negotiated_delivery_date') else None,
                             'deliveryConditions': resp.get('negotiated_delivery_conditions'),
                             'specialTerms': resp.get('negotiated_special_terms'),
+                            'prepaymentPercent': float(resp['negotiated_prepayment_percent']) if resp.get('negotiated_prepayment_percent') is not None else None,
+                            'contractStartDate': str(resp['negotiated_contract_start_date']) if resp.get('negotiated_contract_start_date') else None,
+                            'contractEndDate': str(resp['negotiated_contract_end_date']) if resp.get('negotiated_contract_end_date') else None,
                         },
                         'sellerInfo': {
                             'firstName': (seller.get('first_name') or '').strip(),
@@ -276,8 +279,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     delivery_date = body.get('deliveryDate') or None
                     delivery_conditions = body.get('deliveryConditions') or None
                     special_terms = body.get('specialTerms') or None
+                    prepayment_percent_raw = body.get('prepaymentPercent')
+                    contract_start_date = body.get('contractStartDate') or None
+                    contract_end_date = body.get('contractEndDate') or None
 
                     neg_price = float(price_raw) if price_raw is not None else None
+                    neg_prepayment = float(prepayment_percent_raw) if prepayment_percent_raw is not None else None
                     quantity = float(resp.get('quantity') or 0)
                     neg_total = neg_price * quantity if neg_price is not None and quantity else None
 
@@ -287,12 +294,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             negotiated_delivery_date = %s,
                             negotiated_delivery_conditions = %s,
                             negotiated_special_terms = %s,
+                            negotiated_prepayment_percent = %s,
+                            negotiated_contract_start_date = %s,
+                            negotiated_contract_end_date = %s,
                             seller_confirmed = FALSE,
                             buyer_confirmed = FALSE,
                             status = 'negotiating',
                             updated_at = NOW()
                         WHERE id = %s
-                    ''', (neg_price, delivery_date, delivery_conditions, special_terms, response_id))
+                    ''', (neg_price, delivery_date, delivery_conditions, special_terms,
+                          neg_prepayment, contract_start_date, contract_end_date, response_id))
                     if neg_total is not None:
                         cur.execute('UPDATE contract_responses SET total_amount = %s WHERE id = %s', (neg_total, response_id))
                     conn.commit()
