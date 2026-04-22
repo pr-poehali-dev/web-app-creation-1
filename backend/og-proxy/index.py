@@ -45,7 +45,7 @@ def html_response(title: str, description: str, image_url: str, page_url: str, r
         'statusCode': 200,
         'headers': {
             'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=3600',
+            'Cache-Control': 'public, max-age=300',
             'Access-Control-Allow-Origin': '*',
         },
         'body': html,
