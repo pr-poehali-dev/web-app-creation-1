@@ -100,7 +100,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
   const [myResponseId, setMyResponseId] = useState<number | null>(locationState?.responseId ?? null);
   const [negotiationOpen, setNegotiationOpen] = useState(false);
   const negotiationResponseId = useRef<number | null>(locationState?.responseId ?? null);
-  const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
+  const [responses, setResponses] = useState<{id: number; firstName: string; lastName: string; companyName?: string; userType?: string; phone: string; email: string; pricePerUnit: number; totalAmount: number; comment: string; status: string; createdAt: string}[]>([]);
 
   const [showGuestDialog, setShowGuestDialog] = useState(false);
   const [respondVerifDialog, setRespondVerifDialog] = useState<{ open: boolean; mode: 'not-verified' | 'pending' | 'barter-restricted' }>({ open: false, mode: 'not-verified' });

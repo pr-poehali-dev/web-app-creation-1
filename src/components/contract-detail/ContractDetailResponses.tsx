@@ -9,6 +9,8 @@ interface Response {
   id: number;
   firstName: string;
   lastName: string;
+  companyName?: string;
+  userType?: string;
   phone: string;
   email: string;
   pricePerUnit: number;
@@ -73,7 +75,9 @@ export default function ContractDetailResponses({ responses, isSeller, contractS
               <div key={r.id} className="border rounded-lg p-3 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-sm">{r.firstName} {r.lastName}</span>
+                    <span className="font-medium text-sm">
+                      {r.companyName && r.userType === 'legal-entity' ? r.companyName : `${r.firstName} ${r.lastName}`}
+                    </span>
                     <Badge variant={rStatus.variant} className="text-xs">{rStatus.label}</Badge>
                     {isConfirmed && (
                       <Badge className="text-xs bg-green-100 text-green-700 border-green-200">
@@ -102,7 +106,7 @@ export default function ContractDetailResponses({ responses, isSeller, contractS
                     size="sm"
                     variant="outline"
                     className="w-full gap-2 h-9 text-sm mt-1"
-                    onClick={() => setNegotiationModal({ responseId: r.id, responderName: `${r.firstName} ${r.lastName}` })}
+                    onClick={() => setNegotiationModal({ responseId: r.id, responderName: (r.companyName && r.userType === 'legal-entity') ? r.companyName : `${r.firstName} ${r.lastName}` })}
                   >
                     <Icon name="MessageSquare" size={14} />
                     Переговоры

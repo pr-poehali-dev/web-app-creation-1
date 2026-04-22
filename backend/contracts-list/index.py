@@ -381,7 +381,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
 
                 cur.execute('''
-                    SELECT cr.*, u.first_name, u.last_name, u.phone, u.email
+                    SELECT cr.*, u.first_name, u.last_name, u.phone, u.email,
+                           COALESCE(u.company_name, '') as company_name, COALESCE(u.user_type, 'individual') as user_type
                     FROM contract_responses cr
                     JOIN users u ON cr.user_id = u.id
                     WHERE cr.contract_id = %s
@@ -393,6 +394,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d = decimal_to_float(dict(r))
                     d['firstName'] = d.pop('first_name')
                     d['lastName'] = d.pop('last_name')
+                    d['companyName'] = d.pop('company_name', '')
+                    d['userType'] = d.pop('user_type', 'individual')
                     d['pricePerUnit'] = d.pop('price_per_unit')
                     d['totalAmount'] = d.pop('total_amount')
                     d['contractId'] = d.pop('contract_id')
@@ -565,8 +568,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     s.first_name   as seller_first_name,
                     s.last_name    as seller_last_name,
                     s.company_name as seller_company_name,
-                    b.first_name   as buyer_first_name,
-                    b.last_name    as buyer_last_name,
+                    b.first_name    as buyer_first_name,
+                    b.last_name     as buyer_last_name,
+                    b.company_name  as buyer_company_name,
                     COALESCE(AVG(r.rating), 0) as seller_rating,
                     (
                         SELECT CASE
@@ -581,6 +585,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'id', cr2.id,
                             'firstName', u2.first_name,
                             'lastName', u2.last_name,
+                            'companyName', COALESCE(u2.company_name, ''),
+                            'userType', COALESCE(u2.user_type, 'individual'),
                             'status', cr2.status,
                             'createdAt', cr2.created_at
                         ) ORDER BY cr2.created_at DESC)
@@ -595,7 +601,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 LEFT JOIN reviews r ON r.reviewed_user_id = c.seller_id
                 LEFT JOIN contract_responses cr ON cr.contract_id = c.id
                 {where_clause}
-                GROUP BY c.id, s.first_name, s.last_name, s.company_name, b.first_name, b.last_name
+                GROUP BY c.id, s.first_name, s.last_name, s.company_name, b.first_name, b.last_name, b.company_name
                 ORDER BY c.created_at DESC
                 LIMIT %s OFFSET %s
             """
@@ -615,6 +621,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d['sellerCompanyName']  = d.pop('seller_company_name', None)
                 d['buyerFirstName']     = d.pop('buyer_first_name')
                 d['buyerLastName']      = d.pop('buyer_last_name')
+                d['buyerCompanyName']   = d.pop('buyer_company_name', None)
                 d['sellerRating']       = d.pop('seller_rating')
                 d['contractType']       = d.pop('contract_type')
                 d['productName']        = d.pop('product_name')

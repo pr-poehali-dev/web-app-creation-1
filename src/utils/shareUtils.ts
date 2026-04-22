@@ -53,13 +53,15 @@ async function tinyUrl(url: string): Promise<string> {
   }
 }
 
+const PROD_DOMAIN = 'https://erttp.ru';
+
 /** Строим URL og-proxy для оффера — он отдаёт HTML с OG-тегами для мессенджеров */
 function buildOgProxyUrl(pageUrl: string): string | null {
   const ogProxyBase = (func2url as Record<string, string>)['og-proxy'];
   if (!ogProxyBase) return null;
 
-  // v=3 — сброс кэша WhatsApp/Telegram (меняем при необходимости принудительного обновления)
-  const v = '3';
+  // v=4 — сброс кэша WhatsApp/Telegram
+  const v = '4';
 
   const offerMatch = pageUrl.match(/\/offer\/([0-9a-f-]{36})/);
   if (offerMatch) return `${ogProxyBase}?type=offer&id=${offerMatch[1]}&v=${v}`;
@@ -73,10 +75,22 @@ function buildOgProxyUrl(pageUrl: string): string | null {
   return null;
 }
 
+/** Возвращает боевой URL страницы (на erttp.ru) вне зависимости от текущего домена */
+function toProdUrl(pageUrl: string): string {
+  try {
+    const u = new URL(pageUrl);
+    return `${PROD_DOMAIN}${u.pathname}${u.search}`;
+  } catch {
+    return pageUrl;
+  }
+}
+
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
+  // Нормализуем URL к боевому домену — мессенджеры парсят OG с него
+  const prodUrl = toProdUrl(url);
   // og-proxy ссылка — отдаёт HTML с og:image, мессенджеры читают превью из неё
-  const ogUrl = buildOgProxyUrl(url);
-  const shareUrl = ogUrl || url;
+  const ogUrl = buildOgProxyUrl(prodUrl);
+  const shareUrl = ogUrl || prodUrl;
 
   if (navigator.share) {
     try {
