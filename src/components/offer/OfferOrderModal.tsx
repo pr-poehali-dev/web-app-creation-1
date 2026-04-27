@@ -140,6 +140,11 @@ export default function OfferOrderModal({
   const handleQuantityChange = (value: string) => {
     setQuantity(value);
 
+    if (offerCategory === 'utilities') {
+      setQuantityError('');
+      return;
+    }
+
     const numValue = Number(value);
     const minValue = minOrderQuantity || 1;
 
@@ -242,14 +247,16 @@ export default function OfferOrderModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (minOrderQuantity && Number(quantity) < minOrderQuantity) {
-      setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
-      return;
-    }
+    if (offerCategory !== 'utilities') {
+      if (minOrderQuantity && Number(quantity) < minOrderQuantity) {
+        setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
+        return;
+      }
 
-    if (Number(quantity) > remainingQuantity) {
-      setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
-      return;
+      if (Number(quantity) > remainingQuantity) {
+        setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
+        return;
+      }
     }
 
     if (selectedDeliveryType === 'delivery') {
@@ -309,7 +316,7 @@ export default function OfferOrderModal({
               <TransportDateBadge dateTime={offerTransportDateTime} />
             )}
 
-            {offerCategory !== 'auto-sale' && (
+            {offerCategory !== 'auto-sale' && offerCategory !== 'utilities' && (
               <QuantitySelector
                 quantity={quantity}
                 unit={offerCategory === 'transport' ? capacityUnit : unit}
