@@ -373,7 +373,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
-    # GET ?responses=true&contractId={id} — список откликов (только для автора)
+    # GET ?responses=true&contractId={id} — список откликов (только для автора контракта)
     if params.get('responses') == 'true':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}

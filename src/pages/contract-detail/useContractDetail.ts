@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { getSession } from '@/utils/auth';
 import func2url from '../../../backend/func2url.json';
 
 export interface Contract {
@@ -82,7 +83,9 @@ export function useContractDetail(id: string | undefined) {
   const loadContract = async () => {
     try {
       setLoading(true);
-      const userId = localStorage.getItem('userId');
+      const session = getSession();
+      const rawUserId = localStorage.getItem('userId') || (session?.id ? String(session.id) : null);
+      const userId = rawUserId || null;
       const res = await fetch(`${func2url['contracts-list']}?id=${id}`, {
         headers: { 'X-User-Id': userId || '' },
       });
@@ -90,7 +93,7 @@ export function useContractDetail(id: string | undefined) {
         const data = await res.json();
         const contracts = data.contracts || [];
         const found = contracts.find((c: Contract) => String(c.id) === String(id)) || contracts[0] || null;
-        console.log('[ContractDetail] loadContract', { id, userId, found_sellerId: found?.sellerId, found_id: found?.id, total: contracts.length });
+        console.log('[ContractDetail] loadContract', { id, userId, found_sellerId: found?.sellerId, found_id: found?.id, total: contracts.length, isSeller: userId && String(found?.sellerId) === String(userId) });
         if (found) {
           setContract(found);
           if (userId && String(found.sellerId) === String(userId)) {
@@ -103,6 +106,8 @@ export function useContractDetail(id: string | undefined) {
             } else {
               checkMyResponse(Number(id), userId);
             }
+          } else if (!userId) {
+            console.warn('[ContractDetail] No userId available, cannot load responses or check response');
           }
         } else {
           toast({ title: 'Контракт не найден', variant: 'destructive' });
@@ -116,7 +121,8 @@ export function useContractDetail(id: string | undefined) {
     }
   };
 
-  const checkMyResponse = async (contractId: number, userId: string): Promise<number | null> => {
+  const checkMyResponse = async (contractId: number, userId: string | null): Promise<number | null> => {
+    if (!userId) return null;
     try {
       const res = await fetch(`${func2url['contract-response-id']}?contractId=${contractId}`, {
         headers: { 'X-User-Id': userId },
@@ -138,14 +144,20 @@ export function useContractDetail(id: string | undefined) {
   };
 
   const loadResponses = async (contractId: number, userId: string) => {
+    if (!userId) {
+      console.warn('[ContractDetail] loadResponses called with empty userId');
+      return;
+    }
     try {
       const res = await fetch(`${func2url['contracts-list']}?responses=true&contractId=${contractId}`, {
         headers: { 'X-User-Id': userId },
       });
       const data = await res.json();
-      console.log('[ContractDetail] loadResponses', { contractId, userId, status: res.status, data });
+      console.log('[ContractDetail] loadResponses', { contractId, userId, status: res.status, ok: res.ok, responses: data.responses?.length, error: data.error });
       if (res.ok) {
         setResponses(data.responses || []);
+      } else {
+        console.error('[ContractDetail] loadResponses failed', data.error);
       }
     } catch (e) {
       console.error('[ContractDetail] loadResponses error', e);
