@@ -110,7 +110,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
             <p className="font-medium">{order.offerAvailableQuantity} {order.unit}</p>
           </div>
         )}
-        {!order.isRequest && (
+        {!order.isRequest && order.offerCategory !== 'utilities' && (
         <div>
           {order.offerCategory === 'transport' ? (
             <>
