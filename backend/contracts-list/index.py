@@ -418,8 +418,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     d['totalAmount'] = d.pop('total_amount')
                     d['contractId'] = d.pop('contract_id')
                     d['userId'] = d.pop('user_id')
-                    d['createdAt'] = str(d.pop('created_at', ''))
-                    d['updatedAt'] = str(d.pop('updated_at', ''))
+                    d['createdAt'] = str(d.pop('created_at', '') or '')
+                    d['updatedAt'] = str(d.pop('updated_at', '') or '')
+                    d['confirmedAt'] = str(d.pop('confirmed_at', '') or '')
+                    d['negotiatedDeliveryDate'] = str(d.pop('negotiated_delivery_date', '') or '')
+                    d['negotiatedContractStartDate'] = str(d.pop('negotiated_contract_start_date', '') or '')
+                    d['negotiatedContractEndDate'] = str(d.pop('negotiated_contract_end_date', '') or '')
+                    d['negotiatedPricePerUnit'] = float(d.pop('negotiated_price_per_unit', 0) or 0)
+                    d['negotiatedPrepaymentPercent'] = float(d.pop('negotiated_prepayment_percent', 0) or 0)
+                    d['negotiatedDeliveryConditions'] = d.pop('negotiated_delivery_conditions', '') or ''
+                    d['negotiatedSpecialTerms'] = d.pop('negotiated_special_terms', '') or ''
+                    d['sellerConfirmed'] = d.pop('seller_confirmed', False) or False
+                    d['buyerConfirmed'] = d.pop('buyer_confirmed', False) or False
+                    d['sellerWantsAmend'] = d.pop('seller_wants_amend', False) or False
+                    d['buyerWantsAmend'] = d.pop('buyer_wants_amend', False) or False
                     responses.append(d)
 
                 return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'responses': responses, 'total': len(responses)}, cls=SafeEncoder), 'isBase64Encoded': False}
