@@ -88,12 +88,13 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm">
-          {!order.isRequest && order.offerCategory !== 'auto-sale' && (
+          {!order.isRequest && order.offerCategory !== 'auto-sale' && order.offerCategory !== 'utilities' && (
           <div>
             <p className="text-muted-foreground">Количество</p>
             <p className="font-medium">{order.quantity} {order.unit}</p>
           </div>
           )}
+          {order.offerCategory !== 'utilities' && (
           <div>
             <p className="text-muted-foreground">Сумма</p>
             <p className="font-bold text-primary">
@@ -104,20 +105,26 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                     : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽`}
             </p>
           </div>
+          )}
           {order.status === 'negotiating' && order.counterPricePerUnit && (
             <div className="col-span-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded p-2">
               <p className="text-xs text-muted-foreground mb-1">
-                {order.counterOfferedBy === 'buyer' ? `Предложение ${roles.counterBuyer}` : `Встречная цена ${roles.counterSeller}`}
+                {order.counterOfferedBy === 'buyer'
+                  ? `Предложение ${order.offerCategory === 'utilities' ? 'заказчика' : roles.counterBuyer}`
+                  : `Встречная цена ${order.offerCategory === 'utilities' ? 'исполнителя' : roles.counterSeller}`}
               </p>
               <p className="font-bold text-orange-700 dark:text-orange-400">
-                {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽/{order.unit}
+                {order.counterPricePerUnit.toLocaleString('ru-RU')} ₽
+                {order.offerCategory !== 'utilities' && `/${order.unit}`}
               </p>
+              {order.offerCategory !== 'utilities' && (
               <p className="text-xs text-muted-foreground mt-0.5">
                 Сумма: {order.counterTotalAmount?.toLocaleString('ru-RU')} ₽
               </p>
+              )}
             </div>
           )}
-          {!order.isRequest && (
+          {!order.isRequest && order.offerCategory !== 'utilities' && (
           <div>
             {order.offerCategory === 'transport' ? (
               <>
@@ -148,10 +155,12 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           )}
           <div>
             <p className="text-muted-foreground">
-              {isSeller ? roles.buyer : roles.seller}
+              {order.offerCategory === 'utilities'
+                ? (isSeller ? 'Заказчик' : 'Исполнитель')
+                : (isSeller ? roles.buyer : roles.seller)}
             </p>
             <p className="font-medium truncate">
-              {['accepted', 'completed', 'cancelled'].includes(order.status)
+              {(['accepted', 'completed', 'cancelled'].includes(order.status) || order.offerCategory === 'utilities')
                 ? (
                   <span className="flex flex-col gap-0.5">
                     <span>{isSeller ? order.buyerName : (order.sellerName || '—')}</span>

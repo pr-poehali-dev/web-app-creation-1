@@ -44,10 +44,10 @@ export default function CounterOfferDisplay({
                       {order.counterOfferedBy === 'buyer' 
                         ? (isBuyer 
                           ? `Ваше встречное предложение:` 
-                          : `Встречное предложение ${roles.counterBuyer}: ${order.buyerName}`)
+                          : `Встречное предложение ${order.offerCategory === 'utilities' ? 'заказчика' : roles.counterBuyer}: ${order.buyerName}`)
                         : (isSeller 
                           ? 'Ваше встречное предложение:' 
-                          : `Встречное предложение ${roles.counterSeller}: ${order.sellerName}`)}
+                          : `Встречное предложение ${order.offerCategory === 'utilities' ? 'исполнителя' : roles.counterSeller}: ${order.sellerName}`)}
                     </span>
                   </span>
                 </div>
