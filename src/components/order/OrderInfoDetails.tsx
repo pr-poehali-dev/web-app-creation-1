@@ -49,6 +49,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4 text-sm">
+        {order.offerCategory !== 'utilities' && (
         <div>
           <p className="text-muted-foreground">Количество</p>
           <div className="flex items-center gap-2">
@@ -60,6 +61,8 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
             )}
           </div>
         </div>
+        )}
+        {order.offerCategory !== 'utilities' && (
         <div>
           <p className="text-muted-foreground">Сумма</p>
           <p className="font-bold text-primary">
@@ -70,6 +73,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
                   : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽`}
           </p>
         </div>
+        )}
         {order.isRequest && order.buyerComment?.match(/Срок (?:поставки|выполнения): (\d+) дней/) && (
         <div>
           <p className="text-muted-foreground">Срок выполнения</p>
@@ -84,13 +88,13 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
             </p>
           </div>
         )}
-        {order.offerPricePerUnit != null && order.offerPricePerUnit > 0 && order.offerCategory !== 'transport' && (
+        {order.offerPricePerUnit != null && order.offerPricePerUnit > 0 && order.offerCategory !== 'transport' && order.offerCategory !== 'utilities' && (
           <div>
             <p className="text-muted-foreground">Начальная цена</p>
             <p className="font-medium">{Number(order.offerPricePerUnit).toLocaleString('ru-RU')} ₽/{order.unit}</p>
           </div>
         )}
-        {order.offerCategory !== 'transport' && (
+        {order.offerCategory !== 'transport' && order.offerCategory !== 'utilities' && (
         <div>
           <p className="text-muted-foreground">Конечная цена будет</p>
           <p className="font-medium text-primary">
@@ -100,7 +104,7 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
           </p>
         </div>
         )}
-        {!order.isRequest && order.status !== 'accepted' && order.status !== 'completed' && order.offerAvailableQuantity !== undefined && (
+        {!order.isRequest && order.status !== 'accepted' && order.status !== 'completed' && order.offerAvailableQuantity !== undefined && order.offerCategory !== 'utilities' && (
           <div>
             <p className="text-muted-foreground">Доступно</p>
             <p className="font-medium">{order.offerAvailableQuantity} {order.unit}</p>

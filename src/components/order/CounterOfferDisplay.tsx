@@ -52,6 +52,7 @@ export default function CounterOfferDisplay({
                   </span>
                 </div>
                 
+                {order.offerCategory !== 'utilities' && (
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="text-muted-foreground">Количество:</span>
@@ -66,13 +67,16 @@ export default function CounterOfferDisplay({
                     </span>
                   </div>
                 </div>
+                )}
                 
+                {(order.offerCategory !== 'utilities' || (order.counterTotalAmount && order.counterTotalAmount > 0)) && (
                 <div className="flex items-center justify-between pt-1.5 border-t border-dashed">
                   <span className="text-sm text-muted-foreground">Сумма заказа:</span>
                   <span className={`font-bold text-base ${order.counterOfferedBy === 'buyer' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
                     {order.counterTotalAmount?.toLocaleString('ru-RU')} ₽
                   </span>
                 </div>
+                )}
                 
                 {order.counterOfferMessage && (
                   <div className="pt-2 border-t border-dashed">

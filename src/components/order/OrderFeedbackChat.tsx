@@ -13,10 +13,11 @@ interface OrderFeedbackChatProps {
   orderStatus: string;
   isBuyer: boolean;
   isRequest?: boolean;
+  offerCategory?: string;
   onLightboxOpen?: (url: string) => void;
 }
 
-export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest, onLightboxOpen }: OrderFeedbackChatProps) {
+export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest, offerCategory, onLightboxOpen }: OrderFeedbackChatProps) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<OrderMessage[]>([]);
   const prevOrderStatus = useRef(orderStatus);
@@ -297,7 +298,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
-  if (orderStatus !== 'accepted' && orderStatus !== 'completed') {
+  const isUtilities = offerCategory === 'utilities';
+  const chatAllowedStatuses = ['accepted', 'completed', ...(isUtilities ? ['new', 'pending', 'negotiating'] : [])];
+  if (!chatAllowedStatuses.includes(orderStatus)) {
     return null;
   }
 
