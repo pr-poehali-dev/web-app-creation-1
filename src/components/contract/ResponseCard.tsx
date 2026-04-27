@@ -27,7 +27,8 @@ interface ResponseCardProps {
 }
 
 export default function ResponseCard({ contract: c, onClick, onNegotiate }: ResponseCardProps) {
-  const sellerName = `${c.sellerFirstName || ''} ${c.sellerLastName || ''}`.trim() || 'Продавец';
+  const isForwardRequest = c.contractType === 'forward-request';
+  const sellerName = `${c.sellerFirstName || ''} ${c.sellerLastName || ''}`.trim() || (isForwardRequest ? 'Покупатель' : 'Продавец');
   const myName = `${c.respondentFirstName || ''} ${c.respondentLastName || ''}`.trim();
   const rStatus = c.myResponseStatus || 'pending';
   const isConfirmed = rStatus === 'confirmed';
@@ -61,7 +62,7 @@ export default function ResponseCard({ contract: c, onClick, onNegotiate }: Resp
               )}
               <span className="flex items-center gap-1">
                 <Icon name="Store" size={12} />
-                Продавец: {sellerName}
+                {isForwardRequest ? 'Покупатель' : 'Продавец'}: {sellerName}
               </span>
               <span className="flex items-center gap-1">
                 <Icon name="Package" size={12} />
@@ -74,7 +75,7 @@ export default function ResponseCard({ contract: c, onClick, onNegotiate }: Resp
             <div className="text-xs text-muted-foreground mt-1">
               {isConfirmed
                 ? (c.sellerConfirmed && c.buyerConfirmed ? '✓ Оба подтвердили' : '○ Ожидание')
-                : 'Покупатель'}
+                : (isForwardRequest ? 'Продавец' : 'Покупатель')}
             </div>
           </div>
         </div>

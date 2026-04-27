@@ -390,7 +390,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 contract = cur.fetchone()
                 if not contract:
                     return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт не найден'}), 'isBase64Encoded': False}
-                if contract['seller_id'] != user_id:
+                if str(contract['seller_id']) != str(user_id):
                     return {'statusCode': 403, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нет доступа'}), 'isBase64Encoded': False}
 
                 cur.execute('''

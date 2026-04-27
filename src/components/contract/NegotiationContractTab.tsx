@@ -131,11 +131,15 @@ export default function NegotiationContractTab({ status, userId, onStatusChange 
         </h4>
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div className="space-y-0.5">
-            <p className="font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Продавец</p>
+            <p className="font-medium text-muted-foreground uppercase tracking-wide text-[10px]">
+              {c.contractType === 'forward-request' ? 'Покупатель' : c.contractType === 'barter' ? 'Сторона 1' : 'Продавец'}
+            </p>
             <p>{status.sellerFirstName} {status.sellerLastName}</p>
           </div>
           <div className="space-y-0.5">
-            <p className="font-medium text-muted-foreground uppercase tracking-wide text-[10px]">Покупатель</p>
+            <p className="font-medium text-muted-foreground uppercase tracking-wide text-[10px]">
+              {c.contractType === 'forward-request' ? 'Продавец' : c.contractType === 'barter' ? 'Сторона 2' : 'Покупатель'}
+            </p>
             <p>{status.respondentFirstName} {status.respondentLastName}</p>
           </div>
         </div>
