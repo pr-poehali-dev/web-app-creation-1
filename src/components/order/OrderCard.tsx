@@ -80,7 +80,7 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
           {order.status === 'negotiating' ? (
             <Badge variant="outline" className={`${order.hasUnreadCounterOffer ? 'bg-red-50 border-red-300 text-red-700 animate-pulse' : 'bg-orange-50 border-orange-200 text-orange-700'} font-semibold shrink-0`}>
               <Icon name="MessageSquare" className="mr-1 h-3 w-3" />
-              {order.hasUnreadCounterOffer ? 'Новая цена' : 'Торг'}
+              {order.hasUnreadCounterOffer ? 'Новая цена' : (order.offerCategory === 'utilities' ? 'Переговоры' : 'Торг')}
             </Badge>
           ) : (
             getStatusBadge(order.status)
@@ -105,6 +105,14 @@ export default function OrderCard({ order, isSeller, onOpenChat, onAcceptOrder, 
                     : order.totalAmount)?.toLocaleString('ru-RU') || '0'} ₽`}
             </p>
           </div>
+          )}
+          {order.offerCategory === 'utilities' && order.pricePerUnit > 0 && (
+            <div className="col-span-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded p-2">
+              <p className="text-xs text-muted-foreground mb-1">Предложение заказчика</p>
+              <p className="font-bold text-blue-700 dark:text-blue-400">
+                {order.pricePerUnit.toLocaleString('ru-RU')} ₽
+              </p>
+            </div>
           )}
           {order.status === 'negotiating' && order.counterPricePerUnit && (
             <div className="col-span-2 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded p-2">

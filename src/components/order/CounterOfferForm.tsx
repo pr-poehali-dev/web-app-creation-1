@@ -100,6 +100,72 @@ export default function CounterOfferForm({
     );
   }
 
+  // Форма встречной цены исполнителя для услуг
+  if (isSeller && order.offerCategory === 'utilities' && (order.status === 'new' || order.status === 'pending' || order.status === 'negotiating')) {
+    return (
+      <Card className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
+        <CardContent className="pt-4 space-y-3">
+          <h3 className="font-semibold text-sm">Предложить свою цену</h3>
+          {order.pricePerUnit > 0 && (
+            <div className="text-xs text-muted-foreground">
+              Заказчик предложил: <span className="font-semibold text-foreground">{order.pricePerUnit.toLocaleString('ru-RU')} ₽</span>
+            </div>
+          )}
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Ваша цена</label>
+            <Input
+              type="number"
+              value={counterPrice}
+              onChange={(e) => onCounterPriceChange(e.target.value)}
+              placeholder="Введите сумму"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={onSubmit} size="sm" className="bg-green-600 hover:bg-green-700">
+              Отправить предложение
+            </Button>
+            <Button onClick={onCancel} size="sm" variant="outline">
+              Отмена
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Форма встречного предложения заказчика для услуг
+  if (isBuyer && order.offerCategory === 'utilities' && (order.status === 'new' || order.status === 'negotiating')) {
+    return (
+      <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+        <CardContent className="pt-4 space-y-3">
+          <h3 className="font-semibold text-sm">Встречное предложение</h3>
+          {order.counterPricePerUnit != null && order.counterPricePerUnit > 0 && (
+            <div className="text-xs text-muted-foreground">
+              Исполнитель предложил: <span className="font-semibold text-foreground">{order.counterPricePerUnit.toLocaleString('ru-RU')} ₽</span>
+            </div>
+          )}
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Ваша цена</label>
+            <Input
+              type="number"
+              value={counterPrice}
+              onChange={(e) => onCounterPriceChange(e.target.value)}
+              placeholder="Введите сумму"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={onSubmit} size="sm" className="bg-green-600 hover:bg-green-700">
+              Отправить предложение
+            </Button>
+            <Button onClick={onCancel} size="sm" variant="outline">
+              Отмена
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // Форма предложения цены от заказчика запроса (isSeller = заказчик запроса)
   if (isSeller && order.isRequest && (order.status === 'new' || order.status === 'pending')) {
     return (

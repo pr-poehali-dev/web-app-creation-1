@@ -38,7 +38,7 @@ export default function NegotiationActions({
 
   const isSeller = !isBuyer;
 
-  if (isSeller && order.isRequest && (order.status === 'new' || order.status === 'pending') && !showCounterForm && !order.counterPricePerUnit && onCounterOffer) {
+  if (isSeller && (order.isRequest || order.offerCategory === 'utilities') && (order.status === 'new' || order.status === 'pending') && !showCounterForm && !order.counterPricePerUnit && onCounterOffer) {
     return (
       <Button 
         onClick={onShowCounterForm} 
@@ -61,9 +61,13 @@ export default function NegotiationActions({
         className="w-full border-2 border-primary hover:bg-primary/10 font-semibold shadow-sm"
       >
         <Icon name="MessageSquare" className="mr-1.5 h-4 w-4" />
-        Предложить свою цену
+        {order.offerCategory === 'utilities' ? 'Предложить свою цену' : 'Предложить свою цену'}
       </Button>
     );
+  }
+
+  if (isBuyer && order.offerCategory === 'utilities' && order.status === 'negotiating' && !showCounterForm && order.counterOfferedBy === 'seller' && !order.buyerAcceptedCounter && onCounterOffer) {
+    return null;
   }
 
   if (isBuyer && order.status === 'new' && !order.isRequest && order.noNegotiation) {

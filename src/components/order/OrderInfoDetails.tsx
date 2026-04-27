@@ -88,6 +88,20 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
             </p>
           </div>
         )}
+        {order.offerCategory === 'utilities' && order.pricePerUnit > 0 && (
+          <div className="col-span-2">
+            <p className="text-muted-foreground">Предложение заказчика</p>
+            <p className="font-bold text-primary">{Number(order.pricePerUnit).toLocaleString('ru-RU')} ₽</p>
+          </div>
+        )}
+        {order.offerCategory === 'utilities' && order.counterPricePerUnit != null && order.counterPricePerUnit > 0 && (
+          <div className="col-span-2">
+            <p className="text-muted-foreground">
+              {order.counterOfferedBy === 'seller' ? 'Встречная цена исполнителя' : 'Встречное предложение заказчика'}
+            </p>
+            <p className="font-bold text-orange-600">{Number(order.counterPricePerUnit).toLocaleString('ru-RU')} ₽</p>
+          </div>
+        )}
         {order.offerPricePerUnit != null && order.offerPricePerUnit > 0 && order.offerCategory !== 'transport' && order.offerCategory !== 'utilities' && (
           <div>
             <p className="text-muted-foreground">Начальная цена</p>
@@ -171,10 +185,12 @@ export default function OrderInfoDetails({ order, isBuyer }: OrderInfoDetailsPro
                 <p className="font-medium">{education}</p>
               </div>
             )}
+            {order.offerCategory !== 'utilities' && (
             <div className="text-sm">
               <p className="text-muted-foreground mb-1">{order.isRequest ? 'Комментарий к отклику' : `Комментарий ${roles.counterBuyer}`}</p>
               <p className="font-medium whitespace-pre-line">{cleanComment || 'Без комментария'}</p>
             </div>
+            )}
             {allFiles.length > 0 && (
               <div className="text-sm">
                 <p className="text-muted-foreground mb-2">Прикрепленные файлы</p>

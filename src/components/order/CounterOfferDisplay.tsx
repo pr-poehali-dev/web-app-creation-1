@@ -23,7 +23,9 @@ export default function CounterOfferDisplay({
 }: CounterOfferDisplayProps) {
   const roles = getOrderRoles(order);
 
-  if (!order.counterPricePerUnit || order.status !== 'negotiating' || order.buyerAcceptedCounter || order.status === 'accepted') {
+  const isUtilities = order.offerCategory === 'utilities';
+  const statusAllowed = order.status === 'negotiating' || (isUtilities && (order.status === 'new' || order.status === 'pending'));
+  if (!order.counterPricePerUnit || !statusAllowed || order.buyerAcceptedCounter || order.status === 'accepted') {
     return null;
   }
 
@@ -78,7 +80,7 @@ export default function CounterOfferDisplay({
                 </div>
                 )}
                 
-                {order.counterOfferMessage && (
+                {order.counterOfferMessage && order.offerCategory !== 'utilities' && (
                   <div className="pt-2 border-t border-dashed">
                     <span className="text-xs text-muted-foreground block mb-1">Комментарий:</span>
                     <p className="text-sm text-foreground bg-white/50 dark:bg-gray-800/50 p-2 rounded">
@@ -135,13 +137,13 @@ export default function CounterOfferDisplay({
             {isSeller && order.counterOfferedBy === 'seller' && (
               <div className="flex items-center gap-2 text-muted-foreground text-xs mt-3">
                 <Icon name="Clock" className="h-3.5 w-3.5" />
-                <span>Ожидание ответа покупателя: <span className="font-semibold text-foreground">{order.buyerName}</span></span>
+                <span>Ожидание ответа {order.offerCategory === 'utilities' ? 'заказчика' : 'покупателя'}: <span className="font-semibold text-foreground">{order.buyerName}</span></span>
               </div>
             )}
             {isBuyer && order.counterOfferedBy === 'buyer' && (
               <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm mt-3">
                 <Icon name="Clock" className="h-4 w-4" />
-                <span>Ожидание ответа {roles.counterSeller}: <span className="font-bold text-amber-800">{order.sellerName}</span></span>
+                <span>Ожидание ответа {order.offerCategory === 'utilities' ? 'исполнителя' : roles.counterSeller}: <span className="font-bold text-amber-800">{order.sellerName}</span></span>
               </div>
             )}
           </div>
