@@ -302,9 +302,11 @@ export default function OfferOrderModal({
           <DialogHeader>
             <div className="flex items-start justify-between gap-4 pr-10">
               <DialogTitle>Оформление заказа</DialogTitle>
-              <div className="text-sm font-bold text-black whitespace-nowrap">
-                Доступно: {remainingQuantity} {unit}
-              </div>
+              {offerCategory !== 'utilities' && (
+                <div className="text-sm font-bold text-black whitespace-nowrap">
+                  Доступно: {remainingQuantity} {unit}
+                </div>
+              )}
             </div>
             <DialogDescription>
               Заполните форму, и мы свяжемся с вами для подтверждения заказа
