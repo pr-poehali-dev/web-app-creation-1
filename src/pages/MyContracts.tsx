@@ -129,6 +129,11 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   // Завершённые/отменённые собственные → в Архив
   const closedOwn = ownContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
 
+  // Мои активные контракты у которых есть отменённые отклики → тоже в Архив
+  const withCancelledResponses = ownContracts.filter(
+    c => !['completed', 'cancelled'].includes(c.status) && (c as Contract & { hasCancelledResponses?: boolean }).hasCancelledResponses
+  );
+
   // Мои отклики: активные (не cancelled/rejected)
   const activeResponded = respondedContracts.filter(
     c => !ARCHIVED_RESPONSE_STATUSES.includes(c.myResponseStatus || '')
@@ -139,7 +144,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   );
 
   const activeCount = activeOwn.length;
-  const archiveCount = archivedResponded.length + closedOwn.length;
+  const archiveCount = archivedResponded.length + closedOwn.length + withCancelledResponses.length;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -243,6 +248,21 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                       </div>
                       {archivedResponded.map(c => (
                         <ResponseCard key={`arch-${c.id}`} contract={c} onClick={() => navigate(`/contract/${c.id}`)} />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Мои контракты с отменёнными откликами участников */}
+                  {withCancelledResponses.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="UserX" size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отменённые отклики на мои контракты</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{withCancelledResponses.length}</span>
+                      </div>
+                      {withCancelledResponses.map(c => (
+                        <ContractCard key={`wcr-${c.id}`} contract={c} currentUserId={currentUserId}
+                          onClick={() => navigate(`/contract/${c.id}`)} />
                       ))}
                     </div>
                   )}
