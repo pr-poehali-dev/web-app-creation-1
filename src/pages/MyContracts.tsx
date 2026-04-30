@@ -16,6 +16,9 @@ import ResponseCard from '@/components/contract/ResponseCard';
 const CONTRACTS_API = func2url['contracts-list'];
 const RESPONSE_ID_API = func2url['contract-response-id'];
 
+// Отклики со статусами отменения/отклонения
+const ARCHIVED_STATUSES = ['cancelled', 'rejected'];
+
 interface MyContractsProps {
   isAuthenticated: boolean;
   onLogout: () => void;
@@ -27,8 +30,13 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const { toast } = useToast();
   const currentUser = getSession();
 
-  const [contracts, setContracts] = useState<Contract[]>([]);
+  // Контракты где пользователь — продавец
+  const [myContracts, setMyContracts] = useState<Contract[]>([]);
+  // Контракты где пользователь откликался (все статусы)
   const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
+  // Контракты продавца у которых есть отменённые отклики (для архива)
+  const [sellerCancelledContracts, setSellerCancelledContracts] = useState<Contract[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -36,51 +44,59 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   });
   const [negotiationModal, setNegotiationModal] = useState<{ responseId: number; title: string } | null>(null);
 
+  const getUserId = () => {
+    const rawId = (currentUser as { id?: number; userId?: number })?.id
+      ?? (currentUser as { id?: number; userId?: number })?.userId
+      ?? (Number(localStorage.getItem('userId') || '0') || undefined);
+    return rawId ? String(rawId) : '';
+  };
+
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
       navigate('/login');
       return;
     }
-    loadContracts();
-  }, [isAuthenticated]);
+    loadAll();
+  }, [isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const loadContracts = async () => {
+  const loadAll = async () => {
     setIsLoading(true);
-    try {
-      const rawId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? (Number(localStorage.getItem('userId') || '0') || undefined);
-      const userId = rawId ? String(rawId) : '';
-      if (!userId) {
-        setIsLoading(false);
-        return;
-      }
-      const resp = await fetch(`${CONTRACTS_API}?user_id=${userId}`, {
-        headers: { 'X-User-Id': userId },
-      });
-      if (!resp.ok) throw new Error('Ошибка загрузки');
-      const data = await resp.json();
-      const allContracts: Contract[] = data.contracts || [];
-      setContracts(allContracts);
+    const userId = getUserId();
+    if (!userId) { setIsLoading(false); return; }
 
-      const myResponsesResp = await fetch(`${CONTRACTS_API}?my_responses=true`, { headers: { 'X-User-Id': userId } }).catch(() => null);
-      if (myResponsesResp?.ok) {
-        const myRespData = await myResponsesResp.json();
-        setRespondedContracts(myRespData.contracts || []);
+    try {
+      // Три параллельных запроса
+      const [ownResp, myRespResp, cancelledResp] = await Promise.all([
+        fetch(`${CONTRACTS_API}?user_id=${userId}`, { headers: { 'X-User-Id': userId } }),
+        fetch(`${CONTRACTS_API}?my_responses=true`, { headers: { 'X-User-Id': userId } }),
+        fetch(`${CONTRACTS_API}?cancelled_responses=true`, { headers: { 'X-User-Id': userId } }),
+      ]);
+
+      if (ownResp.ok) {
+        const d = await ownResp.json();
+        setMyContracts(d.contracts || []);
+      }
+      if (myRespResp.ok) {
+        const d = await myRespResp.json();
+        setRespondedContracts(d.contracts || []);
+      }
+      if (cancelledResp.ok) {
+        const d = await cancelledResp.json();
+        setSellerCancelledContracts(d.contracts || []);
       }
     } catch (err) {
       console.error(err);
-      toast({ title: 'Ошибка', description: 'Не удалось загрузить контракты', variant: 'destructive' });
-      setContracts([]);
+      toast({ title: 'Ошибка загрузки контрактов', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const rawCurrentId = (currentUser as { id?: number; userId?: number })?.id ?? (currentUser as { id?: number; userId?: number })?.userId ?? (Number(localStorage.getItem('userId') || '0') || undefined);
-  const currentUserId = Number(rawCurrentId ?? 0);
+  const currentUserId = Number(getUserId() || '0');
 
   const handleDeleteContract = async (contractId: number) => {
     if (!window.confirm('Удалить контракт? Это действие нельзя отменить.')) return;
-    const userId = localStorage.getItem('userId') || '';
+    const userId = getUserId();
     try {
       const res = await fetch(CONTRACTS_API, {
         method: 'POST',
@@ -90,7 +106,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       const data = await res.json();
       if (res.ok && data.success) {
         toast({ title: 'Контракт удалён' });
-        loadContracts();
+        loadAll();
       } else {
         toast({ title: data.error || 'Ошибка удаления', variant: 'destructive' });
       }
@@ -99,27 +115,8 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
-  const CANCELLED_STATUSES = ['cancelled', 'rejected'];
-
-  const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);
-  const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
-  const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
-  const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
-  const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
-
-  const activeRespondedContracts = respondedContracts.filter(
-    c => !CANCELLED_STATUSES.includes(c.myResponseStatus || '')
-  );
-  const archivedRespondedContracts = respondedContracts.filter(
-    c => CANCELLED_STATUSES.includes(c.myResponseStatus || '')
-  );
-
-  // Архив: отменённые отклики (где пользователь откликался) + закрытые собственные контракты
-  const archiveCount = archivedRespondedContracts.length + closedContracts.length;
-  const activeCount = allActiveContracts.length;
-
   const openNegotiation = async (c: Contract) => {
-    const userId = String((currentUser as {id?:number;userId?:number})?.id ?? (currentUser as {id?:number;userId?:number})?.userId ?? localStorage.getItem('userId') ?? '');
+    const userId = getUserId();
     const res = await fetch(`${RESPONSE_ID_API}?contractId=${c.id}`, { headers: { 'X-User-Id': userId } });
     if (res.ok) {
       const data = await res.json();
@@ -130,6 +127,35 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
     toast({ title: 'Не удалось найти отклик', variant: 'destructive' });
   };
+
+  // ── Фильтрация ──────────────────────────────────────────────────
+  // Мои собственные контракты (я — продавец)
+  const ownContracts = myContracts.filter(c => Number(c.sellerId) === currentUserId);
+
+  // Активные собственные
+  const activeOwn = ownContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
+  const activeRequests = activeOwn.filter(c => c.contractType === 'forward-request');
+  const activeForwards = activeOwn.filter(c => c.contractType !== 'forward-request');
+
+  // Завершённые/отменённые собственные контракты
+  const closedOwn = ownContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
+
+  // Мои отклики: только активные (не cancelled/rejected)
+  const activeResponded = respondedContracts.filter(
+    c => !ARCHIVED_STATUSES.includes(c.myResponseStatus || '')
+  );
+  // Мои отклики: отменённые/отклонённые → в архив
+  const archivedResponded = respondedContracts.filter(
+    c => ARCHIVED_STATUSES.includes(c.myResponseStatus || '')
+  );
+
+  // Контракты продавца с отменёнными откликами — убираем дубли с closedOwn
+  const closedOwnIds = new Set(closedOwn.map(c => c.id));
+  const sellerCancelled = sellerCancelledContracts.filter(c => !closedOwnIds.has(c.id));
+
+  const activeCount = activeOwn.length;
+  const activeResponsesCount = activeResponded.length;
+  const archiveCount = archivedResponded.length + closedOwn.length + sellerCancelled.length;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -154,13 +180,14 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                 Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="responses">
-                Мои отклики {activeRespondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeRespondedContracts.length}</span>}
+                Мои отклики {activeResponsesCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeResponsesCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="archive">
                 Архив {archiveCount > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{archiveCount}</span>}
               </TabsTrigger>
             </TabsList>
 
+            {/* ── Активные ── */}
             <TabsContent value="active" className="space-y-4">
               {activeCount === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Нет активных контрактов</p>
@@ -173,71 +200,96 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Запросы на закупку</span>
                         <span className="text-xs bg-muted px-1.5 rounded-full">{activeRequests.length}</span>
                       </div>
-                      {activeRequests.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} onDelete={() => handleDeleteContract(c.id)} />)}
+                      {activeRequests.map(c => (
+                        <ContractCard key={c.id} contract={c} currentUserId={currentUserId}
+                          onClick={() => navigate(`/contract/${c.id}`)}
+                          onDelete={() => handleDeleteContract(c.id)} />
+                      ))}
                     </div>
                   )}
-                  {activeContracts.length > 0 && (
+                  {activeForwards.length > 0 && (
                     <div className="space-y-3">
                       {activeRequests.length > 0 && (
                         <div className="flex items-center gap-2">
                           <Icon name="TrendingUp" size={14} className="text-muted-foreground" />
                           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Форварды и бартер</span>
-                          <span className="text-xs bg-muted px-1.5 rounded-full">{activeContracts.length}</span>
+                          <span className="text-xs bg-muted px-1.5 rounded-full">{activeForwards.length}</span>
                         </div>
                       )}
-                      {activeContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} onDelete={() => handleDeleteContract(c.id)} />)}
+                      {activeForwards.map(c => (
+                        <ContractCard key={c.id} contract={c} currentUserId={currentUserId}
+                          onClick={() => navigate(`/contract/${c.id}`)}
+                          onDelete={() => handleDeleteContract(c.id)} />
+                      ))}
                     </div>
                   )}
                 </>
               )}
             </TabsContent>
 
+            {/* ── Мои отклики (только активные) ── */}
             <TabsContent value="responses" className="space-y-3">
-              {activeRespondedContracts.length === 0 ? (
+              {activeResponded.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Нет активных откликов на контракты</p>
               ) : (
-                activeRespondedContracts.map(c => (
+                activeResponded.map(c => (
                   <ResponseCard
                     key={c.id}
                     contract={c}
-                    onClick={() => {
-                      navigate(`/contract/${c.id}`, { state: { alreadyResponded: true } });
-                    }}
+                    onClick={() => navigate(`/contract/${c.id}`)}
                     onNegotiate={() => openNegotiation(c)}
                   />
                 ))
               )}
             </TabsContent>
 
+            {/* ── Архив ── */}
             <TabsContent value="archive" className="space-y-4">
               {archiveCount === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Архив пуст</p>
               ) : (
                 <>
-                  {archivedRespondedContracts.length > 0 && (
+                  {/* Мои отменённые отклики на чужие контракты */}
+                  {archivedResponded.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Icon name="XCircle" size={14} className="text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отменённые отклики</span>
-                        <span className="text-xs bg-muted px-1.5 rounded-full">{archivedRespondedContracts.length}</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Мои отменённые отклики</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{archivedResponded.length}</span>
                       </div>
-                      {archivedRespondedContracts.map(c => (
-                        <ResponseCard
-                          key={c.id}
-                          contract={c}
-                          onClick={() => navigate(`/contract/${c.id}`)}
-                        />
+                      {archivedResponded.map(c => (
+                        <ResponseCard key={`my-arch-${c.id}`} contract={c} onClick={() => navigate(`/contract/${c.id}`)} />
                       ))}
                     </div>
                   )}
-                  {closedContracts.length > 0 && (
+
+                  {/* Мои контракты с отменёнными откликами участников */}
+                  {sellerCancelled.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="UserX" size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отменённые отклики на мои контракты</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{sellerCancelled.length}</span>
+                      </div>
+                      {sellerCancelled.map(c => (
+                        <ContractCard key={`sc-${c.id}`} contract={c} currentUserId={currentUserId}
+                          onClick={() => navigate(`/contract/${c.id}`)} />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Завершённые/отменённые собственные контракты */}
+                  {closedOwn.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Icon name="CheckCircle" size={14} className="text-muted-foreground" />
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Завершённые контракты</span>
-                        <span className="text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{closedOwn.length}</span>
                       </div>
-                      {closedContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)}
+                      {closedOwn.map(c => (
+                        <ContractCard key={c.id} contract={c} currentUserId={currentUserId}
+                          onClick={() => navigate(`/contract/${c.id}`)} />
+                      ))}
                     </div>
                   )}
                 </>
@@ -246,7 +298,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
           </Tabs>
         )}
 
-        {!isLoading && contracts.length === 0 && respondedContracts.length === 0 && (
+        {!isLoading && myContracts.length === 0 && respondedContracts.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <Icon name="FileSignature" className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">Контрактов пока нет</p>
@@ -262,7 +314,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
           onClose={() => setNegotiationModal(null)}
           responseId={negotiationModal.responseId}
           contractTitle={negotiationModal.title}
-          onStatusChange={loadContracts}
+          onStatusChange={loadAll}
         />
       )}
     </div>

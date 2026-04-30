@@ -75,7 +75,7 @@ export function useContractDetail(id: string | undefined) {
   const [alreadyResponded, setAlreadyResponded] = useState(false);
   const [myResponseId, setMyResponseId] = useState<number | null>(null);
   const [negotiationOpen, setNegotiationOpen] = useState(false);
-  const negotiationResponseId = useRef<number | null>(locationState?.responseId ?? null);
+  const negotiationResponseId = useRef<number | null>(null);
   const [responses, setResponses] = useState<ResponseItem[]>([]);
   const [showGuestDialog, setShowGuestDialog] = useState(false);
   const [respondVerifDialog, setRespondVerifDialog] = useState<{ open: boolean; mode: 'not-verified' | 'pending' | 'barter-restricted' }>({ open: false, mode: 'not-verified' });
