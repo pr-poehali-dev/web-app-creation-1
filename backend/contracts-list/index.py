@@ -341,7 +341,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if contract['seller_id'] == user_id:
                     return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нельзя откликнуться на собственный контракт'}), 'isBase64Encoded': False}
 
-                cur.execute('SELECT id FROM contract_responses WHERE contract_id = %s AND user_id = %s', (contract_id, user_id))
+                cur.execute("SELECT id FROM contract_responses WHERE contract_id = %s AND user_id = %s AND status NOT IN ('cancelled', 'rejected')", (contract_id, user_id))
                 if cur.fetchone():
                     return {'statusCode': 409, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Вы уже откликнулись на этот контракт'}), 'isBase64Encoded': False}
 
@@ -443,6 +443,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
 
         contract_id = int(contract_id_raw)
+        print(f'[responses] contract_id={contract_id} user_id={user_id}')
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
@@ -462,14 +463,18 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     ORDER BY cr.created_at DESC
                 ''', (contract_id,))
                 rows = cur.fetchall()
+                print(f'[responses] got {len(rows)} rows')
                 responses = []
                 for r in rows:
                     raw = dict(r)
-                    # Конвертируем все date/datetime в строки перед decimal_to_float
-                    for k, v in raw.items():
-                        if hasattr(v, 'isoformat'):
-                            raw[k] = v.isoformat()
-                    d = decimal_to_float(raw)
+                    try:
+                        for k, v in raw.items():
+                            if hasattr(v, 'isoformat'):
+                                raw[k] = v.isoformat()
+                        d = decimal_to_float(raw)
+                    except Exception as e:
+                        print(f'[responses] row conversion error: {e}, keys={list(raw.keys())}')
+                        raise
                     d['firstName'] = d.pop('first_name')
                     d['lastName'] = d.pop('last_name')
                     d['companyName'] = d.pop('company_name', '')
