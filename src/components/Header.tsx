@@ -307,14 +307,8 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
           <nav className="hidden md:flex items-center space-x-0.5 lg:space-x-1 mr-1 lg:mr-2">
             <Link
-              to="/trading"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
-            >
-              Контракты
-            </Link>
-            <Link
               to="/predlozheniya"
-              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/predlozheniya' || location.pathname === '/' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Предложения
             </Link>
@@ -329,6 +323,15 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
               className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/auction' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
             >
               Аукционы
+            </Link>
+            <Link
+              to="/trading"
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname === '/trading' ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+            >
+              <span className="flex items-center gap-1">
+                Контракты
+                <Badge variant="secondary" className="text-[9px] lg:text-xs px-1 lg:px-1.5 py-0.5">Новое</Badge>
+              </span>
             </Link>
             <Link
               to="/support"

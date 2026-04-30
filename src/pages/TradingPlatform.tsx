@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession, saveSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ContractCard from '@/components/trading/ContractCard';
 import PullToRefresh from '@/components/PullToRefresh';
 import { showLoading, hideLoading } from '@/components/TopLoadingBar';
@@ -64,7 +63,6 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
-  const [activeTab, setActiveTab] = useState('forward');
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [verificationDialogMode, setVerificationDialogMode] = useState<'not-verified' | 'restricted-type'>('not-verified');
   const [showForwardInfo, setShowForwardInfo] = useState(false);
@@ -143,25 +141,14 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
     }).format(price);
   };
 
-  const filterBySearch = (contract: Contract) => {
-    const matchesSearch = searchQuery === '' ||
-      contract.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contract.productName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || contract.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  };
-
-  const forwardContracts = contracts.filter(c => c.contractType === 'forward' && filterBySearch(c));
-  const requestContracts = contracts.filter(c => c.contractType === 'forward-request' && filterBySearch(c));
-  const barterContracts = contracts.filter(c => c.contractType === 'barter' && filterBySearch(c));
-
-  // оставляем для обратной совместимости
   const filteredContracts = contracts.filter(contract => {
     const matchesSearch = searchQuery === '' ||
       contract.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       contract.productName.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesCategory = selectedCategory === 'all' || contract.category === selectedCategory;
     const matchesType = selectedType === 'all' || contract.contractType === selectedType;
+
     return matchesSearch && matchesCategory && matchesType;
   });
 
@@ -237,59 +224,27 @@ export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPl
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
+          ) : filteredContracts.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Icon name="Package" className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">Контракты не найдены</p>
+              </CardContent>
+            </Card>
           ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-              <TabsList className="mb-6 h-auto flex-wrap gap-1">
-                <TabsTrigger value="forward" className="flex items-center gap-1.5">
-                  Предложения
-                  {forwardContracts.length > 0 && (
-                    <span className="ml-1 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{forwardContracts.length}</span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="forward-request" className="flex items-center gap-1.5">
-                  Запросы
-                  {requestContracts.length > 0 && (
-                    <span className="ml-1 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{requestContracts.length}</span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="barter" className="flex items-center gap-1.5">
-                  Бартер
-                  {barterContracts.length > 0 && (
-                    <span className="ml-1 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{barterContracts.length}</span>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-
-              {(['forward', 'forward-request', 'barter'] as const).map(tab => {
-                const list = tab === 'forward' ? forwardContracts : tab === 'forward-request' ? requestContracts : barterContracts;
-                return (
-                  <TabsContent key={tab} value={tab}>
-                    {list.length === 0 ? (
-                      <Card>
-                        <CardContent className="py-12 text-center">
-                          <Icon name="Package" className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                          <p className="text-muted-foreground">Контракты не найдены</p>
-                        </CardContent>
-                      </Card>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {list.map((contract) => (
-                          <ContractCard
-                            key={contract.id}
-                            contract={contract}
-                            onCardClick={(id) => isAuthenticated ? navigate(`/contract/${id}`) : handleGuestAction()}
-                            getContractTypeLabel={getContractTypeLabel}
-                            getStatusBadge={getStatusBadge}
-                            formatDate={formatDate}
-                            formatPrice={formatPrice}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </TabsContent>
-                );
-              })}
-            </Tabs>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredContracts.map((contract) => (
+                <ContractCard
+                  key={contract.id}
+                  contract={contract}
+                  onCardClick={(id) => isAuthenticated ? navigate(`/contract/${id}`) : handleGuestAction()}
+                  getContractTypeLabel={getContractTypeLabel}
+                  getStatusBadge={getStatusBadge}
+                  formatDate={formatDate}
+                  formatPrice={formatPrice}
+                />
+              ))}
+            </div>
           )}
         </div>
       </main>

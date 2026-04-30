@@ -22,13 +22,6 @@ export default function HeaderMobileMenu({
       className="md:hidden border-t py-4 space-y-2 touch-pan-y"
     >
       <Link
-        to="/trading"
-        className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
-        onClick={onClose}
-      >
-        Контракты
-      </Link>
-      <Link
         to="/predlozheniya"
         className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
         onClick={onClose}
@@ -48,6 +41,16 @@ export default function HeaderMobileMenu({
         onClick={onClose}
       >
         Аукционы
+      </Link>
+      <Link
+        to="/trading"
+        className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
+        onClick={onClose}
+      >
+        <span className="flex items-center gap-2">
+          Контракты
+          <Badge variant="secondary" className="text-xs">Новое</Badge>
+        </span>
       </Link>
       <Link
         to="/support"
