@@ -104,6 +104,10 @@ export function useContractDetail(id: string | undefined) {
               setMyResponseId(found.responseId);
               negotiationResponseId.current = found.responseId;
             } else {
+              // Нет активного отклика — сбрасываем состояние (на случай если пришли из locationState с alreadyResponded=true после отмены)
+              setAlreadyResponded(false);
+              setMyResponseId(null);
+              negotiationResponseId.current = null;
               checkMyResponse(Number(id), userId);
             }
           } else if (!userId) {

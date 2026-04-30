@@ -105,7 +105,7 @@ def get_my_responses(user_id: int) -> dict:
                  LEFT JOIN users s ON c.seller_id = s.id
                  LEFT JOIN users me ON cr.user_id = me.id
                  WHERE cr.user_id = %s AND c.seller_id != %s AND COALESCE(c.buyer_id, 0) != %s
-                 ORDER BY c.id, _sort_archived ASC, cr.created_at DESC''',
+                 ORDER BY c.id, CASE WHEN cr.status NOT IN (\'cancelled\', \'rejected\') THEN 0 ELSE 1 END ASC, cr.created_at DESC''',
                 (user_id, user_id, user_id)
             )
             rows = cur.fetchall()
