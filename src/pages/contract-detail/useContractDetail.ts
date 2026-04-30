@@ -98,6 +98,7 @@ export function useContractDetail(id: string | undefined) {
         const data = await res.json();
         const contracts = data.contracts || [];
         const found = contracts.find((c: Contract) => String(c.id) === String(id)) || contracts[0] || null;
+        console.log('[loadContract] id=' + id + ' userId=' + userId + ' responseId=' + found?.responseId + ' sellerId=' + found?.sellerId);
         if (found) {
           setContract(found);
           if (userId && String(found.sellerId) === String(userId)) {
