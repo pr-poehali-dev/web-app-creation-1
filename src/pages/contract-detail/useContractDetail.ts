@@ -72,8 +72,8 @@ export function useContractDetail(id: string | undefined) {
   const [respondComment, setRespondComment] = useState('');
   const [respondPrice, setRespondPrice] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [alreadyResponded, setAlreadyResponded] = useState(locationState?.alreadyResponded ?? false);
-  const [myResponseId, setMyResponseId] = useState<number | null>(locationState?.responseId ?? null);
+  const [alreadyResponded, setAlreadyResponded] = useState(false);
+  const [myResponseId, setMyResponseId] = useState<number | null>(null);
   const [negotiationOpen, setNegotiationOpen] = useState(false);
   const negotiationResponseId = useRef<number | null>(locationState?.responseId ?? null);
   const [responses, setResponses] = useState<ResponseItem[]>([]);

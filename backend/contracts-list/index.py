@@ -378,6 +378,61 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
+    # GET ?cancelled_responses=true — контракты продавца с отменёнными откликами (для вкладки Архив)
+    if params.get('cancelled_responses') == 'true':
+        if not user_id:
+            return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    '''SELECT DISTINCT ON (c.id) c.id, c.title, c.product_name, c.contract_type, c.category,
+                     c.quantity, c.unit, c.price_per_unit, c.total_amount, c.currency,
+                     c.status, c.seller_id, c.buyer_id, c.delivery_date, c.contract_start_date, c.contract_end_date,
+                     c.delivery_address, c.delivery_method,
+                     c.prepayment_percent, c.prepayment_amount,
+                     c.views_count, c.created_at, c.updated_at, c.product_images, c.description,
+                     cr.id AS response_id, cr.status AS response_status,
+                     u.first_name AS respondent_first_name, u.last_name AS respondent_last_name,
+                     COALESCE(u.company_name, \'\') AS respondent_company_name
+                     FROM contracts c
+                     JOIN contract_responses cr ON cr.contract_id = c.id AND cr.status IN (\'cancelled\', \'rejected\')
+                     JOIN users u ON cr.user_id = u.id
+                     WHERE c.seller_id = %s
+                     ORDER BY c.id, cr.updated_at DESC''',
+                    (user_id,)
+                )
+                rows = cur.fetchall()
+                items = []
+                for row in rows:
+                    d = decimal_to_float(dict(row))
+                    d['productName'] = d.pop('product_name', '')
+                    d['contractType'] = d.pop('contract_type', '')
+                    d['pricePerUnit'] = float(d.pop('price_per_unit', 0) or 0)
+                    d['totalAmount'] = float(d.pop('total_amount', 0) or 0)
+                    d['sellerId'] = d.pop('seller_id', None)
+                    d['buyerId'] = d.pop('buyer_id', None)
+                    d['deliveryDate'] = str(d.pop('delivery_date', '') or '')
+                    d['contractStartDate'] = str(d.pop('contract_start_date', '') or '')
+                    d['contractEndDate'] = str(d.pop('contract_end_date', '') or '')
+                    d['deliveryAddress'] = d.pop('delivery_address', '') or ''
+                    d['deliveryMethod'] = d.pop('delivery_method', '') or ''
+                    d['prepaymentPercent'] = float(d.pop('prepayment_percent', 0) or 0)
+                    d['prepaymentAmount'] = float(d.pop('prepayment_amount', 0) or 0)
+                    d['viewsCount'] = d.pop('views_count', 0) or 0
+                    d['createdAt'] = str(d.pop('created_at', '') or '')
+                    d['updatedAt'] = str(d.pop('updated_at', '') or '')
+                    d['productImages'] = d.pop('product_images', None)
+                    d['responseId'] = d.pop('response_id', None)
+                    d['responseStatus'] = d.pop('response_status', '')
+                    d['respondentFirstName'] = d.pop('respondent_first_name', '')
+                    d['respondentLastName'] = d.pop('respondent_last_name', '')
+                    d['respondentCompanyName'] = d.pop('respondent_company_name', '')
+                    items.append(d)
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'contracts': items, 'total': len(items)}), 'isBase64Encoded': False}
+        finally:
+            conn.close()
+
     # GET ?responses=true&contractId={id} — список откликов (только для автора контракта)
     if params.get('responses') == 'true':
         if not user_id:

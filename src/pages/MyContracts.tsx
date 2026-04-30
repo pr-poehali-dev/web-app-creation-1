@@ -29,6 +29,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
+  const [cancelledSellerContracts, setCancelledSellerContracts] = useState<Contract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -61,16 +62,17 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       const allContracts: Contract[] = data.contracts || [];
       setContracts(allContracts);
 
-      const myResponsesResp = await fetch(`${CONTRACTS_API}?my_responses=true`, {
-        headers: { 'X-User-Id': userId },
-      }).catch(() => null);
-      if (myResponsesResp) {
-        if (myResponsesResp.ok) {
-          const myRespData = await myResponsesResp.json();
-          setRespondedContracts(myRespData.contracts || []);
-        } else {
-          console.error('myResponses error:', myResponsesResp.status, await myResponsesResp.text().catch(() => ''));
-        }
+      const [myResponsesResp, cancelledResp] = await Promise.all([
+        fetch(`${CONTRACTS_API}?my_responses=true`, { headers: { 'X-User-Id': userId } }).catch(() => null),
+        fetch(`${CONTRACTS_API}?cancelled_responses=true`, { headers: { 'X-User-Id': userId } }).catch(() => null),
+      ]);
+      if (myResponsesResp?.ok) {
+        const myRespData = await myResponsesResp.json();
+        setRespondedContracts(myRespData.contracts || []);
+      }
+      if (cancelledResp?.ok) {
+        const cancelledData = await cancelledResp.json();
+        setCancelledSellerContracts(cancelledData.contracts || []);
       }
     } catch (err) {
       console.error(err);
@@ -120,8 +122,8 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     c => CANCELLED_STATUSES.includes(c.myResponseStatus || '')
   );
 
-  // Архив: отменённые отклики (где пользователь откликался) + закрытые собственные контракты
-  const archiveCount = archivedRespondedContracts.length + closedContracts.length;
+  // Архив: отменённые отклики (где пользователь откликался) + закрытые собственные контракты + контракты продавца с отменёнными откликами
+  const archiveCount = archivedRespondedContracts.length + closedContracts.length + cancelledSellerContracts.length;
   const activeCount = allActiveContracts.length;
 
   const openNegotiation = async (c: Contract) => {
@@ -233,6 +235,18 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                           contract={c}
                           onClick={() => navigate(`/contract/${c.id}`)}
                         />
+                      ))}
+                    </div>
+                  )}
+                  {cancelledSellerContracts.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="UserX" size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отклики на мои контракты (отменены)</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{cancelledSellerContracts.length}</span>
+                      </div>
+                      {cancelledSellerContracts.map(c => (
+                        <ContractCard key={`seller-cancelled-${c.id}`} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />
                       ))}
                     </div>
                   )}
