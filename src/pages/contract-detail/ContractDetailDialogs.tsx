@@ -66,6 +66,7 @@ export default function ContractDetailDialogs({
         contractPricePerUnit={contract.pricePerUnit}
         contractQuantity={contract.quantity}
         formatPrice={formatPrice}
+        hadCancelledResponse={contract.myCancelledResponse}
       />
 
       <Dialog open={showGuestDialog} onOpenChange={onGuestDialogChange}>

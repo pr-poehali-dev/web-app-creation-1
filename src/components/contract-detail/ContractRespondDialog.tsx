@@ -18,6 +18,7 @@ interface ContractRespondDialogProps {
   contractPricePerUnit?: number;
   contractQuantity?: number;
   formatPrice: (p: number) => string;
+  hadCancelledResponse?: boolean;
 }
 
 export default function ContractRespondDialog({
@@ -33,6 +34,7 @@ export default function ContractRespondDialog({
   contractPricePerUnit,
   contractQuantity,
   formatPrice,
+  hadCancelledResponse,
 }: ContractRespondDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,6 +43,12 @@ export default function ContractRespondDialog({
           <DialogTitle>Отклик на контракт</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
+          {hadCancelledResponse && (
+            <div className="flex items-start gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              <Icon name="AlertTriangle" size={16} className="shrink-0 mt-0.5" />
+              <span>Вы ранее отменяли отклик на этот контракт. Вы можете подать новый отклик.</span>
+            </div>
+          )}
           {!isBarter && (
             <div className="space-y-1.5">
               <Label>Ваша цена за единицу, ₽</Label>

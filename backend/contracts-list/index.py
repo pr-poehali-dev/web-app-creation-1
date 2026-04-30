@@ -185,13 +185,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     params = event.get('queryStringParameters', {}) or {}
 
+    # Парсим body один раз для всех POST-запросов
+    post_body = json.loads(event.get('body') or '{}') if method == 'POST' else {}
+    post_action = params.get('action') or post_body.get('action') or ''
+
     # ── POST action=deleteContract — удаление контракта (черновик или без откликов) ──
-    _delete_body_raw = json.loads(event.get('body') or '{}') if method == 'POST' else {}
-    _delete_action = params.get('action') or _delete_body_raw.get('action', '')
-    if method == 'POST' and _delete_action == 'deleteContract':
+    if method == 'POST' and post_action == 'deleteContract':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
-        contract_id_raw = _delete_body_raw.get('contractId') or params.get('contractId')
+        contract_id_raw = post_body.get('contractId') or params.get('contractId')
         if not contract_id_raw:
             return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
         contract_id = int(contract_id_raw)
@@ -219,8 +221,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     if method == 'POST':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
-        body = json.loads(event.get('body') or '{}')
-        action = params.get('action') or body.get('action', '')
+        body = post_body
+        action = post_action
+        print(f'[POST] action={repr(action)} body_keys={list(body.keys())}')
 
         # ── action=respond — создать новый отклик ─────────────────────────────
         if action == 'respond':
@@ -713,6 +716,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
             my_response_subq = f"(SELECT id FROM contract_responses WHERE contract_id = c.id AND user_id = {user_id} AND status != 'cancelled' LIMIT 1)" if user_id else "NULL"
+            my_cancelled_subq = f"EXISTS(SELECT 1 FROM contract_responses WHERE contract_id = c.id AND user_id = {user_id} AND status IN ('cancelled','rejected'))" if user_id else "FALSE"
             query = f"""
                 SELECT
                     c.*,
@@ -746,7 +750,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         WHERE cr2.contract_id = c.id AND cr2.status NOT IN ('cancelled','rejected')
                     ) as recent_respondents,
                     {my_response_subq} as my_response_id,
-                    EXISTS(SELECT 1 FROM contract_responses WHERE contract_id = c.id AND status IN ('cancelled','rejected')) as has_cancelled_responses
+                    EXISTS(SELECT 1 FROM contract_responses WHERE contract_id = c.id AND status IN ('cancelled','rejected')) as has_cancelled_responses,
+                    {my_cancelled_subq} as my_cancelled_response
                 FROM contracts c
                 LEFT JOIN users s ON c.seller_id = s.id
                 LEFT JOIN users b ON c.buyer_id  = b.id
@@ -804,6 +809,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d['reliabilityScore']   = d.pop('reliability_score', None)
                 d['responseId']         = d.pop('my_response_id', None)
                 d['hasCancelledResponses'] = bool(d.pop('has_cancelled_responses', False))
+                d['myCancelledResponse'] = bool(d.pop('my_cancelled_response', False))
                 # Извлекаем priceType из product_specs или из отдельного поля
                 specs = d.get('productSpecs') or {}
                 if isinstance(specs, str):

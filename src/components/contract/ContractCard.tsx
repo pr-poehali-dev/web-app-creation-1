@@ -47,6 +47,7 @@ export interface Contract {
   myResponseStatus?: string;
   sellerConfirmed?: boolean;
   buyerConfirmed?: boolean;
+  myCancelledResponse?: boolean;
 }
 
 export const STATUS_LABELS: Record<string, string> = {

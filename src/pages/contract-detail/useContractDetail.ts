@@ -41,6 +41,7 @@ export interface Contract {
   productImages?: string[];
   productVideoUrl?: string;
   responseId?: number;
+  myCancelledResponse?: boolean;
 }
 
 export interface ResponseItem {

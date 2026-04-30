@@ -89,10 +89,17 @@ export default function ContractDetailHeader({
               Переговоры
             </Button>
           ) : (
-            <Button onClick={onRespond}>
-              <Icon name="Send" className="mr-2 h-4 w-4" />
-              Откликнуться
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              {contract.myCancelledResponse && (
+                <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+                  ⚠ Вы ранее отменяли отклик
+                </span>
+              )}
+              <Button onClick={onRespond}>
+                <Icon name="Send" className="mr-2 h-4 w-4" />
+                Откликнуться
+              </Button>
+            </div>
           )
         )}
       </div>
