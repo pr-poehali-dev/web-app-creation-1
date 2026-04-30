@@ -210,16 +210,16 @@ export function useContractDetail(id: string | undefined) {
     try {
       const price = parseFloat(respondPrice) || contractData.pricePerUnit;
       const total = price * contractData.quantity;
-      const res = await fetch(func2url['contracts-list'], {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({
-          action: 'respond',
-          contractId: contractData.id,
-          pricePerUnit: price,
-          totalAmount: total,
-          comment: respondComment.trim(),
-        }),
+      const qp = new URLSearchParams({
+        action: 'respond',
+        contractId: String(contractData.id),
+        pricePerUnit: String(price),
+        totalAmount: String(total),
+        comment: respondComment.trim(),
+      });
+      const res = await fetch(`${func2url['contracts-list']}?${qp.toString()}`, {
+        method: 'GET',
+        headers: { 'X-User-Id': userId },
       });
       const data = await res.json();
       if (res.ok) {
