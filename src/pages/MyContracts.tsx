@@ -105,14 +105,37 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     }
   };
 
+  const CANCELLED_STATUSES = ['cancelled', 'rejected'];
+
   const myOwnContracts = contracts.filter(c => Number(c.sellerId) === currentUserId);
-  const filteredRespondedContracts = respondedContracts;
   const allActiveContracts = myOwnContracts.filter(c => ['open', 'signed', 'in_progress', 'draft'].includes(c.status));
   const activeRequests = allActiveContracts.filter(c => c.contractType === 'forward-request');
   const activeContracts = allActiveContracts.filter(c => c.contractType !== 'forward-request');
   const closedContracts = myOwnContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
-  const allCount = myOwnContracts.length + filteredRespondedContracts.length;
+
+  const activeRespondedContracts = respondedContracts.filter(
+    c => !CANCELLED_STATUSES.includes(c.myResponseStatus || '')
+  );
+  const archivedRespondedContracts = respondedContracts.filter(
+    c => CANCELLED_STATUSES.includes(c.myResponseStatus || '')
+  );
+
+  // Архив: отменённые отклики (где пользователь откликался) + закрытые собственные контракты
+  const archiveCount = archivedRespondedContracts.length + closedContracts.length;
   const activeCount = allActiveContracts.length;
+
+  const openNegotiation = async (c: Contract) => {
+    const userId = String((currentUser as {id?:number;userId?:number})?.id ?? (currentUser as {id?:number;userId?:number})?.userId ?? localStorage.getItem('userId') ?? '');
+    const res = await fetch(`${RESPONSE_ID_API}?contractId=${c.id}`, { headers: { 'X-User-Id': userId } });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.responseId) {
+        setNegotiationModal({ responseId: data.responseId, title: c.title || c.productName || `Контракт #${c.id}` });
+        return;
+      }
+    }
+    toast({ title: 'Не удалось найти отклик', variant: 'destructive' });
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -137,10 +160,10 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                 Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="responses">
-                Мои отклики {filteredRespondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{filteredRespondedContracts.length}</span>}
+                Мои отклики {activeRespondedContracts.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeRespondedContracts.length}</span>}
               </TabsTrigger>
-              <TabsTrigger value="closed">
-                Завершённые {closedContracts.length > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>}
+              <TabsTrigger value="archive">
+                Архив {archiveCount > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{archiveCount}</span>}
               </TabsTrigger>
             </TabsList>
 
@@ -175,46 +198,61 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
               )}
             </TabsContent>
 
-
-
-            <TabsContent value="closed" className="space-y-3">
-              {closedContracts.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Нет завершённых контрактов</p>
-              ) : (
-                closedContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)
-              )}
-            </TabsContent>
-
             <TabsContent value="responses" className="space-y-3">
-              {filteredRespondedContracts.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">Вы ещё не откликались на контракты</p>
+              {activeRespondedContracts.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Нет активных откликов на контракты</p>
               ) : (
-                filteredRespondedContracts.map(c => (
+                activeRespondedContracts.map(c => (
                   <ResponseCard
                     key={c.id}
                     contract={c}
                     onClick={() => {
                       navigate(`/contract/${c.id}`, { state: { alreadyResponded: true } });
                     }}
-                    onNegotiate={async () => {
-                      const userId = String((currentUser as {id?:number;userId?:number})?.id ?? (currentUser as {id?:number;userId?:number})?.userId ?? localStorage.getItem('userId') ?? '');
-                      const res = await fetch(`${RESPONSE_ID_API}?contractId=${c.id}`, { headers: { 'X-User-Id': userId } });
-                      if (res.ok) {
-                        const data = await res.json();
-                        if (data.responseId) {
-                          setNegotiationModal({ responseId: data.responseId, title: c.title || c.productName || `Контракт #${c.id}` });
-                          return;
-                        }
-                      }
-                      toast({ title: 'Не удалось найти отклик', variant: 'destructive' });
-                    }}
+                    onNegotiate={() => openNegotiation(c)}
                   />
                 ))
               )}
             </TabsContent>
+
+            <TabsContent value="archive" className="space-y-4">
+              {archiveCount === 0 ? (
+                <p className="text-center text-muted-foreground py-8">Архив пуст</p>
+              ) : (
+                <>
+                  {archivedRespondedContracts.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="XCircle" size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отменённые отклики</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{archivedRespondedContracts.length}</span>
+                      </div>
+                      {archivedRespondedContracts.map(c => (
+                        <ResponseCard
+                          key={c.id}
+                          contract={c}
+                          onClick={() => navigate(`/contract/${c.id}`)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {closedContracts.length > 0 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Icon name="CheckCircle" size={14} className="text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Завершённые контракты</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{closedContracts.length}</span>
+                      </div>
+                      {closedContracts.map(c => <ContractCard key={c.id} contract={c} currentUserId={currentUserId} onClick={() => navigate(`/contract/${c.id}`)} />)}
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
           </Tabs>
         )}
-        {!isLoading && allCount === 0 && respondedContracts.length === 0 && activeTab !== 'responses' && (
+
+        {!isLoading && contracts.length === 0 && respondedContracts.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <Icon name="FileSignature" className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="font-medium">Контрактов пока нет</p>

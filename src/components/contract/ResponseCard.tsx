@@ -12,6 +12,8 @@ const RESPONSE_STATUS_LABELS: Record<string, string> = {
   rejected: 'Отклонён',
 };
 
+const CANCELLED_STATUSES = ['cancelled', 'rejected'];
+
 const RESPONSE_STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   pending: 'outline',
   negotiating: 'secondary',
@@ -80,7 +82,7 @@ export default function ResponseCard({ contract: c, onClick, onNegotiate }: Resp
           </div>
         </div>
 
-        {onNegotiate && (
+        {onNegotiate && !CANCELLED_STATUSES.includes(rStatus) && (
           <div className="mt-3 pt-3 border-t">
             <Button
               size="sm"

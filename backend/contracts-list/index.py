@@ -77,31 +77,35 @@ def get_db_connection():
 
 
 def get_my_responses(user_id: int) -> dict:
-    """Возвращает контракты на которые пользователь откликнулся."""
+    """Возвращает контракты на которые пользователь откликнулся. Для каждого контракта — только последний активный отклик. Отменённые идут отдельно."""
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
+            # Для каждого контракта берём: последний активный отклик (not cancelled/rejected),
+            # а если такого нет — последний из всех (чтобы показать в архиве).
+            # DISTINCT ON (c.id) + ORDER BY берёт строку с наибольшим приоритетом статуса.
             cur.execute(
-                'SELECT c.id, c.title, c.product_name, c.contract_type, c.category,'
-                ' c.quantity, c.unit, c.price_per_unit, c.total_amount, c.currency,'
-                ' c.status, c.seller_id, c.buyer_id, c.delivery_date, c.contract_start_date, c.contract_end_date,'
-                ' c.delivery_address, c.delivery_method, c.logistics_partner_id,'
-                ' c.prepayment_percent, c.prepayment_amount, c.financing_available,'
-                ' c.terms_conditions, c.min_purchase_quantity, c.discount_percent,'
-                ' c.views_count, c.created_at, c.updated_at, c.product_images, c.product_video_url,'
-                ' c.product_specs, c.description,'
-                ' cr.id AS response_id, cr.price_per_unit AS my_price, cr.total_amount AS my_total,'
-                ' cr.comment AS my_comment, cr.status AS my_response_status,'
-                ' cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at,'
-                ' s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.company_name AS seller_company_name,'
-                ' me.first_name AS my_first_name, me.last_name AS my_last_name,'
-                ' COALESCE((SELECT AVG(rating) FROM reviews WHERE reviewed_user_id = c.seller_id), 0) AS seller_rating'
-                ' FROM contract_responses cr'
-                ' JOIN contracts c ON cr.contract_id = c.id'
-                ' LEFT JOIN users s ON c.seller_id = s.id'
-                ' LEFT JOIN users me ON cr.user_id = me.id'
-                ' WHERE cr.user_id = %s AND c.seller_id != %s AND COALESCE(c.buyer_id, 0) != %s'
-                ' ORDER BY cr.created_at DESC',
+                '''SELECT DISTINCT ON (c.id) c.id, c.title, c.product_name, c.contract_type, c.category,
+                 c.quantity, c.unit, c.price_per_unit, c.total_amount, c.currency,
+                 c.status, c.seller_id, c.buyer_id, c.delivery_date, c.contract_start_date, c.contract_end_date,
+                 c.delivery_address, c.delivery_method, c.logistics_partner_id,
+                 c.prepayment_percent, c.prepayment_amount, c.financing_available,
+                 c.terms_conditions, c.min_purchase_quantity, c.discount_percent,
+                 c.views_count, c.created_at, c.updated_at, c.product_images, c.product_video_url,
+                 c.product_specs, c.description,
+                 cr.id AS response_id, cr.price_per_unit AS my_price, cr.total_amount AS my_total,
+                 cr.comment AS my_comment, cr.status AS my_response_status,
+                 cr.seller_confirmed, cr.buyer_confirmed, cr.confirmed_at,
+                 s.first_name AS seller_first_name, s.last_name AS seller_last_name, s.company_name AS seller_company_name,
+                 me.first_name AS my_first_name, me.last_name AS my_last_name,
+                 COALESCE((SELECT AVG(rating) FROM reviews WHERE reviewed_user_id = c.seller_id), 0) AS seller_rating,
+                 CASE WHEN cr.status NOT IN (\'cancelled\', \'rejected\') THEN 0 ELSE 1 END AS _sort_archived
+                 FROM contract_responses cr
+                 JOIN contracts c ON cr.contract_id = c.id
+                 LEFT JOIN users s ON c.seller_id = s.id
+                 LEFT JOIN users me ON cr.user_id = me.id
+                 WHERE cr.user_id = %s AND c.seller_id != %s AND COALESCE(c.buyer_id, 0) != %s
+                 ORDER BY c.id, _sort_archived ASC, cr.created_at DESC''',
                 (user_id, user_id, user_id)
             )
             rows = cur.fetchall()
@@ -149,6 +153,7 @@ def get_my_responses(user_id: int) -> dict:
                 d['productVideoUrl'] = d.pop('product_video_url', None)
                 d['buyerFirstName'] = d.pop('buyer_first_name', None)
                 d['buyerLastName'] = d.pop('buyer_last_name', None)
+                d.pop('_sort_archived', None)
                 contracts_list.append(d)
             return {'statusCode': 200, 'headers': RESP_HEADERS,
                     'body': json.dumps({'contracts': contracts_list, 'total': len(contracts_list)}),
