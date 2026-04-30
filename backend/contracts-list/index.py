@@ -591,7 +591,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
             where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
-            my_response_subq = f"(SELECT id FROM contract_responses WHERE contract_id = c.id AND user_id = {user_id} LIMIT 1)" if user_id else "NULL"
+            my_response_subq = f"(SELECT id FROM contract_responses WHERE contract_id = c.id AND user_id = {user_id} AND status != 'cancelled' LIMIT 1)" if user_id else "NULL"
             query = f"""
                 SELECT
                     c.*,

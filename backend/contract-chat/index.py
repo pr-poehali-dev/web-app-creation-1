@@ -257,7 +257,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute('''
-                    SELECT cr.*, c.seller_id, c.id as c_id, c.quantity
+                    SELECT cr.*, c.seller_id, c.id as c_id, c.quantity, c.title as contract_title
                     FROM contract_responses cr
                     JOIN contracts c ON cr.contract_id = c.id
                     WHERE cr.id = %s
@@ -357,6 +357,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if action == 'cancel':
                     cur.execute("UPDATE contract_responses SET status = 'cancelled', updated_at = NOW() WHERE id = %s", (response_id,))
                     conn.commit()
+                    seller_id = resp['seller_id']
+                    contract_title = resp.get('contract_title', 'контракт')
+                    threading.Thread(target=send_push, args=(seller_id, 'Отклик отменён', f'Участник отменил отклик на ваш контракт «{contract_title}»', f'/contract/{resp["contract_id"]}')).start()
+                    threading.Thread(target=send_email, args=(seller_id, 'Отклик на контракт отменён', f'Участник отменил отклик на ваш контракт «{contract_title}»', f'/contract/{resp["contract_id"]}')).start()
                     return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'success': True}), 'isBase64Encoded': False}
 
                 # ── Отправить сообщение ────────────────────────────────────
