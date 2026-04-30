@@ -67,10 +67,15 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
 
       if (ownResp.ok) {
         const d = await ownResp.json();
-        setMyContracts(d.contracts || []);
+        const contracts = d.contracts || [];
+        console.log('[MyContracts] ownResp userId=' + userId, contracts.map((c: Contract) => ({id: c.id, sellerId: c.sellerId, hasCancelled: (c as Contract & {hasCancelledResponses?: boolean}).hasCancelledResponses})));
+        setMyContracts(contracts);
+      } else {
+        console.error('[MyContracts] ownResp error', ownResp.status);
       }
       if (myRespResp.ok) {
         const d = await myRespResp.json();
+        console.log('[MyContracts] myRespResp', d.contracts?.length, d.contracts?.map((c: Contract) => ({id: c.id, status: c.myResponseStatus})));
         setRespondedContracts(d.contracts || []);
       }
     } catch (err) {
