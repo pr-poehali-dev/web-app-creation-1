@@ -684,7 +684,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         JOIN users u2 ON cr2.user_id = u2.id
                         WHERE cr2.contract_id = c.id AND cr2.status NOT IN ('cancelled','rejected')
                     ) as recent_respondents,
-                    {my_response_subq} as my_response_id
+                    {my_response_subq} as my_response_id,
+                    EXISTS(SELECT 1 FROM contract_responses WHERE contract_id = c.id AND status IN ('cancelled','rejected')) as has_cancelled_responses
                 FROM contracts c
                 LEFT JOIN users s ON c.seller_id = s.id
                 LEFT JOIN users b ON c.buyer_id  = b.id
@@ -741,6 +742,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 d['recentRespondents']  = d.pop('recent_respondents', None) or []
                 d['reliabilityScore']   = d.pop('reliability_score', None)
                 d['responseId']         = d.pop('my_response_id', None)
+                d['hasCancelledResponses'] = bool(d.pop('has_cancelled_responses', False))
                 # Извлекаем priceType из product_specs или из отдельного поля
                 specs = d.get('productSpecs') or {}
                 if isinstance(specs, str):
