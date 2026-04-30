@@ -1,6 +1,6 @@
 """
 GET /?contractId=N — возвращает responseId текущего пользователя для контракта.
-Используется для открытия модалки переговоров.
+Только активные отклики (status != cancelled и != rejected).
 """
 import json
 import os
@@ -32,7 +32,7 @@ def handler(event: dict, context) -> dict:
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id FROM contract_responses WHERE contract_id = %s AND user_id = %s AND status != 'cancelled' LIMIT 1",
+                "SELECT id FROM contract_responses WHERE contract_id = %s AND user_id = %s AND status NOT IN ('cancelled', 'rejected') LIMIT 1",
                 (int(contract_id_raw), user_id)
             )
             row = cur.fetchone()
