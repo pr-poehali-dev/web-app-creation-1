@@ -215,12 +215,68 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         finally:
             conn.close()
 
-    # ── POST — чат и подтверждение ─────────────────────────────────────────────
+    # ── POST — отклик, чат и подтверждение ────────────────────────────────────
     if method == 'POST':
         if not user_id:
             return {'statusCode': 401, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Требуется авторизация'}), 'isBase64Encoded': False}
-        action = params.get('action')
         body = json.loads(event.get('body') or '{}')
+        action = params.get('action') or body.get('action', '')
+
+        # ── action=respond — создать новый отклик ─────────────────────────────
+        if action == 'respond':
+            contract_id_raw = body.get('contractId') or params.get('contractId')
+            if not contract_id_raw:
+                return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'contractId обязателен'}), 'isBase64Encoded': False}
+            contract_id = int(contract_id_raw)
+            comment = (body.get('comment') or '').strip()
+            price_per_unit_raw = body.get('pricePerUnit')
+            total_amount_raw = body.get('totalAmount')
+            conn = get_db_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT id, seller_id, status, quantity, price_per_unit, title, product_name FROM contracts WHERE id = %s', (contract_id,))
+                    contract = cur.fetchone()
+                    if not contract:
+                        return {'statusCode': 404, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт не найден'}), 'isBase64Encoded': False}
+                    contract = dict(contract)
+                    if contract['status'] != 'open':
+                        return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Контракт недоступен для отклика'}), 'isBase64Encoded': False}
+                    if contract['seller_id'] == user_id:
+                        return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Нельзя откликнуться на собственный контракт'}), 'isBase64Encoded': False}
+                    cur.execute("SELECT id FROM contract_responses WHERE contract_id = %s AND user_id = %s AND status NOT IN ('cancelled', 'rejected')", (contract_id, user_id))
+                    if cur.fetchone():
+                        return {'statusCode': 409, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Вы уже откликнулись на этот контракт'}), 'isBase64Encoded': False}
+                    price_per_unit = float(price_per_unit_raw) if price_per_unit_raw else float(contract['price_per_unit'] or 0)
+                    total_amount = float(total_amount_raw) if total_amount_raw else price_per_unit * float(contract['quantity'] or 1)
+                    cur.execute(
+                        'INSERT INTO contract_responses (contract_id, user_id, price_per_unit, total_amount, comment, status) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',
+                        (contract_id, user_id, price_per_unit, total_amount, comment, 'pending')
+                    )
+                    new_id = cur.fetchone()['id']
+                    conn.commit()
+                    cur.execute('SELECT u.first_name, u.last_name FROM users u WHERE u.id = %s', (user_id,))
+                    respondent = cur.fetchone() or {}
+                    respondent_name = f"{respondent.get('first_name', '')} {respondent.get('last_name', '')}".strip() or 'Участник'
+                    contract_title = contract.get('title') or contract.get('product_name') or f'Контракт #{contract_id}'
+                    seller_id = contract['seller_id']
+                threading.Thread(
+                    target=send_push,
+                    args=(seller_id, 'Новый отклик на контракт',
+                          f'{respondent_name} откликнулся на «{contract_title}»',
+                          '/my-contracts'),
+                    daemon=True
+                ).start()
+                threading.Thread(
+                    target=send_email,
+                    args=(seller_id, 'Новый отклик на контракт',
+                          f'{respondent_name} откликнулся на «{contract_title}»',
+                          '/my-contracts'),
+                    daemon=True
+                ).start()
+                return {'statusCode': 200, 'headers': RESP_HEADERS, 'body': json.dumps({'id': new_id, 'message': 'Отклик успешно отправлен'}), 'isBase64Encoded': False}
+            finally:
+                conn.close()
+
         response_id_raw = body.get('responseId') or params.get('responseId')
         if not response_id_raw:
             return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'responseId обязателен'}), 'isBase64Encoded': False}

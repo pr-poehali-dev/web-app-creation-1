@@ -32,6 +32,15 @@
       "expectedStatus": 401,
       "bodyMatcher": "partial",
       "expectedBody": {}
+    },
+    {
+      "name": "POST respond without auth returns 401",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "respond", "contractId": 10, "pricePerUnit": 26000, "totalAmount": 52000, "comment": ""},
+      "expectedStatus": 401,
+      "bodyMatcher": "partial",
+      "expectedBody": {}
     }
   ]
 }
