@@ -282,7 +282,7 @@ const App = () => {
                   <ErrorBoundary>
                   <Suspense fallback={pageFallback}>
                 <Routes>
-            <Route path="/" element={<Navigate to="/predlozheniya" replace />} />
+            <Route path="/" element={<Navigate to="/trading" replace />} />
             <Route path="/home" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/predlozheniya" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />

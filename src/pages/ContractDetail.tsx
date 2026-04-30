@@ -45,7 +45,7 @@ export default function ContractDetail({ isAuthenticated, onLogout }: ContractDe
 
   useEffect(() => {
     loadContract();
-  }, [id, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatDate = (d: string) => {
     if (!d || d === 'None' || d === 'null') return '—';
