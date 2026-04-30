@@ -16,8 +16,7 @@ import ResponseCard from '@/components/contract/ResponseCard';
 const CONTRACTS_API = func2url['contracts-list'];
 const RESPONSE_ID_API = func2url['contract-response-id'];
 
-// Отклики со статусами отменения/отклонения
-const ARCHIVED_STATUSES = ['cancelled', 'rejected'];
+const ARCHIVED_RESPONSE_STATUSES = ['cancelled', 'rejected'];
 
 interface MyContractsProps {
   isAuthenticated: boolean;
@@ -30,13 +29,8 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const { toast } = useToast();
   const currentUser = getSession();
 
-  // Контракты где пользователь — продавец
   const [myContracts, setMyContracts] = useState<Contract[]>([]);
-  // Контракты где пользователь откликался (все статусы)
   const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
-  // Контракты продавца у которых есть отменённые отклики (для архива)
-  const [sellerCancelledContracts, setSellerCancelledContracts] = useState<Contract[]>([]);
-
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -44,10 +38,11 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   });
   const [negotiationModal, setNegotiationModal] = useState<{ responseId: number; title: string } | null>(null);
 
-  const getUserId = () => {
-    const rawId = (currentUser as { id?: number; userId?: number })?.id
-      ?? (currentUser as { id?: number; userId?: number })?.userId
-      ?? (Number(localStorage.getItem('userId') || '0') || undefined);
+  const getUserId = (): string => {
+    const rawId =
+      (currentUser as { id?: number; userId?: number })?.id ??
+      (currentUser as { id?: number; userId?: number })?.userId ??
+      (Number(localStorage.getItem('userId') || '0') || undefined);
     return rawId ? String(rawId) : '';
   };
 
@@ -65,11 +60,9 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     if (!userId) { setIsLoading(false); return; }
 
     try {
-      // Три параллельных запроса
-      const [ownResp, myRespResp, cancelledResp] = await Promise.all([
+      const [ownResp, myRespResp] = await Promise.all([
         fetch(`${CONTRACTS_API}?user_id=${userId}`, { headers: { 'X-User-Id': userId } }),
         fetch(`${CONTRACTS_API}?my_responses=true`, { headers: { 'X-User-Id': userId } }),
-        fetch(`${CONTRACTS_API}?cancelled_responses=true`, { headers: { 'X-User-Id': userId } }),
       ]);
 
       if (ownResp.ok) {
@@ -79,10 +72,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
       if (myRespResp.ok) {
         const d = await myRespResp.json();
         setRespondedContracts(d.contracts || []);
-      }
-      if (cancelledResp.ok) {
-        const d = await cancelledResp.json();
-        setSellerCancelledContracts(d.contracts || []);
       }
     } catch (err) {
       console.error(err);
@@ -129,7 +118,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   };
 
   // ── Фильтрация ──────────────────────────────────────────────────
-  // Мои собственные контракты (я — продавец)
+  // Мои контракты (я — продавец)
   const ownContracts = myContracts.filter(c => Number(c.sellerId) === currentUserId);
 
   // Активные собственные
@@ -137,25 +126,20 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   const activeRequests = activeOwn.filter(c => c.contractType === 'forward-request');
   const activeForwards = activeOwn.filter(c => c.contractType !== 'forward-request');
 
-  // Завершённые/отменённые собственные контракты
+  // Завершённые/отменённые собственные → в Архив
   const closedOwn = ownContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
 
-  // Мои отклики: только активные (не cancelled/rejected)
+  // Мои отклики: активные (не cancelled/rejected)
   const activeResponded = respondedContracts.filter(
-    c => !ARCHIVED_STATUSES.includes(c.myResponseStatus || '')
+    c => !ARCHIVED_RESPONSE_STATUSES.includes(c.myResponseStatus || '')
   );
-  // Мои отклики: отменённые/отклонённые → в архив
+  // Мои отклики: отменённые → в Архив
   const archivedResponded = respondedContracts.filter(
-    c => ARCHIVED_STATUSES.includes(c.myResponseStatus || '')
+    c => ARCHIVED_RESPONSE_STATUSES.includes(c.myResponseStatus || '')
   );
-
-  // Контракты продавца с отменёнными откликами — убираем дубли с closedOwn
-  const closedOwnIds = new Set(closedOwn.map(c => c.id));
-  const sellerCancelled = sellerCancelledContracts.filter(c => !closedOwnIds.has(c.id));
 
   const activeCount = activeOwn.length;
-  const activeResponsesCount = activeResponded.length;
-  const archiveCount = archivedResponded.length + closedOwn.length + sellerCancelled.length;
+  const archiveCount = archivedResponded.length + closedOwn.length;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -180,7 +164,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                 Активные {activeCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeCount}</span>}
               </TabsTrigger>
               <TabsTrigger value="responses">
-                Мои отклики {activeResponsesCount > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeResponsesCount}</span>}
+                Мои отклики {activeResponded.length > 0 && <span className="ml-1.5 text-xs bg-primary/10 text-primary px-1.5 rounded-full">{activeResponded.length}</span>}
               </TabsTrigger>
               <TabsTrigger value="archive">
                 Архив {archiveCount > 0 && <span className="ml-1.5 text-xs bg-muted px-1.5 rounded-full">{archiveCount}</span>}
@@ -249,31 +233,16 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                 <p className="text-center text-muted-foreground py-8">Архив пуст</p>
               ) : (
                 <>
-                  {/* Мои отменённые отклики на чужие контракты */}
+                  {/* Мои отменённые/отклонённые отклики */}
                   {archivedResponded.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Icon name="XCircle" size={14} className="text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Мои отменённые отклики</span>
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отменённые отклики</span>
                         <span className="text-xs bg-muted px-1.5 rounded-full">{archivedResponded.length}</span>
                       </div>
                       {archivedResponded.map(c => (
-                        <ResponseCard key={`my-arch-${c.id}`} contract={c} onClick={() => navigate(`/contract/${c.id}`)} />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Мои контракты с отменёнными откликами участников */}
-                  {sellerCancelled.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <Icon name="UserX" size={14} className="text-muted-foreground" />
-                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отменённые отклики на мои контракты</span>
-                        <span className="text-xs bg-muted px-1.5 rounded-full">{sellerCancelled.length}</span>
-                      </div>
-                      {sellerCancelled.map(c => (
-                        <ContractCard key={`sc-${c.id}`} contract={c} currentUserId={currentUserId}
-                          onClick={() => navigate(`/contract/${c.id}`)} />
+                        <ResponseCard key={`arch-${c.id}`} contract={c} onClick={() => navigate(`/contract/${c.id}`)} />
                       ))}
                     </div>
                   )}
@@ -282,7 +251,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                   {closedOwn.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <Icon name="CheckCircle" size={14} className="text-muted-foreground" />
+                        <Icon name="Archive" size={14} className="text-muted-foreground" />
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Завершённые контракты</span>
                         <span className="text-xs bg-muted px-1.5 rounded-full">{closedOwn.length}</span>
                       </div>

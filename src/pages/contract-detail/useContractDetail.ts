@@ -83,6 +83,11 @@ export function useContractDetail(id: string | undefined) {
   const loadContract = async () => {
     try {
       setLoading(true);
+      // Сбрасываем состояние отклика при каждой загрузке
+      setAlreadyResponded(false);
+      setMyResponseId(null);
+      negotiationResponseId.current = null;
+
       const session = getSession();
       const rawUserId = localStorage.getItem('userId') || (session?.id ? String(session.id) : null);
       const userId = rawUserId || null;
@@ -93,25 +98,18 @@ export function useContractDetail(id: string | undefined) {
         const data = await res.json();
         const contracts = data.contracts || [];
         const found = contracts.find((c: Contract) => String(c.id) === String(id)) || contracts[0] || null;
-        console.log('[ContractDetail] loadContract', { id, userId, found_sellerId: found?.sellerId, found_id: found?.id, total: contracts.length, isSeller: userId && String(found?.sellerId) === String(userId) });
         if (found) {
           setContract(found);
           if (userId && String(found.sellerId) === String(userId)) {
             loadResponses(found.id, userId);
           } else if (userId && String(found.sellerId) !== String(userId)) {
+            // responseId возвращается только для активных (не cancelled) откликов
             if (found.responseId) {
               setAlreadyResponded(true);
               setMyResponseId(found.responseId);
               negotiationResponseId.current = found.responseId;
-            } else {
-              // Нет активного отклика — сбрасываем состояние (на случай если пришли из locationState с alreadyResponded=true после отмены)
-              setAlreadyResponded(false);
-              setMyResponseId(null);
-              negotiationResponseId.current = null;
-              checkMyResponse(Number(id), userId);
             }
-          } else if (!userId) {
-            console.warn('[ContractDetail] No userId available, cannot load responses or check response');
+            // если responseId нет — пользователь видит кнопку "Откликнуться" (состояние уже сброшено выше)
           }
         } else {
           toast({ title: 'Контракт не найден', variant: 'destructive' });
@@ -224,13 +222,11 @@ export function useContractDetail(id: string | undefined) {
       });
       const data = await res.json();
       if (res.ok) {
-        setAlreadyResponded(true);
         setRespondOpen(false);
         setRespondComment('');
         toast({ title: 'Отклик отправлен', description: 'Переходим в раздел «Мои контракты» → «Мои отклики»' });
         setTimeout(() => navigate('/my-contracts?tab=responses'), 1500);
       } else if (res.status === 409) {
-        setAlreadyResponded(true);
         setRespondOpen(false);
         toast({
           title: 'Вы уже откликнулись на этот контракт',
