@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -10,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
 import ContractNegotiationModal from '@/components/contract/ContractNegotiationModal';
-import ContractCard, { Contract } from '@/components/contract/ContractCard';
+import ContractCard, { Contract, CONTRACT_TYPE_LABELS, formatAmount, formatDate } from '@/components/contract/ContractCard';
 import ResponseCard from '@/components/contract/ResponseCard';
 
 const CONTRACTS_API = func2url['contracts-list'];
@@ -31,7 +33,30 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
 
   const [myContracts, setMyContracts] = useState<Contract[]>([]);
   const [respondedContracts, setRespondedContracts] = useState<Contract[]>([]);
+  const [cancelledOwnerResponses, setCancelledOwnerResponses] = useState<CancelledOwnerItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  interface CancelledOwnerItem {
+    id: number;
+    title: string;
+    productName: string;
+    contractType: string;
+    status: string;
+    totalAmount: number;
+    currency: string;
+    quantity: number;
+    unit: string;
+    contractStartDate: string;
+    contractEndDate: string;
+    sellerId: number;
+    responseId: number;
+    responseStatus: string;
+    respondentFirstName: string;
+    respondentLastName: string;
+    respondentCompanyName: string;
+    pricePerUnit: number;
+    createdAt: string;
+  }
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('tab') || 'active';
@@ -60,23 +85,23 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
     if (!userId) { setIsLoading(false); return; }
 
     try {
-      const [ownResp, myRespResp] = await Promise.all([
+      const [ownResp, myRespResp, cancelledResp] = await Promise.all([
         fetch(`${CONTRACTS_API}?user_id=${userId}`, { headers: { 'X-User-Id': userId } }),
         fetch(`${CONTRACTS_API}?my_responses=true`, { headers: { 'X-User-Id': userId } }),
+        fetch(`${CONTRACTS_API}?cancelled_responses=true`, { headers: { 'X-User-Id': userId } }),
       ]);
 
       if (ownResp.ok) {
         const d = await ownResp.json();
-        const contracts = d.contracts || [];
-        console.log('[MyContracts] ownResp userId=' + userId, contracts.map((c: Contract) => ({id: c.id, sellerId: c.sellerId, hasCancelled: (c as Contract & {hasCancelledResponses?: boolean}).hasCancelledResponses})));
-        setMyContracts(contracts);
-      } else {
-        console.error('[MyContracts] ownResp error', ownResp.status);
+        setMyContracts(d.contracts || []);
       }
       if (myRespResp.ok) {
         const d = await myRespResp.json();
-        console.log('[MyContracts] myRespResp', d.contracts?.length, d.contracts?.map((c: Contract) => ({id: c.id, status: c.myResponseStatus})));
         setRespondedContracts(d.contracts || []);
+      }
+      if (cancelledResp.ok) {
+        const d = await cancelledResp.json();
+        setCancelledOwnerResponses(d.contracts || []);
       }
     } catch (err) {
       console.error(err);
@@ -134,11 +159,6 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   // Завершённые/отменённые собственные → в Архив
   const closedOwn = ownContracts.filter(c => ['completed', 'cancelled'].includes(c.status));
 
-  // Мои активные контракты у которых есть отменённые отклики → тоже в Архив
-  const withCancelledResponses = ownContracts.filter(
-    c => !['completed', 'cancelled'].includes(c.status) && (c as Contract & { hasCancelledResponses?: boolean }).hasCancelledResponses
-  );
-
   // Мои отклики: активные (не cancelled/rejected)
   const activeResponded = respondedContracts.filter(
     c => !ARCHIVED_RESPONSE_STATUSES.includes(c.myResponseStatus || '')
@@ -149,7 +169,7 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
   );
 
   const activeCount = activeOwn.length;
-  const archiveCount = archivedResponded.length + closedOwn.length + withCancelledResponses.length;
+  const archiveCount = archivedResponded.length + closedOwn.length + cancelledOwnerResponses.length;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -257,17 +277,59 @@ export default function MyContracts({ isAuthenticated, onLogout }: MyContractsPr
                     </div>
                   )}
 
-                  {/* Мои контракты с отменёнными откликами участников */}
-                  {withCancelledResponses.length > 0 && (
+                  {/* Отменённые отклики участников на мои контракты */}
+                  {cancelledOwnerResponses.length > 0 && (
                     <div className="space-y-3">
                       <div className="flex items-center gap-2">
                         <Icon name="UserX" size={14} className="text-muted-foreground" />
                         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Отменённые отклики на мои контракты</span>
-                        <span className="text-xs bg-muted px-1.5 rounded-full">{withCancelledResponses.length}</span>
+                        <span className="text-xs bg-muted px-1.5 rounded-full">{cancelledOwnerResponses.length}</span>
                       </div>
-                      {withCancelledResponses.map(c => (
-                        <ContractCard key={`wcr-${c.id}`} contract={c} currentUserId={currentUserId}
-                          onClick={() => navigate(`/contract/${c.id}`)} />
+                      {cancelledOwnerResponses.map(item => (
+                        <Card key={`cor-${item.responseId}`} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/contract/${item.id}`)}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <span className="font-medium text-sm truncate">{item.title || item.productName || `Контракт #${item.id}`}</span>
+                                  <Badge variant="destructive" className="text-xs shrink-0">Отменён</Badge>
+                                  {item.contractType && CONTRACT_TYPE_LABELS[item.contractType] && (
+                                    <Badge variant="outline" className="text-xs shrink-0">{CONTRACT_TYPE_LABELS[item.contractType]}</Badge>
+                                  )}
+                                </div>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                                  <span className="flex items-center gap-1">
+                                    <Icon name="User" size={12} />
+                                    {`${item.respondentFirstName || ''} ${item.respondentLastName || ''}`.trim() || item.respondentCompanyName || 'Участник'}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Icon name="Package" size={12} />
+                                    {item.quantity} {item.unit}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Icon name="Calendar" size={12} />
+                                    с {formatDate(item.contractStartDate)}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Icon name="Calendar" size={12} />
+                                    по {formatDate(item.contractEndDate)}
+                                  </span>
+                                </div>
+                                {item.pricePerUnit > 0 && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Цена отклика: {formatAmount(item.pricePerUnit, item.currency)} / ед.
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="font-semibold text-sm">
+                                  {item.totalAmount ? formatAmount(item.totalAmount, item.currency) : 'Договорная'}
+                                </div>
+                                <div className="text-xs text-muted-foreground">Инициатор</div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   )}

@@ -248,17 +248,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return {'statusCode': 409, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Вы уже откликнулись на этот контракт'}), 'isBase64Encoded': False}
                     price_per_unit = float(price_per_unit_raw) if price_per_unit_raw else float(contract['price_per_unit'] or 0)
                     total_amount = float(total_amount_raw) if total_amount_raw else price_per_unit * float(contract['quantity'] or 1)
+                    cur.execute('SELECT u.first_name, u.last_name FROM users u WHERE u.id = %s', (user_id,))
+                    respondent = cur.fetchone() or {}
+                    respondent_name = f"{respondent.get('first_name', '')} {respondent.get('last_name', '')}".strip() or 'Участник'
+                    contract_title = contract.get('title') or contract.get('product_name') or f'Контракт #{contract_id}'
+                    seller_id = contract['seller_id']
                     cur.execute(
                         'INSERT INTO contract_responses (contract_id, user_id, price_per_unit, total_amount, comment, status) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id',
                         (contract_id, user_id, price_per_unit, total_amount, comment, 'pending')
                     )
                     new_id = cur.fetchone()['id']
                     conn.commit()
-                    cur.execute('SELECT u.first_name, u.last_name FROM users u WHERE u.id = %s', (user_id,))
-                    respondent = cur.fetchone() or {}
-                    respondent_name = f"{respondent.get('first_name', '')} {respondent.get('last_name', '')}".strip() or 'Участник'
-                    contract_title = contract.get('title') or contract.get('product_name') or f'Контракт #{contract_id}'
-                    seller_id = contract['seller_id']
                 threading.Thread(
                     target=send_push,
                     args=(seller_id, 'Новый отклик на контракт',
