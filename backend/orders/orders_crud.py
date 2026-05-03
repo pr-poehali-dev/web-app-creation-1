@@ -397,7 +397,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         }
     
     cur.execute(
-        f"SELECT id FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}' AND buyer_id = {int(user_id)} AND status NOT IN ('cancelled')"
+        f"SELECT id, status FROM {schema}.orders WHERE offer_id = '{offer_id_escaped}' AND buyer_id = {int(user_id)} AND status NOT IN ('cancelled', 'completed', 'rejected', 'archived')"
     )
     existing_order = cur.fetchone()
     if existing_order:

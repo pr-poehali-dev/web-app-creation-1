@@ -335,15 +335,7 @@ export function useOfferDetail(id: string | undefined) {
       if (response.status === 409) {
         const errorData = await response.json().catch(() => ({}));
         setIsOrderModalOpen(false);
-        toast({
-          title: 'Заказ уже существует',
-          description: 'Вы уже оформляли заказ на это предложение. Перенаправляем на ваш заказ...',
-          duration: 3000,
-        });
-        setTimeout(() => {
-          const tab = errorData.orderTab || 'buyer';
-          navigate(`/my-orders?tab=${tab}`);
-        }, 1000);
+        setExistingOrderDialog({ open: true, tab: errorData.orderTab || 'buyer' });
         return;
       }
 
@@ -564,6 +556,16 @@ export function useOfferDetail(id: string | undefined) {
     }
   };
 
+  const handleExistingOrderYes = () => {
+    setExistingOrderDialog({ open: false, tab: 'buyer' });
+    setIsOrderModalOpen(true);
+  };
+
+  const handleExistingOrderNo = () => {
+    setExistingOrderDialog({ open: false, tab: 'buyer' });
+    navigate(-1);
+  };
+
   return {
     offer,
     isLoading,
@@ -577,6 +579,7 @@ export function useOfferDetail(id: string | undefined) {
     isChatOpen,
     createdOrder,
     chatMessages,
+    existingOrderDialog,
     setCurrentImageIndex,
     setIsVideoPlaying,
     setIsMuted,
@@ -588,6 +591,8 @@ export function useOfferDetail(id: string | undefined) {
     handleShare,
     handleOrderClick,
     handleOrderSubmit,
+    handleExistingOrderYes,
+    handleExistingOrderNo,
     openGallery,
     setGalleryIndex,
     handleSendMessage,

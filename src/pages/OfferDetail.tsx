@@ -32,6 +32,7 @@ export default function OfferDetail() {
     isChatOpen,
     createdOrder,
     chatMessages,
+    existingOrderDialog,
     setCurrentImageIndex,
     setIsVideoPlaying,
     setIsMuted,
@@ -43,6 +44,8 @@ export default function OfferDetail() {
     handleShare,
     handleOrderClick,
     handleOrderSubmit,
+    handleExistingOrderYes,
+    handleExistingOrderNo,
     openGallery,
     setGalleryIndex,
     handleSendMessage,
@@ -79,6 +82,7 @@ export default function OfferDetail() {
         isChatOpen={isChatOpen}
         createdOrder={createdOrder}
         chatMessages={chatMessages}
+        existingOrderDialog={existingOrderDialog}
         onImageIndexChange={setCurrentImageIndex}
         onVideoPlayingChange={setIsVideoPlaying}
         onMuteChange={setIsMuted}
@@ -91,6 +95,8 @@ export default function OfferDetail() {
         onShare={handleShare}
         onOrderClick={() => handleOrderClick(isAuthenticated)}
         onOrderSubmit={handleOrderSubmit}
+        onExistingOrderYes={handleExistingOrderYes}
+        onExistingOrderNo={handleExistingOrderNo}
         onOpenGallery={openGallery}
         onSendMessage={handleSendMessage}
         navigate={navigate}

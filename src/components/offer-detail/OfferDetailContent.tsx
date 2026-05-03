@@ -8,6 +8,16 @@ import OfferReviews from '@/components/offer/OfferReviews';
 import OfferDetailInfoCard from './OfferDetailInfoCard';
 import OfferDetailSidebar from './OfferDetailSidebar';
 import OfferDetailGalleryModal from './OfferDetailGalleryModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 
@@ -36,6 +46,9 @@ interface OfferDetailContentProps {
   onOrderClick: () => void;
   onOrderSubmit: (data: any) => void;
   onOpenGallery: (index: number) => void;
+  existingOrderDialog: { open: boolean; tab: string };
+  onExistingOrderYes: () => void;
+  onExistingOrderNo: () => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 
@@ -63,6 +76,9 @@ export default function OfferDetailContent({
   onOrderClick,
   onOrderSubmit,
   onOpenGallery,
+  existingOrderDialog,
+  onExistingOrderYes,
+  onExistingOrderNo,
   navigate,
 }: OfferDetailContentProps) {
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
@@ -176,6 +192,25 @@ export default function OfferDetailContent({
         onGalleryIndexChange={onGalleryIndexChange}
         onVideoPlayingChange={onVideoPlayingChange}
       />
+
+      <AlertDialog open={existingOrderDialog.open}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>У вас уже есть заказ по этому предложению</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы хотите сделать новый заказ?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={onExistingOrderNo}>
+              Нет, вернуться назад
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={onExistingOrderYes}>
+              Да, новый заказ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
