@@ -538,7 +538,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽{pickup_info}'
 
         call_type = 'response' if is_request else 'order'
-        order_url = f'/my-orders?id={result["id"]}'
+        seller_tab = 'my-requests' if is_request else 'seller'
+        order_url = f'/my-orders?tab={seller_tab}&orderId={result["id"]}'
 
         # Push и звонок запускаем параллельно — не ждём друг друга
         t_notif = threading.Thread(

@@ -114,6 +114,18 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [orderIdParam, isLoading]);
 
   useEffect(() => {
+    if (!orderIdParam || isLoading || orders.length === 0 || isChatOpen) return;
+    const timer = setTimeout(() => {
+      const order = orders.find(o => o.id === orderIdParam);
+      if (order) {
+        handleOpenChat(order);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderIdParam, isLoading, orders]);
+
+  useEffect(() => {
     const handleOpenOrderChat = async (event: CustomEvent) => {
       const { orderId, tab } = event.detail;
       
