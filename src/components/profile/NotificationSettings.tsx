@@ -45,6 +45,17 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
     }
   };
 
+  const registerPushSubscription = async () => {
+    const { setupPushNotifications } = await import('@/services/pushNotifications');
+    const success = await setupPushNotifications(userId);
+    setIsEnabled(true);
+    if (success) {
+      toast({ title: 'Уведомления включены', description: 'Вы будете получать push-уведомления на этом устройстве' });
+    } else {
+      toast({ title: 'Уведомления включены', description: 'Разрешение получено. Подписка будет активирована при следующем входе' });
+    }
+  };
+
   const handleToggleNotifications = async (enabled: boolean) => {
     if (!isSupported) return;
 
@@ -52,48 +63,19 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
 
     try {
       if (enabled) {
-        // Сначала запрашиваем разрешение браузера
-        const permission = await Notification.requestPermission();
-        
-        if (permission !== 'granted') {
-          toast({
-            title: 'Уведомления заблокированы',
-            description: 'Разрешите уведомления в настройках браузера для этого сайта',
-            variant: 'destructive',
-          });
+        // Если разрешение уже выдано — сразу регистрируем подписку
+        if (Notification.permission === 'granted') {
+          await registerPushSubscription();
         } else {
-          // Разрешение получено — регистрируем подписку в БД
-          const { setupPushNotifications } = await import('@/services/pushNotifications');
-          const success = await setupPushNotifications(userId);
-          
-          // Включаем переключатель даже если сервер недоступен (разрешение уже есть)
-          setIsEnabled(true);
-          
-          if (success) {
-            // Автоматически включаем email-уведомления
-            try {
-              const authUrl = 'https://functions.poehali.dev/e95db6c2-d56f-42e2-b3e6-25fbf5e7bc98';
-              await fetch(authUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  userId: parseInt(userId),
-                  emailNotifications: true
-                })
-              });
-            } catch (e) {
-              console.error('Не удалось включить email-уведомления:', e);
-            }
-            
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
             toast({
-              title: 'Уведомления включены',
-              description: 'Вы будете получать важные обновления в браузере и на email',
+              title: 'Уведомления заблокированы',
+              description: 'Разрешите уведомления в настройках браузера для этого сайта',
+              variant: 'destructive',
             });
           } else {
-            toast({
-              title: 'Уведомления включены',
-              description: 'Push-уведомления активированы. Email-уведомления также будут приходить',
-            });
+            await registerPushSubscription();
           }
         }
       } else {

@@ -118,13 +118,13 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
   };
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Проверяем сессию напрямую — isAuthenticated может быть false во время ленивой загрузки
+    const session = getSession();
+    if (!isAuthenticated && !session) {
       navigate('/login');
       return;
     }
     
-    // Читаем сессию свежо в момент эффекта
-    const session = getSession();
     console.log('[PROFILE] useEffect session=', session?.id, 'viewingUserId=', viewingUserId, 'isAuthenticated=', isAuthenticated);
     
     if (viewingUserId && viewingUserId !== String(session?.id)) {
