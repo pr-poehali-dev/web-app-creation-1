@@ -241,7 +241,7 @@ const App = () => {
   const handleGlobalRefresh = async () => {
     showLoading();
     try {
-      // Инвалидируем in-memory кэш API без перезагрузки страницы
+      // Инвалидируем in-memory кэш API
       clearCache();
       SmartCache.invalidateAll('orders');
       SmartCache.invalidateAll('requests');
@@ -249,8 +249,15 @@ const App = () => {
       SmartCache.invalidateAll('auctions');
       // Сигнализируем компонентам о необходимости перезагрузить данные
       window.dispatchEvent(new CustomEvent('globalRefresh'));
-      await new Promise(r => setTimeout(r, 600));
-    } finally {
+      // Сбрасываем кэш Service Worker чтобы PWA получило свежий JS/HTML
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      await new Promise(r => setTimeout(r, 400));
+      // Перезагружаем страницу — гарантирует актуальный код для PWA
+      window.location.reload();
+    } catch {
       hideLoading();
     }
   };

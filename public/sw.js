@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.5';
+const CACHE_VERSION = 'v1.0.6';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 // Хосты API — никогда не кэшируем
@@ -78,20 +78,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML навигация — network first (свежий HTML, но fallback на кэш)
+  // HTML навигация — network first, всегда отдаём свежий index.html
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).then((response) => {
-        caches.open(STATIC_CACHE).then((cache) => {
-          if (response.ok) cache.put(event.request, response.clone());
-        });
+      fetch('/').then((response) => {
+        if (response.ok) {
+          caches.open(STATIC_CACHE).then((cache) => {
+            cache.put('/', response.clone());
+          });
+        }
         return response;
       }).catch(async () => {
-        // Нет сети — отдаём закэшированный index.html, React запустится из кэша JS/CSS
         const cached = await caches.match('/');
-        if (cached) return cached;
-        // Кэша нет — повторяем напрямую, браузер покажет своё сообщение об ошибке
-        return fetch(event.request);
+        return cached || fetch(event.request);
       })
     );
     return;

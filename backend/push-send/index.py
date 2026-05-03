@@ -1,22 +1,32 @@
 import json
 import os
+import base64
 import psycopg2
+from cryptography.hazmat.primitives.serialization import load_pem_private_key, Encoding, PrivateFormat, NoEncryption
 from pywebpush import webpush, WebPushException
 
 
-def load_vapid_pem() -> str:
-    """Загружает VAPID приватный ключ из секрета в виде PEM-строки"""
+def load_vapid_key_b64() -> str:
+    """
+    Загружает VAPID приватный ключ из секрета (PEM) и возвращает
+    в формате base64url raw — именно такой ожидает pywebpush.
+    """
     raw = os.environ.get('VAPID_PRIVATE_KEY', '')
-    return raw.replace('\\n', '\n').strip() + '\n'
+    pem = raw.replace('\\n', '\n').strip() + '\n'
+    private_key = load_pem_private_key(pem.encode(), password=None)
+    # Экспортируем raw байты EC приватного ключа (32 байта для P-256)
+    raw_bytes = private_key.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
+    # Кодируем в base64url без padding — именно этот формат принимает pywebpush
+    return base64.urlsafe_b64encode(raw_bytes).rstrip(b'=').decode('ascii')
 
 
-def send_web_push(subscription_info: dict, payload: str, vapid_pem: str, vapid_claims: dict) -> tuple:
+def send_web_push(subscription_info: dict, payload: str, vapid_key_b64: str, vapid_claims: dict) -> tuple:
     """Отправляет Web Push через pywebpush"""
     try:
         webpush(
             subscription_info=subscription_info,
             data=payload,
-            vapid_private_key=vapid_pem,
+            vapid_private_key=vapid_key_b64,
             vapid_claims=vapid_claims,
         )
         return 201, 'ok'
@@ -103,7 +113,7 @@ def handler(event: dict, context) -> dict:
 
         # Загружаем VAPID ключ
         try:
-            vapid_pem = load_vapid_pem()
+            vapid_key_b64 = load_vapid_key_b64()
             print(f'[PUSH] VAPID key loaded OK')
         except Exception as e:
             print(f'[PUSH] VAPID key error: {e}')
@@ -133,7 +143,7 @@ def handler(event: dict, context) -> dict:
                 subscription_info = json.loads(sub_data[0])
                 status_code, resp_text = send_web_push(
                     subscription_info, notification_payload,
-                    vapid_pem, vapid_claims
+                    vapid_key_b64, vapid_claims
                 )
                 if status_code in (200, 201, 202):
                     sent_count += 1
