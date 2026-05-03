@@ -42,7 +42,7 @@ def check_existing_response(event: Dict[str, Any], offer_id: str, headers: Dict[
     schema = get_schema()
     from psycopg2 import sql as pgsql
     cur.execute(
-        pgsql.SQL("SELECT id, price_per_unit, quantity, buyer_comment, status, attachments FROM {schema}.orders WHERE offer_id = %s AND buyer_id = %s AND status NOT IN ('cancelled') LIMIT 1").format(schema=pgsql.Identifier(schema)),
+        pgsql.SQL("SELECT id, price_per_unit, quantity, buyer_comment, status, attachments FROM {schema}.orders WHERE offer_id = %s AND buyer_id = %s AND status NOT IN ('cancelled', 'completed', 'rejected', 'archived') LIMIT 1").format(schema=pgsql.Identifier(schema)),
         (offer_id, int(user_id))
     )
     row = cur.fetchone()
