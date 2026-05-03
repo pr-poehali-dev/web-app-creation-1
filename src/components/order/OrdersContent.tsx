@@ -61,6 +61,10 @@ export default function OrdersContent({
   const isEffectivelyArchived = (order: Order) =>
     isArchivedStatus(order.status as string) || isTransportExpired(order);
 
+  const SERVICE_CATEGORIES = ['utilities', 'transport'];
+  const isServiceOrder = (order: Order) =>
+    SERVICE_CATEGORIES.includes((order as unknown as Record<string, unknown>).offerCategory as string);
+
   const isOrderVisible = (order: Order) => {
     if (activeTab === 'archive') {
       return isEffectivelyArchived(order);
@@ -69,10 +73,13 @@ export default function OrdersContent({
       return order.isRequest && order.type === 'sale' && !isEffectivelyArchived(order);
     }
     if (activeTab === 'my-responses') {
-      return order.isRequest && order.type === 'purchase' && !isEffectivelyArchived(order);
+      return order.type === 'purchase' && !isEffectivelyArchived(order) &&
+        (order.isRequest || isServiceOrder(order));
     }
-    const typeMatch = activeTab === 'buyer' ? order.type === 'purchase' : order.type === 'sale';
-    return typeMatch && !order.isRequest && !isEffectivelyArchived(order);
+    if (activeTab === 'buyer') {
+      return order.type === 'purchase' && !order.isRequest && !isServiceOrder(order) && !isEffectivelyArchived(order);
+    }
+    return order.type === 'sale' && !order.isRequest && !isEffectivelyArchived(order);
   };
 
   const visibleOrders = orders.filter(order => {

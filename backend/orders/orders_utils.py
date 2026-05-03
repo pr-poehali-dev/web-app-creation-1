@@ -72,16 +72,8 @@ def _send_email_async(notification_data: str):
         print(f'[NOTIFICATION] Email error: {e}')
 
 
-def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
-    """Отправка push (синхронно) и email (асинхронно) уведомлений"""
-    notification_data = json.dumps({
-        'userId': user_id,
-        'title': title,
-        'message': message,
-        'url': url
-    })
-
-    # Web Push — синхронно, гарантированно до завершения функции
+def _send_push(notification_data: str, user_id: int, title: str):
+    """Отправка Web Push уведомления"""
     try:
         conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=10)
         conn.request('POST', '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a',  # push-send
@@ -92,6 +84,29 @@ def send_notification(user_id: int, title: str, message: str, url: str = '/my-or
         print(f'[NOTIFICATION] Push sent to user {user_id}: {title} | status={response.status} resp={body_resp[:200]}')
     except Exception as e:
         print(f'[NOTIFICATION] Push error: {e}')
+
+
+def send_push_only(user_id: int, title: str, message: str, url: str = '/my-orders'):
+    """Отправка только push-уведомления (без email)"""
+    notification_data = json.dumps({
+        'userId': user_id,
+        'title': title,
+        'message': message,
+        'url': url
+    })
+    _send_push(notification_data, user_id, title)
+
+
+def send_notification(user_id: int, title: str, message: str, url: str = '/my-orders'):
+    """Отправка push (синхронно) и email (асинхронно) уведомлений"""
+    notification_data = json.dumps({
+        'userId': user_id,
+        'title': title,
+        'message': message,
+        'url': url
+    })
+
+    _send_push(notification_data, user_id, title)
 
     # Email — в фоне, не блокирует
     t = threading.Thread(target=_send_email_async, args=(notification_data,), daemon=True)

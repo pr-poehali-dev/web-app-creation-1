@@ -6,7 +6,7 @@ import uuid
 import mimetypes
 import boto3
 from typing import Dict, Any
-from orders_utils import get_db_connection, get_schema, send_notification
+from orders_utils import get_db_connection, get_schema, send_push_only
 
 
 def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
@@ -224,7 +224,7 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
         try:
             recipient_id = order['seller_id'] if int(sender_id) == order['buyer_id'] else order['buyer_id']
             notif_text = message_text if message_text else '📎 Файл'
-            send_notification(
+            send_push_only(
                 recipient_id,
                 'Новое сообщение по заказу',
                 f'{sender_name}: {notif_text[:50]}...' if len(notif_text) > 50 else f'{sender_name}: {notif_text}',

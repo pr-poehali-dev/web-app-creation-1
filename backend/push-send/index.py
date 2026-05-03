@@ -1,55 +1,29 @@
 import json
 import os
-import base64
-import http_ece
-import requests
 import psycopg2
-from cryptography.hazmat.primitives.serialization import load_pem_private_key, Encoding, PublicFormat
-from cryptography.hazmat.primitives.asymmetric.ec import ECDH, generate_private_key, SECP256R1
-from py_vapid import Vapid02
+from pywebpush import webpush, WebPushException
 
 
-def load_vapid_key():
-    """Загружает VAPID приватный ключ из секрета, нормализуя формат"""
+def load_vapid_pem() -> str:
+    """Загружает VAPID приватный ключ из секрета в виде PEM-строки"""
     raw = os.environ.get('VAPID_PRIVATE_KEY', '')
-    # Нормализуем \n как литерал → реальный перенос
-    pem = raw.replace('\\n', '\n').strip() + '\n'
-    return load_pem_private_key(pem.encode('utf-8'), password=None)
+    return raw.replace('\\n', '\n').strip() + '\n'
 
 
-def send_web_push(subscription_info: dict, payload: str, vapid_private_key, vapid_claims: dict) -> tuple:
-    """Отправляет Web Push напрямую через py_vapid + requests"""
-    endpoint = subscription_info['endpoint']
-    p256dh = base64.urlsafe_b64decode(
-        subscription_info['keys']['p256dh'] + '=='
-    )
-    auth = base64.urlsafe_b64decode(
-        subscription_info['keys']['auth'] + '=='
-    )
-
-    # Шифруем payload
-    salt = os.urandom(16)
-    server_key = generate_private_key(SECP256R1())
-    server_key_public = server_key.public_key()
-
-    encrypted = http_ece.encrypt(
-        payload.encode('utf-8'),
-        salt=salt,
-        private_key=server_key,
-        dh=p256dh,
-        auth_secret=auth,
-        version='aes128gcm'
-    )
-
-    # Формируем VAPID заголовки
-    vapid = Vapid02.from_private_key(vapid_private_key)
-    headers = vapid.sign(vapid_claims)
-    headers['Content-Encoding'] = 'aes128gcm'
-    headers['Content-Type'] = 'application/octet-stream'
-    headers['TTL'] = '86400'
-
-    resp = requests.post(endpoint, data=encrypted, headers=headers, timeout=15)
-    return resp.status_code, resp.text[:200]
+def send_web_push(subscription_info: dict, payload: str, vapid_pem: str, vapid_claims: dict) -> tuple:
+    """Отправляет Web Push через pywebpush"""
+    try:
+        webpush(
+            subscription_info=subscription_info,
+            data=payload,
+            vapid_private_key=vapid_pem,
+            vapid_claims=vapid_claims,
+        )
+        return 201, 'ok'
+    except WebPushException as e:
+        status = e.response.status_code if e.response is not None else 500
+        body = e.response.text[:200] if e.response is not None else str(e)
+        return status, body
 
 
 def handler(event: dict, context) -> dict:
@@ -129,7 +103,7 @@ def handler(event: dict, context) -> dict:
 
         # Загружаем VAPID ключ
         try:
-            vapid_private_key = load_vapid_key()
+            vapid_pem = load_vapid_pem()
             print(f'[PUSH] VAPID key loaded OK')
         except Exception as e:
             print(f'[PUSH] VAPID key error: {e}')
@@ -159,7 +133,7 @@ def handler(event: dict, context) -> dict:
                 subscription_info = json.loads(sub_data[0])
                 status_code, resp_text = send_web_push(
                     subscription_info, notification_payload,
-                    vapid_private_key, vapid_claims
+                    vapid_pem, vapid_claims
                 )
                 if status_code in (200, 201, 202):
                     sent_count += 1
