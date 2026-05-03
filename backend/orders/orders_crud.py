@@ -407,7 +407,7 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
         return {
             'statusCode': 409,
             'headers': headers,
-            'body': json.dumps({'error': error_msg, 'existingOrderId': str(existing_order['id'])}),
+            'body': json.dumps({'error': error_msg, 'existingOrderId': str(existing_order['id']), 'orderTab': 'my-responses' if is_request else 'buyer'}),
             'isBase64Encoded': False
         }
     

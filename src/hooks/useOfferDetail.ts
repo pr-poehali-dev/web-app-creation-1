@@ -340,7 +340,8 @@ export function useOfferDetail(id: string | undefined) {
           duration: 3000,
         });
         setTimeout(() => {
-          navigate(`/my-orders?tab=buyer&orderId=${errorData.existingOrderId || ''}`);
+          const tab = errorData.orderTab || 'buyer';
+          navigate(`/my-orders?tab=${tab}`);
         }, 1000);
         return;
       }

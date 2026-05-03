@@ -117,7 +117,8 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     if (!orderIdParam || isLoading || orders.length === 0 || isChatOpen) return;
     const timer = setTimeout(() => {
       const order = orders.find(o => o.id === orderIdParam);
-      if (order) {
+      const closedStatuses = ['completed', 'cancelled', 'archived', 'rejected'];
+      if (order && !closedStatuses.includes(order.status)) {
         handleOpenChat(order);
       }
     }, 800);
