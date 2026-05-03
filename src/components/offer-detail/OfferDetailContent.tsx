@@ -8,16 +8,6 @@ import OfferReviews from '@/components/offer/OfferReviews';
 import OfferDetailInfoCard from './OfferDetailInfoCard';
 import OfferDetailSidebar from './OfferDetailSidebar';
 import OfferDetailGalleryModal from './OfferDetailGalleryModal';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 
@@ -34,21 +24,22 @@ interface OfferDetailContentProps {
   galleryIndex: number;
   showVideo: boolean;
   createdOrder: Order | null;
+  chatMessages: unknown[];
+  isChatOpen: boolean;
   onImageIndexChange: (index: number) => void;
   onVideoPlayingChange: (playing: boolean) => void;
   onMuteChange: (muted: boolean) => void;
   onOrderModalChange: (open: boolean) => void;
   onGalleryChange: (open: boolean) => void;
   onGalleryIndexChange: (index: number) => void;
+  onChatChange: (open: boolean) => void;
   onPrevImage: () => void;
   onNextImage: () => void;
   onShare: () => void;
   onOrderClick: () => void;
-  onOrderSubmit: (data: any) => void;
+  onOrderSubmit: (data: unknown) => void;
   onOpenGallery: (index: number) => void;
-  existingOrderDialog: { open: boolean; tab: string };
-  onExistingOrderYes: () => void;
-  onExistingOrderNo: () => void;
+  onSendMessage: (message: string) => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 
@@ -76,9 +67,6 @@ export default function OfferDetailContent({
   onOrderClick,
   onOrderSubmit,
   onOpenGallery,
-  existingOrderDialog,
-  onExistingOrderYes,
-  onExistingOrderNo,
   navigate,
 }: OfferDetailContentProps) {
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
@@ -113,7 +101,6 @@ export default function OfferDetailContent({
               onVideoPause={() => onVideoPlayingChange(false)}
             />
 
-            {/* На мобильных показываем информацию сразу после медиа */}
             <div className="lg:hidden">
               <OfferDetailInfoCard
                 offer={offer}
@@ -192,25 +179,6 @@ export default function OfferDetailContent({
         onGalleryIndexChange={onGalleryIndexChange}
         onVideoPlayingChange={onVideoPlayingChange}
       />
-
-      <AlertDialog open={existingOrderDialog.open}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>У вас уже есть заказ по этому предложению</AlertDialogTitle>
-            <AlertDialogDescription>
-              Вы хотите сделать новый заказ?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={onExistingOrderNo}>
-              Нет, вернуться назад
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={onExistingOrderYes}>
-              Да, новый заказ
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
