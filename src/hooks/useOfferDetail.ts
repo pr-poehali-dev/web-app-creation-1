@@ -25,6 +25,7 @@ export function useOfferDetail(id: string | undefined) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [existingOrderDialog, setExistingOrderDialog] = useState<{ open: boolean; tab: string }>({ open: false, tab: 'buyer' });
 
   useEffect(() => {
     const loadOffer = async () => {
