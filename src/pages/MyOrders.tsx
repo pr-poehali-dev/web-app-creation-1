@@ -29,7 +29,7 @@ type AllTab = Exclude<OrderTab, 'seller'> | 'my-offers';
 export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as OrderTab | null;
   const orderIdParam = searchParams.get('orderId');
   const sessionUser = getSession();
@@ -114,17 +114,18 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   }, [orderIdParam, isLoading]);
 
   useEffect(() => {
-    if (!orderIdParam || isLoading || orders.length === 0 || isChatOpen) return;
+    if (!orderIdParam || isLoading || orders.length === 0) return;
     const timer = setTimeout(() => {
       const order = orders.find(o => o.id === orderIdParam);
       const closedStatuses = ['completed', 'cancelled', 'archived', 'rejected'];
       if (order && !closedStatuses.includes(order.status)) {
         handleOpenChat(order);
       }
+      setSearchParams(prev => { prev.delete('orderId'); return prev; }, { replace: true });
     }, 800);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderIdParam, isLoading, orders]);
+  }, [orderIdParam, isLoading]);
 
   useEffect(() => {
     const handleOpenOrderChat = async (event: CustomEvent) => {
