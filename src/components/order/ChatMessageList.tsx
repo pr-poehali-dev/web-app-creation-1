@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import Icon from '@/components/ui/icon';
-import ConfirmDialog from '@/components/ui/confirm-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { OrderMessage } from './chat-types';
 
 interface ChatMessageListProps {
@@ -143,16 +143,25 @@ export default function ChatMessageList({
         </button>
       )}
 
-      <ConfirmDialog
-        open={!!confirmDeleteId}
-        title="Удалить сообщение?"
-        description="Сообщение и прикреплённый файл будут удалены безвозвратно."
-        confirmLabel="Удалить"
-        cancelLabel="Отмена"
-        confirmClassName="bg-destructive hover:bg-destructive/90 text-white"
-        onConfirm={() => { if (confirmDeleteId && onDeleteMessage) { onDeleteMessage(confirmDeleteId); setConfirmDeleteId(null); } }}
-        onCancel={() => setConfirmDeleteId(null)}
-      />
+      <AlertDialog open={!!confirmDeleteId} onOpenChange={(open) => { if (!open) setConfirmDeleteId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить сообщение?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Сообщение и прикреплённый файл будут удалены безвозвратно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-white"
+              onClick={() => { if (confirmDeleteId && onDeleteMessage) { onDeleteMessage(confirmDeleteId); setConfirmDeleteId(null); } }}
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

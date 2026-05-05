@@ -63,7 +63,7 @@ export default function OfferInfoFields({
 }: OfferInfoFieldsProps) {
   const isTransport = offer.category === 'transport';
   const isAutoSale = offer.category === 'auto-sale';
-  const isWorks = offer.subcategory === 'works' || offer.category === 'utilities';
+  const isWorks = offer.subcategory === 'works';
 
   const handleShare = async () => {
     let shareText: string;
@@ -105,19 +105,6 @@ export default function OfferInfoFields({
         offer.description ? `\n📝 ${offer.description}` : null,
       ].filter(Boolean);
 
-      shareText = lines.join('\n');
-    } else if (isWorks) {
-      // Услуги — с видом услуги, стоимостью и описанием
-      const serviceType = offer.transportServiceType ? `🔧 ${offer.transportServiceType}` : null;
-      const price = offer.pricePerUnit > 0
-        ? `💰 Стоимость: ${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽`
-        : `💰 Стоимость: Договорная`;
-      const lines = [
-        `🛠 ${offer.title}`,
-        serviceType,
-        price,
-        offer.description ? `\n📋 ${offer.description}` : null,
-      ].filter(Boolean);
       shareText = lines.join('\n');
     } else {
       const price = offer.pricePerUnit != null

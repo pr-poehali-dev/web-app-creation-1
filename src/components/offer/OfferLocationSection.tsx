@@ -10,9 +10,7 @@ import Icon from '@/components/ui/icon';
 import { cn } from '@/lib/utils';
 import { useDistrict } from '@/contexts/DistrictContext';
 
-const MapModal = lazy(() =>
-  import('@/components/auction/MapModal').catch(() => ({ default: () => null }))
-);
+const MapModal = lazy(() => import('@/components/auction/MapModal'));
 import { findSettlementByName, SETTLEMENTS } from '@/data/settlements';
 import { DISTRICTS } from '@/data/districts';
 import type { DeliveryType } from '@/types/offer';

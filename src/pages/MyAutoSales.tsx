@@ -12,7 +12,16 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { offersAPI } from '@/services/api';
 import type { Offer } from '@/types/offer';
-import ConfirmDialog from '@/components/ui/confirm-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface MyAutoSalesProps {
   isAuthenticated: boolean;
@@ -271,16 +280,25 @@ export default function MyAutoSales({ isAuthenticated, onLogout }: MyAutoSalesPr
 
       <Footer />
 
-      <ConfirmDialog
-        open={!!offerToDelete}
-        title="Удалить объявление?"
-        description="Это действие нельзя отменить. Объявление будет удалено навсегда."
-        confirmLabel="Удалить"
-        cancelLabel="Отмена"
-        confirmClassName="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-        onConfirm={() => offerToDelete && handleDelete(offerToDelete)}
-        onCancel={() => setOfferToDelete(null)}
-      />
+      <AlertDialog open={!!offerToDelete} onOpenChange={() => setOfferToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить объявление?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Объявление будет удалено навсегда.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => offerToDelete && handleDelete(offerToDelete)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

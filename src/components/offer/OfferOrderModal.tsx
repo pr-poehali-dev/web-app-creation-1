@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
-const MapModal = lazy(() =>
-  import('@/components/auction/MapModal').catch(() => ({ default: () => null }))
-);
+import MapModal from '@/components/auction/MapModal';
 import Icon from '@/components/ui/icon';
 import QuantitySelector from './order-modal/QuantitySelector';
 import PriceDisplay from './order-modal/PriceDisplay';
@@ -303,9 +301,7 @@ export default function OfferOrderModal({
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-start justify-between gap-4 pr-10">
-              <DialogTitle>
-                {offerCategory === 'utilities' ? 'Написать исполнителю' : 'Оформление заказа'}
-              </DialogTitle>
+              <DialogTitle>Оформление заказа</DialogTitle>
               {offerCategory !== 'utilities' && (
                 <div className="text-sm font-bold text-black whitespace-nowrap">
                   Доступно: {remainingQuantity} {unit}
@@ -313,9 +309,7 @@ export default function OfferOrderModal({
               )}
             </div>
             <DialogDescription>
-              {offerCategory === 'utilities'
-                ? 'Опишите вашу задачу, и исполнитель свяжется с вами'
-                : 'Заполните форму, и мы свяжемся с вами для подтверждения заказа'}
+              Заполните форму, и мы свяжемся с вами для подтверждения заказа
             </DialogDescription>
           </DialogHeader>
 
@@ -338,18 +332,16 @@ export default function OfferOrderModal({
               />
             )}
 
-            {offerCategory !== 'utilities' && (
-              <PriceDisplay
-                pricePerUnit={effectivePricePerUnit}
-                quantity={quantity}
-                unit={unit}
-                quantityError={quantityError}
-                showCounterPrice={showCounterPrice}
-                priceType={offerTransportPriceType}
-                isNegotiable={offerTransportNegotiable}
-                isTransport={offerCategory === 'transport'}
-              />
-            )}
+            <PriceDisplay
+              pricePerUnit={effectivePricePerUnit}
+              quantity={quantity}
+              unit={unit}
+              quantityError={quantityError}
+              showCounterPrice={showCounterPrice}
+              priceType={offerTransportPriceType}
+              isNegotiable={offerTransportNegotiable}
+              isTransport={offerCategory === 'transport'}
+            />
 
             {offerCategory === 'transport' && (
               <TransportSection
@@ -374,7 +366,6 @@ export default function OfferOrderModal({
               addressError={addressError}
               availableDistricts={availableDistricts}
               showCounterPrice={showCounterPrice}
-              isService={offerCategory === 'utilities'}
               onDeliveryTypeChange={setSelectedDeliveryType}
               onAddressChange={setAddress}
               onCommentChange={setComment}
@@ -383,7 +374,7 @@ export default function OfferOrderModal({
               onAddressErrorClear={() => setAddressError('')}
             />
 
-            {offerCategory !== 'utilities' && (noNegotiation ? (
+            {noNegotiation ? (
               <div className="border-t pt-3 flex items-center gap-2 text-sm text-muted-foreground">
                 <Icon name="Lock" size={14} />
                 <span>Цена фиксирована, торг не предусмотрен</span>
@@ -400,7 +391,7 @@ export default function OfferOrderModal({
                 onCounterPriceChange={setCounterPrice}
                 onCounterCommentChange={setCounterComment}
               />
-            ))}
+            )}
 
             <OrderFormActions
               quantityError={quantityError}
@@ -413,29 +404,25 @@ export default function OfferOrderModal({
 
       {isMapOpen && (
         <div className="fixed inset-0 z-[100] bg-background">
-          <Suspense fallback={<div />}>
-            <MapModal
-              isOpen={isMapOpen}
-              onClose={() => setIsMapOpen(false)}
-              coordinates={gpsCoordinates}
-              onCoordinatesChange={handleCoordinatesChange}
-              onAddressChange={handleAddressChange}
-            />
-          </Suspense>
+          <MapModal
+            isOpen={isMapOpen}
+            onClose={() => setIsMapOpen(false)}
+            coordinates={gpsCoordinates}
+            onCoordinatesChange={handleCoordinatesChange}
+            onAddressChange={handleAddressChange}
+          />
         </div>
       )}
 
       {isPickupMapOpen && (
         <div className="fixed inset-0 z-[100] bg-background">
-          <Suspense fallback={<div />}>
-            <MapModal
-              isOpen={isPickupMapOpen}
-              onClose={() => setIsPickupMapOpen(false)}
-              coordinates={pickupGpsCoordinates}
-              onCoordinatesChange={setPickupGpsCoordinates}
-              onAddressChange={handlePickupAddressFromMap}
-            />
-          </Suspense>
+          <MapModal
+            isOpen={isPickupMapOpen}
+            onClose={() => setIsPickupMapOpen(false)}
+            coordinates={pickupGpsCoordinates}
+            onCoordinatesChange={setPickupGpsCoordinates}
+            onAddressChange={handlePickupAddressFromMap}
+          />
         </div>
       )}
     </>

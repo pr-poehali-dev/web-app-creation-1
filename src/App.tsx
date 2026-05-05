@@ -24,27 +24,18 @@ const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
       const component = await componentImport();
       return component as { default: React.ComponentType };
     } catch {
-      return {
+      return { 
         default: () => (
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="text-center max-w-md">
-              <div className="text-5xl mb-4">📡</div>
               <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
-              <p className="text-muted-foreground mb-6">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 active:opacity-80"
-                >
-                  Попробовать снова
-                </button>
-                <button
-                  onClick={() => { window.location.href = '/'; }}
-                  className="px-5 py-2.5 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 active:opacity-80"
-                >
-                  На главную
-                </button>
-              </div>
+              <p className="text-muted-foreground mb-4">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+              >
+                Попробовать снова
+              </button>
             </div>
           </div>
         )

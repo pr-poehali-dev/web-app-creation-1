@@ -6,6 +6,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { offersAPI } from '@/services/api';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Icon from '@/components/ui/icon';
 import type { Offer } from '@/types/offer';
 import { CATEGORIES } from '@/data/categories';
@@ -339,39 +349,22 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
         )}
       </CardFooter>
 
-      {showDeleteDialog && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={(e) => { e.stopPropagation(); setShowDeleteDialog(false); }}
-        >
-          <div
-            className="bg-background rounded-xl shadow-xl max-w-sm w-full p-6 space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold">Удалить объявление?</h2>
-              <p className="text-sm text-muted-foreground">
-                Это действие нельзя отменить. Объявление будет удалено безвозвратно.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowDeleteDialog(false)}
-              >
-                Отмена
-              </Button>
-              <Button
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                onClick={confirmDelete}
-              >
-                Удалить
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить объявление?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Объявление будет удалено безвозвратно.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Отмена</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

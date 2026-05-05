@@ -44,30 +44,6 @@ setTimeout(() => {
 
 
 
-// Обработчик ошибок чанков (устаревший кэш на iOS)
-window.addEventListener('error', (e) => {
-  const isChunkError =
-    e.message?.includes('Failed to fetch dynamically imported module') ||
-    e.message?.includes('Importing a module script failed') ||
-    e.message?.includes('Unable to preload CSS') ||
-    (e as ErrorEvent).filename?.includes('/assets/');
-  if (isChunkError) {
-    const reloadKey = 'chunk-error-reload';
-    const lastReload = sessionStorage.getItem(reloadKey);
-    const now = Date.now();
-    if (!lastReload || now - Number(lastReload) > 10000) {
-      sessionStorage.setItem(reloadKey, String(now));
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          names.forEach((name) => caches.delete(name));
-        }).finally(() => window.location.reload());
-      } else {
-        window.location.reload();
-      }
-    }
-  }
-});
-
 if ('serviceWorker' in navigator) {
   setTimeout(() => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});

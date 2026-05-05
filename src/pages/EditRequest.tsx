@@ -14,7 +14,16 @@ import { notifyRequestUpdated } from '@/utils/dataSync';
 import EditRequestHeader from '@/components/edit-request/EditRequestHeader';
 import EditRequestTabs from '@/components/edit-request/EditRequestTabs';
 import EditRequestDeleteDialog from '@/components/edit-request/EditRequestDeleteDialog';
-import ConfirmDialog from '@/components/ui/confirm-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface EditRequestProps {
   isAuthenticated: boolean;
@@ -219,15 +228,26 @@ export default function EditRequest({ isAuthenticated, onLogout }: EditRequestPr
         onConfirm={confirmDelete}
       />
 
-      <ConfirmDialog
-        open={showPublishDialog}
-        title="Опубликовать запрос заново?"
-        description="Вы можете отредактировать запрос прямо сейчас, а затем подтвердить публикацию. После публикации запрос снова станет виден всем поставщикам."
-        confirmLabel={isPublishing ? 'Публикуем...' : 'Опубликовать'}
-        cancelLabel="Сначала отредактирую"
-        onConfirm={confirmPublish}
-        onCancel={() => setShowPublishDialog(false)}
-      />
+      <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Опубликовать запрос заново?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Вы можете отредактировать запрос прямо сейчас, а затем подтвердить публикацию. После публикации запрос снова станет виден всем поставщикам.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowPublishDialog(false)}>
+              Сначала отредактирую
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmPublish} disabled={isPublishing}>
+              {isPublishing ? (
+                <><Icon name="Loader2" className="mr-2 h-4 w-4 animate-spin" />Публикуем...</>
+              ) : 'Опубликовать'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>

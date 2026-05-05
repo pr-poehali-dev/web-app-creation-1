@@ -21,7 +21,6 @@ interface OfferBasicInfoSectionProps {
 export default function OfferBasicInfoSection({ formData, onInputChange }: OfferBasicInfoSectionProps) {
   const isTransport = formData.category === 'transport';
   const isAutoSale = formData.category === 'auto-sale';
-  const isUtilities = formData.category === 'utilities';
   const selectedCategory = CATEGORIES.find(c => c.id === formData.category);
   const subcategories = selectedCategory?.subcategories || [];
   
@@ -41,10 +40,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
   const handleSelectCategory = (categoryId: string) => {
     onInputChange('category', categoryId);
     const cat = CATEGORIES.find(c => c.id === categoryId);
-    if (categoryId === 'utilities') {
-      // Для услуг автоматически подставляем subcategory = works
-      onInputChange('subcategory', 'works');
-    } else if (cat && cat.subcategories.length === 0) {
+    if (cat && cat.subcategories.length === 0) {
       onInputChange('subcategory', '');
     }
     setIsCategoryOpen(false);
@@ -114,8 +110,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
             )}
           </div>
 
-          {/* Для utilities подкатегория скрыта — вместо неё поле "Вид услуги" ниже */}
-          {subcategories.length > 0 && !isUtilities && (
+          {subcategories.length > 0 && (
             <div className="relative">
               <Label htmlFor="subcategory">Подкатегория (необязательно)</Label>
               <div className="relative">
@@ -168,8 +163,6 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
             )}
             </div>
           )}
-
-
         </div>
 
         {!isTransport && !isAutoSale && (
@@ -191,7 +184,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
                 id="title"
                 value={formData.title}
                 onChange={(e) => onInputChange('title', e.target.value)}
-                placeholder={isUtilities ? 'Например: Ремонт кровли, укладка плитки' : 'Например: Цемент М500, мешок 50 кг'}
+                placeholder="Например: Цемент М500, мешок 50 кг"
                 required
                 maxLength={100}
               />
