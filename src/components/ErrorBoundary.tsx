@@ -35,13 +35,21 @@ class ErrorBoundary extends Component<Props, State> {
     // Пустой объект {} — Radix UI / сторонние библиотеки бросают не-Error
     const isEmptyError = !msg && (!error || Object.keys(error).length === 0);
     
+    const isChunkError = msg && (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      msg.includes('Unable to preload CSS') ||
+      msg.includes('Loading chunk') ||
+      msg.includes('ChunkLoadError')
+    );
+    
     const isHookError = msg && (
       msg.includes('Cannot read properties of null') ||
       msg.includes('Invalid hook call') ||
       msg.includes('Hooks can only be called')
     );
     
-    if (isHookError || isEmptyError) {
+    if (isHookError || isEmptyError || isChunkError) {
       const hasAlreadyReloaded = sessionStorage.getItem('eb_reloaded') === '1';
       if (!hasAlreadyReloaded) {
         sessionStorage.setItem('eb_reloaded', '1');
@@ -50,10 +58,11 @@ class ErrorBoundary extends Component<Props, State> {
           if ('caches' in window) {
             caches.keys().then(names => {
               names.forEach(name => caches.delete(name));
-            });
+            }).finally(() => window.location.reload());
+          } else {
+            window.location.reload();
           }
-          window.location.reload();
-        }, 1000);
+        }, 800);
       }
     }
   }
