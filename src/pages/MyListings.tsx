@@ -5,16 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
@@ -281,22 +272,16 @@ export default function MyListings({ isAuthenticated, onLogout }: MyListingsProp
 
       <Footer />
 
-      <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить объявление?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Это действие нельзя отменить. Объявление будет удалено безвозвратно.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!itemToDelete}
+        title="Удалить объявление?"
+        description="Это действие нельзя отменить. Объявление будет удалено безвозвратно."
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        confirmClassName="bg-red-600 hover:bg-red-700"
+        onConfirm={handleDelete}
+        onCancel={() => setItemToDelete(null)}
+      />
     </div>
   );
 }

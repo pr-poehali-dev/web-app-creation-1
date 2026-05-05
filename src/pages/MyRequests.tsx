@@ -12,16 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
@@ -390,25 +381,16 @@ export default function MyRequests({ isAuthenticated, onLogout }: MyRequestsProp
         )}
       </main>
 
-      <AlertDialog open={!!requestToDelete} onOpenChange={() => setRequestToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить запрос?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Это действие нельзя отменить. Запрос будет удален безвозвратно.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => requestToDelete && handleDeleteRequest(requestToDelete)}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!requestToDelete}
+        title="Удалить запрос?"
+        description="Это действие нельзя отменить. Запрос будет удален безвозвратно."
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        confirmClassName="bg-destructive hover:bg-destructive/90"
+        onConfirm={() => requestToDelete && handleDeleteRequest(requestToDelete)}
+        onCancel={() => setRequestToDelete(null)}
+      />
 
       <Footer />
     </div>

@@ -45,6 +45,15 @@ export default function OfferDetailSidebar({
               <Icon name="Edit" className="h-5 w-5" />
               Редактировать предложение
             </Button>
+          ) : offer.category === 'utilities' ? (
+            <Button
+              onClick={onOrderClick}
+              size="lg"
+              className="w-full gap-2"
+            >
+              <Icon name="MessageCircle" className="h-5 w-5" />
+              Написать исполнителю
+            </Button>
           ) : (
             <Button
               onClick={onOrderClick}

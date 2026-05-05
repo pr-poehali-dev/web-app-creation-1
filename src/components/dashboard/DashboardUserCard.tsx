@@ -3,16 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { formatPhoneNumber } from '@/utils/phoneFormat';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { isAdminUser } from '@/utils/adminCheck';
 
 interface DashboardUserCardProps {
@@ -98,32 +89,15 @@ const DashboardUserCard = ({ vkUser, emailUser, finalIsAdmin, onOpenAdminPanel, 
         </CardContent>
       </Card>
 
-      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-lg md:text-xl">
-              <Icon name="LogOut" className="text-orange-500" size={20} />
-              Выход из аккаунта
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs md:text-sm">
-              Вы уверены, что хотите выйти? Вам потребуется снова войти в систему для доступа к своему аккаунту.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel className="w-full sm:w-auto">Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setShowLogoutDialog(false);
-                onLogout?.();
-              }}
-              className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
-            >
-              <Icon name="LogOut" size={14} className="mr-2" />
-              Выйти
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showLogoutDialog}
+        title="Выход из аккаунта"
+        description="Вы уверены, что хотите выйти? Вам потребуется снова войти в систему."
+        confirmLabel="Выйти"
+        confirmClassName="bg-primary hover:bg-primary/90 text-primary-foreground"
+        onConfirm={() => { setShowLogoutDialog(false); onLogout?.(); }}
+        onCancel={() => setShowLogoutDialog(false)}
+      />
     </>
   );
 };

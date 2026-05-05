@@ -3,16 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import Icon from '@/components/ui/icon';
 import OptimizedImage from '@/components/ui/optimized-image';
 import type { Auction } from '@/types/auction';
@@ -274,22 +265,14 @@ export default function AuctionCard({ auction, districts, isAuthenticated, isHig
         )}
       </CardFooter>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить аукцион?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Это действие нельзя отменить. Аукцион будет удален навсегда.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Удалить аукцион?"
+        description="Это действие нельзя отменить. Аукцион будет удален навсегда."
+        confirmLabel="Удалить"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
     </Card>
   );
 }

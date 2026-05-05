@@ -1,6 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 interface Props {
   children: ReactNode;
@@ -35,13 +34,21 @@ class ErrorBoundary extends Component<Props, State> {
     // Пустой объект {} — Radix UI / сторонние библиотеки бросают не-Error
     const isEmptyError = !msg && (!error || Object.keys(error).length === 0);
     
+    const isChunkError = msg && (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('Importing a module script failed') ||
+      msg.includes('Unable to preload CSS') ||
+      msg.includes('Loading chunk') ||
+      msg.includes('ChunkLoadError')
+    );
+    
     const isHookError = msg && (
       msg.includes('Cannot read properties of null') ||
       msg.includes('Invalid hook call') ||
       msg.includes('Hooks can only be called')
     );
     
-    if (isHookError || isEmptyError) {
+    if (isHookError || isEmptyError || isChunkError) {
       const hasAlreadyReloaded = sessionStorage.getItem('eb_reloaded') === '1';
       if (!hasAlreadyReloaded) {
         sessionStorage.setItem('eb_reloaded', '1');
@@ -50,16 +57,20 @@ class ErrorBoundary extends Component<Props, State> {
           if ('caches' in window) {
             caches.keys().then(names => {
               names.forEach(name => caches.delete(name));
-            });
+            }).finally(() => window.location.reload());
+          } else {
+            window.location.reload();
           }
-          window.location.reload();
-        }, 1000);
+        }, 800);
       }
     }
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    if ('caches' in window) {
+      caches.keys().then(names => { names.forEach(name => caches.delete(name)); });
+    }
+    sessionStorage.removeItem('eb_reloaded');
     window.location.href = '/predlozheniya';
   };
 
@@ -67,9 +78,14 @@ class ErrorBoundary extends Component<Props, State> {
     if ('caches' in window) {
       caches.keys().then(names => {
         names.forEach(name => caches.delete(name));
+      }).finally(() => {
+        sessionStorage.removeItem('eb_reloaded');
+        window.location.replace(window.location.origin + window.location.pathname + '?_r=' + Date.now());
       });
+    } else {
+      sessionStorage.removeItem('eb_reloaded');
+      window.location.replace(window.location.origin + window.location.pathname + '?_r=' + Date.now());
     }
-    window.location.reload();
   };
 
   render() {
@@ -78,45 +94,43 @@ class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const btnBase: React.CSSProperties = {
+        display: 'block', width: '100%', padding: '14px 20px',
+        borderRadius: '12px', fontSize: '16px', fontWeight: '600',
+        cursor: 'pointer', border: 'none', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif',
+        marginBottom: '10px',
+      };
+
       return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-muted/20 to-background">
-          <div className="text-center max-w-md space-y-6">
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#f1f4f8', fontFamily: '-apple-system,BlinkMacSystemFont,sans-serif' }}>
+          <div style={{ textAlign: 'center', maxWidth: '360px', width: '100%' }}>
             {this.state.isReloading ? (
-              <div className="space-y-4">
-                <div className="animate-spin h-12 w-12 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-                <h2 className="text-xl font-semibold">Перезагрузка...</h2>
-                <p className="text-muted-foreground">Исправляем проблему</p>
+              <div>
+                <div style={{ width: '48px', height: '48px', border: '4px solid #e2e8f0', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+                <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                <p style={{ fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Перезагрузка...</p>
+                <p style={{ color: '#64748b', marginTop: '8px' }}>Очищаем кэш и исправляем проблему</p>
               </div>
             ) : (
-              <>
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-bold">😔</h1>
-                  <h2 className="text-2xl font-bold">Что-то пошло не так</h2>
-                  <p className="text-muted-foreground">
-                    Произошла ошибка при загрузке страницы
-                  </p>
-                </div>
-
-            {this.state.error && (
-              <details className="text-left bg-muted p-4 rounded-lg text-sm">
-                <summary className="cursor-pointer font-semibold mb-2">
-                  Детали ошибки
-                </summary>
-                <pre className="overflow-auto text-xs">
-                  {this.state.error.message}
-                </pre>
-              </details>
-            )}
-
-                <div className="flex flex-col gap-2">
-                  <Button onClick={this.handleReset} className="w-full">
-                    Вернуться на главную
-                  </Button>
-                  <Button onClick={this.handleReload} variant="outline" className="w-full">
-                    Перезагрузить страницу
-                  </Button>
-                </div>
-              </>
+              <div>
+                <div style={{ fontSize: '52px', marginBottom: '16px' }}>😔</div>
+                <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1e293b', marginBottom: '8px' }}>Что-то пошло не так</h2>
+                <p style={{ color: '#64748b', marginBottom: '28px', lineHeight: '1.5' }}>
+                  Страница не загрузилась. Нажмите кнопку ниже чтобы вернуться на сайт.
+                </p>
+                <button
+                  onClick={this.handleReset}
+                  style={{ ...btnBase, background: '#3b82f6', color: '#fff' }}
+                >
+                  ← Вернуться на главную
+                </button>
+                <button
+                  onClick={this.handleReload}
+                  style={{ ...btnBase, background: '#fff', color: '#1e293b', border: '1.5px solid #e2e8f0' }}
+                >
+                  Перезагрузить страницу
+                </button>
+              </div>
             )}
           </div>
         </div>

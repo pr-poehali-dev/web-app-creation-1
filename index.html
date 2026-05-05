@@ -64,7 +64,7 @@
     <!-- Clear old caches on deploy -->
     <script>
         (function() {
-            const APP_VERSION = '1.0.4';
+            const APP_VERSION = '1.1.2';
             const VERSION_KEY = 'app_version';
             const currentVersion = localStorage.getItem(VERSION_KEY);
             if (currentVersion !== APP_VERSION) {
@@ -74,7 +74,18 @@
                     });
                 }
                 sessionStorage.removeItem('chunk-reload');
+                sessionStorage.removeItem('eb_reloaded');
                 localStorage.setItem(VERSION_KEY, APP_VERSION);
+                // При смене версии — редирект с cache-buster (работает на iOS Safari)
+                if (currentVersion !== null) {
+                    var sep = window.location.search ? '&' : '?';
+                    window.location.replace(window.location.href.split('?')[0] + sep + '_v=' + APP_VERSION);
+                }
+            }
+            // Убираем cache-buster из URL после загрузки (чистый URL)
+            if (window.location.search.indexOf('_v=') !== -1 && window.history && window.history.replaceState) {
+                var cleanUrl = window.location.href.replace(/[?&]_v=[^&]*/g, '').replace(/[?&]$/, '');
+                window.history.replaceState(null, '', cleanUrl);
             }
         })();
     </script>

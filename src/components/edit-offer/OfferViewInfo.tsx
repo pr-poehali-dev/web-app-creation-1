@@ -8,6 +8,7 @@ interface OfferViewInfoProps {
 
 export default function OfferViewInfo({ offer, districtName }: OfferViewInfoProps) {
   const isTransport = offer.category === 'transport';
+  const isService = offer.category === 'services' || offer.category === 'utilities' || offer.subcategory === 'works';
 
   return (
     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -70,26 +71,31 @@ export default function OfferViewInfo({ offer, districtName }: OfferViewInfoProp
       ) : (
         <>
           <div>
-            <span className="text-muted-foreground">Цена за единицу:</span>
-            <p className="font-bold text-lg text-primary">
-              {offer.pricePerUnit.toLocaleString('ru-RU')} ₽
-            </p>
+            <span className="text-muted-foreground">{isService ? 'Стоимость:' : 'Цена за единицу:'}</span>
+            {offer.pricePerUnit > 0
+              ? <p className="font-bold text-lg text-primary">{offer.pricePerUnit.toLocaleString('ru-RU')} ₽</p>
+              : <p className="text-sm text-muted-foreground">Договорная</p>}
           </div>
-          <div>
-            <span className="text-muted-foreground">Количество:</span>
-            <p className="font-semibold">{offer.quantity} {offer.unit}</p>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Доступно:</span>
-            <p className="font-semibold text-green-600">
-              {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
-            </p>
-          </div>
-          {offer.minOrderQuantity && (
-            <div>
-              <span className="text-muted-foreground">Мин. заказ:</span>
-              <p className="font-semibold">{offer.minOrderQuantity} {offer.unit}</p>
-            </div>
+          {/* Количество и Доступно скрыты для услуг */}
+          {!isService && (
+            <>
+              <div>
+                <span className="text-muted-foreground">Количество:</span>
+                <p className="font-semibold">{offer.quantity} {offer.unit}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Доступно:</span>
+                <p className="font-semibold text-green-600">
+                  {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
+                </p>
+              </div>
+              {offer.minOrderQuantity && (
+                <div>
+                  <span className="text-muted-foreground">Мин. заказ:</span>
+                  <p className="font-semibold">{offer.minOrderQuantity} {offer.unit}</p>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
