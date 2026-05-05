@@ -18,18 +18,6 @@ interface OfferBasicInfoSectionProps {
   onInputChange: (field: string, value: string) => void;
 }
 
-const SERVICE_TYPES = [
-  'Ремонт помещений',
-  'Строительные работы',
-  'Столярные работы',
-  'Сантехника',
-  'Электромонтаж',
-  'Уборка',
-  'Ландшафтные работы',
-  'Грузчики / Переезд',
-  'Прочие услуги',
-];
-
 export default function OfferBasicInfoSection({ formData, onInputChange }: OfferBasicInfoSectionProps) {
   const isTransport = formData.category === 'transport';
   const isAutoSale = formData.category === 'auto-sale';
@@ -41,7 +29,6 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [subcategorySearch, setSubcategorySearch] = useState('');
   const [isSubcategoryOpen, setIsSubcategoryOpen] = useState(false);
-  const [isServiceTypeOpen, setIsServiceTypeOpen] = useState(false);
 
   const filteredCategories = CATEGORIES.filter(cat => 
     cat.name.toLowerCase().includes(categorySearch.toLowerCase())
@@ -182,53 +169,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
             </div>
           )}
 
-          {/* Поле "Вид услуги" — только для категории Услуги */}
-          {isUtilities && (
-            <div className="relative">
-              <Label htmlFor="serviceType">Вид услуги *</Label>
-              <div className="relative">
-                <Input
-                  id="serviceType"
-                  value={isServiceTypeOpen
-                    ? (formData.transportServiceType || '')
-                    : (formData.transportServiceType || '')}
-                  onChange={(e) => onInputChange('transportServiceType', e.target.value)}
-                  onFocus={() => setIsServiceTypeOpen(true)}
-                  placeholder="Например: Ремонт помещений, Сантехника..."
-                  className="pr-8"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsServiceTypeOpen(!isServiceTypeOpen)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
-                >
-                  <Icon name={isServiceTypeOpen ? "ChevronUp" : "ChevronDown"} className="h-4 w-4 text-muted-foreground" />
-                </button>
-              </div>
-              {isServiceTypeOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setIsServiceTypeOpen(false)} />
-                  <div className="absolute z-20 w-full mt-1 max-h-60 overflow-auto bg-background border border-input rounded-md shadow-lg">
-                    {SERVICE_TYPES.map(type => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => {
-                          onInputChange('transportServiceType', type);
-                          setIsServiceTypeOpen(false);
-                        }}
-                        className={`w-full text-left px-3 py-2 border-b border-input last:border-b-0 hover:bg-accent transition-colors ${
-                          formData.transportServiceType === type ? 'bg-accent font-medium' : ''
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+
         </div>
 
         {!isTransport && !isAutoSale && (

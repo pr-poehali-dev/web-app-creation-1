@@ -13,6 +13,7 @@ interface DeliverySectionProps {
   addressError: string;
   availableDistricts?: string[];
   showCounterPrice: boolean;
+  isService?: boolean;
   onDeliveryTypeChange: (type: 'pickup' | 'delivery') => void;
   onAddressChange: (value: string) => void;
   onCommentChange: (value: string) => void;
@@ -29,6 +30,7 @@ export default function DeliverySection({
   addressError,
   availableDistricts = [],
   showCounterPrice,
+  isService = false,
   onDeliveryTypeChange,
   onAddressChange,
   onCommentChange,
@@ -118,16 +120,21 @@ export default function DeliverySection({
         </div>
       )}
 
-      {!showCounterPrice && (
+      {(!showCounterPrice || isService) && (
         <div>
-          <Label htmlFor="order-comment">Комментарий</Label>
+          <Label htmlFor="order-comment">
+            {isService ? 'Опишите вашу задачу *' : 'Комментарий'}
+          </Label>
           <Textarea
             id="order-comment"
             name="order-comment"
-            placeholder="Дополнительная информация к заказу"
+            placeholder={isService
+              ? 'Расскажите подробнее: что нужно сделать, объём работ, сроки, пожелания...'
+              : 'Дополнительная информация к заказу'}
             value={comment}
             onChange={(e) => onCommentChange(e.target.value)}
-            rows={2}
+            rows={isService ? 4 : 2}
+            required={isService}
             className="md:rows-[2] rows-[1] min-h-[40px] md:min-h-[60px]"
           />
         </div>

@@ -70,13 +70,6 @@ export default function OfferViewInfo({ offer, districtName }: OfferViewInfoProp
         </>
       ) : (
         <>
-          {/* Вид услуги — только для услуг */}
-          {isService && offer.transportServiceType && (
-            <div className="col-span-2">
-              <span className="text-muted-foreground">Вид услуги:</span>
-              <p className="font-semibold">{offer.transportServiceType}</p>
-            </div>
-          )}
           <div>
             <span className="text-muted-foreground">{isService ? 'Стоимость:' : 'Цена за единицу:'}</span>
             {offer.pricePerUnit > 0
