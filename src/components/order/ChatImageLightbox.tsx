@@ -47,8 +47,6 @@ async function downloadFile(url: string) {
 export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxProps) {
   if (!url) return null;
 
-  const ext = getFileExtension(url).toUpperCase();
-
   return (
     <div
       className="absolute inset-0 flex items-center justify-center bg-black/90 rounded-lg"
@@ -61,11 +59,11 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
         style={{ zIndex: 9999, pointerEvents: 'none' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Кнопка скачать с типом файла */}
+        {/* Кнопка скачать */}
         <button
           type="button"
           aria-label="Скачать"
-          className="flex items-center gap-2 px-4 py-2 rounded-full text-white font-semibold text-sm shadow-lg active:opacity-80"
+          className="flex items-center justify-center w-12 h-12 rounded-full shadow-lg active:opacity-80"
           style={{
             pointerEvents: 'auto',
             background: 'rgba(0,0,0,0.75)',
@@ -74,8 +72,7 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
           }}
           onClick={(e) => { e.stopPropagation(); downloadFile(url); }}
         >
-          <Icon name="Download" size={20} className="text-white" />
-          <span>{ext}</span>
+          <Icon name="Download" size={22} className="text-white" />
         </button>
 
         {/* Крестик — красный, заметный */}
