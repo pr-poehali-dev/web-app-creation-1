@@ -160,9 +160,9 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
         style={{ zIndex: 9999, pointerEvents: 'none' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Кнопки скачивания */}
+        {/* Кнопки действий */}
         <div className="flex gap-2" style={{ pointerEvents: 'auto' }}>
-          {/* PNG */}
+          {/* Скачать PNG */}
           <button
             type="button"
             aria-label="Скачать PNG"
@@ -174,17 +174,17 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
             }}
             onClick={(e) => { e.stopPropagation(); downloadAsPng(url); }}
           >
-            <Icon name="Image" size={18} className="text-white" />
+            <Icon name="Download" size={18} className="text-white" />
             PNG
           </button>
 
-          {/* PDF */}
+          {/* Скачать PDF */}
           <button
             type="button"
             aria-label="Скачать PDF"
             className="flex items-center gap-1.5 px-3 h-11 rounded-full shadow-lg active:opacity-70 text-white text-sm font-semibold"
             style={{
-              background: pdfLoading ? 'rgba(220,38,38,0.7)' : 'rgba(220,38,38,0.9)',
+              background: pdfLoading ? 'rgba(37,99,235,0.7)' : 'rgba(37,99,235,0.9)',
               border: '1.5px solid rgba(255,255,255,0.25)',
               backdropFilter: 'blur(8px)',
             }}
@@ -196,6 +196,28 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
               : <Icon name="FileText" size={18} className="text-white" />
             }
             PDF
+          </button>
+
+          {/* Печать */}
+          <button
+            type="button"
+            aria-label="Печать"
+            className="flex items-center gap-1.5 px-3 h-11 rounded-full shadow-lg active:opacity-70 text-white text-sm font-semibold"
+            style={{
+              background: 'rgba(22,163,74,0.9)',
+              border: '1.5px solid rgba(255,255,255,0.25)',
+              backdropFilter: 'blur(8px)',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const win = window.open('', '_blank');
+              if (!win) return;
+              win.document.write(`<!DOCTYPE html><html><head><title>Печать</title><style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fff}img{max-width:100%;max-height:100vh;object-fit:contain}@media print{body{margin:0}}</style></head><body><img src="${url}" onload="window.print();window.close()"/></body></html>`);
+              win.document.close();
+            }}
+          >
+            <Icon name="Printer" size={18} className="text-white" />
+            Печать
           </button>
         </div>
 
