@@ -8,16 +8,29 @@ interface ChatImageLightboxProps {
 
 async function downloadAsPng(url: string) {
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = 'image.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(objectUrl);
+    // Загружаем через canvas чтобы обойти CORS и гарантировать скачивание файлом
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise<void>((res, rej) => {
+      img.onload = () => res();
+      img.onerror = rej;
+      img.src = url + (url.includes('?') ? '&' : '?') + '_dl=1';
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d')!.drawImage(img, 0, 0);
+    canvas.toBlob((blob) => {
+      if (!blob) { window.open(url, '_blank'); return; }
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = 'image.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    }, 'image/png');
   } catch {
     window.open(url, '_blank');
   }
@@ -127,7 +140,7 @@ async function downloadAsPdf(url: string): Promise<void> {
       }
     };
     img.onerror = reject;
-    img.src = url;
+    img.src = url + (url.includes('?') ? '&' : '?') + '_dl=1';
   });
 }
 
