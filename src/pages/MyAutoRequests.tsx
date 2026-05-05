@@ -12,16 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 import { requestsAPI } from '@/services/api';
 import type { Request } from '@/types/offer';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 
 interface MyAutoRequestsProps {
   isAuthenticated: boolean;
@@ -260,25 +251,16 @@ export default function MyAutoRequests({ isAuthenticated, onLogout }: MyAutoRequ
 
       <Footer />
 
-      <AlertDialog open={!!requestToDelete} onOpenChange={() => setRequestToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Удалить запрос?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Это действие нельзя отменить.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Отмена</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => requestToDelete && handleDelete(requestToDelete)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Удалить
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={!!requestToDelete}
+        title="Удалить запрос?"
+        description="Это действие нельзя отменить."
+        confirmLabel="Удалить"
+        cancelLabel="Отмена"
+        confirmClassName="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        onConfirm={() => requestToDelete && handleDelete(requestToDelete)}
+        onCancel={() => setRequestToDelete(null)}
+      />
     </div>
   );
 }
