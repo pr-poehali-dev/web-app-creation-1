@@ -8,6 +8,7 @@ interface OfferViewInfoProps {
 
 export default function OfferViewInfo({ offer, districtName }: OfferViewInfoProps) {
   const isTransport = offer.category === 'transport';
+  const isService = offer.category === 'services';
 
   return (
     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -79,12 +80,14 @@ export default function OfferViewInfo({ offer, districtName }: OfferViewInfoProp
             <span className="text-muted-foreground">Количество:</span>
             <p className="font-semibold">{offer.quantity} {offer.unit}</p>
           </div>
-          <div>
-            <span className="text-muted-foreground">Доступно:</span>
-            <p className="font-semibold text-green-600">
-              {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
-            </p>
-          </div>
+          {!isService && (
+            <div>
+              <span className="text-muted-foreground">Доступно:</span>
+              <p className="font-semibold text-green-600">
+                {offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0)} {offer.unit}
+              </p>
+            </div>
+          )}
           {offer.minOrderQuantity && (
             <div>
               <span className="text-muted-foreground">Мин. заказ:</span>
