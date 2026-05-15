@@ -70,12 +70,15 @@ function buildOgProxyUrl(prodUrl: string): string | null {
  */
 async function fetchImageAsFile(imageUrl: string, title: string): Promise<File | null> {
   try {
-    const resp = await fetch(imageUrl, { mode: 'cors', cache: 'force-cache' });
+    // Пробуем без явного mode (браузер использует CORS если заголовки есть)
+    const resp = await fetch(imageUrl);
     if (!resp.ok) return null;
     const blob = await resp.blob();
-    if (!blob.type.startsWith('image/')) return null;
-    const ext = blob.type === 'image/png' ? 'png' : 'jpg';
-    return new File([blob], `${title}.${ext}`, { type: blob.type });
+    // Проверяем что реально получили изображение (не HTML с ошибкой)
+    if (!blob.type.startsWith('image/') && !blob.type.includes('octet-stream')) return null;
+    const ext = imageUrl.toLowerCase().includes('.png') ? 'png' : 'jpg';
+    const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
+    return new File([blob], `${title}.${ext}`, { type: mimeType });
   } catch {
     return null;
   }
@@ -91,6 +94,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
       // Пробуем передать фото напрямую через Web Share API Level 2
       if (imageUrl && navigator.canShare) {
         const file = await fetchImageAsFile(imageUrl, title);
+        console.log('[share] imageFile:', file ? `${file.name} ${file.type} ${file.size}b` : 'null');
         if (file && navigator.canShare({ files: [file] })) {
           await navigator.share({ title, text: `${text}\n${shareUrl}`, files: [file] });
           toast.success('Ссылка отправлена!');

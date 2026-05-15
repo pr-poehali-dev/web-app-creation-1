@@ -48,6 +48,7 @@ export function useOfferDetail(id: string | undefined) {
           isPremium: data.is_premium !== undefined ? data.is_premium : data.isPremium,
           availableDistricts: data.available_districts || data.availableDistricts || [],
           availableDeliveryTypes: data.available_delivery_types || data.availableDeliveryTypes || ['pickup'],
+          transportWaypoints: data.transport_waypoints || data.transportWaypoints || [],
           userId: data.user_id || data.userId,
           fullAddress: data.full_address || data.fullAddress,
           video: data.videoUrl ? { url: data.videoUrl } : undefined,
