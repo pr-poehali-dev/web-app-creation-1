@@ -1,6 +1,8 @@
-import L from 'leaflet';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* Leaflet загружается через CDN в index.html как глобальная переменная L */
+declare const L: any;
 
-export function createMarkerIcon(): L.Icon {
+export function createMarkerIcon(): any {
   return L.icon({
     iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -11,27 +13,23 @@ export function createMarkerIcon(): L.Icon {
 }
 
 export function createDraggableMarker(
-  map: L.Map,
+  map: any,
   lat: number,
   lng: number,
   onDragEnd: (lat: number, lng: number) => void
-): L.Marker {
+): any {
   const icon = createMarkerIcon();
   const marker = L.marker([lat, lng], { icon, draggable: true }).addTo(map);
-  
+
   marker.on('dragend', () => {
     const position = marker.getLatLng();
     onDragEnd(position.lat, position.lng);
   });
-  
+
   return marker;
 }
 
-export function updateMarkerPosition(
-  marker: L.Marker | null,
-  lat: number,
-  lng: number
-): void {
+export function updateMarkerPosition(marker: any, lat: number, lng: number): void {
   if (marker) {
     marker.setLatLng([lat, lng]);
   }

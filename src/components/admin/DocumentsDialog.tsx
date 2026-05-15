@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-import JSZip from 'jszip';
 import funcUrl from '../../../backend/func2url.json';
 
 interface Verification {
@@ -145,7 +144,7 @@ export default function DocumentsDialog({
 }: DocumentsDialogProps) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<{ url: string; title: string } | null>(null);
-  const [uploadedDocuments, setUploadedDocuments] = useState<any[]>([]);
+  const [uploadedDocuments, setUploadedDocuments] = useState<Record<string, unknown>[]>([]);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   useEffect(() => {
@@ -186,6 +185,7 @@ export default function DocumentsDialog({
   const handleDownloadAll = async () => {
     if (!selectedVerification) return;
 
+    const JSZip = (await import('jszip')).default;
     const zip = new JSZip();
     const documents: Array<{ url: string; name: string }> = [];
 
