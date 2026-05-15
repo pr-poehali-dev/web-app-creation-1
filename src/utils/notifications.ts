@@ -15,8 +15,7 @@ const STORAGE_KEY = 'marketplace_notifications';
 
 export function playNotificationSound(): void {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     const times = [0, 0.15, 0.3];
     times.forEach((t) => {
       const osc = ctx.createOscillator();
