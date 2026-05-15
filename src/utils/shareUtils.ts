@@ -5,7 +5,7 @@ interface ShareOptions {
   title: string;
   text: string;
   url: string;        // прямая ссылка на страницу (erttp.ru/offer/UUID)
-  imageUrl?: string;
+  imageUrl?: string;  // URL первого фото предложения
 }
 
 async function copyToClipboard(text: string): Promise<void> {
@@ -68,16 +68,36 @@ function buildOgProxyUrl(prodUrl: string): string | null {
  * - При клике пользователь переходит на erttp.ru (og-proxy делает JS-редирект).
  * - Поэтому передаём og-proxy URL, если он доступен.
  */
-export async function shareContent({ title, text, url }: ShareOptions): Promise<void> {
+async function fetchImageAsFile(imageUrl: string, title: string): Promise<File | null> {
+  try {
+    const resp = await fetch(imageUrl, { mode: 'cors', cache: 'force-cache' });
+    if (!resp.ok) return null;
+    const blob = await resp.blob();
+    if (!blob.type.startsWith('image/')) return null;
+    const ext = blob.type === 'image/png' ? 'png' : 'jpg';
+    return new File([blob], `${title}.${ext}`, { type: blob.type });
+  } catch {
+    return null;
+  }
+}
+
+export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
   const prodUrl = toProdUrl(url);
   const ogUrl = buildOgProxyUrl(prodUrl);
-
-  // Передаём og-proxy URL мессенджеру — бот парсит статический HTML с og:image
-  // Если og-proxy не найден (например для обычных страниц) — отдаём прямой URL
   const shareUrl = ogUrl ?? prodUrl;
 
   if (navigator.share) {
     try {
+      // Пробуем передать фото напрямую через Web Share API Level 2
+      if (imageUrl && navigator.canShare) {
+        const file = await fetchImageAsFile(imageUrl, title);
+        if (file && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title, text: `${text}\n${shareUrl}`, files: [file] });
+          toast.success('Ссылка отправлена!');
+          return;
+        }
+      }
+      // Fallback: без файла, с og-proxy URL
       await navigator.share({ title, text, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
