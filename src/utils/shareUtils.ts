@@ -93,17 +93,16 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
 
   if (navigator.share) {
     try {
-      // Пробуем передать фото напрямую через Web Share API Level 2
+      // Пробуем Web Share API Level 2 — передаём файл напрямую (Android Chrome)
       if (imageUrl && navigator.canShare) {
         const file = await fetchImageAsFile(imageUrl, title);
-        console.log('[share] imageFile:', file ? `${file.name} ${file.type} ${file.size}b` : 'null');
         if (file && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title, text: `${text}\n${shareUrl}`, files: [file] });
+          await navigator.share({ title, text: `${text}\n${prodUrl}`, files: [file] });
           toast.success('Ссылка отправлена!');
           return;
         }
       }
-      // Fallback: без файла, с og-proxy URL
+      // Fallback: без файла — передаём og-proxy URL (бот мессенджера загрузит og:image)
       await navigator.share({ title, text, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
@@ -112,8 +111,6 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     }
   }
 
-  // Десктоп: копируем og-proxy URL — при вставке в Telegram/WhatsApp Desktop
-  // бот загрузит og-proxy и покажет превью с фото
   await copyToClipboard(shareUrl);
   toast.success('Ссылка скопирована', {
     description: 'Вставьте в мессенджер — получатель увидит превью с фото',
