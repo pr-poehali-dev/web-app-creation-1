@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
