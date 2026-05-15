@@ -202,11 +202,13 @@ export function useOfferDetail(id: string | undefined) {
       });
 
       shareText = `🚌 ${offer.transportRoute}${price ? ` — ${price}` : ''}`;
+    } else if (offer.category === 'utilities') {
+      shareText = `🔧 ${offer.title}`;
     } else {
-      const price = offer.pricePerUnit != null
+      const price = offer.pricePerUnit != null && Number(offer.pricePerUnit) > 0
         ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽/${offer.unit}`
-        : '—';
-      shareText = `📦 ${offer.title} — ${price}`;
+        : null;
+      shareText = price ? `📦 ${offer.title} — ${price}` : `📦 ${offer.title}`;
     }
 
     await shareContent({
