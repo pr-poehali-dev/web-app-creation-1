@@ -70,11 +70,13 @@ function buildOgProxyUrl(prodUrl: string): string | null {
  */
 async function fetchImageAsFile(imageUrl: string, title: string): Promise<File | null> {
   try {
-    // Пробуем без явного mode (браузер использует CORS если заголовки есть)
-    const resp = await fetch(imageUrl);
+    // CDN блокирует прямой fetch (CORS) — используем backend-прокси
+    const proxyBase = (func2url as Record<string, string>)['image-proxy'];
+    if (!proxyBase) return null;
+    const proxyUrl = `${proxyBase}?url=${encodeURIComponent(imageUrl)}`;
+    const resp = await fetch(proxyUrl);
     if (!resp.ok) return null;
     const blob = await resp.blob();
-    // Проверяем что реально получили изображение (не HTML с ошибкой)
     if (!blob.type.startsWith('image/') && !blob.type.includes('octet-stream')) return null;
     const ext = imageUrl.toLowerCase().includes('.png') ? 'png' : 'jpg';
     const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';

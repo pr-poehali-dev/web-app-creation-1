@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Proxy CDN image",
+      "method": "GET",
+      "path": "/?url=https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/offer-images/cb1eda95-73d9-4c1a-9e97-6996c1de8d92.jpg",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Reject non-CDN URL",
+      "method": "GET",
+      "path": "/?url=https://evil.com/hack.jpg",
+      "expectedStatus": 400
+    }
+  ]
+}
