@@ -121,18 +121,7 @@ export function useRequestsData() {
     };
   }, []);
 
-  // Polling заказов каждые 10 секунд для актуального счётчика новых откликов
-  useEffect(() => {
-    const pollOrders = async () => {
-      if (document.hidden) return;
-      try {
-        const response = await ordersAPI.getAll('all');
-        setOrders(response.orders || []);
-      } catch { /* тихо игнорируем */ }
-    };
-    const intervalId = setInterval(pollOrders, 10000);
-    return () => clearInterval(intervalId);
-  }, []);
+
 
   const handleDelete = async (id: string) => {
     try {
