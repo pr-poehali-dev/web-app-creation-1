@@ -5,7 +5,7 @@ interface ShareOptions {
   title: string;
   text: string;
   url: string;        // прямая ссылка на страницу (erttp.ru/offer/UUID)
-  imageUrl?: string;  // URL первого фото предложения
+  imageUrl?: string;
 }
 
 async function copyToClipboard(text: string): Promise<void> {
@@ -45,7 +45,7 @@ function buildOgProxyUrl(prodUrl: string): string | null {
   const ogProxyBase = (func2url as Record<string, string>)['og-proxy'];
   if (!ogProxyBase) return null;
 
-  const v = '8';
+  const v = '6';
 
   const offerMatch = prodUrl.match(/\/offer\/([0-9a-f-]{36})/);
   if (offerMatch) return `${ogProxyBase}?type=offer&id=${offerMatch[1]}&v=${v}`;
@@ -68,41 +68,16 @@ function buildOgProxyUrl(prodUrl: string): string | null {
  * - При клике пользователь переходит на erttp.ru (og-proxy делает JS-редирект).
  * - Поэтому передаём og-proxy URL, если он доступен.
  */
-async function fetchImageAsFile(imageUrl: string, title: string): Promise<File | null> {
-  try {
-    // CDN блокирует прямой fetch (CORS) — используем backend-прокси
-    const proxyBase = (func2url as Record<string, string>)['image-proxy'];
-    if (!proxyBase) return null;
-    const proxyUrl = `${proxyBase}?url=${encodeURIComponent(imageUrl)}`;
-    const resp = await fetch(proxyUrl);
-    if (!resp.ok) return null;
-    const blob = await resp.blob();
-    if (!blob.type.startsWith('image/') && !blob.type.includes('octet-stream')) return null;
-    const ext = imageUrl.toLowerCase().includes('.png') ? 'png' : 'jpg';
-    const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
-    return new File([blob], `${title}.${ext}`, { type: mimeType });
-  } catch {
-    return null;
-  }
-}
-
-export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
+export async function shareContent({ title, text, url }: ShareOptions): Promise<void> {
   const prodUrl = toProdUrl(url);
   const ogUrl = buildOgProxyUrl(prodUrl);
+
+  // Передаём og-proxy URL мессенджеру — бот парсит статический HTML с og:image
+  // Если og-proxy не найден (например для обычных страниц) — отдаём прямой URL
   const shareUrl = ogUrl ?? prodUrl;
 
   if (navigator.share) {
     try {
-      // Пробуем Web Share API Level 2 — передаём файл напрямую (Android Chrome)
-      if (imageUrl && navigator.canShare) {
-        const file = await fetchImageAsFile(imageUrl, title);
-        if (file && navigator.canShare({ files: [file] })) {
-          await navigator.share({ title, text: `${text}\n${prodUrl}`, files: [file] });
-          toast.success('Ссылка отправлена!');
-          return;
-        }
-      }
-      // Fallback: без файла — передаём og-proxy URL (бот мессенджера загрузит og:image)
       await navigator.share({ title, text, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
@@ -111,6 +86,8 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
     }
   }
 
+  // Десктоп: копируем og-proxy URL — при вставке в Telegram/WhatsApp Desktop
+  // бот загрузит og-proxy и покажет превью с фото
   await copyToClipboard(shareUrl);
   toast.success('Ссылка скопирована', {
     description: 'Вставьте в мессенджер — получатель увидит превью с фото',

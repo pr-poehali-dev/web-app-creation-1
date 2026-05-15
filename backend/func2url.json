@@ -1,5 +1,4 @@
 {
-  "image-proxy": "https://functions.poehali.dev/af98351d-6866-4726-b0fd-5f3a36952325",
   "track-visit": "https://functions.poehali.dev/d6fc7d3f-1215-492d-943f-d1cbf3a44bcf",
   "ai-assist": "https://functions.poehali.dev/3c3c03a1-545b-4d8f-916e-cfc3b8a7719a",
   "contract-response-id": "https://functions.poehali.dev/6dbabecb-07ef-45e6-9147-9ff93d61a44e",
@@ -7,6 +6,7 @@
   "save-contract": "https://functions.poehali.dev/8f4ffbc2-2473-4005-b7ad-2ee7edd3c995",
   "get-upload-url": "https://functions.poehali.dev/0337d155-71d5-48b2-995c-be83c3469396",
   "upload-audio": "https://functions.poehali.dev/2f3a7850-2c10-41c3-af1f-a910c74a416c",
+  "exolve-call": "https://functions.poehali.dev/5dbb4a7a-067d-4c58-805a-9e6fc53c9692",
   "short-url": "https://functions.poehali.dev/c3038bbe-b541-4d95-ad57-e89f37964ac2",
   "archive-expired": "https://functions.poehali.dev/dc0465e6-c003-401a-8981-b59154bdff84",
   "og-proxy": "https://functions.poehali.dev/2a7d2949-7159-4c2e-aeda-5cd18c67e0e7",

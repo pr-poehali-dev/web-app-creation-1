@@ -16,12 +16,17 @@ const InstallPrompt = () => {
     const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
     
     if (isStandalone || isIOSStandalone) {
-      localStorage.setItem('pwa-installed', '1');
       return;
     }
 
     if (localStorage.getItem('pwa-installed') === '1') {
       return;
+    }
+
+    const dismissed = localStorage.getItem('pwa-install-dismissed');
+    if (dismissed) {
+      const daysSince = (Date.now() - Number(dismissed)) / (1000 * 60 * 60 * 24);
+      if (daysSince < 7) return;
     }
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -34,7 +39,7 @@ const InstallPrompt = () => {
     setIsIOS(iOS);
 
     if (iOS) {
-      setTimeout(() => setShowPrompt(true), 3000);
+      setTimeout(() => setShowPrompt(true), 15000);
       return;
     }
 
@@ -43,12 +48,11 @@ const InstallPrompt = () => {
       const installEvent = e as BeforeInstallPromptEvent;
       setDeferredPrompt(installEvent);
       
-      setTimeout(() => setShowPrompt(true), 3000);
+      setTimeout(() => setShowPrompt(true), 15000);
     };
 
     window.addEventListener('appinstalled', () => {
       localStorage.setItem('pwa-installed', '1');
-      setShowPrompt(false);
     });
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -73,6 +77,7 @@ const InstallPrompt = () => {
   };
 
   const handleClose = () => {
+    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
     setShowPrompt(false);
   };
 
@@ -125,16 +130,10 @@ const InstallPrompt = () => {
                 </div>
               ))}
             </div>
-
-            <div className="flex items-center justify-center gap-2 mt-3">
-              <div className="flex flex-col items-center animate-bounce">
-                <p className="text-xs text-blue-200 text-center">Кнопка «Поделиться» внизу экрана</p>
-                <svg width="24" height="20" viewBox="0 0 24 20" fill="none" className="mt-1">
-                  <path d="M12 0 L12 14 M12 14 L6 8 M12 14 L18 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <rect x="2" y="16" width="20" height="4" rx="2" fill="white" fillOpacity="0.3"/>
-                </svg>
-              </div>
-            </div>
+            
+            <p className="text-xs text-blue-200 animate-pulse text-center mt-2">
+              👆 Следуйте инструкции выше
+            </p>
           </div>
         </div>
       </div>

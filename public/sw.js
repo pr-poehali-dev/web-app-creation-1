@@ -97,25 +97,6 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-function playPushSound() {
-  try {
-    const ctx = new AudioContext();
-    const times = [0, 0.15, 0.3];
-    times.forEach((t) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 880;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.12);
-      osc.start(ctx.currentTime + t);
-      osc.stop(ctx.currentTime + t + 0.12);
-    });
-  } catch (e) {}
-}
-
 // Обработка push-уведомлений
 self.addEventListener('push', (event) => {
   let notificationData = {
@@ -142,22 +123,14 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    Promise.all([
-      self.registration.showNotification(notificationData.title, {
-        body: notificationData.body,
-        icon: notificationData.icon,
-        badge: notificationData.badge,
-        data: notificationData.data,
-        tag: notificationData.tag,
-        requireInteraction: notificationData.requireInteraction,
-        vibrate: [200, 100, 200],
-      }),
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-        clientList.forEach((client) => {
-          client.postMessage({ type: 'PUSH_RECEIVED', data: notificationData });
-        });
-      })
-    ])
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      data: notificationData.data,
+      tag: notificationData.tag,
+      requireInteraction: notificationData.requireInteraction,
+    })
   );
 });
 
