@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -127,15 +127,17 @@ const MyContracts = lazyWithRetry(() => import("./pages/MyContracts"));
 const ContractDetail = lazyWithRetry(() => import("./pages/ContractDetail"));
 const EditContract = lazyWithRetry(() => import("./pages/EditContract"));
 
-// Инвалидирует кэш при каждой смене маршрута — гарантирует свежие данные на мобильных
+// Инвалидирует кэш только при возврате на главную страницу, а не при каждом переходе
 function RouteChangeInvalidator() {
   const location = useLocation();
+  const prevPath = useRef<string>('');
   useEffect(() => {
-    SmartCache.invalidate('offers_list');
-    SmartCache.invalidate('requests_list');
-    SmartCache.invalidate('orders_list');
-    SmartCache.invalidate('auctions_list');
-    localStorage.setItem('force_offers_reload', Date.now().toString());
+    const prev = prevPath.current;
+    prevPath.current = location.pathname;
+    // Сбрасываем кеш только когда возвращаемся на главную со страницы детали
+    if (location.pathname === '/' && prev.startsWith('/offer')) {
+      SmartCache.invalidate('offers_list');
+    }
   }, [location.pathname]);
   return null;
 }
