@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
-import L from 'leaflet';
+/* Leaflet загружается через CDN в index.html как глобальная переменная L */
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+declare const L: any;
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
@@ -16,8 +18,10 @@ interface MapModalProps {
 }
 
 export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesChange, onAddressChange }: MapModalProps) {
-  const mapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markerRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([41.2995, 69.2401]);
   const [currentAddress, setCurrentAddress] = useState<string>('');
@@ -60,7 +64,8 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
 
-      map.on('click', async (e: L.LeafletMouseEvent) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      map.on('click', async (e: any) => {
         const { lat, lng } = e.latlng;
         const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         console.log('🗺️ MAP CLICK:', coords);
