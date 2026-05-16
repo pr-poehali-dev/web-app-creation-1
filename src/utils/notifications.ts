@@ -13,6 +13,28 @@ interface Notification {
 
 const STORAGE_KEY = 'marketplace_notifications';
 
+export function playNotificationSound(): void {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const times = [0, 0.15, 0.3];
+    times.forEach((t) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.12);
+      osc.start(ctx.currentTime + t);
+      osc.stop(ctx.currentTime + t + 0.12);
+    });
+  } catch (e) {
+    console.debug('Audio not available', e);
+  }
+}
+
 export function addNotification(
   userId: string,
   type: NotificationType,
@@ -142,19 +164,17 @@ export function notifyNewOrder(
     `/my-orders`
   );
 
-  // КРИТИЧНО: Показываем пуш-уведомление ТОЛЬКО продавцу, а не покупателю
   if ('Notification' in window && Notification.permission === 'granted') {
-    // Проверяем, что текущий пользователь - это продавец
-    const currentUserStr = localStorage.getItem('marketplace_session');
+    const currentUserStr = localStorage.getItem('currentUser');
     if (currentUserStr) {
       try {
         const currentUser = JSON.parse(currentUserStr);
-        // Показываем уведомление только если текущий пользователь = продавец
         if (currentUser.id?.toString() === sellerId) {
+          playNotificationSound();
           new Notification('Новый заказ!', {
             body: `${buyerName} заказал ${quantity} ${unit}`,
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
+            icon: '/favicon.png',
+            badge: '/favicon.png',
             tag: `order-${orderId}`,
             requireInteraction: true,
           });

@@ -35,7 +35,7 @@ export default function TransportSection({
   onPassengerRouteChange,
   onPickupMapOpen,
 }: TransportSectionProps) {
-  const activeWaypoints = offerTransportWaypoints.filter(w => w.isActive);
+  const activeWaypoints = (offerTransportWaypoints || []).filter(w => w.isActive);
 
   if (isFreight) {
     return (
