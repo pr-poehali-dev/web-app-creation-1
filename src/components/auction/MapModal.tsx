@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import L from 'leaflet';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+declare const L: any;
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
@@ -16,8 +17,8 @@ interface MapModalProps {
 }
 
 export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesChange, onAddressChange }: MapModalProps) {
-  const mapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([41.2995, 69.2401]);
   const [currentAddress, setCurrentAddress] = useState<string>('');
@@ -60,7 +61,7 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
 
-      map.on('click', async (e: L.LeafletMouseEvent) => {
+      map.on('click', async (e: any) => {
         const { lat, lng } = e.latlng;
         const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         console.log('🗺️ MAP CLICK:', coords);
@@ -216,144 +217,117 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
     const loadingMessage = 'Определяем ваше местоположение...';
     console.log(loadingMessage);
     
+    if (!navigator.geolocation) {
+      console.error('Геолокация не поддерживается');
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        console.log('✅ Геолокация получена:', position.coords);
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        console.log('📍 Координаты:', { lat, lng });
         const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        console.log('🎯 Got location:', coords);
+        
         onCoordinatesChange(coords);
         setMapCenter([lat, lng]);
+
+        if (mapRef.current) {
+          mapRef.current.setView([lat, lng], 15);
           
-          if (mapRef.current) {
-            if (markerRef.current) {
-              updateMarkerPosition(markerRef.current, lat, lng);
-            } else {
-              markerRef.current = createDraggableMarker(mapRef.current, lat, lng, async (dragLat, dragLng) => {
-                const dragCoords = `${dragLat.toFixed(6)}, ${dragLng.toFixed(6)}`;
-                onCoordinatesChange(dragCoords);
-                
-                if (onAddressChange) {
-                  console.log('🔄 Geolocation marker drag: fetching address for', dragCoords);
-                  try {
-                    const result = await geocodeCoordinates(dragLat, dragLng);
-                    console.log('🔄 Geolocation marker drag: Calling onAddressChange with:', result);
-                    setCurrentAddress(result.fullAddress);
-                    setCurrentDistrict(result.district);
-                    setCurrentCoords(dragCoords);
-                    onAddressChange(result.fullAddress, result.district, dragCoords);
-                  } catch (error) {
-                    console.error('Ошибка получения адреса при перетаскивании:', error);
-                  }
-                }
-              });
-            }
-            mapRef.current.setView([lat, lng], 13);
-          }
-          
-          if (onAddressChange) {
-            console.log('🚀 Начинаем геокодирование для геолокации...');
-            try {
-              const result = await geocodeCoordinates(lat, lng, '📍 Geolocation:');
-              console.log('🎉 Геокодирование завершено, вызываем onAddressChange:', result);
-              setCurrentAddress(result.fullAddress);
-              setCurrentDistrict(result.district);
-              setCurrentCoords(coords);
-              onAddressChange(result.fullAddress, result.district, coords);
-              console.log('✅ onAddressChange вызван успешно');
-            } catch (error) {
-              console.error('❌ Ошибка получения адреса:', error);
-            }
+          if (markerRef.current) {
+            updateMarkerPosition(markerRef.current, lat, lng);
           } else {
-            console.log('⚠️ onAddressChange не передан в MapModal');
+            markerRef.current = createDraggableMarker(mapRef.current, lat, lng, async (dragLat, dragLng) => {
+              const dragCoords = `${dragLat.toFixed(6)}, ${dragLng.toFixed(6)}`;
+              onCoordinatesChange(dragCoords);
+              if (onAddressChange) {
+                try {
+                  const result = await geocodeCoordinates(dragLat, dragLng);
+                  setCurrentAddress(result.fullAddress);
+                  setCurrentDistrict(result.district);
+                  setCurrentCoords(dragCoords);
+                  onAddressChange(result.fullAddress, result.district, dragCoords);
+                } catch (error) {
+                  console.error('Ошибка получения адреса при перетаскивании:', error);
+                }
+              }
+            });
           }
-        },
-        (error) => {
-          console.error('❌ Ошибка получения координат:', error);
-          let errorMessage = 'Не удалось определить местоположение. ';
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage += 'Разрешите доступ к геолокации в настройках браузера.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage += 'Местоположение недоступно.';
-              break;
-            case error.TIMEOUT:
-              errorMessage += 'Время ожидания истекло.';
-              break;
-          }
-          alert(errorMessage);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
         }
-      );
+
+        if (onAddressChange) {
+          try {
+            const result = await geocodeCoordinates(lat, lng, '🎯 Location:');
+            console.log('🎯 Got address:', result);
+            setCurrentAddress(result.fullAddress);
+            setCurrentDistrict(result.district);
+            setCurrentCoords(coords);
+            onAddressChange(result.fullAddress, result.district, coords);
+          } catch (error) {
+            console.error('Ошибка получения адреса по геолокации:', error);
+          }
+        }
+      },
+      (error) => {
+        console.error('Ошибка геолокации:', error);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-background rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col shadow-xl">
-        <div className="p-4 border-b flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Выбор местоположения на карте</h2>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Icon name="X" className="h-6 w-6" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h2 className="text-lg font-semibold">Выбор на карте</h2>
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100">
+            <Icon name="X" size={20} />
           </button>
         </div>
-        
-        <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-          <MapSearchBar onSelectLocation={handleSearchSelect} initialValue={currentAddress} />
 
-          <div>
-            <Label htmlFor="coordinates">GPS координаты (широта, долгота)</Label>
-            <Input
-              id="coordinates"
-              type="text"
-              value={coordinates}
-              onChange={(e) => handleInputChange(e.target.value)}
-              placeholder="Например: 62.0355, 129.6755"
-            />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGetCurrentLocation}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            <Icon name="Navigation" className="h-4 w-4" />
-            Мое местоположение
-          </button>
-
-          <div 
-            ref={mapContainerRef} 
-            className="w-full h-[400px] rounded-md border overflow-hidden"
-            style={{ minHeight: '400px' }}
-          />
+        <div className="p-4 space-y-3">
+          <MapSearchBar onSelect={handleSearchSelect} />
           
-          <p className="text-xs text-muted-foreground">
-            💡 Кликните на карту или перетащите маркер для выбора точного местоположения
-          </p>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground mb-1 block">Координаты</Label>
+              <Input
+                value={coordinates}
+                onChange={(e) => handleInputChange(e.target.value)}
+                placeholder="41.299496, 69.240073"
+                className="font-mono text-sm"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={handleGetCurrentLocation}
+                className="px-3 py-2 rounded-lg border hover:bg-gray-50 flex items-center gap-1 text-sm"
+                title="Моё местоположение"
+              >
+                <Icon name="MapPin" size={16} />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="p-4 border-t flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border rounded-md hover:bg-accent transition-colors"
-          >
+        <div ref={mapContainerRef} className="flex-1 min-h-[350px] mx-4 rounded-xl overflow-hidden border" />
+
+        {currentAddress && (
+          <div className="px-4 py-2 text-sm text-muted-foreground border-t bg-gray-50">
+            {currentAddress}
+          </div>
+        )}
+
+        <div className="flex gap-2 p-4 border-t">
+          <button onClick={onClose} className="flex-1 px-4 py-2 rounded-lg border hover:bg-gray-50 text-sm">
             Отмена
           </button>
           <button
-            type="button"
             onClick={handleApply}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
           >
             Применить
           </button>
