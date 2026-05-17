@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +16,8 @@ import NotificationPermissionBanner from "./components/NotificationPermissionBan
 import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
 import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
+import IncomingCallModal, { type IncomingCallData } from "./components/IncomingCallModal";
+import { useOrderCallNotification } from "./hooks/useOrderCallNotification";
 
 // Ленивая загрузка страниц
 const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
@@ -152,6 +154,29 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function AppContent({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
+
+  const handleIncomingCall = useCallback((data: IncomingCallData) => {
+    setIncomingCall(data);
+  }, []);
+
+  const handleDismissCall = useCallback(() => {
+    setIncomingCall(null);
+  }, []);
+
+  useOrderCallNotification({
+    onIncomingCall: handleIncomingCall,
+    enabled: isAuthenticated,
+  });
+
+  return (
+    <>
+      <IncomingCallModal call={incomingCall} onDismiss={handleDismissCall} />
+    </>
+  );
+}
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getSession());
@@ -295,6 +320,7 @@ const App = () => {
                   <TechnicalIssuesBanner />
                   {isAuthenticated && <NotificationPermissionBanner />}
                   <InstallPrompt />
+                  <AppContent isAuthenticated={isAuthenticated} />
                   <ErrorBoundary>
                   <Suspense fallback={pageFallback}>
                 <Routes>
