@@ -286,15 +286,19 @@ export function useOrdersData(
   // Удалено: этот effect вызывал постоянные перерисовки модалки
   // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
 
-  // Периодическое обновление всех заказов каждые 10 секунд (optimistic updates уже мгновенные)
+  // Периодическое обновление заказов — 30 сек, только при хорошем соединении и активной вкладке
   useEffect(() => {
     if (!isAuthenticated) return;
 
     loadOrders(false);
 
     const intervalId = setInterval(() => {
+      if (document.hidden) return;
+      // Не опрашиваем при медленном соединении
+      const conn = (navigator as Navigator & { connection?: { effectiveType?: string } }).connection;
+      if (conn?.effectiveType === 'slow-2g' || conn?.effectiveType === '2g') return;
       loadOrders(false);
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, [isAuthenticated, loadOrders]);
