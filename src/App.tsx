@@ -13,6 +13,7 @@ import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
 import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
+import { playNotificationSound } from "./utils/notifications";
 import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
 import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
@@ -210,10 +211,12 @@ const App = () => {
         });
       }, 4000);
 
-      // Слушаем сообщения от Service Worker (клики по уведомлениям)
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data.type === 'NOTIFICATION_CLICK') {
           window.location.href = event.data.url;
+        }
+        if (event.data.type === 'PUSH_RECEIVED') {
+          playNotificationSound();
         }
       });
     }
