@@ -9,7 +9,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
-import { useToast } from '@/hooks/use-toast';
 
 import { getSession, saveSession } from '@/utils/auth';
 import func2url from '../../backend/func2url.json';
@@ -56,8 +55,6 @@ interface Contract {
 export default function TradingPlatform({ isAuthenticated, onLogout }: TradingPlatformProps) {
   const navigate = useNavigate();
   useScrollToTop();
-  const { toast } = useToast();
-
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

@@ -45,7 +45,7 @@ def html_response(title: str, description: str, image_url: str, page_url: str, r
         'statusCode': 200,
         'headers': {
             'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=60',
+            'Cache-Control': 'public, max-age=300',
             'Access-Control-Allow-Origin': '*',
         },
         'body': html,
@@ -121,10 +121,6 @@ def handler(event: dict, context) -> dict:
                 title = f"Пассажирские перевозки {row['transport_route']}"
                 parts = [p for p in [price, date_str, seats] if p]
                 desc = ' • '.join(parts)
-            elif row.get('category') == 'utilities':
-                title = row['title']
-                category_label = 'Услуга'
-                desc = f"{category_label}. {row['description'][:200] if row.get('description') else ''}".strip('. ')
             else:
                 p_price = float(row['price_per_unit'] or 0)
                 price = f"{p_price:,.0f} ₽/{row['unit']}".replace(',', '\u00a0') if p_price > 0 else ''
