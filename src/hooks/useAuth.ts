@@ -16,7 +16,6 @@ export interface AuthState {
   isBlocked: boolean;
   blockReason: string | null;
   blockData: any | null;
-  needsTelegramVerification: boolean;
 }
 
 const getSessionTimeout = async (): Promise<number> => {
@@ -56,7 +55,6 @@ export const useAuth = () => {
   const [blockData, setBlockData] = useState<any | null>(null);
   const [showAccessDenied, setShowAccessDenied] = useState(false);
   const [accessDeniedMessage, setAccessDeniedMessage] = useState('Доступ на вход временно недоступен по техническим причинам');
-  const [needsTelegramVerification, setNeedsTelegramVerification] = useState(false);
   const lastActivityRef = useRef<number>(Date.now());
 
   const handleLoginSuccess = async (uid: number, email?: string, token?: string) => {
@@ -84,15 +82,11 @@ export const useAuth = () => {
       }
     }
     
-    // Telegram verification is now handled via TelegramBanner component
-    // No blocking on login - just show banner if not verified
-    
     setIsAuthenticated(true);
     setUserId(uid);
     setUserEmail(email || '');
     setIsAdmin(isUserAdmin);
     setCurrentPage('dashboard');
-    setNeedsTelegramVerification(false);
     lastActivityRef.current = Date.now();
     
     localStorage.setItem('userId', uid.toString());

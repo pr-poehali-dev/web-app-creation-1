@@ -82,7 +82,7 @@ const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
 const CreateAuction = lazyWithRetry(() => import("./pages/CreateAuction"));
 const EditAuction = lazyWithRetry(() => import("./pages/EditAuction"));
 const AuctionDetail = lazyWithRetry(() => import("./pages/AuctionDetail"));
-const TelegramConnect = lazyWithRetry(() => import("./pages/TelegramConnect"));
+
 const VerificationPage = lazyWithRetry(() => import("./pages/VerificationPage"));
 const VerificationResubmit = lazyWithRetry(() => import("./pages/VerificationResubmit"));
 const AdminVerifications = lazyWithRetry(() => import("./pages/AdminVerifications"));
@@ -117,7 +117,7 @@ const Support = lazyWithRetry(() => import("./pages/Support"));
 const ClearData = lazyWithRetry(() => import("./pages/ClearData"));
 const DeleteTestData = lazyWithRetry(() => import("./pages/DeleteTestData"));
 const MigrateImages = lazyWithRetry(() => import("./pages/MigrateImages"));
-const TelegramSetup = lazyWithRetry(() => import("./pages/TelegramSetup"));
+
 const VerifyPhone = lazyWithRetry(() => import("./pages/VerifyPhone"));
 const ImageEditor = lazyWithRetry(() => import("./pages/ImageEditor"));
 const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
@@ -369,8 +369,7 @@ const App = () => {
             <Route path="/terms" element={<TermsOfService isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/privacy" element={<PrivacyPolicy isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer-agreement" element={<OfferAgreement isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/telegram-setup" element={<TelegramSetup isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/telegram-connect" element={<TelegramConnect />} />
+
             <Route path="/image-editor" element={<ImageEditor />} />
             <Route path="/s/:code" element={<ShortUrlRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -87,40 +87,6 @@ export default function AdminOtherTabs({
 
       <Card>
         <CardHeader>
-          <CardTitle>Настройки Telegram</CardTitle>
-          <CardDescription>Интеграция с Telegram для уведомлений</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="telegram-bot-token">Токен Telegram бота</Label>
-            <Input
-              id="telegram-bot-token"
-              type="password"
-              placeholder="1234567890:ABCdefGHIjklMNOpqrsTUVwxyz"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="telegram-chat-id">ID чата для уведомлений</Label>
-            <Input
-              id="telegram-chat-id"
-              placeholder="-1001234567890"
-            />
-          </div>
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-            <p className="text-sm flex items-start gap-2">
-              <Icon name="Info" className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span>
-                Для получения токена создайте бота через @BotFather в Telegram.
-                ID чата можно узнать через @userinfobot
-              </span>
-            </p>
-          </div>
-          <Button onClick={handleSaveSettings}>Сохранить изменения</Button>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Безопасность</CardTitle>
           <CardDescription>Настройки безопасности и защиты</CardDescription>
         </CardHeader>

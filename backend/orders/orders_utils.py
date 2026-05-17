@@ -43,21 +43,6 @@ def generate_order_number():
     random_part = random.randint(1000, 9999)
     return f'ORD-{timestamp}-{random_part}'
 
-def send_call(phone: str, text: str = '', call_type: str = 'order'):
-    """Голосовой звонок через МТС Exolve (синхронно — гарантированно выполняется до завершения функции)"""
-    if not phone:
-        return
-    try:
-        payload = json.dumps({'phone': phone, 'type': call_type})
-        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=20)
-        conn.request('POST', '/5dbb4a7a-067d-4c58-805a-9e6fc53c9692', payload, {'Content-Type': 'application/json'})
-        resp = conn.getresponse()
-        resp_body = resp.read().decode('utf-8')
-        conn.close()
-        print(f'[EXOLVE] Call to {phone} type={call_type}: status={resp.status} resp={resp_body[:200]}')
-    except Exception as e:
-        print(f'[EXOLVE] Call error: {e}')
-
 
 def _send_email_async(notification_data: str):
     """Email-уведомление в фоновом потоке"""
