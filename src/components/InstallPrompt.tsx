@@ -16,7 +16,6 @@ const InstallPrompt = () => {
     const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
     
     if (isStandalone || isIOSStandalone) {
-      localStorage.setItem('pwa-installed', '1');
       return;
     }
 
