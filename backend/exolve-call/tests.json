@@ -1,0 +1,25 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Missing phone returns 400",
+      "method": "POST",
+      "path": "/",
+      "body": {"text": "Тест"},
+      "expectedStatus": 400
+    },
+    {
+      "name": "Real call to seller phone",
+      "method": "POST",
+      "path": "/",
+      "body": {"phone": "+79841017355", "type": "order"},
+      "expectedStatus": 200,
+      "bodyMatcher": "partial"
+    }
+  ]
+}

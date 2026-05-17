@@ -4,12 +4,14 @@ import { Badge } from '@/components/ui/badge';
 interface HeaderMobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
+  currentPath: string;
   menuRef: React.RefObject<HTMLDivElement>;
 }
 
 export default function HeaderMobileMenu({ 
   isOpen, 
   onClose, 
+  currentPath,
   menuRef
 }: HeaderMobileMenuProps) {
   if (!isOpen) return null;
