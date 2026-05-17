@@ -568,8 +568,6 @@ export const useAuth = () => {
     blockData,
     showAccessDenied,
     accessDeniedMessage,
-    needsTelegramVerification,
-    setNeedsTelegramVerification,
     setShowAccessDenied,
     setNeeds2FA,
     setPendingUserData,
