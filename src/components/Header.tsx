@@ -341,7 +341,6 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         <HeaderMobileMenu
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
-          currentPath={location.pathname}
           menuRef={mobileMenuRef}
         />
 
