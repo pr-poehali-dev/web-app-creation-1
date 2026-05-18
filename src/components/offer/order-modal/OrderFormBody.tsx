@@ -130,23 +130,6 @@ export default function OrderFormBody({
   onClose,
   onSubmit,
 }: OrderFormBodyProps) {
-  if (createdOrderId) {
-    return (
-      <div className="space-y-2 pt-1">
-        <OrderInlineChat
-          createdOrderId={createdOrderId}
-          chatMessages={chatMessages}
-          chatText={chatText}
-          isSendingMessage={isSendingMessage}
-          chatScrollRef={chatScrollRef}
-          onChatTextChange={onChatTextChange}
-          onSend={onSendChatMessage}
-          onClose={onClose}
-        />
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={onSubmit} className="space-y-3">
       {offerCategory === 'transport' && offerTransportDateTime && (
