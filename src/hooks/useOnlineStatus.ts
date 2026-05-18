@@ -12,7 +12,7 @@ interface UseOnlineStatusProps {
   isAuthenticated: boolean;
 }
 
-export const useOnlineStatus = ({ userId, userEmail, vkId, isAuthenticated }: UseOnlineStatusProps) => {
+export const useOnlineStatus = ({ userId: _userId, userEmail, vkId, isAuthenticated }: UseOnlineStatusProps) => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
 

@@ -7,7 +7,7 @@ from datetime import datetime, date
 from typing import Dict, Any
 from psycopg2.extras import RealDictCursor
 from orders_utils import (
-    get_db_connection, get_schema, send_notification, send_call,
+    get_db_connection, get_schema, send_notification,
     generate_order_number, reject_other_responses,
     decimal_to_float, offers_cache
 )
@@ -416,12 +416,8 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
     
     if seller:
         seller_name = f"{seller.get('first_name', '')} {seller.get('last_name', '')}".strip()
-        seller_phone = seller.get('phone', '')
-        seller_email = seller.get('email', '')
     else:
         seller_name = 'Продавец'
-        seller_phone = ''
-        seller_email = ''
     
     order_number = generate_order_number()
     
@@ -537,27 +533,17 @@ def create_order(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, An
             pickup_info = f' | Посадка: {pickup}' if pickup else ''
             notification_message = f'Получен заказ на "{body["title"]}" на сумму {total_amount:,.0f} ₽{pickup_info}'
 
-        call_type = 'response' if is_request else 'order'
         seller_tab = 'my-requests' if is_request else 'seller'
         order_url = f'/my-orders?tab={seller_tab}&orderId={result["id"]}'
 
-        # Push и звонок запускаем параллельно — не ждём друг друга
+        # Отправляем push + email уведомление продавцу
         t_notif = threading.Thread(
             target=send_notification,
             args=(seller_id, notification_title, notification_message, order_url),
             daemon=False
         )
-        t_call = threading.Thread(
-            target=send_call,
-            args=(seller_phone,),
-            kwargs={'call_type': call_type},
-            daemon=False
-        )
         t_notif.start()
-        t_call.start()
-        # Ждём оба завершения (таймаут 25 сек суммарно)
         t_notif.join(timeout=12)
-        t_call.join(timeout=12)
     except Exception as e:
         print(f'Notification error: {e}')
     

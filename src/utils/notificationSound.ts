@@ -3,7 +3,10 @@ let isInitialized = false;
 
 const initAudio = () => {
   if (!isInitialized && typeof window !== 'undefined') {
-    audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    audioContext = new AudioCtx();
     isInitialized = true;
   }
 };

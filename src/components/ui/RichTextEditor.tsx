@@ -1,6 +1,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { TextStyle, Color } from '@tiptap/extension-text-style';
+import TextStyle from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
@@ -81,7 +82,7 @@ export default function RichTextEditor({ value, onChange, readOnly = false }: Ri
   if (!editor) return null;
 
   const setFontSize = (size: string) => {
-    editor.chain().focus().setFontSize(`${size}px`).run();
+    editor.chain().focus().setMark('textStyle', { fontSize: `${size}px` }).run();
   };
 
   if (readOnly) {
