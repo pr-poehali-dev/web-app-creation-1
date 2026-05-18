@@ -9,7 +9,8 @@ let isRinging = false;
 
 function getAudioContext(): AudioContext {
   if (!ringAudioCtx || ringAudioCtx.state === 'closed') {
-    const AudioCtx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) throw new Error('AudioContext not supported');
     ringAudioCtx = new AudioCtx();
   }
