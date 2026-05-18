@@ -38,7 +38,7 @@ export default function CounterOfferForm({
     return null;
   }
 
-  const isServices = order.offerCategory === 'services';
+  const isServices = order.offerCategory === 'utilities';
 
   // Форма встречного предложения от покупателя
   if (isBuyer && (order.status === 'new' || order.status === 'pending')) {

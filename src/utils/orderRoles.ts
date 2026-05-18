@@ -60,7 +60,7 @@ export function getOrderRoles(order: Order): OrderRoles {
     return { buyer: 'Клиент', seller: 'Исполнитель', counterBuyer: 'клиента', counterSeller: 'исполнителя' };
   }
 
-  if (order.offerCategory === 'services') {
+  if (order.offerCategory === 'utilities') {
     return { buyer: 'Заказчик', seller: 'Исполнитель', counterBuyer: 'заказчика', counterSeller: 'исполнителя' };
   }
 
