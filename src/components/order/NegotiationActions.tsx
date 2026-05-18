@@ -52,7 +52,7 @@ export default function NegotiationActions({
     );
   }
 
-  if (isBuyer && order.status === 'new' && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && !order.isRequest && !order.noNegotiation) {
+  if (isBuyer && (order.status === 'new' || order.status === 'pending') && !showCounterForm && !order.counterPricePerUnit && onCounterOffer && !order.isRequest && !order.noNegotiation) {
     return (
       <Button 
         onClick={onShowCounterForm} 
@@ -70,7 +70,7 @@ export default function NegotiationActions({
     return null;
   }
 
-  if (isBuyer && order.status === 'new' && !order.isRequest && order.noNegotiation) {
+  if (isBuyer && (order.status === 'new' || order.status === 'pending') && !order.isRequest && order.noNegotiation) {
     return (
       <div className="border-t pt-3 flex items-center gap-2 text-sm text-muted-foreground">
         <Icon name="Lock" size={14} />

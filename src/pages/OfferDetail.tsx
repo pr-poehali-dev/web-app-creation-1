@@ -47,6 +47,7 @@ export default function OfferDetail() {
     setGalleryIndex,
     handleSendMessage,
     handleSendChatMessage,
+    handleCounterOfferCreatedOrder,
     handleAcceptCreatedOrder,
     handleCancelCreatedOrder,
     createdOrderId,
@@ -103,6 +104,7 @@ export default function OfferDetail() {
         onCreatedOrderIdReset={() => setCreatedOrderId(null)}
         onSendChatMessage={handleSendChatMessage}
         currentUserId={currentUser?.id?.toString()}
+        onCounterOfferCreatedOrder={handleCounterOfferCreatedOrder}
         onAcceptCreatedOrder={handleAcceptCreatedOrder}
         onCancelCreatedOrder={handleCancelCreatedOrder}
       />

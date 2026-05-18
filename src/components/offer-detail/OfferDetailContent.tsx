@@ -46,6 +46,7 @@ interface OfferDetailContentProps {
   onCreatedOrderIdReset?: () => void;
   onSendChatMessage?: (orderId: string, text: string) => Promise<void>;
   currentUserId?: string;
+  onCounterOfferCreatedOrder?: (price: number, message: string, quantity?: number) => void;
   onAcceptCreatedOrder?: () => void;
   onCancelCreatedOrder?: (orderId?: string, reason?: string) => void;
 }
@@ -79,6 +80,7 @@ export default function OfferDetailContent({
   onCreatedOrderIdReset,
   onSendChatMessage,
   currentUserId,
+  onCounterOfferCreatedOrder,
   onAcceptCreatedOrder,
   onCancelCreatedOrder,
 }: OfferDetailContentProps) {
@@ -165,6 +167,7 @@ export default function OfferDetailContent({
           isOpen={!!createdOrderId || isOrderModalOpen}
           onClose={() => { onOrderModalChange(false); onCreatedOrderIdReset?.(); }}
           order={createdOrder}
+          onCounterOffer={onCounterOfferCreatedOrder}
           onAcceptOrder={onAcceptCreatedOrder}
           onCancelOrder={onCancelCreatedOrder}
         />

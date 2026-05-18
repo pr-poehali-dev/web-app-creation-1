@@ -646,6 +646,30 @@ export function useOfferDetail(id: string | undefined) {
     });
   };
 
+  const handleCounterOfferCreatedOrder = async (price: number, message: string, quantity?: number) => {
+    if (!createdOrder) return;
+    try {
+      await ordersAPI.updateOrder(createdOrder.id, {
+        counterPrice: price,
+        counterQuantity: quantity ?? createdOrder.quantity,
+        counterMessage: message,
+      });
+      toast({ title: 'Встречное предложение отправлено', description: 'Продавец получит уведомление' });
+      const updatedData = await ordersAPI.getOrderById(createdOrder.id);
+      setCreatedOrder(prev => prev ? {
+        ...prev,
+        counterPricePerUnit: updatedData.counter_price_per_unit || price,
+        counterTotalAmount: updatedData.counter_total_amount,
+        counterOfferedBy: updatedData.counter_offered_by || 'buyer',
+        status: updatedData.status || prev.status,
+      } : prev);
+      notifyOrderUpdated(createdOrder.id);
+    } catch (error) {
+      console.error('Error sending counter offer:', error);
+      toast({ title: 'Ошибка', description: 'Не удалось отправить встречное предложение', variant: 'destructive' });
+    }
+  };
+
   const handleAcceptCreatedOrder = async () => {
     if (!createdOrder) return;
     try {
@@ -764,6 +788,7 @@ export function useOfferDetail(id: string | undefined) {
     setGalleryIndex,
     handleSendMessage,
     handleSendChatMessage,
+    handleCounterOfferCreatedOrder,
     handleAcceptCreatedOrder,
     handleCancelCreatedOrder,
     createdOrderId,
