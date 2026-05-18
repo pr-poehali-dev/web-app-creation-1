@@ -283,6 +283,43 @@ export function useOfferDetail(id: string | undefined) {
           const errorData = await response.json().catch(() => ({}));
           const existingId = errorData.existingOrderId || errorData.orderId || '';
           if (existingId) {
+            // Загружаем существующий заказ
+            try {
+              const orderResponse = await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${existingId}`, {
+                headers: { 'X-User-Id': currentUser.id?.toString() || '' },
+              });
+              if (orderResponse.ok) {
+                const orderData = await orderResponse.json();
+                const existingOrder: Order = {
+                  id: String(existingId),
+                  orderNumber: orderData.order_number,
+                  offerId: orderData.offer_id || offer.id,
+                  offerTitle: orderData.title || offer.title,
+                  offerImage: offer.images?.[0]?.url,
+                  offerCategory: offer.category,
+                  buyerId: orderData.buyer_id?.toString() || currentUser.id?.toString() || '',
+                  buyerName: orderData.buyer_name || `${currentUser.firstName} ${currentUser.lastName}`,
+                  buyerEmail: orderData.buyer_email || currentUser.email,
+                  buyerPhone: orderData.buyer_phone || currentUser.phone || '',
+                  sellerId: orderData.seller_id?.toString() || offer.userId || '',
+                  sellerName: orderData.seller_name || offer.seller?.name || '',
+                  sellerEmail: orderData.seller_email || offer.seller?.email || '',
+                  sellerPhone: orderData.seller_phone || offer.seller?.phone || '',
+                  quantity: orderData.quantity,
+                  unit: orderData.unit || offer.unit,
+                  pricePerUnit: orderData.price_per_unit || offer.pricePerUnit,
+                  totalAmount: orderData.total_amount,
+                  deliveryType: orderData.delivery_type || 'pickup',
+                  deliveryAddress: orderData.delivery_address || '',
+                  status: orderData.status || 'pending',
+                  createdAt: new Date(orderData.created_at || orderData.createdAt),
+                  noNegotiation: orderData.no_negotiation || offer.noNegotiation || false,
+                  offerAvailableQuantity: offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0),
+                  offerPricePerUnit: offer.pricePerUnit,
+                };
+                setCreatedOrder(existingOrder);
+              }
+            } catch { /* ignore */ }
             setCreatedOrderId(String(existingId));
             setIsOrderModalOpen(true);
           } else {
@@ -294,7 +331,37 @@ export function useOfferDetail(id: string | undefined) {
           const result = await response.json();
           notifyOfferUpdated(offer.id);
           notifyOrderUpdated(result.id);
-          setCreatedOrderId(String(result.id));
+          const orderId = String(result.id);
+          setCreatedOrderId(orderId);
+          // Формируем Order объект для OrderNegotiationModal
+          const quickOrder: Order = {
+            id: orderId,
+            orderNumber: result.order_number || `ORD-${orderId}`,
+            offerId: offer.id,
+            offerTitle: offer.title,
+            offerImage: offer.images?.[0]?.url,
+            offerCategory: offer.category,
+            buyerId: currentUser.id?.toString() || '',
+            buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
+            buyerEmail: currentUser.email,
+            buyerPhone: currentUser.phone || '',
+            sellerId: offer.userId || offer.seller?.id || '',
+            sellerName: offer.seller?.name || '',
+            sellerEmail: offer.seller?.email || '',
+            sellerPhone: offer.seller?.phone || '',
+            quantity: defaultQuantity,
+            unit: offer.unit || 'шт',
+            pricePerUnit: offer.pricePerUnit,
+            totalAmount: offer.pricePerUnit * defaultQuantity,
+            deliveryType: defaultDeliveryType,
+            deliveryAddress: defaultDeliveryType === 'delivery' ? defaultAddress : '',
+            status: 'pending',
+            createdAt: new Date(),
+            noNegotiation: offer.noNegotiation || false,
+            offerAvailableQuantity: offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0),
+            offerPricePerUnit: offer.pricePerUnit,
+          };
+          setCreatedOrder(quickOrder);
           setIsOrderModalOpen(true);
           return;
         }

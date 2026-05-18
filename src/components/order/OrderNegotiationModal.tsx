@@ -22,6 +22,7 @@ interface OrderNegotiationModalProps {
   onCompleteOrder?: () => void;
   onRequestCompletion?: (orderId: string) => void;
   onCancelTrip?: (offerId: string, reason: string) => void;
+  isNew?: boolean;
 }
 
 export default function OrderNegotiationModal({
@@ -35,6 +36,7 @@ export default function OrderNegotiationModal({
   onCompleteOrder,
   onRequestCompletion,
   onCancelTrip,
+  isNew,
 }: OrderNegotiationModalProps) {
   const currentUser = getSession();
   const isBuyer = currentUser?.id?.toString() === order.buyerId?.toString();
@@ -50,7 +52,10 @@ export default function OrderNegotiationModal({
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0" onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b">
           <DialogTitle>
-            <span>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</span>
+            {isNew
+              ? <span>Обсуждение заказа и торг</span>
+              : <span>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</span>
+            }
           </DialogTitle>
         </DialogHeader>
 

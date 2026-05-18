@@ -8,6 +8,7 @@ import OfferReviews from '@/components/offer/OfferReviews';
 import OfferDetailInfoCard from './OfferDetailInfoCard';
 import OfferDetailSidebar from './OfferDetailSidebar';
 import OfferDetailGalleryModal from './OfferDetailGalleryModal';
+import OrderNegotiationModal from '@/components/order/OrderNegotiationModal';
 import type { Offer } from '@/types/offer';
 import type { Order } from '@/types/order';
 
@@ -155,30 +156,39 @@ export default function OfferDetailContent({
         )}
       </main>
 
-      <OfferOrderModal
-        isOpen={isOrderModalOpen || !!createdOrderId}
-        onClose={() => { onOrderModalChange(false); onCreatedOrderIdReset?.(); }}
-        onSubmit={onOrderSubmit}
-        remainingQuantity={remainingQuantity}
-        minOrderQuantity={offer.minOrderQuantity}
-        unit={offer.unit}
-        pricePerUnit={offer.category === 'transport' ? Number(offer.transportPrice || 0) : offer.pricePerUnit}
-        availableDeliveryTypes={offer.availableDeliveryTypes}
-        availableDistricts={offer.availableDistricts}
-        offerDistrict={offer.district}
-        offerCategory={offer.category}
-        offerTransportRoute={offer.transportRoute}
-        offerTransportWaypoints={offer.transportWaypoints}
-        offerTransportPriceType={offer.transportPriceType}
-        offerTransportNegotiable={offer.transportNegotiable}
-        offerTransportDateTime={offer.transportDateTime}
-        offerTransportServiceType={offer.transportServiceType}
-        offerTransportCapacity={offer.transportCapacity}
-        noNegotiation={offer.noNegotiation}
-        createdOrderId={createdOrderId}
-        currentUserId={currentUserId}
-        onSendChatMessage={onSendChatMessage}
-      />
+      {createdOrder ? (
+        <OrderNegotiationModal
+          isOpen={!!createdOrderId || isOrderModalOpen}
+          onClose={() => { onOrderModalChange(false); onCreatedOrderIdReset?.(); }}
+          order={createdOrder}
+          isNew
+        />
+      ) : (
+        <OfferOrderModal
+          isOpen={isOrderModalOpen}
+          onClose={() => onOrderModalChange(false)}
+          onSubmit={onOrderSubmit}
+          remainingQuantity={remainingQuantity}
+          minOrderQuantity={offer.minOrderQuantity}
+          unit={offer.unit}
+          pricePerUnit={offer.category === 'transport' ? Number(offer.transportPrice || 0) : offer.pricePerUnit}
+          availableDeliveryTypes={offer.availableDeliveryTypes}
+          availableDistricts={offer.availableDistricts}
+          offerDistrict={offer.district}
+          offerCategory={offer.category}
+          offerTransportRoute={offer.transportRoute}
+          offerTransportWaypoints={offer.transportWaypoints}
+          offerTransportPriceType={offer.transportPriceType}
+          offerTransportNegotiable={offer.transportNegotiable}
+          offerTransportDateTime={offer.transportDateTime}
+          offerTransportServiceType={offer.transportServiceType}
+          offerTransportCapacity={offer.transportCapacity}
+          noNegotiation={offer.noNegotiation}
+          createdOrderId={createdOrderId}
+          currentUserId={currentUserId}
+          onSendChatMessage={onSendChatMessage}
+        />
+      )}
 
       <OfferDetailGalleryModal
         offer={offer}
