@@ -298,8 +298,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
-  const isUtilities = offerCategory === 'utilities';
-  const chatAllowedStatuses = ['accepted', 'completed', ...(isUtilities ? ['new', 'pending', 'negotiating'] : [])];
+  const chatAllowedStatuses = ['new', 'pending', 'negotiating', 'accepted', 'completed'];
   if (!chatAllowedStatuses.includes(orderStatus)) {
     return null;
   }
