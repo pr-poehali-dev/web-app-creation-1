@@ -48,6 +48,7 @@ export function useOfferDetail(id: string | undefined) {
           isPremium: data.is_premium !== undefined ? data.is_premium : data.isPremium,
           availableDistricts: data.available_districts || data.availableDistricts || [],
           availableDeliveryTypes: data.available_delivery_types || data.availableDeliveryTypes || ['pickup'],
+          transportWaypoints: data.transport_waypoints || data.transportWaypoints || [],
           userId: data.user_id || data.userId,
           fullAddress: data.full_address || data.fullAddress,
           video: data.videoUrl ? { url: data.videoUrl } : undefined,
@@ -202,11 +203,13 @@ export function useOfferDetail(id: string | undefined) {
       });
 
       shareText = `🚌 ${offer.transportRoute}${price ? ` — ${price}` : ''}`;
+    } else if (offer.category === 'utilities') {
+      shareText = `🔧 ${offer.title}`;
     } else {
-      const price = offer.pricePerUnit != null
+      const price = offer.pricePerUnit != null && Number(offer.pricePerUnit) > 0
         ? `${Number(offer.pricePerUnit).toLocaleString('ru-RU')} ₽/${offer.unit}`
-        : '—';
-      shareText = `📦 ${offer.title} — ${price}`;
+        : null;
+      shareText = price ? `📦 ${offer.title} — ${price}` : `📦 ${offer.title}`;
     }
 
     await shareContent({

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,8 +16,6 @@ import NotificationPermissionBanner from "./components/NotificationPermissionBan
 import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
 import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
-import IncomingCallModal, { type IncomingCallData } from "./components/IncomingCallModal";
-import { useOrderCallNotification } from "./hooks/useOrderCallNotification";
 
 // Ленивая загрузка страниц
 const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
@@ -84,7 +82,7 @@ const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
 const CreateAuction = lazyWithRetry(() => import("./pages/CreateAuction"));
 const EditAuction = lazyWithRetry(() => import("./pages/EditAuction"));
 const AuctionDetail = lazyWithRetry(() => import("./pages/AuctionDetail"));
-
+const TelegramConnect = lazyWithRetry(() => import("./pages/TelegramConnect"));
 const VerificationPage = lazyWithRetry(() => import("./pages/VerificationPage"));
 const VerificationResubmit = lazyWithRetry(() => import("./pages/VerificationResubmit"));
 const AdminVerifications = lazyWithRetry(() => import("./pages/AdminVerifications"));
@@ -119,7 +117,7 @@ const Support = lazyWithRetry(() => import("./pages/Support"));
 const ClearData = lazyWithRetry(() => import("./pages/ClearData"));
 const DeleteTestData = lazyWithRetry(() => import("./pages/DeleteTestData"));
 const MigrateImages = lazyWithRetry(() => import("./pages/MigrateImages"));
-
+const TelegramSetup = lazyWithRetry(() => import("./pages/TelegramSetup"));
 const VerifyPhone = lazyWithRetry(() => import("./pages/VerifyPhone"));
 const ImageEditor = lazyWithRetry(() => import("./pages/ImageEditor"));
 const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
@@ -129,15 +127,17 @@ const MyContracts = lazyWithRetry(() => import("./pages/MyContracts"));
 const ContractDetail = lazyWithRetry(() => import("./pages/ContractDetail"));
 const EditContract = lazyWithRetry(() => import("./pages/EditContract"));
 
-// Инвалидирует кэш при каждой смене маршрута — гарантирует свежие данные на мобильных
+// Инвалидирует кэш только при возврате на главную страницу, а не при каждом переходе
 function RouteChangeInvalidator() {
   const location = useLocation();
+  const prevPath = useRef<string>('');
   useEffect(() => {
-    SmartCache.invalidate('offers_list');
-    SmartCache.invalidate('requests_list');
-    SmartCache.invalidate('orders_list');
-    SmartCache.invalidate('auctions_list');
-    localStorage.setItem('force_offers_reload', Date.now().toString());
+    const prev = prevPath.current;
+    prevPath.current = location.pathname;
+    // Сбрасываем кеш только когда возвращаемся на главную со страницы детали
+    if (location.pathname === '/' && prev.startsWith('/offer')) {
+      SmartCache.invalidate('offers_list');
+    }
   }, [location.pathname]);
   return null;
 }
@@ -154,29 +154,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-function AppContent({ isAuthenticated }: { isAuthenticated: boolean }) {
-  const [incomingCall, setIncomingCall] = useState<IncomingCallData | null>(null);
-
-  const handleIncomingCall = useCallback((data: IncomingCallData) => {
-    setIncomingCall(data);
-  }, []);
-
-  const handleDismissCall = useCallback(() => {
-    setIncomingCall(null);
-  }, []);
-
-  useOrderCallNotification({
-    onIncomingCall: handleIncomingCall,
-    enabled: isAuthenticated,
-  });
-
-  return (
-    <>
-      <IncomingCallModal call={incomingCall} onDismiss={handleDismissCall} />
-    </>
-  );
-}
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getSession());
@@ -320,7 +297,6 @@ const App = () => {
                   <TechnicalIssuesBanner />
                   {isAuthenticated && <NotificationPermissionBanner />}
                   <InstallPrompt />
-                  <AppContent isAuthenticated={isAuthenticated} />
                   <ErrorBoundary>
                   <Suspense fallback={pageFallback}>
                 <Routes>
@@ -395,7 +371,8 @@ const App = () => {
             <Route path="/terms" element={<TermsOfService isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/privacy" element={<PrivacyPolicy isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/offer-agreement" element={<OfferAgreement isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-
+            <Route path="/telegram-setup" element={<TelegramSetup isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/telegram-connect" element={<TelegramConnect />} />
             <Route path="/image-editor" element={<ImageEditor />} />
             <Route path="/s/:code" element={<ShortUrlRedirect />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
