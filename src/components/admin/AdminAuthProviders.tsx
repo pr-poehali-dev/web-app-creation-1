@@ -9,6 +9,7 @@ interface AuthProvidersProps {
     yandex: boolean;
     vk: boolean;
     google: boolean;
+    telegram?: boolean;
   };
   onToggleProvider: (provider: string) => void;
 }
@@ -17,6 +18,13 @@ const AdminAuthProviders = ({ authProviders, onToggleProvider }: AuthProvidersPr
   const [isExpanded, setIsExpanded] = useState(true);
 
   const providers = [
+    {
+      key: 'telegram',
+      name: 'Telegram',
+      description: 'Вход через Telegram аккаунт',
+      icon: 'MessageCircle',
+      color: 'text-[#0088cc]',
+    },
     {
       key: 'yandex',
       name: 'Яндекс ID',
@@ -71,7 +79,7 @@ const AdminAuthProviders = ({ authProviders, onToggleProvider }: AuthProvidersPr
             >
               <div className="flex items-center gap-4">
                 <div className={`p-2 rounded-full bg-accent/20 ${provider.color}`}>
-                  <Icon name={provider.icon} size={24} />
+                  <Icon name={provider.icon as any} size={24} />
                 </div>
                 <div>
                   <Label htmlFor={provider.key} className="text-base font-semibold cursor-pointer">
