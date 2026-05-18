@@ -268,7 +268,7 @@ export default function RequestCard({ request, onDelete, unreadMessages }: Reque
               className="w-full h-8 text-xs"
               size="sm"
             >
-              Откликнуться
+              Подробнее
             </Button>
           )}
         </CardFooter>
