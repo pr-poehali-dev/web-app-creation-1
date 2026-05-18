@@ -158,7 +158,25 @@ export default function SupportChatModal({ isOpen, onClose, userId, userName, us
         )}
 
         {/* Сообщения */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3" onScroll={() => newReply && setNewReply(false)}>
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 relative"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          onScroll={() => newReply && setNewReply(false)}
+          onTouchStart={(e) => {
+            const el = e.currentTarget;
+            const startY = e.touches[0].clientY;
+            const onMove = (ev: TouchEvent) => {
+              const deltaY = ev.touches[0].clientY - startY;
+              const atTop = el.scrollTop === 0;
+              const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+              if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) ev.preventDefault();
+            };
+            el.addEventListener('touchmove', onMove, { passive: false });
+            const onEnd = () => el.removeEventListener('touchmove', onMove);
+            el.addEventListener('touchend', onEnd, { once: true });
+            el.addEventListener('touchcancel', onEnd, { once: true });
+          }}
+        >
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />

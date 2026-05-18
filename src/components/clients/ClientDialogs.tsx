@@ -109,8 +109,8 @@ const ClientDialogs = ({
             </Tooltip>
           </TooltipProvider>
         )}
-        <DialogContent className="max-w-md flex flex-col max-h-[90vh] sm:max-h-[85vh] p-0 gap-0" data-tour="client-form" aria-describedby="add-client-description">
-          <div className="flex-shrink-0 p-4 sm:p-6 pb-3">
+        <DialogContent className="max-w-md max-h-[90vh] sm:max-h-[85vh] p-0" data-tour="client-form" aria-describedby="add-client-description">
+          <div className="sticky top-0 z-10 bg-background p-4 sm:p-6 pb-3 border-b">
             <DialogHeader>
               <DialogTitle>Новый клиент</DialogTitle>
             </DialogHeader>
@@ -118,7 +118,7 @@ const ClientDialogs = ({
               Форма для добавления нового клиента в базу
             </div>
           </div>
-          <div className="space-y-3 sm:space-y-4 px-4 sm:px-6 overflow-y-auto flex-1 min-h-0 pb-4">
+          <div className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4">
             <div className="space-y-1.5 sm:space-y-2">
               <Label htmlFor="name" className="text-sm">ФИО *</Label>
               <Input
@@ -202,8 +202,8 @@ const ClientDialogs = ({
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-md flex flex-col max-h-[90vh] sm:max-h-[85vh] p-0 gap-0" aria-describedby="edit-client-description">
-          <div className="flex-shrink-0 p-4 sm:p-6 pb-3">
+        <DialogContent className="max-w-md max-h-[90vh] sm:max-h-[85vh] p-0" aria-describedby="edit-client-description">
+          <div className="sticky top-0 z-10 bg-background p-4 sm:p-6 pb-3 border-b">
             <DialogHeader>
               <DialogTitle>Редактирование клиента</DialogTitle>
             </DialogHeader>
@@ -213,7 +213,7 @@ const ClientDialogs = ({
           </div>
           {editingClient && (
             <>
-              <div className="space-y-3 sm:space-y-4 px-4 sm:px-6 overflow-y-auto flex-1 min-h-0 pb-4">
+              <div className="space-y-3 sm:space-y-4 px-4 sm:px-6 pb-4">
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="edit-name" className="text-sm">ФИО *</Label>
                   <Input

@@ -56,14 +56,14 @@ const BookingDialogs = ({
   return (
     <>
       <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] bg-gradient-to-br from-purple-50/80 via-pink-50/60 to-rose-50/80 dark:from-purple-950/80 dark:via-pink-950/60 dark:to-rose-950/80 backdrop-blur-sm flex flex-col p-0" aria-describedby="create-booking-description">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b dark:border-gray-700">
-            <DialogTitle>Записать съёмку для {selectedClient?.name}</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[90vh] bg-gradient-to-br from-purple-50/80 via-pink-50/60 to-rose-50/80 dark:from-purple-950/80 dark:via-pink-950/60 dark:to-rose-950/80 backdrop-blur-sm p-0" aria-describedby="create-booking-description">
+          <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-50/80 to-rose-50/80 dark:from-purple-950/80 dark:to-rose-950/80 px-6 pt-6 pb-4 border-b dark:border-gray-700">
+            <DialogTitle className="text-lg font-semibold leading-none tracking-tight">Записать съёмку для {selectedClient?.name}</DialogTitle>
+          </div>
           <div id="create-booking-description" className="sr-only">
             Форма создания новой съёмки для клиента
           </div>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="px-6 py-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <div className="scale-90 md:scale-100 origin-top">

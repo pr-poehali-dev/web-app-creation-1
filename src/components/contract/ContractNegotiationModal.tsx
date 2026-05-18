@@ -323,7 +323,7 @@ export default function ContractNegotiationModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden" onPointerDownOutside={(e) => e.preventDefault()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] p-0" onPointerDownOutside={(e) => e.preventDefault()}>
           <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3 border-b">
             <DialogTitle className="flex items-center gap-2 text-base">
               <Icon name="FileSignature" className="h-4 w-4 text-primary" />

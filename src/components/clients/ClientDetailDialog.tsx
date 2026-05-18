@@ -118,9 +118,9 @@ const ClientDetailDialog = ({ open, onOpenChange, client, onUpdate }: ClientDeta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl h-[90vh] p-0 flex flex-col overflow-hidden">
+      <DialogContent className="max-w-4xl h-[90vh] p-0">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-          <div className="flex-shrink-0">
+          <div className="sticky top-0 z-10 bg-background">
             <ClientDialogHeader 
               localClient={localClient} 
               onUpdate={onUpdate}
@@ -128,7 +128,7 @@ const ClientDetailDialog = ({ open, onOpenChange, client, onUpdate }: ClientDeta
             />
             <ClientDialogTabs activeTab={activeTab} />
           </div>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden safe-bottom bg-background scroll-smooth scrollbar-visible">
+          <div className="bg-background">
             <ClientDialogContent
               localClient={localClient}
               projects={projects}
