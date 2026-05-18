@@ -46,6 +46,7 @@ interface TransportWaypoint {
 interface OfferOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSubmit: (orderData: any) => void;
   remainingQuantity: number;
   minOrderQuantity?: number;
@@ -373,7 +374,6 @@ export default function OfferOrderModal({
               comment={comment}
               addressError={addressError}
               availableDistricts={availableDistricts}
-              showCounterPrice={showCounterPrice}
               isService={offerCategory === 'utilities'}
               onDeliveryTypeChange={setSelectedDeliveryType}
               onAddressChange={setAddress}

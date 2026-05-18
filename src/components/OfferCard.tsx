@@ -334,7 +334,7 @@ export default function OfferCard({ offer, onDelete, unreadMessages, existingOrd
         ) : (
           <Button onClick={handleOrderClick} className="w-full h-7 text-xs" size="sm">
             <Icon name="ShoppingCart" className="mr-1 h-3 w-3" />
-            Заказать
+            Подробнее
           </Button>
         )}
       </CardFooter>
