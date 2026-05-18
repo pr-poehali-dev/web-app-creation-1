@@ -27,12 +27,12 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   
 
   
-  const [adminsList, setAdminsList] = useState<any[]>([]);
+  const [adminsList, setAdminsList] = useState<Record<string, unknown>[]>([]);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<'moderator' | 'admin' | 'superadmin'>('moderator');
   const [isSettingRole, setIsSettingRole] = useState(false);
-  const [foundUser, setFoundUser] = useState<any>(null);
+  const [foundUser, setFoundUser] = useState<Record<string, unknown> | null>(null);
   const [isSearchingUser, setIsSearchingUser] = useState(false);
 
   useEffect(() => {
@@ -166,7 +166,6 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
               <TabsTrigger value="admins">Администраторы</TabsTrigger>
               <TabsTrigger value="moderation">Модерация</TabsTrigger>
               <TabsTrigger value="notifications">Уведомления</TabsTrigger>
-              <TabsTrigger value="telegram">Telegram</TabsTrigger>
               <TabsTrigger value="security">Безопасность</TabsTrigger>
               <TabsTrigger value="audio">Аудио</TabsTrigger>
             </TabsList>
@@ -208,16 +207,6 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">
-              <AdminOtherTabs
-                autoModeration={autoModeration}
-                setAutoModeration={setAutoModeration}
-                emailNotifications={emailNotifications}
-                setEmailNotifications={setEmailNotifications}
-                handleSaveSettings={handleSaveSettings}
-              />
-            </TabsContent>
-
-            <TabsContent value="telegram" className="space-y-6">
               <AdminOtherTabs
                 autoModeration={autoModeration}
                 setAutoModeration={setAutoModeration}
