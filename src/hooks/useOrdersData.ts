@@ -24,6 +24,7 @@ export function useOrdersData(
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const isInitialLoadRef = useRef(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [pendingReviewOrder, setPendingReviewOrder] = useState<Order | null>(null);
@@ -159,7 +160,8 @@ export function useOrdersData(
       
       setOrders(ordersWithOptimistic);
       
-      if (isInitialLoad) {
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
         setIsInitialLoad(false);
       }
     } catch (error) {
@@ -184,7 +186,8 @@ export function useOrdersData(
         setIsSyncing(false);
       }
     }
-  }, [isInitialLoad, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast]);
   
   useEffect(() => {
     if (!isAuthenticated) {
