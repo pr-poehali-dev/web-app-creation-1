@@ -244,6 +244,50 @@ export function useOfferDetail(id: string | undefined) {
         return;
       }
     }
+
+    // Для услуг — сразу создаём заказ и открываем чат
+    if (offer?.category === 'utilities' && currentUser) {
+      toast({ title: 'Создаём обращение...', description: 'Пожалуйста, подождите' });
+      try {
+        const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id?.toString() || '' },
+          body: JSON.stringify({
+            offerId: offer.id,
+            title: offer.title,
+            quantity: 1,
+            unit: offer.unit || 'услуга',
+            pricePerUnit: 0,
+            deliveryType: 'pickup',
+            deliveryAddress: '',
+            district: offer.district,
+            buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
+            buyerPhone: currentUser.phone || '',
+            buyerEmail: currentUser.email,
+            buyerCompany: currentUser.companyName || '',
+            buyerInn: currentUser.inn || '',
+            buyerComment: '',
+            hasVAT: false,
+            vatRate: 0,
+          }),
+        });
+        if (response.status === 409) {
+          const errorData = await response.json().catch(() => ({}));
+          navigate(`/my-orders?tab=buyer&orderId=${errorData.existingOrderId || ''}`);
+          return;
+        }
+        if (response.ok) {
+          const result = await response.json();
+          notifyOfferUpdated(offer.id);
+          notifyOrderUpdated(result.id);
+          toast({ title: 'Чат открыт!', description: 'Напишите исполнителю', duration: 2000 });
+          setTimeout(() => { navigate(`/my-orders?tab=buyer&orderId=${result.id}`); }, 300);
+          return;
+        }
+      } catch (error) {
+        console.error('Error creating service order:', error);
+      }
+    }
     
     setIsOrderModalOpen(true);
   };
@@ -421,13 +465,13 @@ export function useOfferDetail(id: string | undefined) {
         // Показываем уведомление с автоматическим скрытием через 2 секунды
         toast({
           title: '🎉 Ваш заказ оформлен!',
-          description: 'Проверьте детали в разделе "Мои заказы"',
+          description: 'Открываем чат с продавцом...',
           duration: 2000,
         });
         
-        // Перенаправляем на страницу "Мои заказы"
+        // Перенаправляем на страницу "Мои заказы" и открываем чат
         setTimeout(() => {
-          navigate('/my-orders');
+          navigate(`/my-orders?tab=buyer&orderId=${result.id}`);
         }, 300);
         
         return;
@@ -484,13 +528,13 @@ export function useOfferDetail(id: string | undefined) {
       // Показываем уведомление с автоматическим скрытием через 2 секунды
       toast({
         title: '🎉 Ваш заказ оформлен!',
-        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Проверьте детали в разделе "Мои заказы"',
+        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Открываем чат с продавцом...',
         duration: 2000,
       });
 
-      // Перенаправляем на страницу "Мои заказы"
+      // Перенаправляем на страницу "Мои заказы" и автоматически открываем чат
       setTimeout(() => {
-        navigate('/my-orders');
+        navigate(`/my-orders?tab=buyer&orderId=${result.id}`);
       }, 300);
     } catch (error) {
       console.error('Error creating order:', error);

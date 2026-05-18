@@ -24,6 +24,10 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   const [currentAddress, setCurrentAddress] = useState<string>('');
   const [currentDistrict, setCurrentDistrict] = useState<string>('');
   const [currentCoords, setCurrentCoords] = useState<string>('');
+  const onCoordinatesChangeRef = useRef(onCoordinatesChange);
+  const onAddressChangeRef = useRef(onAddressChange);
+  onCoordinatesChangeRef.current = onCoordinatesChange;
+  onAddressChangeRef.current = onAddressChange;
 
   useEffect(() => {
     if (coordinates) {
@@ -52,11 +56,13 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       markerRef.current = null;
     }
 
-    if (!mapRef.current) {
-      setTimeout(() => {
-        if (!mapContainerRef.current) return;
-        const map = L.map(mapContainerRef.current).setView(mapCenter, 13);
-      
+    const initCenter = mapCenter;
+    const initCoordinates = coordinates;
+
+    setTimeout(() => {
+      if (!mapContainerRef.current) return;
+      const map = L.map(mapContainerRef.current).setView(initCenter, 13);
+
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       }).addTo(map);
@@ -64,17 +70,15 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
       map.on('click', async (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        console.log('🗺️ MAP CLICK:', coords);
-        onCoordinatesChange(coords);
+        onCoordinatesChangeRef.current(coords);
 
-        if (onAddressChange) {
-          console.log('🔄 Fetching address from Nominatim...');
+        if (onAddressChangeRef.current) {
           try {
             const result = await geocodeCoordinates(lat, lng, '📍');
             setCurrentAddress(result.fullAddress);
             setCurrentDistrict(result.district);
             setCurrentCoords(coords);
-            onAddressChange(result.fullAddress, result.district, coords);
+            onAddressChangeRef.current(result.fullAddress, result.district, coords);
           } catch (error) {
             console.error('Ошибка получения адреса:', error);
           }
@@ -85,17 +89,14 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         } else {
           markerRef.current = createDraggableMarker(map, lat, lng, async (dragLat, dragLng) => {
             const dragCoords = `${dragLat.toFixed(6)}, ${dragLng.toFixed(6)}`;
-            onCoordinatesChange(dragCoords);
-            
-            if (onAddressChange) {
-              console.log('🔄 Drag callback: fetching address for', dragCoords);
+            onCoordinatesChangeRef.current(dragCoords);
+            if (onAddressChangeRef.current) {
               try {
                 const result = await geocodeCoordinates(dragLat, dragLng, '🔄 Drag:');
-                console.log('🔄 Drag: Calling onAddressChange with:', result);
                 setCurrentAddress(result.fullAddress);
                 setCurrentDistrict(result.district);
                 setCurrentCoords(dragCoords);
-                onAddressChange(result.fullAddress, result.district, dragCoords);
+                onAddressChangeRef.current(result.fullAddress, result.district, dragCoords);
               } catch (error) {
                 console.error('Ошибка получения адреса при перетаскивании:', error);
               }
@@ -104,38 +105,33 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
         }
       });
 
-        mapRef.current = map;
-        
-        if (coordinates) {
-          const [lat, lng] = coordinates.split(',').map(c => parseFloat(c.trim()));
-          if (!isNaN(lat) && !isNaN(lng)) {
-            markerRef.current = createDraggableMarker(map, lat, lng, async (dragLat, dragLng) => {
-              const dragCoords = `${dragLat.toFixed(6)}, ${dragLng.toFixed(6)}`;
-              onCoordinatesChange(dragCoords);
-              
-              if (onAddressChange) {
-                console.log('🔄 Initial marker drag: fetching address for', dragCoords);
-                try {
-                  const result = await geocodeCoordinates(dragLat, dragLng);
-                  console.log('🔄 Initial marker drag: Calling onAddressChange with:', result);
-                  setCurrentAddress(result.fullAddress);
-                  setCurrentDistrict(result.district);
-                  setCurrentCoords(dragCoords);
-                  onAddressChange(result.fullAddress, result.district, dragCoords);
-                } catch (error) {
-                  console.error('Ошибка получения адреса при перетаскивании:', error);
-                }
-              }
-            });
-          }
-        }
+      mapRef.current = map;
 
-        setTimeout(() => {
-          map.invalidateSize();
-        }, 100);
-      }, 100);
-    }
-  }, [isOpen, mapCenter, coordinates, onCoordinatesChange, onAddressChange]);
+      if (initCoordinates) {
+        const [lat, lng] = initCoordinates.split(',').map(c => parseFloat(c.trim()));
+        if (!isNaN(lat) && !isNaN(lng)) {
+          markerRef.current = createDraggableMarker(map, lat, lng, async (dragLat, dragLng) => {
+            const dragCoords = `${dragLat.toFixed(6)}, ${dragLng.toFixed(6)}`;
+            onCoordinatesChangeRef.current(dragCoords);
+            if (onAddressChangeRef.current) {
+              try {
+                const result = await geocodeCoordinates(dragLat, dragLng);
+                setCurrentAddress(result.fullAddress);
+                setCurrentDistrict(result.district);
+                setCurrentCoords(dragCoords);
+                onAddressChangeRef.current(result.fullAddress, result.district, dragCoords);
+              } catch (error) {
+                console.error('Ошибка получения адреса при перетаскивании:', error);
+              }
+            }
+          });
+        }
+      }
+
+      setTimeout(() => { map.invalidateSize(); }, 100);
+    }, 100);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const handleInputChange = async (value: string) => {
     onCoordinatesChange(value);
@@ -212,86 +208,69 @@ export default function MapModal({ isOpen, onClose, coordinates, onCoordinatesCh
   };
 
   const handleGetCurrentLocation = () => {
-    console.log('🎯 handleGetCurrentLocation вызван');
-    console.log('🎯 onAddressChange существует:', !!onAddressChange);
-    const loadingMessage = 'Определяем ваше местоположение...';
-    console.log(loadingMessage);
-    
+    if (!navigator.geolocation) {
+      alert('Геолокация не поддерживается вашим браузером');
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        console.log('✅ Геолокация получена:', position.coords);
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        console.log('📍 Координаты:', { lat, lng });
         const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        onCoordinatesChange(coords);
-        setMapCenter([lat, lng]);
-          
-          if (mapRef.current) {
-            if (markerRef.current) {
-              updateMarkerPosition(markerRef.current, lat, lng);
-            } else {
-              markerRef.current = createDraggableMarker(mapRef.current, lat, lng, async (dragLat, dragLng) => {
-                const dragCoords = `${dragLat.toFixed(6)}, ${dragLng.toFixed(6)}`;
-                onCoordinatesChange(dragCoords);
-                
-                if (onAddressChange) {
-                  console.log('🔄 Geolocation marker drag: fetching address for', dragCoords);
-                  try {
-                    const result = await geocodeCoordinates(dragLat, dragLng);
-                    console.log('🔄 Geolocation marker drag: Calling onAddressChange with:', result);
-                    setCurrentAddress(result.fullAddress);
-                    setCurrentDistrict(result.district);
-                    setCurrentCoords(dragCoords);
-                    onAddressChange(result.fullAddress, result.district, dragCoords);
-                  } catch (error) {
-                    console.error('Ошибка получения адреса при перетаскивании:', error);
-                  }
-                }
-              });
-            }
-            mapRef.current.setView([lat, lng], 13);
-          }
-          
-          if (onAddressChange) {
-            console.log('🚀 Начинаем геокодирование для геолокации...');
-            try {
-              const result = await geocodeCoordinates(lat, lng, '📍 Geolocation:');
-              console.log('🎉 Геокодирование завершено, вызываем onAddressChange:', result);
-              setCurrentAddress(result.fullAddress);
-              setCurrentDistrict(result.district);
-              setCurrentCoords(coords);
-              onAddressChange(result.fullAddress, result.district, coords);
-              console.log('✅ onAddressChange вызван успешно');
-            } catch (error) {
-              console.error('❌ Ошибка получения адреса:', error);
-            }
+        onCoordinatesChangeRef.current(coords);
+
+        if (mapRef.current) {
+          mapRef.current.setView([lat, lng], 13);
+          if (markerRef.current) {
+            updateMarkerPosition(markerRef.current, lat, lng);
           } else {
-            console.log('⚠️ onAddressChange не передан в MapModal');
+            markerRef.current = createDraggableMarker(mapRef.current, lat, lng, async (dragLat, dragLng) => {
+              const dragCoords = `${dragLat.toFixed(6)}, ${dragLng.toFixed(6)}`;
+              onCoordinatesChangeRef.current(dragCoords);
+              if (onAddressChangeRef.current) {
+                try {
+                  const result = await geocodeCoordinates(dragLat, dragLng);
+                  setCurrentAddress(result.fullAddress);
+                  setCurrentDistrict(result.district);
+                  setCurrentCoords(dragCoords);
+                  onAddressChangeRef.current(result.fullAddress, result.district, dragCoords);
+                } catch (error) {
+                  console.error('Ошибка адреса при перетаскивании:', error);
+                }
+              }
+            });
           }
-        },
-        (error) => {
-          console.error('❌ Ошибка получения координат:', error);
-          let errorMessage = 'Не удалось определить местоположение. ';
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage += 'Разрешите доступ к геолокации в настройках браузера.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage += 'Местоположение недоступно.';
-              break;
-            case error.TIMEOUT:
-              errorMessage += 'Время ожидания истекло.';
-              break;
-          }
-          alert(errorMessage);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
         }
-      );
+
+        if (onAddressChangeRef.current) {
+          try {
+            const result = await geocodeCoordinates(lat, lng, '📍 Geolocation:');
+            setCurrentAddress(result.fullAddress);
+            setCurrentDistrict(result.district);
+            setCurrentCoords(coords);
+            onAddressChangeRef.current(result.fullAddress, result.district, coords);
+          } catch (error) {
+            console.error('❌ Ошибка получения адреса:', error);
+          }
+        }
+      },
+      (error) => {
+        let errorMessage = 'Не удалось определить местоположение. ';
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += 'Разрешите доступ к геолокации в настройках браузера.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += 'Местоположение недоступно.';
+            break;
+          case error.TIMEOUT:
+            errorMessage += 'Время ожидания истекло.';
+            break;
+        }
+        alert(errorMessage);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   };
 
   if (!isOpen) return null;
