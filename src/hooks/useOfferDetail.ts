@@ -646,6 +646,41 @@ export function useOfferDetail(id: string | undefined) {
     });
   };
 
+  const handleAcceptCreatedOrder = async () => {
+    if (!createdOrder) return;
+    try {
+      await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${createdOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': getSession()?.id?.toString() || '' },
+        body: JSON.stringify({ status: 'accepted' }),
+      });
+      setCreatedOrder(prev => prev ? { ...prev, status: 'accepted', acceptedAt: new Date() } : prev);
+      notifyOrderUpdated(createdOrder.id);
+      toast({ title: 'Заказ принят!', description: `Заказ №${createdOrder.orderNumber || createdOrder.id} принят в работу`, duration: 2000 });
+    } catch (error) {
+      console.error('Error accepting order:', error);
+    }
+  };
+
+  const handleCancelCreatedOrder = async (orderId?: string, reason?: string) => {
+    const id = orderId || createdOrder?.id;
+    if (!id) return;
+    try {
+      await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': getSession()?.id?.toString() || '' },
+        body: JSON.stringify({ status: 'cancelled', cancellationReason: reason }),
+      });
+      setCreatedOrder(null);
+      setCreatedOrderId(null);
+      setIsOrderModalOpen(false);
+      notifyOfferUpdated(offer?.id || '');
+      toast({ title: 'Заказ отменён', duration: 2000 });
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+    }
+  };
+
   const handleSendMessage = async (message: string) => {
     if (!createdOrder) return;
     
@@ -729,6 +764,8 @@ export function useOfferDetail(id: string | undefined) {
     setGalleryIndex,
     handleSendMessage,
     handleSendChatMessage,
+    handleAcceptCreatedOrder,
+    handleCancelCreatedOrder,
     createdOrderId,
     setCreatedOrderId,
     navigate,
