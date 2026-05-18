@@ -455,26 +455,11 @@ export function useOfferDetail(id: string | undefined) {
           createdAt: new Date(),
         };
         
-        setIsOrderModalOpen(false);
         setCreatedOrder(minimalOrder);
-        
-        // Уведомляем всех пользователей об обновлении предложения и заказа
         notifyOfferUpdated(offer.id);
         notifyOrderUpdated(result.id);
-        
-        // Показываем уведомление с автоматическим скрытием через 2 секунды
-        toast({
-          title: '🎉 Ваш заказ оформлен!',
-          description: 'Открываем чат с продавцом...',
-          duration: 2000,
-        });
-        
-        // Перенаправляем на страницу "Мои заказы" и открываем чат
-        setTimeout(() => {
-          navigate(`/my-orders?tab=buyer&orderId=${result.id}`);
-        }, 300);
-        
-        return;
+        toast({ title: '🎉 Заказ оформлен!', description: 'Напишите продавцу в чате', duration: 2000 });
+        return result.id;
       }
 
       const newOrder: Order = {
@@ -525,17 +510,13 @@ export function useOfferDetail(id: string | undefined) {
       notifyOfferUpdated(offer.id);
       notifyOrderUpdated(result.id);
       
-      // Показываем уведомление с автоматическим скрытием через 2 секунды
       toast({
-        title: '🎉 Ваш заказ оформлен!',
-        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Открываем чат с продавцом...',
+        title: '🎉 Заказ оформлен!',
+        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Напишите продавцу в чате',
         duration: 2000,
       });
 
-      // Перенаправляем на страницу "Мои заказы" и автоматически открываем чат
-      setTimeout(() => {
-        navigate(`/my-orders?tab=buyer&orderId=${result.id}`);
-      }, 300);
+      return result.id;
     } catch (error) {
       console.error('Error creating order:', error);
       

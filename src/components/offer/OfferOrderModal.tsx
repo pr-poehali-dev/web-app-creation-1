@@ -19,6 +19,7 @@ import CounterPriceSection from './order-modal/CounterPriceSection';
 import TransportDateBadge from './order-modal/TransportDateBadge';
 import TransportSection from './order-modal/TransportSection';
 import OrderFormActions from './order-modal/OrderFormActions';
+import OrderFeedbackChat from '@/components/order/OrderFeedbackChat';
 
 function shortenAddress(fullAddress: string): string {
   return fullAddress
@@ -47,7 +48,7 @@ interface OfferOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onSubmit: (orderData: any) => void;
+  onSubmit: (orderData: any) => Promise<string | void> | void;
   remainingQuantity: number;
   minOrderQuantity?: number;
   unit: string;
@@ -97,6 +98,7 @@ export default function OfferOrderModal({
 
   const currentUser = getSession();
   const { toast } = useToast();
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery' | ''>('');
   const [quantity, setQuantity] = useState<string>(String(minOrderQuantity || 1));
   const [address, setAddress] = useState<string>('');
@@ -277,7 +279,7 @@ export default function OfferOrderModal({
       ? (selectedWaypoint === '__custom__' ? customPickupAddress : selectedWaypoint) || undefined
       : undefined;
 
-    onSubmit({
+    const result = await onSubmit({
       quantity: Number(quantity),
       deliveryType: selectedDeliveryType,
       address: selectedDeliveryType === 'delivery' ? address : undefined,
@@ -286,6 +288,9 @@ export default function OfferOrderModal({
       counterComment: showCounterPrice && counterComment ? counterComment : undefined,
       passengerPickupAddress: pickupAddress,
     });
+    if (result) {
+      setCreatedOrderId(result);
+    }
   };
 
   const handleWaypointChange = (waypoint: string, route: string) => {
@@ -320,7 +325,24 @@ export default function OfferOrderModal({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          {createdOrderId && (
+            <div className="mt-2">
+              <div className="flex items-center gap-2 mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                <Icon name="CheckCircle" className="h-5 w-5 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">Заказ оформлен!</p>
+                  <p className="text-xs text-green-600">Напишите продавцу напрямую в чате ниже</p>
+                </div>
+              </div>
+              <OrderFeedbackChat
+                orderId={createdOrderId}
+                orderStatus="pending"
+                isBuyer={true}
+                offerCategory={offerCategory}
+              />
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className={`space-y-3 ${createdOrderId ? 'hidden' : ''}`}>
             {offerCategory === 'transport' && offerTransportDateTime && (
               <TransportDateBadge dateTime={offerTransportDateTime} />
             )}

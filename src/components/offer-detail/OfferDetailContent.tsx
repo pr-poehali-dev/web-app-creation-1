@@ -23,23 +23,23 @@ interface OfferDetailContentProps {
   isGalleryOpen: boolean;
   galleryIndex: number;
   showVideo: boolean;
-  createdOrder: Order | null;
-  chatMessages: unknown[];
-  isChatOpen: boolean;
+  createdOrder?: Order | null;
+  chatMessages?: unknown[];
+  isChatOpen?: boolean;
   onImageIndexChange: (index: number) => void;
   onVideoPlayingChange: (playing: boolean) => void;
   onMuteChange: (muted: boolean) => void;
   onOrderModalChange: (open: boolean) => void;
   onGalleryChange: (open: boolean) => void;
   onGalleryIndexChange: (index: number) => void;
-  onChatChange: (open: boolean) => void;
+  onChatChange?: (open: boolean) => void;
   onPrevImage: () => void;
   onNextImage: () => void;
   onShare: () => void;
   onOrderClick: () => void;
-  onOrderSubmit: (data: unknown) => void;
+  onOrderSubmit: (data: unknown) => Promise<string | void> | void;
   onOpenGallery: (index: number) => void;
-  onSendMessage: (message: string) => void;
+  onSendMessage?: (message: string) => void;
   navigate: ReturnType<typeof useNavigate>;
 }
 
