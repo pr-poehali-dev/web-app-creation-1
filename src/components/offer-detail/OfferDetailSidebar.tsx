@@ -52,7 +52,7 @@ export default function OfferDetailSidebar({
               className="w-full gap-2"
             >
               <Icon name="MessageCircle" className="h-5 w-5" />
-              Написать исполнителю
+              Связаться
             </Button>
           ) : (
             <Button
