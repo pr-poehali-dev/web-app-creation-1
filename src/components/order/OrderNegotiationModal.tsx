@@ -47,40 +47,38 @@ export default function OrderNegotiationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={lightboxUrl ? undefined : onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0" onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 sm:pt-6 pb-3 border-b">
-          <DialogTitle>
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0" onPointerDownOutside={(e) => e.preventDefault()}>
+        <div className="sticky top-0 z-10 bg-background border-b px-4 sm:px-6 pt-4 sm:pt-6 pb-3">
+          <DialogTitle className="text-lg font-semibold leading-none tracking-tight pr-8">
             {(order.status === 'pending' || order.status === 'new' || order.status === 'negotiating')
               ? <span>Обсуждение заказа и торг</span>
               : <span>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</span>
             }
           </DialogTitle>
-        </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-          <div className="space-y-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
-            <OrderNegotiationSection
-              order={order}
-              isBuyer={isBuyer}
-              isSeller={isSeller}
-              onCounterOffer={onCounterOffer}
-              onAcceptCounter={onAcceptCounter}
-              onCancelOrder={onCancelOrder}
-              onCompleteOrder={onCompleteOrder}
-            />
+        <div className="space-y-4 px-4 sm:px-6 py-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+          <OrderNegotiationSection
+            order={order}
+            isBuyer={isBuyer}
+            isSeller={isSeller}
+            onCounterOffer={onCounterOffer}
+            onAcceptCounter={onAcceptCounter}
+            onCancelOrder={onCancelOrder}
+            onCompleteOrder={onCompleteOrder}
+          />
 
-            <OrderChatInfoCard
-              order={order}
-              isBuyer={isBuyer}
-              contactPerson={contactPerson}
-              onLightboxOpen={setLightboxUrl}
-              onCancelOrder={onCancelOrder ? (orderId, reason) => onCancelOrder(orderId, reason) : undefined}
-              onCompleteOrder={onCompleteOrder ? () => onCompleteOrder() : undefined}
-              onAcceptOrder={onAcceptOrder ? () => onAcceptOrder() : undefined}
-              onRequestCompletion={onRequestCompletion}
-              onCancelTrip={onCancelTrip}
-            />
-          </div>
+          <OrderChatInfoCard
+            order={order}
+            isBuyer={isBuyer}
+            contactPerson={contactPerson}
+            onLightboxOpen={setLightboxUrl}
+            onCancelOrder={onCancelOrder ? (orderId, reason) => onCancelOrder(orderId, reason) : undefined}
+            onCompleteOrder={onCompleteOrder ? () => onCompleteOrder() : undefined}
+            onAcceptOrder={onAcceptOrder ? () => onAcceptOrder() : undefined}
+            onRequestCompletion={onRequestCompletion}
+            onCancelTrip={onCancelTrip}
+          />
         </div>
 
         {lightboxUrl && (
