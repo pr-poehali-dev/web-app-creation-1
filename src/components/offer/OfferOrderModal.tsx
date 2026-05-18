@@ -1,5 +1,3 @@
-import { useState, useEffect, lazy, Suspense, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -7,45 +5,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
-import { getSession } from '@/utils/auth';
-const MapModal = lazy(() =>
-  import('@/components/auction/MapModal').catch(() => ({ default: () => null }))
-);
-import Icon from '@/components/ui/icon';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import QuantitySelector from './order-modal/QuantitySelector';
-import PriceDisplay from './order-modal/PriceDisplay';
-import DeliverySection from './order-modal/DeliverySection';
-import CounterPriceSection from './order-modal/CounterPriceSection';
-import TransportDateBadge from './order-modal/TransportDateBadge';
-import TransportSection from './order-modal/TransportSection';
-import OrderFormActions from './order-modal/OrderFormActions';
-
-function shortenAddress(fullAddress: string): string {
-  return fullAddress
-    .replace('Республика Саха (Якутия)', 'РС(Я)')
-    .replace('Респ Саха (Якутия)', 'РС(Я)')
-    .replace('Республика Саха', 'РС(Я)')
-    .replace('Московская область', 'МО')
-    .replace('Ленинградская область', 'ЛО')
-    .replace('Республика', 'Р.')
-    .replace('область', 'обл.')
-    .replace('край', 'кр.')
-    .replace('улица', '')
-    .replace(/,\s+,/g, ',')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-interface TransportWaypoint {
-  id: string;
-  address: string;
-  price?: number;
-  isActive: boolean;
-}
+import { useOrderForm, type TransportWaypoint } from './order-modal/useOrderForm';
+import OrderFormBody from './order-modal/OrderFormBody';
+import OrderMapOverlays from './order-modal/OrderMapOverlays';
 
 interface OfferOrderModalProps {
   isOpen: boolean;
@@ -73,14 +35,6 @@ interface OfferOrderModalProps {
   onSendChatMessage?: (orderId: string, text: string) => Promise<void>;
 }
 
-interface InlineChatMessage {
-  id: string;
-  text: string;
-  isOwn: boolean;
-  senderName: string;
-  timestamp: Date;
-}
-
 export default function OfferOrderModal({
   isOpen,
   onClose,
@@ -91,7 +45,6 @@ export default function OfferOrderModal({
   pricePerUnit,
   availableDeliveryTypes,
   availableDistricts = [],
-  offerDistrict,
   offerCategory,
   offerTransportRoute,
   offerTransportWaypoints = [],
@@ -102,254 +55,27 @@ export default function OfferOrderModal({
   offerTransportCapacity,
   noNegotiation,
   createdOrderId,
-  currentUserId,
   onSendChatMessage,
 }: OfferOrderModalProps) {
-  const navigate = useNavigate();
-  const isFreight = offerTransportServiceType?.toLowerCase().includes('груз');
-
-  const capacityUnit = (() => {
-    if (!offerTransportCapacity) return unit || 'мест';
-    const match = offerTransportCapacity.trim().match(/^[\d.,]+\s*(.+)$/);
-    return match ? match[1].trim() : (unit || 'мест');
-  })();
-
-  const currentUser = getSession();
-  const { toast } = useToast();
-  const [selectedDeliveryType, setSelectedDeliveryType] = useState<'pickup' | 'delivery' | ''>('');
-  const [quantity, setQuantity] = useState<string>(String(minOrderQuantity || 1));
-  const [address, setAddress] = useState<string>('');
-  const [comment, setComment] = useState<string>('');
-  const [passengerRoute, setPassengerRoute] = useState<string>('');
-  const [selectedWaypoint, setSelectedWaypoint] = useState<string>('');
-  const [customPickupAddress, setCustomPickupAddress] = useState<string>('');
-  const [quantityError, setQuantityError] = useState<string>('');
-  const [counterPrice, setCounterPrice] = useState<string>('');
-  const [counterComment, setCounterComment] = useState<string>('');
-  const [showCounterPrice, setShowCounterPrice] = useState<boolean>(false);
-  const [isMapOpen, setIsMapOpen] = useState(false);
-  const [isPickupMapOpen, setIsPickupMapOpen] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [addressError, setAddressError] = useState<string>('');
-  const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
-  const [addressSetFromMap, setAddressSetFromMap] = useState<boolean>(false);
-  const [pickupGpsCoordinates, setPickupGpsCoordinates] = useState<string>('');
-  const [chatMessages, setChatMessages] = useState<InlineChatMessage[]>([]);
-  const [chatText, setChatText] = useState<string>('');
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const chatScrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (createdOrderId && chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, [chatMessages, createdOrderId]);
-
-  const handleSendChatMessage = async () => {
-    if (!chatText.trim() || !createdOrderId || !onSendChatMessage) return;
-    const text = chatText.trim();
-    setChatText('');
-    setIsSendingMessage(true);
-    const tempMsg: InlineChatMessage = {
-      id: `temp-${Date.now()}`,
-      text,
-      isOwn: true,
-      senderName: 'Вы',
-      timestamp: new Date(),
-    };
-    setChatMessages(prev => [...prev, tempMsg]);
-    try {
-      await onSendChatMessage(createdOrderId, text);
-    } finally {
-      setIsSendingMessage(false);
-    }
-  };
-
-  useEffect(() => {
-    if (availableDeliveryTypes.length === 1) {
-      setSelectedDeliveryType(availableDeliveryTypes[0]);
-    }
-  }, [availableDeliveryTypes]);
-
-  useEffect(() => {
-    if (currentUser?.legalAddress && selectedDeliveryType === 'delivery' && !addressSetFromMap) {
-      const shortened = shortenAddress(currentUser.legalAddress);
-      setAddress(shortened);
-    }
-  }, [currentUser, selectedDeliveryType, addressSetFromMap]);
-
-  useEffect(() => {
-    const numQuantity = Number(quantity);
-    if (minOrderQuantity && numQuantity < minOrderQuantity) {
-      setQuantity(String(minOrderQuantity));
-    }
-  }, [minOrderQuantity]);
-
-  useEffect(() => {
-    console.log('📍 Address state changed to:', address);
-  }, [address]);
-
-  const handleQuantityChange = (value: string) => {
-    setQuantity(value);
-
-    if (offerCategory === 'utilities') {
-      setQuantityError('');
-      return;
-    }
-
-    const numValue = Number(value);
-    const minValue = minOrderQuantity || 1;
-
-    if (value === '' || isNaN(numValue) || numValue < minValue) {
-      setQuantityError(`Минимальное количество для заказа: ${minValue} ${unit}`);
-    } else if (numValue > remainingQuantity) {
-      setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
-    } else {
-      setQuantityError('');
-    }
-  };
-
-  const incrementQuantity = () => {
-    const newValue = Number(quantity) + 1;
-    if (newValue <= remainingQuantity) {
-      handleQuantityChange(String(newValue));
-    }
-  };
-
-  const decrementQuantity = () => {
-    const minValue = minOrderQuantity || 1;
-    const newValue = Number(quantity) - 1;
-    if (newValue >= minValue) {
-      handleQuantityChange(String(newValue));
-    }
-  };
-
-  const handleCoordinatesChange = (coords: string) => {
-    setGpsCoordinates(coords);
-    const [lat, lng] = coords.split(',').map(c => parseFloat(c.trim()));
-    if (!isNaN(lat) && !isNaN(lng)) {
-      setSelectedLocation({ lat, lng });
-    }
-  };
-
-  const extractShortAddress = (fullAddress: string): string => {
-    const parts = fullAddress.split(',').map(p => p.trim());
-    const streetPart = parts.find(p => /улица|ул\.|проспект|пр\.|переулок|пер\.|шоссе|бульвар|набережная|площадь|алея/i.test(p));
-    const housePart = parts.find(p => /^\d[\dа-яёА-ЯЁ/]*$/.test(p) && parts.indexOf(p) > (streetPart ? parts.indexOf(streetPart) : -1));
-    if (streetPart) {
-      const streetClean = streetPart
-        .replace(/улица/i, 'ул.')
-        .replace(/проспект/i, 'пр.')
-        .replace(/переулок/i, 'пер.')
-        .replace(/бульвар/i, 'бул.')
-        .replace(/набережная/i, 'наб.')
-        .replace(/площадь/i, 'пл.');
-      return housePart ? `${streetClean} ${housePart}` : streetClean;
-    }
-    return parts.slice(0, 2).join(', ');
-  };
-
-  const handlePickupAddressFromMap = (fullAddress: string, _district: string, coords?: string) => {
-    const shortAddr = extractShortAddress(fullAddress);
-    setCustomPickupAddress(shortAddr);
-    setSelectedWaypoint('__custom__');
-    if (coords) setPickupGpsCoordinates(coords);
-    if (offerTransportRoute) {
-      const routeEnd = offerTransportRoute.split(/\s*[-–—]\s*/).pop()?.trim() || '';
-      if (routeEnd) {
-        const cityPart = shortAddr.split(',')[0].split(' ').slice(-1)[0] || shortAddr;
-        setPassengerRoute(`${cityPart} — ${routeEnd}`);
-      }
-    }
-  };
-
-  const handleAddressChange = (fullAddress: string, district: string, coords?: string) => {
-    console.log('📍 OfferOrderModal handleAddressChange called:', { fullAddress, district, coords });
-    console.log('📍 Setting address to:', fullAddress);
-    setAddress(fullAddress);
-    setAddressSetFromMap(true);
-    setAddressError('');
-    if (coords) {
-      console.log('📍 Setting GPS coordinates to:', coords);
-      setGpsCoordinates(coords);
-      const [lat, lng] = coords.split(',').map(c => parseFloat(c.trim()));
-      if (!isNaN(lat) && !isNaN(lng)) {
-        setSelectedLocation({ lat, lng });
-        console.log('📍 Updated location:', { lat, lng });
-      }
-    }
-    console.log('📍 handleAddressChange complete');
-  };
-
-  const validateAddress = async (addressText: string) => {
-    if (!addressText || selectedDeliveryType !== 'delivery') {
-      setAddressError('');
-      return true;
-    }
-
-    if (addressText.trim().length < 5) {
-      setAddressError('Укажите полный адрес доставки');
-      return false;
-    }
-
-    setAddressError('');
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (offerCategory !== 'utilities') {
-      if (minOrderQuantity && Number(quantity) < minOrderQuantity) {
-        setQuantityError(`Минимальное количество для заказа: ${minOrderQuantity} ${unit}`);
-        return;
-      }
-
-      if (Number(quantity) > remainingQuantity) {
-        setQuantityError(`Доступно только ${remainingQuantity} ${unit}`);
-        return;
-      }
-    }
-
-    if (selectedDeliveryType === 'delivery') {
-      const isAddressValid = await validateAddress(address);
-      if (!isAddressValid || addressError) {
-        return;
-      }
-    }
-
-    const finalComment = offerCategory === 'transport' && passengerRoute
-      ? `Маршрут: ${passengerRoute}${comment ? `\n${comment}` : ''}`
-      : comment;
-
-    const pickupAddress = offerCategory === 'transport'
-      ? (selectedWaypoint === '__custom__' ? customPickupAddress : selectedWaypoint) || undefined
-      : undefined;
-
-    onSubmit({
-      quantity: Number(quantity),
-      deliveryType: selectedDeliveryType,
-      address: selectedDeliveryType === 'delivery' ? address : undefined,
-      comment: finalComment,
-      counterPrice: showCounterPrice && counterPrice ? parseFloat(counterPrice) : undefined,
-      counterComment: showCounterPrice && counterComment ? counterComment : undefined,
-      passengerPickupAddress: pickupAddress,
-    });
-  };
-
-  const handleWaypointChange = (waypoint: string, route: string) => {
-    setSelectedWaypoint(waypoint);
-    setPassengerRoute(route);
-  };
-
-  const effectivePricePerUnit =
-    offerCategory === 'transport' && selectedWaypoint && selectedWaypoint !== '__custom__'
-      ? (offerTransportWaypoints.find(w => w.address === selectedWaypoint)?.price ?? pricePerUnit)
-      : pricePerUnit;
+  const form = useOrderForm({
+    remainingQuantity,
+    minOrderQuantity,
+    unit,
+    pricePerUnit,
+    availableDeliveryTypes,
+    offerCategory,
+    offerTransportRoute,
+    offerTransportWaypoints,
+    offerTransportCapacity,
+    offerTransportServiceType,
+    createdOrderId,
+    onSubmit,
+    onSendChatMessage,
+  });
 
   return (
     <>
-      <Dialog open={isOpen && !isMapOpen && !isPickupMapOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen && !form.isMapOpen && !form.isPickupMapOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-start justify-between gap-4 pr-10">
@@ -369,183 +95,76 @@ export default function OfferOrderModal({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            {offerCategory === 'transport' && offerTransportDateTime && (
-              <TransportDateBadge dateTime={offerTransportDateTime} />
-            )}
-
-            {offerCategory !== 'auto-sale' && offerCategory !== 'utilities' && (
-              <QuantitySelector
-                quantity={quantity}
-                unit={offerCategory === 'transport' ? capacityUnit : unit}
-                minOrderQuantity={minOrderQuantity}
-                remainingQuantity={remainingQuantity}
-                quantityError={quantityError}
-                onQuantityChange={handleQuantityChange}
-                onIncrement={incrementQuantity}
-                onDecrement={decrementQuantity}
-                onErrorClear={() => setQuantityError('')}
-              />
-            )}
-
-            {offerCategory !== 'utilities' && (
-              <PriceDisplay
-                pricePerUnit={effectivePricePerUnit}
-                quantity={quantity}
-                unit={unit}
-                quantityError={quantityError}
-                showCounterPrice={showCounterPrice}
-                priceType={offerTransportPriceType}
-                isNegotiable={offerTransportNegotiable}
-                isTransport={offerCategory === 'transport'}
-              />
-            )}
-
-            {offerCategory === 'transport' && (
-              <TransportSection
-                isFreight={!!isFreight}
-                passengerRoute={passengerRoute}
-                offerTransportRoute={offerTransportRoute}
-                offerTransportWaypoints={offerTransportWaypoints}
-                selectedWaypoint={selectedWaypoint}
-                customPickupAddress={customPickupAddress}
-                pricePerUnit={pricePerUnit}
-                onWaypointChange={handleWaypointChange}
-                onPassengerRouteChange={setPassengerRoute}
-                onPickupMapOpen={() => setIsPickupMapOpen(true)}
-              />
-            )}
-
-            <DeliverySection
-              availableDeliveryTypes={availableDeliveryTypes}
-              selectedDeliveryType={selectedDeliveryType}
-              address={address}
-              comment={comment}
-              addressError={addressError}
-              availableDistricts={availableDistricts}
-              isService={offerCategory === 'utilities'}
-              onDeliveryTypeChange={setSelectedDeliveryType}
-              onAddressChange={setAddress}
-              onCommentChange={setComment}
-              onAddressBlur={() => validateAddress(address)}
-              onMapOpen={() => setIsMapOpen(true)}
-              onAddressErrorClear={() => setAddressError('')}
-            />
-
-            {offerCategory !== 'utilities' && (noNegotiation ? (
-              <div className="border-t pt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                <Icon name="Lock" size={14} />
-                <span>Цена фиксирована, торг не предусмотрен</span>
-              </div>
-            ) : (
-              <CounterPriceSection
-                showCounterPrice={showCounterPrice}
-                pricePerUnit={pricePerUnit}
-                counterPrice={counterPrice}
-                counterComment={counterComment}
-                quantity={quantity}
-                unit={unit}
-                onToggle={() => setShowCounterPrice(!showCounterPrice)}
-                onCounterPriceChange={setCounterPrice}
-                onCounterCommentChange={setCounterComment}
-              />
-            ))}
-
-            {createdOrderId ? (
-              <div className="border-t pt-3 space-y-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                  <Icon name="CheckCircle2" size={16} className="text-green-600" />
-                  Заказ оформлен — можно написать продавцу
-                </div>
-                <div
-                  ref={chatScrollRef}
-                  className="h-36 overflow-y-auto space-y-2 bg-muted/30 rounded-lg p-2"
-                >
-                  {chatMessages.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center pt-10">
-                      Начните переписку с продавцом
-                    </p>
-                  )}
-                  {chatMessages.map(msg => (
-                    <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-lg px-3 py-1.5 text-xs ${msg.isOwn ? 'bg-primary text-primary-foreground' : 'bg-white border text-foreground'}`}>
-                        {!msg.isOwn && <p className="text-[10px] font-semibold opacity-60 mb-0.5">{msg.senderName}</p>}
-                        <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-                        <p className={`text-[10px] mt-0.5 ${msg.isOwn ? 'opacity-60' : 'text-muted-foreground'}`}>
-                          {msg.timestamp.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    value={chatText}
-                    onChange={e => setChatText(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChatMessage(); } }}
-                    placeholder="Написать продавцу..."
-                    className="text-sm h-9"
-                    disabled={isSendingMessage}
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-9 px-3"
-                    onClick={handleSendChatMessage}
-                    disabled={!chatText.trim() || isSendingMessage}
-                  >
-                    <Icon name="Send" size={15} />
-                  </Button>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                  onClick={() => { onClose(); navigate(`/my-orders?tab=buyer&orderId=${createdOrderId}`); }}
-                >
-                  <Icon name="ExternalLink" size={13} className="mr-1.5" />
-                  Перейти к заказу
-                </Button>
-              </div>
-            ) : (
-              <OrderFormActions
-                quantityError={quantityError}
-                addressError={addressError}
-                onClose={onClose}
-              />
-            )}
-          </form>
+          <OrderFormBody
+            offerCategory={offerCategory}
+            offerTransportDateTime={offerTransportDateTime}
+            offerTransportRoute={offerTransportRoute}
+            offerTransportWaypoints={offerTransportWaypoints}
+            offerTransportPriceType={offerTransportPriceType}
+            offerTransportNegotiable={offerTransportNegotiable}
+            noNegotiation={noNegotiation}
+            unit={unit}
+            pricePerUnit={pricePerUnit}
+            remainingQuantity={remainingQuantity}
+            minOrderQuantity={minOrderQuantity}
+            availableDeliveryTypes={availableDeliveryTypes}
+            availableDistricts={availableDistricts}
+            createdOrderId={createdOrderId}
+            isFreight={!!form.isFreight}
+            capacityUnit={form.capacityUnit}
+            effectivePricePerUnit={form.effectivePricePerUnit}
+            quantity={form.quantity}
+            quantityError={form.quantityError}
+            address={form.address}
+            comment={form.comment}
+            addressError={form.addressError}
+            selectedDeliveryType={form.selectedDeliveryType}
+            passengerRoute={form.passengerRoute}
+            selectedWaypoint={form.selectedWaypoint}
+            customPickupAddress={form.customPickupAddress}
+            showCounterPrice={form.showCounterPrice}
+            counterPrice={form.counterPrice}
+            counterComment={form.counterComment}
+            chatMessages={form.chatMessages}
+            chatText={form.chatText}
+            isSendingMessage={form.isSendingMessage}
+            chatScrollRef={form.chatScrollRef}
+            onQuantityChange={form.handleQuantityChange}
+            onIncrement={form.incrementQuantity}
+            onDecrement={form.decrementQuantity}
+            onQuantityErrorClear={() => form.setQuantityError('')}
+            onDeliveryTypeChange={form.setSelectedDeliveryType}
+            onAddressChange={form.setAddress}
+            onCommentChange={form.setComment}
+            onAddressBlur={() => form.validateAddress(form.address)}
+            onMapOpen={() => form.setIsMapOpen(true)}
+            onAddressErrorClear={() => form.setAddressError('')}
+            onWaypointChange={form.handleWaypointChange}
+            onPassengerRouteChange={form.setPassengerRoute}
+            onPickupMapOpen={() => form.setIsPickupMapOpen(true)}
+            onToggleCounterPrice={() => form.setShowCounterPrice(!form.showCounterPrice)}
+            onCounterPriceChange={form.setCounterPrice}
+            onCounterCommentChange={form.setCounterComment}
+            onChatTextChange={form.setChatText}
+            onSendChatMessage={form.handleSendChatMessage}
+            onClose={onClose}
+            onSubmit={form.handleSubmit}
+          />
         </DialogContent>
       </Dialog>
 
-      {isMapOpen && (
-        <div className="fixed inset-0 z-[100] bg-background">
-          <Suspense fallback={<div />}>
-            <MapModal
-              isOpen={isMapOpen}
-              onClose={() => setIsMapOpen(false)}
-              coordinates={gpsCoordinates}
-              onCoordinatesChange={handleCoordinatesChange}
-              onAddressChange={handleAddressChange}
-            />
-          </Suspense>
-        </div>
-      )}
-
-      {isPickupMapOpen && (
-        <div className="fixed inset-0 z-[100] bg-background">
-          <Suspense fallback={<div />}>
-            <MapModal
-              isOpen={isPickupMapOpen}
-              onClose={() => setIsPickupMapOpen(false)}
-              coordinates={pickupGpsCoordinates}
-              onCoordinatesChange={setPickupGpsCoordinates}
-              onAddressChange={handlePickupAddressFromMap}
-            />
-          </Suspense>
-        </div>
-      )}
+      <OrderMapOverlays
+        isMapOpen={form.isMapOpen}
+        isPickupMapOpen={form.isPickupMapOpen}
+        gpsCoordinates={form.gpsCoordinates}
+        pickupGpsCoordinates={form.pickupGpsCoordinates}
+        onDeliveryMapClose={() => form.setIsMapOpen(false)}
+        onPickupMapClose={() => form.setIsPickupMapOpen(false)}
+        onCoordinatesChange={form.handleCoordinatesChange}
+        onPickupCoordinatesChange={form.setPickupGpsCoordinates}
+        onAddressChange={form.handleAddressChange}
+        onPickupAddressFromMap={form.handlePickupAddressFromMap}
+      />
     </>
   );
 }
