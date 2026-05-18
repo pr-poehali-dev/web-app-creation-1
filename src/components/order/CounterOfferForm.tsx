@@ -39,7 +39,7 @@ export default function CounterOfferForm({
   }
 
   // Форма встречного предложения от покупателя
-  if (isBuyer && order.status === 'new') {
+  if (isBuyer && (order.status === 'new' || order.status === 'pending')) {
     return (
       <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
         <CardContent className="pt-4 space-y-3">
