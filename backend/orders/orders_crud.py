@@ -291,6 +291,8 @@ def get_order_by_id(order_id: str, headers: Dict[str, str], event: Dict[str, Any
     order_dict['noNegotiation'] = bool(order_dict.pop('no_negotiation', False))
     order_dict['is_request'] = order_dict.get('is_request', False)
     order_dict['completionRequested'] = order_dict.pop('completion_requested', False) or False
+    order_dict['buyerAgreed'] = bool(order_dict.pop('buyer_agreed', False) or False)
+    order_dict['sellerAgreed'] = bool(order_dict.pop('seller_agreed', False) or False)
     order_dict['buyerRating'] = float(order_dict.pop('buyer_rating')) if order_dict.get('buyer_rating') is not None else None
     order_dict['sellerRating'] = float(order_dict.pop('seller_rating')) if order_dict.get('seller_rating') is not None else None
     order_dict['sellerAvgReviewRating'] = round(float(order_dict.pop('seller_avg_review_rating')), 1) if order_dict.get('seller_avg_review_rating') is not None else None
@@ -763,8 +765,53 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         )
         offers_cache.clear()
     
-    # Продавец принимает заказ (по исходной цене)
-    if 'status' in body and body['status'] == 'accepted' and not counter_accepted and is_seller:
+    # Сторона соглашается с заказом (двойное подтверждение)
+    if 'agreeOrder' in body and body['agreeOrder'] and not counter_accepted and order['status'] in ('new', 'pending', 'negotiating'):
+        if is_buyer:
+            updates.append("buyer_agreed = TRUE")
+            buyer_agreed_now = True
+            seller_agreed_now = bool(order.get('seller_agreed'))
+        elif is_seller:
+            updates.append("seller_agreed = TRUE")
+            seller_agreed_now = True
+            buyer_agreed_now = bool(order.get('buyer_agreed'))
+        else:
+            buyer_agreed_now = False
+            seller_agreed_now = False
+
+        # Если обе стороны согласились — принимаем заказ
+        if buyer_agreed_now and seller_agreed_now:
+            cur.execute(
+                pgsql.SQL("SELECT quantity, sold_quantity, reserved_quantity FROM {schema}.offers WHERE id = %s").format(schema=pgsql.Identifier(schema)),
+                (str(order['offer_id']),)
+            )
+            offer = cur.fetchone()
+            if offer:
+                order_quantity = order['quantity']
+                available = offer['quantity'] - (offer.get('sold_quantity', 0) or 0) - (offer.get('reserved_quantity', 0) or 0) + order_quantity
+                if available < order_quantity:
+                    cur.close()
+                    conn.close()
+                    return {
+                        'statusCode': 400,
+                        'headers': headers,
+                        'body': json.dumps({'error': 'Insufficient quantity', 'available': available, 'requested': order_quantity}),
+                        'isBase64Encoded': False
+                    }
+                cur.execute(
+                    pgsql.SQL("""
+                        UPDATE {schema}.offers
+                        SET sold_quantity = COALESCE(sold_quantity, 0) + %s,
+                            reserved_quantity = GREATEST(0, COALESCE(reserved_quantity, 0) - %s)
+                        WHERE id = %s
+                    """).format(schema=pgsql.Identifier(schema)),
+                    (order_quantity, order_quantity, str(order['offer_id']))
+                )
+                offers_cache.clear()
+            updates.append("status = 'accepted'")
+
+    # Продавец принимает заказ напрямую (старая логика, обратная совместимость)
+    if 'status' in body and body['status'] == 'accepted' and not counter_accepted and is_seller and 'agreeOrder' not in body:
         cur.execute(
             pgsql.SQL("SELECT quantity, sold_quantity, reserved_quantity FROM {schema}.offers WHERE id = %s").format(schema=pgsql.Identifier(schema)),
             (str(order['offer_id']),)
@@ -773,8 +820,6 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         
         if offer:
             order_quantity = order['quantity']
-            # reserved_quantity уже содержит количество этого заказа (добавлено при создании),
-            # поэтому вычитаем его обратно, чтобы не было двойного счёта
             available = offer['quantity'] - (offer.get('sold_quantity', 0) or 0) - (offer.get('reserved_quantity', 0) or 0) + order_quantity
             
             if available < order_quantity:

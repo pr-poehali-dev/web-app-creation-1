@@ -81,6 +81,8 @@ export function useOrdersData(
       counterOfferedAt,
       counterOfferedBy,
       buyerAcceptedCounter: orderData.buyer_accepted_counter || orderData.buyerAcceptedCounter,
+      buyerAgreed: orderData.buyer_agreed || orderData.buyerAgreed || false,
+      sellerAgreed: orderData.seller_agreed || orderData.sellerAgreed || false,
       buyerId: orderData.buyer_id?.toString() || orderData.buyerId,
       buyerName: orderData.buyer_name || orderData.buyerName || orderData.buyer_full_name,
       buyerPhone: orderData.buyer_phone || orderData.buyerPhone,
@@ -350,12 +352,25 @@ export function useOrdersData(
     const order = orders.find(o => o.id === orderToAccept);
     if (!order) return;
 
+    const currentUser = getSession();
+    const isBuyer = currentUser?.id?.toString() === order.buyerId?.toString();
+
     try {
-      // СРАЗУ обновляем статус локально ДО отправки на сервер (optimistic update)
+      await ordersAPI.updateOrder(orderToAccept, { agreeOrder: true });
+
+      // Перезагружаем заказ с сервера чтобы получить актуальные buyerAgreed/sellerAgreed/status
+      const updatedData = await ordersAPI.getOrderById(orderToAccept);
+      const buyerAgreedNow = updatedData.buyerAgreed || false;
+      const sellerAgreedNow = updatedData.sellerAgreed || false;
+      const bothAgreed = updatedData.status === 'accepted';
+
       const updatedOrder = {
         ...order,
-        status: 'accepted' as const,
-        acceptedAt: new Date(),
+        buyerAgreed: buyerAgreedNow,
+        sellerAgreed: sellerAgreedNow,
+        status: updatedData.status as Order['status'],
+        acceptedAt: bothAgreed ? new Date() : order.acceptedAt,
+        orderNumber: updatedData.order_number || updatedData.orderNumber || order.orderNumber,
       };
       
       setOrders(prevOrders => 
@@ -366,13 +381,17 @@ export function useOrdersData(
         setSelectedOrder(updatedOrder);
       }
 
-      // Отправляем на сервер в фоне
-      await ordersAPI.updateOrder(orderToAccept, { status: 'accepted' });
-
-      toast({
-        title: 'Заказ принят',
-        description: 'Заказ успешно принят в работу. Остаток товара обновлен.',
-      });
+      if (bothAgreed) {
+        toast({
+          title: 'Заказ принят!',
+          description: 'Обе стороны подтвердили. Заказ принят в работу.',
+        });
+      } else {
+        toast({
+          title: isBuyer ? 'Вы подтвердили заказ' : 'Вы приняли заказ',
+          description: 'Ожидается подтверждение второй стороны',
+        });
+      }
 
       // Инвалидируем кэш запросов — после принятия отклика запрос мог изменить состояние
       SmartCache.invalidate('requests_list');

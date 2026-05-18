@@ -297,7 +297,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           isOpen={isChatOpen}
           onClose={handleCloseChat}
           order={selectedOrder}
-          onAcceptOrder={currentUser?.id?.toString() === selectedOrder.sellerId ? () => handleAcceptOrder() : undefined}
+          onAcceptOrder={(currentUser?.id?.toString() === selectedOrder.sellerId || currentUser?.id?.toString() === selectedOrder.buyerId) && (selectedOrder.status === 'pending' || selectedOrder.status === 'new') ? () => handleAcceptOrder() : undefined}
           onCounterOffer={handleCounterOffer}
           onAcceptCounter={handleAcceptCounter}
           onCancelOrder={handleCancelOrder}

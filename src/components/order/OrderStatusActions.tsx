@@ -159,7 +159,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
       {order.status !== 'completed' && order.status !== 'cancelled' && (
         <>
           <Separator />
-          {order.status === 'pending' && isBuyer && (
+          {(order.status === 'pending' || order.status === 'new') && isBuyer && (
             <div className="space-y-3">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
                 <Icon name="Clock" className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -168,9 +168,23 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                     {roles.seller}: {contactPerson.name}
                     {counterpartRating != null && <RatingBadge rating={counterpartRating} />}
                   </p>
-                  <p>Заказ ожидает подтверждения {roles.counterSeller}. После принятия статус изменится на "Принят"</p>
+                  {order.buyerAgreed
+                    ? <p>Вы подтвердили. Ожидается подтверждение {roles.counterSeller}.</p>
+                    : <p>Подтвердите заказ. После подтверждения обеими сторонами статус изменится на "Принят"</p>
+                  }
                 </div>
               </div>
+              {!order.buyerAgreed && onAcceptOrder && (
+                <Button
+                  onClick={() => onAcceptOrder(order.id)}
+                  variant="default"
+                  size="sm"
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                  Принять заказ
+                </Button>
+              )}
               {onCancelOrder && (
                 <Button
                   onClick={onCancelClick}
@@ -194,7 +208,10 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                     {roles.buyer}: {contactPerson.name}
                     {counterpartRating != null && <RatingBadge rating={counterpartRating} />}
                   </p>
-                  <p>Новый заказ ожидает вашего подтверждения</p>
+                  {order.buyerAgreed
+                    ? <p>Покупатель подтвердил заказ. Нажмите «Принять» для завершения.</p>
+                    : <p>Новый заказ ожидает подтверждения обеих сторон</p>
+                  }
                 </div>
               </div>
               {onAcceptOrder && (

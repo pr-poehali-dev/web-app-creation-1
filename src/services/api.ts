@@ -902,6 +902,7 @@ export const ordersAPI = {
     counterMessage?: string;
     acceptCounter?: boolean;
     completionRequested?: boolean;
+    agreeOrder?: boolean;
   }): Promise<{ message: string }> {
     const userId = getUserId();
     if (!userId) {

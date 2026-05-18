@@ -25,6 +25,8 @@ export interface Order {
   counterOfferedAt?: Date;
   counterOfferedBy?: 'buyer' | 'seller';
   buyerAcceptedCounter?: boolean;
+  buyerAgreed?: boolean;
+  sellerAgreed?: boolean;
   deliveryType: 'pickup' | 'delivery';
   deliveryAddress?: string;
   comment?: string;

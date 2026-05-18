@@ -314,6 +314,8 @@ export function useOfferDetail(id: string | undefined) {
                   status: orderData.status || 'pending',
                   createdAt: new Date(orderData.created_at || orderData.createdAt),
                   noNegotiation: orderData.no_negotiation || offer.noNegotiation || false,
+                  buyerAgreed: orderData.buyer_agreed || orderData.buyerAgreed || false,
+                  sellerAgreed: orderData.seller_agreed || orderData.sellerAgreed || false,
                   offerAvailableQuantity: offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0),
                   offerPricePerUnit: offer.pricePerUnit,
                 };
@@ -672,17 +674,35 @@ export function useOfferDetail(id: string | undefined) {
 
   const handleAcceptCreatedOrder = async () => {
     if (!createdOrder) return;
+    const currentUser = getSession();
+    if (!currentUser) return;
     try {
-      await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${createdOrder.id}`, {
+      const response = await fetch(`https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?id=${createdOrder.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': getSession()?.id?.toString() || '' },
-        body: JSON.stringify({ status: 'accepted' }),
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id?.toString() || '' },
+        body: JSON.stringify({ agreeOrder: true }),
       });
-      setCreatedOrder(prev => prev ? { ...prev, status: 'accepted', acceptedAt: new Date() } : prev);
-      notifyOrderUpdated(createdOrder.id);
-      toast({ title: 'Заказ принят!', description: `Заказ №${createdOrder.orderNumber || createdOrder.id} принят в работу`, duration: 2000 });
+      if (response.ok) {
+        const isBuyer = currentUser.id?.toString() === createdOrder.buyerId?.toString();
+        const buyerAgreedNow = isBuyer ? true : (createdOrder.buyerAgreed || false);
+        const sellerAgreedNow = !isBuyer ? true : (createdOrder.sellerAgreed || false);
+        const bothAgreed = buyerAgreedNow && sellerAgreedNow;
+        setCreatedOrder(prev => prev ? {
+          ...prev,
+          buyerAgreed: buyerAgreedNow,
+          sellerAgreed: sellerAgreedNow,
+          status: bothAgreed ? 'accepted' : prev.status,
+          acceptedAt: bothAgreed ? new Date() : prev.acceptedAt,
+        } : prev);
+        notifyOrderUpdated(createdOrder.id);
+        if (bothAgreed) {
+          toast({ title: 'Заказ принят!', description: `Заказ №${createdOrder.orderNumber || createdOrder.id} принят обеими сторонами`, duration: 3000 });
+        } else {
+          toast({ title: 'Вы подтвердили заказ', description: 'Ожидается подтверждение второй стороны', duration: 3000 });
+        }
+      }
     } catch (error) {
-      console.error('Error accepting order:', error);
+      console.error('Error agreeing to order:', error);
     }
   };
 
