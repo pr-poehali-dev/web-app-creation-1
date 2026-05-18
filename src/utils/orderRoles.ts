@@ -60,5 +60,9 @@ export function getOrderRoles(order: Order): OrderRoles {
     return { buyer: 'Клиент', seller: 'Исполнитель', counterBuyer: 'клиента', counterSeller: 'исполнителя' };
   }
 
+  if (order.offerCategory === 'services') {
+    return { buyer: 'Заказчик', seller: 'Исполнитель', counterBuyer: 'заказчика', counterSeller: 'исполнителя' };
+  }
+
   return { buyer: 'Покупатель', seller: 'Продавец', counterBuyer: 'покупателя', counterSeller: 'продавца' };
 }

@@ -38,24 +38,28 @@ export default function CounterOfferForm({
     return null;
   }
 
+  const isServices = order.offerCategory === 'services';
+
   // Форма встречного предложения от покупателя
   if (isBuyer && (order.status === 'new' || order.status === 'pending')) {
     return (
       <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
         <CardContent className="pt-4 space-y-3">
           <h3 className="font-semibold text-sm">Предложить свои условия</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={isServices ? 'w-full' : 'grid grid-cols-2 gap-3'}>
+            {!isServices && (
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Количество ({order.unit})</label>
+                <Input
+                  type="number"
+                  value={counterQuantity}
+                  onChange={(e) => onCounterQuantityChange(e.target.value)}
+                  min="1"
+                />
+              </div>
+            )}
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">Количество ({order.unit})</label>
-              <Input
-                type="number"
-                value={counterQuantity}
-                onChange={(e) => onCounterQuantityChange(e.target.value)}
-                min="1"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground block mb-1">Цена за {order.unit}</label>
+              <label className="text-xs text-muted-foreground block mb-1">{isServices ? 'Ваша цена' : `Цена за ${order.unit}`}</label>
               <Input
                 type="number"
                 value={counterPrice}
@@ -172,18 +176,20 @@ export default function CounterOfferForm({
       <Card className="bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800">
         <CardContent className="pt-4 space-y-3">
           <h3 className="font-semibold text-sm">Предложить свои условия</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={isServices ? 'w-full' : 'grid grid-cols-2 gap-3'}>
+            {!isServices && (
+              <div>
+                <label className="text-xs text-muted-foreground block mb-1">Количество ({order.unit})</label>
+                <Input
+                  type="number"
+                  value={counterQuantity}
+                  onChange={(e) => onCounterQuantityChange(e.target.value)}
+                  min="1"
+                />
+              </div>
+            )}
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">Количество ({order.unit})</label>
-              <Input
-                type="number"
-                value={counterQuantity}
-                onChange={(e) => onCounterQuantityChange(e.target.value)}
-                min="1"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground block mb-1">Цена за {order.unit}</label>
+              <label className="text-xs text-muted-foreground block mb-1">{isServices ? 'Ваша цена' : `Цена за ${order.unit}`}</label>
               <Input
                 type="number"
                 value={counterPrice}
