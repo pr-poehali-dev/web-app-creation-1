@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "name": "Verify phone - missing phone",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "verify-phone"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Reset password - invalid action",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "invalid",
+        "phone": "+79991234567"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
