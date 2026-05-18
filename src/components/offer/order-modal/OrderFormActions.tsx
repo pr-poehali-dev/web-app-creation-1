@@ -14,7 +14,7 @@ export default function OrderFormActions({ quantityError, addressError, onClose 
         className="flex-1"
         disabled={!!quantityError || !!addressError}
       >
-        Отправить заказ
+        Обсудить детали
       </Button>
       <Button type="button" variant="outline" onClick={onClose}>
         Отмена
