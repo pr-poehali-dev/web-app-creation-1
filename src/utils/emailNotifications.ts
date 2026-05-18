@@ -152,7 +152,7 @@ export const scheduleBookingNotification = (
   notificationTime: number,
   clientEmail: string,
   clientName: string,
-  description: string
+  _description?: string
 ) => {
   const hoursBeforeText = notificationTime >= 24 
     ? `${notificationTime / 24} ${notificationTime === 24 ? 'день' : notificationTime === 48 ? 'дня' : 'недель'}`
