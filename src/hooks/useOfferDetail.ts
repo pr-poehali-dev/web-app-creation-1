@@ -246,21 +246,27 @@ export function useOfferDetail(id: string | undefined) {
       }
     }
 
-    // Для услуг — сразу создаём заказ и открываем чат
-    if (offer?.category === 'utilities' && currentUser) {
-      toast({ title: 'Создаём обращение...', description: 'Пожалуйста, подождите' });
+    // Сразу создаём заказ и открываем чат для всех категорий
+    if (offer && currentUser) {
+      toast({ title: 'Создаём заказ...', description: 'Пожалуйста, подождите' });
       try {
+        const defaultDeliveryType = offer.availableDeliveryTypes?.includes('delivery') ? 'delivery' : (offer.availableDeliveryTypes?.[0] || 'pickup');
+        const defaultQuantity = offer.minOrderQuantity || offer.quantity || 1;
+        const defaultAddress = currentUser.legalAddress || '';
+
         const response = await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id?.toString() || '' },
           body: JSON.stringify({
             offerId: offer.id,
             title: offer.title,
-            quantity: 1,
-            unit: offer.unit || 'услуга',
-            pricePerUnit: 0,
-            deliveryType: 'pickup',
-            deliveryAddress: '',
+            quantity: defaultQuantity,
+            unit: offer.unit || 'шт',
+            pricePerUnit: offer.category === 'transport'
+              ? (offer.transportNegotiable ? 0 : Number(offer.transportPrice || offer.pricePerUnit || 0))
+              : offer.pricePerUnit,
+            deliveryType: defaultDeliveryType,
+            deliveryAddress: defaultDeliveryType === 'delivery' ? defaultAddress : '',
             district: offer.district,
             buyerName: `${currentUser.firstName} ${currentUser.lastName}`,
             buyerPhone: currentUser.phone || '',
@@ -268,28 +274,37 @@ export function useOfferDetail(id: string | undefined) {
             buyerCompany: currentUser.companyName || '',
             buyerInn: currentUser.inn || '',
             buyerComment: '',
-            hasVAT: false,
-            vatRate: 0,
+            hasVAT: offer.hasVAT || false,
+            vatRate: offer.vatRate || 0,
+            noNegotiation: offer.noNegotiation || false,
           }),
         });
         if (response.status === 409) {
           const errorData = await response.json().catch(() => ({}));
-          navigate(`/my-orders?tab=buyer&orderId=${errorData.existingOrderId || ''}`);
+          const existingId = errorData.existingOrderId || errorData.orderId || '';
+          if (existingId) {
+            setCreatedOrderId(String(existingId));
+            setIsOrderModalOpen(true);
+          } else {
+            navigate(`/my-orders?tab=buyer`);
+          }
           return;
         }
         if (response.ok) {
           const result = await response.json();
           notifyOfferUpdated(offer.id);
           notifyOrderUpdated(result.id);
-          toast({ title: 'Чат открыт!', description: 'Напишите исполнителю', duration: 2000 });
-          setTimeout(() => { navigate(`/my-orders?tab=buyer&orderId=${result.id}`); }, 300);
+          setCreatedOrderId(String(result.id));
+          setIsOrderModalOpen(true);
           return;
         }
       } catch (error) {
-        console.error('Error creating service order:', error);
+        console.error('Error creating order:', error);
+        toast({ title: 'Ошибка', description: 'Не удалось создать заказ. Попробуйте снова.', variant: 'destructive' });
       }
+      return;
     }
-    
+
     setIsOrderModalOpen(true);
   };
 

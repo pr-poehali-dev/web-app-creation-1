@@ -80,19 +80,21 @@ export default function OfferOrderModal({
           <DialogHeader>
             <div className="flex items-start justify-between gap-4 pr-10">
               <DialogTitle>
-                {offerCategory === 'utilities' ? 'Написать исполнителю' : 'Оформление заказа'}
+                {createdOrderId ? 'Обсуждение заказа' : offerCategory === 'utilities' ? 'Написать исполнителю' : 'Оформление заказа'}
               </DialogTitle>
-              {offerCategory !== 'utilities' && (
+              {!createdOrderId && offerCategory !== 'utilities' && (
                 <div className="text-sm font-bold text-black whitespace-nowrap">
                   Доступно: {remainingQuantity} {unit}
                 </div>
               )}
             </div>
-            <DialogDescription>
-              {offerCategory === 'utilities'
-                ? 'Опишите вашу задачу, и исполнитель свяжется с вами'
-                : 'Заполните форму, и мы свяжемся с вами для подтверждения заказа'}
-            </DialogDescription>
+            {!createdOrderId && (
+              <DialogDescription>
+                {offerCategory === 'utilities'
+                  ? 'Опишите вашу задачу, и исполнитель свяжется с вами'
+                  : 'Заполните форму, и мы свяжемся с вами для подтверждения заказа'}
+              </DialogDescription>
+            )}
           </DialogHeader>
 
           <OrderFormBody

@@ -28,7 +28,7 @@ export default function OrderInlineChat({
   const navigate = useNavigate();
 
   return (
-    <div className="border-t pt-3 space-y-2">
+    <div className="space-y-2">
       <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
         <Icon name="CheckCircle2" size={16} className="text-green-600" />
         Обсуждение заказа
