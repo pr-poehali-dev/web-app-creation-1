@@ -25,6 +25,7 @@ export function useOfferDetail(id: string | undefined) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -455,24 +456,18 @@ export function useOfferDetail(id: string | undefined) {
           createdAt: new Date(),
         };
         
-        setIsOrderModalOpen(false);
         setCreatedOrder(minimalOrder);
+        setCreatedOrderId(String(result.id));
         
         // Уведомляем всех пользователей об обновлении предложения и заказа
         notifyOfferUpdated(offer.id);
         notifyOrderUpdated(result.id);
         
-        // Показываем уведомление с автоматическим скрытием через 2 секунды
         toast({
-          title: '🎉 Ваш заказ оформлен!',
-          description: 'Открываем чат с продавцом...',
+          title: '🎉 Заказ оформлен!',
+          description: 'Напишите продавцу прямо сейчас',
           duration: 2000,
         });
-        
-        // Перенаправляем на страницу "Мои заказы" и открываем чат
-        setTimeout(() => {
-          navigate(`/my-orders?tab=buyer&orderId=${result.id}`);
-        }, 300);
         
         return;
       }
@@ -506,8 +501,8 @@ export function useOfferDetail(id: string | undefined) {
         noNegotiation: fullOrderData.noNegotiation || fullOrderData.no_negotiation || offer.noNegotiation || false,
       };
       
-      setIsOrderModalOpen(false);
       setCreatedOrder(newOrder);
+      setCreatedOrderId(String(result.id));
       
       await loadMessages(result.id);
       
@@ -525,17 +520,11 @@ export function useOfferDetail(id: string | undefined) {
       notifyOfferUpdated(offer.id);
       notifyOrderUpdated(result.id);
       
-      // Показываем уведомление с автоматическим скрытием через 2 секунды
       toast({
-        title: '🎉 Ваш заказ оформлен!',
-        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Открываем чат с продавцом...',
+        title: '🎉 Заказ оформлен!',
+        description: orderFormData.counterPrice ? 'Продавец получит ваше предложение цены' : 'Напишите продавцу прямо сейчас',
         duration: 2000,
       });
-
-      // Перенаправляем на страницу "Мои заказы" и автоматически открываем чат
-      setTimeout(() => {
-        navigate(`/my-orders?tab=buyer&orderId=${result.id}`);
-      }, 300);
     } catch (error) {
       console.error('Error creating order:', error);
       
@@ -554,6 +543,25 @@ export function useOfferDetail(id: string | undefined) {
   const openGallery = (index: number) => {
     setGalleryIndex(index);
     setIsGalleryOpen(true);
+  };
+
+  const handleSendChatMessage = async (orderId: string, text: string) => {
+    const currentUser = getSession();
+    if (!currentUser) return;
+
+    await fetch('https://functions.poehali.dev/ac0118fc-097c-4d35-a326-6afad0b5f8d4?message=true', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': currentUser.id?.toString() || '',
+      },
+      body: JSON.stringify({
+        orderId,
+        senderId: currentUser.id,
+        senderType: 'buyer',
+        message: text,
+      }),
+    });
   };
 
   const handleSendMessage = async (message: string) => {
@@ -638,6 +646,9 @@ export function useOfferDetail(id: string | undefined) {
     openGallery,
     setGalleryIndex,
     handleSendMessage,
+    handleSendChatMessage,
+    createdOrderId,
+    setCreatedOrderId,
     navigate,
   };
 }

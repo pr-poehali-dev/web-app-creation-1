@@ -46,6 +46,9 @@ export default function OfferDetail() {
     openGallery,
     setGalleryIndex,
     handleSendMessage,
+    handleSendChatMessage,
+    createdOrderId,
+    setCreatedOrderId,
   } = useOfferDetail(id);
 
   if (isLoading) {
@@ -94,6 +97,10 @@ export default function OfferDetail() {
         onOpenGallery={openGallery}
         onSendMessage={handleSendMessage}
         navigate={navigate}
+        createdOrderId={createdOrderId}
+        onCreatedOrderIdReset={() => setCreatedOrderId(null)}
+        onSendChatMessage={handleSendChatMessage}
+        currentUserId={currentUser?.id?.toString()}
       />
     </>
   );

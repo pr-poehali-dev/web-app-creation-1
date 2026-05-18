@@ -1,4 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,9 @@ const MapModal = lazy(() =>
   import('@/components/auction/MapModal').catch(() => ({ default: () => null }))
 );
 import Icon from '@/components/ui/icon';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import QuantitySelector from './order-modal/QuantitySelector';
 import PriceDisplay from './order-modal/PriceDisplay';
 import DeliverySection from './order-modal/DeliverySection';
@@ -64,6 +68,17 @@ interface OfferOrderModalProps {
   offerTransportServiceType?: string;
   offerTransportCapacity?: string;
   noNegotiation?: boolean;
+  createdOrderId?: string | null;
+  currentUserId?: string;
+  onSendChatMessage?: (orderId: string, text: string) => Promise<void>;
+}
+
+interface InlineChatMessage {
+  id: string;
+  text: string;
+  isOwn: boolean;
+  senderName: string;
+  timestamp: Date;
 }
 
 export default function OfferOrderModal({
@@ -86,7 +101,11 @@ export default function OfferOrderModal({
   offerTransportServiceType,
   offerTransportCapacity,
   noNegotiation,
+  createdOrderId,
+  currentUserId,
+  onSendChatMessage,
 }: OfferOrderModalProps) {
+  const navigate = useNavigate();
   const isFreight = offerTransportServiceType?.toLowerCase().includes('груз');
 
   const capacityUnit = (() => {
@@ -115,6 +134,36 @@ export default function OfferOrderModal({
   const [gpsCoordinates, setGpsCoordinates] = useState<string>('');
   const [addressSetFromMap, setAddressSetFromMap] = useState<boolean>(false);
   const [pickupGpsCoordinates, setPickupGpsCoordinates] = useState<string>('');
+  const [chatMessages, setChatMessages] = useState<InlineChatMessage[]>([]);
+  const [chatText, setChatText] = useState<string>('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (createdOrderId && chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatMessages, createdOrderId]);
+
+  const handleSendChatMessage = async () => {
+    if (!chatText.trim() || !createdOrderId || !onSendChatMessage) return;
+    const text = chatText.trim();
+    setChatText('');
+    setIsSendingMessage(true);
+    const tempMsg: InlineChatMessage = {
+      id: `temp-${Date.now()}`,
+      text,
+      isOwn: true,
+      senderName: 'Вы',
+      timestamp: new Date(),
+    };
+    setChatMessages(prev => [...prev, tempMsg]);
+    try {
+      await onSendChatMessage(createdOrderId, text);
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
 
   useEffect(() => {
     if (availableDeliveryTypes.length === 1) {
@@ -402,11 +451,70 @@ export default function OfferOrderModal({
               />
             ))}
 
-            <OrderFormActions
-              quantityError={quantityError}
-              addressError={addressError}
-              onClose={onClose}
-            />
+            {createdOrderId ? (
+              <div className="border-t pt-3 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                  <Icon name="CheckCircle2" size={16} className="text-green-600" />
+                  Заказ оформлен — можно написать продавцу
+                </div>
+                <div
+                  ref={chatScrollRef}
+                  className="h-36 overflow-y-auto space-y-2 bg-muted/30 rounded-lg p-2"
+                >
+                  {chatMessages.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center pt-10">
+                      Начните переписку с продавцом
+                    </p>
+                  )}
+                  {chatMessages.map(msg => (
+                    <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[80%] rounded-lg px-3 py-1.5 text-xs ${msg.isOwn ? 'bg-primary text-primary-foreground' : 'bg-white border text-foreground'}`}>
+                        {!msg.isOwn && <p className="text-[10px] font-semibold opacity-60 mb-0.5">{msg.senderName}</p>}
+                        <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                        <p className={`text-[10px] mt-0.5 ${msg.isOwn ? 'opacity-60' : 'text-muted-foreground'}`}>
+                          {msg.timestamp.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={chatText}
+                    onChange={e => setChatText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChatMessage(); } }}
+                    placeholder="Написать продавцу..."
+                    className="text-sm h-9"
+                    disabled={isSendingMessage}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="h-9 px-3"
+                    onClick={handleSendChatMessage}
+                    disabled={!chatText.trim() || isSendingMessage}
+                  >
+                    <Icon name="Send" size={15} />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                  onClick={() => { onClose(); navigate(`/my-orders?tab=buyer&orderId=${createdOrderId}`); }}
+                >
+                  <Icon name="ExternalLink" size={13} className="mr-1.5" />
+                  Перейти к заказу
+                </Button>
+              </div>
+            ) : (
+              <OrderFormActions
+                quantityError={quantityError}
+                addressError={addressError}
+                onClose={onClose}
+              />
+            )}
           </form>
         </DialogContent>
       </Dialog>

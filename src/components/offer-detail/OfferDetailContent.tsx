@@ -41,6 +41,10 @@ interface OfferDetailContentProps {
   onOpenGallery: (index: number) => void;
   onSendMessage: (message: string) => void;
   navigate: ReturnType<typeof useNavigate>;
+  createdOrderId?: string | null;
+  onCreatedOrderIdReset?: () => void;
+  onSendChatMessage?: (orderId: string, text: string) => Promise<void>;
+  currentUserId?: string;
 }
 
 export default function OfferDetailContent({
@@ -68,6 +72,10 @@ export default function OfferDetailContent({
   onOrderSubmit,
   onOpenGallery,
   navigate,
+  createdOrderId,
+  onCreatedOrderIdReset,
+  onSendChatMessage,
+  currentUserId,
 }: OfferDetailContentProps) {
   const remainingQuantity = offer.quantity - (offer.soldQuantity || 0) - (offer.reservedQuantity || 0);
   const totalPrice = offer.pricePerUnit * remainingQuantity;
@@ -148,8 +156,8 @@ export default function OfferDetailContent({
       </main>
 
       <OfferOrderModal
-        isOpen={isOrderModalOpen}
-        onClose={() => onOrderModalChange(false)}
+        isOpen={isOrderModalOpen || !!createdOrderId}
+        onClose={() => { onOrderModalChange(false); onCreatedOrderIdReset?.(); }}
         onSubmit={onOrderSubmit}
         remainingQuantity={remainingQuantity}
         minOrderQuantity={offer.minOrderQuantity}
@@ -167,6 +175,9 @@ export default function OfferDetailContent({
         offerTransportServiceType={offer.transportServiceType}
         offerTransportCapacity={offer.transportCapacity}
         noNegotiation={offer.noNegotiation}
+        createdOrderId={createdOrderId}
+        currentUserId={currentUserId}
+        onSendChatMessage={onSendChatMessage}
       />
 
       <OfferDetailGalleryModal
