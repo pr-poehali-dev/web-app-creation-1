@@ -17,20 +17,6 @@ interface Props {
 export default function IncomingCallModal({ call, onDismiss }: Props) {
   const [visible, setVisible] = useState(false);
 
-  const handleDismiss = () => {
-    stopBrowserRing();
-    setVisible(false);
-    onDismiss();
-  };
-
-  const handleOpen = () => {
-    stopBrowserRing();
-    if (call?.url) {
-      window.location.href = call.url;
-    }
-    onDismiss();
-  };
-
   useEffect(() => {
     if (call) {
       setVisible(true);
@@ -46,8 +32,21 @@ export default function IncomingCallModal({ call, onDismiss }: Props) {
       setVisible(false);
       stopBrowserRing();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [call]);
+
+  const handleDismiss = () => {
+    stopBrowserRing();
+    setVisible(false);
+    onDismiss();
+  };
+
+  const handleOpen = () => {
+    stopBrowserRing();
+    if (call?.url) {
+      window.location.href = call.url;
+    }
+    onDismiss();
+  };
 
   if (!visible || !call) return null;
 

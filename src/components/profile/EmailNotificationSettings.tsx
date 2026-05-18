@@ -11,7 +11,7 @@ interface EmailNotificationSettingsProps {
   userEmail: string;
 }
 
-export default function EmailNotificationSettings({ userId, userEmail: _userEmail }: EmailNotificationSettingsProps) {
+export default function EmailNotificationSettings({ userId, userEmail }: EmailNotificationSettingsProps) {
   const [isEnabled, setIsEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
