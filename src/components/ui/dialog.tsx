@@ -78,23 +78,28 @@ const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => {
   const scrollRef = React.useRef<HTMLDivElement>(null)
+  const contentRef = React.useRef<HTMLDivElement>(null)
 
-  const handleTouchStart = React.useCallback((e: React.TouchEvent<HTMLDivElement>) => {
-    const el = scrollRef.current
-    if (!el) return
+  // Блокируем pull-to-refresh и свайп-закрытие на уровне всей модалки
+  const handleModalTouchStart = React.useCallback((e: React.TouchEvent<HTMLDivElement>) => {
     const startY = e.touches[0].clientY
     const onMove = (ev: TouchEvent) => {
+      const el = scrollRef.current
+      if (!el) return
       const deltaY = ev.touches[0].clientY - startY
       const atTop = el.scrollTop === 0
       const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+      // Блокируем: свайп вниз когда скролл вверху (pull-to-refresh) и свайп вверх когда внизу
       if ((atTop && deltaY > 0) || (atBottom && deltaY < 0)) {
         ev.preventDefault()
       }
     }
-    el.addEventListener('touchmove', onMove, { passive: false })
-    const onEnd = () => el.removeEventListener('touchmove', onMove)
-    el.addEventListener('touchend', onEnd, { once: true })
-    el.addEventListener('touchcancel', onEnd, { once: true })
+    const modalEl = contentRef.current
+    if (!modalEl) return
+    modalEl.addEventListener('touchmove', onMove, { passive: false })
+    const onEnd = () => modalEl.removeEventListener('touchmove', onMove)
+    modalEl.addEventListener('touchend', onEnd, { once: true })
+    modalEl.addEventListener('touchcancel', onEnd, { once: true })
   }, [])
 
   return (
@@ -117,16 +122,21 @@ const DialogContent = React.forwardRef<
         {...props}
       >
         <div
-          ref={scrollRef}
-          className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative min-h-0",
-            !className?.includes('p-0') && "p-6"
-          )}
-          style={{ WebkitOverflowScrolling: 'touch' }}
-          onTouchStart={handleTouchStart}
+          ref={contentRef}
+          className="flex flex-col flex-1 min-h-0 overflow-hidden"
+          onTouchStart={handleModalTouchStart}
         >
-          {children}
-          <ScrollIndicator scrollRef={scrollRef as React.RefObject<HTMLDivElement>} />
+          <div
+            ref={scrollRef}
+            className={cn(
+              "flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative min-h-0",
+              !className?.includes('p-0') && "p-6"
+            )}
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {children}
+            <ScrollIndicator scrollRef={scrollRef as React.RefObject<HTMLDivElement>} />
+          </div>
         </div>
         <DialogPrimitive.Close className="absolute right-3 top-3 rounded-full bg-red-500 hover:bg-red-600 text-white p-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:pointer-events-none z-20">
           <X className="h-4 w-4" />

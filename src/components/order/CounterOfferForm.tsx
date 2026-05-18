@@ -3,6 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { Order } from '@/types/order';
 
+const handlePriceInput = (value: string, onChange: (v: string) => void) => {
+  const digits = value.replace(/[^\d]/g, '');
+  onChange(digits);
+};
+
 interface CounterOfferFormProps {
   order: Order;
   isBuyer: boolean;
@@ -61,9 +66,10 @@ export default function CounterOfferForm({
             <div>
               <label className="text-xs text-muted-foreground block mb-1">{isServices ? 'Ваша цена' : `Цена за ${order.unit}`}</label>
               <Input
-                type="number"
+                inputMode="numeric"
                 value={counterPrice}
-                onChange={(e) => onCounterPriceChange(e.target.value)}
+                onChange={(e) => handlePriceInput(e.target.value, onCounterPriceChange)}
+                placeholder="0"
               />
             </div>
           </div>
@@ -71,7 +77,7 @@ export default function CounterOfferForm({
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Общая сумма:</span>
               <span className="font-bold text-lg text-blue-600 dark:text-blue-400">
-                {(parseFloat(counterPrice || '0') * parseFloat(counterQuantity || '0')).toLocaleString('ru-RU')} ₽
+                {(parseInt(counterPrice || '0', 10) * parseInt(counterQuantity || '0', 10)).toLocaleString('ru-RU')} ₽
               </span>
             </div>
           </div>
@@ -118,10 +124,10 @@ export default function CounterOfferForm({
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Ваша цена</label>
             <Input
-              type="number"
+              inputMode="numeric"
               value={counterPrice}
-              onChange={(e) => onCounterPriceChange(e.target.value)}
-              placeholder="Введите сумму"
+              onChange={(e) => handlePriceInput(e.target.value, onCounterPriceChange)}
+              placeholder="0"
             />
           </div>
           <div className="flex gap-2">
@@ -151,10 +157,10 @@ export default function CounterOfferForm({
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Ваша цена</label>
             <Input
-              type="number"
+              inputMode="numeric"
               value={counterPrice}
-              onChange={(e) => onCounterPriceChange(e.target.value)}
-              placeholder="Введите сумму"
+              onChange={(e) => handlePriceInput(e.target.value, onCounterPriceChange)}
+              placeholder="0"
             />
           </div>
           <div className="flex gap-2">
@@ -191,9 +197,10 @@ export default function CounterOfferForm({
             <div>
               <label className="text-xs text-muted-foreground block mb-1">{isServices ? 'Ваша цена' : `Цена за ${order.unit}`}</label>
               <Input
-                type="number"
+                inputMode="numeric"
                 value={counterPrice}
-                onChange={(e) => onCounterPriceChange(e.target.value)}
+                onChange={(e) => handlePriceInput(e.target.value, onCounterPriceChange)}
+                placeholder="0"
               />
             </div>
           </div>
@@ -201,7 +208,7 @@ export default function CounterOfferForm({
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Общая сумма:</span>
               <span className="font-bold text-lg text-orange-600 dark:text-orange-400">
-                {(parseFloat(counterPrice || '0') * parseFloat(counterQuantity || '0')).toLocaleString('ru-RU')} ₽
+                {(parseInt(counterPrice || '0', 10) * parseInt(counterQuantity || '0', 10)).toLocaleString('ru-RU')} ₽
               </span>
             </div>
           </div>
