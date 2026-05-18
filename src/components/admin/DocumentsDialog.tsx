@@ -3,8 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-import funcUrlRaw from '../../../backend/func2url.json';
-const funcUrl = funcUrlRaw as Record<string, string>;
+import funcUrl from '../../../backend/func2url.json';
 
 interface Verification {
   id: number;

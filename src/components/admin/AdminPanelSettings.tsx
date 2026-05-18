@@ -33,6 +33,7 @@ export const useAdminPanelSettings = () => {
     yandex: true,
     vk: true,
     google: true,
+    telegram: true,
   });
 
   const [colors, setColors] = useState({
@@ -105,7 +106,7 @@ export const useAdminPanelSettings = () => {
       }
       
       if (oldData.widgets) {
-        const mappedWidgets = oldData.widgets.map((w: Record<string, unknown>, idx: number) => ({
+        const mappedWidgets = oldData.widgets.map((w: any, idx: number) => ({
           id: idx + 1,
           name: w.widget_name,
           enabled: w.enabled,

@@ -29,6 +29,7 @@ const AuthStats = () => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const providerInfo: Record<string, { name: string; icon: string; color: string }> = {
+    telegram: { name: 'Telegram', icon: 'MessageCircle', color: 'bg-[#0088cc] text-white' },
     google: { name: 'Google', icon: 'Globe', color: 'bg-blue-500 text-white' },
     vk: { name: 'VK', icon: 'Users', color: 'bg-blue-600 text-white' },
     yandex: { name: 'Яндекс', icon: 'Shield', color: 'bg-red-500 text-white' },
@@ -77,7 +78,7 @@ const AuthStats = () => {
     const info = providerInfo[source] || { name: source, icon: 'User', color: 'bg-gray-500 text-white' };
     return (
       <Badge className={`${info.color} flex items-center gap-1 px-2 py-1`}>
-        <Icon name={info.icon} size={14} />
+        <Icon name={info.icon as any} size={14} />
         {info.name}
       </Badge>
     );
@@ -127,7 +128,7 @@ const AuthStats = () => {
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-4 mb-4">
                         <div className={`p-3 rounded-full ${info.color}`}>
-                          <Icon name={info.icon} size={24} className="text-white" />
+                          <Icon name={info.icon as any} size={24} className="text-white" />
                         </div>
                         <div>
                           <h3 className="font-bold text-lg">{info.name}</h3>

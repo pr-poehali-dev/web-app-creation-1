@@ -15,7 +15,7 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
   useScrollToTop();
   const supportEmail = 'doydum-invest@mail.ru';
   const supportPhone = '+7 (984) 101-73-55';
-  const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'call'>('call');
+  const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'telegram' | 'call'>('call');
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <SEO 
@@ -64,7 +64,11 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
               <div className="flex items-start gap-3 md:gap-4">
                 <div className="bg-primary/10 p-2 md:p-2.5 rounded-lg">
                   <Icon 
-                    name={phoneContactMethod === 'whatsapp' ? 'MessageSquare' : 'Phone'}
+                    name={
+                      phoneContactMethod === 'whatsapp' ? 'MessageSquare' :
+                      phoneContactMethod === 'telegram' ? 'MessageCircle' :
+                      'Phone'
+                    }
                     className="h-5 w-5 md:h-6 md:w-6 text-primary" 
                   />
                 </div>
@@ -124,7 +128,29 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
                       <span className="text-sm font-medium">WhatsApp</span>
                     </a>
 
-
+                    <a
+                      href={phoneContactMethod === 'telegram' ? `https://t.me/${supportPhone.replace(/[^0-9]/g, '')}` : '#'}
+                      target={phoneContactMethod === 'telegram' ? '_blank' : undefined}
+                      rel={phoneContactMethod === 'telegram' ? 'noopener noreferrer' : undefined}
+                      onClick={(e) => {
+                        if (phoneContactMethod !== 'telegram') {
+                          e.preventDefault();
+                          setPhoneContactMethod('telegram');
+                          // Открываем сразу после выбора
+                          setTimeout(() => {
+                            window.open(`https://t.me/${supportPhone.replace(/[^0-9]/g, '')}`, '_blank');
+                          }, 100);
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                        phoneContactMethod === 'telegram'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background hover:bg-accent border-border'
+                      }`}
+                    >
+                      <Icon name="MessageCircle" className="h-4 w-4" />
+                      <span className="text-sm font-medium">Telegram</span>
+                    </a>
                   </div>
                 </div>
               </div>

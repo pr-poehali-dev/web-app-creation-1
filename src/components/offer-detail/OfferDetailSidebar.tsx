@@ -61,7 +61,7 @@ export default function OfferDetailSidebar({
               className="w-full gap-2"
             >
               <Icon name="ShoppingCart" className="h-5 w-5" />
-              Связаться
+              Заказать
             </Button>
           )}
           <Button
