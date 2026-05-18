@@ -6,6 +6,7 @@ import Icon from '@/components/ui/icon';
 import RegionDistrictSelector from '@/components/RegionDistrictSelector';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
+import { useOffers } from '@/contexts/OffersContext';
 import { getUnreadCount } from '@/utils/notifications';
 import HeaderMobileMenu from '@/components/header/HeaderMobileMenu';
 import HeaderRegionModal from '@/components/header/HeaderRegionModal';
@@ -83,8 +84,11 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const [currentUser, setCurrentUser] = useState(getSession());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [regionModalOpen, setRegionModalOpen] = useState(false);
+  const [, setListingsCount] = useState(0);
+  const [, setOrdersCount] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
-  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, selectedRegion, regions } = useDistrict();
+  const { selectedDistricts, districts, toggleDistrict, setSelectedDistricts, detectedCity, selectedRegion, regions } = useDistrict();
+  const { offers, requests } = useOffers();
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const getShortRegionName = (regionId: string): string => {
@@ -124,6 +128,20 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
 
     const fetchCounts = async () => {
       try {
+        const userListings = [...offers, ...requests].filter(
+          item => item.userId === currentUser.id
+        );
+        setListingsCount(userListings.length);
+
+        const storedOrders = localStorage.getItem('orders');
+        if (storedOrders) {
+          const ordersData = JSON.parse(storedOrders);
+          const userOrders = ordersData.filter(
+            (order: { buyerId: string; sellerId: string }) => order.buyerId === currentUser.id?.toString() || order.sellerId === currentUser.id?.toString()
+          );
+          setOrdersCount(userOrders.length);
+        }
+
         const notifCount = getUnreadCount(currentUser.id?.toString());
         setUnreadNotifications(notifCount);
       } catch (error) {
@@ -153,7 +171,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
       window.removeEventListener('newNotification', handleNotificationUpdate);
       window.removeEventListener('notificationsUpdated', handleNotificationUpdate);
     };
-  }, [isAuthenticated, currentUser]);
+  }, [isAuthenticated, currentUser, offers, requests]);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -341,6 +359,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
         <HeaderMobileMenu
           isOpen={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
+          currentPath={location.pathname}
           menuRef={mobileMenuRef}
         />
 

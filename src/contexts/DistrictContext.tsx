@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { detectLocationByBrowser, detectLocationByIP, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
+import { detectLocationByBrowser, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
 import { REGIONS, findRegionByLocation, type Region } from '@/data/regions';
 import { DISTRICTS, getDistrictsByRegion, findDistrictByName, type District as DistrictType } from '@/data/districts';
 
