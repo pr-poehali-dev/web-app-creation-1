@@ -3,7 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
-import func2url from '../../../backend/func2url.json';
+import func2urlRaw from '../../../backend/func2url.json';
+const func2url = func2urlRaw as Record<string, string>;
 import VideoUrlInput from './video-upload/VideoUrlInput';
 import VideoPreviewCard from './video-upload/VideoPreviewCard';
 import VideoUploadProgress from './video-upload/VideoUploadProgress';
