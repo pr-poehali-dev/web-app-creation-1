@@ -1,128 +1,163 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import { type VideoCallPayload, clearIncomingCall, getJitsiUrl } from '@/services/videoCallService';
+import { getAudioContext } from '@/components/order/chat-types';
 
 export default function IncomingCallAlert() {
   const [call, setCall] = useState<VideoCallPayload | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [seconds, setSeconds] = useState(30);
+  const playingRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const ringTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const callRef = useRef<VideoCallPayload | null>(null);
 
-  // Генерируем звук звонка через Web Audio API
-  const startRinging = () => {
+  // Звонок через общий AudioContext (уже разблокированный пользователем)
+  const ring = useCallback(() => {
+    if (!playingRef.current) return;
     try {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      let playing = true;
+      const ctx = getAudioContext();
+      if (!ctx) return;
 
-      const ring = () => {
-        if (!playing) return;
+      const resume = () => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.frequency.setValueAtTime(880, ctx.currentTime);
         osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
         osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.4);
-        if (playing) setTimeout(ring, 1200);
+        osc.stop(ctx.currentTime + 0.5);
+        if (playingRef.current) {
+          ringTimerRef.current = setTimeout(ring, 1400);
+        }
       };
 
-      ring();
-      audioRef.current = { pause: () => { playing = false; ctx.close(); } } as unknown as HTMLAudioElement;
+      if (ctx.state === 'suspended') {
+        ctx.resume().then(resume).catch(() => {});
+      } else {
+        resume();
+      }
     } catch {
-      // браузер заблокировал — ничего страшного
+      // браузер заблокировал
     }
-  };
+  }, []);
 
-  const stopRinging = () => {
-    audioRef.current?.pause();
-    audioRef.current = null;
+  const startRinging = useCallback(() => {
+    playingRef.current = true;
+    ring();
+  }, [ring]);
+
+  const stopRinging = useCallback(() => {
+    playingRef.current = false;
+    if (ringTimerRef.current) {
+      clearTimeout(ringTimerRef.current);
+      ringTimerRef.current = null;
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const showCall = useCallback((payload: VideoCallPayload, remainingSeconds = 30) => {
+    // Не показываем свой же звонок (инициатор)
+    const myId = localStorage.getItem('userId');
+    if (myId && payload.callerId === myId) return;
+
+    callRef.current = payload;
+    setCall(payload);
+    setSeconds(remainingSeconds);
+    stopRinging();
+    startRinging();
+
     if (timerRef.current) clearInterval(timerRef.current);
-  };
+    timerRef.current = setInterval(() => {
+      setSeconds(prev => {
+        if (prev <= 1) {
+          handleDecline();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [startRinging, stopRinging]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleDecline = useCallback(() => {
+    stopRinging();
+    clearIncomingCall();
+    callRef.current = null;
+    setCall(null);
+  }, [stopRinging]);
+
+  const handleAccept = useCallback(() => {
+    const c = callRef.current;
+    if (!c) return;
+    stopRinging();
+    clearIncomingCall();
+    callRef.current = null;
+    setCall(null);
+    window.open(getJitsiUrl(c.roomId), '_blank');
+  }, [stopRinging]);
 
   useEffect(() => {
+    // Слушаем CustomEvent (когда страница уже открыта)
     const handleIncoming = (e: Event) => {
       const payload = (e as CustomEvent<VideoCallPayload>).detail;
-      setCall(payload);
-      setSeconds(30);
-      startRinging();
-      // Автоотбой через 30 секунд
-      timerRef.current = setInterval(() => {
-        setSeconds(prev => {
-          if (prev <= 1) {
-            handleDecline();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      showCall(payload);
     };
 
     const handleCleared = () => {
-      setCall(null);
       stopRinging();
+      callRef.current = null;
+      setCall(null);
     };
 
     window.addEventListener('incoming_video_call', handleIncoming);
     window.addEventListener('call_cleared', handleCleared);
 
-    // Восстановим звонок если страница перезагрузилась пока шёл звонок
-    const stored = localStorage.getItem('incoming_call');
-    if (stored) {
+    // Polling localStorage каждую секунду — надёжный fallback для push-уведомлений
+    const pollId = setInterval(() => {
+      if (callRef.current) return; // уже показываем звонок
+      const stored = localStorage.getItem('incoming_call');
+      if (!stored) return;
       try {
         const parsed = JSON.parse(stored) as VideoCallPayload & { timestamp: number };
-        if (Date.now() - parsed.timestamp < 30000) {
-          setCall(parsed);
-          setSeconds(Math.max(1, 30 - Math.floor((Date.now() - parsed.timestamp) / 1000)));
-          startRinging();
+        const elapsed = Math.floor((Date.now() - parsed.timestamp) / 1000);
+        if (elapsed < 30) {
+          showCall(parsed, Math.max(1, 30 - elapsed));
         } else {
           clearIncomingCall();
         }
       } catch {
         clearIncomingCall();
       }
-    }
+    }, 1000);
 
     return () => {
       window.removeEventListener('incoming_video_call', handleIncoming);
       window.removeEventListener('call_cleared', handleCleared);
+      clearInterval(pollId);
       stopRinging();
     };
-  }, []);
-
-  const handleAccept = () => {
-    if (!call) return;
-    stopRinging();
-    clearIncomingCall();
-    setCall(null);
-    window.open(getJitsiUrl(call.roomId), '_blank');
-  };
-
-  const handleDecline = () => {
-    stopRinging();
-    clearIncomingCall();
-    setCall(null);
-  };
+  }, [showCall, stopRinging]);
 
   if (!call) return null;
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 duration-300">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-border overflow-hidden">
-        {/* Зелёная полоска сверху */}
         <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
-
         <div className="p-4">
-          {/* Аватар + имя */}
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-shrink-0">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-md">
                 <Icon name="Video" className="h-6 w-6 text-white" />
               </div>
-              {/* Пульсирующий индикатор */}
               <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white">
                 <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-75" />
               </span>
@@ -135,7 +170,6 @@ export default function IncomingCallAlert() {
             <span className="text-sm font-mono text-muted-foreground tabular-nums">{seconds}с</span>
           </div>
 
-          {/* Кнопки */}
           <div className="flex gap-3">
             <Button
               onClick={handleDecline}

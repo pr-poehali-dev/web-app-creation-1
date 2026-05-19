@@ -288,8 +288,63 @@ export function useOrdersData(
     }
   }, [currentUser?.id, selectedOrder, isChatOpen]);
 
-  // Удалено: этот effect вызывал постоянные перерисовки модалки
-  // Теперь selectedOrder обновляется только при явных действиях (counter offer, accept, etc)
+  // Polling открытого заказа — каждые 3 сек когда модалка открыта
+  // Нужен для мгновенного отображения встречной цены от контрагента
+  useEffect(() => {
+    if (!isChatOpen || !selectedOrder?.id) return;
+
+    const orderId = selectedOrder.id;
+    let prevCounterPrice = selectedOrder.counterPricePerUnit;
+    let prevCounterBy = selectedOrder.counterOfferedBy;
+    let prevCounterAt = selectedOrder.counterOfferedAt?.getTime?.() ?? 0;
+
+    const pollOrder = async () => {
+      if (document.hidden) return;
+      try {
+        const updatedData = await ordersAPI.getOrderById(orderId);
+        const mapped = mapOrderData(updatedData);
+
+        const newCounterPrice = mapped.counterPricePerUnit;
+        const newCounterBy = mapped.counterOfferedBy;
+        const newCounterAt = mapped.counterOfferedAt?.getTime?.() ?? 0;
+
+        // Если появилась новая/изменённая встречная цена от контрагента
+        const hasNewCounter =
+          newCounterPrice &&
+          (newCounterPrice !== prevCounterPrice || newCounterBy !== prevCounterBy || newCounterAt !== prevCounterAt);
+
+        if (hasNewCounter) {
+          prevCounterPrice = newCounterPrice;
+          prevCounterBy = newCounterBy;
+          prevCounterAt = newCounterAt;
+
+          setSelectedOrder(mapped);
+          setOrders(prev => prev.map(o => o.id === mapped.id ? mapped : o));
+
+          // Звук как для нового сообщения
+          if (localStorage.getItem('soundNotificationsEnabled') !== 'false') {
+            const { playNotificationSound } = await import('@/components/order/chat-types');
+            playNotificationSound();
+          }
+        } else {
+          // Тихо синхронизируем статус и другие поля без сброса скролла
+          setSelectedOrder(prev => {
+            if (!prev || prev.id !== mapped.id) return prev;
+            if (prev.status !== mapped.status || prev.totalAmount !== mapped.totalAmount) {
+              return mapped;
+            }
+            return prev;
+          });
+        }
+      } catch {
+        // Сетевая ошибка — пропускаем
+      }
+    };
+
+    const intervalId = setInterval(pollOrder, 3000);
+    return () => clearInterval(intervalId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isChatOpen, selectedOrder?.id]);
 
   // Периодическое обновление заказов — 30 сек, только при хорошем соединении и активной вкладке
   useEffect(() => {
