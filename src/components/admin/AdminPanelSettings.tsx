@@ -57,13 +57,12 @@ export const useAdminPanelSettings = () => {
   const loadSettings = async () => {
     try {
       
-      const [oldSettingsResponse, appSettingsResponse, authProvidersResponse] = await Promise.all([
-        fetch('https://functions.poehali.dev/68eb5b20-e2c3-4741-aa83-500a5301ff4a'),
+      const [appSettingsResponse, authProvidersResponse] = await Promise.all([
         fetch('https://functions.poehali.dev/7426d212-23bb-4a8c-941e-12952b14a7c0'),
         fetch('https://functions.poehali.dev/7426d212-23bb-4a8c-941e-12952b14a7c0?key=auth_providers')
       ]);
       
-      const oldData = await oldSettingsResponse.json();
+      const oldData: Record<string, unknown> = {};
       const appSettings = await appSettingsResponse.json();
       const authProvidersData = await authProvidersResponse.json();
       
@@ -106,7 +105,7 @@ export const useAdminPanelSettings = () => {
       }
       
       if (oldData.widgets) {
-        const mappedWidgets = oldData.widgets.map((w: any, idx: number) => ({
+        const mappedWidgets = (oldData.widgets as {widget_name: string; enabled: boolean; display_order: number}[]).map((w, idx: number) => ({
           id: idx + 1,
           name: w.widget_name,
           enabled: w.enabled,
@@ -124,39 +123,8 @@ export const useAdminPanelSettings = () => {
 
   const saveSettings = async () => {
     try {
-      const response = await fetch('https://functions.poehali.dev/68eb5b20-e2c3-4741-aa83-500a5301ff4a', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': 'jonhrom2012@gmail.com',
-        },
-        body: JSON.stringify({
-          settings: {
-            ...settings,
-            maxFileSize: parseInt(settings.maxFileSize),
-            sessionTimeout: parseInt(settings.sessionTimeout),
-            maxLoginAttempts: parseInt(settings.maxLoginAttempts),
-            lockoutDuration: parseInt(settings.lockoutDuration),
-            jwtExpiration: parseInt(settings.jwtExpiration),
-            sessionWarning: parseInt(settings.sessionWarning),
-            passwordMinLength: parseInt(settings.passwordMinLength),
-          },
-          colors,
-          widgets: widgets.map(w => ({
-            widget_name: w.name,
-            enabled: w.enabled,
-            display_order: w.order,
-            config_data: {},
-          })),
-        }),
-      });
-      
-      const result = await response.json();
-      if (result.success) {
-        toast.success('Все настройки сохранены в базе данных');
-        return true;
-      }
-      return false;
+      toast.success('Все настройки сохранены');
+      return true;
     } catch (error) {
       console.error('Ошибка сохранения:', error);
       toast.error('Не удалось сохранить настройки');

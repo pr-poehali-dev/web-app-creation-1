@@ -88,10 +88,22 @@ def handler(event: dict, context) -> dict:
         cur = conn.cursor()
 
         if user_id:
+            # Если передан не числовой ID — ищем пользователя по телефону/email
+            resolved_id = str(user_id)
+            if not str(user_id).lstrip('-').isdigit():
+                cur.execute(f'''
+                    SELECT id FROM {schema}.users
+                    WHERE phone = %s OR email = %s
+                    LIMIT 1
+                ''', (str(user_id), str(user_id)))
+                found = cur.fetchone()
+                if found:
+                    resolved_id = str(found[0])
+                    print(f'[PUSH] resolved phone/email {user_id} → user_id={resolved_id}')
             cur.execute(f'''
                 SELECT subscription_data FROM {schema}.push_subscriptions
                 WHERE user_id = %s AND active = true
-            ''', (str(user_id),))
+            ''', (resolved_id,))
         elif district:
             cur.execute(f'''
                 SELECT ps.subscription_data FROM {schema}.push_subscriptions ps
@@ -107,7 +119,7 @@ def handler(event: dict, context) -> dict:
             }
 
         subscriptions = cur.fetchall()
-        print(f'[PUSH] user_id={user_id} found {len(subscriptions)} subscriptions')
+        print(f'[PUSH] user_id={user_id} (resolved={resolved_id if user_id else "n/a"}) found {len(subscriptions)} subscriptions')
         cur.close()
         conn.close()
 
