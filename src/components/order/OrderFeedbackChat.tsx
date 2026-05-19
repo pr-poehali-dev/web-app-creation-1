@@ -11,7 +11,6 @@ import VideoCallRoom from '@/components/videocall/VideoCallRoom';
 import {
   getRoomId,
   sendCallNotification,
-  storeIncomingCall,
   getCurrentUserName,
 } from '@/services/videoCallService';
 
@@ -421,7 +420,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     setInVideoCall(true);
     if (otherUserId) {
       await sendCallNotification(otherUserId, payload);
-      storeIncomingCall(payload);
+      // storeIncomingCall намеренно НЕ вызываем — он только для получателя звонка
     }
     toast({ title: '📞 Звонок отправлен', description: 'Ожидаем ответа собеседника...' });
   }

@@ -210,9 +210,13 @@ const App = () => {
       }, 4000);
 
       // Слушаем сообщения от Service Worker
-      navigator.serviceWorker.addEventListener('message', (event) => {
+      navigator.serviceWorker.addEventListener('message', async (event) => {
         if (event.data.type === 'NOTIFICATION_CLICK') {
           window.location.href = event.data.url;
+        }
+        if (event.data.type === 'INCOMING_VIDEO_CALL' && event.data.callData) {
+          const { storeIncomingCall } = await import('./services/videoCallService');
+          storeIncomingCall(event.data.callData);
         }
         if (event.data.type === 'PLAY_NOTIFICATION_SOUND') {
           try {

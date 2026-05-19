@@ -179,6 +179,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const relativeUrl = event.notification.data?.url || '/';
+  const callData = event.notification.data?.callData || null;
   const urlToOpen = relativeUrl.startsWith('http') ? relativeUrl : (self.location.origin + relativeUrl);
 
   event.waitUntil(
@@ -186,11 +187,23 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus().then(() => {
-            return client.postMessage({ type: 'NOTIFICATION_CLICK', url: relativeUrl });
+            client.postMessage({ type: 'NOTIFICATION_CLICK', url: relativeUrl });
+            if (callData) {
+              client.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
+            }
           });
         }
       }
-      if (clients.openWindow) return clients.openWindow(urlToOpen);
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen).then((newClient) => {
+          if (newClient && callData) {
+            // Ждём пока страница загрузится, потом шлём callData
+            setTimeout(() => {
+              newClient.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
+            }, 2500);
+          }
+        });
+      }
     })
   );
 });

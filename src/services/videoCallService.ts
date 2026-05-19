@@ -44,7 +44,7 @@ export async function sendCallNotification(
           : payload.type === 'call_declined'
           ? 'Собеседник отклонил звонок'
           : 'Звонок завершён',
-        url: `/order/${payload.orderId}`,
+        url: `/my-orders?orderId=${payload.orderId}`,
         type: 'video_call',
         callData: payload,
       }),
