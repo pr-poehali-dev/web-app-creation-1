@@ -1,8 +1,4 @@
 {
-  "telegram-connect": "https://functions.poehali.dev/c86812f6-d28a-40f4-ab14-ded366f14139",
-  "exolve-call": "https://functions.poehali.dev/07860575-6f68-48d1-ae80-d423ae1a8c23",
-  "telegram-verify": "https://functions.poehali.dev/d910d17b-3a6e-46c2-a42b-8b25d0b58a59",
-  "telegram-setup-webhook": "https://functions.poehali.dev/a3434593-3079-4fad-a25b-0913dd4754f7",
   "upload-audio": "https://functions.poehali.dev/0c6513d8-33cd-4b60-908b-ed9456d0bb50",
   "image-proxy": "https://functions.poehali.dev/af98351d-6866-4726-b0fd-5f3a36952325",
   "track-visit": "https://functions.poehali.dev/d6fc7d3f-1215-492d-943f-d1cbf3a44bcf",

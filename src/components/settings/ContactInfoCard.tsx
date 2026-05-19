@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { formatPhoneNumber as formatPhone } from '@/utils/phoneFormat';
 import LocationSelector from './LocationSelector';
-import TelegramVerificationCard from './TelegramVerificationCard';
 import { useState } from 'react';
 import { getUserTimezoneLabel } from '@/utils/regionTimezone';
 

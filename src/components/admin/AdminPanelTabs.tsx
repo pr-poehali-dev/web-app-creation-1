@@ -6,10 +6,8 @@ import AdminWidgets from '@/components/admin/AdminWidgets';
 import EnhancedAdminUsers from '@/components/admin/EnhancedAdminUsers';
 import AdminAuthProviders from '@/components/admin/AdminAuthProviders';
 import AuthStats from '@/components/admin/AuthStats';
-import TelegramVerificationAdmin from '@/components/admin/TelegramVerificationAdmin';
 import EmailNotifications from '@/components/admin/EmailNotifications';
 import NotificationSoundSettings from '@/components/admin/NotificationSoundSettings';
-import SmsBalanceManager from '@/components/admin/SmsBalanceManager';
 import MaxTemplates from '@/components/admin/MaxTemplates';
 import MaxSettings from '@/components/admin/MaxSettings';
 import AdminClientsTab from '@/components/admin/AdminClientsTab';
@@ -243,18 +241,6 @@ const AdminPanelTabs = ({
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="sms" className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-0">
-        <AccordionTrigger className="px-4 sm:px-6 py-4 hover:no-underline">
-          <div className="flex items-center gap-3">
-            <Icon name="Smartphone" size={20} className="text-primary" />
-            <span className="text-lg font-semibold">SMS уведомления</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="px-4 sm:px-6 pb-4">
-          <SmsBalanceManager />
-        </AccordionContent>
-      </AccordionItem>
-
       <AccordionItem value="emails" className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border-0">
         <AccordionTrigger className="px-4 sm:px-6 py-4 hover:no-underline">
           <div className="flex items-center gap-3">
@@ -321,7 +307,6 @@ const AdminPanelTabs = ({
               onToggleProvider={onToggleAuthProvider}
             />
             <AuthStats />
-            <TelegramVerificationAdmin />
           </div>
         </AccordionContent>
       </AccordionItem>

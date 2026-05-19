@@ -347,14 +347,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             }
             
             try:
-                telegram_url = 'https://functions.poehali.dev/d49f8584-6ef9-47c0-9661-02560166e10f'
+                push_url = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+                push_payload = {
+                    'userId': user_info.get('id'),
+                    'title': 'Заявка на верификацию получена',
+                    'message': 'Ваша заявка принята и находится на проверке.',
+                    'url': '/verification'
+                }
                 req = urllib.request.Request(
-                    telegram_url,
-                    data=json.dumps(email_payload).encode('utf-8'),
+                    push_url,
+                    data=json.dumps(push_payload).encode('utf-8'),
                     headers={'Content-Type': 'application/json'},
                     method='POST'
                 )
-                
                 with urllib.request.urlopen(req, timeout=5) as response:
                     pass
             except (urllib.error.URLError, urllib.error.HTTPError, Exception):

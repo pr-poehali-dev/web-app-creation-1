@@ -70,14 +70,13 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
                 'message': f'Запрос «{row["title"]}» скрыт из публичного списка, так как по нему принят исполнитель.',
                 'url': '/my-orders?tab=my-requests'
             })
-            for endpoint in ['/d49f8584-6ef9-47c0-9661-02560166e10f', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43']:
-                try:
-                    conn2 = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
-                    conn2.request('POST', endpoint, payload, {'Content-Type': 'application/json'})
-                    conn2.getresponse().read()
-                    conn2.close()
-                except Exception:
-                    pass
+            try:
+                conn2 = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
+                conn2.request('POST', '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a', payload, {'Content-Type': 'application/json'})
+                conn2.getresponse().read()
+                conn2.close()
+            except Exception:
+                pass
         except Exception as e:
             print(f'[ACCEPTED] Notification error: {e}')
 
@@ -90,14 +89,13 @@ def get_requests_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[st
                 'message': f'Срок публикации запроса «{row["title"]}» истёк. Перейдите в «Мои запросы» чтобы опубликовать снова.',
                 'url': '/my-requests'
             })
-            for endpoint in ['/d49f8584-6ef9-47c0-9661-02560166e10f', '/3c4b3e64-cb71-4b82-abd5-e67393be3d43']:
-                try:
-                    conn2 = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
-                    conn2.request('POST', endpoint, payload, {'Content-Type': 'application/json'})
-                    conn2.getresponse().read()
-                    conn2.close()
-                except Exception:
-                    pass
+            try:
+                conn2 = http.client.HTTPSConnection('functions.poehali.dev', timeout=3)
+                conn2.request('POST', '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a', payload, {'Content-Type': 'application/json'})
+                conn2.getresponse().read()
+                conn2.close()
+            except Exception:
+                pass
         except Exception as e:
             print(f'[EXPIRY] Notification error: {e}')
 

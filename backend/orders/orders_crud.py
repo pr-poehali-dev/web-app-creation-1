@@ -7,7 +7,7 @@ from datetime import datetime, date
 from typing import Dict, Any
 from psycopg2.extras import RealDictCursor
 from orders_utils import (
-    get_db_connection, get_schema, send_notification, send_call,
+    get_db_connection, get_schema, send_notification,
     generate_order_number, reject_other_responses,
     decimal_to_float, offers_cache
 )
