@@ -13,6 +13,7 @@ import AdminGeneralSettings from '@/components/admin/AdminGeneralSettings';
 import AdminRolesManagement from '@/components/admin/AdminRolesManagement';
 import AdminOtherTabs from '@/components/admin/AdminOtherTabs';
 import AdminAudioUpload from '@/components/admin/AdminAudioUpload';
+import AdminPushTest from '@/components/admin/AdminPushTest';
 
 interface AdminSettingsProps {
   isAuthenticated: boolean;
@@ -208,6 +209,7 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
             </TabsContent>
 
             <TabsContent value="notifications" className="space-y-6">
+              <AdminPushTest />
               <AdminOtherTabs
                 autoModeration={autoModeration}
                 setAutoModeration={setAutoModeration}
