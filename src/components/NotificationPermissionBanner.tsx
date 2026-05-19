@@ -19,11 +19,22 @@ export default function NotificationPermissionBanner() {
         setTimeout(() => setShow(true), 2000);
       }
 
-      // Если разрешение уже выдано — подписываемся тихо в фоне
+      // Если разрешение уже выдано — всегда переподписываемся (на случай смены VAPID ключа)
       if (Notification.permission === 'granted') {
         const session = getSession();
         if (session?.id) {
-          setupPushNotifications(String(session.id)).catch(() => {});
+          // Сбрасываем старую подписку и создаём новую
+          import('@/services/pushNotifications').then(({ checkPushSubscription, subscribeToPushNotifications, sendSubscriptionToServer, registerServiceWorker }) => {
+            registerServiceWorker().then(async (reg) => {
+              if (!reg) return;
+              await navigator.serviceWorker.ready;
+              // Отписываемся от старой подписки чтобы создать новую с актуальным ключом
+              const existing = await reg.pushManager.getSubscription();
+              if (existing) await existing.unsubscribe();
+              const newSub = await subscribeToPushNotifications(reg);
+              if (newSub) await sendSubscriptionToServer(newSub, String(session.id));
+            }).catch(() => {});
+          });
         }
       }
     }

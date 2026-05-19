@@ -83,7 +83,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         headers = event.get('headers', {})
         user_id = headers.get('X-User-Id') or headers.get('x-user-id', 'anonymous')
         
-        if not check_rate_limit(conn, user_id, 'admin_users', max_requests=30, window_minutes=1):
+        if not check_rate_limit(conn, user_id, 'admin_users', max_requests=60, window_minutes=1):
             return {
                 'statusCode': 429,
                 'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},

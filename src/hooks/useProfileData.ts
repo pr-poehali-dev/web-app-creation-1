@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { getSession, saveSession } from '@/utils/auth';
+import { getSession, saveSession, getJwtToken } from '@/utils/auth';
 
 export interface User {
   id?: number;
@@ -62,9 +62,11 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
     
     try {
       const url = `https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${userId}`;
+      const token = getJwtToken();
       const response = await fetch(url, {
         headers: {
-          'X-User-Id': String(freshSession?.id || 'anonymous'),
+          'X-User-Id': String(freshSession?.id || userId),
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
       });
       

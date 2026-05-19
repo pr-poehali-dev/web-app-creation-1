@@ -50,6 +50,7 @@ export default function EmailNotificationSettings({ userId, userEmail }: EmailNo
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'X-User-Id': userId,
         },
         body: JSON.stringify({
           id: userId,
