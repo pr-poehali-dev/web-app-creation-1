@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
-import { type VideoCallPayload, clearIncomingCall, getJitsiUrl } from '@/services/videoCallService';
+import { type VideoCallPayload, clearIncomingCall, clearCallSignal, getJitsiUrl } from '@/services/videoCallService';
 import { getAudioContext } from '@/components/order/chat-types';
 
 export default function IncomingCallAlert() {
@@ -99,9 +99,11 @@ export default function IncomingCallAlert() {
     if (!c) return;
     stopRinging();
     clearIncomingCall();
+    // Снимаем звонок из БД — инициатор увидит что принято
+    clearCallSignal(c.orderId);
     callRef.current = null;
     setCall(null);
-    window.open(getJitsiUrl(c.roomId), '_blank');
+    window.open(getJitsiUrl(c.roomId, c.callMode || 'video'), '_blank');
   }, [stopRinging]);
 
   useEffect(() => {
@@ -156,14 +158,16 @@ export default function IncomingCallAlert() {
           <div className="flex items-center gap-3 mb-4">
             <div className="relative flex-shrink-0">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-md">
-                <Icon name="Video" className="h-6 w-6 text-white" />
+                <Icon name={call.callMode === 'audio' ? 'Phone' : 'Video'} className="h-6 w-6 text-white" />
               </div>
               <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white">
                 <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-75" />
               </span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Входящий видеозвонок</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
+                Входящий {call.callMode === 'audio' ? 'аудио' : 'видео'}звонок
+              </p>
               <p className="font-semibold text-foreground truncate">{call.callerName}</p>
               <p className="text-xs text-muted-foreground truncate">По заказу #{call.orderId}</p>
             </div>
@@ -183,7 +187,7 @@ export default function IncomingCallAlert() {
               onClick={handleAccept}
               className="flex-1 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white gap-2 shadow-md shadow-green-200"
             >
-              <Icon name="Video" className="h-4 w-4" />
+              <Icon name={call.callMode === 'audio' ? 'Phone' : 'Video'} className="h-4 w-4" />
               Принять
             </Button>
           </div>

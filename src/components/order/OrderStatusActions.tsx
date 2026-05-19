@@ -77,35 +77,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                 {contactPerson.email}
               </a>
             </div>
-            <div className="flex items-center gap-2 mt-3">
-              <a
-                href={`https://api.whatsapp.com/send?phone=${contactPerson.phone.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-green-500 hover:bg-green-600 text-white transition-colors"
-                title="WhatsApp"
-              >
-                <Icon name="MessageCircle" className="h-4 w-4" />
-              </a>
-              <a
-                href={`tg://resolve?phone=${contactPerson.phone.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-colors"
-                title="Telegram"
-              >
-                <Icon name="Send" className="h-4 w-4" />
-              </a>
-              <a
-                href={`https://maks.ru/chat/${contactPerson.phone.replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 hover:bg-purple-600 text-white transition-colors"
-                title="Макс"
-              >
-                <Icon name="MessagesSquare" className="h-4 w-4" />
-              </a>
-            </div>
+
           </div>
         </>
       )}

@@ -17,6 +17,7 @@ import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
 import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
 import IncomingCallAlert from "./components/videocall/IncomingCallAlert";
+import { useCallPolling } from "./hooks/useCallPolling";
 
 // Ленивая загрузка страниц
 const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
@@ -156,6 +157,9 @@ const queryClient = new QueryClient({
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getSession());
+
+  // Polling входящих звонков через БД — работает для всех авторизованных
+  useCallPolling(isAuthenticated);
 
   useEffect(() => {
     // Быстрая проверка сессии без лишних операций
