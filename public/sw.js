@@ -97,6 +97,32 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
+// Воспроизведение звука через AudioContext (работает даже без открытой вкладки)
+function playNotificationSound() {
+  try {
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    // Мелодичный двойной бип — приятный звук уведомления
+    const freqs = [880, 1100];
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + i * 0.18);
+      gain.gain.linearRampToValueAtTime(0.25, now + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.22);
+      osc.start(now + i * 0.18);
+      osc.stop(now + i * 0.18 + 0.25);
+    });
+
+    setTimeout(() => ctx.close(), 1000);
+  } catch (e) {}
+}
+
 // Обработка push-уведомлений
 self.addEventListener('push', (event) => {
   let notificationData = {
@@ -123,14 +149,29 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, {
-      body: notificationData.body,
-      icon: notificationData.icon,
-      badge: notificationData.badge,
-      data: notificationData.data,
-      tag: notificationData.tag,
-      requireInteraction: notificationData.requireInteraction,
-    })
+    Promise.all([
+      // Показываем уведомление
+      self.registration.showNotification(notificationData.title, {
+        body: notificationData.body,
+        icon: notificationData.icon,
+        badge: notificationData.badge,
+        data: notificationData.data,
+        tag: notificationData.tag,
+        requireInteraction: notificationData.requireInteraction,
+      }),
+      // Звук: сначала пробуем через открытую вкладку, иначе через AudioContext SW
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        if (clientList.length > 0) {
+          // Вкладка открыта — просим её воспроизвести звук
+          clientList.forEach((client) => {
+            client.postMessage({ type: 'PLAY_NOTIFICATION_SOUND' });
+          });
+        } else {
+          // Вкладка закрыта — играем через AudioContext в SW
+          playNotificationSound();
+        }
+      }),
+    ])
   );
 });
 

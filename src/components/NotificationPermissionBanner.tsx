@@ -2,28 +2,54 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
-import { requestNotificationPermission } from '@/utils/notifications';
+import { setupPushNotifications } from '@/services/pushNotifications';
+import { getSession } from '@/utils/auth';
 
 export default function NotificationPermissionBanner() {
   const [show, setShow] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if ('Notification' in window) {
       setPermission(Notification.permission);
-      
+
       const dismissed = localStorage.getItem('notification_banner_dismissed');
       if (Notification.permission === 'default' && !dismissed) {
         setTimeout(() => setShow(true), 2000);
+      }
+
+      // Если разрешение уже выдано — подписываемся тихо в фоне
+      if (Notification.permission === 'granted') {
+        const session = getSession();
+        if (session?.id) {
+          setupPushNotifications(String(session.id)).catch(() => {});
+        }
       }
     }
   }, []);
 
   const handleEnable = async () => {
-    const granted = await requestNotificationPermission();
-    if (granted) {
-      setPermission('granted');
-      setShow(false);
+    setLoading(true);
+    try {
+      const session = getSession();
+      const userId = session?.id ? String(session.id) : null;
+
+      if (!userId) {
+        setShow(false);
+        return;
+      }
+
+      const success = await setupPushNotifications(userId);
+      if (success) {
+        setPermission('granted');
+        setShow(false);
+      } else if (Notification.permission === 'denied') {
+        setPermission('denied');
+        setShow(false);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,11 +75,15 @@ export default function NotificationPermissionBanner() {
               Получайте мгновенные уведомления о новых заказах, сообщениях и важных событиях
             </p>
             <div className="flex gap-2">
-              <Button onClick={handleEnable} size="sm" className="flex-1">
-                <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                Включить
+              <Button onClick={handleEnable} size="sm" className="flex-1" disabled={loading}>
+                {loading ? (
+                  <Icon name="Loader2" className="mr-1.5 h-4 w-4 animate-spin" />
+                ) : (
+                  <Icon name="Check" className="mr-1.5 h-4 w-4" />
+                )}
+                {loading ? 'Подключение...' : 'Включить'}
               </Button>
-              <Button onClick={handleDismiss} variant="outline" size="sm">
+              <Button onClick={handleDismiss} variant="outline" size="sm" disabled={loading}>
                 Позже
               </Button>
             </div>

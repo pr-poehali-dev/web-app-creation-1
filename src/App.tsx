@@ -208,10 +208,33 @@ const App = () => {
         });
       }, 4000);
 
-      // Слушаем сообщения от Service Worker (клики по уведомлениям)
+      // Слушаем сообщения от Service Worker
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data.type === 'NOTIFICATION_CLICK') {
           window.location.href = event.data.url;
+        }
+        if (event.data.type === 'PLAY_NOTIFICATION_SOUND') {
+          try {
+            const ctx = new AudioContext();
+            const now = ctx.currentTime;
+            const freqs = [880, 1100];
+            freqs.forEach((freq, i) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.type = 'sine';
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0, now + i * 0.18);
+              gain.gain.linearRampToValueAtTime(0.25, now + i * 0.18 + 0.02);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.22);
+              osc.start(now + i * 0.18);
+              osc.stop(now + i * 0.18 + 0.25);
+            });
+            setTimeout(() => ctx.close(), 1000);
+          } catch (_e) {
+            console.warn('AudioContext error', _e);
+          }
         }
       });
     }
