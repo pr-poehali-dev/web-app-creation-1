@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.6';
+const CACHE_VERSION = 'v1.0.8';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 // Хосты API — никогда не кэшируем
@@ -185,29 +185,35 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const relativeUrl = event.notification.data?.url || '/';
   const callData = event.notification.data?.callData || null;
-  const urlToOpen = relativeUrl.startsWith('http') ? relativeUrl : (self.location.origin + relativeUrl);
+
+  // Если это видеозвонок — добавляем callData в URL как параметр
+  let targetUrl = relativeUrl;
+  if (callData) {
+    try {
+      const encoded = btoa(JSON.stringify(callData));
+      const sep = relativeUrl.includes('?') ? '&' : '?';
+      targetUrl = relativeUrl + sep + 'vcall=' + encodeURIComponent(encoded);
+    } catch (e) {}
+  }
+
+  const urlToOpen = targetUrl.startsWith('http') ? targetUrl : (self.location.origin + targetUrl);
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus().then(() => {
-            client.postMessage({ type: 'NOTIFICATION_CLICK', url: relativeUrl });
+            // Передаём и навигацию и callData через postMessage
+            client.postMessage({ type: 'NOTIFICATION_CLICK', url: targetUrl });
             if (callData) {
               client.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
             }
           });
         }
       }
+      // Вкладка не открыта — открываем с callData в URL
       if (clients.openWindow) {
-        return clients.openWindow(urlToOpen).then((newClient) => {
-          if (newClient && callData) {
-            // Ждём пока страница загрузится, потом шлём callData
-            setTimeout(() => {
-              newClient.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
-            }, 2500);
-          }
-        });
+        return clients.openWindow(urlToOpen);
       }
     })
   );

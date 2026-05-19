@@ -209,8 +209,8 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                     {counterpartRating != null && <RatingBadge rating={counterpartRating} />}
                   </p>
                   {order.buyerAgreed
-                    ? <p>Покупатель подтвердил заказ. Нажмите «Принять» для завершения.</p>
-                    : <p>Новый заказ ожидает подтверждения обеих сторон</p>
+                    ? <p>Покупатель подтвердил заказ. Нажмите «Принять в работу» для завершения.</p>
+                    : <p>Подтвердите заказ. После подтверждения обеими сторонами статус изменится на "Принят в работу"</p>
                   }
                 </div>
               </div>

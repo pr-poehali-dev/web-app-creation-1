@@ -201,6 +201,24 @@ const App = () => {
       }
     }
 
+    // Проверяем URL на наличие параметра vcall (видеозвонок из push-уведомления)
+    const vcallParam = new URLSearchParams(window.location.search).get('vcall');
+    if (vcallParam) {
+      try {
+        const callData = JSON.parse(atob(decodeURIComponent(vcallParam)));
+        // Небольшая задержка чтобы компонент IncomingCallAlert успел смонтироваться
+        setTimeout(async () => {
+          const { storeIncomingCall } = await import('./services/videoCallService');
+          storeIncomingCall(callData);
+        }, 1500);
+        // Убираем параметр из URL не перезагружая страницу
+        const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]vcall=[^&]*/g, '').replace(/^&/, '?');
+        window.history.replaceState({}, '', cleanUrl);
+      } catch (_e) {
+        // некорректный параметр — игнорируем
+      }
+    }
+
     // Регистрируем Service Worker в фоне (позже чтобы не замедлять старт)
     if ('serviceWorker' in navigator) {
       setTimeout(() => {
