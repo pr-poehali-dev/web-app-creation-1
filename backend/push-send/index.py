@@ -94,12 +94,22 @@ def handler(event: dict, context) -> dict:
                 # Нормализуем номер телефона: убираем всё кроме цифр и +
                 import re
                 normalized = re.sub(r'[\s\-\(\)]', '', str(user_id))
+                # Ищем пользователя у которого есть активная подписка (приоритет)
                 cur.execute(f'''
-                    SELECT id FROM {schema}.users
-                    WHERE phone = %s OR phone = %s OR email = %s
+                    SELECT u.id FROM {schema}.users u
+                    JOIN {schema}.push_subscriptions ps ON ps.user_id = u.id::text AND ps.active = true
+                    WHERE u.phone = %s OR u.phone = %s OR u.email = %s
                     LIMIT 1
                 ''', (str(user_id), normalized, str(user_id)))
                 found = cur.fetchone()
+                if not found:
+                    # Если подписки нет — просто находим первого пользователя
+                    cur.execute(f'''
+                        SELECT id FROM {schema}.users
+                        WHERE phone = %s OR phone = %s OR email = %s
+                        LIMIT 1
+                    ''', (str(user_id), normalized, str(user_id)))
+                    found = cur.fetchone()
                 if found:
                     resolved_id = str(found[0])
                     print(f'[PUSH] resolved phone/email {user_id} (normalized={normalized}) → user_id={resolved_id}')

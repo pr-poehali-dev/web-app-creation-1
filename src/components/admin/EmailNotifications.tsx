@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 const EMAIL_API = 'https://functions.poehali.dev/26301a69-7e80-461b-bc17-2ad62cd57d4f';
-const SETTINGS_API = 'https://functions.poehali.dev/68eb5b20-e2c3-4741-aa83-500a5301ff4a';
+const SETTINGS_API = 'https://functions.poehali.dev/7426d212-23bb-4a8c-941e-12952b14a7c0';
 
 const EmailNotifications = () => {
   const [loading, setLoading] = useState(false);
