@@ -8,16 +8,23 @@ from pywebpush import webpush, WebPushException
 
 def load_vapid_key_b64() -> str:
     """
-    Загружает VAPID приватный ключ из секрета (PEM) и возвращает
-    в формате base64url raw — именно такой ожидает pywebpush.
+    Загружает VAPID приватный ключ из секрета.
+    Поддерживает форматы:
+    1. PEM (-----BEGIN EC PRIVATE KEY-----)  → конвертируем в DER base64
+    2. Чистый base64/base64url              → возвращаем как есть
+    pywebpush ожидает DER в base64 (не raw EC bytes).
     """
-    raw = os.environ.get('VAPID_PRIVATE_KEY', '')
-    pem = raw.replace('\\n', '\n').strip() + '\n'
-    private_key = load_pem_private_key(pem.encode(), password=None)
-    # Экспортируем raw байты EC приватного ключа (32 байта для P-256)
-    raw_bytes = private_key.private_bytes(Encoding.Raw, PrivateFormat.Raw, NoEncryption())
-    # Кодируем в base64url без padding — именно этот формат принимает pywebpush
-    return base64.urlsafe_b64encode(raw_bytes).rstrip(b'=').decode('ascii')
+    raw = os.environ.get('VAPID_PRIVATE_KEY', '').strip()
+
+    if raw.startswith('-----'):
+        # PEM-формат: конвертируем в DER base64 (именно это ожидает py_vapid)
+        pem = raw.replace('\\n', '\n').strip() + '\n'
+        private_key = load_pem_private_key(pem.encode(), password=None)
+        der_bytes = private_key.private_bytes(Encoding.DER, PrivateFormat.PKCS8, NoEncryption())
+        return base64.urlsafe_b64encode(der_bytes).rstrip(b'=').decode('ascii')
+    else:
+        # Уже в формате base64/base64url DER — возвращаем как есть
+        return raw
 
 
 def send_web_push(subscription_info: dict, payload: str, vapid_key_b64: str, vapid_claims: dict) -> tuple:
@@ -113,8 +120,10 @@ def handler(event: dict, context) -> dict:
 
         # Загружаем VAPID ключ
         try:
+            raw_key = os.environ.get('VAPID_PRIVATE_KEY', '')
+            print(f'[PUSH] VAPID raw key starts with: {repr(raw_key[:30])}')
             vapid_key_b64 = load_vapid_key_b64()
-            print(f'[PUSH] VAPID key loaded OK')
+            print(f'[PUSH] VAPID key loaded OK, len={len(vapid_key_b64)}')
         except Exception as e:
             print(f'[PUSH] VAPID key error: {e}')
             return {
