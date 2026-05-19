@@ -91,15 +91,18 @@ def handler(event: dict, context) -> dict:
             # Если передан не числовой ID — ищем пользователя по телефону/email
             resolved_id = str(user_id)
             if not str(user_id).lstrip('-').isdigit():
+                # Нормализуем номер телефона: убираем всё кроме цифр и +
+                import re
+                normalized = re.sub(r'[\s\-\(\)]', '', str(user_id))
                 cur.execute(f'''
                     SELECT id FROM {schema}.users
-                    WHERE phone = %s OR email = %s
+                    WHERE phone = %s OR phone = %s OR email = %s
                     LIMIT 1
-                ''', (str(user_id), str(user_id)))
+                ''', (str(user_id), normalized, str(user_id)))
                 found = cur.fetchone()
                 if found:
                     resolved_id = str(found[0])
-                    print(f'[PUSH] resolved phone/email {user_id} → user_id={resolved_id}')
+                    print(f'[PUSH] resolved phone/email {user_id} (normalized={normalized}) → user_id={resolved_id}')
             cur.execute(f'''
                 SELECT subscription_data FROM {schema}.push_subscriptions
                 WHERE user_id = %s AND active = true
@@ -162,9 +165,15 @@ def handler(event: dict, context) -> dict:
         for sub_data in subscriptions:
             try:
                 subscription_info = json.loads(sub_data[0])
+                # aud должен быть origin URL подписки (требуется Firefox)
+                endpoint = subscription_info.get('endpoint', '')
+                from urllib.parse import urlparse
+                parsed = urlparse(endpoint)
+                aud = f'{parsed.scheme}://{parsed.netloc}'
+                per_sub_claims = {**vapid_claims, 'aud': aud}
                 status_code, resp_text = send_web_push(
                     subscription_info, notification_payload,
-                    vapid_key_b64, vapid_claims
+                    vapid_key_b64, per_sub_claims
                 )
                 if status_code in (200, 201, 202):
                     sent_count += 1

@@ -28,12 +28,12 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
   
 
   
-  const [adminsList, setAdminsList] = useState<any[]>([]);
+  const [adminsList, setAdminsList] = useState<{id: number; email: string; role: string}[]>([]);
   const [isLoadingAdmins, setIsLoadingAdmins] = useState(false);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<'moderator' | 'admin' | 'superadmin'>('moderator');
   const [isSettingRole, setIsSettingRole] = useState(false);
-  const [foundUser, setFoundUser] = useState<any>(null);
+  const [foundUser, setFoundUser] = useState<{id: number; email: string; phone?: string; role?: string} | null>(null);
   const [isSearchingUser, setIsSearchingUser] = useState(false);
 
   useEffect(() => {
@@ -60,7 +60,6 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
       }
     } catch (error) {
       console.error('Ошибка загрузки администраторов:', error);
-      toast.error('Ошибка загрузки данных');
     } finally {
       setIsLoadingAdmins(false);
     }
@@ -167,7 +166,6 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
               <TabsTrigger value="admins">Администраторы</TabsTrigger>
               <TabsTrigger value="moderation">Модерация</TabsTrigger>
               <TabsTrigger value="notifications">Уведомления</TabsTrigger>
-              <TabsTrigger value="telegram">Telegram</TabsTrigger>
               <TabsTrigger value="security">Безопасность</TabsTrigger>
               <TabsTrigger value="audio">Аудио</TabsTrigger>
             </TabsList>
@@ -210,16 +208,6 @@ export default function AdminSettings({ isAuthenticated, onLogout }: AdminSettin
 
             <TabsContent value="notifications" className="space-y-6">
               <AdminPushTest />
-              <AdminOtherTabs
-                autoModeration={autoModeration}
-                setAutoModeration={setAutoModeration}
-                emailNotifications={emailNotifications}
-                setEmailNotifications={setEmailNotifications}
-                handleSaveSettings={handleSaveSettings}
-              />
-            </TabsContent>
-
-            <TabsContent value="telegram" className="space-y-6">
               <AdminOtherTabs
                 autoModeration={autoModeration}
                 setAutoModeration={setAutoModeration}
