@@ -89,6 +89,7 @@ export default function OrderChatInfoCard({ order, isBuyer, contactPerson, onCan
           isRequest={order.isRequest}
           offerCategory={order.offerCategory}
           onLightboxOpen={onLightboxOpen}
+          otherUserId={isBuyer ? String(order.sellerId ?? '') : String(order.buyerId ?? '')}
         />
       </CardContent>
 

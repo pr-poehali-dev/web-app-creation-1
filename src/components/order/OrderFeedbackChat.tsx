@@ -7,6 +7,13 @@ import { useToast } from '@/hooks/use-toast';
 import { type OrderMessage, playNotificationSound } from './chat-types';
 import ChatMessageList from './ChatMessageList';
 import ChatInputBar from './ChatInputBar';
+import VideoCallRoom from '@/components/videocall/VideoCallRoom';
+import {
+  getRoomId,
+  sendCallNotification,
+  storeIncomingCall,
+  getCurrentUserName,
+} from '@/services/videoCallService';
 
 interface OrderFeedbackChatProps {
   orderId: string;
@@ -15,9 +22,10 @@ interface OrderFeedbackChatProps {
   isRequest?: boolean;
   offerCategory?: string;
   onLightboxOpen?: (url: string) => void;
+  otherUserId?: string;
 }
 
-export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest, offerCategory, onLightboxOpen }: OrderFeedbackChatProps) {
+export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isRequest, offerCategory, onLightboxOpen, otherUserId }: OrderFeedbackChatProps) {
   const { toast } = useToast();
   const [messages, setMessages] = useState<OrderMessage[]>([]);
   const prevOrderStatus = useRef(orderStatus);
@@ -39,6 +47,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const isAtBottomRef = useRef(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);
   const prevMessagesLengthRef = useRef(0);
+  const [inVideoCall, setInVideoCall] = useState(false);
   const initialScrollDone = useRef(false);
 
   const handleMessagesScroll = () => {
@@ -385,8 +394,35 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
           onStartRecording={startRecording}
           onStopRecording={stopRecording}
           onCancelRecording={cancelRecording}
+          onVideoCall={otherUserId ? handleVideoCall : undefined}
         />
       </div>
+
+      {inVideoCall && (
+        <VideoCallRoom
+          roomId={getRoomId(orderId)}
+          displayName={getCurrentUserName()}
+          onClose={() => setInVideoCall(false)}
+        />
+      )}
     </>
   );
+
+  async function handleVideoCall() {
+    const session = getSession();
+    if (!session?.id) return;
+    const payload = {
+      orderId,
+      callerId: String(session.id),
+      callerName: getCurrentUserName(),
+      roomId: getRoomId(orderId),
+      type: 'incoming_call' as const,
+    };
+    setInVideoCall(true);
+    if (otherUserId) {
+      await sendCallNotification(otherUserId, payload);
+      storeIncomingCall(payload);
+    }
+    toast({ title: '📞 Звонок отправлен', description: 'Ожидаем ответа собеседника...' });
+  }
 }
