@@ -159,12 +159,17 @@ self.addEventListener('push', (event) => {
         tag: notificationData.tag,
         requireInteraction: notificationData.requireInteraction,
       }),
-      // Звук: сначала пробуем через открытую вкладку, иначе через AudioContext SW
+      // Если входящий видеозвонок — уведомляем открытые вкладки сразу
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        const callData = notificationData.data && notificationData.data.callData;
         if (clientList.length > 0) {
-          // Вкладка открыта — просим её воспроизвести звук
           clientList.forEach((client) => {
+            // Звук уведомления
             client.postMessage({ type: 'PLAY_NOTIFICATION_SOUND' });
+            // Если это видеозвонок — показываем IncomingCallAlert сразу
+            if (callData) {
+              client.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
+            }
           });
         } else {
           // Вкладка закрыта — играем через AudioContext в SW

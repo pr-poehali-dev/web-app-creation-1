@@ -170,7 +170,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   </p>
                   {order.buyerAgreed
                     ? <p>Вы подтвердили. Ожидается подтверждение {roles.counterSeller}.</p>
-                    : <p>Подтвердите заказ. После подтверждения обеими сторонами статус изменится на "Принят"</p>
+                    : <p>Подтвердите заказ. После подтверждения обеими сторонами статус изменится на "Принят в работу"</p>
                   }
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
                   <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                  Принять заказ
+                  Подтвердить заказ
                 </Button>
               )}
               {onCancelOrder && (
@@ -193,7 +193,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   className="w-full"
                 >
                   <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-                  Отменить заказ
+                  Отменить
                 </Button>
               )}
             </div>
@@ -222,7 +222,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   className="w-full bg-green-600 hover:bg-green-700"
                 >
                   <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                  Принять заказ
+                  Принять в работу
                 </Button>
               )}
               {onCancelOrder && (
@@ -233,7 +233,7 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
                   className="w-full"
                 >
                   <Icon name="XCircle" className="mr-1.5 h-4 w-4" />
-                  Отменить заказ
+                  Отменить
                 </Button>
               )}
             </div>

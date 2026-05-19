@@ -73,6 +73,7 @@ def handler(event: dict, context) -> dict:
         title = body.get('title')
         message = body.get('message')
         url = body.get('url', '/')
+        call_data = body.get('callData', None)
 
         if not title or not message:
             return {
@@ -159,14 +160,18 @@ def handler(event: dict, context) -> dict:
 
         vapid_claims = {'sub': 'mailto:noreply@erttp.ru'}
 
+        notification_data = {'url': url, 'type': notification_type}
+        if call_data:
+            notification_data['callData'] = call_data
+
         notification_payload = json.dumps({
             'title': title,
             'body': message,
             'icon': '/favicon.png',
             'badge': '/favicon.png',
-            'data': {'url': url, 'type': notification_type},
+            'data': notification_data,
             'tag': notification_type,
-            'requireInteraction': False
+            'requireInteraction': notification_type == 'video_call'
         })
 
         sent_count = 0
