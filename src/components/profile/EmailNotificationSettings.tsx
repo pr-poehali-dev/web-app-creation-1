@@ -31,8 +31,10 @@ export default function EmailNotificationSettings({ userId, userEmail }: EmailNo
       });
 
       const data = await response.json();
-      if (data.user?.email_notifications !== undefined) {
-        setIsEnabled(data.user.email_notifications);
+      // admin-users возвращает объект пользователя напрямую при запросе по id
+      const emailNotif = data.email_notifications ?? data.user?.email_notifications;
+      if (emailNotif !== undefined && emailNotif !== null) {
+        setIsEnabled(emailNotif);
       }
     } catch (error) {
       console.error('Ошибка загрузки настроек email:', error);

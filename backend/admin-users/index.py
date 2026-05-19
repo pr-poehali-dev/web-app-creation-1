@@ -112,7 +112,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.ogrnip,
                         u.ogrn,
                         u.created_at,
-                        u.notification_email
+                        u.notification_email,
+                        u.email_notifications
                     FROM t_p42562714_web_app_creation_1.users u
                     WHERE u.id = %s AND u.removed_at IS NULL
                 """, (user_id_param,))
@@ -291,8 +292,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         elif method == 'PUT':
             body_data = json.loads(event.get('body', '{}'))
-            user_id = body_data.get('userId')
+            user_id = body_data.get('userId') or body_data.get('id')
             action = body_data.get('action')
+
+            # Обновление email_notifications пользователем для себя
+            if user_id and 'email_notifications' in body_data and not action:
+                cur.execute(
+                    "UPDATE t_p42562714_web_app_creation_1.users SET email_notifications = %s WHERE id = %s",
+                    (body_data['email_notifications'], user_id)
+                )
+                conn.commit()
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True}),
+                    'isBase64Encoded': False
+                }
             
             if not user_id or not action:
                 return {
