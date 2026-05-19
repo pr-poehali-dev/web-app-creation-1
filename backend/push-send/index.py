@@ -52,24 +52,10 @@ def handler(event: dict, context) -> dict:
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type'
             },
             'body': ''
-        }
-
-    if method == 'GET':
-        from py_vapid import Vapid
-        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat, PrivateFormat, NoEncryption
-        v = Vapid()
-        v.generate_keys()
-        pub_raw = v.public_key.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)
-        pub_b64 = base64.urlsafe_b64encode(pub_raw).rstrip(b'=').decode('ascii')
-        priv_pem = v.private_key.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption()).decode('ascii').strip()
-        return {
-            'statusCode': 200,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'public_key': pub_b64, 'private_key_pem': priv_pem})
         }
 
     if method != 'POST':
