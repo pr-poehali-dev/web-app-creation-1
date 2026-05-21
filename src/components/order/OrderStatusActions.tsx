@@ -62,12 +62,13 @@ export default function OrderStatusActions({ order, isBuyer, contactPerson, onCa
             </div>
             <p className="text-sm font-medium">{contactPerson.name}</p>
             <div className="space-y-1 mt-2">
-              <span
-                className="text-sm font-semibold text-blue-600 flex items-center gap-1.5 select-text"
+              <a
+                href={`tel:${contactPerson.phone}`}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center gap-1.5"
               >
                 <Icon name="Phone" className="h-3.5 w-3.5" />
                 {contactPerson.phone}
-              </span>
+              </a>
               <a
                 href={`mailto:${contactPerson.email}`}
                 className="text-sm font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors flex items-center gap-1.5"
