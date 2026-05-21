@@ -73,11 +73,10 @@ export default function OrdersContent({
       return order.isRequest && order.type === 'sale' && !isEffectivelyArchived(order);
     }
     if (activeTab === 'my-responses') {
-      return order.type === 'purchase' && !isEffectivelyArchived(order) &&
-        (order.isRequest || isServiceOrder(order));
+      return order.type === 'purchase' && !isEffectivelyArchived(order) && order.isRequest;
     }
     if (activeTab === 'buyer') {
-      return order.type === 'purchase' && !order.isRequest && !isServiceOrder(order) && !isEffectivelyArchived(order);
+      return order.type === 'purchase' && !order.isRequest && !isEffectivelyArchived(order);
     }
     return order.type === 'sale' && !order.isRequest && !isEffectivelyArchived(order);
   };

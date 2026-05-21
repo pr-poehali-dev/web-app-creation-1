@@ -166,9 +166,9 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
   const isServiceOrder = (order: Order) =>
     SERVICE_CATEGORIES.includes((order as unknown as Record<string, unknown>).offerCategory as string);
 
-  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && !isServiceOrder(order) && activeFilter(order)).length;
+  const buyerOrdersCount = orders.filter(order => order.type === 'purchase' && !order.isRequest && activeFilter(order)).length;
   const myRequestsCount = orders.filter(order => order.isRequest && order.type === 'sale' && activeFilter(order)).length;
-  const myResponsesCount = orders.filter(order => order.type === 'purchase' && activeFilter(order) && (order.isRequest || isServiceOrder(order))).length;
+  const myResponsesCount = orders.filter(order => order.type === 'purchase' && activeFilter(order) && order.isRequest).length;
   const archiveOrdersCount = orders.filter(order => isEffectivelyArchived(order)).length;
   const myOffersCount = myOffers.filter(o => o.status !== 'archived').length;
   const sellerOrdersCount = orders.filter(order => order.type === 'sale' && !order.isRequest && activeFilter(order)).length;
