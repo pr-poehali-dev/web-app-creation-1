@@ -23,8 +23,6 @@ interface ChatInputBarProps {
   onStartRecording: () => void;
   onStopRecording: () => void;
   onCancelRecording: () => void;
-  onVideoCall?: () => void;
-  onAudioCall?: () => void;
 }
 
 function formatRecordingTime(s: number) {
@@ -45,8 +43,6 @@ export default function ChatInputBar({
   onStartRecording,
   onStopRecording,
   onCancelRecording,
-  onVideoCall,
-  onAudioCall,
 }: ChatInputBarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,28 +106,7 @@ export default function ChatInputBar({
           >
             <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
           </button>
-          {onVideoCall && (
-            <button
-              type="button"
-              onClick={onVideoCall}
-              disabled={isSending}
-              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-green-50 hover:border-green-400 transition-colors disabled:opacity-50 group"
-              title="Видеозвонок"
-            >
-              <Icon name="Video" className="h-4 w-4 text-muted-foreground group-hover:text-green-500 transition-colors" />
-            </button>
-          )}
-          {onAudioCall && (
-            <button
-              type="button"
-              onClick={onAudioCall}
-              disabled={isSending}
-              className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-blue-50 hover:border-blue-400 transition-colors disabled:opacity-50 group"
-              title="Аудиозвонок"
-            >
-              <Icon name="Phone" className="h-4 w-4 text-muted-foreground group-hover:text-blue-500 transition-colors" />
-            </button>
-          )}
+
           {!pendingFile && !newMessage.trim() ? (
             <button
               type="button"
