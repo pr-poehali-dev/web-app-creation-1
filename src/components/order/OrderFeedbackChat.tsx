@@ -7,7 +7,14 @@ import { useToast } from '@/hooks/use-toast';
 import { type OrderMessage, playNotificationSound } from './chat-types';
 import ChatMessageList from './ChatMessageList';
 import ChatInputBar from './ChatInputBar';
-
+import {
+  type CallMode,
+  getJitsiUrl,
+  initiateCall,
+  clearCallSignal,
+  sendCallNotification,
+  getCurrentUserName,
+} from '@/services/videoCallService';
 
 interface OrderFeedbackChatProps {
   orderId: string;
@@ -41,7 +48,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const isAtBottomRef = useRef(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);
   const prevMessagesLengthRef = useRef(0);
-
+  const [callMode, setCallMode] = useState<CallMode>('video');
+  const activeCallOrderIdRef = useRef<string | null>(null);
   const initialScrollDone = useRef(false);
 
   const handleMessagesScroll = () => {
@@ -388,11 +396,46 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
           onStartRecording={startRecording}
           onStopRecording={stopRecording}
           onCancelRecording={cancelRecording}
-
+          onVideoCall={otherUserId ? () => handleStartCall('video') : undefined}
+          onAudioCall={otherUserId ? () => handleStartCall('audio') : undefined}
         />
       </div>
 
     </>
   );
 
+  async function handleStartCall(mode: CallMode) {
+    const session = getSession();
+    if (!session?.id) return;
+
+    const modeLabel = mode === 'audio' ? 'аудио' : 'видео';
+    toast({ title: `📞 ${modeLabel}звонок`, description: 'Ожидаем ответа собеседника...' });
+
+    // Записываем звонок в БД — получатель узнает через polling
+    const callPayload = await initiateCall(orderId, mode);
+    if (!callPayload) {
+      toast({ title: 'Ошибка', description: 'Не удалось инициировать звонок', variant: 'destructive' });
+      return;
+    }
+
+    setCallMode(mode);
+    activeCallOrderIdRef.current = orderId;
+
+    // Открываем Jitsi для инициатора
+    const jitsiUrl = getJitsiUrl(callPayload.roomId, mode);
+    window.open(jitsiUrl, '_blank');
+
+    // Push как дополнительное уведомление (не основной механизм)
+    if (otherUserId) {
+      sendCallNotification(otherUserId, callPayload);
+    }
+
+    // Через 35 сек автоматически снимаем звонок если не ответили
+    setTimeout(() => {
+      if (activeCallOrderIdRef.current === orderId) {
+        clearCallSignal(orderId);
+        activeCallOrderIdRef.current = null;
+      }
+    }, 35000);
+  }
 }
