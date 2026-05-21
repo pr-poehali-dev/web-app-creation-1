@@ -203,7 +203,7 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as AllTab)} className="mb-6" defaultValue="buyer">
             <TabsList className="grid w-full grid-cols-5 gap-0.5 mb-6 h-auto p-1">
               <TabsTrigger value="buyer" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-row items-center gap-0.5">
-                <span>Покупки</span>
+                <span>Заказы</span>
                 {buyerOrdersCount > 0 && <span className="text-[10px] font-bold text-primary">({buyerOrdersCount})</span>}
               </TabsTrigger>
               <TabsTrigger value="my-offers" className="py-2 px-1 text-[11px] sm:text-xs leading-tight flex flex-row items-center gap-0.5">
