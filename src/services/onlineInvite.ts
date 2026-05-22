@@ -1,0 +1,44 @@
+const INVITE_URL = 'https://functions.poehali.dev/a2c4ab26-756f-4a09-af41-a5589a8ff2c2';
+
+export interface Invitation {
+  id: number;
+  orderId: number;
+  senderId: number;
+  senderName: string;
+  offerTitle: string;
+  status: 'pending' | 'accepted' | 'declined' | 'expired';
+}
+
+export async function sendInvitation(senderId: number, recipientId: number, orderId: number): Promise<number | null> {
+  const res = await fetch(INVITE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'send', senderId, recipientId, orderId }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.invitationId ?? null;
+}
+
+export async function respondToInvitation(invitationId: number, recipientId: number, response: 'accepted' | 'declined'): Promise<{ orderId: number } | null> {
+  const res = await fetch(INVITE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'respond', invitationId, recipientId, response }),
+  });
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+export async function pollIncoming(userId: number): Promise<Invitation | null> {
+  const res = await fetch(`${INVITE_URL}?action=poll&userId=${userId}`);
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.invitation ?? null;
+}
+
+export async function pollSentStatus(invitationId: number, senderId: number): Promise<{ status: string; recipientName: string; orderId: number } | null> {
+  const res = await fetch(`${INVITE_URL}?action=status&invitationId=${invitationId}&senderId=${senderId}`);
+  if (!res.ok) return null;
+  return await res.json();
+}

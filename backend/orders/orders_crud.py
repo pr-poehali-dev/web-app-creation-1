@@ -857,7 +857,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 order['buyer_id'],
                 'Запрос на завершение заказа',
                 f'Исполнитель запрашивает подтверждение завершения заказа №{order.get("order_number", order_id[:8])}',
-                f'/my-orders?id={order_id}'
+                f'/my-orders?orderId={order_id}'
             )
         except Exception as e:
             print(f'Notification error: {e}')
@@ -1073,7 +1073,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 order['seller_id'],
                 'Встречное предложение по заказу',
                 f'Покупатель предложил {body["counterPrice"]} ₽ за единицу товара',
-                f'/my-orders?id={order_id}'
+                f'/my-orders?orderId={order_id}'
             )
         
         elif 'counterPrice' in body and is_seller:
@@ -1081,7 +1081,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 order['buyer_id'],
                 'Встречное предложение от продавца',
                 f'Продавец предложил {body["counterPrice"]} ₽ за единицу товара',
-                f'/my-orders?id={order_id}'
+                f'/my-orders?orderId={order_id}'
             )
         
         elif counter_accepted:
@@ -1090,14 +1090,14 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                     order['buyer_id'],
                     'Встречное предложение принято',
                     f'Продавец согласился на вашу цену. Заказ принят!',
-                    f'/my-orders?id={order_id}'
+                    f'/my-orders?orderId={order_id}'
                 )
             elif is_buyer:
                 send_notification(
                     order['seller_id'],
                     'Встречное предложение принято',
                     f'Покупатель согласился на вашу цену. Заказ принят!',
-                    f'/my-orders?id={order_id}'
+                    f'/my-orders?orderId={order_id}'
                 )
         
         elif new_status == 'accepted':
@@ -1106,14 +1106,14 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                     order['buyer_id'],
                     'Заказ принят',
                     f'Ваш заказ №{order.get("order_number", order_id[:8])} принят в работу',
-                    f'/my-orders?id={order_id}'
+                    f'/my-orders?orderId={order_id}'
                 )
             elif is_buyer:
                 send_notification(
                     order['seller_id'],
                     'Ваш отклик принят',
                     f'Заказчик принял ваш отклик по заказу №{order.get("order_number", order_id[:8])}',
-                    f'/my-orders?id={order_id}'
+                    f'/my-orders?orderId={order_id}'
                 )
         
         elif new_status == 'rejected':
@@ -1121,7 +1121,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 order['buyer_id'],
                 'Заказ отклонен',
                 f'К сожалению, ваш заказ №{order.get("order_number", order_id[:8])} был отклонен',
-                f'/my-orders?id={order_id}'
+                f'/my-orders?orderId={order_id}'
             )
         
         elif new_status == 'cancelled':
@@ -1131,7 +1131,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 notify_user,
                 'Заказ отменён',
                 f'{who_cancelled} отменил заказ №{order.get("order_number", order_id[:8])}',
-                f'/my-orders?id={order_id}'
+                f'/my-orders?orderId={order_id}'
             )
         
         elif new_status == 'completed':
@@ -1139,7 +1139,7 @@ def update_order(order_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
                 order['seller_id'],
                 'Заказ завершён',
                 f'Покупатель подтвердил получение заказа №{order.get("order_number", order_id[:8])}',
-                f'/my-orders?id={order_id}'
+                f'/my-orders?orderId={order_id}'
             )
     except Exception as e:
         print(f'Notification error: {e}')

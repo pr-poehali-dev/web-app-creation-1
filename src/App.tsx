@@ -16,6 +16,7 @@ import NotificationPermissionBanner from "./components/NotificationPermissionBan
 import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
 import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
+import OnlineInviteBanner from "./components/OnlineInviteBanner";
 
 
 // Ленивая загрузка страниц
@@ -213,7 +214,23 @@ const App = () => {
       // Слушаем сообщения от Service Worker
       navigator.serviceWorker.addEventListener('message', async (event) => {
         if (event.data.type === 'NOTIFICATION_CLICK') {
-          window.location.href = event.data.url;
+          const url: string = event.data.url || '/';
+          // Парсим orderId из URL вида /my-orders?orderId=123
+          const parsed = new URL(url, window.location.origin);
+          const orderId = parsed.searchParams.get('orderId');
+          const targetPath = parsed.pathname;
+
+          if (targetPath === '/my-orders' && orderId) {
+            // Уже на странице — просто открываем чат
+            if (window.location.pathname === '/my-orders') {
+              window.dispatchEvent(new CustomEvent('openOrderChatById', { detail: { orderId } }));
+            } else {
+              // Переходим на страницу и открываем чат после загрузки
+              window.location.href = `/my-orders?orderId=${orderId}`;
+            }
+          } else {
+            window.location.href = url;
+          }
         }
         if (event.data.type === 'PLAY_NOTIFICATION_SOUND') {
           try {
@@ -319,6 +336,20 @@ const App = () => {
                   <Sonner />
                   <TechnicalIssuesBanner />
                   {isAuthenticated && <NotificationPermissionBanner />}
+                  {isAuthenticated && (
+                    <OnlineInviteBanner
+                      onOpenOrderChat={(orderId) => {
+                        const dispatch = () => window.dispatchEvent(
+                          new CustomEvent('openOrderChatById', { detail: { orderId: String(orderId) } })
+                        );
+                        if (window.location.pathname === '/my-orders') {
+                          dispatch();
+                        } else {
+                          window.location.href = `/my-orders?orderId=${orderId}`;
+                        }
+                      }}
+                    />
+                  )}
 
                   <InstallPrompt />
                   <ErrorBoundary>

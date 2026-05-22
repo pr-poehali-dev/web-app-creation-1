@@ -153,6 +153,37 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     return () => window.removeEventListener('openOrderChat' as any, handleOpenOrderChat);
   }, [orders, activeTab]);
 
+  // Открытие чата по orderId — от пуш-уведомления или приглашения
+  useEffect(() => {
+    const handleOpenById = async (event: CustomEvent) => {
+      const { orderId } = event.detail;
+      if (!orderId) return;
+
+      let order = orders.find(o => o.id === String(orderId));
+
+      if (!order) {
+        await loadOrders(true);
+        await new Promise(resolve => setTimeout(resolve, 300));
+        order = orders.find(o => o.id === String(orderId));
+      }
+
+      if (order) {
+        const closedStatuses = ['completed', 'cancelled', 'archived', 'rejected'];
+        if (!closedStatuses.includes(order.status)) {
+          // Переключаем на нужную вкладку
+          const session = getSession();
+          if (order.type === 'purchase' && !order.isRequest) setActiveTab('buyer');
+          else if (order.type === 'sale' && !order.isRequest) setActiveTab('my-offers');
+          handleOpenChat(order);
+        }
+      }
+    };
+
+    window.addEventListener('openOrderChatById', handleOpenById as EventListener);
+    return () => window.removeEventListener('openOrderChatById', handleOpenById as EventListener);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders]);
+
   const isArchived = (s: string) => s === 'completed' || s === 'cancelled' || s === 'archived' || s === 'rejected';
   const ACTIVE_STATUSES = ['new', 'accepted', 'negotiating', 'awaiting_payment', 'pending'];
   const isTransportExpired = (order: Order) => {

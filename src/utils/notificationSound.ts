@@ -76,3 +76,26 @@ export const enableNotificationSound = () => {
     audioContext.resume();
   }
 };
+
+// Звук приглашения к онлайн-общению — 3 пульса (более настойчивый)
+export const playInviteSound = async () => {
+  try {
+    initAudio();
+    if (!audioContext) return;
+    if (audioContext.state === 'suspended') await audioContext.resume();
+
+    const t = audioContext.currentTime;
+    // Три пульса: G5 → B5 → D6
+    const pulses = [
+      { freq: 783.99, time: 0 },
+      { freq: 987.77, time: 0.22 },
+      { freq: 1174.66, time: 0.44 },
+      { freq: 783.99, time: 0.72 },
+      { freq: 987.77, time: 0.94 },
+      { freq: 1174.66, time: 1.16 },
+    ];
+    pulses.forEach(({ freq, time }) => {
+      playNote(freq, t + time, 0.18, 0.18);
+    });
+  } catch (_e) { /* ignore */ }
+};

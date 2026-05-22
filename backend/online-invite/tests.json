@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Poll with missing userId",
+      "method": "GET",
+      "path": "/?action=poll",
+      "expectedStatus": 400,
+      "expectedBody": {"error": "userId required"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

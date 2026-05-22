@@ -228,7 +228,7 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
                 recipient_id,
                 'Новое сообщение по заказу',
                 f'{sender_name}: {notif_text[:50]}...' if len(notif_text) > 50 else f'{sender_name}: {notif_text}',
-                f'/my-orders?id={body["orderId"]}'
+                f'/my-orders?orderId={body["orderId"]}'
             )
         except Exception as e:
             print(f'Message notification error: {e}')
