@@ -81,7 +81,7 @@ function OffersFilters({
           </span>
         </div>
 
-        {filters.category && (
+        {(filters.category || selectedDistricts.length > 0) && (
           <div className="mt-3 flex flex-wrap gap-2">
             {filters.category && (
               <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-medium">
