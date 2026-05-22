@@ -44,6 +44,7 @@ export default function OrderNegotiationModal({
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [inviteSending, setInviteSending] = useState(false);
   const [counterpartOnline, setCounterpartOnline] = useState(false);
+  const [bothInChat, setBothInChat] = useState(false);
 
   const contactPerson = isBuyer
     ? { name: order.sellerName, phone: order.sellerPhone, email: order.sellerEmail }
@@ -71,8 +72,22 @@ export default function OrderNegotiationModal({
 
   // Оповещаем баннер что пользователь уже открыл чат этого заказа
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setBothInChat(false);
+      return;
+    }
     window.dispatchEvent(new CustomEvent('orderChatOpened', { detail: { orderId: order.id } }));
+  }, [isOpen, order.id]);
+
+  // Слушаем — если второй участник тоже открыл чат, показываем статус "оба здесь"
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: Event) => {
+      const { orderId } = (e as CustomEvent).detail;
+      if (orderId === order.id) setBothInChat(true);
+    };
+    window.addEventListener('orderChatOpened', handler);
+    return () => window.removeEventListener('orderChatOpened', handler);
   }, [isOpen, order.id]);
 
   const handleSendInvite = async () => {
@@ -100,7 +115,12 @@ export default function OrderNegotiationModal({
             </DialogTitle>
 
             {(isBuyer || isSeller) && counterpartId && (
-              counterpartOnline ? (
+              bothInChat ? (
+                <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium shrink-0">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  Оба онлайн
+                </div>
+              ) : counterpartOnline ? (
                 <Button
                   size="sm"
                   className="h-8 text-xs gap-1.5 shrink-0 bg-green-500 hover:bg-green-600 text-white border-0"
