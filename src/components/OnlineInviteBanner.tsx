@@ -63,8 +63,18 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     console.log('[INVITE] starting poll for userId=', userId);
     pollIncomingFn();
     incomingPollRef.current = setInterval(pollIncomingFn, 3000);
+
+    // При возврате в приложение (из фона / неактивной вкладки) — сразу опрашиваем
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        pollIncomingFn();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
     return () => {
       if (incomingPollRef.current) clearInterval(incomingPollRef.current);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [userId, pollIncomingFn]);
 
