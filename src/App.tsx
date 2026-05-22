@@ -17,6 +17,7 @@ import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
 import InstallPrompt from "./components/InstallPrompt";
 import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
 import OnlineInviteBanner from "./components/OnlineInviteBanner";
+import BannerStrip from "./components/BannerStrip";
 
 
 // Ленивая загрузка страниц
@@ -335,6 +336,7 @@ const App = () => {
                   <Toaster />
                   <Sonner />
                   <TechnicalIssuesBanner />
+                  <BannerStrip />
                   {isAuthenticated && <NotificationPermissionBanner />}
                   {isAuthenticated && (
                     <OnlineInviteBanner
