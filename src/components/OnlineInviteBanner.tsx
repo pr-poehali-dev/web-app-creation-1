@@ -99,6 +99,17 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     return () => window.removeEventListener('onlineInviteSent', handler);
   }, []);
 
+  // Автоскрытие: если чат заказа уже открыт (оба в модалке) — прячем баннер
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { orderId } = (e as CustomEvent).detail;
+      setIncoming(prev => (prev && prev.orderId === orderId ? null : prev));
+      setSent(prev => (prev && prev.orderId === orderId && prev.status === 'waiting' ? null : prev));
+    };
+    window.addEventListener('orderChatOpened', handler);
+    return () => window.removeEventListener('orderChatOpened', handler);
+  }, []);
+
   useEffect(() => {
     if (!sent || sent.status !== 'waiting' || !userId) return;
     const poll = async () => {

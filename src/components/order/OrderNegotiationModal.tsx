@@ -54,7 +54,10 @@ export default function OrderNegotiationModal({
 
   // Проверяем онлайн-статус контрагента пока модалка открыта
   useEffect(() => {
-    if (!isOpen || !counterpartId) return;
+    if (!isOpen || !counterpartId) {
+      setCounterpartOnline(false);
+      return;
+    }
 
     const check = async () => {
       const online = await checkOnline(Number(counterpartId));
@@ -62,9 +65,15 @@ export default function OrderNegotiationModal({
     };
 
     check();
-    const interval = setInterval(check, 10000);
+    const interval = setInterval(check, 3000);
     return () => clearInterval(interval);
   }, [isOpen, counterpartId]);
+
+  // Оповещаем баннер что пользователь уже открыл чат этого заказа
+  useEffect(() => {
+    if (!isOpen) return;
+    window.dispatchEvent(new CustomEvent('orderChatOpened', { detail: { orderId: order.id } }));
+  }, [isOpen, order.id]);
 
   const handleSendInvite = async () => {
     if (!currentUser?.id || !counterpartId) return;
