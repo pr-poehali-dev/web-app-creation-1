@@ -158,24 +158,26 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
     const handleOpenById = async (event: CustomEvent) => {
       const { orderId } = event.detail;
       if (!orderId) return;
+      const oid = String(orderId);
 
-      let order = orders.find(o => o.id === String(orderId));
+      // Сначала ищем в текущем списке
+      const order = orders.find(o => o.id === oid);
 
+      // Если не нашли — перезагружаем и снова ищем (через orderId в URL)
       if (!order) {
         await loadOrders(true);
-        await new Promise(resolve => setTimeout(resolve, 300));
-        order = orders.find(o => o.id === String(orderId));
+        // После loadOrders orders обновится через useState — ждём ре-рендер
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Повторный поиск через searchParams (как уже реализовано в useEffect выше)
+        setSearchParams(prev => { prev.set('orderId', oid); return prev; }, { replace: true });
+        return;
       }
 
-      if (order) {
-        const closedStatuses = ['completed', 'cancelled', 'archived', 'rejected'];
-        if (!closedStatuses.includes(order.status)) {
-          // Переключаем на нужную вкладку
-          const session = getSession();
-          if (order.type === 'purchase' && !order.isRequest) setActiveTab('buyer');
-          else if (order.type === 'sale' && !order.isRequest) setActiveTab('my-offers');
-          handleOpenChat(order);
-        }
+      const closedStatuses = ['completed', 'cancelled', 'archived', 'rejected'];
+      if (!closedStatuses.includes(order.status)) {
+        if (order.type === 'purchase' && !order.isRequest) setActiveTab('buyer');
+        else if (order.type === 'sale' && !order.isRequest) setActiveTab('my-offers');
+        handleOpenChat(order);
       }
     };
 

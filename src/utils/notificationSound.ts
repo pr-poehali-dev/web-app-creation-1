@@ -77,15 +77,13 @@ export const enableNotificationSound = () => {
   }
 };
 
-// Звук приглашения к онлайн-общению — 3 пульса (более настойчивый)
+// Звук приглашения к онлайн-общению — всегда создаём свежий AudioContext
+// (обходит политику браузера на autoplay, работает после любого тапа)
 export const playInviteSound = async () => {
   try {
-    initAudio();
-    if (!audioContext) return;
-    if (audioContext.state === 'suspended') await audioContext.resume();
-
-    const t = audioContext.currentTime;
-    // Три пульса: G5 → B5 → D6
+    const ctx = new (window.AudioContext || (window as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)();
+    if (ctx.state === 'suspended') await ctx.resume();
+    const t = ctx.currentTime;
     const pulses = [
       { freq: 783.99, time: 0 },
       { freq: 987.77, time: 0.22 },
@@ -95,7 +93,18 @@ export const playInviteSound = async () => {
       { freq: 1174.66, time: 1.16 },
     ];
     pulses.forEach(({ freq, time }) => {
-      playNote(freq, t + time, 0.18, 0.18);
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, t + time);
+      gain.gain.linearRampToValueAtTime(0.18, t + time + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + time + 0.18);
+      osc.start(t + time);
+      osc.stop(t + time + 0.2);
     });
+    setTimeout(() => ctx.close(), 2000);
   } catch (_e) { /* ignore */ }
 };

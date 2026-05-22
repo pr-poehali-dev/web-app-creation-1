@@ -55,11 +55,12 @@ export default function OrderNegotiationModal({
   const handleSendInvite = async () => {
     if (!currentUser?.id || !counterpartId) return;
     setInviteSending(true);
-    const invId = await sendInvitation(Number(currentUser.id), Number(counterpartId), Number(order.id));
+    // order.id — UUID строка, counterpartId — числовой id пользователя
+    const invId = await sendInvitation(Number(currentUser.id), Number(counterpartId), order.id);
     setInviteSending(false);
     if (invId) {
       window.dispatchEvent(new CustomEvent('onlineInviteSent', {
-        detail: { invitationId: invId, orderId: Number(order.id), recipientName: counterpartName },
+        detail: { invitationId: invId, orderId: order.id, recipientName: counterpartName },
       }));
     }
   };
