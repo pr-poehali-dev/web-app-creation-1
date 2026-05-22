@@ -13,6 +13,7 @@ interface Banner {
   icon?: string;
   show_on_pages?: string[];
   show_regions?: string[];
+  show_districts?: string[];
 }
 
 const CONTENT_API = func2url['content-management'];
@@ -25,7 +26,7 @@ const PAGE_MAP: Record<string, string> = {
 
 export default function BannerStrip() {
   const location = useLocation();
-  const { selectedRegion } = useDistrict();
+  const { selectedRegion, selectedDistricts } = useDistrict();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -55,10 +56,16 @@ export default function BannerStrip() {
       if (!b.show_on_pages.includes(currentPage)) return false;
     }
 
-    // Фильтр по региону: если баннер привязан к регионам — показываем только совпадающий
+    // Фильтр по региону
     if (b.show_regions && b.show_regions.length > 0) {
       if (selectedRegion === 'all') return false;
       if (!b.show_regions.includes(selectedRegion)) return false;
+
+      // Фильтр по районам — если указаны, хотя бы один должен совпасть
+      if (b.show_districts && b.show_districts.length > 0) {
+        const hasMatchingDistrict = selectedDistricts.some(d => b.show_districts!.includes(d));
+        if (!hasMatchingDistrict) return false;
+      }
     }
 
     return true;

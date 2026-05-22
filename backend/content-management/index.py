@@ -270,13 +270,15 @@ def create_or_update_content(event: Dict[str, Any], headers: Dict[str, str]) -> 
         text_color = body.get('textColor', '#FFFFFF')
         icon = body.get('icon', '')
         show_on_pages = body.get('showOnPages', ['home'])
+        show_regions = body.get('showRegions') or body.get('show_regions')
+        show_districts = body.get('showDistricts') or body.get('show_districts')
         
         cur.execute(f"""
             INSERT INTO {schema}.holiday_banners 
-            (title, message, type, start_date, end_date, is_active, background_color, text_color, icon, show_on_pages)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            (title, message, type, start_date, end_date, is_active, background_color, text_color, icon, show_on_pages, show_regions, show_districts)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        """, (title, message, banner_type, start_date, end_date, is_active, bg_color, text_color, icon, show_on_pages))
+        """, (title, message, banner_type, start_date, end_date, is_active, bg_color, text_color, icon, show_on_pages, show_regions, show_districts))
         
         result = cur.fetchone()
         conn.commit()
@@ -331,16 +333,28 @@ def update_banner(banner_id: str, event: Dict[str, Any], headers: Dict[str, str]
         'message': 'message',
         'type': 'type',
         'startDate': 'start_date',
+        'start_date': 'start_date',
         'endDate': 'end_date',
+        'end_date': 'end_date',
         'isActive': 'is_active',
+        'is_active': 'is_active',
         'backgroundColor': 'background_color',
+        'background_color': 'background_color',
         'textColor': 'text_color',
+        'text_color': 'text_color',
         'icon': 'icon',
         'showOnPages': 'show_on_pages',
+        'show_on_pages': 'show_on_pages',
+        'showRegions': 'show_regions',
+        'show_regions': 'show_regions',
+        'showDistricts': 'show_districts',
+        'show_districts': 'show_districts',
     }
     
+    seen_cols = set()
     for key, col in field_map.items():
-        if key in body:
+        if key in body and col not in seen_cols:
+            seen_cols.add(col)
             updates.append(f"{col} = %s")
             params.append(body[key])
     

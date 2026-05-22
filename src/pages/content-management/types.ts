@@ -19,6 +19,7 @@ export interface BannerItem {
   icon?: string;
   show_on_pages?: string[];
   show_regions?: string[];
+  show_districts?: string[];
 }
 
 export interface BannerFormState {
@@ -33,6 +34,7 @@ export interface BannerFormState {
   icon: string;
   showOnPages: string[];
   showRegions: string[];
+  showDistricts: string[];
 }
 
 export const CONTENT_LABELS: Record<string, { label: string; hint: string }> = {
@@ -66,6 +68,7 @@ export const EMPTY_BANNER: BannerFormState = {
   icon: '',
   showOnPages: ['home'],
   showRegions: [],
+  showDistricts: [],
 };
 
 export const PAGE_OPTIONS = [

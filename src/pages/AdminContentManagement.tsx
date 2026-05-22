@@ -129,6 +129,7 @@ export default function AdminContentManagement() {
       icon: banner.icon || '',
       showOnPages: banner.show_on_pages || ['home'],
       showRegions: banner.show_regions || [],
+      showDistricts: banner.show_districts || [],
     });
     setShowBannerForm(true);
   };
@@ -152,6 +153,7 @@ export default function AdminContentManagement() {
           icon: bannerForm.icon,
           show_on_pages: bannerForm.showOnPages,
           show_regions: bannerForm.showRegions.length > 0 ? bannerForm.showRegions : null,
+          show_districts: bannerForm.showDistricts.length > 0 ? bannerForm.showDistricts : null,
         });
         showSuccess('Баннер обновлён');
       } else {
@@ -167,6 +169,7 @@ export default function AdminContentManagement() {
           icon: bannerForm.icon,
           showOnPages: bannerForm.showOnPages,
           showRegions: bannerForm.showRegions.length > 0 ? bannerForm.showRegions : null,
+          showDistricts: bannerForm.showDistricts.length > 0 ? bannerForm.showDistricts : null,
         });
         showSuccess('Баннер создан и опубликован');
       }
