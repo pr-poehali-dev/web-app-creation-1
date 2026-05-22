@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { getSession } from '@/utils/auth';
 import OrderNegotiationSection from './OrderNegotiationSection';
 import OrderChatInfoCard from './OrderChatInfoCard';
 import ChatImageLightbox from './ChatImageLightbox';
-import { sendInvitation } from '@/services/onlineInvite';
+import { sendInvitation, checkOnline } from '@/services/onlineInvite';
 
 interface OrderNegotiationModalProps {
   isOpen: boolean;
@@ -44,18 +43,32 @@ export default function OrderNegotiationModal({
   const isSeller = currentUser?.id?.toString() === order.sellerId?.toString();
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [inviteSending, setInviteSending] = useState(false);
+  const [counterpartOnline, setCounterpartOnline] = useState(false);
 
-  const contactPerson = isBuyer 
+  const contactPerson = isBuyer
     ? { name: order.sellerName, phone: order.sellerPhone, email: order.sellerEmail }
     : { name: order.buyerName, phone: order.buyerPhone, email: order.buyerEmail };
 
   const counterpartId = isBuyer ? order.sellerId : order.buyerId;
   const counterpartName = isBuyer ? order.sellerName : order.buyerName;
 
+  // Проверяем онлайн-статус контрагента пока модалка открыта
+  useEffect(() => {
+    if (!isOpen || !counterpartId) return;
+
+    const check = async () => {
+      const online = await checkOnline(Number(counterpartId));
+      setCounterpartOnline(online);
+    };
+
+    check();
+    const interval = setInterval(check, 10000);
+    return () => clearInterval(interval);
+  }, [isOpen, counterpartId]);
+
   const handleSendInvite = async () => {
     if (!currentUser?.id || !counterpartId) return;
     setInviteSending(true);
-    // order.id — UUID строка, counterpartId — числовой id пользователя
     const invId = await sendInvitation(Number(currentUser.id), Number(counterpartId), order.id);
     setInviteSending(false);
     if (invId) {
@@ -76,17 +89,30 @@ export default function OrderNegotiationModal({
                 : <span>Заказ {order.orderNumber ? `№${order.orderNumber}` : `#${order.id.slice(0, 8)}`}</span>
               }
             </DialogTitle>
+
             {(isBuyer || isSeller) && counterpartId && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs gap-1.5 shrink-0 border-primary/40 text-primary hover:bg-primary/10"
-                onClick={handleSendInvite}
-                disabled={inviteSending}
-              >
-                <Icon name="PhoneCall" size={13} />
-                {inviteSending ? 'Отправка…' : 'Позвать онлайн'}
-              </Button>
+              counterpartOnline ? (
+                <Button
+                  size="sm"
+                  className="h-8 text-xs gap-1.5 shrink-0 bg-green-500 hover:bg-green-600 text-white border-0"
+                  onClick={handleSendInvite}
+                  disabled={inviteSending}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  {inviteSending ? 'Отправка…' : 'В сети — позвать'}
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs gap-1.5 shrink-0 border-primary/40 text-primary hover:bg-primary/10"
+                  onClick={handleSendInvite}
+                  disabled={inviteSending}
+                >
+                  <Icon name="PhoneCall" size={13} />
+                  {inviteSending ? 'Отправка…' : 'Позвать онлайн'}
+                </Button>
+              )
             )}
           </div>
         </div>

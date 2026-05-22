@@ -13,6 +13,14 @@
       "expectedStatus": 400,
       "expectedBody": {"error": "userId required"},
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Check online with userId",
+      "method": "GET",
+      "path": "/?action=check-online&userId=999999",
+      "expectedStatus": 200,
+      "expectedBody": {"online": false},
+      "bodyMatcher": "partial"
     }
   ]
 }

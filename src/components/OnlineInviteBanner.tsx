@@ -21,6 +21,23 @@ interface Props {
   onOpenOrderChat: (orderId: string) => void;
 }
 
+// Вибрация — работает на мобильных устройствах
+function vibrate(pattern: number | number[]) {
+  try {
+    if (navigator.vibrate) navigator.vibrate(pattern);
+  } catch (_e) { /* ignore */ }
+}
+
+// Системное уведомление браузера — показывается даже при неактивном экране
+async function showSystemNotification(title: string, body: string) {
+  try {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/favicon.ico', tag: 'online-invite', renotify: true });
+    }
+  } catch (_e) { /* ignore */ }
+}
+
 export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
   const [incoming, setIncoming] = useState<Invitation | null>(null);
   const [sent, setSent] = useState<SentState | null>(null);
@@ -31,7 +48,7 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
   const sentPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const incomingPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Получаем userId надёжно — и при монтировании, и при смене сессии
+  // Получаем userId надёжно
   useEffect(() => {
     const sync = () => {
       const session = getSession();
@@ -46,29 +63,47 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     };
   }, []);
 
+  // ── Обработка нового входящего приглашения ────────────────────────────────
+  const handleNewInvitation = useCallback((inv: Invitation) => {
+    if (seenInvites.current.has(inv.id)) return;
+    seenInvites.current.add(inv.id);
+    setIncoming(inv);
+
+    // 1. Звук
+    playInviteSound().catch(() => { /* ignore */ });
+
+    // 2. Вибрация — пульс 3 раза
+    vibrate([300, 150, 300, 150, 300]);
+
+    // 3. Системное уведомление (при неактивной вкладке)
+    if (document.visibilityState !== 'visible') {
+      showSystemNotification(
+        'Приглашение к онлайн-общению',
+        `${inv.senderName} приглашает обсудить условия сделки`
+      );
+    }
+  }, []);
+
   // ── Polling входящих приглашений ────────────────────────────────────────────
   const pollIncomingFn = useCallback(async () => {
     if (!userId) return;
-    const inv = await pollIncoming(userId);
-    if (inv && !seenInvites.current.has(inv.id)) {
-      console.log('[INVITE] incoming invitation:', inv);
-      seenInvites.current.add(inv.id);
-      setIncoming(inv);
-      playInviteSound().catch(() => {});
-    }
-  }, [userId]);
+    try {
+      const inv = await pollIncoming(userId);
+      if (inv) handleNewInvitation(inv);
+    } catch (_e) { /* сетевая ошибка — молча игнорируем */ }
+  }, [userId, handleNewInvitation]);
 
   useEffect(() => {
     if (!userId) return;
-    console.log('[INVITE] starting poll for userId=', userId);
     pollIncomingFn();
     incomingPollRef.current = setInterval(pollIncomingFn, 3000);
 
-    // При возврате в приложение (из фона / неактивной вкладки) — сразу опрашиваем
+    // При возврате в приложение — немедленно опрашиваем 3 раза подряд
     const onVisible = () => {
-      if (document.visibilityState === 'visible') {
-        pollIncomingFn();
-      }
+      if (document.visibilityState !== 'visible') return;
+      pollIncomingFn();
+      setTimeout(pollIncomingFn, 500);
+      setTimeout(pollIncomingFn, 1500);
     };
     document.addEventListener('visibilitychange', onVisible);
 
@@ -82,7 +117,6 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
   useEffect(() => {
     const handler = (e: Event) => {
       const { invitationId, orderId, recipientName } = (e as CustomEvent).detail;
-      console.log('[INVITE] sent event:', { invitationId, orderId, recipientName });
       setSent({ invitationId, orderId, recipientName, status: 'waiting' });
     };
     window.addEventListener('onlineInviteSent', handler);
@@ -94,22 +128,24 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     if (!sent || sent.status !== 'waiting' || !userId) return;
 
     const poll = async () => {
-      const result = await pollSentStatus(sent.invitationId, userId);
-      if (!result) return;
-      console.log('[INVITE] sent status:', result.status);
-      if (result.status === 'accepted') {
-        setSent(prev => prev ? { ...prev, status: 'accepted' } : null);
-        playInviteSound().catch(() => {});
-        if (sentPollRef.current) clearInterval(sentPollRef.current);
-        setTimeout(() => {
-          onOpenOrderChat(result.orderId);
-          setTimeout(() => setSent(null), 4000);
-        }, 1500);
-      } else if (result.status === 'declined' || result.status === 'expired' || result.status === 'not_found') {
-        setSent(prev => prev ? { ...prev, status: 'declined' } : null);
-        if (sentPollRef.current) clearInterval(sentPollRef.current);
-        setTimeout(() => setSent(null), 6000);
-      }
+      try {
+        const result = await pollSentStatus(sent.invitationId, userId);
+        if (!result) return;
+        if (result.status === 'accepted') {
+          setSent(prev => prev ? { ...prev, status: 'accepted' } : null);
+          playInviteSound().catch(() => { /* ignore */ });
+          vibrate([500, 100, 500]);
+          if (sentPollRef.current) clearInterval(sentPollRef.current);
+          setTimeout(() => {
+            onOpenOrderChat(result.orderId);
+            setTimeout(() => setSent(null), 4000);
+          }, 1500);
+        } else if (result.status === 'declined' || result.status === 'expired' || result.status === 'not_found') {
+          setSent(prev => prev ? { ...prev, status: 'declined' } : null);
+          if (sentPollRef.current) clearInterval(sentPollRef.current);
+          setTimeout(() => setSent(null), 6000);
+        }
+      } catch (_e) { /* сетевая ошибка — молча игнорируем */ }
     };
 
     sentPollRef.current = setInterval(poll, 3000);
@@ -134,7 +170,7 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
   if (incoming) {
     return (
       <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300">
-        <div className="bg-card border border-primary/30 shadow-2xl rounded-2xl p-4">
+        <div className="bg-card border-2 border-primary/50 shadow-2xl rounded-2xl p-4">
           <div className="flex items-start gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 animate-pulse">
               <Icon name="PhoneCall" size={20} className="text-primary" />
@@ -143,7 +179,7 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
               <p className="font-semibold text-sm leading-tight">Приглашение к онлайн-общению</p>
               <p className="text-xs text-muted-foreground mt-0.5 truncate">
                 <span className="font-medium text-foreground">{incoming.senderName}</span>
-                {incoming.offerTitle ? ` · ${incoming.offerTitle}` : ' приглашает обсудить сделку'}
+                {' приглашает обсудить условия сделки'}
               </p>
             </div>
           </div>
@@ -173,7 +209,7 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     );
   }
 
-  // ── Рендер: статус отправленного приглашения ──────────────────────────────
+  // ── Рендер: статус отправленного ──────────────────────────────────────────
   if (sent) {
     if (sent.status === 'waiting') {
       return (
@@ -190,28 +226,22 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
         </div>
       );
     }
-
     if (sent.status === 'accepted') {
       return (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="bg-card border border-green-500/40 shadow-xl rounded-2xl px-4 py-3 flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-            <p className="text-sm flex-1 font-semibold text-green-600">
-              Приглашение принято — открываю чат…
-            </p>
+            <p className="text-sm flex-1 font-semibold text-green-600">Приглашение принято — открываю чат…</p>
           </div>
         </div>
       );
     }
-
     if (sent.status === 'declined') {
       return (
         <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="bg-card border border-muted shadow-xl rounded-2xl px-4 py-3 flex items-start gap-3">
             <Icon name="WifiOff" size={18} className="text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-sm flex-1 text-muted-foreground">
-              Не в сети. Предложите цену и условия — ответит позже
-            </p>
+            <p className="text-sm flex-1 text-muted-foreground">Не в сети. Предложите цену и условия — ответит позже</p>
             <button onClick={() => setSent(null)} className="text-muted-foreground hover:text-foreground p-1">
               <Icon name="X" size={16} />
             </button>

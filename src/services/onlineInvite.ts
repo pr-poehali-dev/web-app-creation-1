@@ -63,6 +63,17 @@ export async function pollIncoming(userId: number): Promise<Invitation | null> {
   }
 }
 
+export async function checkOnline(userId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${INVITE_URL}?action=check-online&userId=${userId}`);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.online === true;
+  } catch (_e) {
+    return false;
+  }
+}
+
 export async function pollSentStatus(
   invitationId: number,
   senderId: number

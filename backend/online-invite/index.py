@@ -55,7 +55,7 @@ def get_user_name(cur, schema, user_id):
 
 
 def handler(event: dict, context) -> dict:
-    """Система онлайн-приглашений: отправить, ответить, проверить статус"""
+    """Система онлайн-приглашений: отправить, ответить, проверить статус, присутствие"""
     if event.get('httpMethod') == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': ''}
 
@@ -63,8 +63,7 @@ def handler(event: dict, context) -> dict:
     params = event.get('queryStringParameters') or {}
     action = params.get('action', '')
 
-    # ── GET /online-invite?action=poll&userId=123 ──────────────────────────────
-    # Получатель проверяет: есть ли для него входящие приглашения
+    # ── GET ?action=poll&userId=123 ────────────────────────────────────────────
     if method == 'GET' and action == 'poll':
         user_id = params.get('userId')
         if not user_id:
@@ -72,6 +71,14 @@ def handler(event: dict, context) -> dict:
 
         conn, cur, schema = get_db()
         try:
+            # Обновляем время присутствия пользователя
+            cur.execute(f'''
+                INSERT INTO {schema}.online_presence (user_id, last_seen_at)
+                VALUES (%s, NOW())
+                ON CONFLICT (user_id) DO UPDATE SET last_seen_at = NOW()
+            ''', (int(user_id),))
+            conn.commit()
+
             cur.execute(f'''
                 SELECT i.id, i.order_id, i.sender_id, i.status
                 FROM {schema}.online_invitations i
@@ -99,8 +106,7 @@ def handler(event: dict, context) -> dict:
             cur.close()
             conn.close()
 
-    # ── GET /online-invite?action=status&invitationId=5&senderId=123 ──────────
-    # Отправитель проверяет: принято/отклонено?
+    # ── GET ?action=status&invitationId=5&senderId=123 ─────────────────────────
     if method == 'GET' and action == 'status':
         inv_id = params.get('invitationId')
         sender_id = params.get('senderId')
@@ -119,13 +125,32 @@ def handler(event: dict, context) -> dict:
                 return ok({'status': 'not_found'})
             status, recipient_id, order_id = row
             recipient_name = get_user_name(cur, schema, recipient_id)
-            return ok({'status': status, 'recipientName': recipient_name, 'orderId': order_id})
+            return ok({'status': status, 'recipientName': recipient_name, 'orderId': str(order_id)})
         finally:
             cur.close()
             conn.close()
 
-    # ── POST /online-invite  action=send ──────────────────────────────────────
-    # Отправитель шлёт приглашение
+    # ── GET ?action=check-online&userId=123 ────────────────────────────────────
+    # Проверить онлайн ли пользователь (был в приложении последние 30 секунд)
+    if method == 'GET' and action == 'check-online':
+        user_id = params.get('userId')
+        if not user_id:
+            return err(400, 'userId required')
+
+        conn, cur, schema = get_db()
+        try:
+            cur.execute(f'''
+                SELECT last_seen_at FROM {schema}.online_presence
+                WHERE user_id = %s
+                  AND last_seen_at > NOW() - INTERVAL '30 seconds'
+            ''', (int(user_id),))
+            row = cur.fetchone()
+            return ok({'online': row is not None})
+        finally:
+            cur.close()
+            conn.close()
+
+    # ── POST action=send ───────────────────────────────────────────────────────
     if method == 'POST':
         body = json.loads(event.get('body') or '{}')
         post_action = body.get('action', '')
@@ -139,7 +164,6 @@ def handler(event: dict, context) -> dict:
 
             conn, cur, schema = get_db()
             try:
-                # Закрываем старые pending приглашения от того же отправителя
                 cur.execute(f'''
                     UPDATE {schema}.online_invitations
                     SET status = 'expired'
@@ -155,14 +179,13 @@ def handler(event: dict, context) -> dict:
                 inv_id = cur.fetchone()[0]
                 conn.commit()
 
-                # Отправляем push-уведомление получателю
                 sender_name = get_user_name(cur, schema, sender_id)
                 send_push(
                     recipient_id,
                     'Приглашение к онлайн-общению',
                     f'{sender_name} приглашает вас обсудить условия сделки онлайн',
-                    f'/my-orders?orderId={int(order_id)}',
-                    {'type': 'online_invite', 'invitationId': inv_id, 'orderId': int(order_id)}
+                    f'/my-orders?orderId={str(order_id)}',
+                    {'type': 'online_invite', 'invitationId': inv_id, 'orderId': str(order_id)}
                 )
 
                 return ok({'invitationId': inv_id, 'status': 'pending'})
@@ -173,7 +196,7 @@ def handler(event: dict, context) -> dict:
         elif post_action == 'respond':
             inv_id = body.get('invitationId')
             recipient_id = body.get('recipientId')
-            response = body.get('response')  # 'accepted' or 'declined'
+            response = body.get('response')
             if not inv_id or not recipient_id or response not in ('accepted', 'declined'):
                 return err(400, 'invitationId, recipientId, response required')
 
@@ -198,7 +221,7 @@ def handler(event: dict, context) -> dict:
                         sender_id,
                         'Приглашение принято!',
                         f'{recipient_name} принял приглашение — начните общение',
-                        f'/my-orders?orderId={order_id}',
+                        f'/my-orders?orderId={str(order_id)}',
                         {'type': 'invite_accepted', 'orderId': str(order_id)}
                     )
                 else:
@@ -206,11 +229,11 @@ def handler(event: dict, context) -> dict:
                         sender_id,
                         'Не в сети',
                         f'{recipient_name} сейчас не в сети. Предложите цену и условия — ответит позже',
-                        f'/my-orders?orderId={order_id}',
+                        f'/my-orders?orderId={str(order_id)}',
                         {'type': 'invite_declined', 'orderId': str(order_id)}
                     )
 
-                return ok({'status': response, 'orderId': order_id})
+                return ok({'status': response, 'orderId': str(order_id)})
             finally:
                 cur.close()
                 conn.close()
