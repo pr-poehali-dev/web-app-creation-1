@@ -110,7 +110,7 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
   const touchEndY = useRef<number>(0);
   
   const shouldShowDistricts = () => {
-    const hiddenPaths = ['/', '/support'];
+    const hiddenPaths = ['/support'];
     return !hiddenPaths.includes(location.pathname);
   };
 
