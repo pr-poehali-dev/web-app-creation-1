@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { type BannerItem, type BannerFormState, PAGE_OPTIONS } from './types';
+import { REGIONS } from '@/data/regions';
 
 interface BannerFormProps {
   bannerForm: BannerFormState;
@@ -28,6 +29,15 @@ export default function BannerForm({
     onChange({ ...bannerForm, showOnPages: pages });
   };
 
+  const toggleRegion = (regionId: string) => {
+    const regions = bannerForm.showRegions.includes(regionId)
+      ? bannerForm.showRegions.filter(r => r !== regionId)
+      : [...bannerForm.showRegions, regionId];
+    onChange({ ...bannerForm, showRegions: regions });
+  };
+
+  const allRegionsSelected = bannerForm.showRegions.length === 0;
+
   return (
     <div className="bg-card rounded-xl border p-6">
       <h3 className="text-lg font-bold mb-5">
@@ -46,12 +56,12 @@ export default function BannerForm({
         </div>
 
         <div>
-          <Label>Сообщение</Label>
+          <Label>Сообщение (полный текст при раскрытии)</Label>
           <Textarea
             className="mt-1 min-h-[80px]"
             value={bannerForm.message}
             onChange={(e) => onChange({ ...bannerForm, message: e.target.value })}
-            placeholder="Текст баннера для пользователей"
+            placeholder="Текст новости, поздравления или объявления"
           />
         </div>
 
@@ -114,11 +124,13 @@ export default function BannerForm({
         <div>
           <Label>Предпросмотр баннера</Label>
           <div
-            className="mt-1 rounded-lg px-4 py-3 text-sm font-medium"
+            className="mt-1 rounded-lg px-4 py-2.5 text-sm"
             style={{ backgroundColor: bannerForm.backgroundColor, color: bannerForm.textColor }}
           >
-            <strong>{bannerForm.title || 'Заголовок'}</strong>
-            {bannerForm.message && <span className="ml-2 opacity-80">{bannerForm.message}</span>}
+            <strong>{bannerForm.title || 'Заголовок баннера'}</strong>
+            <span className="ml-2 opacity-70 text-xs hidden sm:inline">
+              {bannerForm.message ? bannerForm.message.slice(0, 60) + (bannerForm.message.length > 60 ? '...' : '') : 'Текст сообщения'}
+            </span>
           </div>
         </div>
 
@@ -140,6 +152,45 @@ export default function BannerForm({
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <Label>Показывать для регионов</Label>
+          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+            Если ни один не выбран — баннер виден всем регионам
+          </p>
+          <div className="border rounded-lg p-3 space-y-1.5 max-h-48 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => onChange({ ...bannerForm, showRegions: [] })}
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                allRegionsSelected
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-background text-muted-foreground border-border hover:border-primary'
+              }`}
+            >
+              🌍 Все регионы
+            </button>
+            {REGIONS.map(region => (
+              <button
+                key={region.id}
+                type="button"
+                onClick={() => toggleRegion(region.id)}
+                className={`w-full text-left px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                  bannerForm.showRegions.includes(region.id)
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'bg-background text-muted-foreground border-border hover:border-primary'
+                }`}
+              >
+                {region.name}
+              </button>
+            ))}
+          </div>
+          {bannerForm.showRegions.length > 0 && (
+            <p className="text-xs text-primary mt-1">
+              Выбрано регионов: {bannerForm.showRegions.length}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

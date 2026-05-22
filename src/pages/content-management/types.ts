@@ -18,6 +18,7 @@ export interface BannerItem {
   text_color?: string;
   icon?: string;
   show_on_pages?: string[];
+  show_regions?: string[];
 }
 
 export interface BannerFormState {
@@ -31,6 +32,7 @@ export interface BannerFormState {
   textColor: string;
   icon: string;
   showOnPages: string[];
+  showRegions: string[];
 }
 
 export const CONTENT_LABELS: Record<string, { label: string; hint: string }> = {
@@ -63,6 +65,7 @@ export const EMPTY_BANNER: BannerFormState = {
   textColor: '#FFFFFF',
   icon: '',
   showOnPages: ['home'],
+  showRegions: [],
 };
 
 export const PAGE_OPTIONS = [

@@ -2,11 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
-import type { ChatMessage, ChatAttachment } from '@/types/chat';
+import type { ChatMessage } from '@/types/chat';
 
 interface ChatBoxProps {
   orderId: string;
@@ -33,20 +31,13 @@ export default function ChatBox({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isAtBottomRef = useRef(true);
   const prevLengthRef = useRef(0);
+  const bottomAnchorRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  };
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 60;
-  };
-
+  // При первой загрузке — всегда прокручиваем в самый низ
   useEffect(() => {
+    if (messages.length > 0 && prevLengthRef.current === 0) {
+      scrollToBottom();
+    }
     const isNew = messages.length > prevLengthRef.current;
     prevLengthRef.current = messages.length;
     if (isNew && isAtBottomRef.current) {
@@ -54,9 +45,19 @@ export default function ChatBox({
     }
   }, [messages]);
 
+  const scrollToBottom = () => {
+    // Используем якорный элемент для надёжной прокрутки
+    bottomAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  };
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    isAtBottomRef.current = scrollHeight - scrollTop - clientHeight < 80;
+  };
+
   const handleSend = () => {
     if (!messageText.trim() && attachments.length === 0) return;
-
     onSendMessage(messageText.trim(), attachments);
     setMessageText('');
     setAttachments([]);
@@ -73,19 +74,9 @@ export default function ChatBox({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const totalFiles = attachments.length + files.length;
-
-    if (totalFiles > 5) {
-      alert('Максимум 5 файлов');
-      return;
-    }
-
-    const totalSize = [...attachments, ...files].reduce((sum, file) => sum + file.size, 0);
-    if (totalSize > 5 * 1024 * 1024) {
-      alert('Общий размер файлов не должен превышать 5 МБ');
-      return;
-    }
-
+    if (attachments.length + files.length > 5) { alert('Максимум 5 файлов'); return; }
+    const totalSize = [...attachments, ...files].reduce((sum, f) => sum + f.size, 0);
+    if (totalSize > 5 * 1024 * 1024) { alert('Общий размер файлов не должен превышать 5 МБ'); return; }
     setAttachments(prev => [...prev, ...files]);
   };
 
@@ -100,10 +91,7 @@ export default function ChatBox({
   };
 
   const formatTime = (date: Date): string => {
-    return new Date(date).toLocaleTimeString('ru-RU', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(date).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -117,8 +105,14 @@ export default function ChatBox({
 
       <Separator />
 
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea className="flex-1 p-3 sm:p-4" ref={scrollRef} onScroll={handleScroll}>
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+        {/* Нативный div вместо ScrollArea — нормально работает на мобильных */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-3 sm:p-4"
+          style={{ touchAction: 'pan-y', overscrollBehavior: 'contain' }}
+        >
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-8">
               <Icon name="MessageCircle" className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-2 sm:mb-3" />
@@ -137,9 +131,7 @@ export default function ChatBox({
                   >
                     <div
                       className={`max-w-[85%] sm:max-w-[75%] ${
-                        isOwnMessage
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                        isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted'
                       } rounded-lg p-2.5 sm:p-3 space-y-1.5`}
                     >
                       {!isOwnMessage && (
@@ -147,13 +139,11 @@ export default function ChatBox({
                           {message.senderName}
                         </p>
                       )}
-                      
                       {message.text && (
                         <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">
                           {message.text}
                         </p>
                       )}
-
                       {message.attachments && message.attachments.length > 0 && (
                         <div className="space-y-1">
                           {message.attachments.map((attachment) => (
@@ -173,7 +163,6 @@ export default function ChatBox({
                           ))}
                         </div>
                       )}
-
                       <p className={`text-[10px] sm:text-xs ${isOwnMessage ? 'opacity-70' : 'text-muted-foreground'}`}>
                         {formatTime(message.timestamp)}
                       </p>
@@ -181,20 +170,19 @@ export default function ChatBox({
                   </div>
                 );
               })}
+              {/* Якорь для прокрутки вниз */}
+              <div ref={bottomAnchorRef} />
             </div>
           )}
-        </ScrollArea>
+        </div>
 
         <Separator />
 
-        <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+        <div className="p-3 sm:p-4 space-y-2 sm:space-y-3 shrink-0">
           {attachments.length > 0 && (
             <div className="space-y-1.5">
               {attachments.map((file, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-1.5 text-xs sm:text-sm p-1.5 sm:p-2 bg-muted rounded"
-                >
+                <div key={index} className="flex items-center gap-1.5 text-xs sm:text-sm p-1.5 sm:p-2 bg-muted rounded">
                   <Icon name="File" className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                   <span className="flex-1 truncate text-xs">{file.name}</span>
                   <span className="text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
@@ -223,7 +211,6 @@ export default function ChatBox({
               onChange={handleFileSelect}
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
             />
-            
             <Button
               type="button"
               variant="outline"
@@ -235,7 +222,6 @@ export default function ChatBox({
             >
               <Icon name="Paperclip" className="h-4 w-4" />
             </Button>
-
             <Input
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
@@ -244,21 +230,15 @@ export default function ChatBox({
               disabled={isLoading}
               className="flex-1 text-sm h-9 sm:h-10"
             />
-
             <Button
               onClick={handleSend}
               disabled={isLoading || (!messageText.trim() && attachments.length === 0)}
               className="gap-1.5 h-9 sm:h-10 px-3 sm:px-4 flex-shrink-0"
-              size="sm"
             >
-              <Icon name="Send" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <Icon name="Send" className="h-4 w-4" />
               <span className="hidden sm:inline">Отправить</span>
             </Button>
           </div>
-
-          <p className="text-[10px] sm:text-xs text-muted-foreground">
-            До 5 файлов, макс. 5 МБ
-          </p>
         </div>
       </CardContent>
     </Card>

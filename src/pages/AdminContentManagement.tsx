@@ -128,6 +128,7 @@ export default function AdminContentManagement() {
       textColor: banner.text_color || '#FFFFFF',
       icon: banner.icon || '',
       showOnPages: banner.show_on_pages || ['home'],
+      showRegions: banner.show_regions || [],
     });
     setShowBannerForm(true);
   };
@@ -150,6 +151,7 @@ export default function AdminContentManagement() {
           text_color: bannerForm.textColor,
           icon: bannerForm.icon,
           show_on_pages: bannerForm.showOnPages,
+          show_regions: bannerForm.showRegions.length > 0 ? bannerForm.showRegions : null,
         });
         showSuccess('Баннер обновлён');
       } else {
@@ -164,6 +166,7 @@ export default function AdminContentManagement() {
           textColor: bannerForm.textColor,
           icon: bannerForm.icon,
           showOnPages: bannerForm.showOnPages,
+          showRegions: bannerForm.showRegions.length > 0 ? bannerForm.showRegions : null,
         });
         showSuccess('Баннер создан и опубликован');
       }

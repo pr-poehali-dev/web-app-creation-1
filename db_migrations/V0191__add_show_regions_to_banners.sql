@@ -1,0 +1,1 @@
+ALTER TABLE holiday_banners ADD COLUMN IF NOT EXISTS show_regions TEXT[] DEFAULT NULL;
