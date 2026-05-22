@@ -152,7 +152,10 @@ async function fetchWithRetry(url: string, options?: RequestInit, maxRetries = 2
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await fetch(url, options);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
       
       // Кэшируем только GET запросы (кроме сообщений чата и заказов)
       if (response.ok && isCacheable) {
