@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import Icon from '@/components/ui/icon';
+import { createPortal } from 'react-dom';
 import { getSession } from '@/utils/auth';
 import { playInviteSound } from '@/utils/notificationSound';
 import {
@@ -21,14 +20,10 @@ interface Props {
   onOpenOrderChat: (orderId: string) => void;
 }
 
-// Вибрация — работает на мобильных устройствах
 function vibrate(pattern: number | number[]) {
-  try {
-    if (navigator.vibrate) navigator.vibrate(pattern);
-  } catch (_e) { /* ignore */ }
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (_e) { /* ignore */ }
 }
 
-// Системное уведомление браузера — показывается даже при неактивном экране
 async function showSystemNotification(title: string, body: string) {
   try {
     if (!('Notification' in window)) return;
@@ -48,57 +43,40 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
   const sentPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const incomingPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Получаем userId надёжно
   useEffect(() => {
     const sync = () => {
       const session = getSession();
-      const id = session?.id ? Number(session.id) : null;
-      setUserId(id);
+      setUserId(session?.id ? Number(session.id) : null);
     };
     sync();
     window.addEventListener('userSessionChanged', sync);
     window.addEventListener('userLoggedOut', () => setUserId(null));
-    return () => {
-      window.removeEventListener('userSessionChanged', sync);
-    };
+    return () => { window.removeEventListener('userSessionChanged', sync); };
   }, []);
 
-  // ── Обработка нового входящего приглашения ────────────────────────────────
   const handleNewInvitation = useCallback((inv: Invitation) => {
     if (seenInvites.current.has(inv.id)) return;
     seenInvites.current.add(inv.id);
     setIncoming(inv);
-
-    // 1. Звук
     playInviteSound().catch(() => { /* ignore */ });
-
-    // 2. Вибрация — пульс 3 раза
     vibrate([300, 150, 300, 150, 300]);
-
-    // 3. Системное уведомление (при неактивной вкладке)
     if (document.visibilityState !== 'visible') {
-      showSystemNotification(
-        'Приглашение к онлайн-общению',
-        `${inv.senderName} приглашает обсудить условия сделки`
-      );
+      showSystemNotification('Приглашение к онлайн-общению', `${inv.senderName} приглашает обсудить условия сделки`);
     }
   }, []);
 
-  // ── Polling входящих приглашений ────────────────────────────────────────────
   const pollIncomingFn = useCallback(async () => {
     if (!userId) return;
     try {
       const inv = await pollIncoming(userId);
       if (inv) handleNewInvitation(inv);
-    } catch (_e) { /* сетевая ошибка — молча игнорируем */ }
+    } catch (_e) { /* ignore */ }
   }, [userId, handleNewInvitation]);
 
   useEffect(() => {
     if (!userId) return;
     pollIncomingFn();
     incomingPollRef.current = setInterval(pollIncomingFn, 3000);
-
-    // При возврате в приложение — немедленно опрашиваем 3 раза подряд
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
       pollIncomingFn();
@@ -106,14 +84,12 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
       setTimeout(pollIncomingFn, 1500);
     };
     document.addEventListener('visibilitychange', onVisible);
-
     return () => {
       if (incomingPollRef.current) clearInterval(incomingPollRef.current);
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [userId, pollIncomingFn]);
 
-  // ── Слушаем событие отправки приглашения ──────────────────────────────────
   useEffect(() => {
     const handler = (e: Event) => {
       const { invitationId, orderId, recipientName } = (e as CustomEvent).detail;
@@ -123,10 +99,8 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     return () => window.removeEventListener('onlineInviteSent', handler);
   }, []);
 
-  // ── Polling статуса отправленного приглашения ─────────────────────────────
   useEffect(() => {
     if (!sent || sent.status !== 'waiting' || !userId) return;
-
     const poll = async () => {
       try {
         const result = await pollSentStatus(sent.invitationId, userId);
@@ -136,125 +110,165 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
           playInviteSound().catch(() => { /* ignore */ });
           vibrate([500, 100, 500]);
           if (sentPollRef.current) clearInterval(sentPollRef.current);
-          setTimeout(() => {
-            onOpenOrderChat(result.orderId);
-            setTimeout(() => setSent(null), 4000);
-          }, 1500);
-        } else if (result.status === 'declined' || result.status === 'expired' || result.status === 'not_found') {
+          setTimeout(() => { onOpenOrderChat(result.orderId); setTimeout(() => setSent(null), 4000); }, 1500);
+        } else if (['declined', 'expired', 'not_found'].includes(result.status)) {
           setSent(prev => prev ? { ...prev, status: 'declined' } : null);
           if (sentPollRef.current) clearInterval(sentPollRef.current);
           setTimeout(() => setSent(null), 6000);
         }
-      } catch (_e) { /* сетевая ошибка — молча игнорируем */ }
+      } catch (_e) { /* ignore */ }
     };
-
     sentPollRef.current = setInterval(poll, 3000);
-    return () => {
-      if (sentPollRef.current) clearInterval(sentPollRef.current);
-    };
+    return () => { if (sentPollRef.current) clearInterval(sentPollRef.current); };
   }, [sent?.invitationId, sent?.status, userId, onOpenOrderChat]);
 
-  // ── Ответ на входящее приглашение ─────────────────────────────────────────
   const handleRespond = async (response: 'accepted' | 'declined') => {
     if (!incoming || !userId) return;
     setResponding(true);
-    const result = await respondToInvitation(incoming.id, userId, response);
-    setResponding(false);
-    setIncoming(null);
-    if (response === 'accepted' && result?.orderId) {
-      onOpenOrderChat(result.orderId);
+    try {
+      const result = await respondToInvitation(incoming.id, userId, response);
+      setIncoming(null);
+      if (response === 'accepted' && result?.orderId) onOpenOrderChat(result.orderId);
+    } finally {
+      setResponding(false);
     }
   };
 
-  // ── Рендер: входящее приглашение ─────────────────────────────────────────
+  // ── Входящее приглашение ──────────────────────────────────────────────────
   if (incoming) {
-    return (
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300">
-        <div className="bg-card border-2 border-primary/50 shadow-2xl rounded-2xl p-4">
-          <div className="flex items-start gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 animate-pulse">
-              <Icon name="PhoneCall" size={20} className="text-primary" />
+    return createPortal(
+      // Полноэкранный backdrop — перекрывает ВСЁ включая модальные окна
+      <div
+        style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none' }}
+      >
+        {/* Карточка приглашения — только она кликабельна */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100% - 2rem)',
+            maxWidth: '400px',
+            pointerEvents: 'all',
+          }}
+          className="animate-in slide-in-from-bottom-4 fade-in duration-300"
+        >
+          <div
+            style={{
+              background: 'var(--card)',
+              border: '2px solid hsl(var(--primary) / 0.5)',
+              borderRadius: '1rem',
+              padding: '1rem',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.4)',
+            }}
+          >
+            {/* Заголовок */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'hsl(var(--primary) / 0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                📞
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontWeight: 600, fontSize: '14px', margin: 0 }}>Приглашение к онлайн-общению</p>
+                <p style={{ fontSize: '12px', color: 'var(--muted-foreground)', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <strong>{incoming.senderName}</strong> приглашает обсудить условия сделки
+                </p>
+              </div>
+              {/* Крестик — закрыть без ответа */}
+              <button
+                onClick={() => setIncoming(null)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '4px', marginTop: '-4px', marginRight: '-4px',
+                  color: 'var(--muted-foreground)', flexShrink: 0,
+                  fontSize: '18px', lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm leading-tight">Приглашение к онлайн-общению</p>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                <span className="font-medium text-foreground">{incoming.senderName}</span>
-                {' приглашает обсудить условия сделки'}
-              </p>
+
+            {/* Кнопки */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => { if (!responding) handleRespond('accepted'); }}
+                disabled={responding}
+                style={{
+                  flex: 1, height: '40px', borderRadius: '8px', border: 'none',
+                  background: 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))',
+                  fontSize: '13px', fontWeight: 600, cursor: responding ? 'not-allowed' : 'pointer',
+                  opacity: responding ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                }}
+              >
+                ✓ {responding ? 'Подождите…' : 'Принять'}
+              </button>
+              <button
+                onClick={() => { if (!responding) handleRespond('declined'); }}
+                disabled={responding}
+                style={{
+                  flex: 1, height: '40px', borderRadius: '8px',
+                  border: '1px solid hsl(var(--border))',
+                  background: 'transparent', color: 'hsl(var(--foreground))',
+                  fontSize: '13px', cursor: responding ? 'not-allowed' : 'pointer',
+                  opacity: responding ? 0.7 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                }}
+              >
+                ✕ Не сейчас
+              </button>
             </div>
-            <button
-              onClick={() => setIncoming(null)}
-              className="text-muted-foreground hover:text-foreground p-1 -mt-1 -mr-1 shrink-0"
-            >
-              <Icon name="X" size={16} />
-            </button>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              className="flex-1 h-9 text-xs font-semibold"
-              onClick={() => handleRespond('accepted')}
-              disabled={responding}
-            >
-              <Icon name="Check" size={14} className="mr-1" />
-              Принять
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="flex-1 h-9 text-xs"
-              onClick={() => handleRespond('declined')}
-              disabled={responding}
-            >
-              <Icon name="X" size={14} className="mr-1" />
-              Не сейчас
-            </Button>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
 
-  // ── Рендер: статус отправленного ──────────────────────────────────────────
+  // ── Статус отправленного приглашения ──────────────────────────────────────
   if (sent) {
-    if (sent.status === 'waiting') {
-      return (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="bg-card border border-muted shadow-xl rounded-2xl px-4 py-3 flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse shrink-0" />
-            <p className="text-sm flex-1">
-              Ожидаем ответ от <span className="font-semibold">{sent.recipientName}</span>…
-            </p>
-            <button onClick={() => setSent(null)} className="text-muted-foreground hover:text-foreground p-1">
-              <Icon name="X" size={16} />
-            </button>
+    const content = sent.status === 'waiting' ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'hsl(var(--primary))', flexShrink: 0, animation: 'pulse 1.5s infinite' }} />
+        <p style={{ fontSize: '14px', flex: 1, margin: 0 }}>
+          Ожидаем ответ от <strong>{sent.recipientName}</strong>…
+        </p>
+        <button onClick={() => setSent(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '16px', color: 'var(--muted-foreground)' }}>✕</button>
+      </div>
+    ) : sent.status === 'accepted' ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+        <p style={{ fontSize: '14px', fontWeight: 600, color: '#16a34a', margin: 0 }}>Приглашение принято — открываю чат…</p>
+      </div>
+    ) : (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ fontSize: '16px' }}>📵</span>
+        <p style={{ fontSize: '14px', color: 'var(--muted-foreground)', flex: 1, margin: 0 }}>Не в сети. Предложите цену — ответит позже</p>
+        <button onClick={() => setSent(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '16px', color: 'var(--muted-foreground)' }}>✕</button>
+      </div>
+    );
+
+    return createPortal(
+      <div style={{ position: 'fixed', inset: 0, zIndex: 99999, pointerEvents: 'none' }}>
+        <div style={{
+          position: 'absolute', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
+          width: 'calc(100% - 2rem)', maxWidth: '400px', pointerEvents: 'all',
+        }}
+          className="animate-in slide-in-from-bottom-4 fade-in duration-300"
+        >
+          <div style={{
+            background: 'var(--card)', border: '1px solid hsl(var(--border))',
+            borderRadius: '1rem', padding: '12px 16px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+          }}>
+            {content}
           </div>
         </div>
-      );
-    }
-    if (sent.status === 'accepted') {
-      return (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="bg-card border border-green-500/40 shadow-xl rounded-2xl px-4 py-3 flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
-            <p className="text-sm flex-1 font-semibold text-green-600">Приглашение принято — открываю чат…</p>
-          </div>
-        </div>
-      );
-    }
-    if (sent.status === 'declined') {
-      return (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="bg-card border border-muted shadow-xl rounded-2xl px-4 py-3 flex items-start gap-3">
-            <Icon name="WifiOff" size={18} className="text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-sm flex-1 text-muted-foreground">Не в сети. Предложите цену и условия — ответит позже</p>
-            <button onClick={() => setSent(null)} className="text-muted-foreground hover:text-foreground p-1">
-              <Icon name="X" size={16} />
-            </button>
-          </div>
-        </div>
-      );
-    }
+      </div>,
+      document.body
+    );
   }
 
   return null;
