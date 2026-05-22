@@ -182,6 +182,12 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
                 {' приглашает обсудить условия сделки'}
               </p>
             </div>
+            <button
+              onClick={() => setIncoming(null)}
+              className="text-muted-foreground hover:text-foreground p-1 -mt-1 -mr-1 shrink-0"
+            >
+              <Icon name="X" size={16} />
+            </button>
           </div>
           <div className="flex gap-2">
             <Button
