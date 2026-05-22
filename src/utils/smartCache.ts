@@ -8,7 +8,7 @@ interface CacheEntry<T> {
   version: number;
 }
 
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const CACHE_DURATION = 2 * 60 * 1000; // 2 минуты
 
 export class SmartCache {
@@ -108,7 +108,7 @@ export class SmartCache {
       const cached = localStorage.getItem(`cache_${key}`);
       if (!cached) return true;
 
-      const entry: CacheEntry<any> = JSON.parse(cached);
+      const entry: CacheEntry<unknown> = JSON.parse(cached);
       const age = Date.now() - entry.timestamp;
       
       // Если кэшу больше 1 минуты - рекомендуем обновить в фоне
