@@ -56,7 +56,6 @@ def get_user_name(cur, schema, user_id):
 
 def handler(event: dict, context) -> dict:
     """Система онлайн-приглашений: отправить, ответить, проверить статус"""
-
     if event.get('httpMethod') == 'OPTIONS':
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': ''}
 
@@ -74,10 +73,8 @@ def handler(event: dict, context) -> dict:
         conn, cur, schema = get_db()
         try:
             cur.execute(f'''
-                SELECT i.id, i.order_id, i.sender_id, i.status,
-                       o.offer_title
+                SELECT i.id, i.order_id, i.sender_id, i.status
                 FROM {schema}.online_invitations i
-                LEFT JOIN {schema}.orders o ON o.id = i.order_id
                 WHERE i.recipient_id = %s
                   AND i.status = 'pending'
                   AND i.expires_at > NOW()
@@ -88,14 +85,14 @@ def handler(event: dict, context) -> dict:
             if not row:
                 return ok({'invitation': None})
 
-            inv_id, order_id, sender_id, status, offer_title = row
+            inv_id, order_id, sender_id, status = row
             sender_name = get_user_name(cur, schema, sender_id)
             return ok({'invitation': {
                 'id': inv_id,
-                'orderId': order_id,
+                'orderId': str(order_id),
                 'senderId': sender_id,
                 'senderName': sender_name,
-                'offerTitle': offer_title or '',
+                'offerTitle': '',
                 'status': status,
             }})
         finally:
@@ -154,7 +151,7 @@ def handler(event: dict, context) -> dict:
                         (order_id, sender_id, recipient_id, status, expires_at)
                     VALUES (%s, %s, %s, 'pending', NOW() + INTERVAL '2 minutes')
                     RETURNING id
-                ''', (int(order_id), int(sender_id), int(recipient_id)))
+                ''', (str(order_id), int(sender_id), int(recipient_id)))
                 inv_id = cur.fetchone()[0]
                 conn.commit()
 
@@ -201,16 +198,16 @@ def handler(event: dict, context) -> dict:
                         sender_id,
                         'Приглашение принято!',
                         f'{recipient_name} принял приглашение — начните общение',
-                        '/my-orders',
-                        {'type': 'invite_accepted', 'orderId': order_id}
+                        f'/my-orders?orderId={order_id}',
+                        {'type': 'invite_accepted', 'orderId': str(order_id)}
                     )
                 else:
                     send_push(
                         sender_id,
                         'Не в сети',
                         f'{recipient_name} сейчас не в сети. Предложите цену и условия — ответит позже',
-                        '/my-orders',
-                        {'type': 'invite_declined', 'orderId': order_id}
+                        f'/my-orders?orderId={order_id}',
+                        {'type': 'invite_declined', 'orderId': str(order_id)}
                     )
 
                 return ok({'status': response, 'orderId': order_id})
