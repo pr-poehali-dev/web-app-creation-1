@@ -68,19 +68,22 @@ const unlockAudio = () => {
     audioContext.resume().catch(() => { /* ignore */ });
   }
 
-  // 2. HTML5 Audio preload — создаём элемент + играем 0мс тишину чтобы разблокировать
+  // 2. HTML5 Audio preload — создаём элемент c тишиной чтобы разблокировать iOS,
+  //    но сам рингтон НЕ загружаем сейчас — только при реальном вызове
   if (!preloadedAudio) {
     try {
-      preloadedAudio = new Audio(getRingtoneUrl());
-      preloadedAudio.preload = 'auto';
-      preloadedAudio.volume = 0.8;
-      // Первый тап: играем тихо 0мс — iOS разблокирует элемент
-      preloadedAudio.volume = 0;
-      preloadedAudio.play().then(() => {
-        preloadedAudio!.pause();
-        preloadedAudio!.currentTime = 0;
-        preloadedAudio!.volume = 0.8;
-      }).catch(() => { /* ignore */ });
+      // Используем data-URI тишины (0.1 сек) — разблокирует элемент без звука
+      const silenceUrl = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAA' +
+        'EAAQARKwAAESsAAAEACABkYXRhAAAAAA==';
+      const unlockEl = new Audio(silenceUrl);
+      unlockEl.volume = 0;
+      unlockEl.play().then(() => {
+        unlockEl.pause();
+        // Теперь создаём настоящий preloaded элемент — уже без play()
+        preloadedAudio = new Audio(getRingtoneUrl());
+        preloadedAudio.preload = 'auto';
+        preloadedAudio.volume = 0.8;
+      }).catch(() => { /* autoplay blocked — ничего страшного */ });
     } catch (_e) { /* ignore */ }
   }
 };
@@ -131,33 +134,39 @@ export const enableNotificationSound = () => { unlockAudio(); };
 
 // Звук входящего приглашения — сначала WebAudio, потом preloadedAudio, потом новый Audio
 export const playInviteSound = async () => {
-  // Вариант 1: WebAudio (работает на десктопе и Android если был жест)
-  if (audioContext && audioContext.state === 'running') {
+  // Вариант 1: WebAudio
+  if (audioContext) {
     try {
-      const t = audioContext.currentTime;
-      const pulses = [
-        { freq: 880,  time: 0 },    { freq: 1100, time: 0.15 },
-        { freq: 880,  time: 0.45 }, { freq: 1100, time: 0.60 },
-        { freq: 880,  time: 0.90 }, { freq: 1100, time: 1.05 },
-      ];
-      pulses.forEach(({ freq, time }) => {
-        playNote(audioContext!, freq, t + time, 0.18, 0.35);
-      });
-      return;
+      // Обязательно resume — контекст может быть suspended
+      if (audioContext.state === 'suspended') await audioContext.resume();
+      if (audioContext.state === 'running') {
+        const t = audioContext.currentTime;
+        const pulses = [
+          { freq: 880,  time: 0 },    { freq: 1100, time: 0.15 },
+          { freq: 880,  time: 0.45 }, { freq: 1100, time: 0.60 },
+          { freq: 880,  time: 0.90 }, { freq: 1100, time: 1.05 },
+        ];
+        pulses.forEach(({ freq, time }) => {
+          playNote(audioContext!, freq, t + time, 0.18, 0.35);
+        });
+        return;
+      }
     } catch (_e) { /* fall through */ }
   }
 
   // Вариант 2: Заранее разблокированный Audio элемент (iOS после первого тапа)
   if (preloadedAudio) {
     try {
-      preloadedAudio.currentTime = 0;
-      preloadedAudio.volume = 0.8;
-      await preloadedAudio.play();
+      // Клонируем чтобы избежать конфликта если элемент занят
+      const clone = preloadedAudio.cloneNode() as HTMLAudioElement;
+      clone.volume = 0.8;
+      clone.currentTime = 0;
+      await clone.play();
       return;
     } catch (_e) { /* fall through */ }
   }
 
-  // Вариант 3: Новый Audio элемент с свежим blob URL
+  // Вариант 3: Новый Audio элемент с blob URL
   try {
     const audio = new Audio(getRingtoneUrl());
     audio.volume = 0.8;
