@@ -18,6 +18,7 @@ import InstallPrompt from "./components/InstallPrompt";
 import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
 import OnlineInviteBanner from "./components/OnlineInviteBanner";
 import BannerStrip from "./components/BannerStrip";
+import LocationToast from "./components/LocationToast";
 
 
 // Ленивая загрузка страниц
@@ -353,6 +354,7 @@ const App = () => {
                     />
                   )}
 
+                  <LocationToast />
                   <InstallPrompt />
                   <ErrorBoundary>
                   <Suspense fallback={pageFallback}>

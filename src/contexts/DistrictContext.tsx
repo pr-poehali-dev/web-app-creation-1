@@ -1,7 +1,11 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { detectLocationByBrowser, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
+import { detectLocationByBrowser, getLocationFromStorage, saveLocationToStorage, detectVpn } from '@/utils/geolocation';
 import { REGIONS, findRegionByLocation, type Region } from '@/data/regions';
 import { DISTRICTS, getDistrictsByRegion, findDistrictByName, type District as DistrictType } from '@/data/districts';
+
+const emitLocationEvent = (type: 'detected' | 'vpn', payload?: Record<string, string>) => {
+  window.dispatchEvent(new CustomEvent('locationNotify', { detail: { type, ...payload } }));
+};
 
 export interface District {
   id: string;
@@ -103,12 +107,21 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('locationDetected', 'true');
         setIsDetecting(true);
         try {
-          // Сначала быстро через IP — без запроса разрешений
+          // Проверяем VPN параллельно с IP-геолокацией
           const { detectLocationByIP } = await import('@/utils/geolocation');
-          const ipLocation = await detectLocationByIP();
+          const [ipLocation, vpnResult] = await Promise.all([detectLocationByIP(), detectVpn()]);
+
+          // Если VPN — предупреждаем и останавливаемся
+          if (vpnResult.isVpn) {
+            setTimeout(() => emitLocationEvent('vpn', { country: vpnResult.country }), 1000);
+            setIsDetecting(false);
+            return;
+          }
+
           if (ipLocation.source !== 'default' && ipLocation.district && ipLocation.district !== 'Все районы') {
             const districtData = DISTRICTS.find(d => d.id === ipLocation.district);
             if (districtData) {
+              const regionData = REGIONS.find(r => r.id === districtData.regionId);
               setSelectedRegionState(districtData.regionId);
               setDetectedCity(ipLocation.city);
               saveLocationToStorage(ipLocation);
@@ -118,16 +131,23 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
               localStorage.setItem('detectedCity', ipLocation.city);
               setSelectedDistrictsState([districtData.id]);
               localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
+              setTimeout(() => emitLocationEvent('detected', {
+                city: ipLocation.city,
+                district: districtData.name,
+                region: regionData?.name || '',
+              }), 800);
               setIsDetecting(false);
               return;
             }
           }
+
           // Если IP не дал результата — запрашиваем GPS
           if (navigator.geolocation) {
             const gpsLocation = await detectLocationByBrowser();
             if (gpsLocation.source !== 'default' && gpsLocation.district && gpsLocation.district !== 'Все районы') {
               const districtData = DISTRICTS.find(d => d.id === gpsLocation.district);
               if (districtData) {
+                const regionData = REGIONS.find(r => r.id === districtData.regionId);
                 setSelectedRegionState(districtData.regionId);
                 setDetectedCity(gpsLocation.city);
                 saveLocationToStorage(gpsLocation);
@@ -137,6 +157,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem('detectedCity', gpsLocation.city);
                 setSelectedDistrictsState([districtData.id]);
                 localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
+                setTimeout(() => emitLocationEvent('detected', {
+                  city: gpsLocation.city,
+                  district: districtData.name,
+                  region: regionData?.name || '',
+                }), 800);
               }
             }
           }

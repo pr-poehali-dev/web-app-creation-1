@@ -21,7 +21,33 @@ export interface IPLocationResponse {
   loc?: string;
   timezone?: string;
   utc_offset?: string;
+  org?: string;
 }
+
+export interface VpnCheckResult {
+  isVpn: boolean;
+  country: string;
+  org: string;
+}
+
+export const detectVpn = async (): Promise<VpnCheckResult> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    const data: IPLocationResponse = await response.json();
+    const country = data.country || '';
+    const org = data.org || '';
+    const vpnKeywords = ['vpn', 'proxy', 'hosting', 'datacenter', 'digitalocean', 'amazon', 'google cloud', 'cloudflare', 'linode', 'vultr', 'ovh', 'hetzner'];
+    const orgLower = org.toLowerCase();
+    const isVpnOrg = vpnKeywords.some(kw => orgLower.includes(kw));
+    const isVpn = country !== 'RU' || isVpnOrg;
+    return { isVpn, country, org };
+  } catch {
+    return { isVpn: false, country: 'RU', org: '' };
+  }
+};
 
 export const detectLocationByIP = async (): Promise<LocationData> => {
   try {
