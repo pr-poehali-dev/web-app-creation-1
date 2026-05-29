@@ -56,34 +56,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         )
         
         image_urls = []
-        images_data = body_data.get('images', [])
-        
-        for idx, img_data in enumerate(images_data):
-            # Декодируем base64
-            img_base64 = img_data.split(',')[1] if ',' in img_data else img_data
-            img_bytes = base64.b64decode(img_base64)
-            
-            # Генерируем уникальное имя файла
-            file_ext = 'jpg'
-            if 'image/png' in img_data:
-                file_ext = 'png'
-            elif 'image/webp' in img_data:
-                file_ext = 'webp'
-            
-            file_name = f'auctions/{uuid.uuid4()}.{file_ext}'
-            
-            # Загружаем в S3
-            content_type = f'image/{file_ext}'
-            s3.put_object(
-                Bucket='files',
-                Key=file_name,
-                Body=img_bytes,
-                ContentType=content_type
-            )
-            
-            # Формируем CDN URL
-            cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{file_name}"
-            image_urls.append(cdn_url)
+
+        # Новый способ: фронтенд уже загрузил фото через offersAPI, передаёт готовые URL
+        if body_data.get('imageUrls'):
+            image_urls = body_data['imageUrls']
+        else:
+            # Старый способ: base64 inline (обратная совместимость)
+            images_data = body_data.get('images', [])
+            for idx, img_data in enumerate(images_data):
+                img_base64 = img_data.split(',')[1] if ',' in img_data else img_data
+                img_bytes = base64.b64decode(img_base64)
+                file_ext = 'jpg'
+                if 'image/png' in img_data:
+                    file_ext = 'png'
+                elif 'image/webp' in img_data:
+                    file_ext = 'webp'
+                file_name = f'auctions/{uuid.uuid4()}.{file_ext}'
+                s3.put_object(
+                    Bucket='files',
+                    Key=file_name,
+                    Body=img_bytes,
+                    ContentType=f'image/{file_ext}'
+                )
+                cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{file_name}"
+                image_urls.append(cdn_url)
+
+        video_url = body_data.get('videoUrl')
         
         # Подключение к БД
         conn = psycopg2.connect(os.environ['DATABASE_URL'])
@@ -117,9 +115,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 quantity, unit, starting_price, current_bid, min_bid_step,
                 buy_now_price, has_vat, vat_rate, district, full_address,
                 gps_coordinates, available_districts, available_delivery_types,
-                start_date, end_date, duration_days, status
+                start_date, end_date, duration_days, status, video_url
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             ) RETURNING id
         """, (
             int(user_id),
@@ -143,7 +141,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             start_datetime,
             end_datetime,
             duration_days,
-            initial_status
+            initial_status,
+            video_url
         ))
         
         auction_id = cur.fetchone()[0]

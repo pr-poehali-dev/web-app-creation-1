@@ -9,6 +9,9 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { useDistrict } from '@/contexts/DistrictContext';
 import { getSession } from '@/utils/auth';
+import { offersAPI } from '@/services/api';
+import { compressImage } from '@/utils/imageCompression';
+import { uploadVideoMultipart } from '@/utils/videoUpload';
 import AuctionBasicInfoSection from '@/components/auction/AuctionBasicInfoSection';
 import AuctionPricingSection from '@/components/auction/AuctionPricingSection';
 import AuctionScheduleSection from '@/components/auction/AuctionScheduleSection';
@@ -103,6 +106,12 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
 
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [video, setVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState('');
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [imageUploadProgress, setImageUploadProgress] = useState('');
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -157,24 +166,30 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length + images.length > 10) {
-      toast({
-        title: 'Слишком много изображений',
-        description: 'Максимум 10 изображений',
-        variant: 'destructive',
-      });
+      toast({ title: 'Ошибка', description: 'Максимум 10 фотографий', variant: 'destructive' });
       return;
     }
-
-    setImages(prev => [...prev, ...files]);
-    
-    files.forEach(file => {
+    for (const file of files) {
+      if (file.size > 100 * 1024 * 1024) {
+        toast({ title: 'Файл слишком большой', description: `${file.name} превышает 100 МБ`, variant: 'destructive' });
+        return;
+      }
+    }
+    const compressed: File[] = [];
+    for (const file of files) {
+      try {
+        compressed.push(await compressImage(file, 15, 2560));
+      } catch {
+        compressed.push(file);
+      }
+    }
+    setImages(prev => [...prev, ...compressed]);
+    compressed.forEach(file => {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreviews(prev => [...prev, reader.result as string]);
-      };
+      reader.onloadend = () => setImagePreviews(prev => [...prev, reader.result as string]);
       reader.readAsDataURL(file);
     });
   };
@@ -182,6 +197,22 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
   const removeImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      toast({ title: 'Видео слишком большое', description: `${(file.size / 1024 / 1024).toFixed(0)} МБ. Максимум 100 МБ.`, variant: 'destructive' });
+      return;
+    }
+    setVideo(file);
+    setVideoPreview(URL.createObjectURL(file));
+  };
+
+  const removeVideo = () => {
+    setVideo(null);
+    setVideoPreview('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -230,69 +261,47 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) {
-        toast({
-          title: 'Ошибка',
-          description: 'Необходимо авторизоваться',
-          variant: 'destructive',
-        });
+        toast({ title: 'Ошибка', description: 'Необходимо авторизоваться', variant: 'destructive' });
         navigate('/login');
         return;
       }
 
-      // Конвертируем и сжимаем изображения в base64
-      const imagePromises = images.map(file => {
-        return new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              let width = img.width;
-              let height = img.height;
-              
-              // Уменьшаем размер пропорционально до 800px по большей стороне
-              const maxSize = 800;
-              if (width > maxSize || height > maxSize) {
-                const ratio = Math.min(maxSize / width, maxSize / height);
-                width = Math.round(width * ratio);
-                height = Math.round(height * ratio);
-              }
-              
-              canvas.width = width;
-              canvas.height = height;
-              
-              const ctx = canvas.getContext('2d');
-              ctx?.drawImage(img, 0, 0, width, height);
-              
-              // Сжимаем до 70% качества для меньшего размера файла
-              const compressed = canvas.toDataURL('image/jpeg', 0.7);
-              resolve(compressed);
-            };
-            img.onerror = reject;
-            img.src = e.target?.result as string;
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      });
-      
-      const imagesBase64 = await Promise.all(imagePromises);
+      // 1. Загружаем фото через offersAPI (S3)
+      setIsUploadingImages(true);
+      const imageUrls: string[] = [];
+      for (let i = 0; i < imagePreviews.length; i++) {
+        const preview = imagePreviews[i];
+        setImageUploadProgress(`${i + 1}/${imagePreviews.length}`);
+        if (preview.startsWith('https://')) {
+          imageUrls.push(preview);
+        } else {
+          const result = await offersAPI.uploadMedia(preview, false);
+          imageUrls.push(result.url);
+        }
+      }
+      setIsUploadingImages(false);
+      setImageUploadProgress('');
 
-      // Получаем часовой пояс пользователя
+      // 2. Загружаем видео если есть
+      let videoUrl: string | null = null;
+      if (video) {
+        setIsUploadingVideo(true);
+        videoUrl = await uploadVideoMultipart(video, (p) => setVideoUploadProgress(p));
+        setIsUploadingVideo(false);
+        setVideoUploadProgress(0);
+      }
+
+      // 3. Получаем часовой пояс
       const userLocation = localStorage.getItem('userLocation');
-      const timezoneOffset = userLocation 
-        ? JSON.parse(userLocation).timezoneOffset || 9 
-        : 9;
+      const timezoneOffset = userLocation ? JSON.parse(userLocation).timezoneOffset || 9 : 9;
 
       const response = await fetch('https://functions.poehali.dev/54ee04cf-3428-411f-8f87-bc1f19a53f27', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-User-Id': userId,
-        },
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({
           ...formData,
-          images: imagesBase64,
+          imageUrls,
+          videoUrl,
           timezoneOffset,
         }),
       });
@@ -375,10 +384,17 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
             onDeliveryTypeToggle={handleDeliveryTypeToggle}
           />
 
-          <AuctionMediaSection 
+          <AuctionMediaSection
             imagePreviews={imagePreviews}
+            videoPreview={videoPreview}
+            isUploadingImages={isUploadingImages}
+            isUploadingVideo={isUploadingVideo}
+            imageUploadProgress={imageUploadProgress}
+            videoUploadProgress={videoUploadProgress}
             onImageUpload={handleImageUpload}
             onRemoveImage={removeImage}
+            onVideoUpload={handleVideoUpload}
+            onRemoveVideo={removeVideo}
           />
 
           <div className="flex gap-4">

@@ -272,7 +272,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'url', ai.url,
                         'alt', ai.alt
                     ) ORDER BY ai.sort_order
-                ) FILTER (WHERE ai.id IS NOT NULL), '[]') as images
+                ) FILTER (WHERE ai.id IS NOT NULL), '[]') as images,
+                a.video_url
             FROM t_p42562714_web_app_creation_1.auctions a
             LEFT JOIN t_p42562714_web_app_creation_1.auction_images ai ON a.id = ai.auction_id
         """
@@ -338,7 +339,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'bidCount': row[24],
                 'viewCount': row[25],
                 'createdAt': utc_to_yakutsk(created_at),
-                'images': json.loads(row[27]) if isinstance(row[27], str) else row[27]
+                'images': json.loads(row[27]) if isinstance(row[27], str) else row[27],
+                'videoUrl': row[28],
             }
             auctions.append(auction)
         
