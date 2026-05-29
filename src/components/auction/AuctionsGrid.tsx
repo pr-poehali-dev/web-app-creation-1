@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 import AuctionCard from '@/components/auction/AuctionCard';
 import type { Auction } from '@/types/auction';
+import { useDistrict } from '@/contexts/DistrictContext';
 
 interface District {
   id: string;
@@ -43,6 +44,7 @@ export default function AuctionsGrid({
 }: AuctionsGridProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
   const firstAuctionRef = useRef<HTMLDivElement>(null);
+  const { selectedDistricts, setSelectedDistricts } = useDistrict();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -69,6 +71,7 @@ export default function AuctionsGrid({
   }
 
   if (currentAuctions.length === 0) {
+    const hasDistrictFilter = selectedDistricts.length > 0;
     return (
       <div className="text-center py-10 md:py-16">
         <Icon name="Gavel" className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground mx-auto mb-3 md:mb-4" />
@@ -78,11 +81,25 @@ export default function AuctionsGrid({
         <p className="text-sm md:text-base text-muted-foreground mb-4 md:mb-6">
           {showOnlyMy
             ? 'Создайте свой первый аукцион, чтобы начать продавать'
-            : 'Попробуйте изменить параметры фильтра или поиска'}
+            : hasDistrictFilter
+              ? 'В вашем районе пока нет аукционов. Попробуйте показать все районы.'
+              : 'Попробуйте изменить параметры фильтра или поиска'}
         </p>
-        {isAuthenticated && showOnlyMy && (
-          <Button onClick={onCreateClick}>Создать аукцион</Button>
-        )}
+        <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          {hasDistrictFilter && !showOnlyMy && (
+            <Button
+              variant="outline"
+              onClick={() => setSelectedDistricts([])}
+              className="gap-2"
+            >
+              <Icon name="MapPin" size={15} />
+              Показать все районы
+            </Button>
+          )}
+          {isAuthenticated && showOnlyMy && (
+            <Button onClick={onCreateClick}>Создать аукцион</Button>
+          )}
+        </div>
       </div>
     );
   }
