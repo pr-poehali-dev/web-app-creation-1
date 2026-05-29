@@ -215,6 +215,15 @@ const App = () => {
 
       // Слушаем сообщения от Service Worker
       navigator.serviceWorker.addEventListener('message', async (event) => {
+        // Новая версия SW активирована — сбрасываем кэш и перезагружаем
+        if (event.data.type === 'SW_UPDATED') {
+          try {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          } catch { /* ignore */ }
+          window.location.reload();
+          return;
+        }
         if (event.data.type === 'NOTIFICATION_CLICK') {
           const url: string = event.data.url || '/';
           // Парсим orderId из URL вида /my-orders?orderId=123

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.8';
+const CACHE_VERSION = 'v1.0.9';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 // Хосты API — никогда не кэшируем
@@ -32,7 +32,14 @@ self.addEventListener('activate', (event) => {
           .filter((name) => name !== STATIC_CACHE)
           .map((name) => caches.delete(name))
       );
-    }).then(() => self.clients.claim())
+    }).then(() => self.clients.claim()).then(() => {
+      // Уведомляем все открытые вкладки о новой версии — они перезагрузятся
+      return self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
+        });
+      });
+    })
   );
 });
 

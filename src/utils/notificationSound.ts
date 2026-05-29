@@ -89,9 +89,15 @@ const unlockAudio = () => {
 };
 
 if (typeof window !== 'undefined') {
-  const events = ['touchstart', 'touchend', 'click', 'keydown', 'pointerdown', 'scroll'];
+  // Только явные жесты пользователя — scroll убран, он срабатывал при входе
+  const events = ['touchstart', 'click', 'keydown', 'pointerdown'];
+  const onceUnlock = () => {
+    unlockAudio();
+    // После первого срабатывания снимаем все слушатели
+    events.forEach(evt => window.removeEventListener(evt, onceUnlock, true));
+  };
   events.forEach(evt => {
-    window.addEventListener(evt, unlockAudio, { passive: true, capture: true });
+    window.addEventListener(evt, onceUnlock, { passive: true, capture: true, once: false });
   });
 }
 
