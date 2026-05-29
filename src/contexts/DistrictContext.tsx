@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { detectLocationByBrowser, getLocationFromStorage, saveLocationToStorage, detectVpn } from '@/utils/geolocation';
+import { detectLocationByBrowser, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
 import { REGIONS, findRegionByLocation, type Region } from '@/data/regions';
 import { DISTRICTS, getDistrictsByRegion, findDistrictByName, type District as DistrictType } from '@/data/districts';
 
@@ -107,16 +107,9 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('locationDetected', 'true');
         setIsDetecting(true);
         try {
-          // Проверяем VPN параллельно с IP-геолокацией
+          // Сначала пробуем IP (быстро, без запроса разрешений)
           const { detectLocationByIP } = await import('@/utils/geolocation');
-          const [ipLocation, vpnResult] = await Promise.all([detectLocationByIP(), detectVpn()]);
-
-          // Если VPN — предупреждаем и останавливаемся
-          if (vpnResult.isVpn) {
-            setTimeout(() => emitLocationEvent('vpn', { country: vpnResult.country }), 1000);
-            setIsDetecting(false);
-            return;
-          }
+          const ipLocation = await detectLocationByIP();
 
           if (ipLocation.source !== 'default' && ipLocation.district && ipLocation.district !== 'Все районы') {
             const districtData = DISTRICTS.find(d => d.id === ipLocation.district);
