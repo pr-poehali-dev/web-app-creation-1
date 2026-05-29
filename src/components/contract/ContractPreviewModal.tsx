@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
 
@@ -21,11 +22,32 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-white shadow-sm">
+  const handleDownload = () => {
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    a.href = url;
+    a.download = `Договор_${date}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  return createPortal(
+    <div
+      className="fixed inset-0 flex flex-col bg-white"
+      style={{ zIndex: 99999 }}
+    >
+      {/* Шапка — единственная, без дублирования */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-white shadow-sm flex-shrink-0">
         <span className="font-semibold text-sm text-foreground">Шаблон договора</span>
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="default" onClick={handleDownload} className="gap-1.5">
+            <Icon name="Download" size={14} />
+            Скачать договор
+          </Button>
           <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
             <Icon name="Printer" size={14} />
             Печать / PDF
@@ -36,12 +58,15 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
           </Button>
         </div>
       </div>
+
+      {/* Содержимое договора */}
       <iframe
         ref={iframeRef}
         srcDoc={html}
         className="flex-1 w-full border-0"
         title="Шаблон договора"
       />
-    </div>
+    </div>,
+    document.body
   );
 }
