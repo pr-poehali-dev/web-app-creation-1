@@ -97,7 +97,52 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // При первом открытии — оставляем "Все районы" по умолчанию
+      // При первом открытии — автоматически определяем местоположение
+      const isFirstVisit = !localStorage.getItem('locationDetected');
+      if (isFirstVisit) {
+        localStorage.setItem('locationDetected', 'true');
+        setIsDetecting(true);
+        try {
+          // Сначала быстро через IP — без запроса разрешений
+          const { detectLocationByIP } = await import('@/utils/geolocation');
+          const ipLocation = await detectLocationByIP();
+          if (ipLocation.source !== 'default' && ipLocation.district && ipLocation.district !== 'Все районы') {
+            const districtData = DISTRICTS.find(d => d.id === ipLocation.district);
+            if (districtData) {
+              setSelectedRegionState(districtData.regionId);
+              setDetectedCity(ipLocation.city);
+              saveLocationToStorage(ipLocation);
+              setAvailableDistricts(getDistrictsByRegion(districtData.regionId));
+              setDetectedDistrictId(districtData.id);
+              localStorage.setItem('detectedDistrictId', districtData.id);
+              localStorage.setItem('detectedCity', ipLocation.city);
+              setSelectedDistrictsState([districtData.id]);
+              localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
+              setIsDetecting(false);
+              return;
+            }
+          }
+          // Если IP не дал результата — запрашиваем GPS
+          if (navigator.geolocation) {
+            const gpsLocation = await detectLocationByBrowser();
+            if (gpsLocation.source !== 'default' && gpsLocation.district && gpsLocation.district !== 'Все районы') {
+              const districtData = DISTRICTS.find(d => d.id === gpsLocation.district);
+              if (districtData) {
+                setSelectedRegionState(districtData.regionId);
+                setDetectedCity(gpsLocation.city);
+                saveLocationToStorage(gpsLocation);
+                setAvailableDistricts(getDistrictsByRegion(districtData.regionId));
+                setDetectedDistrictId(districtData.id);
+                localStorage.setItem('detectedDistrictId', districtData.id);
+                localStorage.setItem('detectedCity', gpsLocation.city);
+                setSelectedDistrictsState([districtData.id]);
+                localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
+              }
+            }
+          }
+        } catch (_e) { /* не удалось определить — оставляем "Все районы" */ }
+        setIsDetecting(false);
+      }
     };
 
     initLocation();
