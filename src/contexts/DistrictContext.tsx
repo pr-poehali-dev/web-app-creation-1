@@ -101,65 +101,53 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // При первом открытии — автоматически определяем местоположение
+      // При первом открытии — геолокацию запускаем ПОСЛЕ рендера страницы
       const isFirstVisit = !localStorage.getItem('locationDetected');
       if (isFirstVisit) {
         localStorage.setItem('locationDetected', 'true');
-        setIsDetecting(true);
-        try {
-          // Сначала пробуем IP (быстро, без запроса разрешений)
-          const { detectLocationByIP } = await import('@/utils/geolocation');
-          const ipLocation = await detectLocationByIP();
+        // Откладываем на 2 сек — страница успевает отрисоваться и стать интерактивной
+        setTimeout(async () => {
+          setIsDetecting(true);
+          try {
+            const { detectLocationByIP } = await import('@/utils/geolocation');
+            const ipLocation = await detectLocationByIP();
 
-          if (ipLocation.source !== 'default' && ipLocation.district && ipLocation.district !== 'Все районы') {
-            const districtData = DISTRICTS.find(d => d.id === ipLocation.district);
-            if (districtData) {
+            const applyLocation = (loc: typeof ipLocation) => {
+              const districtData = DISTRICTS.find(d => d.id === loc.district);
+              if (!districtData) return false;
               const regionData = REGIONS.find(r => r.id === districtData.regionId);
               setSelectedRegionState(districtData.regionId);
-              setDetectedCity(ipLocation.city);
-              saveLocationToStorage(ipLocation);
+              setDetectedCity(loc.city);
+              saveLocationToStorage(loc);
               setAvailableDistricts(getDistrictsByRegion(districtData.regionId));
               setDetectedDistrictId(districtData.id);
               localStorage.setItem('detectedDistrictId', districtData.id);
-              localStorage.setItem('detectedCity', ipLocation.city);
+              localStorage.setItem('detectedCity', loc.city);
               setSelectedDistrictsState([districtData.id]);
               localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
               setTimeout(() => emitLocationEvent('detected', {
-                city: ipLocation.city,
+                city: loc.city,
                 district: districtData.name,
                 region: regionData?.name || '',
               }), 800);
-              setIsDetecting(false);
-              return;
-            }
-          }
+              return true;
+            };
 
-          // Если IP не дал результата — запрашиваем GPS
-          if (navigator.geolocation) {
-            const gpsLocation = await detectLocationByBrowser();
-            if (gpsLocation.source !== 'default' && gpsLocation.district && gpsLocation.district !== 'Все районы') {
-              const districtData = DISTRICTS.find(d => d.id === gpsLocation.district);
-              if (districtData) {
-                const regionData = REGIONS.find(r => r.id === districtData.regionId);
-                setSelectedRegionState(districtData.regionId);
-                setDetectedCity(gpsLocation.city);
-                saveLocationToStorage(gpsLocation);
-                setAvailableDistricts(getDistrictsByRegion(districtData.regionId));
-                setDetectedDistrictId(districtData.id);
-                localStorage.setItem('detectedDistrictId', districtData.id);
-                localStorage.setItem('detectedCity', gpsLocation.city);
-                setSelectedDistrictsState([districtData.id]);
-                localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
-                setTimeout(() => emitLocationEvent('detected', {
-                  city: gpsLocation.city,
-                  district: districtData.name,
-                  region: regionData?.name || '',
-                }), 800);
+            const ipOk = ipLocation.source !== 'default'
+              && ipLocation.district
+              && ipLocation.district !== 'Все районы'
+              && applyLocation(ipLocation);
+
+            // Если IP не дал результата — пробуем GPS
+            if (!ipOk && navigator.geolocation) {
+              const gpsLocation = await detectLocationByBrowser();
+              if (gpsLocation.source !== 'default' && gpsLocation.district && gpsLocation.district !== 'Все районы') {
+                applyLocation(gpsLocation);
               }
             }
-          }
-        } catch (_e) { /* не удалось определить — оставляем "Все районы" */ }
-        setIsDetecting(false);
+          } catch (_e) { /* не удалось определить — оставляем "Все районы" */ }
+          setIsDetecting(false);
+        }, 2000);
       }
     };
 

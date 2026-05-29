@@ -33,7 +33,7 @@ export interface VpnCheckResult {
 export const detectVpn = async (): Promise<VpnCheckResult> => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
     const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
     clearTimeout(timeoutId);
     const data: IPLocationResponse = await response.json();
@@ -52,7 +52,7 @@ export const detectVpn = async (): Promise<VpnCheckResult> => {
 export const detectLocationByIP = async (): Promise<LocationData> => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
     const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
     clearTimeout(timeoutId);
     const data: IPLocationResponse = await response.json();
