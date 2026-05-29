@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Button } from '@/components/ui/button';
-import Icon from '@/components/ui/icon';
 
 interface ContractPreviewModalProps {
   html: string;
@@ -9,7 +7,7 @@ interface ContractPreviewModalProps {
 }
 
 export default function ContractPreviewModal({ html, onClose }: ContractPreviewModalProps) {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -17,9 +15,12 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
   }, []);
 
   const handlePrint = () => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.print();
-    }
+    const w = window.open('', '_blank');
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
   };
 
   const handleDownload = () => {
@@ -35,6 +36,14 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
     URL.revokeObjectURL(url);
   };
 
+  // Извлекаем только содержимое <body> из html для вставки в div
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const bodyContent = bodyMatch ? bodyMatch[1] : html;
+
+  // Извлекаем стили из <style> тега
+  const styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  const styles = styleMatch ? styleMatch[1] : '';
+
   return createPortal(
     <div
       style={{
@@ -46,11 +55,9 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
         background: '#fff',
       }}
     >
-      {/* Шапка — z-index выше iframe, pointer-events включены */}
+      {/* Шапка с кнопками */}
       <div
         style={{
-          position: 'relative',
-          zIndex: 2,
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
@@ -58,33 +65,70 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
           padding: '10px 16px',
           borderBottom: '1px solid #e5e7eb',
           background: '#fff',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
         }}
       >
-        <span style={{ fontWeight: 600, fontSize: 14 }}>Шаблон договора</span>
+        <span style={{ fontWeight: 600, fontSize: 14, color: '#111' }}>Шаблон договора</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button size="sm" variant="default" onClick={handleDownload} className="gap-1.5">
-            <Icon name="Download" size={14} />
-            Скачать договор
-          </Button>
-          <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5">
-            <Icon name="Printer" size={14} />
-            Печать / PDF
-          </Button>
-          <Button size="sm" variant="ghost" onClick={onClose} className="gap-1.5">
-            <Icon name="X" size={16} />
-            Закрыть
-          </Button>
+          <button
+            onClick={handleDownload}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 8, border: 'none',
+              background: '#16a34a', color: '#fff',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            ⬇ Скачать договор
+          </button>
+          <button
+            onClick={handlePrint}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 8,
+              border: '1px solid #d1d5db', background: '#fff', color: '#111',
+              fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            }}
+          >
+            🖨 Печать / PDF
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 8,
+              border: '1px solid #d1d5db', background: '#fff', color: '#111',
+              fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            }}
+          >
+            ✕ Закрыть
+          </button>
         </div>
       </div>
 
-      {/* iframe строго под шапкой, не перекрывает её */}
-      <div style={{ position: 'relative', zIndex: 1, flex: 1, overflow: 'hidden' }}>
-        <iframe
-          ref={iframeRef}
-          srcDoc={html}
-          style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-          title="Шаблон договора"
+      {/* Содержимое договора — обычный div, не iframe */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          background: '#f9f9f9',
+          padding: '24px',
+        }}
+      >
+        {styles && (
+          <style dangerouslySetInnerHTML={{ __html: styles }} />
+        )}
+        <div
+          ref={contentRef}
+          dangerouslySetInnerHTML={{ __html: bodyContent }}
+          style={{
+            maxWidth: 820,
+            margin: '0 auto',
+            background: '#fff',
+            padding: '40px 48px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+            borderRadius: 4,
+          }}
         />
       </div>
     </div>,
