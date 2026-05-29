@@ -182,10 +182,21 @@ def handler(event: dict, context) -> dict:
                 sender_name = get_user_name(cur, schema, sender_id)
                 send_push(
                     recipient_id,
-                    'Приглашение к онлайн-общению',
-                    f'{sender_name} приглашает вас обсудить условия сделки онлайн',
+                    f'📞 {sender_name} приглашает в чат',
+                    'Нажмите чтобы открыть чат заказа',
                     f'/my-orders?orderId={str(order_id)}',
-                    {'type': 'online_invite', 'invitationId': inv_id, 'orderId': str(order_id)}
+                    {
+                        'type': 'online_invite',
+                        'tag': 'online-invite',
+                        'requireInteraction': True,
+                        'invitationId': inv_id,
+                        'orderId': str(order_id),
+                        'data': {
+                            'url': f'/my-orders?orderId={str(order_id)}',
+                            'type': 'online_invite',
+                            'orderId': str(order_id),
+                        }
+                    }
                 )
 
                 return ok({'invitationId': inv_id, 'status': 'pending'})

@@ -97,13 +97,11 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Воспроизведение звука через AudioContext (работает даже без открытой вкладки)
+// Короткий бип — обычное уведомление
 function playNotificationSound() {
   try {
     const ctx = new AudioContext();
     const now = ctx.currentTime;
-
-    // Мелодичный двойной бип — приятный звук уведомления
     const freqs = [880, 1100];
     freqs.forEach((freq, i) => {
       const osc = ctx.createOscillator();
@@ -118,8 +116,35 @@ function playNotificationSound() {
       osc.start(now + i * 0.18);
       osc.stop(now + i * 0.18 + 0.25);
     });
-
     setTimeout(() => ctx.close(), 1000);
+  } catch (e) {}
+}
+
+// Длинный телефонный звонок — для приглашения в чат
+function playRingSound() {
+  try {
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+    // 3 пары импульсов — как телефонный звонок
+    const pulses = [
+      { freq: 880, time: 0 },    { freq: 1100, time: 0.15 },
+      { freq: 880, time: 0.45 }, { freq: 1100, time: 0.60 },
+      { freq: 880, time: 0.90 }, { freq: 1100, time: 1.05 },
+    ];
+    pulses.forEach(({ freq, time }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now + time);
+      gain.gain.linearRampToValueAtTime(0.4, now + time + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + time + 0.18);
+      osc.start(now + time);
+      osc.stop(now + time + 0.22);
+    });
+    setTimeout(() => ctx.close(), 2000);
   } catch (e) {}
 }
 
@@ -159,21 +184,30 @@ self.addEventListener('push', (event) => {
         tag: notificationData.tag,
         requireInteraction: notificationData.requireInteraction,
       }),
-      // Если входящий видеозвонок — уведомляем открытые вкладки сразу
+      // Уведомляем открытые вкладки + играем нужный звук
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
         const callData = notificationData.data && notificationData.data.callData;
+        const isInvite = notificationData.data && notificationData.data.type === 'online_invite';
+
         if (clientList.length > 0) {
           clientList.forEach((client) => {
-            // Звук уведомления
-            client.postMessage({ type: 'PLAY_NOTIFICATION_SOUND' });
-            // Если это видеозвонок — показываем IncomingCallAlert сразу
+            if (isInvite) {
+              // Приглашение в чат — длинный звонок
+              client.postMessage({ type: 'PLAY_INVITE_RING' });
+            } else {
+              client.postMessage({ type: 'PLAY_NOTIFICATION_SOUND' });
+            }
             if (callData) {
               client.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
             }
           });
         } else {
-          // Вкладка закрыта — играем через AudioContext в SW
-          playNotificationSound();
+          // Вкладка закрыта — играем через AudioContext прямо в SW
+          if (isInvite) {
+            playRingSound();
+          } else {
+            playNotificationSound();
+          }
         }
       }),
     ])

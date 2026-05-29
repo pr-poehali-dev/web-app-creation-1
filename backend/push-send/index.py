@@ -171,7 +171,7 @@ def handler(event: dict, context) -> dict:
             'badge': '/favicon.png',
             'data': notification_data,
             'tag': notification_type,
-            'requireInteraction': notification_type == 'video_call'
+            'requireInteraction': notification_type in ('video_call', 'online_invite'),
         })
 
         sent_count = 0

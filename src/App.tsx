@@ -238,24 +238,42 @@ const App = () => {
           try {
             const ctx = new AudioContext();
             const now = ctx.currentTime;
-            const freqs = [880, 1100];
-            freqs.forEach((freq, i) => {
+            [880, 1100].forEach((freq, i) => {
               const osc = ctx.createOscillator();
               const gain = ctx.createGain();
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-              osc.type = 'sine';
-              osc.frequency.value = freq;
+              osc.connect(gain); gain.connect(ctx.destination);
+              osc.type = 'sine'; osc.frequency.value = freq;
               gain.gain.setValueAtTime(0, now + i * 0.18);
               gain.gain.linearRampToValueAtTime(0.25, now + i * 0.18 + 0.02);
               gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.22);
-              osc.start(now + i * 0.18);
-              osc.stop(now + i * 0.18 + 0.25);
+              osc.start(now + i * 0.18); osc.stop(now + i * 0.18 + 0.25);
             });
             setTimeout(() => ctx.close(), 1000);
-          } catch (_e) {
-            console.warn('AudioContext error', _e);
-          }
+          } catch (_e) { /* ignore */ }
+        }
+        // Длинный звонок — приглашение в чат заказа
+        if (event.data.type === 'PLAY_INVITE_RING') {
+          try {
+            const ctx = new AudioContext();
+            if (ctx.state === 'suspended') await ctx.resume();
+            const now = ctx.currentTime;
+            const pulses = [
+              { freq: 880, time: 0 }, { freq: 1100, time: 0.15 },
+              { freq: 880, time: 0.45 }, { freq: 1100, time: 0.60 },
+              { freq: 880, time: 0.90 }, { freq: 1100, time: 1.05 },
+            ];
+            pulses.forEach(({ freq, time }) => {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain); gain.connect(ctx.destination);
+              osc.type = 'sine'; osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0, now + time);
+              gain.gain.linearRampToValueAtTime(0.4, now + time + 0.01);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + time + 0.18);
+              osc.start(now + time); osc.stop(now + time + 0.22);
+            });
+            setTimeout(() => ctx.close(), 2000);
+          } catch (_e) { /* ignore */ }
         }
       });
     }
