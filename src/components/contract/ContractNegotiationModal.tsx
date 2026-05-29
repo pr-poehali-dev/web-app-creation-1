@@ -320,6 +320,13 @@ export default function ContractNegotiationModal({
     ? `${status?.respondentFirstName || ''} ${status?.respondentLastName || ''}`.trim() || 'Контрагент'
     : `${status?.sellerFirstName || ''} ${status?.sellerLastName || ''}`.trim() || 'Продавец';
 
+  // Рендерим ContractPreviewModal отдельно — вне Dialog, чтобы его оверлей не блокировал клики
+  if (previewHtml) {
+    return (
+      <ContractPreviewModal html={previewHtml} onClose={() => setPreviewHtml(null)} />
+    );
+  }
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -430,9 +437,6 @@ export default function ContractNegotiationModal({
         onCancel={handleCancel}
       />
 
-      {previewHtml && (
-        <ContractPreviewModal html={previewHtml} onClose={() => setPreviewHtml(null)} />
-      )}
     </>
   );
 }
