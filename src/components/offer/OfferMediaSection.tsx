@@ -64,8 +64,8 @@ export default function OfferMediaSection({
         <CardTitle>{isWorks ? 'Наши работы' : 'Медиа'}</CardTitle>
         <CardDescription>
           {isWorks
-            ? 'Загрузите фотографии выполненных работ (до 10 фото + 1 видео)'
-            : 'Загрузите фотографии и видео (до 10 фото + 1 видео)'}
+            ? 'Загрузите фотографии выполненных работ (до 10 фото до 100 МБ + 1 видео до 100 МБ)'
+            : 'Загрузите фотографии и видео (до 10 фото до 100 МБ + 1 видео до 100 МБ)'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

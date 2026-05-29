@@ -303,12 +303,12 @@ export function useCreateOfferForm(editOffer?: Offer) {
       return;
     }
 
-    const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB — разрешаем большие файлы, сожмём сами
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 МБ — сожмём сами
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
         toast({
           title: 'Файл слишком большой',
-          description: `Файл ${file.name} превышает 15 МБ`,
+          description: `Файл ${file.name} превышает 100 МБ`,
           variant: 'destructive',
         });
         return;
@@ -318,7 +318,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     const compressedFiles: File[] = [];
     for (const file of files) {
       try {
-        const compressed = await compressImage(file, 4, 1920);
+        const compressed = await compressImage(file, 15, 2560);
         compressedFiles.push(compressed);
       } catch {
         compressedFiles.push(file);
@@ -361,10 +361,10 @@ export function useCreateOfferForm(editOffer?: Offer) {
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
+    if (file.size > 100 * 1024 * 1024) {
       toast({
         title: 'Видео слишком большое',
-        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(0)} МБ. Максимум 50 МБ.`,
+        description: `Размер видео: ${(file.size / 1024 / 1024).toFixed(0)} МБ. Максимум 100 МБ.`,
         variant: 'destructive',
       });
       return;

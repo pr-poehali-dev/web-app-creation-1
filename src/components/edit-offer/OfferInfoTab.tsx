@@ -259,11 +259,11 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     setIsUploadingImage(true);
     try {
       const file = files[0];
-      if (file.size > 10 * 1024 * 1024) {
-        toast({ title: 'Ошибка', description: 'Файл слишком большой. Максимум 10 МБ', variant: 'destructive' });
+      if (file.size > 100 * 1024 * 1024) {
+        toast({ title: 'Ошибка', description: 'Файл слишком большой. Максимум 100 МБ', variant: 'destructive' });
         return;
       }
-      const compressed = await compressImage(file);
+      const compressed = await compressImage(file, 15, 2560);
       const isAuto = offer.category === 'auto';
       if (isAuto) {
         const result = await offersAPI.uploadMedia(compressed, true);
