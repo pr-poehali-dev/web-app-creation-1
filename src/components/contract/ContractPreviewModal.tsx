@@ -37,13 +37,32 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
 
   return createPortal(
     <div
-      className="fixed inset-0 flex flex-col bg-white"
-      style={{ zIndex: 99999 }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 99999,
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#fff',
+      }}
     >
-      {/* Шапка — единственная, без дублирования */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-white shadow-sm flex-shrink-0">
-        <span className="font-semibold text-sm text-foreground">Шаблон договора</span>
-        <div className="flex items-center gap-2">
+      {/* Шапка — z-index выше iframe, pointer-events включены */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '10px 16px',
+          borderBottom: '1px solid #e5e7eb',
+          background: '#fff',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: 14 }}>Шаблон договора</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Button size="sm" variant="default" onClick={handleDownload} className="gap-1.5">
             <Icon name="Download" size={14} />
             Скачать договор
@@ -59,13 +78,15 @@ export default function ContractPreviewModal({ html, onClose }: ContractPreviewM
         </div>
       </div>
 
-      {/* Содержимое договора */}
-      <iframe
-        ref={iframeRef}
-        srcDoc={html}
-        className="flex-1 w-full border-0"
-        title="Шаблон договора"
-      />
+      {/* iframe строго под шапкой, не перекрывает её */}
+      <div style={{ position: 'relative', zIndex: 1, flex: 1, overflow: 'hidden' }}>
+        <iframe
+          ref={iframeRef}
+          srcDoc={html}
+          style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+          title="Шаблон договора"
+        />
+      </div>
     </div>,
     document.body
   );
