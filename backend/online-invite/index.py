@@ -142,7 +142,7 @@ def handler(event: dict, context) -> dict:
             cur.execute(f'''
                 SELECT last_seen_at FROM {schema}.online_presence
                 WHERE user_id = %s
-                  AND last_seen_at > NOW() - INTERVAL '30 seconds'
+                  AND last_seen_at > NOW() - INTERVAL '60 seconds'
             ''', (int(user_id),))
             row = cur.fetchone()
             return ok({'online': row is not None})

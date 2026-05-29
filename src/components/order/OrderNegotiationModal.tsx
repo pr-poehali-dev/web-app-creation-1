@@ -66,8 +66,15 @@ export default function OrderNegotiationModal({
     };
 
     check();
-    const interval = setInterval(check, 3000);
-    return () => clearInterval(interval);
+    // Проверяем каждые 5 сек — достаточно быстро для UX
+    const interval = setInterval(check, 5000);
+    // При пробуждении экрана — сразу обновляем статус
+    const onVisible = () => { if (document.visibilityState === 'visible') check(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [isOpen, counterpartId]);
 
   // Оповещаем баннер что пользователь уже открыл чат этого заказа
