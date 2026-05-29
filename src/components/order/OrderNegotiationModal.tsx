@@ -135,7 +135,7 @@ export default function OrderNegotiationModal({
                   disabled={inviteSending}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  {inviteSending ? 'Отправка…' : 'В сети — позвать'}
+                  {inviteSending ? 'Отправка…' : 'В сети'}
                 </Button>
               ) : (
                 <Button
