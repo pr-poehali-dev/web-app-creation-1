@@ -43,6 +43,7 @@ export default function NegotiationChatTab({
   scrollRef,
 }: NegotiationChatTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const showMicBtn = !pendingFile && !text.trim() && !isRecording;
 
   return (
@@ -144,19 +145,39 @@ export default function NegotiationChatTab({
               </div>
             ) : (
               <div className="flex gap-2">
+                {/* Инпут для фото/видео — отдельный для iOS Safari */}
                 <input
-                  ref={fileInputRef}
+                  ref={mediaInputRef}
                   type="file"
-                  accept="image/*,video/*,.pdf,.doc,.docx"
+                  accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/x-m4v"
                   className="hidden"
                   onChange={onFileSelect}
                 />
+                {/* Инпут для документов */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  className="hidden"
+                  onChange={onFileSelect}
+                />
+                {/* Кнопка фото/видео */}
+                <button
+                  type="button"
+                  onClick={() => mediaInputRef.current?.click()}
+                  disabled={isSending || !!pendingFile}
+                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                  title="Фото или видео"
+                >
+                  <Icon name="Image" className="h-4 w-4 text-muted-foreground" />
+                </button>
+                {/* Кнопка документа */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isSending || !!pendingFile}
                   className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
-                  title="Прикрепить файл"
+                  title="Прикрепить документ"
                 >
                   <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
                 </button>
