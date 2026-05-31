@@ -1,24 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import Icon from '@/components/ui/icon';
-import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
-import func2url from '../../../backend/func2url.json';
-import {
-  ResponseStatus,
-  ChatMessage,
-  buildContractHtml,
-} from './NegotiationTypes';
+import { buildContractHtml } from './NegotiationTypes';
+import { useNegotiationData } from './useNegotiationData';
+import { useNegotiationMedia } from './useNegotiationMedia';
+import NegotiationHeader from './NegotiationHeader';
 import NegotiationChatTab from './NegotiationChatTab';
 import NegotiationContractTab from './NegotiationContractTab';
 import { NegotiationFooter, ConfirmDialog, CancelDialog } from './NegotiationDialogs';
 import ContractPreviewModal from './ContractPreviewModal';
+import { useToast } from '@/hooks/use-toast';
+import func2url from '../../../backend/func2url.json';
 
 const CHAT_API = (func2url as Record<string, string>)['contract-chat'];
 
@@ -38,294 +31,44 @@ export default function ContractNegotiationModal({
   onStatusChange,
 }: ContractNegotiationModalProps) {
   const { toast } = useToast();
+
   const userId = (() => {
     const s = getSession() as { id?: number; userId?: number } | null;
     const raw = s?.id ?? s?.userId ?? (Number(localStorage.getItem('userId') || '0') || undefined);
     return raw ? String(raw) : '';
   })();
 
-  const [status, setStatus] = useState<ResponseStatus | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [text, setText] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
+  const [activeTab, setActiveTab] = useState<'chat' | 'preview'>('chat');
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [confirmChecked, setConfirmChecked] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'preview'>('chat');
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
 
-  // Медиа
-  const [pendingFile, setPendingFile] = useState<{ file: File; preview: string } | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isCancelRecordingRef = useRef(false);
+  const { status, messages, isLoading, scrollRef, loadStatus, loadMessages } = useNegotiationData({
+    isOpen,
+    responseId,
+    userId,
+  });
 
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  };
-
-  const loadStatus = useCallback(async () => {
-    if (!responseId) return;
-    try {
-      const res = await fetch(`${CHAT_API}?action=status&responseId=${responseId}`, {
-        headers: { 'X-User-Id': userId },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStatus(data);
-      }
-    } catch (e) { console.error(e); }
-  }, [responseId, userId]);
-
-  const loadMessages = useCallback(async () => {
-    if (!responseId) return;
-    try {
-      const res = await fetch(`${CHAT_API}?action=messages&responseId=${responseId}`, {
-        headers: { 'X-User-Id': userId },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessages(data.messages || []);
-        setTimeout(scrollToBottom, 50);
-      }
-    } catch (e) { console.error(e); }
-  }, [responseId, userId]);
-
-  useEffect(() => {
-    if (!isOpen || !responseId) return;
-    setIsLoading(true);
-    setActiveTab('chat');
-    Promise.all([loadStatus(), loadMessages()]).finally(() => setIsLoading(false));
-    pollRef.current = setInterval(loadMessages, 5000);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
-  }, [isOpen, responseId, loadStatus, loadMessages]);
-
-  // Запись голоса
-  const sendVoiceBlob = async (blob: Blob, mimeType: string) => {
-    if (!userId) return;
-    const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
-    setIsSending(true);
-    try {
-      const reader = new FileReader();
-      const fileData = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      const res = await fetch(CHAT_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({
-          responseId,
-          text: '',
-          fileData,
-          fileName: `voice_${Date.now()}.${ext}`,
-          fileType: mimeType,
-        }),
-      });
-      if (res.ok) {
-        await loadMessages();
-      } else {
-        toast({ title: 'Ошибка отправки голосового', variant: 'destructive' });
-      }
-    } finally {
-      setIsSending(false);
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
-        .find(t => MediaRecorder.isTypeSupported(t)) || '';
-      const mr = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-      const usedMime = mr.mimeType || mimeType || 'audio/webm';
-      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = () => {
-        stream.getTracks().forEach(t => t.stop());
-        if (audioChunksRef.current.length === 0) return;
-        const blob = new Blob(audioChunksRef.current, { type: usedMime });
-        if (isCancelRecordingRef.current) {
-          isCancelRecordingRef.current = false;
-          return;
-        }
-        sendVoiceBlob(blob, usedMime);
-      };
-      mr.start();
-      mediaRecorderRef.current = mr;
-      isCancelRecordingRef.current = false;
-      setIsRecording(true);
-      setRecordingTime(0);
-      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
-    } catch {
-      toast({ title: 'Нет доступа к микрофону', variant: 'destructive' });
-    }
-  };
-
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    setIsRecording(false);
-    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-  };
-
-  const cancelRecording = () => {
-    isCancelRecordingRef.current = true;
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stream?.getTracks().forEach(t => t.stop());
-      mediaRecorderRef.current.stop();
-    }
-    audioChunksRef.current = [];
-    setIsRecording(false);
-    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
-  };
-
-  const removePendingFile = () => {
-    setPendingFile(null);
-  };
-
-  const MIME_EXT_MAP: Record<string, string> = {
-    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-    gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
-    mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v',
-    avi: 'video/avi', webm: 'video/webm',
-    pdf: 'application/pdf', doc: 'application/msword',
-    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  };
-
-  const resolveFileType = (file: File): string => {
-    if (file.type) return file.type;
-    const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    return MIME_EXT_MAP[ext] || 'application/octet-stream';
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const MAX_SIZE = 500 * 1024 * 1024; // 500 МБ
-    if (file.size > MAX_SIZE) {
-      toast({ title: 'Файл слишком большой', description: 'Максимальный размер — 500 МБ', variant: 'destructive' });
-      e.target.value = '';
-      return;
-    }
-
-    const fileType = resolveFileType(file);
-    const isPdf = fileType === 'application/pdf';
-    const preview = isPdf ? '' : URL.createObjectURL(file);
-    setPendingFile({ file, preview });
-    e.target.value = '';
-  };
-
-  // Читаем Blob-чанк как ArrayBuffer → base64 через apply (не падает на iOS при больших буферах)
-  const blobChunkToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const buf = reader.result as ArrayBuffer;
-        const bytes = new Uint8Array(buf);
-        // apply вместо цикла += — не вызывает stack overflow на больших чанках
-        const binary = String.fromCharCode.apply(null, Array.from(bytes));
-        resolve(btoa(binary));
-      };
-      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-      reader.readAsArrayBuffer(blob);
-    });
-  };
-
-  // Загрузка файла через multipart S3 (чанки по 4 МБ)
-  const uploadFileMultipart = async (file: File): Promise<{ url: string; name: string; type: string }> => {
-    const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
-    const CHUNK = 4 * 1024 * 1024;
-    const fileType = resolveFileType(file);
-
-    // 1. Инициализируем multipart upload
-    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename: file.name || 'file', contentType: fileType, folder: 'contract-chat' }),
-    });
-    if (!initRes.ok) throw new Error('Не удалось начать загрузку файла');
-    const { uploadId, key, fileUrl } = await initRes.json();
-
-    // 2. Загружаем чанками через ArrayBuffer (стабильнее readAsDataURL на iOS Safari)
-    const parts: { partNumber: number; etag: string }[] = [];
-    const totalChunks = Math.ceil(file.size / CHUNK);
-
-    for (let i = 0; i < totalChunks; i++) {
-      const chunk = file.slice(i * CHUNK, Math.min((i + 1) * CHUNK, file.size));
-      const chunkB64 = await blobChunkToBase64(chunk);
-      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
-      });
-      if (!partRes.ok) {
-        // Отменяем загрузку при ошибке
-        fetch(`${UPLOAD_URL}?action=abort`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': userId }, body: JSON.stringify({ key, uploadId }) });
-        throw new Error(`Ошибка загрузки части ${i + 1}`);
-      }
-      const { etag } = await partRes.json();
-      parts.push({ partNumber: i + 1, etag });
-    }
-
-    // 3. Завершаем загрузку
-    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
-    });
-    if (!completeRes.ok) throw new Error('Не удалось завершить загрузку файла');
-
-    return { url: fileUrl, name: file.name || 'file', type: fileType };
-  };
-
-  const handleSend = async () => {
-    if ((!text.trim() && !pendingFile) || isSending) return;
-    if (!userId) {
-      toast({ title: 'Ошибка', description: 'Не удалось определить пользователя. Обновите страницу и войдите снова.', variant: 'destructive' });
-      return;
-    }
-    setIsSending(true);
-    try {
-      const payload: Record<string, unknown> = { responseId, text: text.trim() };
-
-      if (pendingFile) {
-        const { url, name, type } = await uploadFileMultipart(pendingFile.file);
-        payload.fileUrl = url;
-        payload.fileName = name;
-        payload.fileType = type;
-      }
-
-      const res = await fetch(CHAT_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        setText('');
-        removePendingFile();
-        await loadMessages();
-      } else {
-        toast({ title: 'Ошибка', description: 'Не удалось отправить сообщение', variant: 'destructive' });
-      }
-    } catch {
-      toast({ title: 'Ошибка', description: 'Не удалось загрузить файл. Проверьте соединение.', variant: 'destructive' });
-    } finally {
-      setIsSending(false);
-    }
-  };
+  const {
+    text, setText,
+    isSending,
+    pendingFile,
+    handleFileSelect,
+    removePendingFile,
+    isRecording,
+    recordingTime,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+    handleSend,
+  } = useNegotiationMedia({
+    userId,
+    responseId,
+    onMessageSent: loadMessages,
+  });
 
   const handleConfirm = async () => {
     if (!confirmChecked) return;
@@ -377,8 +120,7 @@ export default function ContractNegotiationModal({
 
   const handleDownloadContract = () => {
     if (!status) return;
-    const c = status.contract;
-    setPreviewHtml(buildContractHtml(status, c));
+    setPreviewHtml(buildContractHtml(status, status.contract));
   };
 
   const isSeller = status?.sellerId === Number(userId);
@@ -392,7 +134,6 @@ export default function ContractNegotiationModal({
     ? `${status?.respondentFirstName || ''} ${status?.respondentLastName || ''}`.trim() || 'Контрагент'
     : `${status?.sellerFirstName || ''} ${status?.sellerLastName || ''}`.trim() || 'Продавец';
 
-  // Рендерим ContractPreviewModal отдельно — вне Dialog, чтобы его оверлей не блокировал клики
   if (previewHtml) {
     return (
       <ContractPreviewModal html={previewHtml} onClose={() => setPreviewHtml(null)} />
@@ -403,51 +144,18 @@ export default function ContractNegotiationModal({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl max-h-[90vh] p-0" onPointerDownOutside={(e) => e.preventDefault()}>
-          <DialogHeader className="flex-shrink-0 px-4 sm:px-6 pt-4 pb-3 border-b">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Icon name="FileSignature" className="h-4 w-4 text-primary" />
-              <span className="truncate">{contractTitle || status?.contract?.title || 'Переговоры по контракту'}</span>
-            </DialogTitle>
-            {status && (
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                {isConfirmed && (
-                  <Badge className="bg-green-100 text-green-700 border-green-200">
-                    <Icon name="CheckCircle" size={12} className="mr-1" />
-                    Контракт заключён
-                  </Badge>
-                )}
-                {isCancelled && <Badge variant="destructive">Отменён</Badge>}
-                {!isConfirmed && !isCancelled && (
-                  <Badge variant="outline">На переговорах</Badge>
-                )}
-                {!isConfirmed && !isCancelled && (
-                  <span className="text-xs text-muted-foreground">
-                    {myConfirmed ? '✓ Вы подтвердили' : '○ Вы не подтвердили'}
-                    {' · '}
-                    {otherConfirmed ? `✓ ${otherName} подтвердил(а)` : `○ ${otherName} не подтвердил(а)`}
-                  </span>
-                )}
-              </div>
-            )}
-          </DialogHeader>
-
-          {/* Tabs */}
-          <div className="flex border-b flex-shrink-0">
-            <button
-              onClick={() => setActiveTab('chat')}
-              className={`flex-1 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'chat' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <Icon name="MessageSquare" size={14} />
-              Чат
-            </button>
-            <button
-              onClick={() => setActiveTab('preview')}
-              className={`flex-1 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'preview' ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <Icon name="FileText" size={14} />
-              Договор
-            </button>
-          </div>
+          <NegotiationHeader
+            contractTitle={contractTitle}
+            status={status}
+            isSeller={isSeller}
+            isConfirmed={isConfirmed}
+            isCancelled={isCancelled}
+            myConfirmed={myConfirmed}
+            otherConfirmed={otherConfirmed}
+            otherName={otherName}
+            activeTab={activeTab}
+            onTabChange={(tab) => { setActiveTab(tab); if (tab === 'chat') setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, 50); }}
+          />
 
           {isLoading ? (
             <div className="flex-1 flex items-center justify-center py-12">
@@ -476,7 +184,11 @@ export default function ContractNegotiationModal({
                 />
               )}
               {activeTab === 'preview' && (
-                <NegotiationContractTab status={status} userId={userId} onStatusChange={() => { loadStatus(); onStatusChange?.(); }} />
+                <NegotiationContractTab
+                  status={status}
+                  userId={userId}
+                  onStatusChange={() => { loadStatus(); onStatusChange?.(); }}
+                />
               )}
             </>
           )}
@@ -508,7 +220,6 @@ export default function ContractNegotiationModal({
         isCancelling={isCancelling}
         onCancel={handleCancel}
       />
-
     </>
   );
 }
