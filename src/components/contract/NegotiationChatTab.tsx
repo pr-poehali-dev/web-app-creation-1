@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -65,25 +66,26 @@ export default function NegotiationChatTab({
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* Лайтбокс */}
-      {lightboxUrl && (
+      {/* Лайтбокс — через portal в body, вне Dialog чтобы крестик не дублировался */}
+      {lightboxUrl && createPortal(
         <div
-          className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center"
+          style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setLightboxUrl(null)}
         >
           <button
-            className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 z-10"
+            style={{ position: 'absolute', top: 20, right: 20, zIndex: 1000000, background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', touchAction: 'manipulation' }}
             onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
           >
-            <Icon name="X" size={24} />
+            <Icon name="X" size={28} style={{ color: '#fff' }} />
           </button>
           <img
             src={lightboxUrl}
             alt="Просмотр"
-            className="max-w-full max-h-full object-contain"
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
             onClick={(e) => e.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
