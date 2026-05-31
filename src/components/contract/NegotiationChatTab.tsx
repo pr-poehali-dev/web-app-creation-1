@@ -83,10 +83,11 @@ export default function NegotiationChatTab({
           onClick={closeLightbox}
         >
           <button
-            style={{ position: 'absolute', top: 20, right: 20, zIndex: 1000000, background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.5)', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', touchAction: 'manipulation' }}
+            style={{ position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 1000000, background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.6)', borderRadius: 12, padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', touchAction: 'manipulation', color: '#fff', fontSize: 16, fontWeight: 600 }}
             onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
           >
-            <Icon name="X" size={28} style={{ color: '#fff' }} />
+            <Icon name="X" size={20} style={{ color: '#fff' }} />
+            Закрыть
           </button>
           <img
             src={lightboxUrl}
