@@ -199,21 +199,72 @@ export default function ContractNegotiationModal({
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isVideo = file.type.startsWith('video/');
     const isPdf = file.type === 'application/pdf';
-    const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast({
-        title: 'Файл слишком большой',
-        description: isVideo ? 'Лимит видео — 30 МБ' : 'Лимит файла — 20 МБ',
-        variant: 'destructive',
-      });
-      e.target.value = '';
-      return;
-    }
     const preview = isPdf ? '' : URL.createObjectURL(file);
     setPendingFile({ file, preview });
     e.target.value = '';
+  };
+
+  // Загрузка файла через multipart S3 (чанки по 4 МБ) — работает для любого размера
+  const uploadFileMultipart = async (file: File): Promise<{ url: string; name: string; type: string }> => {
+    const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
+    const CHUNK = 4 * 1024 * 1024;
+
+    // Определяем тип файла (iOS может не заполнять file.type)
+    let fileType = file.type;
+    if (!fileType && file.name) {
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      const extMap: Record<string, string> = {
+        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+        gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
+        mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v',
+        avi: 'video/avi', webm: 'video/webm',
+        pdf: 'application/pdf', doc: 'application/msword',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      };
+      fileType = extMap[ext] || 'application/octet-stream';
+    }
+
+    // 1. Инициализируем multipart upload
+    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ filename: file.name || 'file', contentType: fileType, folder: 'contract-chat' }),
+    });
+    if (!initRes.ok) throw new Error('Не удалось начать загрузку файла');
+    const { uploadId, key, fileUrl } = await initRes.json();
+
+    // 2. Загружаем чанками
+    const parts: { partNumber: number; etag: string }[] = [];
+    const totalChunks = Math.ceil(file.size / CHUNK);
+
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = file.slice(i * CHUNK, (i + 1) * CHUNK);
+      const chunkB64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(chunk);
+      });
+      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
+      });
+      if (!partRes.ok) throw new Error(`Ошибка загрузки части ${i + 1}`);
+      const { etag } = await partRes.json();
+      parts.push({ partNumber: i + 1, etag });
+    }
+
+    // 3. Завершаем загрузку
+    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
+    });
+    if (!completeRes.ok) throw new Error('Не удалось завершить загрузку файла');
+
+    return { url: fileUrl, name: file.name || 'file', type: fileType };
   };
 
   const handleSend = async () => {
@@ -227,29 +278,10 @@ export default function ContractNegotiationModal({
       const payload: Record<string, unknown> = { responseId, text: text.trim() };
 
       if (pendingFile) {
-        const reader = new FileReader();
-        const fileData = await new Promise<string>((resolve, reject) => {
-          reader.onload = () => resolve((reader.result as string).split(',')[1]);
-          reader.onerror = reject;
-          reader.readAsDataURL(pendingFile.file);
-        });
-        // На iOS тип файла может быть пустым — определяем по расширению
-        let fileType = pendingFile.file.type;
-        if (!fileType && pendingFile.file.name) {
-          const ext = pendingFile.file.name.split('.').pop()?.toLowerCase() || '';
-          const extMap: Record<string, string> = {
-            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-            gif: 'image/gif', webp: 'image/webp', heic: 'image/heic',
-            heif: 'image/heif', mp4: 'video/mp4', mov: 'video/quicktime',
-            m4v: 'video/x-m4v', avi: 'video/avi', pdf: 'application/pdf',
-            doc: 'application/msword',
-            docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          };
-          fileType = extMap[ext] || 'application/octet-stream';
-        }
-        payload.fileData = fileData;
-        payload.fileName = pendingFile.file.name;
-        payload.fileType = fileType;
+        const { url, name, type } = await uploadFileMultipart(pendingFile.file);
+        payload.fileUrl = url;
+        payload.fileName = name;
+        payload.fileType = type;
       }
 
       const res = await fetch(CHAT_API, {
@@ -264,6 +296,8 @@ export default function ContractNegotiationModal({
       } else {
         toast({ title: 'Ошибка', description: 'Не удалось отправить сообщение', variant: 'destructive' });
       }
+    } catch {
+      toast({ title: 'Ошибка', description: 'Не удалось загрузить файл. Проверьте соединение.', variant: 'destructive' });
     } finally {
       setIsSending(false);
     }
