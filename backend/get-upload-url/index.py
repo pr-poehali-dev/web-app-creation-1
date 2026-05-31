@@ -54,25 +54,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     s3 = get_s3()
 
-    if action == 'single':
-        # Загрузка файла целиком за один запрос (для файлов до ~6МБ base64)
-        filename = body.get('filename', 'file')
-        content_type = body.get('contentType', 'application/octet-stream')
-        folder = body.get('folder', 'contract-chat')
-        file_data = body.get('fileData', '')
-        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
-        key = f"{folder}/{uuid.uuid4()}.{ext}" if ext else f"{folder}/{uuid.uuid4()}"
-        raw = base64.b64decode(file_data)
-        s3.put_object(Bucket='files', Key=key, Body=raw, ContentType=content_type)
-        cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps({'fileUrl': cdn_url}),
-            'isBase64Encoded': False
-        }
-
-    elif action == 'init':
+    if action == 'init':
         filename = body.get('filename', 'video.mp4')
         content_type = body.get('contentType', 'video/mp4')
         folder = body.get('folder', 'offer-videos')

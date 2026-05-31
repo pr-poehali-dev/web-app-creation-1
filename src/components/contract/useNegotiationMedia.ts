@@ -21,15 +21,18 @@ const resolveFileType = (file: File): string => {
   return MIME_EXT_MAP[ext] || 'application/octet-stream';
 };
 
-// Читает файл через FileReader.readAsDataURL — возвращает только base64 часть
-const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(',')[1]);
-    reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-    reader.readAsDataURL(file);
-  });
-
+// Конвертирует Blob в base64 — используем blob.arrayBuffer() (надёжнее FileReader на iOS)
+const blobChunkToBase64 = async (blob: Blob): Promise<string> => {
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  // Обрабатываем по 8192 байта чтобы не переполнять стек apply()
+  const STEP = 8192;
+  for (let i = 0; i < bytes.length; i += STEP) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + STEP) as unknown as number[]);
+  }
+  return btoa(binary);
+};
 
 interface UseNegotiationMediaProps {
   userId: string;
@@ -71,36 +74,67 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
     e.target.value = '';
   };
 
-  const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
+  const uploadFileMultipart = async (file: File): Promise<{ url: string; name: string; type: string }> => {
+    const CHUNK = 4 * 1024 * 1024;
     const fileType = resolveFileType(file);
-    const fileData = await fileToBase64(file);
-    const res = await fetch(`${UPLOAD_URL}?action=single`, {
+    console.log('[upload] start', file.name, file.size, fileType, UPLOAD_URL);
+
+    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename: file.name || 'file', contentType: fileType, folder: 'contract-chat', fileData }),
+      body: JSON.stringify({ filename: file.name || 'file', contentType: fileType, folder: 'contract-chat' }),
     });
-    if (!res.ok) throw new Error('Ошибка загрузки файла');
-    const { fileUrl } = await res.json();
+    if (!initRes.ok) throw new Error('Не удалось начать загрузку файла');
+    const { uploadId, key, fileUrl } = await initRes.json();
+
+    const parts: { partNumber: number; etag: string }[] = [];
+    const totalChunks = Math.ceil(file.size / CHUNK);
+
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = file.slice(i * CHUNK, Math.min((i + 1) * CHUNK, file.size));
+      const chunkB64 = await blobChunkToBase64(chunk);
+      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
+      });
+      if (!partRes.ok) {
+        fetch(`${UPLOAD_URL}?action=abort`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': userId }, body: JSON.stringify({ key, uploadId }) });
+        throw new Error(`Ошибка загрузки части ${i + 1}`);
+      }
+      const { etag } = await partRes.json();
+      parts.push({ partNumber: i + 1, etag });
+    }
+
+    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
+    });
+    if (!completeRes.ok) throw new Error('Не удалось завершить загрузку файла');
+
     return { url: fileUrl, name: file.name || 'file', type: fileType };
   };
 
   const sendVoiceBlob = async (blob: Blob, mimeType: string) => {
     if (!userId) return;
     const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
-    const fileName = `voice_${Date.now()}.${ext}`;
     setIsSending(true);
     try {
-      // Загружаем голосовое в S3 через get-upload-url
-      const voiceFile = new File([blob], fileName, { type: mimeType });
-      const { url } = await uploadFile(voiceFile);
+      const reader = new FileReader();
+      const fileData = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
       const res = await fetch(CHAT_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({
           responseId,
           text: '',
-          fileUrl: url,
-          fileName,
+          fileData,
+          fileName: `voice_${Date.now()}.${ext}`,
           fileType: mimeType,
         }),
       });
@@ -109,8 +143,6 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
       } else {
         toast({ title: 'Ошибка отправки голосового', variant: 'destructive' });
       }
-    } catch {
-      toast({ title: 'Ошибка отправки голосового', variant: 'destructive' });
     } finally {
       setIsSending(false);
     }
@@ -174,7 +206,8 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
       const payload: Record<string, unknown> = { responseId, text: text.trim() };
       if (pendingFile) {
         console.log('[send] file:', pendingFile.file.name, pendingFile.file.size, pendingFile.file.type);
-        const { url, name, type } = await uploadFile(pendingFile.file);
+        toast({ title: '⏳ Загрузка файла...', description: `${pendingFile.file.name} (${(pendingFile.file.size / 1024 / 1024).toFixed(1)} МБ)` });
+        const { url, name, type } = await uploadFileMultipart(pendingFile.file);
         console.log('[send] uploaded:', url);
         payload.fileUrl = url;
         payload.fileName = name;
