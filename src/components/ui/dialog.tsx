@@ -73,6 +73,24 @@ function ScrollIndicator({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
   )
 }
 
+function DialogCloseButton() {
+  const [hidden, setHidden] = React.useState(false);
+  React.useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setHidden(document.body.hasAttribute('data-lightbox-open'));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-lightbox-open'] });
+    return () => observer.disconnect();
+  }, []);
+  if (hidden) return null;
+  return (
+    <DialogPrimitive.Close className="absolute right-3 top-3 rounded-full bg-red-500 hover:bg-red-600 text-white p-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:pointer-events-none z-20">
+      <X className="h-4 w-4" />
+      <span className="sr-only">Close</span>
+    </DialogPrimitive.Close>
+  );
+}
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -138,10 +156,7 @@ const DialogContent = React.forwardRef<
             <ScrollIndicator scrollRef={scrollRef as React.RefObject<HTMLDivElement>} />
           </div>
         </div>
-        <DialogPrimitive.Close className="absolute right-3 top-3 rounded-full bg-red-500 hover:bg-red-600 text-white p-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:pointer-events-none z-20 [[data-lightbox-open]_&]:hidden">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        <DialogCloseButton />
       </DialogPrimitive.Content>
     </DialogPortal>
   )

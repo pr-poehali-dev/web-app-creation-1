@@ -20,23 +20,17 @@ const resolveFileType = (file: File): string => {
   return MIME_EXT_MAP[ext] || 'application/octet-stream';
 };
 
-const blobChunkToBase64 = (blob: Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const buf = reader.result as ArrayBuffer;
-      const bytes = new Uint8Array(buf);
-      // Конвертируем по 8192 байта — apply с 4 млн аргументов вызывает stack overflow на iOS
-      let binary = '';
-      const STEP = 8192;
-      for (let i = 0; i < bytes.length; i += STEP) {
-        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + STEP)));
-      }
-      resolve(btoa(binary));
-    };
-    reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-    reader.readAsArrayBuffer(blob);
-  });
+// Конвертирует Blob в base64 — используем blob.arrayBuffer() (надёжнее FileReader на iOS)
+const blobChunkToBase64 = async (blob: Blob): Promise<string> => {
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  // Обрабатываем по 8192 байта чтобы не переполнять стек apply()
+  const STEP = 8192;
+  for (let i = 0; i < bytes.length; i += STEP) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + STEP) as unknown as number[]);
+  }
+  return btoa(binary);
 };
 
 interface UseNegotiationMediaProps {
@@ -82,6 +76,7 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
   const uploadFileMultipart = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const CHUNK = 4 * 1024 * 1024;
     const fileType = resolveFileType(file);
+    console.log('[upload] start', file.name, file.size, fileType, 'UPLOAD_URL:', UPLOAD_URL);
 
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
@@ -226,7 +221,8 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
       } else {
         toast({ title: 'Ошибка', description: 'Не удалось отправить сообщение', variant: 'destructive' });
       }
-    } catch {
+    } catch (err) {
+      console.error('[upload] error:', err);
       toast({ title: 'Ошибка', description: 'Не удалось загрузить файл. Проверьте соединение.', variant: 'destructive' });
     } finally {
       setIsSending(false);
