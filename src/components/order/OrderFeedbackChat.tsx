@@ -215,15 +215,25 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       };
 
       if (pendingFile) {
-        const reader = new FileReader();
+        // Загружаем файл в S3 напрямую, в чат передаём только URL
+        const UPLOAD_URL = (await import('../../backend/func2url.json')).default['get-upload-url'];
+        const fileType = pendingFile.file.type || 'application/octet-stream';
         const fileData = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
           reader.onload = () => resolve((reader.result as string).split(',')[1]);
           reader.onerror = reject;
           reader.readAsDataURL(pendingFile.file);
         });
-        payload.fileData = fileData;
+        const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+          body: JSON.stringify({ filename: pendingFile.file.name || 'file', contentType: fileType, folder: 'order-chat', fileData }),
+        });
+        if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
+        const { fileUrl } = await uploadRes.json();
+        payload.fileUrl = fileUrl;
         payload.fileName = pendingFile.file.name;
-        payload.fileType = pendingFile.file.type;
+        payload.fileType = fileType;
       }
 
       await ordersAPI.createMessage(payload as Parameters<typeof ordersAPI.createMessage>[0]);
