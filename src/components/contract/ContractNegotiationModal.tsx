@@ -196,34 +196,60 @@ export default function ContractNegotiationModal({
     setPendingFile(null);
   };
 
+  const MIME_EXT_MAP: Record<string, string> = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+    gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
+    mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v',
+    avi: 'video/avi', webm: 'video/webm',
+    pdf: 'application/pdf', doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  };
+
+  const resolveFileType = (file: File): string => {
+    if (file.type) return file.type;
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    return MIME_EXT_MAP[ext] || 'application/octet-stream';
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const isPdf = file.type === 'application/pdf';
+
+    const MAX_SIZE = 500 * 1024 * 1024; // 500 МБ
+    if (file.size > MAX_SIZE) {
+      toast({ title: 'Файл слишком большой', description: 'Максимальный размер — 500 МБ', variant: 'destructive' });
+      e.target.value = '';
+      return;
+    }
+
+    const fileType = resolveFileType(file);
+    const isPdf = fileType === 'application/pdf';
     const preview = isPdf ? '' : URL.createObjectURL(file);
     setPendingFile({ file, preview });
     e.target.value = '';
   };
 
-  // Загрузка файла через multipart S3 (чанки по 4 МБ) — работает для любого размера
+  // Читаем Blob-чанк как ArrayBuffer → конвертируем в base64 без FileReader (надёжнее на iOS)
+  const blobChunkToBase64 = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const buf = reader.result as ArrayBuffer;
+        const bytes = new Uint8Array(buf);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        resolve(btoa(binary));
+      };
+      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+      reader.readAsArrayBuffer(blob);
+    });
+  };
+
+  // Загрузка файла через multipart S3 (чанки по 4 МБ)
   const uploadFileMultipart = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
     const CHUNK = 4 * 1024 * 1024;
-
-    // Определяем тип файла (iOS может не заполнять file.type)
-    let fileType = file.type;
-    if (!fileType && file.name) {
-      const ext = file.name.split('.').pop()?.toLowerCase() || '';
-      const extMap: Record<string, string> = {
-        jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-        gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
-        mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v',
-        avi: 'video/avi', webm: 'video/webm',
-        pdf: 'application/pdf', doc: 'application/msword',
-        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      };
-      fileType = extMap[ext] || 'application/octet-stream';
-    }
+    const fileType = resolveFileType(file);
 
     // 1. Инициализируем multipart upload
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
@@ -234,24 +260,23 @@ export default function ContractNegotiationModal({
     if (!initRes.ok) throw new Error('Не удалось начать загрузку файла');
     const { uploadId, key, fileUrl } = await initRes.json();
 
-    // 2. Загружаем чанками
+    // 2. Загружаем чанками через ArrayBuffer (стабильнее readAsDataURL на iOS Safari)
     const parts: { partNumber: number; etag: string }[] = [];
     const totalChunks = Math.ceil(file.size / CHUNK);
 
     for (let i = 0; i < totalChunks; i++) {
-      const chunk = file.slice(i * CHUNK, (i + 1) * CHUNK);
-      const chunkB64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(chunk);
-      });
+      const chunk = file.slice(i * CHUNK, Math.min((i + 1) * CHUNK, file.size));
+      const chunkB64 = await blobChunkToBase64(chunk);
       const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
       });
-      if (!partRes.ok) throw new Error(`Ошибка загрузки части ${i + 1}`);
+      if (!partRes.ok) {
+        // Отменяем загрузку при ошибке
+        fetch(`${UPLOAD_URL}?action=abort`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-User-Id': userId }, body: JSON.stringify({ key, uploadId }) });
+        throw new Error(`Ошибка загрузки части ${i + 1}`);
+      }
       const { etag } = await partRes.json();
       parts.push({ partNumber: i + 1, etag });
     }
