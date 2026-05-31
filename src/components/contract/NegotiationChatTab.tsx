@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -46,8 +46,46 @@ export default function NegotiationChatTab({
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const showMicBtn = !pendingFile && !text.trim() && !isRecording;
 
+  // Лайтбокс для полноэкранного просмотра фото
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  // Определяем тип файла учитывая что iOS может не заполнять file.type
+  const getFileType = (file: File): string => {
+    if (file.type) return file.type;
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const map: Record<string, string> = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+      gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
+      mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v', webm: 'video/webm',
+    };
+    return map[ext] || 'application/octet-stream';
+  };
+
+  const pendingFileType = pendingFile ? getFileType(pendingFile.file) : '';
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
+      {/* Лайтбокс */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 z-10"
+            onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
+          >
+            <Icon name="X" size={24} />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Просмотр"
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
@@ -69,9 +107,20 @@ export default function NegotiationChatTab({
                         {att.type?.startsWith('audio/') ? (
                           <audio src={att.url} controls className="max-w-full h-8" />
                         ) : att.type?.startsWith('video/') ? (
-                          <video src={att.url} controls className="max-w-full rounded max-h-48" />
+                          <video
+                            src={att.url}
+                            controls
+                            playsInline
+                            preload="metadata"
+                            className="max-w-full rounded max-h-48"
+                          />
                         ) : att.type?.startsWith('image/') ? (
-                          <img src={att.url} alt={att.name} className="max-w-full rounded max-h-48 object-cover" />
+                          <img
+                            src={att.url}
+                            alt={att.name}
+                            className="max-w-full rounded max-h-48 object-cover cursor-pointer"
+                            onClick={() => setLightboxUrl(att.url)}
+                          />
                         ) : (
                           <a
                             href={att.url}
@@ -102,25 +151,20 @@ export default function NegotiationChatTab({
           <div className="p-3 space-y-2">
             {pendingFile && (
               <div className="flex items-center gap-2 bg-muted rounded-lg px-2 py-1.5">
-                {pendingFile.file.type.startsWith('audio/') ? (
+                {pendingFileType.startsWith('audio/') ? (
                   <>
                     <Icon name="Mic" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <audio src={pendingFile.preview} controls className="h-8 flex-1" />
                   </>
-                ) : pendingFile.file.type.startsWith('image/') ? (
-                  <img src={pendingFile.preview} alt="preview" className="h-10 w-10 object-cover rounded" />
-                ) : pendingFile.file.type.startsWith('video/') ? (
-                  <video src={pendingFile.preview} className="h-10 w-10 object-cover rounded" />
+                ) : pendingFileType.startsWith('image/') ? (
+                  <img src={pendingFile.preview} alt="preview" className="h-10 w-10 object-cover rounded flex-shrink-0" />
+                ) : pendingFileType.startsWith('video/') ? (
+                  <video src={pendingFile.preview} className="h-10 w-10 object-cover rounded flex-shrink-0" playsInline />
                 ) : (
-                  <>
-                    <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-xs text-muted-foreground flex-1 truncate">{pendingFile.file.name}</span>
-                  </>
+                  <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 )}
-                {!pendingFile.file.type.startsWith('audio/') && (
-                  <span className="text-xs text-muted-foreground truncate flex-1">{pendingFile.file.name}</span>
-                )}
-                <button onClick={onRemovePendingFile} className="text-muted-foreground hover:text-destructive transition-colors ml-auto">
+                <span className="text-xs text-muted-foreground truncate flex-1">{pendingFile.file.name}</span>
+                <button onClick={onRemovePendingFile} className="text-muted-foreground hover:text-destructive transition-colors ml-auto flex-shrink-0">
                   <Icon name="X" size={14} />
                 </button>
               </div>
@@ -145,11 +189,11 @@ export default function NegotiationChatTab({
               </div>
             ) : (
               <div className="flex gap-2">
-                {/* Медиа-инпут: фото + видео + HEIC (iPhone) */}
+                {/* Медиа-инпут: фото + видео (все форматы включая HEIC) */}
                 <input
                   ref={mediaInputRef}
                   type="file"
-                  accept="image/*,video/*,.heic,.heif,video/quicktime,video/mp4"
+                  accept="image/*,video/*"
                   className="hidden"
                   onChange={onFileSelect}
                 />

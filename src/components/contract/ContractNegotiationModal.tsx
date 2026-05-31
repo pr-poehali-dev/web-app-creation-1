@@ -192,7 +192,6 @@ export default function ContractNegotiationModal({
   };
 
   const removePendingFile = () => {
-    if (pendingFile) URL.revokeObjectURL(pendingFile.preview);
     setPendingFile(null);
   };
 
@@ -229,15 +228,15 @@ export default function ContractNegotiationModal({
     e.target.value = '';
   };
 
-  // Читаем Blob-чанк как ArrayBuffer → конвертируем в base64 без FileReader (надёжнее на iOS)
+  // Читаем Blob-чанк как ArrayBuffer → base64 через apply (не падает на iOS при больших буферах)
   const blobChunkToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const buf = reader.result as ArrayBuffer;
         const bytes = new Uint8Array(buf);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        // apply вместо цикла += — не вызывает stack overflow на больших чанках
+        const binary = String.fromCharCode.apply(null, Array.from(bytes));
         resolve(btoa(binary));
       };
       reader.onerror = () => reject(new Error('Ошибка чтения файла'));
