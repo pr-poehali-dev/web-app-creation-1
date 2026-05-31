@@ -83,11 +83,10 @@ export default function NegotiationChatTab({
           onClick={closeLightbox}
         >
           <button
-            style={{ position: 'absolute', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 1000000, background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.6)', borderRadius: 12, padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', touchAction: 'manipulation', color: '#fff', fontSize: 16, fontWeight: 600 }}
+            style={{ position: 'absolute', top: 20, left: 20, zIndex: 1000000, background: 'rgba(0,0,0,0.6)', border: '2px solid rgba(255,255,255,0.5)', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', touchAction: 'manipulation' }}
             onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
           >
-            <Icon name="X" size={20} style={{ color: '#fff' }} />
-            Закрыть
+            <Icon name="X" size={26} style={{ color: '#fff' }} />
           </button>
           <img
             src={lightboxUrl}
@@ -257,7 +256,15 @@ export default function NegotiationChatTab({
                   disabled={isSending}
                   className="text-sm"
                 />
-                <Button onClick={onSend} disabled={isSending || (!text.trim() && !pendingFile)} size="sm" className="gap-1.5 px-3">
+                <Button
+                  onClick={() => {
+                    console.log('[btn] send clicked, pendingFile:', !!pendingFile, 'text:', text.trim(), 'isSending:', isSending);
+                    onSend();
+                  }}
+                  disabled={isSending}
+                  size="sm"
+                  className="gap-1.5 px-3"
+                >
                   {isSending ? <Icon name="Loader2" size={14} className="animate-spin" /> : <Icon name="Send" size={14} />}
                 </Button>
               </div>
