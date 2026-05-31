@@ -377,14 +377,33 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
                         aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
                     )
-                    ext = (file_name or '').rsplit('.', 1)[-1].lower() if file_name and '.' in file_name else ''
+                    # Надёжный маппинг типов — важно для iOS (quicktime, heic и др.)
+                    MIME_TO_EXT = {
+                        'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif',
+                        'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif',
+                        'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/x-m4v': 'm4v',
+                        'video/avi': 'avi', 'video/webm': 'webm', 'video/ogg': 'ogg',
+                        'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'audio/webm': 'webm',
+                        'audio/mp4': 'm4a', 'audio/x-m4a': 'm4a',
+                        'application/pdf': 'pdf', 'application/msword': 'doc',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+                    }
+                    EXT_TO_MIME = {v: k for k, v in MIME_TO_EXT.items()}
+                    # Определяем расширение из имени файла или типа
+                    ext = ''
+                    if file_name and '.' in file_name:
+                        ext = file_name.rsplit('.', 1)[-1].lower()
                     if not ext and file_type:
-                        ext = (mimetypes.guess_extension(file_type, strict=False) or '').lstrip('.')
+                        ext = MIME_TO_EXT.get(file_type, '') or (mimetypes.guess_extension(file_type, strict=False) or '').lstrip('.')
+                    # Если тип не задан — определяем по расширению
+                    if not file_type and ext:
+                        file_type = EXT_TO_MIME.get(ext, 'application/octet-stream')
+                    content_type = file_type or 'application/octet-stream'
                     key = f"contract-chat/{resp['c_id']}/{uuid.uuid4()}.{ext}" if ext else f"contract-chat/{resp['c_id']}/{uuid.uuid4()}"
                     raw = base64.b64decode(file_data)
-                    s3.put_object(Bucket='files', Key=key, Body=raw, ContentType=file_type or 'application/octet-stream')
+                    s3.put_object(Bucket='files', Key=key, Body=raw, ContentType=content_type)
                     cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{key}"
-                    attachments.append({'url': cdn_url, 'name': file_name or 'file', 'type': file_type})
+                    attachments.append({'url': cdn_url, 'name': file_name or 'file', 'type': content_type})
 
                 if not text and not attachments:
                     return {'statusCode': 400, 'headers': RESP_HEADERS, 'body': json.dumps({'error': 'Текст или файл обязателен'}), 'isBase64Encoded': False}

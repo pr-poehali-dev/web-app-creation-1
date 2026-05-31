@@ -233,9 +233,23 @@ export default function ContractNegotiationModal({
           reader.onerror = reject;
           reader.readAsDataURL(pendingFile.file);
         });
+        // На iOS тип файла может быть пустым — определяем по расширению
+        let fileType = pendingFile.file.type;
+        if (!fileType && pendingFile.file.name) {
+          const ext = pendingFile.file.name.split('.').pop()?.toLowerCase() || '';
+          const extMap: Record<string, string> = {
+            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+            gif: 'image/gif', webp: 'image/webp', heic: 'image/heic',
+            heif: 'image/heif', mp4: 'video/mp4', mov: 'video/quicktime',
+            m4v: 'video/x-m4v', avi: 'video/avi', pdf: 'application/pdf',
+            doc: 'application/msword',
+            docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          };
+          fileType = extMap[ext] || 'application/octet-stream';
+        }
         payload.fileData = fileData;
         payload.fileName = pendingFile.file.name;
-        payload.fileType = pendingFile.file.type;
+        payload.fileType = fileType;
       }
 
       const res = await fetch(CHAT_API, {

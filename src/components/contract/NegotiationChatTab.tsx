@@ -145,19 +145,19 @@ export default function NegotiationChatTab({
               </div>
             ) : (
               <div className="flex gap-2">
-                {/* Инпут для фото/видео — отдельный для iOS Safari */}
+                {/* Медиа-инпут: фото + видео + HEIC (iPhone) */}
                 <input
                   ref={mediaInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/x-m4v"
+                  accept="image/*,video/*,.heic,.heif,video/quicktime,video/mp4"
                   className="hidden"
                   onChange={onFileSelect}
                 />
-                {/* Инпут для документов */}
+                {/* Документы */}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  accept=".pdf,.doc,.docx"
                   className="hidden"
                   onChange={onFileSelect}
                 />
