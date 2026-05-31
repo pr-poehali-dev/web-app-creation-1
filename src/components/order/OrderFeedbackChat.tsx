@@ -7,6 +7,9 @@ import { useToast } from '@/hooks/use-toast';
 import { type OrderMessage, playNotificationSound } from './chat-types';
 import ChatMessageList from './ChatMessageList';
 import ChatInputBar from './ChatInputBar';
+import func2url from '../../../backend/func2url.json';
+
+const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
 
 
 interface OrderFeedbackChatProps {
@@ -216,7 +219,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
       if (pendingFile) {
         // Загружаем файл в S3 напрямую, в чат передаём только URL
-        const UPLOAD_URL = (await import('../../backend/func2url.json')).default['get-upload-url'];
         const fileType = pendingFile.file.type || 'application/octet-stream';
         const fileData = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
