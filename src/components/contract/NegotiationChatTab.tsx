@@ -50,6 +50,16 @@ export default function NegotiationChatTab({
   // Лайтбокс для полноэкранного просмотра фото
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
+  const openLightbox = (url: string) => {
+    setLightboxUrl(url);
+    document.body.setAttribute('data-lightbox-open', 'true');
+  };
+
+  const closeLightbox = () => {
+    setLightboxUrl(null);
+    document.body.removeAttribute('data-lightbox-open');
+  };
+
   // Определяем тип файла учитывая что iOS может не заполнять file.type
   const getFileType = (file: File): string => {
     if (file.type) return file.type;
@@ -70,11 +80,11 @@ export default function NegotiationChatTab({
       {lightboxUrl && createPortal(
         <div
           style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={() => setLightboxUrl(null)}
+          onClick={closeLightbox}
         >
           <button
-            style={{ position: 'absolute', top: 20, right: 20, zIndex: 1000000, background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%', width: 48, height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', touchAction: 'manipulation' }}
-            onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
+            style={{ position: 'absolute', top: 20, right: 20, zIndex: 1000000, background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.5)', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', touchAction: 'manipulation' }}
+            onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
           >
             <Icon name="X" size={28} style={{ color: '#fff' }} />
           </button>
@@ -121,7 +131,7 @@ export default function NegotiationChatTab({
                             src={att.url}
                             alt={att.name}
                             className="max-w-full rounded max-h-48 object-cover cursor-pointer"
-                            onClick={() => setLightboxUrl(att.url)}
+                            onClick={() => openLightbox(att.url)}
                           />
                         ) : (
                           <a

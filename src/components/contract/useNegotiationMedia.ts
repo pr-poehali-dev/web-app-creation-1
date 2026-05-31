@@ -26,7 +26,12 @@ const blobChunkToBase64 = (blob: Blob): Promise<string> => {
     reader.onload = () => {
       const buf = reader.result as ArrayBuffer;
       const bytes = new Uint8Array(buf);
-      const binary = String.fromCharCode.apply(null, Array.from(bytes));
+      // Конвертируем по 8192 байта — apply с 4 млн аргументов вызывает stack overflow на iOS
+      let binary = '';
+      const STEP = 8192;
+      for (let i = 0; i < bytes.length; i += STEP) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + STEP)));
+      }
       resolve(btoa(binary));
     };
     reader.onerror = () => reject(new Error('Ошибка чтения файла'));

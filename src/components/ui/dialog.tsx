@@ -138,7 +138,7 @@ const DialogContent = React.forwardRef<
             <ScrollIndicator scrollRef={scrollRef as React.RefObject<HTMLDivElement>} />
           </div>
         </div>
-        <DialogPrimitive.Close className="absolute right-3 top-3 rounded-full bg-red-500 hover:bg-red-600 text-white p-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:pointer-events-none z-20">
+        <DialogPrimitive.Close className="absolute right-3 top-3 rounded-full bg-red-500 hover:bg-red-600 text-white p-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:pointer-events-none z-20 [[data-lightbox-open]_&]:hidden">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </DialogPrimitive.Close>
