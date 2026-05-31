@@ -76,7 +76,7 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
   const uploadFileMultipart = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const CHUNK = 4 * 1024 * 1024;
     const fileType = resolveFileType(file);
-    console.log('[upload] start', file.name, file.size, fileType, 'UPLOAD_URL:', UPLOAD_URL);
+    console.log('[upload] start', file.name, file.size, fileType, UPLOAD_URL);
 
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
@@ -204,7 +204,10 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
     try {
       const payload: Record<string, unknown> = { responseId, text: text.trim() };
       if (pendingFile) {
+        console.log('[send] file:', pendingFile.file.name, pendingFile.file.size, pendingFile.file.type);
+        toast({ title: '⏳ Загрузка файла...', description: `${pendingFile.file.name} (${(pendingFile.file.size / 1024 / 1024).toFixed(1)} МБ)` });
         const { url, name, type } = await uploadFileMultipart(pendingFile.file);
+        console.log('[send] uploaded:', url);
         payload.fileUrl = url;
         payload.fileName = name;
         payload.fileType = type;
@@ -219,11 +222,14 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
         removePendingFile();
         await onMessageSent();
       } else {
+        const errText = await res.text();
+        console.error('[send] chat error:', res.status, errText);
         toast({ title: 'Ошибка', description: 'Не удалось отправить сообщение', variant: 'destructive' });
       }
     } catch (err) {
-      console.error('[upload] error:', err);
-      toast({ title: 'Ошибка', description: 'Не удалось загрузить файл. Проверьте соединение.', variant: 'destructive' });
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('[send] catch:', msg);
+      toast({ title: 'Ошибка отправки', description: msg, variant: 'destructive' });
     } finally {
       setIsSending(false);
     }
