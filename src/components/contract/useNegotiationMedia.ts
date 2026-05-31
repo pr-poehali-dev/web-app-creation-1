@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import func2url from '../../../backend/func2url.json';
 
+
 const CHAT_API = (func2url as Record<string, string>)['contract-chat'];
 const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
 
