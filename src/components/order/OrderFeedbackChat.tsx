@@ -148,7 +148,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const checkFileSize = (file: File): { ok: boolean; isVideo: boolean } => {
     const videoExtensions = /\.(mp4|mov|avi|mkv|webm|m4v|3gp|hevc|heic)$/i;
     const isVideo = file.type.startsWith('video/') || videoExtensions.test(file.name) || (!file.type && file.size > 5 * 1024 * 1024);
-    const maxSize = isVideo ? 30 * 1024 * 1024 : 20 * 1024 * 1024;
+    const maxSize = isVideo ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
     return { ok: file.size <= maxSize, isVideo };
   };
 
@@ -162,8 +162,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         toast({
           title: 'Файл слишком большой для отправки',
           description: isVideo
-            ? 'Лимит видео — 30 МБ (~30 сек). Попробуй отправить частями или сократи длительность.'
-            : 'Максимальный размер фото — 20 МБ.',
+            ? 'Лимит видео — 100 МБ. Попробуй сократить длительность.'
+            : 'Максимальный размер фото — 50 МБ.',
           variant: 'destructive',
         });
       }, 100);
@@ -200,8 +200,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         toast({
           title: 'Файл слишком большой для отправки',
           description: isVideo
-            ? 'Лимит видео — 30 МБ (~30 сек). Попробуй отправить частями или сократи длительность.'
-            : 'Максимальный размер фото — 20 МБ.',
+            ? 'Лимит видео — 100 МБ. Попробуй сократить длительность.'
+            : 'Максимальный размер фото — 50 МБ.',
           variant: 'destructive',
         });
         return;
@@ -218,21 +218,64 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       };
 
       if (pendingFile) {
-        // Загружаем файл в S3 напрямую, в чат передаём только URL
         const fileType = pendingFile.file.type || 'application/octet-stream';
-        const fileData = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve((reader.result as string).split(',')[1]);
-          reader.onerror = reject;
-          reader.readAsDataURL(pendingFile.file);
-        });
-        const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-          body: JSON.stringify({ filename: pendingFile.file.name || 'file', contentType: fileType, folder: 'order-chat', fileData }),
-        });
-        if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
-        const { fileUrl } = await uploadRes.json();
+        const CHUNK = 4 * 1024 * 1024;
+        let fileUrl: string;
+
+        if (pendingFile.file.size <= 5 * 1024 * 1024) {
+          // Маленький файл — одним запросом
+          const fileData = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(pendingFile.file);
+          });
+          const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+            body: JSON.stringify({ filename: pendingFile.file.name || 'file', contentType: fileType, folder: 'order-chat', fileData }),
+          });
+          if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
+          ({ fileUrl } = await uploadRes.json());
+        } else {
+          // Большой файл — multipart по чанкам 4МБ
+          const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+            body: JSON.stringify({ filename: pendingFile.file.name || 'file', contentType: fileType, folder: 'order-chat' }),
+          });
+          if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
+          const { uploadId, key, fileUrl: initUrl } = await initRes.json();
+          fileUrl = initUrl;
+
+          const parts: { partNumber: number; etag: string }[] = [];
+          const totalChunks = Math.ceil(pendingFile.file.size / CHUNK);
+          for (let i = 0; i < totalChunks; i++) {
+            const chunk = pendingFile.file.slice(i * CHUNK, (i + 1) * CHUNK);
+            const chunkB64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve((reader.result as string).split(',')[1]);
+              reader.onerror = reject;
+              reader.readAsDataURL(chunk);
+            });
+            const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+              body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
+            });
+            if (!partRes.ok) throw new Error('Ошибка загрузки части файла');
+            const { etag } = await partRes.json();
+            parts.push({ partNumber: i + 1, etag });
+          }
+
+          const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+            body: JSON.stringify({ key, uploadId, parts, fileUrl }),
+          });
+          if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
+        }
+
         payload.fileUrl = fileUrl;
         payload.fileName = pendingFile.file.name;
         payload.fileType = fileType;

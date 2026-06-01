@@ -23,6 +23,7 @@ interface ChatInputBarProps {
   onStartRecording: () => void;
   onStopRecording: () => void;
   onCancelRecording: () => void;
+  onCameraCapture?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 function formatRecordingTime(s: number) {
@@ -43,8 +44,10 @@ export default function ChatInputBar({
   onStartRecording,
   onStopRecording,
   onCancelRecording,
+  onCameraCapture,
 }: ChatInputBarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <>
@@ -90,6 +93,7 @@ export default function ChatInputBar({
         </div>
       ) : (
         <div className="flex gap-2">
+          {/* Медиатека — открывает галерею телефона */}
           <input
             ref={fileInputRef}
             type="file"
@@ -97,14 +101,32 @@ export default function ChatInputBar({
             className="hidden"
             onChange={onFileSelect}
           />
+          {/* Камера — снять прямо сейчас */}
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*,video/*"
+            capture="environment"
+            className="hidden"
+            onChange={onCameraCapture || onFileSelect}
+          />
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isSending || !!pendingFile}
             className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
-            title="Прикрепить фото/видео"
+            title="Выбрать из галереи"
           >
-            <Icon name="Paperclip" className="h-4 w-4 text-muted-foreground" />
+            <Icon name="Image" className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={isSending || !!pendingFile}
+            className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+            title="Сделать фото/видео"
+          >
+            <Icon name="Camera" className="h-4 w-4 text-muted-foreground" />
           </button>
 
           {!pendingFile && !newMessage.trim() ? (
