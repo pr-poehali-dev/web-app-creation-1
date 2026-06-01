@@ -69,7 +69,47 @@ window.addEventListener('error', (e) => {
 });
 
 if ('serviceWorker' in navigator) {
+  // Сначала — сбросить все старые SW и кеш, если есть проблемы
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    // Если SW уже есть — проверим актуальность через fetch sw.js
+    if (registrations.length > 0) {
+      fetch('/sw.js?_v=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.text())
+        .then(text => {
+          const match = text.match(/CACHE_VERSION\s*=\s*'([^']+)'/);
+          const serverVersion = match ? match[1] : null;
+          registrations.forEach(reg => {
+            // Принудительно проверяем обновление
+            reg.update().catch(() => {});
+          });
+          // Если версия в SW не совпадает — чистим кеш немедленно
+          const cachedVersion = localStorage.getItem('sw_cache_version');
+          if (serverVersion && cachedVersion !== serverVersion) {
+            localStorage.setItem('sw_cache_version', serverVersion);
+            caches.keys().then(names => Promise.all(names.map(n => caches.delete(n)))).catch(() => {});
+          }
+        }).catch(() => {});
+    }
+  }).catch(() => {});
+
   setTimeout(() => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  }, 2000);
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      // Если есть ожидающий SW — активируем сразу
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Новый SW установлен — очищаем кеш и перезагружаем
+              caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))))
+                .finally(() => window.location.reload());
+            }
+          });
+        }
+      });
+    }).catch(() => {});
+  }, 1000);
 }
