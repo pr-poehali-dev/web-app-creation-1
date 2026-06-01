@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.9';
+const CACHE_VERSION = 'v1.1.0';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 // Хосты API — никогда не кэшируем
