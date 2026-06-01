@@ -221,64 +221,26 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         const file = pendingFile.file;
         const fileType = file.type || 'application/octet-stream';
         const filename = file.name || 'file';
-        const CHUNK = 4 * 1024 * 1024;
 
-        // Читаем весь файл сразу в ArrayBuffer — решает проблему iOS где file.size=0
+        // Читаем файл в ArrayBuffer — решает проблему iOS где file.size может быть 0
         const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as ArrayBuffer);
           reader.onerror = () => reject(new Error('Ошибка чтения файла'));
           reader.readAsArrayBuffer(file);
         });
-        const totalSize = arrayBuffer.byteLength;
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const fileData = btoa(binary);
 
-        const toBase64 = (buf: ArrayBuffer): string => {
-          const bytes = new Uint8Array(buf);
-          let binary = '';
-          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-          return btoa(binary);
-        };
-
-        let fileUrl: string;
-
-        if (totalSize <= 5 * 1024 * 1024) {
-          const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-            body: JSON.stringify({ filename, contentType: fileType, folder: 'order-chat', fileData: toBase64(arrayBuffer) }),
-          });
-          if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
-          ({ fileUrl } = await uploadRes.json());
-        } else {
-          const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-            body: JSON.stringify({ filename, contentType: fileType, folder: 'order-chat' }),
-          });
-          if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
-          const { uploadId, key, fileUrl: initUrl } = await initRes.json();
-          fileUrl = initUrl;
-
-          const parts: { partNumber: number; etag: string }[] = [];
-          const totalChunks = Math.ceil(totalSize / CHUNK);
-          for (let i = 0; i < totalChunks; i++) {
-            const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-              body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: toBase64(arrayBuffer.slice(i * CHUNK, (i + 1) * CHUNK)) }),
-            });
-            if (!partRes.ok) throw new Error('Ошибка загрузки части файла');
-            const { etag } = await partRes.json();
-            parts.push({ partNumber: i + 1, etag });
-          }
-
-          const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-            body: JSON.stringify({ key, uploadId, parts, fileUrl }),
-          });
-          if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
-        }
+        const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+          body: JSON.stringify({ filename, contentType: fileType, folder: 'order-chat', fileData }),
+        });
+        if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
+        const { fileUrl } = await uploadRes.json();
 
         payload.fileUrl = fileUrl;
         payload.fileName = filename;

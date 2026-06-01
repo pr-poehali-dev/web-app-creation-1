@@ -74,9 +74,8 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
   const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const fileType = resolveFileType(file);
     const filename = file.name || 'file';
-    const CHUNK = 4 * 1024 * 1024;
 
-    // Читаем весь файл в ArrayBuffer сразу — это решает проблему iOS где file.size=0
+    // Читаем файл в ArrayBuffer — решает проблему iOS где file.size может быть 0
     const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as ArrayBuffer);
@@ -84,58 +83,18 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
       reader.readAsArrayBuffer(file);
     });
 
-    const totalSize = arrayBuffer.byteLength;
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    const fileData = btoa(binary);
 
-    if (totalSize <= 5 * 1024 * 1024) {
-      // Маленький файл — одним запросом
-      const bytes = new Uint8Array(arrayBuffer);
-      let binary = '';
-      for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-      const fileData = btoa(binary);
-      const res = await fetch(`${UPLOAD_URL}?action=single`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat', fileData }),
-      });
-      if (!res.ok) throw new Error('Ошибка загрузки файла');
-      const { fileUrl } = await res.json();
-      return { url: fileUrl, name: filename, type: fileType };
-    }
-
-    // Большой файл — multipart по чанкам 4МБ
-    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
+    const res = await fetch(`${UPLOAD_URL}?action=single`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat' }),
+      body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat', fileData }),
     });
-    if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
-    const { uploadId, key, fileUrl } = await initRes.json();
-
-    const parts: { partNumber: number; etag: string }[] = [];
-    const totalChunks = Math.ceil(totalSize / CHUNK);
-    for (let i = 0; i < totalChunks; i++) {
-      const chunkBuffer = arrayBuffer.slice(i * CHUNK, (i + 1) * CHUNK);
-      const bytes = new Uint8Array(chunkBuffer);
-      let binary = '';
-      for (let j = 0; j < bytes.byteLength; j++) binary += String.fromCharCode(bytes[j]);
-      const chunk = btoa(binary);
-      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk }),
-      });
-      if (!partRes.ok) throw new Error('Ошибка загрузки части файла');
-      const { etag } = await partRes.json();
-      parts.push({ partNumber: i + 1, etag });
-    }
-
-    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
-    });
-    if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
-
+    if (!res.ok) throw new Error('Ошибка загрузки файла');
+    const { fileUrl } = await res.json();
     return { url: fileUrl, name: filename, type: fileType };
   };
 
