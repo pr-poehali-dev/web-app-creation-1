@@ -87,22 +87,20 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
   const sendVoiceBlob = async (blob: Blob, mimeType: string) => {
     if (!userId) return;
     const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+    const fileName = `voice_${Date.now()}.${ext}`;
     setIsSending(true);
     try {
-      const reader = new FileReader();
-      const fileData = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve((reader.result as string).split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+      // Загружаем голосовое в S3 через get-upload-url
+      const voiceFile = new File([blob], fileName, { type: mimeType });
+      const { url } = await uploadFile(voiceFile);
       const res = await fetch(CHAT_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({
           responseId,
           text: '',
-          fileData,
-          fileName: `voice_${Date.now()}.${ext}`,
+          fileUrl: url,
+          fileName,
           fileType: mimeType,
         }),
       });
@@ -111,6 +109,8 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
       } else {
         toast({ title: 'Ошибка отправки голосового', variant: 'destructive' });
       }
+    } catch {
+      toast({ title: 'Ошибка отправки голосового', variant: 'destructive' });
     } finally {
       setIsSending(false);
     }

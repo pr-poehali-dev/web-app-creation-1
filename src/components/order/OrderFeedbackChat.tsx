@@ -7,6 +7,9 @@ import { useToast } from '@/hooks/use-toast';
 import { type OrderMessage, playNotificationSound } from './chat-types';
 import ChatMessageList from './ChatMessageList';
 import ChatInputBar from './ChatInputBar';
+import func2url from '../../../backend/func2url.json';
+
+const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
 
 
 interface OrderFeedbackChatProps {
@@ -215,15 +218,31 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       };
 
       if (pendingFile) {
-        const reader = new FileReader();
+        // Загружаем файл в S3 напрямую, в чат передаём только URL
+        // На iOS file.type может быть пустым — определяем по расширению
+        const extMap: Record<string, string> = {
+          jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+          webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
+          mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v', webm: 'video/webm',
+        };
+        const ext = (pendingFile.file.name || '').split('.').pop()?.toLowerCase() || '';
+        const fileType = pendingFile.file.type || extMap[ext] || 'application/octet-stream';
         const fileData = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
           reader.onload = () => resolve((reader.result as string).split(',')[1]);
           reader.onerror = reject;
           reader.readAsDataURL(pendingFile.file);
         });
-        payload.fileData = fileData;
+        const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+          body: JSON.stringify({ filename: pendingFile.file.name || 'file', contentType: fileType, folder: 'order-chat', fileData }),
+        });
+        if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
+        const { fileUrl } = await uploadRes.json();
+        payload.fileUrl = fileUrl;
         payload.fileName = pendingFile.file.name;
-        payload.fileType = pendingFile.file.type;
+        payload.fileType = fileType;
       }
 
       await ordersAPI.createMessage(payload as Parameters<typeof ordersAPI.createMessage>[0]);

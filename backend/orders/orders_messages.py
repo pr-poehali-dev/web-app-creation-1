@@ -189,7 +189,15 @@ def create_message(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, 
     
     # Загружаем файл-вложение если есть
     attachments = []
-    if body.get('fileData') and body.get('fileName'):
+    if body.get('fileUrl') and body.get('fileName'):
+        # Файл уже загружен в S3 с фронтенда — просто сохраняем ссылку
+        attachments.append({
+            'url': body['fileUrl'],
+            'name': body['fileName'],
+            'type': body.get('fileType', 'application/octet-stream')
+        })
+    elif body.get('fileData') and body.get('fileName'):
+        # Старый путь — base64 (для голосовых и малых файлов)
         file_url = upload_message_file(
             body['fileData'],
             body['fileName'],
