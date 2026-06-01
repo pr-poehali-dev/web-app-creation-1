@@ -73,15 +73,53 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
 
   const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const fileType = resolveFileType(file);
-    const fileData = await fileToBase64(file);
-    const res = await fetch(`${UPLOAD_URL}?action=single`, {
+    const CHUNK = 4 * 1024 * 1024;
+    const filename = file.name || 'file';
+
+    if (file.size <= 5 * 1024 * 1024) {
+      const fileData = await fileToBase64(file);
+      const res = await fetch(`${UPLOAD_URL}?action=single`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat', fileData }),
+      });
+      if (!res.ok) throw new Error('Ошибка загрузки файла');
+      const { fileUrl } = await res.json();
+      return { url: fileUrl, name: filename, type: fileType };
+    }
+
+    // Большой файл — multipart по чанкам 4МБ
+    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename: file.name || 'file', contentType: fileType, folder: 'contract-chat', fileData }),
+      body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat' }),
     });
-    if (!res.ok) throw new Error('Ошибка загрузки файла');
-    const { fileUrl } = await res.json();
-    return { url: fileUrl, name: file.name || 'file', type: fileType };
+    if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
+    const { uploadId, key, fileUrl } = await initRes.json();
+
+    const parts: { partNumber: number; etag: string }[] = [];
+    const totalChunks = Math.ceil(file.size / CHUNK);
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = file.slice(i * CHUNK, (i + 1) * CHUNK);
+      const chunkB64 = await fileToBase64(new File([chunk], filename, { type: fileType }));
+      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
+      });
+      if (!partRes.ok) throw new Error('Ошибка загрузки части файла');
+      const { etag } = await partRes.json();
+      parts.push({ partNumber: i + 1, etag });
+    }
+
+    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
+    });
+    if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
+
+    return { url: fileUrl, name: filename, type: fileType };
   };
 
   const sendVoiceBlob = async (blob: Blob, mimeType: string) => {

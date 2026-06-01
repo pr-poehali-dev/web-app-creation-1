@@ -45,6 +45,7 @@ export default function NegotiationChatTab({
 }: NegotiationChatTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const showMicBtn = !pendingFile && !text.trim() && !isRecording;
 
   // Лайтбокс для полноэкранного просмотра фото
@@ -201,11 +202,20 @@ export default function NegotiationChatTab({
               </div>
             ) : (
               <div className="flex gap-2">
-                {/* Медиа-инпут: фото + видео (все форматы включая HEIC) */}
+                {/* Медиатека: фото + видео из галереи */}
                 <input
                   ref={mediaInputRef}
                   type="file"
                   accept="image/*,video/*"
+                  className="hidden"
+                  onChange={onFileSelect}
+                />
+                {/* Камера: снять прямо сейчас */}
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  capture="environment"
                   className="hidden"
                   onChange={onFileSelect}
                 />
@@ -217,15 +227,25 @@ export default function NegotiationChatTab({
                   className="hidden"
                   onChange={onFileSelect}
                 />
-                {/* Кнопка фото/видео */}
+                {/* Кнопка галереи */}
                 <button
                   type="button"
                   onClick={() => mediaInputRef.current?.click()}
                   disabled={isSending || !!pendingFile}
                   className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
-                  title="Фото или видео"
+                  title="Выбрать из галереи"
                 >
                   <Icon name="Image" className="h-4 w-4 text-muted-foreground" />
+                </button>
+                {/* Кнопка камеры */}
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isSending || !!pendingFile}
+                  className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-md border border-input bg-background hover:bg-muted transition-colors disabled:opacity-50"
+                  title="Сделать фото/видео"
+                >
+                  <Icon name="Camera" className="h-4 w-4 text-muted-foreground" />
                 </button>
                 {/* Кнопка документа */}
                 <button
