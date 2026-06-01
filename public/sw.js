@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.1.1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 // Хосты API — никогда не кэшируем
@@ -85,7 +85,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML навигация — network first, всегда отдаём свежий index.html
+  // HTML навигация — network first, всегда отдаём index.html (SPA)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch('/').then((response) => {
@@ -97,7 +97,7 @@ self.addEventListener('fetch', (event) => {
         return response;
       }).catch(async () => {
         const cached = await caches.match('/');
-        return cached || fetch(event.request);
+        return cached || new Response('', { status: 302, headers: { Location: '/' } });
       })
     );
     return;
