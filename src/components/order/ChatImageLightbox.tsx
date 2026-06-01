@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from '@/components/ui/icon';
 
 interface ChatImageLightboxProps {
@@ -161,10 +162,9 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="absolute inset-0 flex items-center justify-center bg-black/90 rounded-lg"
-      style={{ zIndex: 50 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 999999, background: 'rgba(0,0,0,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       onClick={onClose}
     >
       {/* Верхняя панель кнопок */}
@@ -258,6 +258,7 @@ export default function ChatImageLightbox({ url, onClose }: ChatImageLightboxPro
         style={{ paddingTop: '4rem' }}
         onClick={(e) => e.stopPropagation()}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
