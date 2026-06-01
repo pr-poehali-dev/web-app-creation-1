@@ -218,50 +218,54 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       };
 
       if (pendingFile) {
-        const fileType = pendingFile.file.type || 'application/octet-stream';
+        const file = pendingFile.file;
+        const fileType = file.type || 'application/octet-stream';
+        const filename = file.name || 'file';
         const CHUNK = 4 * 1024 * 1024;
+
+        // Читаем весь файл сразу в ArrayBuffer — решает проблему iOS где file.size=0
+        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as ArrayBuffer);
+          reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+          reader.readAsArrayBuffer(file);
+        });
+        const totalSize = arrayBuffer.byteLength;
+
+        const toBase64 = (buf: ArrayBuffer): string => {
+          const bytes = new Uint8Array(buf);
+          let binary = '';
+          for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+          return btoa(binary);
+        };
+
         let fileUrl: string;
 
-        if (pendingFile.file.size <= 5 * 1024 * 1024) {
-          // Маленький файл — одним запросом
-          const fileData = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string).split(',')[1]);
-            reader.onerror = reject;
-            reader.readAsDataURL(pendingFile.file);
-          });
+        if (totalSize <= 5 * 1024 * 1024) {
           const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-            body: JSON.stringify({ filename: pendingFile.file.name || 'file', contentType: fileType, folder: 'order-chat', fileData }),
+            body: JSON.stringify({ filename, contentType: fileType, folder: 'order-chat', fileData: toBase64(arrayBuffer) }),
           });
           if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
           ({ fileUrl } = await uploadRes.json());
         } else {
-          // Большой файл — multipart по чанкам 4МБ
           const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-            body: JSON.stringify({ filename: pendingFile.file.name || 'file', contentType: fileType, folder: 'order-chat' }),
+            body: JSON.stringify({ filename, contentType: fileType, folder: 'order-chat' }),
           });
           if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
           const { uploadId, key, fileUrl: initUrl } = await initRes.json();
           fileUrl = initUrl;
 
           const parts: { partNumber: number; etag: string }[] = [];
-          const totalChunks = Math.ceil(pendingFile.file.size / CHUNK);
+          const totalChunks = Math.ceil(totalSize / CHUNK);
           for (let i = 0; i < totalChunks; i++) {
-            const chunk = pendingFile.file.slice(i * CHUNK, (i + 1) * CHUNK);
-            const chunkB64 = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve((reader.result as string).split(',')[1]);
-              reader.onerror = reject;
-              reader.readAsDataURL(chunk);
-            });
             const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-              body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
+              body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: toBase64(arrayBuffer.slice(i * CHUNK, (i + 1) * CHUNK)) }),
             });
             if (!partRes.ok) throw new Error('Ошибка загрузки части файла');
             const { etag } = await partRes.json();
@@ -277,7 +281,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         }
 
         payload.fileUrl = fileUrl;
-        payload.fileName = pendingFile.file.name;
+        payload.fileName = filename;
         payload.fileType = fileType;
       }
 
