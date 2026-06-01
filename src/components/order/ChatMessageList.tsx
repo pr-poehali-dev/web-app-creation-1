@@ -93,11 +93,11 @@ export default function ChatMessageList({
                 {msg.attachments && msg.attachments.length > 0 && (
                   <div className="mt-1.5 space-y-1">
                     {msg.attachments.map((att, i) => (
-                      (att.type || '').startsWith('audio/') ? (
+                      att.type.startsWith('audio/') ? (
                         <audio key={i} src={att.url} controls className="max-w-full h-8" style={{ minWidth: 180 }} />
-                      ) : (att.type || '').startsWith('video/') ? (
-                        <video key={i} src={att.url} controls playsInline preload="metadata" className="max-w-full rounded max-h-40" />
-                      ) : (att.type || '').startsWith('image/') ? (
+                      ) : att.type.startsWith('video/') ? (
+                        <video key={i} src={att.url} controls className="max-w-full rounded max-h-40" />
+                      ) : att.type.startsWith('image/') ? (
                         <img
                           key={i}
                           src={att.url}

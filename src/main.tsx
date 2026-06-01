@@ -68,12 +68,8 @@ window.addEventListener('error', (e) => {
   }
 });
 
-// Удаляем все старые Service Worker и чистим кеш
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    registrations.forEach((reg) => reg.unregister());
-  });
-  if ('caches' in window) {
-    caches.keys().then((names) => names.forEach((name) => caches.delete(name)));
-  }
+  setTimeout(() => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }, 2000);
 }
