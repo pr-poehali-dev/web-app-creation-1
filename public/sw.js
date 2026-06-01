@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.1.1';
+const CACHE_VERSION = 'v1.2.0';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 
 // Хосты API — никогда не кэшируем
@@ -70,9 +70,31 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS/CSS/шрифты приложения — cache first
-  const isAsset = url.pathname.match(/\.(js|css|woff2?|ttf|otf|png|svg|ico|webp|jpg|jpeg)$/);
-  if (isAsset) {
+  // JS/CSS приложения — network first, кеш только как запасной вариант
+  // Это гарантирует что после каждого деплоя пользователь получит свежие файлы
+  const isAppAsset = url.pathname.match(/\.(js|css)$/) && url.hostname === self.location.hostname;
+  if (isAppAsset) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response.ok) {
+          caches.open(STATIC_CACHE).then((cache) => cache.put(event.request, response.clone()));
+        }
+        return response;
+      }).catch(async () => {
+        // Сети нет — берём из кеша
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        // Кеша тоже нет — сбрасываем всё и перезагружаем
+        await caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))));
+        return new Response('', { status: 503 });
+      })
+    );
+    return;
+  }
+
+  // Шрифты/картинки — cache first (редко меняются)
+  const isStaticAsset = url.pathname.match(/\.(woff2?|ttf|otf|png|svg|ico|webp|jpg|jpeg)$/);
+  if (isStaticAsset) {
     event.respondWith(
       caches.open(STATIC_CACHE).then(async (cache) => {
         const cached = await cache.match(event.request);
@@ -90,14 +112,18 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch('/').then((response) => {
         if (response.ok) {
-          caches.open(STATIC_CACHE).then((cache) => {
-            cache.put('/', response.clone());
-          });
+          caches.open(STATIC_CACHE).then((cache) => cache.put('/', response.clone()));
         }
         return response;
       }).catch(async () => {
+        // Офлайн — отдаём закешированный index.html
         const cached = await caches.match('/');
-        return cached || new Response('', { status: 302, headers: { Location: '/' } });
+        if (cached) return cached;
+        // Совсем ничего нет — сбрасываем кеш чтобы следующая загрузка была чистой
+        await caches.keys().then(names => Promise.all(names.map(n => caches.delete(n))));
+        return new Response('<html><body><script>location.reload()</script></body></html>', {
+          headers: { 'Content-Type': 'text/html' }
+        });
       })
     );
     return;
