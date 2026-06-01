@@ -19,6 +19,8 @@ import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoading
 import OnlineInviteBanner from "./components/OnlineInviteBanner";
 import BannerStrip from "./components/BannerStrip";
 import LocationToast from "./components/LocationToast";
+import OfferDetail from "./pages/OfferDetail";
+import RequestDetail from "./pages/RequestDetail";
 
 
 // Ленивая загрузка страниц
@@ -56,12 +58,9 @@ const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
     }
   });
 
-// Ленивая загрузка всех страниц
+// Ленивая загрузка остальных страниц
 const Login = lazyWithRetry(() => import("./pages/Login"));
 const Offers = lazyWithRetry(() => import("./pages/Offers"));
-const OfferDetail = lazyWithRetry(() => import("./pages/OfferDetail"));
-
-// Ленивая загрузка остальных страниц
 const Home = lazyWithRetry(() => import("./pages/Home"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
@@ -80,7 +79,6 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
 const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
 const ActiveOrders = lazyWithRetry(() => import("./pages/ActiveOrders"));
-const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
 const EditRequest = lazyWithRetry(() => import("./pages/EditRequest"));
 const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
 const CreateAuction = lazyWithRetry(() => import("./pages/CreateAuction"));
@@ -393,7 +391,7 @@ const App = () => {
             <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/search" element={<SearchResults isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+            <Route path="/offer/:id" element={<OfferDetail />} />
             <Route path="/edit-offer/:id" element={<EditOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/request/:id" element={<RequestDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
