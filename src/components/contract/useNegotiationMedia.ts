@@ -74,14 +74,41 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
   const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const fileType = resolveFileType(file);
     const filename = file.name || 'file';
-    const fileData = await fileToBase64(file);
-    const res = await fetch(`${UPLOAD_URL}?action=single`, {
+    const CHUNK = 4 * 1024 * 1024;
+    const arrayBuffer = await file.arrayBuffer();
+    const totalChunks = Math.ceil(arrayBuffer.byteLength / CHUNK);
+
+    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat', fileData }),
+      body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat' }),
     });
-    if (!res.ok) throw new Error('Ошибка загрузки файла');
-    const { fileUrl } = await res.json();
+    if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
+    const { uploadId, key, fileUrl } = await initRes.json();
+
+    const parts: { partNumber: number; etag: string }[] = [];
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = arrayBuffer.slice(i * CHUNK, (i + 1) * CHUNK);
+      const bytes = new Uint8Array(chunk);
+      let binary = '';
+      for (let j = 0; j < bytes.byteLength; j++) binary += String.fromCharCode(bytes[j]);
+      const chunkB64 = btoa(binary);
+      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
+      });
+      if (!partRes.ok) throw new Error(`Ошибка загрузки части ${i + 1}`);
+      const { etag } = await partRes.json();
+      parts.push({ partNumber: i + 1, etag });
+    }
+
+    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
+    });
+    if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
     return { url: fileUrl, name: filename, type: fileType };
   };
 
