@@ -64,43 +64,22 @@
     <!-- Clear old caches on deploy -->
     <script>
         (function() {
-            var APP_VERSION = '1.2.0';
+            var APP_VERSION = '1.2.1';
             var VERSION_KEY = 'app_version';
             var currentVersion = localStorage.getItem(VERSION_KEY);
-            var RELOAD_KEY = 'cache_cleared_' + APP_VERSION;
-
-            if (currentVersion !== APP_VERSION && !sessionStorage.getItem(RELOAD_KEY)) {
-                // Помечаем что уже чистим — чтобы не зациклиться
-                sessionStorage.setItem(RELOAD_KEY, '1');
+            if (currentVersion !== APP_VERSION) {
                 localStorage.setItem(VERSION_KEY, APP_VERSION);
-
-                // Разрегистрируем все Service Workers и очищаем кэши
-                var cleared = false;
-                function doReload() {
-                    if (!cleared) {
-                        cleared = true;
-                        window.location.reload(true);
-                    }
-                }
+                // Тихо очищаем кэши в фоне — без перезагрузки
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.getRegistrations().then(function(regs) {
-                        var promises = regs.map(function(r) { return r.unregister(); });
-                        if ('caches' in window) {
-                            promises.push(caches.keys().then(function(names) {
-                                return Promise.all(names.map(function(n) { return caches.delete(n); }));
-                            }));
-                        }
-                        return Promise.all(promises);
-                    }).then(doReload).catch(doReload);
-                    // Страховка — если Promise завис
-                    setTimeout(doReload, 2000);
-                } else if ('caches' in window) {
-                    caches.keys().then(function(names) {
-                        return Promise.all(names.map(function(n) { return caches.delete(n); }));
-                    }).then(doReload).catch(doReload);
-                    setTimeout(doReload, 2000);
+                        regs.forEach(function(r) { r.unregister(); });
+                    }).catch(function(){});
                 }
-                return; // Дальше не выполняем — идёт перезагрузка
+                if ('caches' in window) {
+                    caches.keys().then(function(names) {
+                        names.forEach(function(n) { caches.delete(n); });
+                    }).catch(function(){});
+                }
             }
         })();
     </script>
