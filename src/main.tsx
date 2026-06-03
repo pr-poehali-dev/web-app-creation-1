@@ -70,6 +70,24 @@ window.addEventListener('error', (e) => {
 
 if ('serviceWorker' in navigator) {
   setTimeout(() => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js').then((reg) => {
+      // Когда SW обновился — перезагружаем страницу автоматически
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'activated') {
+            window.location.reload();
+          }
+        });
+      });
+    }).catch(() => {});
+
+    // Слушаем сообщение от SW об обновлении
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'SW_UPDATED') {
+        window.location.reload();
+      }
+    });
   }, 2000);
 }

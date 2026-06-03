@@ -33,10 +33,11 @@ self.addEventListener('activate', (event) => {
           .map((name) => caches.delete(name))
       );
     }).then(() => self.clients.claim()).then(() => {
-      // Уведомляем все открытые вкладки о новой версии — они перезагрузятся
+      // Принудительно перезагружаем все вкладки после обновления SW
       return self.clients.matchAll({ type: 'window' }).then((clients) => {
         clients.forEach((client) => {
           client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
+          client.navigate(client.url);
         });
       });
     })
