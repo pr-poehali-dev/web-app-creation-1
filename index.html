@@ -64,43 +64,28 @@
     <!-- Clear old caches on deploy -->
     <script>
         (function() {
-            var APP_VERSION = '1.2.0';
-            var VERSION_KEY = 'app_version';
-            var currentVersion = localStorage.getItem(VERSION_KEY);
-            var RELOAD_KEY = 'cache_cleared_' + APP_VERSION;
-
-            if (currentVersion !== APP_VERSION && !sessionStorage.getItem(RELOAD_KEY)) {
-                // Помечаем что уже чистим — чтобы не зациклиться
-                sessionStorage.setItem(RELOAD_KEY, '1');
-                localStorage.setItem(VERSION_KEY, APP_VERSION);
-
-                // Разрегистрируем все Service Workers и очищаем кэши
-                var cleared = false;
-                function doReload() {
-                    if (!cleared) {
-                        cleared = true;
-                        window.location.reload(true);
-                    }
-                }
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(function(regs) {
-                        var promises = regs.map(function(r) { return r.unregister(); });
-                        if ('caches' in window) {
-                            promises.push(caches.keys().then(function(names) {
-                                return Promise.all(names.map(function(n) { return caches.delete(n); }));
-                            }));
-                        }
-                        return Promise.all(promises);
-                    }).then(doReload).catch(doReload);
-                    // Страховка — если Promise завис
-                    setTimeout(doReload, 2000);
-                } else if ('caches' in window) {
+            const APP_VERSION = '1.1.2';
+            const VERSION_KEY = 'app_version';
+            const currentVersion = localStorage.getItem(VERSION_KEY);
+            if (currentVersion !== APP_VERSION) {
+                if ('caches' in window) {
                     caches.keys().then(function(names) {
-                        return Promise.all(names.map(function(n) { return caches.delete(n); }));
-                    }).then(doReload).catch(doReload);
-                    setTimeout(doReload, 2000);
+                        names.forEach(function(name) { caches.delete(name); });
+                    });
                 }
-                return; // Дальше не выполняем — идёт перезагрузка
+                sessionStorage.removeItem('chunk-reload');
+                sessionStorage.removeItem('eb_reloaded');
+                localStorage.setItem(VERSION_KEY, APP_VERSION);
+                // При смене версии — редирект с cache-buster (работает на iOS Safari)
+                if (currentVersion !== null) {
+                    var sep = window.location.search ? '&' : '?';
+                    window.location.replace(window.location.href.split('?')[0] + sep + '_v=' + APP_VERSION);
+                }
+            }
+            // Убираем cache-buster из URL после загрузки (чистый URL)
+            if (window.location.search.indexOf('_v=') !== -1 && window.history && window.history.replaceState) {
+                var cleanUrl = window.location.href.replace(/[?&]_v=[^&]*/g, '').replace(/[?&]$/, '');
+                window.history.replaceState(null, '', cleanUrl);
             }
         })();
     </script>
