@@ -203,7 +203,12 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const readFileAsBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onload = () => {
+        const result = reader.result as string;
+        if (!result) { reject(new Error('Файл пустой')); return; }
+        const comma = result.indexOf(',');
+        resolve(comma >= 0 ? result.slice(comma + 1) : result);
+      };
       reader.onerror = () => reject(new Error('Ошибка чтения файла'));
       reader.readAsDataURL(file);
     });
@@ -211,9 +216,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
   const uploadFile = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
     const fileType = resolveFileType(file);
     const fileData = await readFileAsBase64(file);
-    // S3 multipart требует минимум 5MB на каждую часть кроме последней.
-    // Поэтому файлы < 9MB отправляем одним запросом через action=single.
-    // Файлы >= 9MB делим на чанки по 6MB base64 (~4.5MB бинарных).
+    if (!fileData) throw new Error('Не удалось прочитать файл');
     const MULTIPART_THRESHOLD_B64 = 9 * 1024 * 1024;
     if (fileData.length < MULTIPART_THRESHOLD_B64) {
       const res = await fetch(`${UPLOAD_URL}?action=single`, {
@@ -221,9 +224,13 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({ filename, contentType: fileType, folder, fileData }),
       });
-      if (!res.ok) throw new Error('Ошибка загрузки файла');
-      const { fileUrl } = await res.json();
-      return fileUrl;
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Ошибка загрузки: ${res.status} ${errText}`);
+      }
+      const json = await res.json();
+      if (!json.fileUrl) throw new Error('Сервер не вернул URL файла');
+      return json.fileUrl;
     }
     const CHUNK_B64 = 6 * 1024 * 1024;
     const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
