@@ -222,17 +222,13 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         const fileType = file.type || 'application/octet-stream';
         const filename = file.name || 'file';
 
-        // Читаем файл в ArrayBuffer — решает проблему iOS где file.size может быть 0
-        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as ArrayBuffer);
+          reader.onload = () => resolve(reader.result as string);
           reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-          reader.readAsArrayBuffer(file);
+          reader.readAsDataURL(file);
         });
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-        const fileData = btoa(binary);
+        const fileData = dataUrl.split(',')[1];
 
         const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
           method: 'POST',
@@ -254,6 +250,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       await loadMessages(true);
     } catch (e) {
       console.error('Error sending message:', e);
+      toast({ title: 'Ошибка отправки', description: 'Не удалось отправить файл. Попробуй ещё раз.', variant: 'destructive' });
     } finally {
       setIsSending(false);
     }

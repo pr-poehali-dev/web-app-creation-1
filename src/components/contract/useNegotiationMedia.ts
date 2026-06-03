@@ -74,20 +74,7 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
   const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const fileType = resolveFileType(file);
     const filename = file.name || 'file';
-
-    // Читаем файл в ArrayBuffer — решает проблему iOS где file.size может быть 0
-    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as ArrayBuffer);
-      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-      reader.readAsArrayBuffer(file);
-    });
-
-    const bytes = new Uint8Array(arrayBuffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
-    const fileData = btoa(binary);
-
+    const fileData = await fileToBase64(file);
     const res = await fetch(`${UPLOAD_URL}?action=single`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
