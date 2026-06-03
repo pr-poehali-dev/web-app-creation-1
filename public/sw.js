@@ -1,27 +1,14 @@
-const CACHE_VERSION = 'v1.0.9';
-const STATIC_CACHE = `static-${CACHE_VERSION}`;
+const CACHE_VERSION = 'v1.2.0';
+const CDN_CACHE = `cdn-${CACHE_VERSION}`;
 
-// Хосты API — никогда не кэшируем
-const API_HOSTS = [
-  'functions.poehali.dev',
-  'mc.yandex.ru',
-];
+// Кэшируем ТОЛЬКО картинки с CDN — никаких JS/CSS
+const CDN_HOSTS = ['cdn.poehali.dev'];
 
-// Хосты статики — кэшируем агрессивно
-const CDN_HOSTS = [
-  'cdn.poehali.dev',
-];
+// API — никогда не кэшируем
+const API_HOSTS = ['functions.poehali.dev', 'mc.yandex.ru'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/manifest.json',
-      ]).catch(() => {});
-    })
-  );
 });
 
 self.addEventListener('activate', (event) => {
@@ -29,82 +16,47 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((names) => {
       return Promise.all(
         names
-          .filter((name) => name !== STATIC_CACHE)
+          .filter((name) => name !== CDN_CACHE)
           .map((name) => caches.delete(name))
       );
-    }).then(() => self.clients.claim()).then(() => {
-      // Уведомляем все открытые вкладки о новой версии — они перезагрузятся
-      return self.clients.matchAll({ type: 'window' }).then((clients) => {
-        clients.forEach((client) => {
-          client.postMessage({ type: 'SW_UPDATED', version: CACHE_VERSION });
-        });
-      });
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Пропускаем не-GET запросы напрямую
+  // Только GET
   if (event.request.method !== 'GET') return;
 
-  // Пропускаем API — всегда свежие данные с сервера
+  // API — не трогаем
   if (API_HOSTS.some((h) => url.hostname.includes(h))) return;
 
-  // Пропускаем chrome-extension и прочее
+  // Не http — не трогаем
   if (!url.protocol.startsWith('http')) return;
 
-  // CDN картинки — cache first (берём из кэша, обновляем в фоне)
+  // JS/CSS/HTML приложения — ВСЕГДА из сети, никогда из кэша
+  if (url.hostname === self.location.hostname) return;
+
+  // CDN картинки — cache first
   if (CDN_HOSTS.some((h) => url.hostname.includes(h))) {
-    event.respondWith(
-      caches.open(STATIC_CACHE).then(async (cache) => {
-        const cached = await cache.match(event.request);
-        const fetchPromise = fetch(event.request).then((response) => {
-          if (response.ok) cache.put(event.request, response.clone());
-          return response;
-        }).catch(() => cached);
-        return cached || fetchPromise;
-      })
-    );
-    return;
-  }
-
-  // JS/CSS/шрифты приложения — cache first
-  const isAsset = url.pathname.match(/\.(js|css|woff2?|ttf|otf|png|svg|ico|webp|jpg|jpeg)$/);
-  if (isAsset) {
-    event.respondWith(
-      caches.open(STATIC_CACHE).then(async (cache) => {
-        const cached = await cache.match(event.request);
-        if (cached) return cached;
-        const response = await fetch(event.request);
-        if (response.ok) cache.put(event.request, response.clone());
-        return response;
-      })
-    );
-    return;
-  }
-
-  // HTML навигация — network first, всегда отдаём свежий index.html
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch('/').then((response) => {
-        if (response.ok) {
-          caches.open(STATIC_CACHE).then((cache) => {
-            cache.put('/', response.clone());
-          });
-        }
-        return response;
-      }).catch(async () => {
-        const cached = await caches.match('/');
-        return cached || fetch(event.request);
-      })
-    );
+    const isImage = url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg|ico|woff2?)$/i);
+    if (isImage) {
+      event.respondWith(
+        caches.open(CDN_CACHE).then(async (cache) => {
+          const cached = await cache.match(event.request);
+          if (cached) return cached;
+          const response = await fetch(event.request).catch(() => null);
+          if (response && response.ok) cache.put(event.request, response.clone());
+          return response || new Response('', { status: 408 });
+        })
+      );
+    }
     return;
   }
 });
 
-// Короткий бип — обычное уведомление
+// Push-уведомления
 function playNotificationSound() {
   try {
     const ctx = new AudioContext();
@@ -127,12 +79,10 @@ function playNotificationSound() {
   } catch (e) {}
 }
 
-// Длинный телефонный звонок — для приглашения в чат
 function playRingSound() {
   try {
     const ctx = new AudioContext();
     const now = ctx.currentTime;
-    // 3 пары импульсов — как телефонный звонок
     const pulses = [
       { freq: 880, time: 0 },    { freq: 1100, time: 0.15 },
       { freq: 880, time: 0.45 }, { freq: 1100, time: 0.60 },
@@ -155,7 +105,6 @@ function playRingSound() {
   } catch (e) {}
 }
 
-// Обработка push-уведомлений
 self.addEventListener('push', (event) => {
   let notificationData = {
     title: 'ЕРТТП',
@@ -182,7 +131,6 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     Promise.all([
-      // Показываем уведомление
       self.registration.showNotification(notificationData.title, {
         body: notificationData.body,
         icon: notificationData.icon,
@@ -191,7 +139,6 @@ self.addEventListener('push', (event) => {
         tag: notificationData.tag,
         requireInteraction: notificationData.requireInteraction,
       }),
-      // Уведомляем открытые вкладки + играем нужный звук
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
         const callData = notificationData.data && notificationData.data.callData;
         const isInvite = notificationData.data && notificationData.data.type === 'online_invite';
@@ -199,7 +146,6 @@ self.addEventListener('push', (event) => {
         if (clientList.length > 0) {
           clientList.forEach((client) => {
             if (isInvite) {
-              // Приглашение в чат — длинный звонок
               client.postMessage({ type: 'PLAY_INVITE_RING' });
             } else {
               client.postMessage({ type: 'PLAY_NOTIFICATION_SOUND' });
@@ -209,7 +155,6 @@ self.addEventListener('push', (event) => {
             }
           });
         } else {
-          // Вкладка закрыта — играем через AudioContext прямо в SW
           if (isInvite) {
             playRingSound();
           } else {
@@ -221,13 +166,11 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Обработка клика по уведомлению
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const relativeUrl = event.notification.data?.url || '/';
   const callData = event.notification.data?.callData || null;
 
-  // Если это видеозвонок — добавляем callData в URL как параметр
   let targetUrl = relativeUrl;
   if (callData) {
     try {
@@ -244,7 +187,6 @@ self.addEventListener('notificationclick', (event) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus().then(() => {
-            // Передаём и навигацию и callData через postMessage
             client.postMessage({ type: 'NOTIFICATION_CLICK', url: targetUrl });
             if (callData) {
               client.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
@@ -252,10 +194,7 @@ self.addEventListener('notificationclick', (event) => {
           });
         }
       }
-      // Вкладка не открыта — открываем с callData в URL
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
+      return clients.openWindow(urlToOpen);
     })
   );
 });

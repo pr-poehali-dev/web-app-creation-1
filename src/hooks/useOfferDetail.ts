@@ -228,7 +228,7 @@ export function useOfferDetail(id: string | undefined) {
     }
     
     const currentUser = getSession();
-    if (currentUser && offer && currentUser.id?.toString() === offer.userId) {
+    if (currentUser && offer && String(currentUser.id) === String(offer.userId)) {
       toast({
         title: 'Невозможно создать заказ',
         description: 'Нельзя заказать собственное предложение',

@@ -92,12 +92,20 @@ export default function ChatMessageList({
                 {msg.message && <p className="whitespace-pre-line break-words">{msg.message}</p>}
                 {msg.attachments && msg.attachments.length > 0 && (
                   <div className="mt-1.5 space-y-1">
-                    {msg.attachments.map((att, i) => (
-                      att.type.startsWith('audio/') ? (
+                    {msg.attachments.map((att, i) => {
+                      const urlExt = att.url?.split('?')[0].split('.').pop()?.toLowerCase() || '';
+                      const nameExt = att.name?.split('.').pop()?.toLowerCase() || '';
+                      const videoExts = ['mp4','mov','avi','mkv','webm','m4v','3gp'];
+                      const audioExts = ['mp3','ogg','webm','m4a','wav','opus'];
+                      const imageExts = ['jpg','jpeg','png','gif','webp','heic','heif'];
+                      const isAudio = att.type?.startsWith('audio/') || audioExts.includes(urlExt) || audioExts.includes(nameExt);
+                      const isVideo = !isAudio && (att.type?.startsWith('video/') || videoExts.includes(urlExt) || videoExts.includes(nameExt));
+                      const isImage = !isAudio && !isVideo && (att.type?.startsWith('image/') || imageExts.includes(urlExt) || imageExts.includes(nameExt));
+                      return isAudio ? (
                         <audio key={i} src={att.url} controls className="max-w-full h-8" style={{ minWidth: 180 }} />
-                      ) : att.type.startsWith('video/') ? (
-                        <video key={i} src={att.url} controls className="max-w-full rounded max-h-40" />
-                      ) : att.type.startsWith('image/') ? (
+                      ) : isVideo ? (
+                        <video key={i} src={att.url} controls className="max-w-full rounded max-h-40" playsInline />
+                      ) : isImage ? (
                         <img
                           key={i}
                           src={att.url}
@@ -110,8 +118,8 @@ export default function ChatMessageList({
                           <Icon name="Paperclip" size={12} />
                           {att.name}
                         </a>
-                      )
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
                 <div className="flex items-center justify-between gap-2 mt-1">
