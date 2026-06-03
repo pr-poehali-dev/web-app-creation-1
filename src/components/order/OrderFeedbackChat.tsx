@@ -188,14 +188,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
-  const readChunkAsBase64 = (blob: Blob): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve((reader.result as string).split(',')[1]);
-      reader.onerror = () => reject(new Error('Ошибка чтения чанка'));
-      reader.readAsDataURL(blob);
-    });
-
   const resolveFileType = (file: File): string => {
     if (file.type) return file.type;
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
@@ -208,10 +200,20 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     return map[ext] || 'application/octet-stream';
   };
 
+  const readFileAsBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+      reader.readAsDataURL(file);
+    });
+
   const uploadFileMultipart = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
     const fileType = resolveFileType(file);
-    const CHUNK = 4 * 1024 * 1024;
-    const totalChunks = Math.ceil(file.size / CHUNK);
+    // Читаем весь файл через FileReader — единственный надёжный способ на iOS
+    const fullBase64 = await readFileAsBase64(file);
+    const CHUNK_B64 = 5 * 1024 * 1024; // ~5MB base64 = ~3.75MB бинарных
+    const totalChunks = Math.ceil(fullBase64.length / CHUNK_B64);
 
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
@@ -223,8 +225,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
     const parts: { partNumber: number; etag: string }[] = [];
     for (let i = 0; i < totalChunks; i++) {
-      const chunkBlob = file.slice(i * CHUNK, (i + 1) * CHUNK);
-      const chunkB64 = await readChunkAsBase64(chunkBlob);
+      const chunkB64 = fullBase64.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
       const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
