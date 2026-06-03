@@ -10,6 +10,18 @@ if (!rootElement) {
   throw new Error('Root element not found');
 }
 
+// Убираем сплэш — вызывается из App после первого рендера
+export function removeSplash() {
+  const splash = document.getElementById('html-splash');
+  if (splash && splash.parentNode) {
+    splash.style.transition = 'opacity 0.3s ease';
+    splash.style.opacity = '0';
+    setTimeout(() => {
+      if (splash.parentNode) splash.remove();
+    }, 300);
+  }
+}
+
 const root = createRoot(rootElement);
 
 root.render(
@@ -20,29 +32,24 @@ root.render(
   </React.StrictMode>
 );
 
-// Убираем HTML splash с задержкой — даём React время отрисовать первый экран
-const emergencyTimer = setTimeout(() => {
+// Аварийный таймер — если React не смог запуститься за 20 сек, показываем кнопку
+setTimeout(() => {
   const splash = document.getElementById('html-splash');
   if (splash) {
     const btn = document.createElement('button');
     btn.textContent = 'Обновить страницу';
-    btn.style.cssText = 'margin-top:8px;padding:12px 24px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;font-family:-apple-system,sans-serif;';
-    btn.onclick = () => location.reload();
-    splash.appendChild(btn);
+    btn.style.cssText = 'margin-top:16px;padding:14px 28px;background:#3b82f6;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;font-family:-apple-system,sans-serif;';
+    btn.onclick = () => {
+      if ('caches' in window) {
+        caches.keys().then((names) => names.forEach((n) => caches.delete(n))).finally(() => location.reload());
+      } else {
+        location.reload();
+      }
+    };
+    // Не добавляем если кнопка уже есть
+    if (!splash.querySelector('button')) splash.appendChild(btn);
   }
-}, 15000);
-
-setTimeout(() => {
-  const splash = document.getElementById('html-splash');
-  if (splash) {
-    clearTimeout(emergencyTimer);
-    splash.style.transition = 'opacity 0.4s ease';
-    splash.style.opacity = '0';
-    setTimeout(() => splash.remove(), 400);
-  }
-}, 600);
-
-
+}, 20000);
 
 // Обработчик ошибок чанков (устаревший кэш на iOS)
 window.addEventListener('error', (e) => {
@@ -70,24 +77,6 @@ window.addEventListener('error', (e) => {
 
 if ('serviceWorker' in navigator) {
   setTimeout(() => {
-    navigator.serviceWorker.register('/sw.js').then((reg) => {
-      // Когда SW обновился — перезагружаем страницу автоматически
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'activated') {
-            window.location.reload();
-          }
-        });
-      });
-    }).catch(() => {});
-
-    // Слушаем сообщение от SW об обновлении
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      if (event.data?.type === 'SW_UPDATED') {
-        window.location.reload();
-      }
-    });
-  }, 2000);
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }, 3000);
 }
