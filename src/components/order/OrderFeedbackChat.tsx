@@ -85,16 +85,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
       prevCountRef.current = fetched.length;
       isFirstLoad.current = false;
-      // Обновляем только если количество изменилось или последнее сообщение новее
-      // Это предотвращает пересоздание <video>/<audio> элементов при polling
-      setMessages(prev => {
-        if (fetched.length !== prev.length) return fetched;
-        if (fetched.length === 0) return prev;
-        const lastNew = fetched[fetched.length - 1];
-        const lastOld = prev[prev.length - 1];
-        if (lastNew.id !== lastOld.id || lastNew.isRead !== lastOld.isRead) return fetched;
-        return prev;
-      });
+      setMessages(fetched);
     } catch (e) {
       console.error('Error loading messages:', e);
     } finally {
@@ -197,82 +188,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
-  const resolveFileType = (file: File): string => {
-    if (file.type) return file.type;
-    const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    const map: Record<string, string> = {
-      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
-      webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
-      mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v',
-      avi: 'video/avi', webm: 'video/webm', mkv: 'video/x-matroska',
-    };
-    return map[ext] || 'application/octet-stream';
-  };
-
-  const readFileAsBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        if (!result) { reject(new Error('Файл пустой')); return; }
-        const comma = result.indexOf(',');
-        resolve(comma >= 0 ? result.slice(comma + 1) : result);
-      };
-      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-      reader.readAsDataURL(file);
-    });
-
-  const uploadFile = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
-    const fileType = resolveFileType(file);
-    const fileData = await readFileAsBase64(file);
-    if (!fileData) throw new Error('Не удалось прочитать файл');
-    // single: только файлы до 3 МБ base64 (~2.2 МБ бинарных)
-    // multipart: всё что крупнее, чанки по 7 МБ base64 (~5.2 МБ бинарных > минимум S3 5 МБ)
-    const MULTIPART_THRESHOLD_B64 = 3 * 1024 * 1024;
-    if (fileData.length < MULTIPART_THRESHOLD_B64) {
-      const res = await fetch(`${UPLOAD_URL}?action=single`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ filename, contentType: fileType, folder, fileData }),
-      });
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        throw new Error(`Ошибка загрузки: ${res.status} ${errText}`);
-      }
-      const json = await res.json();
-      if (!json.fileUrl) throw new Error('Сервер не вернул URL файла');
-      return json.fileUrl;
-    }
-    const CHUNK_B64 = 7 * 1024 * 1024;
-    const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
-    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename, contentType: fileType, folder }),
-    });
-    if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
-    const { uploadId, key, fileUrl } = await initRes.json();
-    const parts: { partNumber: number; etag: string }[] = [];
-    for (let i = 0; i < totalChunks; i++) {
-      const chunkB64 = fileData.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
-      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
-      });
-      if (!partRes.ok) throw new Error(`Ошибка загрузки части ${i + 1}`);
-      const { etag } = await partRes.json();
-      parts.push({ partNumber: i + 1, etag });
-    }
-    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
-    });
-    if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
-    return fileUrl;
-  };
-
   const handleSendMessage = async () => {
     if (!newMessage.trim() && !pendingFile) return;
     if (isSending) return;
@@ -304,9 +219,29 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
       if (pendingFile) {
         const file = pendingFile.file;
+        const fileType = file.type || 'application/octet-stream';
         const filename = file.name || 'file';
-        const fileType = resolveFileType(file);
-        const fileUrl = await uploadFile(file, filename, String(user.id), 'order-chat');
+
+        // Читаем файл в ArrayBuffer — решает проблему iOS где file.size может быть 0
+        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as ArrayBuffer);
+          reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+          reader.readAsArrayBuffer(file);
+        });
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        const fileData = btoa(binary);
+
+        const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
+          body: JSON.stringify({ filename, contentType: fileType, folder: 'order-chat', fileData }),
+        });
+        if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
+        const { fileUrl } = await uploadRes.json();
+
         payload.fileUrl = fileUrl;
         payload.fileName = filename;
         payload.fileType = fileType;
@@ -319,7 +254,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       await loadMessages(true);
     } catch (e) {
       console.error('Error sending message:', e);
-      toast({ title: 'Ошибка отправки', description: 'Не удалось отправить файл. Попробуй ещё раз.', variant: 'destructive' });
     } finally {
       setIsSending(false);
     }

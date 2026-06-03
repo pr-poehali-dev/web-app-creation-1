@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, lazy, Suspense } from "react";
-import { removeSplash } from "./main";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -161,10 +160,6 @@ const queryClient = new QueryClient({
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getSession());
 
-  // Убираем сплэш сразу после монтирования App
-  useEffect(() => {
-    removeSplash();
-  }, []);
 
   useEffect(() => {
     // Быстрая проверка сессии без лишних операций

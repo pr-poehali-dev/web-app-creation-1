@@ -71,66 +71,30 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
     e.target.value = '';
   };
 
-  const readFileAsBase64 = (f: File | Blob): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        if (!result) { reject(new Error('Файл пустой')); return; }
-        const comma = result.indexOf(',');
-        resolve(comma >= 0 ? result.slice(comma + 1) : result);
-      };
-      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-      reader.readAsDataURL(f);
-    });
-
   const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const fileType = resolveFileType(file);
     const filename = file.name || 'file';
-    const fileData = await readFileAsBase64(file);
-    if (!fileData) throw new Error('Не удалось прочитать файл');
-    const MULTIPART_THRESHOLD_B64 = 3 * 1024 * 1024;
-    if (fileData.length < MULTIPART_THRESHOLD_B64) {
-      const res = await fetch(`${UPLOAD_URL}?action=single`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat', fileData }),
-      });
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        throw new Error(`Ошибка загрузки: ${res.status} ${errText}`);
-      }
-      const json = await res.json();
-      if (!json.fileUrl) throw new Error('Сервер не вернул URL файла');
-      return { url: json.fileUrl, name: filename, type: fileType };
-    }
-    const CHUNK_B64 = 7 * 1024 * 1024;
-    const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
-    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
+
+    // Читаем файл в ArrayBuffer — решает проблему iOS где file.size может быть 0
+    const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(new Error('Ошибка чтения файла'));
+      reader.readAsArrayBuffer(file);
+    });
+
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+    const fileData = btoa(binary);
+
+    const res = await fetch(`${UPLOAD_URL}?action=single`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat' }),
+      body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat', fileData }),
     });
-    if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
-    const { uploadId, key, fileUrl } = await initRes.json();
-    const parts: { partNumber: number; etag: string }[] = [];
-    for (let i = 0; i < totalChunks; i++) {
-      const chunkB64 = fileData.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
-      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
-      });
-      if (!partRes.ok) throw new Error(`Ошибка загрузки части ${i + 1}`);
-      const { etag } = await partRes.json();
-      parts.push({ partNumber: i + 1, etag });
-    }
-    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
-    });
-    if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
+    if (!res.ok) throw new Error('Ошибка загрузки файла');
+    const { fileUrl } = await res.json();
     return { url: fileUrl, name: filename, type: fileType };
   };
 

@@ -330,13 +330,13 @@ export default function MyOrders({ isAuthenticated, onLogout }: MyOrdersProps) {
           isOpen={isChatOpen}
           onClose={handleCloseChat}
           order={selectedOrder}
-          onAcceptOrder={(String(currentUser?.id) === String(selectedOrder.sellerId) || String(currentUser?.id) === String(selectedOrder.buyerId)) && (selectedOrder.status === 'pending' || selectedOrder.status === 'new') ? () => handleAcceptOrder() : undefined}
+          onAcceptOrder={(currentUser?.id?.toString() === selectedOrder.sellerId || currentUser?.id?.toString() === selectedOrder.buyerId) && (selectedOrder.status === 'pending' || selectedOrder.status === 'new') ? () => handleAcceptOrder() : undefined}
           onCounterOffer={handleCounterOffer}
           onAcceptCounter={handleAcceptCounter}
           onCancelOrder={handleCancelOrder}
-          onCompleteOrder={String(currentUser?.id) === String(selectedOrder.buyerId) ? () => handleCompleteOrder(selectedOrder.id) : undefined}
-          onRequestCompletion={String(currentUser?.id) === String(selectedOrder.sellerId) ? handleRequestCompletion : undefined}
-          onCancelTrip={String(currentUser?.id) === String(selectedOrder.sellerId) ? handleCancelTrip : undefined}
+          onCompleteOrder={currentUser?.id?.toString() === selectedOrder.buyerId ? () => handleCompleteOrder(selectedOrder.id) : undefined}
+          onRequestCompletion={currentUser?.id?.toString() === selectedOrder.sellerId ? handleRequestCompletion : undefined}
+          onCancelTrip={currentUser?.id?.toString() === selectedOrder.sellerId ? handleCancelTrip : undefined}
         />
       )}
 

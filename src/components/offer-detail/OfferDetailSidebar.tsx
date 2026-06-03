@@ -24,8 +24,13 @@ export default function OfferDetailSidebar({
   navigate,
 }: OfferDetailSidebarProps) {
   const currentUser = getSession();
-  const isOwner = !!(currentUser && String(currentUser.id) === String(offer.userId));
+  const isOwner = currentUser && currentUser.id?.toString() === offer.userId?.toString();
 
+  console.log('🔍 Проверка владельца:', {
+    currentUserId: currentUser?.id,
+    offerUserId: offer.userId,
+    isOwner,
+  });
 
   return (
     <div className="space-y-1">
