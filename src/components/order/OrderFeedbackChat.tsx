@@ -85,7 +85,16 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
       prevCountRef.current = fetched.length;
       isFirstLoad.current = false;
-      setMessages(fetched);
+      // Обновляем только если количество изменилось или последнее сообщение новее
+      // Это предотвращает пересоздание <video>/<audio> элементов при polling
+      setMessages(prev => {
+        if (fetched.length !== prev.length) return fetched;
+        if (fetched.length === 0) return prev;
+        const lastNew = fetched[fetched.length - 1];
+        const lastOld = prev[prev.length - 1];
+        if (lastNew.id !== lastOld.id || lastNew.isRead !== lastOld.isRead) return fetched;
+        return prev;
+      });
     } catch (e) {
       console.error('Error loading messages:', e);
     } finally {
@@ -217,7 +226,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     const fileType = resolveFileType(file);
     const fileData = await readFileAsBase64(file);
     if (!fileData) throw new Error('Не удалось прочитать файл');
-    const MULTIPART_THRESHOLD_B64 = 9 * 1024 * 1024;
+    // single: только файлы до 3 МБ base64 (~2.2 МБ бинарных)
+    // multipart: всё что крупнее, чанки по 7 МБ base64 (~5.2 МБ бинарных > минимум S3 5 МБ)
+    const MULTIPART_THRESHOLD_B64 = 3 * 1024 * 1024;
     if (fileData.length < MULTIPART_THRESHOLD_B64) {
       const res = await fetch(`${UPLOAD_URL}?action=single`, {
         method: 'POST',
@@ -232,7 +243,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       if (!json.fileUrl) throw new Error('Сервер не вернул URL файла');
       return json.fileUrl;
     }
-    const CHUNK_B64 = 6 * 1024 * 1024;
+    const CHUNK_B64 = 7 * 1024 * 1024;
     const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',

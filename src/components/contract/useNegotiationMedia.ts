@@ -89,7 +89,7 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
     const filename = file.name || 'file';
     const fileData = await readFileAsBase64(file);
     if (!fileData) throw new Error('Не удалось прочитать файл');
-    const MULTIPART_THRESHOLD_B64 = 9 * 1024 * 1024;
+    const MULTIPART_THRESHOLD_B64 = 3 * 1024 * 1024;
     if (fileData.length < MULTIPART_THRESHOLD_B64) {
       const res = await fetch(`${UPLOAD_URL}?action=single`, {
         method: 'POST',
@@ -104,7 +104,7 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
       if (!json.fileUrl) throw new Error('Сервер не вернул URL файла');
       return { url: json.fileUrl, name: filename, type: fileType };
     }
-    const CHUNK_B64 = 6 * 1024 * 1024;
+    const CHUNK_B64 = 7 * 1024 * 1024;
     const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
