@@ -188,10 +188,30 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
-  const uploadFileMultipart = async (file: File, fileType: string, filename: string, userId: string, folder: string): Promise<string> => {
+  const readChunkAsBase64 = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = () => reject(new Error('Ошибка чтения чанка'));
+      reader.readAsDataURL(blob);
+    });
+
+  const resolveFileType = (file: File): string => {
+    if (file.type) return file.type;
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const map: Record<string, string> = {
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
+      webp: 'image/webp', heic: 'image/heic', heif: 'image/heif',
+      mp4: 'video/mp4', mov: 'video/quicktime', m4v: 'video/x-m4v',
+      avi: 'video/avi', webm: 'video/webm', mkv: 'video/x-matroska',
+    };
+    return map[ext] || 'application/octet-stream';
+  };
+
+  const uploadFileMultipart = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
+    const fileType = resolveFileType(file);
     const CHUNK = 4 * 1024 * 1024;
-    const arrayBuffer = await file.arrayBuffer();
-    const totalChunks = Math.ceil(arrayBuffer.byteLength / CHUNK);
+    const totalChunks = Math.ceil(file.size / CHUNK);
 
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
@@ -203,11 +223,8 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
     const parts: { partNumber: number; etag: string }[] = [];
     for (let i = 0; i < totalChunks; i++) {
-      const chunk = arrayBuffer.slice(i * CHUNK, (i + 1) * CHUNK);
-      const bytes = new Uint8Array(chunk);
-      let binary = '';
-      for (let j = 0; j < bytes.byteLength; j++) binary += String.fromCharCode(bytes[j]);
-      const chunkB64 = btoa(binary);
+      const chunkBlob = file.slice(i * CHUNK, (i + 1) * CHUNK);
+      const chunkB64 = await readChunkAsBase64(chunkBlob);
       const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
@@ -258,9 +275,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
       if (pendingFile) {
         const file = pendingFile.file;
-        const fileType = file.type || 'application/octet-stream';
         const filename = file.name || 'file';
-        const fileUrl = await uploadFileMultipart(file, fileType, filename, String(user.id), 'order-chat');
+        const fileType = resolveFileType(file);
+        const fileUrl = await uploadFileMultipart(file, filename, String(user.id), 'order-chat');
         payload.fileUrl = fileUrl;
         payload.fileName = filename;
         payload.fileType = fileType;

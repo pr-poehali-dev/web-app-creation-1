@@ -106,7 +106,6 @@ export default function ChatInputBar({
             ref={cameraInputRef}
             type="file"
             accept="image/*,video/*"
-            capture="environment"
             className="hidden"
             onChange={onCameraCapture || onFileSelect}
           />

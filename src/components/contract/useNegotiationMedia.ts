@@ -71,12 +71,19 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
     e.target.value = '';
   };
 
+  const readChunkAsBase64 = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve((reader.result as string).split(',')[1]);
+      reader.onerror = () => reject(new Error('Ошибка чтения чанка'));
+      reader.readAsDataURL(blob);
+    });
+
   const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const fileType = resolveFileType(file);
     const filename = file.name || 'file';
     const CHUNK = 4 * 1024 * 1024;
-    const arrayBuffer = await file.arrayBuffer();
-    const totalChunks = Math.ceil(arrayBuffer.byteLength / CHUNK);
+    const totalChunks = Math.ceil(file.size / CHUNK);
 
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
@@ -88,11 +95,8 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
 
     const parts: { partNumber: number; etag: string }[] = [];
     for (let i = 0; i < totalChunks; i++) {
-      const chunk = arrayBuffer.slice(i * CHUNK, (i + 1) * CHUNK);
-      const bytes = new Uint8Array(chunk);
-      let binary = '';
-      for (let j = 0; j < bytes.byteLength; j++) binary += String.fromCharCode(bytes[j]);
-      const chunkB64 = btoa(binary);
+      const chunkBlob = file.slice(i * CHUNK, (i + 1) * CHUNK);
+      const chunkB64 = await readChunkAsBase64(chunkBlob);
       const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
