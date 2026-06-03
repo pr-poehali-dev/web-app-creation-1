@@ -188,6 +188,45 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     }
   };
 
+  const uploadFileMultipart = async (file: File, fileType: string, filename: string, userId: string, folder: string): Promise<string> => {
+    const CHUNK = 4 * 1024 * 1024;
+    const arrayBuffer = await file.arrayBuffer();
+    const totalChunks = Math.ceil(arrayBuffer.byteLength / CHUNK);
+
+    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ filename, contentType: fileType, folder }),
+    });
+    if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
+    const { uploadId, key, fileUrl } = await initRes.json();
+
+    const parts: { partNumber: number; etag: string }[] = [];
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = arrayBuffer.slice(i * CHUNK, (i + 1) * CHUNK);
+      const bytes = new Uint8Array(chunk);
+      let binary = '';
+      for (let j = 0; j < bytes.byteLength; j++) binary += String.fromCharCode(bytes[j]);
+      const chunkB64 = btoa(binary);
+      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
+      });
+      if (!partRes.ok) throw new Error(`Ошибка загрузки части ${i + 1}`);
+      const { etag } = await partRes.json();
+      parts.push({ partNumber: i + 1, etag });
+    }
+
+    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
+    });
+    if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
+    return fileUrl;
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() && !pendingFile) return;
     if (isSending) return;
@@ -221,23 +260,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         const file = pendingFile.file;
         const fileType = file.type || 'application/octet-stream';
         const filename = file.name || 'file';
-
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => reject(new Error('Ошибка чтения файла'));
-          reader.readAsDataURL(file);
-        });
-        const fileData = dataUrl.split(',')[1];
-
-        const uploadRes = await fetch(`${UPLOAD_URL}?action=single`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-User-Id': String(user.id) },
-          body: JSON.stringify({ filename, contentType: fileType, folder: 'order-chat', fileData }),
-        });
-        if (!uploadRes.ok) throw new Error('Ошибка загрузки файла');
-        const { fileUrl } = await uploadRes.json();
-
+        const fileUrl = await uploadFileMultipart(file, fileType, filename, String(user.id), 'order-chat');
         payload.fileUrl = fileUrl;
         payload.fileName = filename;
         payload.fileType = fileType;
