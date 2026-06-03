@@ -208,13 +208,25 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       reader.readAsDataURL(file);
     });
 
-  const uploadFileMultipart = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
+  const uploadFile = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
     const fileType = resolveFileType(file);
-    // Читаем весь файл через FileReader — единственный надёжный способ на iOS
-    const fullBase64 = await readFileAsBase64(file);
-    const CHUNK_B64 = 5 * 1024 * 1024; // ~5MB base64 = ~3.75MB бинарных
-    const totalChunks = Math.ceil(fullBase64.length / CHUNK_B64);
-
+    const fileData = await readFileAsBase64(file);
+    // S3 multipart требует минимум 5MB на каждую часть кроме последней.
+    // Поэтому файлы < 9MB отправляем одним запросом через action=single.
+    // Файлы >= 9MB делим на чанки по 6MB base64 (~4.5MB бинарных).
+    const MULTIPART_THRESHOLD_B64 = 9 * 1024 * 1024;
+    if (fileData.length < MULTIPART_THRESHOLD_B64) {
+      const res = await fetch(`${UPLOAD_URL}?action=single`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ filename, contentType: fileType, folder, fileData }),
+      });
+      if (!res.ok) throw new Error('Ошибка загрузки файла');
+      const { fileUrl } = await res.json();
+      return fileUrl;
+    }
+    const CHUNK_B64 = 6 * 1024 * 1024;
+    const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
@@ -222,10 +234,9 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     });
     if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
     const { uploadId, key, fileUrl } = await initRes.json();
-
     const parts: { partNumber: number; etag: string }[] = [];
     for (let i = 0; i < totalChunks; i++) {
-      const chunkB64 = fullBase64.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
+      const chunkB64 = fileData.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
       const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
@@ -235,7 +246,6 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
       const { etag } = await partRes.json();
       parts.push({ partNumber: i + 1, etag });
     }
-
     const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
@@ -278,7 +288,7 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
         const file = pendingFile.file;
         const filename = file.name || 'file';
         const fileType = resolveFileType(file);
-        const fileUrl = await uploadFileMultipart(file, filename, String(user.id), 'order-chat');
+        const fileUrl = await uploadFile(file, filename, String(user.id), 'order-chat');
         payload.fileUrl = fileUrl;
         payload.fileName = filename;
         payload.fileType = fileType;

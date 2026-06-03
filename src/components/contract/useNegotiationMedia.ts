@@ -82,10 +82,20 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
   const uploadFile = async (file: File): Promise<{ url: string; name: string; type: string }> => {
     const fileType = resolveFileType(file);
     const filename = file.name || 'file';
-    const fullBase64 = await readFileAsBase64(file);
-    const CHUNK_B64 = 5 * 1024 * 1024;
-    const totalChunks = Math.ceil(fullBase64.length / CHUNK_B64);
-
+    const fileData = await readFileAsBase64(file);
+    const MULTIPART_THRESHOLD_B64 = 9 * 1024 * 1024;
+    if (fileData.length < MULTIPART_THRESHOLD_B64) {
+      const res = await fetch(`${UPLOAD_URL}?action=single`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ filename, contentType: fileType, folder: 'contract-chat', fileData }),
+      });
+      if (!res.ok) throw new Error('Ошибка загрузки файла');
+      const { fileUrl } = await res.json();
+      return { url: fileUrl, name: filename, type: fileType };
+    }
+    const CHUNK_B64 = 6 * 1024 * 1024;
+    const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
     const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
@@ -93,10 +103,9 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
     });
     if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
     const { uploadId, key, fileUrl } = await initRes.json();
-
     const parts: { partNumber: number; etag: string }[] = [];
     for (let i = 0; i < totalChunks; i++) {
-      const chunkB64 = fullBase64.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
+      const chunkB64 = fileData.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
       const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
@@ -106,7 +115,6 @@ export function useNegotiationMedia({ userId, responseId, onMessageSent }: UseNe
       const { etag } = await partRes.json();
       parts.push({ partNumber: i + 1, etag });
     }
-
     const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
