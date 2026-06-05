@@ -1353,7 +1353,7 @@ export const contentAPI = {
         'Content-Type': 'application/json',
         ...(userId ? { 'X-User-Id': userId } : {}),
       },
-      body: JSON.stringify({ type: 'banner', ...data }),
+      body: JSON.stringify({ ...data, type: 'banner', bannerType: data.type }),
     });
     if (!response.ok) {
       const err = await response.json().catch(() => ({ error: 'Unknown error' }));
