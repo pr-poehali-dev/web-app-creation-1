@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { useTimezone } from '@/contexts/TimezoneContext';
 import { useSiteContent } from '@/hooks/useSiteContent';
+import { renderTextWithLinks } from '@/utils/textLinks';
 
 
 const TIMEZONE_NAMES: Record<string, string> = {
@@ -140,9 +141,9 @@ export default function Footer() {
                   <Icon name="AlertCircle" className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
                   <div className="space-y-3 flex-1">
                     <h4 className="font-semibold text-foreground text-base">{noticeTitle}</h4>
-                    <p className="text-sm text-foreground/80 leading-relaxed">{noticeText1}</p>
+                    <p className="text-sm text-foreground/80 leading-relaxed">{renderTextWithLinks(noticeText1)}</p>
                     {noticeText2 && (
-                      <p className="text-sm text-foreground/80 leading-relaxed">{noticeText2}</p>
+                      <p className="text-sm text-foreground/80 leading-relaxed">{renderTextWithLinks(noticeText2)}</p>
                     )}
                   </div>
                 </div>

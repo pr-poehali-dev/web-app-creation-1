@@ -157,6 +157,13 @@ export default function ContentTextsTab({
               rows={3}
               className="resize-none text-sm"
             />
+            {(item.key === 'footer.notice.text1' || item.key === 'footer.notice.text2') && (
+              <p className="text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2 leading-relaxed">
+                Совет: чтобы добавить ссылку, используй формат{' '}
+                <code className="font-mono bg-muted px-1 py-0.5 rounded text-xs">[[поддержка|/support]]</code>{' '}
+                — текст «поддержка» станет кликабельной ссылкой на страницу /support.
+              </p>
+            )}
             <div className="flex gap-2">
               <Button size="sm" onClick={() => onSave(item.key)} disabled={saving}>
                 {saving ? 'Сохранение...' : 'Сохранить'}
