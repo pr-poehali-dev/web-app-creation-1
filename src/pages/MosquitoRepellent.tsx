@@ -11,7 +11,7 @@ const MOSQUITO_FREQUENCIES = [
   { hz: 19000, label: '19 000 Гц', desc: 'Максимум' },
 ];
 
-const DOG_FREQ_HZ = 18500;
+const DOG_FREQ_HZ = 20000;
 
 export default function MosquitoRepellent() {
   const navigate = useNavigate();
@@ -154,7 +154,7 @@ export default function MosquitoRepellent() {
           <p className={`text-sm font-medium transition-colors ${isActive ? (isDog ? 'text-orange-600' : 'text-green-600') : 'text-muted-foreground'}`}>
             {isActive
               ? isDog
-                ? `Работает на ${DOG_FREQ_HZ.toLocaleString('ru')} Гц — максимум`
+                ? `Работает на ${DOG_FREQ_HZ.toLocaleString('ru-RU')} Гц — максимум`
                 : `Работает на ${selectedFreq.label}`
               : 'Нажми чтобы включить'}
           </p>
@@ -201,11 +201,14 @@ export default function MosquitoRepellent() {
               </div>
             </div>
 
-            <div className="bg-card border rounded-xl p-4 mb-6">
-              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <Icon name="Volume1" size={16} className="text-primary" />
-                Громкость — {Math.round(volume * 100)}%
-              </p>
+            <div className="bg-card border-2 border-primary/30 rounded-xl p-4 mb-6 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold flex items-center gap-2">
+                  <Icon name="Volume2" size={18} className="text-primary" />
+                  Громкость
+                </p>
+                <span className="text-lg font-bold text-primary">{Math.round(volume * 100)}%</span>
+              </div>
               <input
                 type="range"
                 min={0.1}
@@ -213,11 +216,12 @@ export default function MosquitoRepellent() {
                 step={0.05}
                 value={volume}
                 onChange={(e) => setVolume(Number(e.target.value))}
-                className="w-full accent-primary"
+                className="w-full h-3 accent-primary cursor-pointer"
+                style={{ accentColor: 'var(--primary)' }}
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>Тише</span>
-                <span>Громче</span>
+              <div className="flex justify-between text-xs text-muted-foreground mt-2">
+                <span className="flex items-center gap-1"><Icon name="VolumeX" size={12} /> Тише</span>
+                <span className="flex items-center gap-1">Громче <Icon name="Volume2" size={12} /></span>
               </div>
             </div>
           </>
