@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
 type Mode = 'mosquito' | 'dog';
-type SignalMode = 'continuous' | 'modulated' | 'pulse';
+type SignalMode = 'modulated' | 'pulse';
 
 const MOSQUITO_FREQUENCIES = [
   { hz: 15000, label: '15 000 Гц', desc: 'Мягкое отпугивание' },
@@ -13,9 +13,8 @@ const MOSQUITO_FREQUENCIES = [
 ];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
-  { id: 'continuous', label: 'Непрерывный', desc: 'Базовый', icon: 'Minus' },
-  { id: 'modulated',  label: 'Модуляция',   desc: 'Продвинутый', icon: 'Activity' },
-  { id: 'pulse',      label: 'Импульсный',  desc: 'Максимум', icon: 'Zap' },
+  { id: 'modulated', label: 'Версия 1', desc: 'Стандартная', icon: 'Shield' },
+  { id: 'pulse',     label: 'Версия 2', desc: 'Улучшенная',  icon: 'ShieldCheck' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -23,7 +22,7 @@ const DOG_FREQ_HZ = 20000;
 export default function MosquitoRepellent() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>('mosquito');
-  const [signalMode, setSignalMode] = useState<SignalMode>('modulated');
+  const [signalMode, setSignalMode] = useState<SignalMode>('pulse');
   const [isActive, setIsActive] = useState(false);
   const [selectedFreq, setSelectedFreq] = useState(MOSQUITO_FREQUENCIES[1]);
   const [volume, setVolume] = useState(0.5);
@@ -214,14 +213,9 @@ export default function MosquitoRepellent() {
                   </button>
                 ))}
               </div>
-              {signalMode === 'modulated' && (
-                <p className="text-[11px] text-primary/80 mt-2 leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
-                  Частота плавно колеблется ±500 Гц — насекомые не успевают привыкнуть к сигналу
-                </p>
-              )}
               {signalMode === 'pulse' && (
                 <p className="text-[11px] text-primary/80 mt-2 leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
-                  Сигнал пульсирует каждые 300 мс — наиболее раздражающий паттерн для насекомых
+                  Версия 2 — наиболее эффективный режим защиты
                 </p>
               )}
             </div>
