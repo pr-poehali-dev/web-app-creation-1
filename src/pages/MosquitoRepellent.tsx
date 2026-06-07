@@ -88,12 +88,15 @@ export default function MosquitoRepellent() {
     }
 
     if (activeSig === 'pulse') {
-      // Импульсный — вкл/выкл gain каждые 300 мс
+      // Импульсный — плавная огибающая 8 мс, без щелчков
       let on = true;
       pulseTimerRef.current = setInterval(() => {
         if (!gainRef.current || !audioCtxRef.current) return;
         on = !on;
-        gainRef.current.gain.setValueAtTime(on ? activeVolume : 0, audioCtxRef.current.currentTime);
+        const t = audioCtxRef.current.currentTime;
+        gainRef.current.gain.cancelScheduledValues(t);
+        gainRef.current.gain.setValueAtTime(gainRef.current.gain.value, t);
+        gainRef.current.gain.linearRampToValueAtTime(on ? activeVolume : 0, t + 0.008);
       }, 300);
     }
 
