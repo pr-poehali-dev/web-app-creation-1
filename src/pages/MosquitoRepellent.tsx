@@ -210,33 +210,34 @@ export default function MosquitoRepellent() {
                 <span className="text-2xl font-bold text-primary">{Math.round(volume * 100)}%</span>
               </div>
 
-              {/* Полоса заполнения */}
-              <div className="relative h-4 bg-muted rounded-full mb-4 overflow-hidden">
+              {/* Полоса + ползунок совмещены */}
+              <div className="relative h-12 flex items-center">
+                {/* Фоновая полоса */}
+                <div className="absolute w-full h-4 bg-muted rounded-full" />
+                {/* Заполненная часть */}
                 <div
-                  className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-100"
+                  className="absolute left-0 h-4 bg-primary rounded-full transition-all duration-75 pointer-events-none"
                   style={{ width: `${((volume - 0.1) / 0.9) * 100}%` }}
+                />
+                {/* Поверх — прозрачный input на всю высоту блока для удобного касания */}
+                <input
+                  type="range"
+                  min={0.1}
+                  max={1}
+                  step={0.05}
+                  value={volume}
+                  onChange={(e) => setVolume(Number(e.target.value))}
+                  className="absolute w-full cursor-pointer opacity-0"
+                  style={{ height: '48px' }}
+                />
+                {/* Кружок-ползунок */}
+                <div
+                  className="absolute w-7 h-7 bg-white border-4 border-primary rounded-full shadow-md pointer-events-none transition-all duration-75"
+                  style={{ left: `calc(${((volume - 0.1) / 0.9) * 100}% - 14px)` }}
                 />
               </div>
 
-              {/* Крупный слайдер */}
-              <input
-                type="range"
-                min={0.1}
-                max={1}
-                step={0.05}
-                value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
-                className="w-full cursor-pointer"
-                style={{
-                  accentColor: 'hsl(var(--primary))',
-                  height: '44px',
-                  WebkitAppearance: 'none',
-                  appearance: 'none',
-                  background: 'transparent',
-                }}
-              />
-
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-2">
                 <span className="flex items-center gap-1"><Icon name="VolumeX" size={13} /> Тише</span>
                 <span className="flex items-center gap-1">Громче <Icon name="Volume2" size={13} /></span>
               </div>
