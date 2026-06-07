@@ -168,7 +168,7 @@ export default function MosquitoRepellent() {
               Режим защиты от собак
             </p>
             <ul className="text-xs text-orange-700 space-y-1.5 leading-relaxed">
-              <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Частота 18 500 Гц — оптимальная для слуха собак</li>
+              <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Частота 20 000 Гц — максимум для динамиков телефона</li>
               <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Громкость выставлена на максимум автоматически</li>
               <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Держи телефон динамиком в сторону животного</li>
             </ul>
@@ -244,6 +244,15 @@ export default function MosquitoRepellent() {
             </div>
           </>
         )}
+
+        {/* Бейдж тестовой версии */}
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-3">
+          <Icon name="FlaskConical" size={15} className="text-blue-500 shrink-0" />
+          <div>
+            <p className="text-xs font-semibold text-blue-700">Тестовая версия</p>
+            <p className="text-xs text-blue-600 leading-relaxed">Функция в разработке. Если результат недостаточный — мы работаем над улучшением эффективности.</p>
+          </div>
+        </div>
 
         {/* Дисклеймер */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1 leading-relaxed">
