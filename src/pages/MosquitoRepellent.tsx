@@ -6,10 +6,10 @@ type Mode = 'mosquito' | 'dog';
 type SignalMode = 'modulated' | 'pulse';
 
 const MOSQUITO_FREQUENCIES = [
-  { hz: 15000, label: '15 000 Гц', desc: 'Мягкое отпугивание' },
-  { hz: 16000, label: '16 000 Гц', desc: 'Стандартный режим' },
-  { hz: 17500, label: '17 500 Гц', desc: 'Усиленный режим' },
-  { hz: 19000, label: '19 000 Гц', desc: 'Максимум' },
+  { hz: 15000, label: 'Уровень 1', desc: 'Мягкое отпугивание' },
+  { hz: 16000, label: 'Уровень 2', desc: 'Стандартный режим' },
+  { hz: 17500, label: 'Уровень 3', desc: 'Усиленный режим' },
+  { hz: 19000, label: 'Уровень 4', desc: 'Максимум' },
 ];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
@@ -171,8 +171,8 @@ export default function MosquitoRepellent() {
           <p className={`text-sm font-medium transition-colors ${isActive ? (isDog ? 'text-orange-600' : 'text-green-600') : 'text-muted-foreground'}`}>
             {isActive
               ? isDog
-                ? `Импульсный режим · ${DOG_FREQ_HZ.toLocaleString('ru-RU')} Гц`
-                : `${SIGNAL_MODES.find(s => s.id === signalMode)?.label} · ${selectedFreq.label}`
+                ? `Импульсный режим · Максимальная защита`
+                : `${SIGNAL_MODES.find(s => s.id === signalMode)?.label} · ${selectedFreq.desc}`
               : 'Нажми чтобы включить'}
           </p>
         </div>
@@ -185,7 +185,7 @@ export default function MosquitoRepellent() {
               Режим защиты от собак
             </p>
             <ul className="text-xs text-orange-700 space-y-1.5 leading-relaxed">
-              <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Частота 20 000 Гц — максимум для динамиков телефона</li>
+              <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Максимальный уровень защиты от собак</li>
               <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Импульсный режим — сигнал пульсирует каждые 0.3 сек</li>
               <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Громкость выставлена на максимум автоматически</li>
               <li className="flex items-start gap-1.5"><Icon name="Check" size={12} className="mt-0.5 shrink-0" /> Держи телефон динамиком в сторону животного</li>
@@ -227,7 +227,7 @@ export default function MosquitoRepellent() {
             <div className="bg-card border rounded-xl p-4 mb-4">
               <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Icon name="Waves" size={16} className="text-primary" />
-                Частота сигнала
+                Уровень защиты
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {MOSQUITO_FREQUENCIES.map((f) => (
