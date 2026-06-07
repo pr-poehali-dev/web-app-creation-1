@@ -201,14 +201,24 @@ export default function MosquitoRepellent() {
               </div>
             </div>
 
-            <div className="bg-card border-2 border-primary/30 rounded-xl p-4 mb-6 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
+            <div className="bg-card border-2 border-primary/30 rounded-xl p-5 mb-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-semibold flex items-center gap-2">
                   <Icon name="Volume2" size={18} className="text-primary" />
                   Громкость
                 </p>
-                <span className="text-lg font-bold text-primary">{Math.round(volume * 100)}%</span>
+                <span className="text-2xl font-bold text-primary">{Math.round(volume * 100)}%</span>
               </div>
+
+              {/* Полоса заполнения */}
+              <div className="relative h-4 bg-muted rounded-full mb-4 overflow-hidden">
+                <div
+                  className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-100"
+                  style={{ width: `${((volume - 0.1) / 0.9) * 100}%` }}
+                />
+              </div>
+
+              {/* Крупный слайдер */}
               <input
                 type="range"
                 min={0.1}
@@ -216,12 +226,19 @@ export default function MosquitoRepellent() {
                 step={0.05}
                 value={volume}
                 onChange={(e) => setVolume(Number(e.target.value))}
-                className="w-full h-3 accent-primary cursor-pointer"
-                style={{ accentColor: 'var(--primary)' }}
+                className="w-full cursor-pointer"
+                style={{
+                  accentColor: 'hsl(var(--primary))',
+                  height: '44px',
+                  WebkitAppearance: 'none',
+                  appearance: 'none',
+                  background: 'transparent',
+                }}
               />
-              <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                <span className="flex items-center gap-1"><Icon name="VolumeX" size={12} /> Тише</span>
-                <span className="flex items-center gap-1">Громче <Icon name="Volume2" size={12} /></span>
+
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span className="flex items-center gap-1"><Icon name="VolumeX" size={13} /> Тише</span>
+                <span className="flex items-center gap-1">Громче <Icon name="Volume2" size={13} /></span>
               </div>
             </div>
           </>
