@@ -311,20 +311,7 @@ export default function MosquitoRepellent() {
               </div>
             )}
 
-            {/* Плашка авто-свипа для Версии 3 */}
-            {signalMode === 'sweep' && !isDog && (
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon name="RefreshCw" size={15} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Авто-свип активен</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Сигнал автоматически охватывает весь рабочий диапазон — выбор уровня не нужен
-                  </p>
-                </div>
-              </div>
-            )}
+
 
             {/* Громкость */}
             <div className="bg-card border-2 border-primary/30 rounded-xl p-5 mb-6 shadow-sm">
@@ -360,15 +347,7 @@ export default function MosquitoRepellent() {
           </>
         )}
 
-        {/* Дисклеймер */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1 leading-relaxed">
-          <p className="font-semibold flex items-center gap-1">
-            <Icon name="Info" size={13} />
-            Важно знать
-          </p>
-          <p>Эффективность ультразвука научно не доказана на 100%. Не полагайся на эту функцию как на единственное средство защиты.</p>
-          <p>Частоты ниже 17 000 Гц слышны детям — используй режим «Мошкара» или уровень «Только насекомые» рядом с детьми.</p>
-        </div>
+
 
       </div>
     </div>
