@@ -298,7 +298,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Ear" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Безопасно для взрослых.</span> Частоты выше 16 кГц практически не воспринимаются слухом человека после 25 лет — вы просто не услышите сигнал.
+                <span className="font-semibold">Безопасно для взрослых.</span> Сигнал выше уровня «Оптимальная защита» практически не воспринимается слухом человека после 25 лет — вы просто не услышите его.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
@@ -306,7 +306,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Clock" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Оптимальное время сеанса — до 60 минут.</span> Для длительного пребывания на природе просто повторяй сеансы с небольшими паузами.
+                <span className="font-semibold">Работает весь вечер без перерывов.</span> Просто включи и забудь — приложение само делает своё дело, пока ты отдыхаешь.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
