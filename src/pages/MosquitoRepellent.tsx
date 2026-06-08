@@ -237,8 +237,7 @@ export default function MosquitoRepellent() {
                     className={`rounded-lg border-2 p-3 text-left transition-all
                       ${selectedFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
                   >
-                    <p className="text-sm font-bold">{f.label}</p>
-                    <p className="text-xs text-muted-foreground">{f.desc}</p>
+                    <p className="text-sm font-extrabold">{f.label}</p>
                   </button>
                 ))}
               </div>
