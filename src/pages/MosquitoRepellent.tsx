@@ -104,6 +104,18 @@ export default function MosquitoRepellent() {
     setPulseAnim(true);
   }, [activeHz, activeVolume, activeSig]);
 
+  useEffect(() => {
+    if (!isActive || !oscillatorRef.current || !audioCtxRef.current) return;
+    const t = audioCtxRef.current.currentTime;
+    oscillatorRef.current.frequency.setTargetAtTime(activeHz, t, 0.05);
+  }, [activeHz, isActive]);
+
+  useEffect(() => {
+    if (!isActive || !gainRef.current || !audioCtxRef.current) return;
+    const t = audioCtxRef.current.currentTime;
+    gainRef.current.gain.setTargetAtTime(activeVolume, t, 0.05);
+  }, [activeVolume, isActive]);
+
   const toggle = () => { if (isActive) stop(); else start(); };
 
   const switchMode = (m: Mode) => { if (isActive) stop(); setMode(m); };
