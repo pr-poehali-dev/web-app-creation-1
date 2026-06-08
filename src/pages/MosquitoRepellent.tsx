@@ -6,10 +6,10 @@ type Mode = 'mosquito' | 'dog';
 type SignalMode = 'modulated' | 'pulse';
 
 const MOSQUITO_FREQUENCIES = [
-  { hz: 15000, label: 'Уровень 1', desc: 'Мягкое отпугивание' },
-  { hz: 16000, label: 'Уровень 2', desc: 'Стандартный режим' },
-  { hz: 17500, label: 'Уровень 3', desc: 'Усиленный режим' },
-  { hz: 19000, label: 'Уровень 4', desc: 'Максимум' },
+  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита' },
+  { hz: 16000, label: 'Оптимальная защита', desc: 'Оптимальная защита' },
+  { hz: 17500, label: 'Усиленная защита', desc: 'Усиленная защита' },
+  { hz: 19000, label: 'Максимальная защита', desc: 'Максимальная защита' },
 ];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
