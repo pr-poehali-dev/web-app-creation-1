@@ -169,12 +169,6 @@ export default function MosquitoRepellent() {
     : (f: typeof MOSQUITO_FREQUENCIES[0]) => setSelectedMosqFreq(f as typeof MOSQUITO_FREQUENCIES[0]);
   const currentFreq = isMidge ? selectedMidgeFreq : selectedMosqFreq;
 
-  const signalHint: Record<SignalMode, string> = {
-    modulated: 'Версия 1 — частота плавно колеблется ±500 Гц, не даёт насекомым привыкнуть',
-    pulse:     'Версия 2 — импульсный сигнал каждые 0.3 сек, наиболее раздражающий для насекомых',
-    sweep:     'Версия 3 — авто-свип: сигнал плавно обходит весь диапазон чувствительности насекомого туда-обратно',
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-md mx-auto px-4 py-6">
@@ -292,9 +286,6 @@ export default function MosquitoRepellent() {
                   </button>
                 ))}
               </div>
-              <p className="text-[11px] text-primary/80 mt-2 leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
-                {signalHint[signalMode]}
-              </p>
             </div>
 
             {/* Частота — скрыта в Версии 3 */}
@@ -314,7 +305,6 @@ export default function MosquitoRepellent() {
                     >
                       <p className="text-sm font-extrabold leading-tight">{f.label}</p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">{f.target}</p>
-                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">{f.hz.toLocaleString()} Гц</p>
                     </button>
                   ))}
                 </div>
@@ -330,7 +320,7 @@ export default function MosquitoRepellent() {
                 <div>
                   <p className="text-sm font-semibold text-foreground">Авто-свип активен</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Сигнал автоматически обходит весь диапазон {isMidge ? '17 000–20 000' : '15 000–17 500'} Гц — выбор уровня не нужен
+                    Сигнал автоматически охватывает весь рабочий диапазон — выбор уровня не нужен
                   </p>
                 </div>
               </div>
@@ -369,90 +359,6 @@ export default function MosquitoRepellent() {
             </div>
           </>
         )}
-
-        {/* Умная технология */}
-        <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
-          <p className="text-sm font-bold text-green-800 flex items-center gap-2 mb-3">
-            <Icon name="Zap" size={15} className="text-green-600" />
-            Как работает отпугивание
-          </p>
-          <div className="space-y-2">
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-xs">🦟</span>
-              </div>
-              <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Комары реагируют на 15 000–17 500 Гц.</span> Именно в этом диапазоне находится их болевой порог. Для взрослых людей частоты от 17 000 Гц практически неслышимы.
-              </p>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                <span className="text-xs">🪲</span>
-              </div>
-              <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Мошкара чувствительна к 17 000–20 000 Гц.</span> Более высокие частоты — вне диапазона человеческого слуха, поэтому режим мошкары комфортен для людей рядом.
-              </p>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon name="RefreshCw" size={12} className="text-green-700" />
-              </div>
-              <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Версия 3 (авто-свип) не даёт привыкнуть.</span> Сигнал плавно обходит весь диапазон чувствительности — насекомые не успевают адаптироваться к одной частоте.
-              </p>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon name="Baby" size={12} className="text-green-700" />
-              </div>
-              <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Рядом с детьми — режим «Мошкара».</span> Частоты 19 000–20 000 Гц взрослые и дети старше 10 лет практически не слышат.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Максимальный эффект */}
-        <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-blue-50 to-sky-50 border border-blue-200">
-          <p className="text-sm font-bold text-blue-800 flex items-center gap-2 mb-3">
-            <Icon name="Sparkles" size={15} className="text-blue-500" />
-            Как получить максимальный эффект
-          </p>
-          <div className="space-y-2">
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon name="Smartphone" size={12} className="text-blue-700" />
-              </div>
-              <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Направляй динамик в сторону угрозы.</span> На улице или у водоёма — положи телефон рядом динамиком наружу.
-              </p>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon name="Volume2" size={12} className="text-blue-700" />
-              </div>
-              <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Громкость выше — зона защиты шире.</span> На открытом воздухе рекомендуем выкручивать на максимум — охватывает до 5 метров вокруг.
-              </p>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon name="ShieldCheck" size={12} className="text-blue-700" />
-              </div>
-              <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Версия 3 + нужный режим = максимум.</span> Выбери правильный вид насекомого и включи авто-свип — сигнал будет постоянно охватывать весь диапазон раздражения.
-              </p>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon name="MapPin" size={12} className="text-blue-700" />
-              </div>
-              <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Покрывает до 5 метров вокруг.</span> Одного телефона хватает на небольшую беседку, рабочий участок или палатку.
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Дисклеймер */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1 leading-relaxed">
