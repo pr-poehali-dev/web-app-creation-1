@@ -2,36 +2,19 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
-type Mode = 'mosquito' | 'midge' | 'dog';
-type SignalMode = 'modulated' | 'pulse' | 'sweep';
+type Mode = 'mosquito' | 'dog';
+type SignalMode = 'modulated' | 'pulse';
 
-// Комары: чувствительны к 15 000–17 500 Гц
 const MOSQUITO_FREQUENCIES = [
-  { hz: 15000, label: 'Слышат все',      desc: 'Слышат все',      target: '🦟 Комары',  subHz: [15000, 15500] },
-  { hz: 16000, label: 'Слышит молодёжь', desc: 'Слышит молодёжь', target: '🦟 Комары',  subHz: [15500, 16500] },
-  { hz: 17500, label: 'Слышат дети',     desc: 'Слышат дети',     target: '🦟🪲 Оба',   subHz: [16500, 17500] },
-  { hz: 19000, label: 'Только насекомые',desc: 'Только насекомые',target: '🪲 Мошкара', subHz: [18000, 19000] },
+  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита' },
+  { hz: 16000, label: 'Оптимальная защита', desc: 'Оптимальная защита' },
+  { hz: 17500, label: 'Усиленная защита', desc: 'Усиленная защита' },
+  { hz: 19000, label: 'Максимальная защита', desc: 'Максимальная защита' },
 ];
-
-// Мошкара: реагирует на более высокие частоты 17 000–20 000 Гц
-const MIDGE_FREQUENCIES = [
-  { hz: 17000, label: 'Слышат дети',     desc: 'Слышат дети',     target: '🪲 Мошкара', subHz: [17000, 17500] },
-  { hz: 18000, label: 'Почти не слышно', desc: 'Почти не слышно', target: '🪲 Мошкара', subHz: [17500, 18500] },
-  { hz: 19000, label: 'Только насекомые',desc: 'Только насекомые',target: '🪲 Мошкара', subHz: [18500, 19500] },
-  { hz: 20000, label: 'Ультразвук',      desc: 'Ультразвук',      target: '🪲 Мошкара', subHz: [19000, 20000] },
-];
-
-// Полные диапазоны для Версии 3 (авто-свип по всему диапазону вида)
-const SWEEP_RANGES: Record<'mosquito' | 'midge' | 'dog', [number, number]> = {
-  mosquito: [15000, 17500],
-  midge:    [17000, 20000],
-  dog:      [19000, 21000],
-};
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
   { id: 'modulated', label: 'Версия 1', desc: 'Стандартная', icon: 'Shield' },
-  { id: 'pulse',     label: 'Версия 2', desc: 'Импульсная',  icon: 'ShieldCheck' },
-  { id: 'sweep',     label: 'Версия 3', desc: 'Авто-свип',   icon: 'ShieldPlus' },
+  { id: 'pulse',     label: 'Версия 2', desc: 'Улучшенная',  icon: 'ShieldCheck' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -41,8 +24,7 @@ export default function MosquitoRepellent() {
   const [mode, setMode] = useState<Mode>('mosquito');
   const [signalMode, setSignalMode] = useState<SignalMode>('pulse');
   const [isActive, setIsActive] = useState(false);
-  const [selectedMosqFreq, setSelectedMosqFreq] = useState(MOSQUITO_FREQUENCIES[1]);
-  const [selectedMidgeFreq, setSelectedMidgeFreq] = useState(MIDGE_FREQUENCIES[1]);
+  const [selectedFreq, setSelectedFreq] = useState(MOSQUITO_FREQUENCIES[1]);
   const [volume, setVolume] = useState(0.5);
   const [pulseAnim, setPulseAnim] = useState(false);
 
@@ -52,11 +34,9 @@ export default function MosquitoRepellent() {
   const lfoRef        = useRef<OscillatorNode | null>(null);
   const lfoGainRef    = useRef<GainNode | null>(null);
   const pulseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sweepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stop = useCallback(() => {
     if (pulseTimerRef.current) { clearInterval(pulseTimerRef.current); pulseTimerRef.current = null; }
-    if (sweepTimerRef.current) { clearInterval(sweepTimerRef.current); sweepTimerRef.current = null; }
     lfoRef.current?.stop();
     lfoRef.current?.disconnect();
     lfoRef.current = null;
@@ -73,11 +53,9 @@ export default function MosquitoRepellent() {
     setPulseAnim(false);
   }, []);
 
-  const selectedFreq = mode === 'midge' ? selectedMidgeFreq : selectedMosqFreq;
   const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : selectedFreq.hz;
   const activeVolume = mode === 'dog' ? 1 : volume;
   const activeSig    = mode === 'dog' ? 'pulse' : signalMode;
-  const sweepRange   = SWEEP_RANGES[mode];
 
   const start = useCallback(() => {
     const ctx  = new AudioContext();
@@ -96,6 +74,7 @@ export default function MosquitoRepellent() {
     gainRef.current       = gain;
 
     if (activeSig === 'modulated') {
+      // LFO медленно качает частоту ±500 Гц с периодом ~2 сек
       const lfo     = ctx.createOscillator();
       const lfoGain = ctx.createGain();
       lfo.type = 'sine';
@@ -109,6 +88,7 @@ export default function MosquitoRepellent() {
     }
 
     if (activeSig === 'pulse') {
+      // Импульсный — плавная огибающая 8 мс, без щелчков
       let on = true;
       pulseTimerRef.current = setInterval(() => {
         if (!gainRef.current || !audioCtxRef.current) return;
@@ -120,31 +100,15 @@ export default function MosquitoRepellent() {
       }, 300);
     }
 
-    if (activeSig === 'sweep') {
-      // Версия 3: плавно обходит диапазон туда-обратно каждые 2 сек
-      const [freqMin, freqMax] = sweepRange;
-      let goingUp = true;
-      sweepTimerRef.current = setInterval(() => {
-        if (!oscillatorRef.current || !audioCtxRef.current) return;
-        const t = audioCtxRef.current.currentTime;
-        const target = goingUp ? freqMax : freqMin;
-        oscillatorRef.current.frequency.cancelScheduledValues(t);
-        oscillatorRef.current.frequency.setValueAtTime(oscillatorRef.current.frequency.value, t);
-        oscillatorRef.current.frequency.linearRampToValueAtTime(target, t + 2.0);
-        goingUp = !goingUp;
-      }, 2000);
-    }
-
     setIsActive(true);
     setPulseAnim(true);
-  }, [activeHz, activeVolume, activeSig, sweepRange]);
+  }, [activeHz, activeVolume, activeSig]);
 
   useEffect(() => {
     if (!isActive || !oscillatorRef.current || !audioCtxRef.current) return;
-    if (activeSig === 'sweep') return;
     const t = audioCtxRef.current.currentTime;
     oscillatorRef.current.frequency.setTargetAtTime(activeHz, t, 0.05);
-  }, [activeHz, isActive, activeSig]);
+  }, [activeHz, isActive]);
 
   useEffect(() => {
     if (!isActive || !gainRef.current || !audioCtxRef.current) return;
@@ -160,14 +124,6 @@ export default function MosquitoRepellent() {
   useEffect(() => { return () => { stop(); }; }, [stop]);
 
   const isDog = mode === 'dog';
-  const isMidge = mode === 'midge';
-  const accentColor = isDog ? 'orange' : isMidge ? 'purple' : 'green';
-
-  const freqList = isMidge ? MIDGE_FREQUENCIES : MOSQUITO_FREQUENCIES;
-  const setFreq = isMidge
-    ? (f: typeof MIDGE_FREQUENCIES[0]) => setSelectedMidgeFreq(f)
-    : (f: typeof MOSQUITO_FREQUENCIES[0]) => setSelectedMosqFreq(f as typeof MOSQUITO_FREQUENCIES[0]);
-  const currentFreq = isMidge ? selectedMidgeFreq : selectedMosqFreq;
 
   return (
     <div className="min-h-screen bg-background">
@@ -185,27 +141,20 @@ export default function MosquitoRepellent() {
         </div>
 
         {/* Переключатель режимов */}
-        <div className="grid grid-cols-3 gap-2 mb-8 bg-muted p-1 rounded-xl">
+        <div className="grid grid-cols-2 gap-2 mb-8 bg-muted p-1 rounded-xl">
           <button
             onClick={() => switchMode('mosquito')}
-            className={`rounded-lg py-2.5 px-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5
-              ${mode === 'mosquito' ? 'bg-white shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            className={`rounded-lg py-2.5 px-3 text-sm font-semibold transition-all flex items-center justify-center gap-2
+              ${!isDog ? 'bg-white shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
-            <span className="text-base">🦟</span>Комары
-          </button>
-          <button
-            onClick={() => switchMode('midge')}
-            className={`rounded-lg py-2.5 px-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5
-              ${mode === 'midge' ? 'bg-white shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <span className="text-base">🪲</span>Мошкара
+            <span className="text-base">🦟</span>От комаров
           </button>
           <button
             onClick={() => switchMode('dog')}
-            className={`rounded-lg py-2.5 px-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5
+            className={`rounded-lg py-2.5 px-3 text-sm font-semibold transition-all flex items-center justify-center gap-2
               ${isDog ? 'bg-white shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
-            <span className="text-base">🐕</span>Собаки
+            <span className="text-base">🐕</span>От собак
           </button>
         </div>
 
@@ -214,31 +163,24 @@ export default function MosquitoRepellent() {
           <div className="relative flex items-center justify-center mb-5">
             {pulseAnim && (
               <>
-                <span className={`absolute inline-flex h-48 w-48 rounded-full opacity-20 animate-ping bg-${accentColor}-400`} />
-                <span className={`absolute inline-flex h-36 w-36 rounded-full opacity-30 animate-ping [animation-delay:0.3s] bg-${accentColor}-400`} />
+                <span className={`absolute inline-flex h-48 w-48 rounded-full opacity-20 animate-ping ${isDog ? 'bg-orange-400' : 'bg-green-400'}`} />
+                <span className={`absolute inline-flex h-36 w-36 rounded-full opacity-30 animate-ping [animation-delay:0.3s] ${isDog ? 'bg-orange-400' : 'bg-green-400'}`} />
               </>
             )}
             <button
               onClick={toggle}
               className={`relative z-10 w-32 h-32 rounded-full text-white font-bold shadow-xl transition-all duration-300 flex flex-col items-center justify-center gap-1
                 ${isActive
-                  ? isDog    ? 'bg-orange-500 hover:bg-orange-600 scale-105'
-                  : isMidge  ? 'bg-purple-500 hover:bg-purple-600 scale-105'
-                             : 'bg-green-500 hover:bg-green-600 scale-105'
+                  ? isDog ? 'bg-orange-500 hover:bg-orange-600 scale-105' : 'bg-green-500 hover:bg-green-600 scale-105'
                   : 'bg-muted-foreground/30 hover:bg-muted-foreground/40'
                 }`}
             >
-              <span className="text-3xl">{isDog ? '🐕' : isMidge ? '🪲' : '🦟'}</span>
+              <span className="text-3xl">{isDog ? '🐕' : '🦟'}</span>
               <span className="text-sm">{isActive ? 'Включён' : 'Выключен'}</span>
             </button>
           </div>
 
-          <p className={`text-sm font-medium transition-colors ${isActive
-            ? isDog   ? 'text-orange-600'
-            : isMidge ? 'text-purple-600'
-                      : 'text-green-600'
-            : 'text-muted-foreground'}`}
-          >
+          <p className={`text-sm font-medium transition-colors ${isActive ? (isDog ? 'text-orange-600' : 'text-green-600') : 'text-muted-foreground'}`}>
             {isActive
               ? isDog
                 ? `Импульсный режим · Максимальная защита`
@@ -263,7 +205,7 @@ export default function MosquitoRepellent() {
           </div>
         )}
 
-        {/* Режим насекомых */}
+        {/* Режим комаров */}
         {!isDog && (
           <>
             {/* Тип сигнала */}
@@ -286,32 +228,32 @@ export default function MosquitoRepellent() {
                   </button>
                 ))}
               </div>
+              {signalMode === 'pulse' && (
+                <p className="text-[11px] text-primary/80 mt-2 leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
+                  Версия 2 — наиболее эффективный режим защиты
+                </p>
+              )}
             </div>
 
-            {/* Частота — скрыта в Версии 3 */}
-            {signalMode !== 'sweep' && (
-              <div className="bg-card border rounded-xl p-4 mb-4">
-                <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Icon name="Waves" size={16} className="text-primary" />
-                  Уровень защиты
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {freqList.map((f) => (
-                    <button
-                      key={f.hz}
-                      onClick={() => setFreq(f as never)}
-                      className={`rounded-lg border-2 p-3 text-left transition-all
-                        ${currentFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
-                    >
-                      <p className="text-sm font-extrabold leading-tight">{f.label}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{f.target}</p>
-                    </button>
-                  ))}
-                </div>
+            {/* Частота */}
+            <div className="bg-card border rounded-xl p-4 mb-4">
+              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Icon name="Waves" size={16} className="text-primary" />
+                Уровень защиты
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {MOSQUITO_FREQUENCIES.map((f) => (
+                  <button
+                    key={f.hz}
+                    onClick={() => setSelectedFreq(f)}
+                    className={`rounded-lg border-2 p-3 text-left transition-all
+                      ${selectedFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
+                  >
+                    <p className="text-sm font-extrabold">{f.label}</p>
+                  </button>
+                ))}
               </div>
-            )}
-
-
+            </div>
 
             {/* Громкость */}
             <div className="bg-card border-2 border-primary/30 rounded-xl p-5 mb-6 shadow-sm">
@@ -347,7 +289,100 @@ export default function MosquitoRepellent() {
           </>
         )}
 
+        {/* Бейдж тестовой версии */}
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-3">
+          <Icon name="FlaskConical" size={15} className="text-blue-500 shrink-0" />
+          <div>
+            <p className="text-xs font-semibold text-blue-700">Тестовая версия</p>
+            <p className="text-xs text-blue-600 leading-relaxed">Функция в разработке. Если результат недостаточный — мы работаем над улучшением эффективности.</p>
+          </div>
+        </div>
 
+        {/* Умная технология */}
+        <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
+          <p className="text-sm font-bold text-green-800 flex items-center gap-2 mb-3">
+            <Icon name="Zap" size={15} className="text-green-600" />
+            Умная ультразвуковая технология
+          </p>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Ear" size={12} className="text-green-700" />
+              </div>
+              <p className="text-xs text-green-800 leading-relaxed">
+                <span className="font-semibold">Безопасно для взрослых.</span> Сигнал выше уровня «Оптимальная защита» практически не воспринимается слухом человека после 25 лет — вы просто не услышите его.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Clock" size={12} className="text-green-700" />
+              </div>
+              <p className="text-xs text-green-800 leading-relaxed">
+                <span className="font-semibold">Работает весь вечер без перерывов.</span> Просто включи и забудь — приложение само делает своё дело, пока ты отдыхаешь.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Baby" size={12} className="text-green-700" />
+              </div>
+              <p className="text-xs text-green-800 leading-relaxed">
+                <span className="font-semibold">Рядом с детьми — используй Мягкую защиту.</span> Слух детей более чувствителен, поэтому первый уровень — идеальный выбор для семейного отдыха.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Максимальный эффект */}
+        <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-blue-50 to-sky-50 border border-blue-200">
+          <p className="text-sm font-bold text-blue-800 flex items-center gap-2 mb-3">
+            <Icon name="Sparkles" size={15} className="text-blue-500" />
+            Как получить максимальный эффект
+          </p>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Smartphone" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Направляй динамик в сторону угрозы.</span> На улице, стройке или у водоёма — просто положи телефон рядом динамиком наружу и работай спокойно.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Volume2" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Громкость выше — зона защиты шире.</span> На открытом воздухе рекомендуем выкручивать на максимум — охватывает рабочее место или зону отдыха целиком.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="ShieldCheck" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Версия 2 не даёт насекомым привыкнуть.</span> В отличие от обычных браслетов и спреев — сигнал постоянно меняется, эффект сохраняется весь день.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="MapPin" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Покрывает до 5 метров вокруг.</span> Одного телефона хватает на небольшую беседку, рабочий участок или палатку.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Дисклеймер */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1 leading-relaxed">
+          <p className="font-semibold flex items-center gap-1">
+            <Icon name="Info" size={13} />
+            Важно знать
+          </p>
+          <p>Эффективность ультразвука научно не доказана на 100%. Не полагайся на эту функцию как на единственное средство защиты.</p>
+          <p>Высокие частоты могут быть слышны детям и домашним животным.</p>
+        </div>
 
       </div>
     </div>
