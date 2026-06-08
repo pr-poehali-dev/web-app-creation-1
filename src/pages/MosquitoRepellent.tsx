@@ -312,7 +312,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Clock" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Работает без перерывов.</span> Просто включи и забудь про кровожадных насекомых — приложение само отпугивает комаров и мошкару, пока ты отдыхаешь или работаешь.
+                <span className="font-semibold">Работает без перерывов.</span> Просто включите в приложении и забудьте про кровожадных насекомых — приложение отпугивает комаров и мошкару, пока вы отдыхаете или работаете.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
