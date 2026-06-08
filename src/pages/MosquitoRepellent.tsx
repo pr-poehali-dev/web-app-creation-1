@@ -332,7 +332,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Smartphone" size={12} className="text-blue-700" />
               </div>
               <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Держи телефон динамиком наружу.</span> Направляй динамик в зону, откуда появляются насекомые — открытое окно, дверь, берег водоёма.
+                <span className="font-semibold">Направляй динамик в сторону угрозы.</span> На улице, стройке или у водоёма — просто положи телефон рядом динамиком наружу и работай спокойно.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
@@ -340,7 +340,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Volume2" size={12} className="text-blue-700" />
               </div>
               <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Громкость — не менее 70%.</span> Чем мощнее сигнал, тем шире радиус действия. На природе ставь на максимум.
+                <span className="font-semibold">Громкость выше — зона защиты шире.</span> На открытом воздухе рекомендуем выкручивать на максимум — охватывает рабочее место или зону отдыха целиком.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
@@ -348,7 +348,7 @@ export default function MosquitoRepellent() {
                 <Icon name="ShieldCheck" size={12} className="text-blue-700" />
               </div>
               <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Версия 2 — твой выбор.</span> Импульсный режим не даёт насекомым привыкнуть к сигналу — это ключевое преимущество перед обычными отпугивателями.
+                <span className="font-semibold">Версия 2 не даёт насекомым привыкнуть.</span> В отличие от обычных браслетов и спреев — сигнал постоянно меняется, эффект сохраняется весь день.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
@@ -356,7 +356,7 @@ export default function MosquitoRepellent() {
                 <Icon name="MapPin" size={12} className="text-blue-700" />
               </div>
               <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Радиус действия — до 5 метров.</span> Для большого пространства положи телефон в центр комнаты или на подоконник.
+                <span className="font-semibold">Покрывает до 5 метров вокруг.</span> Одного телефона хватает на небольшую беседку, рабочий участок или палатку.
               </p>
             </div>
           </div>
