@@ -286,14 +286,48 @@ export default function MosquitoRepellent() {
           </div>
         </div>
 
+        {/* Умная технология */}
+        <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
+          <p className="text-sm font-bold text-green-800 flex items-center gap-2 mb-3">
+            <Icon name="Zap" size={15} className="text-green-600" />
+            Умная ультразвуковая технология
+          </p>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Ear" size={12} className="text-green-700" />
+              </div>
+              <p className="text-xs text-green-800 leading-relaxed">
+                <span className="font-semibold">Безопасно для взрослых.</span> Частоты выше 16 кГц практически не воспринимаются слухом человека после 25 лет — вы просто не услышите сигнал.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Clock" size={12} className="text-green-700" />
+              </div>
+              <p className="text-xs text-green-800 leading-relaxed">
+                <span className="font-semibold">Оптимальное время сеанса — до 60 минут.</span> Для длительного пребывания на природе просто повторяй сеансы с небольшими паузами.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Baby" size={12} className="text-green-700" />
+              </div>
+              <p className="text-xs text-green-800 leading-relaxed">
+                <span className="font-semibold">Рядом с детьми — используй Мягкую защиту.</span> Слух детей более чувствителен, поэтому первый уровень — идеальный выбор для семейного отдыха.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Дисклеймер */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1 leading-relaxed">
           <p className="font-semibold flex items-center gap-1">
             <Icon name="Info" size={13} />
             Важно знать
           </p>
-          <p>Эффективность ультразвука научно не доказана. Не полагайся на эту функцию в реальной опасности.</p>
-          <p>Высокие частоты могут быть слышны молодым людям и домашним животным.</p>
+          <p>Эффективность ультразвука научно не доказана на 100%. Не полагайся на эту функцию как на единственное средство защиты.</p>
+          <p>Высокие частоты могут быть слышны детям и домашним животным.</p>
         </div>
 
       </div>
