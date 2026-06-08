@@ -290,13 +290,7 @@ export default function MosquitoRepellent() {
         )}
 
         {/* Бейдж тестовой версии */}
-        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-3">
-          <Icon name="FlaskConical" size={15} className="text-blue-500 shrink-0" />
-          <div>
-            <p className="text-xs font-semibold text-blue-700">Тестовая версия</p>
-            <p className="text-xs text-blue-600 leading-relaxed">Функция в разработке. Если результат недостаточный — мы работаем над улучшением эффективности.</p>
-          </div>
-        </div>
+
 
         {/* Умная технология */}
         <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
@@ -318,7 +312,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Clock" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Работает весь вечер без перерывов.</span> Просто включи и забудь — приложение само делает своё дело, пока ты отдыхаешь.
+                <span className="font-semibold">Работает без перерывов.</span> Просто включи и забудь про кровожадных насекомых — приложение само отпугивает комаров и мошкару, пока ты отдыхаешь или работаешь.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
