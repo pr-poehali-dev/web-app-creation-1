@@ -320,6 +320,48 @@ export default function MosquitoRepellent() {
           </div>
         </div>
 
+        {/* Максимальный эффект */}
+        <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-blue-50 to-sky-50 border border-blue-200">
+          <p className="text-sm font-bold text-blue-800 flex items-center gap-2 mb-3">
+            <Icon name="Sparkles" size={15} className="text-blue-500" />
+            Как получить максимальный эффект
+          </p>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Smartphone" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Держи телефон динамиком наружу.</span> Направляй динамик в зону, откуда появляются насекомые — открытое окно, дверь, берег водоёма.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="Volume2" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Громкость — не менее 70%.</span> Чем мощнее сигнал, тем шире радиус действия. На природе ставь на максимум.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="ShieldCheck" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Версия 2 — твой выбор.</span> Импульсный режим не даёт насекомым привыкнуть к сигналу — это ключевое преимущество перед обычными отпугивателями.
+              </p>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name="MapPin" size={12} className="text-blue-700" />
+              </div>
+              <p className="text-xs text-blue-900 leading-relaxed">
+                <span className="font-semibold">Радиус действия — до 5 метров.</span> Для большого пространства положи телефон в центр комнаты или на подоконник.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Дисклеймер */}
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 space-y-1 leading-relaxed">
           <p className="font-semibold flex items-center gap-1">
