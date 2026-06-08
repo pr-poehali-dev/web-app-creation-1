@@ -6,10 +6,10 @@ type Mode = 'mosquito' | 'dog';
 type SignalMode = 'modulated' | 'pulse';
 
 const MOSQUITO_FREQUENCIES = [
-  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита' },
-  { hz: 16000, label: 'Оптимальная защита', desc: 'Оптимальная защита' },
-  { hz: 17500, label: 'Усиленная защита', desc: 'Усиленная защита' },
-  { hz: 19000, label: 'Максимальная защита', desc: 'Максимальная защита' },
+  { hz: 15000, label: 'Слышат все', desc: 'Слышат все' },
+  { hz: 16000, label: 'Слышит молодёжь', desc: 'Слышит молодёжь' },
+  { hz: 17500, label: 'Слышат дети', desc: 'Слышат дети' },
+  { hz: 19000, label: 'Только насекомые', desc: 'Только насекомые' },
 ];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
@@ -304,7 +304,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Ear" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Безопасно для взрослых.</span> Сигнал выше уровня «Оптимальная защита» практически не воспринимается слухом человека после 25 лет — вы просто не услышите его.
+                <span className="font-semibold">Безопасно для взрослых.</span> Уровни «Слышат дети» и «Только насекомые» практически не воспринимаются слухом человека после 25 лет — вы просто не услышите их.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
@@ -320,7 +320,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Baby" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Рядом с детьми — используй Мягкую защиту.</span> Слух детей более чувствителен, поэтому первый уровень — идеальный выбор для семейного отдыха.
+                <span className="font-semibold">Рядом с детьми — выбирайте «Только насекомые».</span> На этом уровне дети не слышат сигнал — идеальный выбор для семейного отдыха.
               </p>
             </div>
           </div>
