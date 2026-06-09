@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { type OrderMessage, playNotificationSound } from './chat-types';
 import ChatMessageList from './ChatMessageList';
 import ChatInputBar from './ChatInputBar';
+import { compressImage } from '@/utils/imageCompression';
 import func2url from '../../../backend/func2url.json';
 
 const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
@@ -223,8 +224,10 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     });
 
   const uploadFile = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
-    const fileType = resolveFileType(file);
-    const fileData = await readFileAsBase64(file);
+    const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(file.name);
+    const fileToUpload = isImage ? await compressImage(file, 8, 2048) : file;
+    const fileType = resolveFileType(fileToUpload);
+    const fileData = await readFileAsBase64(fileToUpload);
     if (!fileData) throw new Error('Не удалось прочитать файл');
     const res = await fetch(`${UPLOAD_URL}?action=single`, {
       method: 'POST',
