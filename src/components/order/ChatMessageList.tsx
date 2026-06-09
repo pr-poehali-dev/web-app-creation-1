@@ -144,9 +144,15 @@ export default function ChatMessageList({
         ref={messagesContainerRef}
         onScroll={onScroll}
         tabIndex={0}
-        onTouchStart={() => messagesContainerRef.current?.focus({ preventScroll: true })}
+        onTouchStart={(e) => {
+          messagesContainerRef.current?.focus({ preventScroll: true });
+          e.stopPropagation();
+        }}
+        onTouchMove={(e) => {
+          e.stopPropagation();
+        }}
         className={`space-y-2 overflow-y-auto pr-1 outline-none ${isHistory ? 'max-h-[280px] mb-2' : 'max-h-[380px] mb-3'}`}
-        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain', willChange: 'scroll-position' }}
       >
         {messages.map((msg) => {
           const isMe = isBuyer ? msg.senderType === 'buyer' : msg.senderType === 'seller';
