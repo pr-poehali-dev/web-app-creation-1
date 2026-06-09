@@ -21,13 +21,6 @@ const MIDGE_FREQUENCIES = [
   { hz: 20000, label: 'Ультразвук',      desc: 'Ультразвук',      target: '🪲 Мошкара', subHz: [19000, 20000] },
 ];
 
-// Полные диапазоны для Версии 3 (авто-свип по всему диапазону вида)
-const SWEEP_RANGES: Record<'mosquito' | 'midge' | 'dog', [number, number]> = {
-  mosquito: [15000, 17500],
-  midge:    [17000, 20000],
-  dog:      [19000, 21000],
-};
-
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
   { id: 'modulated', label: 'Версия 1', desc: 'Стандартная', icon: 'Shield' },
   { id: 'pulse',     label: 'Версия 2', desc: 'Импульсная',  icon: 'ShieldCheck' },
@@ -77,7 +70,7 @@ export default function MosquitoRepellent() {
   const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : selectedFreq.hz;
   const activeVolume = mode === 'dog' ? 1 : volume;
   const activeSig    = mode === 'dog' ? 'pulse' : signalMode;
-  const sweepRange   = SWEEP_RANGES[mode];
+  const sweepRange   = mode === 'dog' ? [19000, 21000] : selectedFreq.subHz;
 
   const start = useCallback(() => {
     const ctx  = new AudioContext();
@@ -297,44 +290,32 @@ export default function MosquitoRepellent() {
               </p>
             </div>
 
-            {/* Частота — скрыта в Версии 3 */}
-            {signalMode !== 'sweep' && (
-              <div className="bg-card border rounded-xl p-4 mb-4">
-                <p className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Icon name="Waves" size={16} className="text-primary" />
-                  Уровень защиты
+            {/* Частота */}
+            <div className="bg-card border rounded-xl p-4 mb-4">
+              <p className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Icon name="Waves" size={16} className="text-primary" />
+                Уровень защиты
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {freqList.map((f) => (
+                  <button
+                    key={f.hz}
+                    onClick={() => setFreq(f as never)}
+                    className={`rounded-lg border-2 p-3 text-left transition-all
+                      ${currentFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
+                  >
+                    <p className="text-sm font-extrabold leading-tight">{f.label}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{f.target}</p>
+                    <p className="text-[10px] text-muted-foreground/70 mt-0.5">{f.hz.toLocaleString()} Гц</p>
+                  </button>
+                ))}
+              </div>
+              {signalMode === 'sweep' && (
+                <p className="text-[11px] text-primary/80 mt-2 bg-primary/5 rounded-lg px-3 py-2">
+                  Авто-свип обходит диапазон {currentFreq.subHz[0].toLocaleString()}–{currentFreq.subHz[1].toLocaleString()} Гц
                 </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {freqList.map((f) => (
-                    <button
-                      key={f.hz}
-                      onClick={() => setFreq(f as never)}
-                      className={`rounded-lg border-2 p-3 text-left transition-all
-                        ${currentFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
-                    >
-                      <p className="text-sm font-extrabold leading-tight">{f.label}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{f.target}</p>
-                      <p className="text-[10px] text-muted-foreground/70 mt-0.5">{f.hz.toLocaleString()} Гц</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Плашка авто-свипа для Версии 3 */}
-            {signalMode === 'sweep' && !isDog && (
-              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4 flex items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon name="RefreshCw" size={15} className="text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Авто-свип активен</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Сигнал автоматически обходит весь диапазон {isMidge ? '17 000–20 000' : '15 000–17 500'} Гц — выбор уровня не нужен
-                  </p>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Громкость */}
             <div className="bg-card border-2 border-primary/30 rounded-xl p-5 mb-6 shadow-sm">
