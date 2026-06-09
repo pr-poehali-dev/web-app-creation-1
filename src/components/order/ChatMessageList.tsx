@@ -7,11 +7,15 @@ function VideoWithFullscreen({ src }: { src: string }) {
   const [fullscreen, setFullscreen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fsVideoRef = useRef<HTMLVideoElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
 
   const openFullscreen = () => {
     const currentTime = videoRef.current?.currentTime ?? 0;
     const paused = videoRef.current?.paused ?? true;
     setFullscreen(true);
+    setSwipeOffset(0);
     setTimeout(() => {
       if (fsVideoRef.current) {
         fsVideoRef.current.currentTime = currentTime;
@@ -25,12 +29,46 @@ function VideoWithFullscreen({ src }: { src: string }) {
     const paused = fsVideoRef.current?.paused ?? true;
     fsVideoRef.current?.pause();
     setFullscreen(false);
+    setSwipeOffset(0);
     setTimeout(() => {
       if (videoRef.current) {
         videoRef.current.currentTime = currentTime;
         if (!paused) videoRef.current.play();
       }
     }, 50);
+  };
+
+  const handleOverlayTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+    setSwipeOffset(0);
+  };
+
+  const handleOverlayTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const t = e.touches[0];
+    const dy = t.clientY - touchStartRef.current.y;
+    const dx = t.clientX - touchStartRef.current.x;
+    // Только если жест больше по вертикали или диагональ > 30px
+    if (Math.abs(dy) > Math.abs(dx) && dy > 0) {
+      setSwipeOffset(dy);
+    } else if (Math.abs(dx) > 60) {
+      setSwipeOffset(Math.abs(dx));
+    }
+  };
+
+  const handleOverlayTouchEnd = () => {
+    if (swipeOffset > 80) {
+      closeFullscreen();
+    } else {
+      setSwipeOffset(0);
+    }
+    touchStartRef.current = null;
+  };
+
+  // Блокируем нативный fullscreen на iOS при нажатии play
+  const handleVideoClick = (e: React.MouseEvent<HTMLVideoElement>) => {
+    e.stopPropagation();
   };
 
   return (
@@ -42,10 +80,12 @@ function VideoWithFullscreen({ src }: { src: string }) {
           controls
           className="max-w-full rounded max-h-40"
           playsInline
+          webkit-playsinline=""
+          x5-playsinline=""
         />
         <button
           onClick={openFullscreen}
-          className="absolute top-1 right-1 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+          className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
           title="На весь экран"
         >
           <Icon name="Maximize2" size={14} />
@@ -54,28 +94,47 @@ function VideoWithFullscreen({ src }: { src: string }) {
 
       {fullscreen && (
         <div
-          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
-          style={{ touchAction: 'none' }}
+          ref={overlayRef}
+          className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center"
+          style={{
+            transform: swipeOffset > 0 ? `translateY(${swipeOffset * 0.4}px)` : undefined,
+            opacity: swipeOffset > 0 ? Math.max(0.4, 1 - swipeOffset / 300) : 1,
+            transition: swipeOffset === 0 ? 'opacity 0.2s, transform 0.2s' : undefined,
+          }}
+          onTouchStart={handleOverlayTouchStart}
+          onTouchMove={handleOverlayTouchMove}
+          onTouchEnd={handleOverlayTouchEnd}
         >
+          {/* Кнопка закрытия — сверху по центру, всегда видна */}
+          <button
+            onClick={closeFullscreen}
+            className="flex items-center gap-2 bg-white/15 active:bg-white/30 text-white rounded-full px-5 py-3 mb-4 transition-colors"
+            style={{
+              marginTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
+              minWidth: 140,
+              justifyContent: 'center',
+            }}
+          >
+            <Icon name="ChevronDown" size={20} />
+            <span className="text-sm font-medium">Свернуть</span>
+          </button>
+
           <video
             ref={fsVideoRef}
             src={src}
             controls
             playsInline
+            webkit-playsinline=""
+            x5-playsinline=""
             className="w-full object-contain"
-            style={{ maxHeight: '80dvh' }}
+            style={{ maxHeight: 'calc(100dvh - 120px)' }}
+            onClick={handleVideoClick}
           />
-          <button
-            onClick={closeFullscreen}
-            className="absolute left-1/2 -translate-x-1/2 bg-white/20 hover:bg-white/35 text-white rounded-full flex items-center justify-center transition-colors z-10"
-            style={{
-              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
-              width: 56,
-              height: 56,
-            }}
-          >
-            <Icon name="X" size={26} />
-          </button>
+
+          {/* Подсказка свайпа */}
+          <p className="text-white/40 text-xs mt-3 mb-2">
+            Смахни вниз чтобы свернуть
+          </p>
         </div>
       )}
     </>
