@@ -8,6 +8,7 @@ import { type OrderMessage, playNotificationSound } from './chat-types';
 import ChatMessageList from './ChatMessageList';
 import ChatInputBar from './ChatInputBar';
 import { compressImage } from '@/utils/imageCompression';
+import { uploadFileChunked } from '@/utils/videoUpload';
 import func2url from '../../../backend/func2url.json';
 
 const UPLOAD_URL = (func2url as Record<string, string>)['get-upload-url'];
@@ -225,7 +226,13 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
 
   const uploadFile = async (file: File, filename: string, userId: string, folder: string): Promise<string> => {
     const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|heic|heif)$/i.test(file.name);
-    const fileToUpload = isImage ? await compressImage(file, 8, 2048) : file;
+    const isVideo = file.type.startsWith('video/') || /\.(mp4|mov|avi|mkv|webm|m4v|3gp)$/i.test(file.name);
+
+    if (isVideo || (isImage && file.size > 2 * 1024 * 1024)) {
+      return uploadFileChunked(file);
+    }
+
+    const fileToUpload = isImage ? await compressImage(file, 2, 2048) : file;
     const fileType = resolveFileType(fileToUpload);
     const fileData = await readFileAsBase64(fileToUpload);
     if (!fileData) throw new Error('Не удалось прочитать файл');

@@ -318,7 +318,7 @@ export function useCreateOfferForm(editOffer?: Offer) {
     const compressedFiles: File[] = [];
     for (const file of files) {
       try {
-        const compressed = await compressImage(file, 15, 2560);
+        const compressed = await compressImage(file, 5, 2560);
         compressedFiles.push(compressed);
       } catch {
         compressedFiles.push(file);

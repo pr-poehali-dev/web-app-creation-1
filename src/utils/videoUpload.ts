@@ -13,6 +13,64 @@ function toBase64(buffer: ArrayBuffer): string {
   return btoa(binary);
 }
 
+export async function uploadFileChunked(
+  file: File,
+  onProgress?: (percent: number) => void
+): Promise<string> {
+  const uploadId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  const contentType = file.type || 'application/octet-stream';
+  const filename = file.name || 'file';
+
+  onProgress?.(2);
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, file.size);
+    const chunk = file.slice(start, end);
+    const buffer = await chunk.arrayBuffer();
+    const chunkB64 = toBase64(buffer);
+
+    const resp = await fetch(
+      `${UPLOAD_VIDEO_URL}?action=chunk&uploadId=${uploadId}&part=${i}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chunk: chunkB64 }),
+      }
+    );
+
+    if (!resp.ok) {
+      let msg = `Ошибка загрузки части ${i + 1}`;
+      try { const e = await resp.json(); msg = e.error || msg; } catch { /* ignore */ }
+      throw new Error(msg);
+    }
+
+    onProgress?.(2 + Math.round(((i + 1) / totalChunks) * 88));
+  }
+
+  const completeResp = await fetch(
+    `${UPLOAD_VIDEO_URL}?action=complete`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uploadId, filename, contentType, totalParts: totalChunks }),
+    }
+  );
+
+  if (!completeResp.ok) {
+    let msg = 'Ошибка финализации загрузки';
+    try { const e = await completeResp.json(); msg = e.error || msg; } catch { /* ignore */ }
+    throw new Error(msg);
+  }
+
+  const result = await completeResp.json();
+  if (!result.url) throw new Error('Нет URL в ответе');
+
+  onProgress?.(100);
+  return result.url;
+}
+
 export async function uploadVideoMultipart(
   file: File,
   onProgress?: (percent: number) => void

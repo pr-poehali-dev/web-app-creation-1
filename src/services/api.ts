@@ -1,5 +1,6 @@
 import type { Offer, Request as OfferRequest } from '@/types/offer';
 import type { Auction } from '@/types/auction';
+import { uploadFileChunked } from '@/utils/videoUpload';
 import func2url from '../../backend/func2url.json';
 
 const OFFERS_API = func2url.offers;
@@ -402,34 +403,42 @@ export const offersAPI = {
   },
 
   async uploadMedia(mediaBase64: string, isAutoPhoto = false): Promise<{ url: string; message: string; plateCovered?: boolean }> {
-    console.log('uploadMedia: Starting upload, data size:', mediaBase64.length, 'isAutoPhoto:', isAutoPhoto);
-    
-    // Для загрузки медиа не используем fetchWithRetry, т.к. загрузка может быть долгой
+    // Для больших файлов (data URL > 2 МБ) используем чанковую загрузку
+    const CHUNKED_THRESHOLD = 2 * 1024 * 1024;
+    const isLarge = mediaBase64.length > CHUNKED_THRESHOLD;
+
+    if (isLarge && !isAutoPhoto) {
+      // Конвертируем data URL в File и грузим чанками
+      const comma = mediaBase64.indexOf(',');
+      const header = comma >= 0 ? mediaBase64.slice(0, comma) : '';
+      const b64 = comma >= 0 ? mediaBase64.slice(comma + 1) : mediaBase64;
+      const mimeMatch = header.match(/data:([^;]+)/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      const ext = mimeType.split('/')[1]?.split('+')[0] || 'jpg';
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const file = new File([bytes], `upload.${ext}`, { type: mimeType });
+      const url = await uploadFileChunked(file);
+      return { url, message: 'uploaded' };
+    }
+
     const response = await fetch(UPLOAD_VIDEO_API, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ video: mediaBase64, isAutoPhoto }),
     });
-    
-    console.log('uploadMedia: Response status:', response.status);
-    
+
     if (!response.ok) {
       let errorMessage = 'Failed to upload media';
       try {
         const error = await response.json();
         errorMessage = error.error || errorMessage;
-      } catch (e) {
-        console.error('uploadMedia: Failed to parse error response:', e);
-      }
-      console.error('uploadMedia: Error response:', errorMessage);
+      } catch { /* ignore */ }
       throw new Error(errorMessage);
     }
-    
-    const result = await response.json();
-    console.log('uploadMedia: Success, URL:', result.url);
-    return result;
+
+    return response.json();
   },
 
   // Алиас для обратной совместимости
