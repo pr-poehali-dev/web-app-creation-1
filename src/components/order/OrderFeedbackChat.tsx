@@ -226,51 +226,18 @@ export default function OrderFeedbackChat({ orderId, orderStatus, isBuyer, isReq
     const fileType = resolveFileType(file);
     const fileData = await readFileAsBase64(file);
     if (!fileData) throw new Error('Не удалось прочитать файл');
-    // single: только файлы до 3 МБ base64 (~2.2 МБ бинарных)
-    // multipart: всё что крупнее, чанки по 7 МБ base64 (~5.2 МБ бинарных > минимум S3 5 МБ)
-    const MULTIPART_THRESHOLD_B64 = 3 * 1024 * 1024;
-    if (fileData.length < MULTIPART_THRESHOLD_B64) {
-      const res = await fetch(`${UPLOAD_URL}?action=single`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ filename, contentType: fileType, folder, fileData }),
-      });
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        throw new Error(`Ошибка загрузки: ${res.status} ${errText}`);
-      }
-      const json = await res.json();
-      if (!json.fileUrl) throw new Error('Сервер не вернул URL файла');
-      return json.fileUrl;
-    }
-    const CHUNK_B64 = 7 * 1024 * 1024;
-    const totalChunks = Math.ceil(fileData.length / CHUNK_B64);
-    const initRes = await fetch(`${UPLOAD_URL}?action=init`, {
+    const res = await fetch(`${UPLOAD_URL}?action=single`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ filename, contentType: fileType, folder }),
+      body: JSON.stringify({ filename, contentType: fileType, folder, fileData }),
     });
-    if (!initRes.ok) throw new Error('Ошибка инициализации загрузки');
-    const { uploadId, key, fileUrl } = await initRes.json();
-    const parts: { partNumber: number; etag: string }[] = [];
-    for (let i = 0; i < totalChunks; i++) {
-      const chunkB64 = fileData.slice(i * CHUNK_B64, (i + 1) * CHUNK_B64);
-      const partRes = await fetch(`${UPLOAD_URL}?action=part`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-        body: JSON.stringify({ key, uploadId, partNumber: i + 1, chunk: chunkB64 }),
-      });
-      if (!partRes.ok) throw new Error(`Ошибка загрузки части ${i + 1}`);
-      const { etag } = await partRes.json();
-      parts.push({ partNumber: i + 1, etag });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Ошибка загрузки: ${res.status} ${errText}`);
     }
-    const completeRes = await fetch(`${UPLOAD_URL}?action=complete`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
-      body: JSON.stringify({ key, uploadId, parts, fileUrl }),
-    });
-    if (!completeRes.ok) throw new Error('Ошибка завершения загрузки');
-    return fileUrl;
+    const json = await res.json();
+    if (!json.fileUrl) throw new Error('Сервер не вернул URL файла');
+    return json.fileUrl;
   };
 
   const handleSendMessage = async () => {
