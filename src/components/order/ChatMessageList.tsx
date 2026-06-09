@@ -3,6 +3,81 @@ import Icon from '@/components/ui/icon';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import type { OrderMessage } from './chat-types';
 
+function VideoWithFullscreen({ src }: { src: string }) {
+  const [fullscreen, setFullscreen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fsVideoRef = useRef<HTMLVideoElement>(null);
+
+  const openFullscreen = () => {
+    const currentTime = videoRef.current?.currentTime ?? 0;
+    const paused = videoRef.current?.paused ?? true;
+    setFullscreen(true);
+    setTimeout(() => {
+      if (fsVideoRef.current) {
+        fsVideoRef.current.currentTime = currentTime;
+        if (!paused) fsVideoRef.current.play();
+      }
+    }, 50);
+  };
+
+  const closeFullscreen = () => {
+    const currentTime = fsVideoRef.current?.currentTime ?? 0;
+    const paused = fsVideoRef.current?.paused ?? true;
+    fsVideoRef.current?.pause();
+    setFullscreen(false);
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.currentTime = currentTime;
+        if (!paused) videoRef.current.play();
+      }
+    }, 50);
+  };
+
+  return (
+    <>
+      <div className="relative inline-block">
+        <video
+          ref={videoRef}
+          src={src}
+          controls
+          className="max-w-full rounded max-h-40"
+          playsInline
+        />
+        <button
+          onClick={openFullscreen}
+          className="absolute top-1 right-1 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
+          title="На весь экран"
+        >
+          <Icon name="Maximize2" size={14} />
+        </button>
+      </div>
+
+      {fullscreen && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+          style={{ touchAction: 'none' }}
+        >
+          <video
+            ref={fsVideoRef}
+            src={src}
+            controls
+            playsInline
+            className="w-full h-full object-contain"
+            style={{ maxHeight: '100dvh' }}
+          />
+          <button
+            onClick={closeFullscreen}
+            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-colors z-10"
+            style={{ minWidth: 48, minHeight: 48 }}
+          >
+            <Icon name="X" size={22} />
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
 interface ChatMessageListProps {
   messages: OrderMessage[];
   isLoading: boolean;
@@ -70,7 +145,7 @@ export default function ChatMessageList({
         onScroll={onScroll}
         tabIndex={0}
         onTouchStart={() => messagesContainerRef.current?.focus({ preventScroll: true })}
-        className={`space-y-2 overflow-y-auto pr-1 outline-none ${isHistory ? 'max-h-[200px] mb-2' : 'max-h-[200px] mb-3'}`}
+        className={`space-y-2 overflow-y-auto pr-1 outline-none ${isHistory ? 'max-h-[280px] mb-2' : 'max-h-[380px] mb-3'}`}
         style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y', overscrollBehavior: 'contain' }}
       >
         {messages.map((msg) => {
@@ -104,7 +179,7 @@ export default function ChatMessageList({
                       return isAudio ? (
                         <audio key={i} src={att.url} controls className="max-w-full h-8" style={{ minWidth: 180 }} />
                       ) : isVideo ? (
-                        <video key={i} src={att.url} controls className="max-w-full rounded max-h-40" playsInline />
+                        <VideoWithFullscreen key={i} src={att.url} />
                       ) : isImage ? (
                         <img
                           key={i}
