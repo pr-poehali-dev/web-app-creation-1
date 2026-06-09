@@ -62,15 +62,19 @@ function VideoWithFullscreen({ src }: { src: string }) {
             src={src}
             controls
             playsInline
-            className="w-full h-full object-contain"
-            style={{ maxHeight: '100dvh' }}
+            className="w-full object-contain"
+            style={{ maxHeight: '80dvh' }}
           />
           <button
             onClick={closeFullscreen}
-            className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white rounded-full p-3 transition-colors z-10"
-            style={{ minWidth: 48, minHeight: 48 }}
+            className="absolute left-1/2 -translate-x-1/2 bg-white/20 hover:bg-white/35 text-white rounded-full flex items-center justify-center transition-colors z-10"
+            style={{
+              bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)',
+              width: 56,
+              height: 56,
+            }}
           >
-            <Icon name="X" size={22} />
+            <Icon name="X" size={26} />
           </button>
         </div>
       )}
