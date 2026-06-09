@@ -66,6 +66,16 @@ function VideoWithFullscreen({ src }: { src: string }) {
     touchStartRef.current = null;
   };
 
+  const lastTapRef = useRef<number>(0);
+
+  const handleVideoTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      openFullscreen();
+    }
+    lastTapRef.current = now;
+  };
+
   // Блокируем нативный fullscreen на iOS при нажатии play
   const handleVideoClick = (e: React.MouseEvent<HTMLVideoElement>) => {
     e.stopPropagation();
@@ -73,7 +83,10 @@ function VideoWithFullscreen({ src }: { src: string }) {
 
   return (
     <>
-      <div className="relative inline-block">
+      <div
+        className="relative inline-block"
+        onClick={handleVideoTap}
+      >
         <video
           ref={videoRef}
           src={src}
@@ -83,13 +96,6 @@ function VideoWithFullscreen({ src }: { src: string }) {
           webkit-playsinline=""
           x5-playsinline=""
         />
-        <button
-          onClick={openFullscreen}
-          className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
-          title="На весь экран"
-        >
-          <Icon name="Maximize2" size={14} />
-        </button>
       </div>
 
       {fullscreen && (
