@@ -6,10 +6,10 @@ type Mode = 'mosquito' | 'dog';
 type SignalMode = 'pulse' | 'yakut';
 
 const MOSQUITO_FREQUENCIES = [
-  { hz: 19000, label: 'Максимальная', desc: 'Максимальная защита', safe: false },
-  { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: false },
-  { hz: 16000, label: 'Оптимальная', desc: 'Оптимальная защита', safe: true },
-  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
+  { hz: 19000, label: 'Максимальная', desc: 'Максимальная защита', safe: true },
+  { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: true },
+  { hz: 16000, label: 'Оптимальная', desc: 'Оптимальная защита', safe: false },
+  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: false },
 ];
 
 // Якутские частоты (Aedes): 150–200 Гц — реакция избегания, не слышны как ультразвук,
@@ -253,13 +253,13 @@ export default function MosquitoRepellent() {
                       ${selectedFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
                   >
                     <p className="text-sm font-extrabold">{f.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{f.hz >= 17000 ? '⚠️ слышно до 25 лет' : '✓ безопасно'}</p>
+                    <p className="text-[10px] text-muted-foreground">{f.hz >= 17000 ? '✓ дети не слышат' : '⚠️ слышно детям'}</p>
                   </button>
                 ))}
               </div>
               {!selectedFreq.safe && signalMode !== 'yakut' && (
                 <p className="text-[11px] text-amber-700 mt-2 leading-relaxed bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  ⚠️ Эта частота может вызывать дискомфорт у людей до 25 лет и детей. Рядом с детьми используй «Мягкую защиту» или режим «Якутия».
+                  ⚠️ Эта частота слышна детям и может вызывать дискомфорт. Рядом с детьми используй «Максимальную» или режим «Якутия».
                 </p>
               )}
             </div>
