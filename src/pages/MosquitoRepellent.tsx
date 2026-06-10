@@ -6,10 +6,10 @@ type Mode = 'mosquito' | 'dog';
 type SignalMode = 'pulse' | 'yakut';
 
 const MOSQUITO_FREQUENCIES = [
-  { hz: 19000, label: 'Максимальная', desc: 'Максимальная защита', safe: true },
+  { hz: 19000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
   { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: true },
   { hz: 16000, label: 'Оптимальная', desc: 'Оптимальная защита', safe: false },
-  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: false },
+  { hz: 15000, label: 'Только для взрослых', desc: 'Только для взрослых', safe: false },
 ];
 
 // Якутские частоты (Aedes): 150–200 Гц — реакция избегания, не слышны как ультразвук,
@@ -259,7 +259,7 @@ export default function MosquitoRepellent() {
               </div>
               {!selectedFreq.safe && signalMode !== 'yakut' && (
                 <p className="text-[11px] text-amber-700 mt-2 leading-relaxed bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  ⚠️ Эта частота слышна детям и может вызывать дискомфорт. Рядом с детьми используй «Максимальную» или режим «Якутия».
+                  ⚠️ Эта частота слышна детям и может вызывать дискомфорт. Рядом с детьми используй «Мягкую защиту» или режим «Якутия».
                 </p>
               )}
             </div>
