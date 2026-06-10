@@ -337,7 +337,7 @@ export default function MosquitoRepellent() {
                       ${selectedFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
                   >
                     <p className="text-sm font-extrabold">{f.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{f.hz === 19000 ? '✓ дети почти не слышат' : '✓ дети не слышат'}</p>
+                    <p className="text-[10px] text-muted-foreground">{f.hz === 19000 ? '✓ дети почти не слышат' : '⚠️ дети слышат громче'}</p>
                   </button>
                 ))}
               </div>
