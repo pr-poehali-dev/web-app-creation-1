@@ -447,7 +447,7 @@ export default function MosquitoRepellent() {
                 <Icon name="ShieldCheck" size={12} className="text-blue-700" />
               </div>
               <p className="text-xs text-blue-900 leading-relaxed">
-                <span className="font-semibold">Версия 2 не даёт насекомым привыкнуть.</span> В отличие от обычных браслетов и спреев — сигнал постоянно меняется, эффект сохраняется весь день.
+                <span className="font-semibold">Сигнал постоянно меняется — комары не успевают адаптироваться.</span> В отличие от обычных браслетов и спреев — эффект сохраняется весь день.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
