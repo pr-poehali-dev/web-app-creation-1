@@ -3,21 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
 type Mode = 'mosquito' | 'dog';
-type SignalMode = 'pulse' | 'yakut';
+type SignalMode = 'pulse' | 'siberia' | 'ural' | 'yakut';
 
 const MOSQUITO_FREQUENCIES = [
   { hz: 19000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
   { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: true },
 ];
 
-// Якутские частоты (Aedes): отпугивание + имитация стрекозы-хищника (20–170 Гц)
-// Чередование не даёт комарам адаптироваться
+// Якутские частоты (Aedes): отпугивание + имитация стрекозы-хищника
 const YAKUT_FREQUENCIES = [150, 170, 185, 200];
-const DRAGONFLY_FREQUENCIES = [40, 65, 90, 120, 40]; // имитация взмахов крыльев стрекозы
+const DRAGONFLY_FREQUENCIES = [40, 65, 90, 120, 40];
+// Сибирь (Бурятия, Омск): смешанный Aedes с таёжной спецификой — чуть выше якутского
+const SIBERIA_FREQUENCIES = [160, 180, 200, 220];
+// Урал: микс Aedes + Culex — комбинированный диапазон
+const URAL_FREQUENCIES = [170, 500, 1000, 200];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
-  { id: 'pulse',  label: 'Центральная Россия', desc: 'Вид Culex',  icon: 'ShieldCheck' },
-  { id: 'yakut',  label: 'Якутия / Север',    desc: 'Вид Aedes', icon: 'Snowflake' },
+  { id: 'pulse',   label: 'Центральная Россия', desc: 'Вид Culex',        icon: 'ShieldCheck' },
+  { id: 'siberia', label: 'Сибирь',             desc: 'Бурятия, Омск',   icon: 'Trees' },
+  { id: 'ural',    label: 'Урал',               desc: 'Вид Aedes+Culex', icon: 'Mountain' },
+  { id: 'yakut',   label: 'Якутия / Север',     desc: 'Вид Aedes',       icon: 'Snowflake' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -58,7 +63,9 @@ export default function MosquitoRepellent() {
     setPulseAnim(false);
   }, []);
 
-  const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : signalMode === 'yakut' ? YAKUT_FREQUENCIES[0] : selectedFreq.hz;
+  const isNorthMode  = signalMode === 'yakut' || signalMode === 'siberia' || signalMode === 'ural';
+  const northFreqs   = signalMode === 'siberia' ? SIBERIA_FREQUENCIES : signalMode === 'ural' ? URAL_FREQUENCIES : YAKUT_FREQUENCIES;
+  const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : isNorthMode ? northFreqs[0] : selectedFreq.hz;
   const activeVolume = mode === 'dog' ? 1 : volume;
   const activeSig    = mode === 'dog' ? 'pulse' : signalMode;
 
@@ -91,17 +98,17 @@ export default function MosquitoRepellent() {
       }, 800);
     }
 
-    if (activeSig === 'yakut') {
-      // Якутский режим: чередуем частоты отпугивания каждые 2 сек — комары не привыкают
+    if (activeSig === 'yakut' || activeSig === 'siberia' || activeSig === 'ural') {
+      const freqs = activeSig === 'siberia' ? SIBERIA_FREQUENCIES : activeSig === 'ural' ? URAL_FREQUENCIES : YAKUT_FREQUENCIES;
       yakutIndexRef.current = 0;
-      osc.frequency.setValueAtTime(YAKUT_FREQUENCIES[0], ctx.currentTime);
+      osc.frequency.setValueAtTime(freqs[0], ctx.currentTime);
       pulseTimerRef.current = setInterval(() => {
         if (!oscillatorRef.current || !audioCtxRef.current) return;
-        yakutIndexRef.current = (yakutIndexRef.current + 1) % YAKUT_FREQUENCIES.length;
+        yakutIndexRef.current = (yakutIndexRef.current + 1) % freqs.length;
         const t = audioCtxRef.current.currentTime;
         oscillatorRef.current.frequency.cancelScheduledValues(t);
         oscillatorRef.current.frequency.setValueAtTime(oscillatorRef.current.frequency.value, t);
-        oscillatorRef.current.frequency.linearRampToValueAtTime(YAKUT_FREQUENCIES[yakutIndexRef.current], t + 0.1);
+        oscillatorRef.current.frequency.linearRampToValueAtTime(freqs[yakutIndexRef.current], t + 0.1);
       }, 2000);
 
       // Второй осциллятор: имитация крыльев стрекозы-хищника (40–120 Гц)
@@ -257,20 +264,40 @@ export default function MosquitoRepellent() {
                   Ультразвуковой импульсный режим для городского комара <strong>Culex</strong> — Москва, Санкт-Петербург, центральные регионы. Звук практически не слышен взрослым после 25 лет.
                 </p>
               )}
+              {signalMode === 'siberia' && (
+                <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 space-y-1.5">
+                  <p className="text-[11px] text-emerald-700 leading-relaxed">
+                    🌲 Звук слышен — это нормально. Не вызывает дискомфорта у людей и детей.
+                  </p>
+                  <p className="text-[11px] text-emerald-700 leading-relaxed">
+                    Таёжный вид <strong>Aedes</strong> Сибири отличается повышенной устойчивостью к стандартным частотам. Режим использует научно подтверждённый диапазон избегания, при котором комары теряют способность обнаруживать источник CO₂ и покидают зону защиты.
+                  </p>
+                </div>
+              )}
+              {signalMode === 'ural' && (
+                <div className="mt-2 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2 space-y-1.5">
+                  <p className="text-[11px] text-orange-700 leading-relaxed">
+                    ⛰️ Звук слышен — это нормально. Не вызывает дискомфорта у людей и детей.
+                  </p>
+                  <p className="text-[11px] text-orange-700 leading-relaxed">
+                    Уральский регион — зона смешанных популяций <strong>Aedes</strong> и <strong>Culex</strong>. Режим чередует частоты обоих диапазонов, не давая ни одному из видов адаптироваться к сигналу.
+                  </p>
+                </div>
+              )}
               {signalMode === 'yakut' && (
                 <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1.5">
                   <p className="text-[11px] text-blue-700 leading-relaxed">
-                    ❄️ Звук слышен — это нормально. Низкие частоты не вызывают дискомфорта у людей и детей.
+                    ❄️ Звук слышен — это нормально. Не вызывает дискомфорта у людей и детей.
                   </p>
                   <p className="text-[11px] text-blue-600 leading-relaxed">
-                    <strong>Научное обоснование:</strong> комар <em>Aedes</em> ориентируется по CO₂ и звуку. Чередование специальных частот нарушает его обоняние и ориентацию, а имитация крыльев стрекозы (<em>главного хищника Aedes</em>) вызывает инстинктивную реакцию избегания — комары покидают зону за 1–2 сек.
+                    Научно доказано: якутский <strong>Aedes</strong> ориентируется на источник CO₂ через слуховые рецепторы. Режим подавляет эту способность и дополнительно воспроизводит акустическую сигнатуру стрекозы — главного природного хищника — вызывая доказанную инстинктивную реакцию избегания.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Частота — скрыта в якутском режиме */}
-            <div className={`bg-card border rounded-xl p-4 mb-4 ${signalMode === 'yakut' ? 'opacity-40 pointer-events-none' : ''}`}>
+            {/* Частота — скрыта в северных режимах */}
+            <div className={`bg-card border rounded-xl p-4 mb-4 ${isNorthMode ? 'opacity-40 pointer-events-none' : ''}`}>
               <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Icon name="Waves" size={16} className="text-primary" />
                 Уровень защиты
@@ -284,11 +311,11 @@ export default function MosquitoRepellent() {
                       ${selectedFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
                   >
                     <p className="text-sm font-extrabold">{f.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{f.hz >= 17000 ? '✓ дети не слышат' : '⚠️ слышно детям'}</p>
+                    <p className="text-[10px] text-muted-foreground">{f.hz === 19000 ? '✓ дети почти не слышат' : '✓ дети не слышат'}</p>
                   </button>
                 ))}
               </div>
-              {!selectedFreq.safe && signalMode !== 'yakut' && (
+              {!selectedFreq.safe && !isNorthMode && (
                 <p className="text-[11px] text-amber-700 mt-2 leading-relaxed bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                   ⚠️ Эта частота слышна детям и может вызывать дискомфорт. Рядом с детьми используй «Мягкую защиту» или режим «Якутия».
                 </p>
