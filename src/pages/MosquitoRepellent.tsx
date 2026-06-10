@@ -13,14 +13,14 @@ const MOSQUITO_FREQUENCIES = [
 // Якутские частоты (Aedes): отпугивание + имитация стрекозы-хищника
 const YAKUT_FREQUENCIES = [150, 170, 185, 200];
 const DRAGONFLY_FREQUENCIES = [40, 65, 90, 120, 40];
-// Сибирь (Бурятия, Омск): смешанный Aedes с таёжной спецификой — чуть выше якутского
-const SIBERIA_FREQUENCIES = [160, 180, 200, 220];
-// Урал: микс Aedes + Culex — комбинированный диапазон
-const URAL_FREQUENCIES = [165, 180, 195, 175];
-// Дальний Восток: Aedes togoi / japonicus — прибрежные виды, смещённый диапазон
-const FAREAST_FREQUENCIES = [140, 165, 190, 210];
-// Юг России / Краснодар: Culex pipiens + Aedes aegypti — теплолюбивые виды, высокая активность
-const SOUTH_FREQUENCIES = [18500, 19500, 17000, 19000];
+// Сибирь (Бурятия, Омск): таёжный Aedes — диапазон избегания 150–200 Гц
+const SIBERIA_FREQUENCIES = [155, 170, 185, 200];
+// Урал: микс Aedes + Culex — рабочий диапазон Aedes-части
+const URAL_FREQUENCIES = [160, 175, 190, 175];
+// Дальний Восток: Aedes togoi / japonicus — прибрежный вид, диапазон смещён вниз
+const FAREAST_FREQUENCIES = [140, 160, 180, 200];
+// Юг России: Culex pipiens + Aedes aegypti — ультразвук в пределах воспроизведения телефона
+const SOUTH_FREQUENCIES = [18000, 19000, 17500, 18500];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
   { id: 'pulse',   label: 'Центральная Россия', desc: 'Вид Culex',        icon: 'ShieldCheck' },
