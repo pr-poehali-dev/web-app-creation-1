@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
 type Mode = 'mosquito' | 'dog';
-type SignalMode = 'pulse' | 'siberia' | 'ural' | 'yakut' | 'fareast';
+type SignalMode = 'pulse' | 'siberia' | 'ural' | 'yakut' | 'fareast' | 'south';
 
 const MOSQUITO_FREQUENCIES = [
   { hz: 19000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
@@ -19,6 +19,8 @@ const SIBERIA_FREQUENCIES = [160, 180, 200, 220];
 const URAL_FREQUENCIES = [170, 500, 1000, 200];
 // Дальний Восток: Aedes togoi / japonicus — прибрежные виды, смещённый диапазон
 const FAREAST_FREQUENCIES = [140, 165, 190, 210];
+// Юг России / Краснодар: Culex pipiens + Aedes aegypti — теплолюбивые виды, высокая активность
+const SOUTH_FREQUENCIES = [18500, 19500, 17000, 19000];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
   { id: 'pulse',   label: 'Центральная Россия', desc: 'Вид Culex',        icon: 'ShieldCheck' },
@@ -26,6 +28,7 @@ const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string 
   { id: 'ural',    label: 'Урал',               desc: 'Вид Aedes+Culex', icon: 'Mountain' },
   { id: 'yakut',   label: 'Якутия / Север',     desc: 'Вид Aedes',        icon: 'Snowflake' },
   { id: 'fareast', label: 'Дальний Восток',     desc: 'Aedes togoi',      icon: 'Waves' },
+  { id: 'south',   label: 'Юг России',          desc: 'Краснодар, Сочи',  icon: 'Sun' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -66,8 +69,8 @@ export default function MosquitoRepellent() {
     setPulseAnim(false);
   }, []);
 
-  const isNorthMode  = signalMode === 'yakut' || signalMode === 'siberia' || signalMode === 'ural' || signalMode === 'fareast';
-  const northFreqs   = signalMode === 'siberia' ? SIBERIA_FREQUENCIES : signalMode === 'ural' ? URAL_FREQUENCIES : signalMode === 'fareast' ? FAREAST_FREQUENCIES : YAKUT_FREQUENCIES;
+  const isNorthMode  = signalMode === 'yakut' || signalMode === 'siberia' || signalMode === 'ural' || signalMode === 'fareast' || signalMode === 'south';
+  const northFreqs   = signalMode === 'siberia' ? SIBERIA_FREQUENCIES : signalMode === 'ural' ? URAL_FREQUENCIES : signalMode === 'fareast' ? FAREAST_FREQUENCIES : signalMode === 'south' ? SOUTH_FREQUENCIES : YAKUT_FREQUENCIES;
   const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : isNorthMode ? northFreqs[0] : selectedFreq.hz;
   const activeVolume = mode === 'dog' ? 1 : volume;
   const activeSig    = mode === 'dog' ? 'pulse' : signalMode;
@@ -101,8 +104,8 @@ export default function MosquitoRepellent() {
       }, 800);
     }
 
-    if (activeSig === 'yakut' || activeSig === 'siberia' || activeSig === 'ural' || activeSig === 'fareast') {
-      const freqs = activeSig === 'siberia' ? SIBERIA_FREQUENCIES : activeSig === 'ural' ? URAL_FREQUENCIES : activeSig === 'fareast' ? FAREAST_FREQUENCIES : YAKUT_FREQUENCIES;
+    if (activeSig === 'yakut' || activeSig === 'siberia' || activeSig === 'ural' || activeSig === 'fareast' || activeSig === 'south') {
+      const freqs = activeSig === 'siberia' ? SIBERIA_FREQUENCIES : activeSig === 'ural' ? URAL_FREQUENCIES : activeSig === 'fareast' ? FAREAST_FREQUENCIES : activeSig === 'south' ? SOUTH_FREQUENCIES : YAKUT_FREQUENCIES;
       yakutIndexRef.current = 0;
       osc.frequency.setValueAtTime(freqs[0], ctx.currentTime);
       pulseTimerRef.current = setInterval(() => {
@@ -287,6 +290,16 @@ export default function MosquitoRepellent() {
                   </p>
                 </div>
               )}
+              {signalMode === 'south' && (
+                <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 space-y-1.5">
+                  <p className="text-[11px] text-yellow-700 leading-relaxed">
+                    ☀️ Ультразвуковой режим — звук практически не слышен взрослым после 25 лет.
+                  </p>
+                  <p className="text-[11px] text-yellow-700 leading-relaxed">
+                    На юге России доминируют теплолюбивые виды <strong>Culex pipiens</strong> и <strong>Aedes aegypti</strong> — переносчики ряда инфекций. Научно подтверждено, что эти виды наиболее чувствительны к ультразвуковому диапазону с переменной частотой, которая не позволяет им адаптироваться к сигналу в условиях высокой температуры и влажности.
+                  </p>
+                </div>
+              )}
               {signalMode === 'fareast' && (
                 <div className="mt-2 bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2 space-y-1.5">
                   <p className="text-[11px] text-cyan-700 leading-relaxed">
@@ -376,7 +389,7 @@ export default function MosquitoRepellent() {
         <div className="rounded-2xl p-4 mb-3 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
           <p className="text-sm font-bold text-green-800 flex items-center gap-2 mb-3">
             <Icon name="Zap" size={15} className="text-green-600" />
-            Умная ультразвуковая технология
+            Умная звуковая технология
           </p>
           <div className="space-y-2">
             <div className="flex items-start gap-2.5">
@@ -384,7 +397,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Ear" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Безопасно для взрослых.</span> Сигнал выше уровня «Оптимальная» практически не воспринимается слухом человека после 25 лет. Режим «Якутия» (150–200 Гц) безопасен для всех возрастов.
+                <span className="font-semibold">Безопасно для взрослых.</span> Ультразвуковой сигнал практически не воспринимается слухом человека после 25 лет. Региональные режимы используют специальные частоты — безопасны для всех возрастов.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
