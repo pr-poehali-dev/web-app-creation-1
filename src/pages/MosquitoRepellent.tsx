@@ -3,18 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
 type Mode = 'mosquito' | 'dog';
-type SignalMode = 'modulated' | 'pulse';
+type SignalMode = 'modulated' | 'pulse' | 'yakut';
 
 const MOSQUITO_FREQUENCIES = [
-  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита' },
-  { hz: 16000, label: 'Оптимальная защита', desc: 'Оптимальная защита' },
-  { hz: 17500, label: 'Усиленная защита', desc: 'Усиленная защита' },
-  { hz: 19000, label: 'Максимальная защита', desc: 'Максимальная защита' },
+  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
+  { hz: 16000, label: 'Оптимальная', desc: 'Оптимальная защита', safe: true },
+  { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: false },
+  { hz: 19000, label: 'Максимальная', desc: 'Максимальная защита', safe: false },
 ];
+
+// Якутские частоты (Aedes): 150–200 Гц — реакция избегания, не слышны как ультразвук,
+// не вызывают дискомфорта у людей
+const YAKUT_FREQUENCIES = [150, 170, 185, 200];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
   { id: 'modulated', label: 'Версия 1', desc: 'Стандартная', icon: 'Shield' },
   { id: 'pulse',     label: 'Версия 2', desc: 'Улучшенная',  icon: 'ShieldCheck' },
+  { id: 'yakut',     label: 'Якутия',   desc: 'Вид Aedes',   icon: 'Snowflake' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -28,12 +33,13 @@ export default function MosquitoRepellent() {
   const [volume, setVolume] = useState(0.5);
   const [pulseAnim, setPulseAnim] = useState(false);
 
-  const audioCtxRef   = useRef<AudioContext | null>(null);
-  const oscillatorRef = useRef<OscillatorNode | null>(null);
-  const gainRef       = useRef<GainNode | null>(null);
-  const lfoRef        = useRef<OscillatorNode | null>(null);
-  const lfoGainRef    = useRef<GainNode | null>(null);
-  const pulseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioCtxRef    = useRef<AudioContext | null>(null);
+  const oscillatorRef  = useRef<OscillatorNode | null>(null);
+  const gainRef        = useRef<GainNode | null>(null);
+  const lfoRef         = useRef<OscillatorNode | null>(null);
+  const lfoGainRef     = useRef<GainNode | null>(null);
+  const pulseTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const yakutIndexRef  = useRef(0);
 
   const stop = useCallback(() => {
     if (pulseTimerRef.current) { clearInterval(pulseTimerRef.current); pulseTimerRef.current = null; }
@@ -53,7 +59,7 @@ export default function MosquitoRepellent() {
     setPulseAnim(false);
   }, []);
 
-  const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : selectedFreq.hz;
+  const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : signalMode === 'yakut' ? YAKUT_FREQUENCIES[0] : selectedFreq.hz;
   const activeVolume = mode === 'dog' ? 1 : volume;
   const activeSig    = mode === 'dog' ? 'pulse' : signalMode;
 
@@ -88,7 +94,7 @@ export default function MosquitoRepellent() {
     }
 
     if (activeSig === 'pulse') {
-      // Импульсный — плавная огибающая 8 мс, без щелчков
+      // Импульсный — плавная огибающая 20 мс, без щелчков, интервал 800 мс (не раздражающий)
       let on = true;
       pulseTimerRef.current = setInterval(() => {
         if (!gainRef.current || !audioCtxRef.current) return;
@@ -96,8 +102,22 @@ export default function MosquitoRepellent() {
         const t = audioCtxRef.current.currentTime;
         gainRef.current.gain.cancelScheduledValues(t);
         gainRef.current.gain.setValueAtTime(gainRef.current.gain.value, t);
-        gainRef.current.gain.linearRampToValueAtTime(on ? activeVolume : 0, t + 0.008);
-      }, 300);
+        gainRef.current.gain.linearRampToValueAtTime(on ? activeVolume : 0, t + 0.02);
+      }, 800);
+    }
+
+    if (activeSig === 'yakut') {
+      // Якутский режим: чередуем частоты 150–200 Гц каждые 2 сек — комары не привыкают
+      yakutIndexRef.current = 0;
+      osc.frequency.setValueAtTime(YAKUT_FREQUENCIES[0], ctx.currentTime);
+      pulseTimerRef.current = setInterval(() => {
+        if (!oscillatorRef.current || !audioCtxRef.current) return;
+        yakutIndexRef.current = (yakutIndexRef.current + 1) % YAKUT_FREQUENCIES.length;
+        const t = audioCtxRef.current.currentTime;
+        oscillatorRef.current.frequency.cancelScheduledValues(t);
+        oscillatorRef.current.frequency.setValueAtTime(oscillatorRef.current.frequency.value, t);
+        oscillatorRef.current.frequency.linearRampToValueAtTime(YAKUT_FREQUENCIES[yakutIndexRef.current], t + 0.1);
+      }, 2000);
     }
 
     setIsActive(true);
@@ -230,13 +250,18 @@ export default function MosquitoRepellent() {
               </div>
               {signalMode === 'pulse' && (
                 <p className="text-[11px] text-primary/80 mt-2 leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
-                  Версия 2 — наиболее эффективный режим защиты
+                  Версия 2 — импульсный режим, не даёт комарам привыкнуть
+                </p>
+              )}
+              {signalMode === 'yakut' && (
+                <p className="text-[11px] text-blue-700 mt-2 leading-relaxed bg-blue-50 rounded-lg px-3 py-2">
+                  ❄️ Якутский режим — частоты 150–200 Гц специально для вида <strong>Aedes</strong>. Абсолютно безопасен для людей и детей — не слышен как ультразвук, вызывает реакцию избегания за 1 сек.
                 </p>
               )}
             </div>
 
-            {/* Частота */}
-            <div className="bg-card border rounded-xl p-4 mb-4">
+            {/* Частота — скрыта в якутском режиме */}
+            <div className={`bg-card border rounded-xl p-4 mb-4 ${signalMode === 'yakut' ? 'opacity-40 pointer-events-none' : ''}`}>
               <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Icon name="Waves" size={16} className="text-primary" />
                 Уровень защиты
@@ -250,9 +275,15 @@ export default function MosquitoRepellent() {
                       ${selectedFreq.hz === f.hz ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}
                   >
                     <p className="text-sm font-extrabold">{f.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{f.hz >= 17000 ? '⚠️ слышно до 25 лет' : '✓ безопасно'}</p>
                   </button>
                 ))}
               </div>
+              {!selectedFreq.safe && signalMode !== 'yakut' && (
+                <p className="text-[11px] text-amber-700 mt-2 leading-relaxed bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  ⚠️ Эта частота может вызывать дискомфорт у людей до 25 лет и детей. Рядом с детьми используй «Мягкую защиту» или режим «Якутия».
+                </p>
+              )}
             </div>
 
             {/* Громкость */}
@@ -304,7 +335,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Ear" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Безопасно для взрослых.</span> Сигнал выше уровня «Оптимальная защита» практически не воспринимается слухом человека после 25 лет — вы просто не услышите его.
+                <span className="font-semibold">Безопасно для взрослых.</span> Сигнал выше уровня «Оптимальная» практически не воспринимается слухом человека после 25 лет. Режим «Якутия» (150–200 Гц) безопасен для всех возрастов.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
