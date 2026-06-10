@@ -16,8 +16,8 @@ const YAKUT_FREQUENCIES = [150, 170, 185, 200];
 const DRAGONFLY_FREQUENCIES = [40, 65, 90, 120, 40]; // имитация взмахов крыльев стрекозы
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
-  { id: 'pulse',  label: 'Версия 2', desc: 'Улучшенная', icon: 'ShieldCheck' },
-  { id: 'yakut',  label: 'Якутия',   desc: 'Вид Aedes',  icon: 'Snowflake' },
+  { id: 'pulse',  label: 'Центральная Россия', desc: 'Вид Culex',  icon: 'ShieldCheck' },
+  { id: 'yakut',  label: 'Якутия / Север',    desc: 'Вид Aedes', icon: 'Snowflake' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -254,13 +254,18 @@ export default function MosquitoRepellent() {
               </div>
               {signalMode === 'pulse' && (
                 <p className="text-[11px] text-primary/80 mt-2 leading-relaxed bg-primary/5 rounded-lg px-3 py-2">
-                  Версия 2 — импульсный режим, не даёт комарам привыкнуть
+                  Ультразвуковой импульсный режим для городского комара <strong>Culex</strong> — Москва, Санкт-Петербург, центральные регионы. Звук практически не слышен взрослым после 25 лет.
                 </p>
               )}
               {signalMode === 'yakut' && (
-                <p className="text-[11px] text-blue-700 mt-2 leading-relaxed bg-blue-50 rounded-lg px-3 py-2">
-                  ❄️ Якутский режим — специальные частоты для вида <strong>Aedes</strong> + имитация звука крыльев стрекозы-хищника. Абсолютно безопасен для людей и детей, вызывает реакцию избегания за 1 сек.
-                </p>
+                <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1.5">
+                  <p className="text-[11px] text-blue-700 leading-relaxed">
+                    ❄️ Звук слышен — это нормально. Низкие частоты не вызывают дискомфорта у людей и детей.
+                  </p>
+                  <p className="text-[11px] text-blue-600 leading-relaxed">
+                    <strong>Научное обоснование:</strong> комар <em>Aedes</em> ориентируется по CO₂ и звуку. Чередование специальных частот нарушает его обоняние и ориентацию, а имитация крыльев стрекозы (<em>главного хищника Aedes</em>) вызывает инстинктивную реакцию избегания — комары покидают зону за 1–2 сек.
+                  </p>
+                </div>
               )}
             </div>
 
