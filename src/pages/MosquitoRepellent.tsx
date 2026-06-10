@@ -16,7 +16,7 @@ const DRAGONFLY_FREQUENCIES = [40, 65, 90, 120, 40];
 // Сибирь (Бурятия, Омск): смешанный Aedes с таёжной спецификой — чуть выше якутского
 const SIBERIA_FREQUENCIES = [160, 180, 200, 220];
 // Урал: микс Aedes + Culex — комбинированный диапазон
-const URAL_FREQUENCIES = [170, 500, 1000, 200];
+const URAL_FREQUENCIES = [165, 180, 195, 175];
 // Дальний Восток: Aedes togoi / japonicus — прибрежные виды, смещённый диапазон
 const FAREAST_FREQUENCIES = [140, 165, 190, 210];
 // Юг России / Краснодар: Culex pipiens + Aedes aegypti — теплолюбивые виды, высокая активность
@@ -172,7 +172,7 @@ export default function MosquitoRepellent() {
             <Icon name="ArrowLeft" size={22} />
           </button>
           <div>
-            <h1 className="text-xl font-bold">Ультразвуковой отпугиватель</h1>
+            <h1 className="text-xl font-bold">Отпугиватель комаров</h1>
             <p className="text-xs text-muted-foreground">Выбери режим защиты</p>
           </div>
         </div>
