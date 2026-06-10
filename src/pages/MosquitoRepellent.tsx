@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
 type Mode = 'mosquito' | 'dog';
-type SignalMode = 'modulated' | 'pulse' | 'yakut';
+type SignalMode = 'pulse' | 'yakut';
 
 const MOSQUITO_FREQUENCIES = [
-  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
-  { hz: 16000, label: 'Оптимальная', desc: 'Оптимальная защита', safe: true },
-  { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: false },
   { hz: 19000, label: 'Максимальная', desc: 'Максимальная защита', safe: false },
+  { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: false },
+  { hz: 16000, label: 'Оптимальная', desc: 'Оптимальная защита', safe: true },
+  { hz: 15000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
 ];
 
 // Якутские частоты (Aedes): 150–200 Гц — реакция избегания, не слышны как ультразвук,
@@ -17,9 +17,8 @@ const MOSQUITO_FREQUENCIES = [
 const YAKUT_FREQUENCIES = [150, 170, 185, 200];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
-  { id: 'modulated', label: 'Версия 1', desc: 'Стандартная', icon: 'Shield' },
-  { id: 'pulse',     label: 'Версия 2', desc: 'Улучшенная',  icon: 'ShieldCheck' },
-  { id: 'yakut',     label: 'Якутия',   desc: 'Вид Aedes',   icon: 'Snowflake' },
+  { id: 'pulse',  label: 'Версия 2', desc: 'Улучшенная', icon: 'ShieldCheck' },
+  { id: 'yakut',  label: 'Якутия',   desc: 'Вид Aedes',  icon: 'Snowflake' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -29,25 +28,18 @@ export default function MosquitoRepellent() {
   const [mode, setMode] = useState<Mode>('mosquito');
   const [signalMode, setSignalMode] = useState<SignalMode>('pulse');
   const [isActive, setIsActive] = useState(false);
-  const [selectedFreq, setSelectedFreq] = useState(MOSQUITO_FREQUENCIES[1]);
+  const [selectedFreq, setSelectedFreq] = useState(MOSQUITO_FREQUENCIES[0]);
   const [volume, setVolume] = useState(0.5);
   const [pulseAnim, setPulseAnim] = useState(false);
 
   const audioCtxRef    = useRef<AudioContext | null>(null);
   const oscillatorRef  = useRef<OscillatorNode | null>(null);
   const gainRef        = useRef<GainNode | null>(null);
-  const lfoRef         = useRef<OscillatorNode | null>(null);
-  const lfoGainRef     = useRef<GainNode | null>(null);
   const pulseTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const yakutIndexRef  = useRef(0);
 
   const stop = useCallback(() => {
     if (pulseTimerRef.current) { clearInterval(pulseTimerRef.current); pulseTimerRef.current = null; }
-    lfoRef.current?.stop();
-    lfoRef.current?.disconnect();
-    lfoRef.current = null;
-    lfoGainRef.current?.disconnect();
-    lfoGainRef.current = null;
     oscillatorRef.current?.stop();
     oscillatorRef.current?.disconnect();
     oscillatorRef.current = null;
@@ -78,20 +70,6 @@ export default function MosquitoRepellent() {
     audioCtxRef.current   = ctx;
     oscillatorRef.current = osc;
     gainRef.current       = gain;
-
-    if (activeSig === 'modulated') {
-      // LFO медленно качает частоту ±500 Гц с периодом ~2 сек
-      const lfo     = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.type = 'sine';
-      lfo.frequency.setValueAtTime(0.5, ctx.currentTime);
-      lfoGain.gain.setValueAtTime(500, ctx.currentTime);
-      lfo.connect(lfoGain);
-      lfoGain.connect(osc.frequency);
-      lfo.start();
-      lfoRef.current     = lfo;
-      lfoGainRef.current = lfoGain;
-    }
 
     if (activeSig === 'pulse') {
       // Импульсный — плавная огибающая 20 мс, без щелчков, интервал 800 мс (не раздражающий)
