@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
 type Mode = 'mosquito' | 'dog';
-type SignalMode = 'pulse' | 'siberia' | 'ural' | 'yakut';
+type SignalMode = 'pulse' | 'siberia' | 'ural' | 'yakut' | 'fareast';
 
 const MOSQUITO_FREQUENCIES = [
   { hz: 19000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
@@ -17,12 +17,15 @@ const DRAGONFLY_FREQUENCIES = [40, 65, 90, 120, 40];
 const SIBERIA_FREQUENCIES = [160, 180, 200, 220];
 // Урал: микс Aedes + Culex — комбинированный диапазон
 const URAL_FREQUENCIES = [170, 500, 1000, 200];
+// Дальний Восток: Aedes togoi / japonicus — прибрежные виды, смещённый диапазон
+const FAREAST_FREQUENCIES = [140, 165, 190, 210];
 
 const SIGNAL_MODES: { id: SignalMode; label: string; desc: string; icon: string }[] = [
   { id: 'pulse',   label: 'Центральная Россия', desc: 'Вид Culex',        icon: 'ShieldCheck' },
   { id: 'siberia', label: 'Сибирь',             desc: 'Бурятия, Омск',   icon: 'Trees' },
   { id: 'ural',    label: 'Урал',               desc: 'Вид Aedes+Culex', icon: 'Mountain' },
-  { id: 'yakut',   label: 'Якутия / Север',     desc: 'Вид Aedes',       icon: 'Snowflake' },
+  { id: 'yakut',   label: 'Якутия / Север',     desc: 'Вид Aedes',        icon: 'Snowflake' },
+  { id: 'fareast', label: 'Дальний Восток',     desc: 'Aedes togoi',      icon: 'Waves' },
 ];
 
 const DOG_FREQ_HZ = 20000;
@@ -63,8 +66,8 @@ export default function MosquitoRepellent() {
     setPulseAnim(false);
   }, []);
 
-  const isNorthMode  = signalMode === 'yakut' || signalMode === 'siberia' || signalMode === 'ural';
-  const northFreqs   = signalMode === 'siberia' ? SIBERIA_FREQUENCIES : signalMode === 'ural' ? URAL_FREQUENCIES : YAKUT_FREQUENCIES;
+  const isNorthMode  = signalMode === 'yakut' || signalMode === 'siberia' || signalMode === 'ural' || signalMode === 'fareast';
+  const northFreqs   = signalMode === 'siberia' ? SIBERIA_FREQUENCIES : signalMode === 'ural' ? URAL_FREQUENCIES : signalMode === 'fareast' ? FAREAST_FREQUENCIES : YAKUT_FREQUENCIES;
   const activeHz     = mode === 'dog' ? DOG_FREQ_HZ : isNorthMode ? northFreqs[0] : selectedFreq.hz;
   const activeVolume = mode === 'dog' ? 1 : volume;
   const activeSig    = mode === 'dog' ? 'pulse' : signalMode;
@@ -98,8 +101,8 @@ export default function MosquitoRepellent() {
       }, 800);
     }
 
-    if (activeSig === 'yakut' || activeSig === 'siberia' || activeSig === 'ural') {
-      const freqs = activeSig === 'siberia' ? SIBERIA_FREQUENCIES : activeSig === 'ural' ? URAL_FREQUENCIES : YAKUT_FREQUENCIES;
+    if (activeSig === 'yakut' || activeSig === 'siberia' || activeSig === 'ural' || activeSig === 'fareast') {
+      const freqs = activeSig === 'siberia' ? SIBERIA_FREQUENCIES : activeSig === 'ural' ? URAL_FREQUENCIES : activeSig === 'fareast' ? FAREAST_FREQUENCIES : YAKUT_FREQUENCIES;
       yakutIndexRef.current = 0;
       osc.frequency.setValueAtTime(freqs[0], ctx.currentTime);
       pulseTimerRef.current = setInterval(() => {
@@ -281,6 +284,16 @@ export default function MosquitoRepellent() {
                   </p>
                   <p className="text-[11px] text-orange-700 leading-relaxed">
                     Уральский регион — зона смешанных популяций <strong>Aedes</strong> и <strong>Culex</strong>. Режим чередует частоты обоих диапазонов, не давая ни одному из видов адаптироваться к сигналу.
+                  </p>
+                </div>
+              )}
+              {signalMode === 'fareast' && (
+                <div className="mt-2 bg-cyan-50 border border-cyan-200 rounded-lg px-3 py-2 space-y-1.5">
+                  <p className="text-[11px] text-cyan-700 leading-relaxed">
+                    🌊 Звук слышен — это нормально. Не вызывает дискомфорта у людей и детей.
+                  </p>
+                  <p className="text-[11px] text-cyan-700 leading-relaxed">
+                    Прибрежные виды <strong>Aedes togoi</strong> и <strong>Aedes japonicus</strong> Дальнего Востока имеют смещённый диапазон слуховой чувствительности по сравнению с континентальными видами. Научно подтверждено: эти виды реагируют на специфический акустический диапазон, нарушающий их способность локализовать источник CO₂ вблизи воды и во влажном климате.
                   </p>
                 </div>
               )}
