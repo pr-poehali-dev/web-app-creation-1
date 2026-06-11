@@ -171,10 +171,25 @@ export default function MosquitoRepellent() {
           <button onClick={() => navigate(-1)} className="p-2 hover:bg-muted rounded-lg transition-colors">
             <Icon name="ArrowLeft" size={22} />
           </button>
-          <div>
+          <div className="flex-1">
             <h1 className="text-xl font-bold">Отпугиватель комаров</h1>
             <p className="text-xs text-muted-foreground">Выбери режим защиты</p>
           </div>
+          <button
+            onClick={() => {
+              const url = window.location.origin + '/mosquito-repellent';
+              if (navigator.share) {
+                navigator.share({ title: 'Отпугиватель комаров', url });
+              } else {
+                navigator.clipboard.writeText(url);
+                alert('Ссылка скопирована!');
+              }
+            }}
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            title="Поделиться ссылкой"
+          >
+            <Icon name="Share2" size={20} />
+          </button>
         </div>
 
         {/* Переключатель режимов */}
