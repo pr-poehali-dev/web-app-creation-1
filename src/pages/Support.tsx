@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getSession } from '@/utils/auth';
 
 const SUPPORT_API = 'https://functions.poehali.dev/290e9899-6b8d-4974-bcea-12fafbb54fe5';
+const SETTINGS_API = 'https://functions.poehali.dev/6c65e3c6-d621-44fc-99da-cd570027fae7';
 
 interface SupportProps {
   isAuthenticated: boolean;
@@ -40,8 +41,20 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
   const userId = session?.id ? String(session.id) : null;
 
   const supportEmail = 'doydum-invest@mail.ru';
-  const supportPhone = '+7 (984) 101-73-55';
   const [phoneContactMethod, setPhoneContactMethod] = useState<'whatsapp' | 'telegram' | 'call'>('call');
+  const [contacts, setContacts] = useState({ phone: '+7 (984) 101-73-55', whatsapp: '', telegram: '' });
+
+  useEffect(() => {
+    const keys = ['support_phone', 'support_whatsapp', 'support_telegram'];
+    Promise.all(keys.map(k => fetch(`${SETTINGS_API}?key=${k}`).then(r => r.ok ? r.json() : null).catch(() => null)))
+      .then(([phone, whatsapp, telegram]) => {
+        setContacts({
+          phone: phone?.setting_value || '+7 (984) 101-73-55',
+          whatsapp: whatsapp?.setting_value || '',
+          telegram: telegram?.setting_value || '',
+        });
+      });
+  }, []);
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null);
@@ -326,61 +339,51 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
             </div>
 
             {/* Телефон */}
-            <div className="bg-card border rounded-lg p-4 md:p-5">
-              <div className="flex items-start gap-3 md:gap-4">
-                <div className="bg-primary/10 p-2 md:p-2.5 rounded-lg">
-                  <Icon name={phoneContactMethod === 'whatsapp' ? 'MessageSquare' : phoneContactMethod === 'telegram' ? 'MessageCircle' : 'Phone'}
-                    className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base md:text-lg font-semibold mb-1.5 md:mb-2">Телефон горячей линии</h3>
-                  <p className="text-sm md:text-base text-muted-foreground mb-3">Свяжитесь с нами удобным способом</p>
-                  <div className="mb-3">
-                    <p className="text-primary font-medium mb-2">{supportPhone}</p>
+            {contacts.phone && (
+              <div className="bg-card border rounded-lg p-4 md:p-5">
+                <div className="flex items-start gap-3 md:gap-4">
+                  <div className="bg-primary/10 p-2 md:p-2.5 rounded-lg">
+                    <Icon name={phoneContactMethod === 'whatsapp' ? 'MessageSquare' : phoneContactMethod === 'telegram' ? 'MessageCircle' : 'Phone'}
+                      className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <a href={phoneContactMethod === 'call' ? `tel:${supportPhone.replace(/[^0-9+]/g, '')}` : '#'}
-                      onClick={e => { if (phoneContactMethod !== 'call') { e.preventDefault(); setPhoneContactMethod('call'); } }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'call' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
-                      <Icon name="Phone" className="h-4 w-4" />
-                      <span className="text-sm font-medium">Позвонить</span>
-                    </a>
-                    <a href={phoneContactMethod === 'whatsapp' ? `https://wa.me/${supportPhone.replace(/[^0-9]/g, '')}` : '#'}
-                      target={phoneContactMethod === 'whatsapp' ? '_blank' : undefined}
-                      rel={phoneContactMethod === 'whatsapp' ? 'noopener noreferrer' : undefined}
-                      onClick={e => { if (phoneContactMethod !== 'whatsapp') { e.preventDefault(); setPhoneContactMethod('whatsapp'); setTimeout(() => window.open(`https://wa.me/${supportPhone.replace(/[^0-9]/g, '')}`, '_blank'), 100); } }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'whatsapp' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
-                      <Icon name="MessageSquare" className="h-4 w-4" />
-                      <span className="text-sm font-medium">WhatsApp</span>
-                    </a>
-                    <a href={phoneContactMethod === 'telegram' ? `https://t.me/${supportPhone.replace(/[^0-9]/g, '')}` : '#'}
-                      target={phoneContactMethod === 'telegram' ? '_blank' : undefined}
-                      rel={phoneContactMethod === 'telegram' ? 'noopener noreferrer' : undefined}
-                      onClick={e => { if (phoneContactMethod !== 'telegram') { e.preventDefault(); setPhoneContactMethod('telegram'); setTimeout(() => window.open(`https://t.me/${supportPhone.replace(/[^0-9]/g, '')}`, '_blank'), 100); } }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'telegram' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
-                      <Icon name="MessageCircle" className="h-4 w-4" />
-                      <span className="text-sm font-medium">Telegram</span>
-                    </a>
+                  <div className="flex-1">
+                    <h3 className="text-base md:text-lg font-semibold mb-1.5 md:mb-2">Телефон горячей линии</h3>
+                    <p className="text-sm md:text-base text-muted-foreground mb-3">Свяжитесь с нами удобным способом</p>
+                    <div className="mb-3">
+                      <p className="text-primary font-medium mb-2">{contacts.phone}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <a href={phoneContactMethod === 'call' ? `tel:${contacts.phone.replace(/[^0-9+]/g, '')}` : '#'}
+                        onClick={e => { if (phoneContactMethod !== 'call') { e.preventDefault(); setPhoneContactMethod('call'); } }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'call' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
+                        <Icon name="Phone" className="h-4 w-4" />
+                        <span className="text-sm font-medium">Позвонить</span>
+                      </a>
+                      {contacts.whatsapp && (
+                        <a href={phoneContactMethod === 'whatsapp' ? contacts.whatsapp : '#'}
+                          target={phoneContactMethod === 'whatsapp' ? '_blank' : undefined}
+                          rel={phoneContactMethod === 'whatsapp' ? 'noopener noreferrer' : undefined}
+                          onClick={e => { if (phoneContactMethod !== 'whatsapp') { e.preventDefault(); setPhoneContactMethod('whatsapp'); setTimeout(() => window.open(contacts.whatsapp, '_blank'), 100); } }}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'whatsapp' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
+                          <Icon name="MessageSquare" className="h-4 w-4" />
+                          <span className="text-sm font-medium">WhatsApp</span>
+                        </a>
+                      )}
+                      {contacts.telegram && (
+                        <a href={phoneContactMethod === 'telegram' ? contacts.telegram : '#'}
+                          target={phoneContactMethod === 'telegram' ? '_blank' : undefined}
+                          rel={phoneContactMethod === 'telegram' ? 'noopener noreferrer' : undefined}
+                          onClick={e => { if (phoneContactMethod !== 'telegram') { e.preventDefault(); setPhoneContactMethod('telegram'); setTimeout(() => window.open(contacts.telegram, '_blank'), 100); } }}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${phoneContactMethod === 'telegram' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-accent border-border'}`}>
+                          <Icon name="MessageCircle" className="h-4 w-4" />
+                          <span className="text-sm font-medium">Telegram</span>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Часы работы */}
-            <div className="bg-card border rounded-lg p-4 md:p-5">
-              <div className="flex items-start gap-3 md:gap-4">
-                <div className="bg-primary/10 p-2 md:p-2.5 rounded-lg">
-                  <Icon name="Clock" className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-base md:text-lg font-semibold mb-1.5 md:mb-2">Часы работы поддержки</h3>
-                  <p className="text-sm md:text-base text-muted-foreground">
-                    Понедельник - Пятница: 9:00 - 18:00 (МСК)<br />
-                    Суббота - Воскресенье: выходной
-                  </p>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
