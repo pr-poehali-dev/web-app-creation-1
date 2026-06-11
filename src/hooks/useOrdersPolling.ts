@@ -11,12 +11,13 @@ interface UseOrdersPollingOptions {
 
 export function useOrdersPolling({
   enabled,
-  interval = 15000,
+  interval = 60000,
   onNewOrder,
   onNewMessage,
 }: UseOrdersPollingOptions) {
   const [lastCheck, setLastCheck] = useState<Date>(new Date());
   const intervalRef = useRef<NodeJS.Timeout>();
+  const checkForUpdatesRef = useRef<(() => Promise<void>) | null>(null);
 
   useEffect(() => {
     if (!enabled) {
@@ -47,12 +48,21 @@ export function useOrdersPolling({
       }
     };
 
+    checkForUpdatesRef.current = checkForUpdates;
     intervalRef.current = setInterval(checkForUpdates, interval);
 
+    const handlePushOrder = () => checkForUpdatesRef.current?.();
+    window.addEventListener('push:new_order', handlePushOrder);
+
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'REFRESH_ORDERS') checkForUpdatesRef.current?.();
+    };
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      window.removeEventListener('push:new_order', handlePushOrder);
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
     };
   }, [enabled, interval, lastCheck, onNewOrder, onNewMessage]);
 

@@ -109,7 +109,7 @@ export const useClientsSync = ({ isAuthenticated, userId }: UseClientsSyncProps)
 
     fetchClients();
     
-    const interval = setInterval(fetchClients, 30000);
+    const interval = setInterval(fetchClients, 120000);
     return () => clearInterval(interval);
   }, [isAuthenticated, userId]);
 

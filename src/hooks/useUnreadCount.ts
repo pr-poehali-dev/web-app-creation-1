@@ -41,8 +41,21 @@ export const useUnreadCount = (userId: number | string | null) => {
 
   useEffect(() => {
     fetchCount();
-    const interval = setInterval(fetchCount, 15000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchCount, 60000);
+
+    const handlePushEvent = () => fetchCount();
+    window.addEventListener('push:unread_refresh', handlePushEvent);
+
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'REFRESH_UNREAD') fetchCount();
+    };
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('push:unread_refresh', handlePushEvent);
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+    };
   }, [fetchCount]);
 
   return unreadCount;

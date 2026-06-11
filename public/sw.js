@@ -144,6 +144,7 @@ self.addEventListener('push', (event) => {
         const isInvite = notificationData.data && notificationData.data.type === 'online_invite';
 
         if (clientList.length > 0) {
+          const pushType = notificationData.data && notificationData.data.type;
           clientList.forEach((client) => {
             if (isInvite) {
               client.postMessage({ type: 'PLAY_INVITE_RING' });
@@ -152,6 +153,10 @@ self.addEventListener('push', (event) => {
             }
             if (callData) {
               client.postMessage({ type: 'INCOMING_VIDEO_CALL', callData });
+            }
+            client.postMessage({ type: 'REFRESH_UNREAD' });
+            if (pushType === 'new_order' || pushType === 'order_update') {
+              client.postMessage({ type: 'REFRESH_ORDERS' });
             }
           });
         } else {
