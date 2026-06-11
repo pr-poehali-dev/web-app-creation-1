@@ -3,9 +3,76 @@
 """
 import json
 import os
+import threading
+import http.client
 from datetime import datetime, timedelta
 import psycopg2
 from typing import Dict, Any
+
+
+def _send_push_to_user(user_id: int, title: str, message: str, url: str):
+    """Отправка push-уведомления пользователю в фоновом потоке"""
+    try:
+        payload = json.dumps({
+            'userId': user_id,
+            'type': 'auction_bid',
+            'title': title,
+            'message': message,
+            'url': url
+        })
+        conn = http.client.HTTPSConnection('functions.poehali.dev', timeout=8)
+        conn.request('POST', '/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a',
+                     payload, {'Content-Type': 'application/json'})
+        resp = conn.getresponse()
+        resp.read()
+        conn.close()
+    except Exception as e:
+        print(f'[AUCTION_PUSH] Error sending to user {user_id}: {e}')
+
+
+def _notify_auction_participants(auction_id: str, bidder_id: int, auction_title: str,
+                                  new_amount: float, owner_id: int):
+    """Уведомляем владельца и всех предыдущих участников аукциона"""
+    try:
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor()
+        schema = 't_p42562714_web_app_creation_1'
+
+        cur.execute(f"""
+            SELECT DISTINCT user_id FROM {schema}.bids
+            WHERE auction_id = %s AND user_id != %s
+        """, (auction_id, bidder_id))
+        participants = [row[0] for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+
+        url = f'/auction/{auction_id}'
+        amount_str = f'{new_amount:,.0f}'.replace(',', ' ')
+        title_short = auction_title[:40] + '...' if len(auction_title) > 40 else auction_title
+
+        threads = []
+        for uid in participants:
+            t = threading.Thread(
+                target=_send_push_to_user,
+                args=(uid, 'Вас перебили!',
+                      f'Новая ставка {amount_str} ₽ на «{title_short}»', url),
+                daemon=True
+            )
+            threads.append(t)
+            t.start()
+
+        if owner_id != bidder_id:
+            t = threading.Thread(
+                target=_send_push_to_user,
+                args=(owner_id, 'Новая ставка на аукционе',
+                      f'{amount_str} ₽ на «{title_short}»', url),
+                daemon=True
+            )
+            threads.append(t)
+            t.start()
+
+    except Exception as e:
+        print(f'[AUCTION_PUSH] Notify participants error: {e}')
 
 
 def check_rate_limit(conn, identifier: str, endpoint: str, max_requests: int = 10, window_minutes: int = 1) -> bool:
@@ -197,9 +264,23 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif first_name and last_name:
                 user_name = f"{first_name} {last_name}"
         
+        auction_title = ''
+        cur.execute("""
+            SELECT title FROM t_p42562714_web_app_creation_1.auctions WHERE id = %s
+        """, (auction_id,))
+        title_row = cur.fetchone()
+        if title_row:
+            auction_title = title_row[0]
+
         cur.close()
         conn.close()
-        
+
+        threading.Thread(
+            target=_notify_auction_participants,
+            args=(auction_id, int(user_id), auction_title, float(amount), int(owner_id)),
+            daemon=True
+        ).start()
+
         return {
             'statusCode': 200,
             'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},

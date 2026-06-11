@@ -158,6 +158,9 @@ self.addEventListener('push', (event) => {
             if (pushType === 'new_order' || pushType === 'order_update') {
               client.postMessage({ type: 'REFRESH_ORDERS' });
             }
+            if (pushType === 'auction_bid') {
+              client.postMessage({ type: 'REFRESH_AUCTION_BIDS' });
+            }
           });
         } else {
           if (isInvite) {

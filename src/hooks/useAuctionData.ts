@@ -191,10 +191,17 @@ export function useAuctionData(id: string | undefined) {
       }
     };
 
-    // ⚡ ОПТИМИЗАЦИЯ: Увеличили интервал с 3 до 10 секунд для экономии
     const interval = setInterval(refreshBids, 10000);
 
-    return () => clearInterval(interval);
+    const handleSWMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'REFRESH_AUCTION_BIDS') refreshBids();
+    };
+    navigator.serviceWorker?.addEventListener('message', handleSWMessage);
+
+    return () => {
+      clearInterval(interval);
+      navigator.serviceWorker?.removeEventListener('message', handleSWMessage);
+    };
   }, [auction?.status, id, bids.length, toast]);
 
   useEffect(() => {
