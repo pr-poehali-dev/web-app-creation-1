@@ -115,8 +115,9 @@ def handler(event: dict, context) -> dict:
             
             body_data = json.loads(event.get('body', '{}'))
             setting_key = body_data.get('setting_key', '').strip()
-            setting_value = body_data.get('setting_value', '').strip()
-            
+            setting_value = str(body_data.get('setting_value', '') or '')
+            print(f'[SITE_SETTINGS] saving key={setting_key!r} value={setting_value!r} user_id={user_id}')
+
             if not setting_key:
                 return {
                     'statusCode': 400,
