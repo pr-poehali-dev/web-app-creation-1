@@ -132,6 +132,16 @@ const MyContracts = lazyWithRetry(() => import("./pages/MyContracts"));
 const ContractDetail = lazyWithRetry(() => import("./pages/ContractDetail"));
 const EditContract = lazyWithRetry(() => import("./pages/EditContract"));
 
+// Защищённый маршрут — редирект на /login с сохранением returnUrl
+function ProtectedRoute({ isAuthenticated, children }: { isAuthenticated: boolean; children: React.ReactNode }) {
+  const location = useLocation();
+  if (!isAuthenticated) {
+    localStorage.setItem('returnUrl', location.pathname + location.search);
+    return <Navigate to="/login" state={{ returnUrl: location.pathname + location.search }} replace />;
+  }
+  return <>{children}</>;
+}
+
 // Инвалидирует кэш только при возврате на главную страницу, а не при каждом переходе
 function RouteChangeInvalidator() {
   const location = useLocation();
@@ -456,7 +466,7 @@ const App = () => {
             <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-orders" element={<MyOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/mosquito-repellent" element={<MosquitoRepellent />} />
+            <Route path="/mosquito-repellent" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MosquitoRepellent /></ProtectedRoute>} />
             <Route path="/seller/:userId" element={<SellerReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
 
             <Route path="/register" element={<Register onRegister={handleLogin} />} />

@@ -257,7 +257,9 @@ export default function Register({ onRegister }: RegisterProps) {
               }
             }
           }
-          navigate('/');
+          const returnUrl = localStorage.getItem('returnUrl') || '/';
+          localStorage.removeItem('returnUrl');
+          navigate(returnUrl);
         }, 1500);
       } else {
         toast({
