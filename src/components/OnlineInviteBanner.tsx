@@ -106,7 +106,7 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     );
   }, []);
 
-  const pollIncomingFn = useCallback(async () => {
+  const fetchIncoming = useCallback(async () => {
     if (!userId) return;
     try {
       const inv = await pollIncoming(userId);
@@ -114,24 +114,24 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     } catch (_e) { /* ignore */ }
   }, [userId, handleNewInvitation]);
 
-  // Polling входящих — раз в 30 сек (вместо 3 сек)
-  // При пробуждении экрана — один запрос
+  // Слушаем Push от Service Worker — запрос только при реальном звонке
   useEffect(() => {
     if (!userId) return;
-    pollIncomingFn();
-    incomingPollRef.current = setInterval(pollIncomingFn, 30000);
-
-    const onVisible = () => {
-      if (document.visibilityState !== 'visible') return;
-      pollIncomingFn();
+    const onSwMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'PLAY_INVITE_RING') {
+        fetchIncoming();
+      }
     };
-    document.addEventListener('visibilitychange', onVisible);
+    navigator.serviceWorker?.addEventListener('message', onSwMessage);
+    return () => navigator.serviceWorker?.removeEventListener('message', onSwMessage);
+  }, [userId, fetchIncoming]);
 
-    return () => {
-      if (incomingPollRef.current) clearInterval(incomingPollRef.current);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, [userId, pollIncomingFn]);
+  // Резервный polling раз в 60 сек — для браузеров без Push или если SW не активен
+  useEffect(() => {
+    if (!userId) return;
+    incomingPollRef.current = setInterval(fetchIncoming, 60000);
+    return () => { if (incomingPollRef.current) clearInterval(incomingPollRef.current); };
+  }, [userId, fetchIncoming]);
 
   useEffect(() => {
     const handler = (e: Event) => {

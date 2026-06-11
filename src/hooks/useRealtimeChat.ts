@@ -4,10 +4,10 @@ import type { ChatMessage } from '@/types/chat';
 interface UseRealtimeChatOptions {
   orderId: string;
   enabled: boolean; // Активировать только когда пользователь на странице чата
-  interval?: number; // Интервал опроса в мс (по умолчанию 2000 = 2 сек)
+  interval?: number; // Интервал опроса в мс (по умолчанию 5000 = 5 сек)
 }
 
-export function useRealtimeChat({ orderId, enabled, interval = 2000 }: UseRealtimeChatOptions) {
+export function useRealtimeChat({ orderId, enabled, interval = 5000 }: UseRealtimeChatOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export function useRealtimeChat({ orderId, enabled, interval = 2000 }: UseRealti
       if (response.ok) {
         const data = await response.json();
         if (data.messages) {
-          setMessages(data.messages.map((msg: any) => ({
+          setMessages(data.messages.map((msg: ChatMessage) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           })));
