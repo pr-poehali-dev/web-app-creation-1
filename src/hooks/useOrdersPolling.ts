@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { ordersAPI } from '@/services/api';
+import type { Order } from '@/types/order';
 
 interface UseOrdersPollingOptions {
   enabled: boolean;
   interval?: number;
-  onNewOrder?: (order: any) => void;
-  onNewMessage?: (message: any) => void;
+  onNewOrder?: (order: Order) => void;
+  onNewMessage?: (message: Order) => void;
 }
 
 export function useOrdersPolling({
   enabled,
-  interval = 3000,
+  interval = 15000,
   onNewOrder,
   onNewMessage,
 }: UseOrdersPollingOptions) {
@@ -32,13 +33,13 @@ export function useOrdersPolling({
         const response = await ordersAPI.getAll('sale');
         const orders = response.orders || [];
         
-        const newOrders = orders.filter((order: any) => {
+        const newOrders = orders.filter((order: Order) => {
           const orderDate = new Date(order.createdAt || order.created_at);
           return orderDate > lastCheck;
         });
 
         if (newOrders.length > 0 && onNewOrder) {
-          newOrders.forEach((order: any) => onNewOrder(order));
+          newOrders.forEach((order: Order) => onNewOrder(order));
           setLastCheck(new Date());
         }
       } catch (error) {
