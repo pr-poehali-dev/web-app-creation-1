@@ -57,32 +57,39 @@ export default function AdminContentManagement() {
     } catch { /* silent */ }
   };
 
-  const saveSetting = async (key: string, value: string) => {
-    const token = getJwtToken();
-    const userId = localStorage.getItem('userId') || '';
-    const res = await fetch(SITE_SETTINGS_API, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Authorization': `Bearer ${token}`,
-        'X-User-Id': userId,
-      },
-      body: JSON.stringify({ setting_key: key, setting_value: value }),
-    });
-    if (!res.ok) throw new Error('Ошибка сохранения');
+  const saveSetting = async (key: string, value: string): Promise<boolean> => {
+    try {
+      const token = getJwtToken();
+      const userId = localStorage.getItem('userId') || '';
+      const res = await fetch(SITE_SETTINGS_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'X-Authorization': `Bearer ${token}` } : {}),
+          'X-User-Id': userId,
+        },
+        body: JSON.stringify({ setting_key: key, setting_value: value }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
   };
 
   const handleSaveContacts = async () => {
     setContactsSaving(true);
     try {
-      await Promise.all([
+      const results = await Promise.allSettled([
         saveSetting('support_phone', contacts.phone),
         saveSetting('support_whatsapp', contacts.whatsapp),
         saveSetting('support_telegram', contacts.telegram),
       ]);
-      showSuccess('Контакты сохранены');
-    } catch (e) {
-      alert('Ошибка: ' + (e as Error).message);
+      const allOk = results.every(r => r.status === 'fulfilled' && r.value === true);
+      if (allOk) {
+        showSuccess('Контакты сохранены');
+      } else {
+        showSuccess('Частично сохранено — проверьте права доступа');
+      }
     } finally {
       setContactsSaving(false);
     }

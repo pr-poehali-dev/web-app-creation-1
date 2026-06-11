@@ -48,7 +48,7 @@ def handler(event: dict, context) -> dict:
             with conn.cursor() as cur:
                 if setting_key:
                     cur.execute(
-                        "SELECT * FROM site_settings WHERE setting_key = %s",
+                        "SELECT * FROM t_p42562714_web_app_creation_1.site_settings WHERE setting_key = %s",
                         (setting_key,)
                     )
                     setting = cur.fetchone()
@@ -61,7 +61,7 @@ def handler(event: dict, context) -> dict:
                         }
                     result = dict(setting)
                 else:
-                    cur.execute("SELECT * FROM site_settings ORDER BY setting_key")
+                    cur.execute("SELECT * FROM t_p42562714_web_app_creation_1.site_settings ORDER BY setting_key")
                     settings = cur.fetchall()
                     result = [dict(s) for s in settings]
             
@@ -127,7 +127,7 @@ def handler(event: dict, context) -> dict:
             
             with conn.cursor() as cur:
                 cur.execute(
-                    """INSERT INTO site_settings (setting_key, setting_value) 
+                    """INSERT INTO t_p42562714_web_app_creation_1.site_settings (setting_key, setting_value) 
                        VALUES (%s, %s)
                        ON CONFLICT (setting_key) 
                        DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP
