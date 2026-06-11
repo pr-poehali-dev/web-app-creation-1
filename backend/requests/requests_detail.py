@@ -6,8 +6,11 @@ from psycopg2.extras import RealDictCursor
 from requests_utils import get_db_connection, json_default
 
 
-def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+def get_request_by_id(request_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить запрос по ID"""
+    req_headers = event.get('headers', {})
+    viewer_id = req_headers.get('X-User-Id') or req_headers.get('x-user-id')
+
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
@@ -70,14 +73,16 @@ def get_request_by_id(request_id: str, headers: Dict[str, str]) -> Dict[str, Any
     print(f'[GET_REQUEST] Found: {req is not None}')
 
     if req:
-        try:
-            cur.execute(
-                f"UPDATE t_p42562714_web_app_creation_1.requests SET views = COALESCE(views, 0) + 1 WHERE id = '{request_id_escaped}'"
-            )
-            conn.commit()
-        except Exception as view_err:
-            print(f'[WARN] Could not increment views: {view_err}')
-            conn.rollback()
+        author_id = str(dict(req).get('user_id', ''))
+        if not viewer_id or str(viewer_id) != author_id:
+            try:
+                cur.execute(
+                    f"UPDATE t_p42562714_web_app_creation_1.requests SET views = COALESCE(views, 0) + 1 WHERE id = '{request_id_escaped}'"
+                )
+                conn.commit()
+            except Exception as view_err:
+                print(f'[WARN] Could not increment views: {view_err}')
+                conn.rollback()
 
     cur.close()
     conn.close()

@@ -24,6 +24,7 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
   const telegramLink = 'https://t.me/erttp_ru';
   const [phoneContactMethod, setPhoneContactMethod] = useState<'telegram' | 'call'>('call');
   const [chatOpen, setChatOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -51,15 +52,21 @@ export default function Support({ isAuthenticated, onLogout }: SupportProps) {
                   <h3 className="font-semibold text-base">Чат с поддержкой</h3>
                   <p className="text-sm text-muted-foreground">Отвечаем Пн–Пт 9:00–18:00</p>
                 </div>
-                <Button onClick={() => setChatOpen(true)} className="shrink-0">
+                <Button onClick={() => setChatOpen(true)} className="shrink-0 relative">
                   <Icon name="MessageSquare" size={16} className="mr-2" />
                   Открыть чат
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Button>
               </div>
               <SupportChatModal
                 open={chatOpen}
                 onClose={() => setChatOpen(false)}
                 userId={userId}
+                onUnreadChange={setUnreadCount}
               />
             </>
           )}

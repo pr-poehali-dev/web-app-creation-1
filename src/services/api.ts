@@ -316,7 +316,10 @@ export const offersAPI = {
   },
 
   async getOfferById(id: string): Promise<Offer> {
-    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}`);
+    const userId = getUserId();
+    const response = await fetchWithRetry(`${OFFERS_API}?id=${id}`, userId ? {
+      headers: { 'X-User-Id': userId },
+    } : undefined);
     
     if (!response.ok) {
       console.error('HTTP', response.status, ':', `${OFFERS_API}?id=${id}`);
@@ -589,7 +592,10 @@ export const requestsAPI = {
   },
 
   async getRequestById(id: string): Promise<OfferRequest> {
-    const response = await fetchWithRetry(`${REQUESTS_API}?id=${id}`);
+    const userId = getUserId();
+    const response = await fetchWithRetry(`${REQUESTS_API}?id=${id}`, userId ? {
+      headers: { 'X-User-Id': userId },
+    } : undefined);
     
     if (!response.ok) {
       console.error('HTTP', response.status, ':', `${REQUESTS_API}?id=${id}`);

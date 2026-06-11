@@ -27,9 +27,10 @@ interface SupportChatModalProps {
   open: boolean;
   onClose: () => void;
   userId: string;
+  onUnreadChange?: (count: number) => void;
 }
 
-export default function SupportChatModal({ open, onClose, userId }: SupportChatModalProps) {
+export default function SupportChatModal({ open, onClose, userId, onUnreadChange }: SupportChatModalProps) {
   const { toast } = useToast();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -51,11 +52,30 @@ export default function SupportChatModal({ open, onClose, userId }: SupportChatM
       });
       if (res.ok) {
         const data = await res.json();
-        setTickets(data.tickets || []);
+        const list: Ticket[] = data.tickets || [];
+        setTickets(list);
+        const total = list.reduce((sum, t) => sum + Number(t.unread_admin || 0), 0);
+        onUnreadChange?.(total);
       }
     } catch { /* silent */ }
     finally { setLoadingTickets(false); }
-  }, [userId]);
+  }, [userId, onUnreadChange]);
+
+  const markRead = useCallback(async (ticketId: number) => {
+    try {
+      await fetch(`${SUPPORT_API}?action=mark_read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
+        body: JSON.stringify({ ticketId }),
+      });
+      setTickets(prev => {
+        const updated = prev.map(t => t.id === ticketId ? { ...t, unread_admin: 0 } : t);
+        const total = updated.reduce((sum, t) => sum + Number(t.unread_admin || 0), 0);
+        onUnreadChange?.(total);
+        return updated;
+      });
+    } catch { /* silent */ }
+  }, [userId, onUnreadChange]);
 
   const loadMessages = useCallback(async (ticketId: number) => {
     setLoadingMessages(true);
@@ -76,8 +96,10 @@ export default function SupportChatModal({ open, onClose, userId }: SupportChatM
   }, [open, loadTickets]);
 
   useEffect(() => {
-    if (activeTicket) loadMessages(activeTicket.id);
-  }, [activeTicket, loadMessages]);
+    if (!activeTicket) return;
+    loadMessages(activeTicket.id);
+    if (Number(activeTicket.unread_admin) > 0) markRead(activeTicket.id);
+  }, [activeTicket, loadMessages, markRead]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

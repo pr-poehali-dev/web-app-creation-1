@@ -111,7 +111,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             elif action == 'recalculate-quantities':
                 return recalculate_quantities(query_params.get('userId'), headers)
             elif offer_id:
-                return get_offer_by_id(offer_id, headers)
+                return get_offer_by_id(offer_id, event, headers)
             else:
                 return get_offers_list(event, headers)
         
@@ -412,11 +412,11 @@ def get_offers_list(event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str,
             'isBase64Encoded': False
         }
 
-def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
+def get_offer_by_id(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
     """Получить предложение по ID"""
-    # ⚠️ НЕ используем кэш для детальной страницы, т.к. нужно увеличивать views_count
-    cache_key = f"offer_detail:{offer_id}"
-    
+    req_headers = event.get('headers', {})
+    viewer_id = req_headers.get('X-User-Id') or req_headers.get('x-user-id')
+
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
@@ -463,13 +463,15 @@ def get_offer_by_id(offer_id: str, headers: Dict[str, str]) -> Dict[str, Any]:
     
     offer_dict = dict(offer)
     
-    # Увеличиваем счетчик просмотров
-    try:
-        cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET views_count = COALESCE(views_count, 0) + 1 WHERE id = '{offer_id_escaped}'")
-        conn.commit()
-    except Exception as view_error:
-        print(f'Warning: Could not increment views for offer {offer_id}: {str(view_error)}')
-        conn.rollback()
+    # Увеличиваем счетчик просмотров — только не для автора
+    author_id = str(offer_dict.get('user_id', ''))
+    if not viewer_id or str(viewer_id) != author_id:
+        try:
+            cur.execute(f"UPDATE t_p42562714_web_app_creation_1.offers SET views_count = COALESCE(views_count, 0) + 1 WHERE id = '{offer_id_escaped}'")
+            conn.commit()
+        except Exception as view_error:
+            print(f'Warning: Could not increment views for offer {offer_id}: {str(view_error)}')
+            conn.rollback()
     
     # Получаем количество избранного отдельным запросом
     favorites_count = 0

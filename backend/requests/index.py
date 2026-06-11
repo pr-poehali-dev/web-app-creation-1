@@ -42,7 +42,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             request_id = query_params.get('id')
 
             if request_id:
-                return get_request_by_id(request_id, headers)
+                return get_request_by_id(request_id, event, headers)
             else:
                 return get_requests_list(event, headers)
 

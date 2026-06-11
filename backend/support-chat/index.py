@@ -94,7 +94,7 @@ def handler(event: dict, context) -> dict:
                          ELSE COALESCE(u.first_name || ' ' || u.last_name, 'Пользователь') END AS author_name
                 FROM {SCHEMA}.support_messages m
                 LEFT JOIN {SCHEMA}.users u ON u.id = m.user_id AND NOT m.is_admin
-                WHERE m.ticket_id = %s
+                WHERE m.ticket_id = %s AND m.message != '__read_receipt__'
                 ORDER BY m.created_at ASC
             """, (int(ticket_id),))
             messages = [dict(r) for r in cur.fetchall()]
@@ -226,6 +226,23 @@ def handler(event: dict, context) -> dict:
             if not admin_id and (not user_id or int(user_id) != row['user_id']):
                 return {'statusCode': 403, 'headers': headers, 'body': json.dumps({'error': 'Forbidden'})}
             cur.execute(f"UPDATE {SCHEMA}.support_tickets SET status = 'closed', updated_at = CURRENT_TIMESTAMP WHERE id = %s", (int(ticket_id),))
+            db.commit()
+            return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'success': True})}
+
+        # ── POST /mark_read — сбросить счётчик непрочитанных для пользователя ─
+        if method == 'POST' and action == 'mark_read':
+            body = json.loads(event.get('body', '{}'))
+            ticket_id = body.get('ticketId')
+            if not ticket_id or not user_id:
+                return {'statusCode': 400, 'headers': headers, 'body': json.dumps({'error': 'ticketId and userId required'})}
+            cur.execute(f"SELECT user_id FROM {SCHEMA}.support_tickets WHERE id = %s", (int(ticket_id),))
+            row = cur.fetchone()
+            if not row or int(user_id) != row['user_id']:
+                return {'statusCode': 403, 'headers': headers, 'body': json.dumps({'error': 'Forbidden'})}
+            cur.execute(f"""
+                INSERT INTO {SCHEMA}.support_messages (ticket_id, user_id, is_admin, message)
+                VALUES (%s, %s, FALSE, '__read_receipt__')
+            """, (int(ticket_id), int(user_id)))
             db.commit()
             return {'statusCode': 200, 'headers': headers, 'body': json.dumps({'success': True})}
 
