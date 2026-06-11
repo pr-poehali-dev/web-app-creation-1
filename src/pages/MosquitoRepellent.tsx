@@ -160,6 +160,49 @@ export default function MosquitoRepellent() {
 
   useEffect(() => { return () => { stop(); }; }, [stop]);
 
+  useEffect(() => {
+    const ogUrl     = document.querySelector('meta[property="og:url"]');
+    const ogTitle   = document.querySelector('meta[property="og:title"]');
+    const ogDesc    = document.querySelector('meta[property="og:description"]');
+    const ogImage   = document.querySelector('meta[property="og:image"]');
+    const twTitle   = document.querySelector('meta[name="twitter:title"]');
+    const twDesc    = document.querySelector('meta[name="twitter:description"]');
+    const twImage   = document.querySelector('meta[name="twitter:image"]');
+    const prevUrl   = ogUrl?.getAttribute('content')   ?? '';
+    const prevTitle = ogTitle?.getAttribute('content') ?? '';
+    const prevDesc  = ogDesc?.getAttribute('content')  ?? '';
+    const prevImg   = ogImage?.getAttribute('content') ?? '';
+    const prevTwT   = twTitle?.getAttribute('content') ?? '';
+    const prevTwD   = twDesc?.getAttribute('content')  ?? '';
+    const prevTwI   = twImage?.getAttribute('content') ?? '';
+    const prevDocTitle = document.title;
+
+    const pageTitle = 'Отпугиватель комаров — ЕРТТП';
+    const pageDesc  = 'Бесплатный ультразвуковой отпугиватель комаров и собак прямо в телефоне. Выбери регион и включи защиту.';
+    const pageImg   = 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/fecdcb8f-d804-4115-af1d-6de23bcc0d8a.jpg';
+    const pageUrl   = 'https://erttp.ru/mosquito-repellent';
+
+    document.title = pageTitle;
+    ogUrl?.setAttribute('content', pageUrl);
+    ogTitle?.setAttribute('content', pageTitle);
+    ogDesc?.setAttribute('content', pageDesc);
+    ogImage?.setAttribute('content', pageImg);
+    twTitle?.setAttribute('content', pageTitle);
+    twDesc?.setAttribute('content', pageDesc);
+    twImage?.setAttribute('content', pageImg);
+
+    return () => {
+      document.title = prevDocTitle;
+      ogUrl?.setAttribute('content', prevUrl);
+      ogTitle?.setAttribute('content', prevTitle);
+      ogDesc?.setAttribute('content', prevDesc);
+      ogImage?.setAttribute('content', prevImg);
+      twTitle?.setAttribute('content', prevTwT);
+      twDesc?.setAttribute('content', prevTwD);
+      twImage?.setAttribute('content', prevTwI);
+    };
+  }, []);
+
   const isDog = mode === 'dog';
 
   return (
@@ -168,7 +211,7 @@ export default function MosquitoRepellent() {
 
         {/* Шапка */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-muted rounded-lg transition-colors">
+          <button onClick={() => navigate('/')} className="p-2 hover:bg-muted rounded-lg transition-colors">
             <Icon name="ArrowLeft" size={22} />
           </button>
           <div className="flex-1">
