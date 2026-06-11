@@ -76,7 +76,6 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
   const seenInvites = useRef<Set<number>>(new Set());
   const sentPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const incomingPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     const sync = () => {
@@ -115,19 +114,16 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
     } catch (_e) { /* ignore */ }
   }, [userId, handleNewInvitation]);
 
-  // Основной polling каждые 3 сек
+  // Polling входящих — раз в 30 сек (вместо 3 сек)
+  // При пробуждении экрана — один запрос
   useEffect(() => {
     if (!userId) return;
     pollIncomingFn();
-    incomingPollRef.current = setInterval(pollIncomingFn, 3000);
+    incomingPollRef.current = setInterval(pollIncomingFn, 30000);
 
-    // При пробуждении экрана — сразу несколько быстрых запросов
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
       pollIncomingFn();
-      setTimeout(pollIncomingFn, 300);
-      setTimeout(pollIncomingFn, 800);
-      setTimeout(pollIncomingFn, 1500);
     };
     document.addEventListener('visibilitychange', onVisible);
 
@@ -136,19 +132,6 @@ export default function OnlineInviteBanner({ onOpenOrderChat }: Props) {
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [userId, pollIncomingFn]);
-
-  // Heartbeat — отдельный запрос каждые 20 сек чтобы поддерживать online_presence
-  // Это отдельно от pollIncoming, чтобы пользователь оставался онлайн даже если
-  // мобильный браузер замедляет polling
-  useEffect(() => {
-    if (!userId) return;
-    const sendHeartbeat = () => {
-      // pollIncoming заодно обновляет last_seen_at на бэкенде
-      pollIncoming(userId).catch(() => {});
-    };
-    heartbeatRef.current = setInterval(sendHeartbeat, 20000);
-    return () => { if (heartbeatRef.current) clearInterval(heartbeatRef.current); };
-  }, [userId]);
 
   useEffect(() => {
     const handler = (e: Event) => {
