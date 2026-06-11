@@ -59,9 +59,14 @@ export default function AdminContentManagement() {
 
   const saveSetting = async (key: string, value: string) => {
     const token = getJwtToken();
+    const userId = localStorage.getItem('userId') || '';
     const res = await fetch(SITE_SETTINGS_API, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Authorization': `Bearer ${token}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Authorization': `Bearer ${token}`,
+        'X-User-Id': userId,
+      },
       body: JSON.stringify({ setting_key: key, setting_value: value }),
     });
     if (!res.ok) throw new Error('Ошибка сохранения');

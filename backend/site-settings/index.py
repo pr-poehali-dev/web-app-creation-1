@@ -74,38 +74,38 @@ def handler(event: dict, context) -> dict:
         
         # PUT/POST - обновить настройку (только для админов)
         if method in ['PUT', 'POST']:
-            # Проверка авторизации администратора
-            headers = event.get('headers', {})
-            auth_header = headers.get('X-Authorization') or headers.get('Authorization') or ''
-            if not auth_header:
+            req_headers = event.get('headers', {})
+            auth_header = req_headers.get('X-Authorization') or req_headers.get('Authorization') or ''
+            x_user_id = req_headers.get('X-User-Id') or req_headers.get('x-user-id')
+
+            user_id = None
+
+            if auth_header:
+                token = auth_header.replace('Bearer ', '').strip()
+                jwt_payload = verify_jwt_token(token)
+                if jwt_payload:
+                    user_id = jwt_payload.get('user_id')
+
+            # Fallback: X-User-Id (как в других админ-функциях)
+            if not user_id and x_user_id:
+                user_id = int(x_user_id)
+
+            if not user_id:
                 return {
                     'statusCode': 401,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({'error': 'Требуется авторизация'}),
                     'isBase64Encoded': False
                 }
-            
-            token = auth_header.replace('Bearer ', '').strip()
-            jwt_payload = verify_jwt_token(token)
-            
-            if not jwt_payload:
-                return {
-                    'statusCode': 401,
-                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'error': 'Невалидный токен'}),
-                    'isBase64Encoded': False
-                }
-            
-            user_id = jwt_payload.get('user_id')
-            
+
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT role, is_root_admin FROM users WHERE id = %s",
+                    "SELECT role, is_root_admin FROM t_p42562714_web_app_creation_1.users WHERE id = %s",
                     (user_id,)
                 )
                 user = cur.fetchone()
-                
-                if not user or (user.get('role') not in ['admin', 'superadmin'] and not user.get('is_root_admin')):
+
+                if not user or (user.get('role') not in ['admin', 'superadmin', 'moderator'] and not user.get('is_root_admin')):
                     return {
                         'statusCode': 403,
                         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
