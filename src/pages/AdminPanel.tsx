@@ -195,6 +195,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'high'
     },
     {
+      id: 'support',
+      title: 'Обращения в поддержку',
+      description: 'Чат с пользователями — вопросы и обращения',
+      icon: 'MessageSquare',
+      color: 'bg-sky-500',
+      count: null,
+      path: '/admin/support',
+      priority: 'high'
+    },
+    {
       id: 'arbitrage',
       title: 'Арбитраж споров',
       description: 'Просмотр заказа, переписки и файлов для разрешения споров',
