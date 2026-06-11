@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { contentAPI } from '@/services/api';
 import { invalidateSiteContentCache } from '@/hooks/useSiteContent';
-import { getJwtToken } from '@/utils/auth';
 import Icon from '@/components/ui/icon';
 import {
   type ContentItem,
@@ -14,9 +13,7 @@ import {
 import ContentTextsTab from './content-management/ContentTextsTab';
 import BannersTab from './content-management/BannersTab';
 
-const SITE_SETTINGS_API = 'https://functions.poehali.dev/6c65e3c6-d621-44fc-99da-cd570027fae7';
-
-type Tab = 'texts' | 'banners' | 'contacts';
+type Tab = 'texts' | 'banners';
 
 export default function AdminContentManagement() {
   const navigate = useNavigate();
@@ -30,10 +27,6 @@ export default function AdminContentManagement() {
   const [editValue, setEditValue] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Контакты поддержки
-  const [contacts, setContacts] = useState({ phone: '', whatsapp: '', telegram: '' });
-  const [contactsSaving, setContactsSaving] = useState(false);
-
   // Баннеры
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [showBannerForm, setShowBannerForm] = useState(false);
@@ -41,59 +34,7 @@ export default function AdminContentManagement() {
   const [bannerForm, setBannerForm] = useState<BannerFormState>(EMPTY_BANNER);
   const [bannerSaving, setBannerSaving] = useState(false);
 
-  useEffect(() => { loadData(); loadContacts(); }, []);
-
-  const loadContacts = async () => {
-    try {
-      const keys = ['support_phone', 'support_whatsapp', 'support_telegram'];
-      const results = await Promise.all(
-        keys.map(k => fetch(`${SITE_SETTINGS_API}?key=${k}`).then(r => r.ok ? r.json() : null))
-      );
-      setContacts({
-        phone: results[0]?.setting_value || '',
-        whatsapp: results[1]?.setting_value || '',
-        telegram: results[2]?.setting_value || '',
-      });
-    } catch { /* silent */ }
-  };
-
-  const saveSetting = async (key: string, value: string): Promise<boolean> => {
-    try {
-      const token = getJwtToken();
-      const userId = localStorage.getItem('userId') || '';
-      const res = await fetch(SITE_SETTINGS_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'X-Authorization': `Bearer ${token}` } : {}),
-          'X-User-Id': userId,
-        },
-        body: JSON.stringify({ setting_key: key, setting_value: value }),
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleSaveContacts = async () => {
-    setContactsSaving(true);
-    try {
-      const results = await Promise.allSettled([
-        saveSetting('support_phone', contacts.phone),
-        saveSetting('support_whatsapp', contacts.whatsapp),
-        saveSetting('support_telegram', contacts.telegram),
-      ]);
-      const allOk = results.every(r => r.status === 'fulfilled' && r.value === true);
-      if (allOk) {
-        showSuccess('Контакты сохранены');
-      } else {
-        showSuccess('Частично сохранено — проверьте права доступа');
-      }
-    } finally {
-      setContactsSaving(false);
-    }
-  };
+  useEffect(() => { loadData(); }, []);
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
@@ -325,67 +266,11 @@ export default function AdminContentManagement() {
               )}
             </span>
           </button>
-          <button
-            onClick={() => setTab('contacts')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              tab === 'contacts'
-                ? 'bg-background shadow text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Icon name="Phone" size={15} />
-              Контакты
-            </span>
-          </button>
         </div>
 
         {loading ? (
           <div className="flex justify-center items-center h-48">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-          </div>
-        ) : tab === 'contacts' ? (
-          <div className="space-y-5 max-w-lg">
-            <p className="text-sm text-muted-foreground">
-              Эти данные отображаются на странице поддержки для пользователей.
-            </p>
-            <div>
-              <label className="block text-sm font-medium mb-1">Номер телефона</label>
-              <p className="text-xs text-muted-foreground mb-2">Например: +7 (984) 101-73-55</p>
-              <input
-                className="w-full border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="+7 (___) ___-__-__"
-                value={contacts.phone}
-                onChange={e => setContacts(c => ({ ...c, phone: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Ссылка на WhatsApp</label>
-              <p className="text-xs text-muted-foreground mb-2">Например: https://wa.me/79841017355</p>
-              <input
-                className="w-full border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="https://wa.me/7..."
-                value={contacts.whatsapp}
-                onChange={e => setContacts(c => ({ ...c, whatsapp: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Ссылка на Telegram</label>
-              <p className="text-xs text-muted-foreground mb-2">Например: https://t.me/support_ertpp или @username</p>
-              <input
-                className="w-full border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
-                placeholder="https://t.me/..."
-                value={contacts.telegram}
-                onChange={e => setContacts(c => ({ ...c, telegram: e.target.value }))}
-              />
-            </div>
-            <button
-              onClick={handleSaveContacts}
-              disabled={contactsSaving}
-              className="px-5 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-            >
-              {contactsSaving ? 'Сохранение...' : 'Сохранить контакты'}
-            </button>
           </div>
         ) : tab === 'texts' ? (
           <ContentTextsTab
