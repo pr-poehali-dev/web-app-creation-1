@@ -116,6 +116,7 @@ const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
 const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
 const MosquitoRepellent = lazyWithRetry(() => import("./pages/MosquitoRepellent"));
 const BrainBooster = lazyWithRetry(() => import("./pages/BrainBooster"));
+const TaxReports = lazyWithRetry(() => import("./pages/TaxReports"));
 const SellerReviews = lazyWithRetry(() => import("./pages/SellerReviews"));
 const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
@@ -469,6 +470,7 @@ const App = () => {
             <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
             <Route path="/mosquito-repellent" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MosquitoRepellent /></ProtectedRoute>} />
             <Route path="/brain-booster" element={<ProtectedRoute isAuthenticated={isAuthenticated}><BrainBooster /></ProtectedRoute>} />
+            <Route path="/tax-reports" element={<TaxReports />} />
             <Route path="/seller/:userId" element={<SellerReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
 
             <Route path="/register" element={<Register onRegister={handleLogin} />} />
