@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
-type BrainMode = 'all' | 'focus' | 'stress' | 'energy';
+type BrainMode = 'all' | 'focus' | 'stress' | 'energy' | 'eyes';
 
 interface ModeConfig {
   id: BrainMode;
@@ -112,6 +112,25 @@ const MODES: ModeConfig[] = [
     effect: 'Бодрость, подъём настроения, ясность мышления, борьба с ленью',
     duration: '10–15 мин',
     science: 'Гамма 40 Гц — исследования MIT и Массачусетского ГУ показали снижение амилоидных бляшек у мышей. У людей повышает скорость нейронной синхронизации и ощущение бодрости.',
+  },
+  {
+    id: 'eyes',
+    label: 'Расслабление глаз',
+    desc: 'Альфа + гамма • 10 / 40 Гц',
+    icon: 'Eye',
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10',
+    borderColor: 'border-cyan-500/40',
+    leftHz: 250,
+    rightHz: 260,   // бит = 10 Гц (альфа — расслабление зрительной коры)
+    beatHz: 10,
+    waveType: 'sine',
+    noiseType: 'brown',
+    noiseGain: 0.07,
+    oscGain: 0.20,
+    effect: 'Снятие усталости глаз после экрана, расслабление глазных мышц, снижение напряжения зрительной коры',
+    duration: '5–10 мин',
+    science: 'Альфа-ритм 10 Гц снижает возбуждение зрительной коры и расслабляет глазодвигательные мышцы. Рекомендуется сочетать с упражнениями 20-20-20. Звук не лечит зрение, но снижает общее напряжение глаз.',
   },
 ];
 
@@ -475,6 +494,42 @@ export default function BrainBooster() {
             })}
           </div>
         </div>
+
+        {/* Гимнастика для глаз — показывается только когда выбран режим eyes */}
+        {(activeMode === 'eyes' || expandedMode === 'eyes') && (
+          <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/15 flex items-center justify-center">
+                <Icon name="Eye" size={16} className="text-cyan-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-cyan-400">Гимнастика для глаз</p>
+                <p className="text-xs text-muted-foreground">Выполняйте под звук — 5–7 мин</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {[
+                { icon: '👁️', title: 'Правило 20-20-20', desc: 'Каждые 20 минут смотрите на объект в 6 метрах от вас в течение 20 секунд. Снимает спазм аккомодации.' },
+                { icon: '↔️', title: 'Горизонтальные движения', desc: 'Медленно переводите взгляд слева направо и обратно — 10 раз. Не двигайте головой.' },
+                { icon: '↕️', title: 'Вертикальные движения', desc: 'Медленно переводите взгляд вверх-вниз — 10 раз. Дышите ровно.' },
+                { icon: '🔄', title: 'Круговые вращения', desc: 'Вращайте глазами по часовой стрелке, затем против — по 5 раз. Медленно.' },
+                { icon: '🎯', title: 'Фокусировка', desc: 'Поднесите палец к носу, сфокусируйтесь, затем переведите взгляд вдаль — 10 раз.' },
+                { icon: '😌', title: 'Пальминг', desc: 'Закройте глаза, накройте ладонями — не надавливая. Подержите 1–2 минуты в полной темноте.' },
+              ].map((ex, i) => (
+                <div key={i} className="flex items-start gap-3 bg-background/50 rounded-xl p-3">
+                  <span className="text-lg flex-shrink-0 leading-none mt-0.5">{ex.icon}</span>
+                  <div>
+                    <p className="text-xs font-semibold text-foreground">{ex.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{ex.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-cyan-500/70 mt-3 text-center">
+              Звук создаёт фоновое расслабление — упражнения дают основной эффект
+            </p>
+          </div>
+        )}
 
         {/* Научный блок */}
         <div className="bg-card border border-border rounded-2xl p-4">
