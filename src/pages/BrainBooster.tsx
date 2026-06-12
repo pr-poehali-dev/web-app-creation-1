@@ -547,9 +547,12 @@ export default function BrainBooster() {
         </div>
 
         {/* Дисклеймер */}
-        <div className="bg-muted/50 rounded-2xl p-4">
-          <p className="text-xs text-muted-foreground text-center">
-            Функция носит информационно-развлекательный характер и не является медицинским средством диагностики или лечения.
+        <div className="bg-blue-500/10 border border-blue-500/25 rounded-2xl p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Icon name="Info" size={16} className="text-blue-400" />
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Функция носит <span className="text-foreground font-medium">информационно-развлекательный характер</span>, как прослушивание музыки, и не является медицинским средством диагностики или лечения.
           </p>
         </div>
 
