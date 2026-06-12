@@ -119,6 +119,10 @@ export default function HeaderUserMenu({
           <Icon name="Zap" className="mr-2 h-4 w-4 text-green-500" />
           Отпугиватель комаров
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/brain-booster')} className="border-2 border-border rounded-md mb-1">
+          <Icon name="Brain" className="mr-2 h-4 w-4 text-purple-500" />
+          Нейро-звук для мозга
+        </DropdownMenuItem>
         {currentUser?.role === 'admin' && (
           <>
             <DropdownMenuSeparator />
