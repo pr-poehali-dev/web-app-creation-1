@@ -166,6 +166,7 @@ export default function BrainBooster() {
   const [pulseAnim, setPulseAnim] = useState(false);
   const [timer, setTimer] = useState(0);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [expandedMode, setExpandedMode] = useState<BrainMode | null>(null);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const leftOscRef = useRef<OscillatorNode | null>(null);
@@ -402,18 +403,23 @@ export default function BrainBooster() {
           <div className="grid grid-cols-1 gap-3">
             {MODES.map(mode => {
               const isActive = activeMode === mode.id;
+              const isExpanded = expandedMode === mode.id;
               return (
-                <button
+                <div
                   key={mode.id}
-                  onClick={() => handleToggle(mode.id)}
-                  className={`w-full text-left rounded-2xl border-2 p-4 transition-all active:scale-[0.98]
-                    ${isActive ? `${mode.bgColor} ${mode.borderColor}` : 'bg-card border-border hover:border-primary/30'}`}
+                  className={`rounded-2xl border-2 transition-all
+                    ${isActive ? `${mode.bgColor} ${mode.borderColor}` : 'bg-card border-border'}`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 p-4">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${mode.bgColor}`}>
                       <Icon name={mode.icon} size={22} className={mode.color} />
                     </div>
-                    <div className="flex-1 min-w-0">
+
+                    {/* Текстовая зона — нажатие раскрывает описание */}
+                    <button
+                      className="flex-1 min-w-0 text-left"
+                      onClick={() => setExpandedMode(isExpanded ? null : mode.id)}
+                    >
                       <div className="flex items-center gap-2">
                         <p className="font-semibold text-sm">{mode.label}</p>
                         {isActive && isPlaying && (
@@ -424,20 +430,47 @@ export default function BrainBooster() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground">{mode.desc}</p>
-                      <p className="text-xs text-muted-foreground/60 mt-0.5 line-clamp-1">{mode.effect}</p>
-                    </div>
-                    <div className="flex-shrink-0">
-                      {isActive && isPlaying
-                        ? <div className="w-8 h-8 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center">
-                            <Icon name="Square" size={14} className="text-red-400" />
-                          </div>
-                        : <div className={`w-8 h-8 rounded-full ${mode.bgColor} border ${mode.borderColor} flex items-center justify-center`}>
-                            <Icon name="Play" size={14} className={mode.color} />
-                          </div>
-                      }
-                    </div>
+                      {!isExpanded && (
+                        <p className="text-xs text-muted-foreground/60 mt-0.5 truncate">{mode.effect} <span className="text-primary/60">···</span></p>
+                      )}
+                    </button>
+
+                    {/* Кнопка Play/Stop — отдельная зона */}
+                    <button
+                      onClick={() => handleToggle(mode.id)}
+                      className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90
+                        ${isActive && isPlaying
+                          ? 'bg-red-500 text-white shadow-md'
+                          : `${mode.bgColor} border-2 ${mode.borderColor}`}`}
+                    >
+                      <Icon
+                        name={isActive && isPlaying ? 'Square' : 'Play'}
+                        size={16}
+                        className={isActive && isPlaying ? 'text-white' : mode.color}
+                      />
+                    </button>
                   </div>
-                </button>
+
+                  {/* Раскрытый текст */}
+                  {isExpanded && (
+                    <div className={`px-4 pb-4 pt-0`}>
+                      <div className={`rounded-xl p-3 ${mode.bgColor} border ${mode.borderColor}`}>
+                        <p className="text-xs text-foreground leading-relaxed">{mode.effect}</p>
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{mode.science}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Icon name="Activity" size={11} />
+                            Бит: {mode.beatHz} Гц
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Icon name="Clock" size={11} />
+                            {mode.duration}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
