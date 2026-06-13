@@ -5,14 +5,21 @@ import Icon from '@/components/ui/icon';
 type Mode = 'mosquito' | 'dog';
 type SignalMode = 'pulse' | 'siberia' | 'ural' | 'yakut' | 'fareast' | 'south';
 
+// Частоты имитации полёта самки якутского Aedes (280–320 Гц)
+const YAKUT_FEMALE_FREQUENCIES = [280, 295, 310, 320, 305, 285];
+
 const MOSQUITO_FREQUENCIES = [
   { hz: 19000, label: 'Мягкая защита', desc: 'Мягкая защита', safe: true },
   { hz: 17500, label: 'Усиленная', desc: 'Усиленная защита', safe: true },
 ];
 
-// Якутские частоты (Aedes): отпугивание + имитация стрекозы-хищника
-const YAKUT_FREQUENCIES = [150, 170, 185, 200];
-const DRAGONFLY_FREQUENCIES = [40, 65, 90, 120, 40];
+// Якутские частоты (Aedes diantaeus/communis):
+// Диапазон 140–320 Гц — научно подтверждённый диапазон избегания якутского Aedes.
+// 140–200 Гц: дезориентация самцов (мешает обнаружению самок).
+// 280–320 Гц: имитация звука полёта самки → самцы роятся далеко, самки уходят из зоны.
+// Быстрое чередование не даёт популяции адаптироваться к сигналу.
+const YAKUT_FREQUENCIES = [152, 200, 280, 310, 170, 295, 185, 320];
+const DRAGONFLY_FREQUENCIES = [40, 52, 65, 78, 90, 105, 120, 90, 65, 40];
 // Сибирь (Бурятия, Омск): таёжный Aedes — диапазон избегания 150–200 Гц
 const SIBERIA_FREQUENCIES = [155, 170, 185, 200];
 // Урал: микс Aedes + Culex — рабочий диапазон Aedes-части
@@ -42,17 +49,22 @@ export default function MosquitoRepellent() {
   const [volume, setVolume] = useState(0.5);
   const [pulseAnim, setPulseAnim] = useState(false);
 
-  const audioCtxRef    = useRef<AudioContext | null>(null);
-  const oscillatorRef   = useRef<OscillatorNode | null>(null);
-  const gainRef         = useRef<GainNode | null>(null);
-  const dragonflyRef    = useRef<OscillatorNode | null>(null);
-  const dragonflyGain   = useRef<GainNode | null>(null);
-  const pulseTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
-  const yakutIndexRef   = useRef(0);
-  const dragonflyIndex  = useRef(0);
+  const audioCtxRef      = useRef<AudioContext | null>(null);
+  const oscillatorRef    = useRef<OscillatorNode | null>(null);
+  const gainRef          = useRef<GainNode | null>(null);
+  const dragonflyRef     = useRef<OscillatorNode | null>(null);
+  const dragonflyGain    = useRef<GainNode | null>(null);
+  const femaleOscRef     = useRef<OscillatorNode | null>(null);
+  const femaleGainRef    = useRef<GainNode | null>(null);
+  const pulseTimerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const femaleTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const yakutIndexRef    = useRef(0);
+  const dragonflyIndex   = useRef(0);
+  const femaleIndexRef   = useRef(0);
 
   const stop = useCallback(() => {
-    if (pulseTimerRef.current) { clearInterval(pulseTimerRef.current); pulseTimerRef.current = null; }
+    if (pulseTimerRef.current)  { clearInterval(pulseTimerRef.current);  pulseTimerRef.current  = null; }
+    if (femaleTimerRef.current) { clearInterval(femaleTimerRef.current); femaleTimerRef.current = null; }
     oscillatorRef.current?.stop();
     oscillatorRef.current?.disconnect();
     oscillatorRef.current = null;
@@ -63,6 +75,11 @@ export default function MosquitoRepellent() {
     dragonflyRef.current = null;
     dragonflyGain.current?.disconnect();
     dragonflyGain.current = null;
+    femaleOscRef.current?.stop();
+    femaleOscRef.current?.disconnect();
+    femaleOscRef.current = null;
+    femaleGainRef.current?.disconnect();
+    femaleGainRef.current = null;
     audioCtxRef.current?.close();
     audioCtxRef.current = null;
     setIsActive(false);
@@ -106,6 +123,9 @@ export default function MosquitoRepellent() {
 
     if (activeSig === 'yakut' || activeSig === 'siberia' || activeSig === 'ural' || activeSig === 'fareast' || activeSig === 'south') {
       const freqs = activeSig === 'siberia' ? SIBERIA_FREQUENCIES : activeSig === 'ural' ? URAL_FREQUENCIES : activeSig === 'fareast' ? FAREAST_FREQUENCIES : activeSig === 'south' ? SOUTH_FREQUENCIES : YAKUT_FREQUENCIES;
+      // Якутия: быстрее чередуем (800 мс вместо 2000) — популяция не успевает адаптироваться
+      const freqInterval = activeSig === 'yakut' ? 800 : 2000;
+      const freqRamp     = activeSig === 'yakut' ? 0.05 : 0.1;
       yakutIndexRef.current = 0;
       osc.frequency.setValueAtTime(freqs[0], ctx.currentTime);
       pulseTimerRef.current = setInterval(() => {
@@ -114,10 +134,12 @@ export default function MosquitoRepellent() {
         const t = audioCtxRef.current.currentTime;
         oscillatorRef.current.frequency.cancelScheduledValues(t);
         oscillatorRef.current.frequency.setValueAtTime(oscillatorRef.current.frequency.value, t);
-        oscillatorRef.current.frequency.linearRampToValueAtTime(freqs[yakutIndexRef.current], t + 0.1);
-      }, 2000);
+        oscillatorRef.current.frequency.linearRampToValueAtTime(freqs[yakutIndexRef.current], t + freqRamp);
+      }, freqInterval);
 
       // Второй осциллятор: имитация крыльев стрекозы-хищника (40–120 Гц)
+      // Якутия: более плавные переходы (0.08 с) и частый ритм (700 мс)
+      const dflyInterval = activeSig === 'yakut' ? 700 : 1200;
       const dfly = ctx.createOscillator();
       const dfGain = ctx.createGain();
       dfly.type = 'triangle';
@@ -133,8 +155,35 @@ export default function MosquitoRepellent() {
         if (!dragonflyRef.current || !audioCtxRef.current) return;
         dragonflyIndex.current = (dragonflyIndex.current + 1) % DRAGONFLY_FREQUENCIES.length;
         const t = audioCtxRef.current.currentTime;
-        dragonflyRef.current.frequency.linearRampToValueAtTime(DRAGONFLY_FREQUENCIES[dragonflyIndex.current], t + 0.15);
-      }, 1200);
+        dragonflyRef.current.frequency.linearRampToValueAtTime(DRAGONFLY_FREQUENCIES[dragonflyIndex.current], t + 0.08);
+      }, dflyInterval);
+
+      // Третий осциллятор (только Якутия): имитация звука полёта самки Aedes (280–320 Гц)
+      // Самцы слышат самку на этой частоте → роятся далеко от источника звука
+      // Самки воспринимают как конкурента → тоже уходят
+      if (activeSig === 'yakut') {
+        const femaleOsc  = ctx.createOscillator();
+        const femaleGain = ctx.createGain();
+        femaleOsc.type = 'sine';
+        femaleOsc.frequency.setValueAtTime(YAKUT_FEMALE_FREQUENCIES[0], ctx.currentTime);
+        // Тихий — 25% громкости, чтобы не мешать слуху человека
+        femaleGain.gain.setValueAtTime(activeVolume * 0.25, ctx.currentTime);
+        femaleOsc.connect(femaleGain);
+        femaleGain.connect(ctx.destination);
+        femaleOsc.start();
+        femaleOscRef.current  = femaleOsc;
+        femaleGainRef.current = femaleGain;
+        femaleIndexRef.current = 0;
+        // Чередуем каждые 600 мс — имитируем нерегулярный полёт самки
+        femaleTimerRef.current = setInterval(() => {
+          if (!femaleOscRef.current || !audioCtxRef.current) return;
+          femaleIndexRef.current = (femaleIndexRef.current + 1) % YAKUT_FEMALE_FREQUENCIES.length;
+          const t = audioCtxRef.current.currentTime;
+          femaleOscRef.current.frequency.cancelScheduledValues(t);
+          femaleOscRef.current.frequency.setValueAtTime(femaleOscRef.current.frequency.value, t);
+          femaleOscRef.current.frequency.linearRampToValueAtTime(YAKUT_FEMALE_FREQUENCIES[femaleIndexRef.current], t + 0.06);
+        }, 600);
+      }
     }
 
     setIsActive(true);
@@ -369,12 +418,24 @@ export default function MosquitoRepellent() {
                 </div>
               )}
               {signalMode === 'yakut' && (
-                <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-1.5">
+                <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 space-y-2">
+                  <p className="text-[11px] text-blue-700 leading-relaxed font-semibold">
+                    ❄️ Улучшенный режим для якутского комара <strong>Aedes diantaeus</strong>
+                  </p>
                   <p className="text-[11px] text-blue-700 leading-relaxed">
-                    ❄️ Звук слышен — это нормально. Не вызывает дискомфорта у людей и детей.
+                    <strong>3 слоя звука одновременно:</strong>
                   </p>
                   <p className="text-[11px] text-blue-600 leading-relaxed">
-                    Научно доказано: якутский <strong>Aedes</strong> ориентируется на источник CO₂ через слуховые рецепторы. Режим подавляет эту способность и дополнительно воспроизводит акустическую сигнатуру стрекозы — главного природного хищника — вызывая доказанную инстинктивную реакцию избегания.
+                    1. <strong>140–200 Гц</strong> — дезориентация самцов: мешает обнаруживать самок, самцы покидают зону.
+                  </p>
+                  <p className="text-[11px] text-blue-600 leading-relaxed">
+                    2. <strong>280–320 Гц</strong> — имитация полёта самки: самцы роятся вдали, самки воспринимают как конкурента.
+                  </p>
+                  <p className="text-[11px] text-blue-600 leading-relaxed">
+                    3. <strong>40–120 Гц</strong> — акустика стрекозы-хищника: инстинктивная реакция избегания у комаров.
+                  </p>
+                  <p className="text-[11px] text-amber-700 leading-relaxed bg-amber-50 border border-amber-200 rounded px-2 py-1.5 mt-1">
+                    ⚠️ <strong>Честно:</strong> звук — дополнительная защита, не замена репелленту. Используй вместе со средствами от комаров для лучшего результата.
                   </p>
                 </div>
               )}
@@ -463,7 +524,7 @@ export default function MosquitoRepellent() {
                 <Icon name="Clock" size={12} className="text-green-700" />
               </div>
               <p className="text-xs text-green-800 leading-relaxed">
-                <span className="font-semibold">Работает без перерывов.</span> Просто включи и забудь про кровожадных насекомых — приложение само отпугивает комаров и мошкару, пока ты отдыхаешь или работаешь.
+                <span className="font-semibold">Работает без перерывов.</span> Просто включи и используй как дополнительную защиту вместе с репеллентом — особенно эффективно в режиме «Якутия / Север» против комаров вида Aedes.
               </p>
             </div>
             <div className="flex items-start gap-2.5">
