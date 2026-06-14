@@ -181,11 +181,14 @@ export default function BrainBooster() {
   const navigate = useNavigate();
   const [activeMode, setActiveMode] = useState<BrainMode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.4); // по умолчанию 40% — безопаснее
+  const [volume, setVolume] = useState(0.4);
   const [pulseAnim, setPulseAnim] = useState(false);
   const [timer, setTimer] = useState(0);
   const [shareSuccess, setShareSuccess] = useState(false);
   const [expandedMode, setExpandedMode] = useState<BrainMode | null>(null);
+  // Длительность сессии: null = без ограничения, число = секунды
+  const [sessionDuration, setSessionDuration] = useState<number | null>(15 * 60);
+  const [sessionEnded, setSessionEnded] = useState(false);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const leftOscRef = useRef<OscillatorNode | null>(null);
@@ -193,6 +196,7 @@ export default function BrainBooster() {
   const noiseSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionDurationRef = useRef<number | null>(15 * 60);
 
   useEffect(() => {
     document.title = 'Нейро-звук для стимуляции мозга — ЕРТТП';
@@ -217,6 +221,15 @@ export default function BrainBooster() {
     setIsPlaying(false);
     setPulseAnim(false);
   }, []);
+
+  // Синхронизируем ref при выборе длительности (ref доступен внутри setInterval)
+  const handleDurationChange = useCallback((secs: number | null) => {
+    setSessionDuration(secs);
+    sessionDurationRef.current = secs;
+    // Если сессия идёт — сбрасываем таймер
+    if (isPlaying) setTimer(0);
+    setSessionEnded(false);
+  }, [isPlaying]);
 
   const play = useCallback((mode: ModeConfig, vol: number) => {
     stop();
@@ -272,7 +285,24 @@ export default function BrainBooster() {
     setIsPlaying(true);
     setPulseAnim(true);
     setTimer(0);
-    timerRef.current = setInterval(() => setTimer(t => t + 1), 1000);
+    setSessionEnded(false);
+    timerRef.current = setInterval(() => {
+      setTimer(t => {
+        const next = t + 1;
+        // Автоостановка по достижении выбранной длительности
+        if (sessionDurationRef.current !== null && next >= sessionDurationRef.current) {
+          // Плавное затухание за 3 секунды перед остановкой
+          if (masterGainRef.current && audioCtxRef.current) {
+            masterGainRef.current.gain.linearRampToValueAtTime(0, audioCtxRef.current.currentTime + 3);
+          }
+          setTimeout(() => {
+            stop();
+            setSessionEnded(true);
+          }, 3000);
+        }
+        return next;
+      });
+    }, 1000);
   }, [stop]);
 
   const handleToggle = useCallback((modeId: BrainMode) => {
@@ -501,6 +531,61 @@ export default function BrainBooster() {
             <p className="text-xs mt-1 opacity-60">Используйте стерео-наушники</p>
           </div>
         )}
+
+        {/* Длительность сессии + прогресс */}
+        <div className="bg-card rounded-2xl border border-border p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="Timer" size={16} className="text-muted-foreground" />
+            <span className="text-sm font-medium">Длительность сессии</span>
+          </div>
+          <div className="grid grid-cols-4 gap-2 mb-3">
+            {([5, 10, 15, 20, 30, null] as (number | null)[]).map((mins) => {
+              const secs = mins !== null ? mins * 60 : null;
+              const isSelected = sessionDuration === secs;
+              return (
+                <button
+                  key={mins ?? 'inf'}
+                  onClick={() => handleDurationChange(secs)}
+                  disabled={isPlaying}
+                  className={`rounded-xl py-2 text-xs font-semibold transition-all border-2
+                    ${isSelected
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:border-primary/40 disabled:opacity-40'}`}
+                >
+                  {mins !== null ? `${mins} мин` : '∞'}
+                </button>
+              );
+            })}
+          </div>
+          {/* Прогресс-бар — показывается только когда идёт сессия с лимитом */}
+          {isPlaying && sessionDuration !== null && (
+            <div>
+              <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block" />
+                  {formatTime(timer)} прошло
+                </span>
+                <span>{formatTime(Math.max(0, sessionDuration - timer))} осталось</span>
+              </div>
+              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-1000"
+                  style={{ width: `${Math.min(100, (timer / sessionDuration) * 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+          {/* Уведомление об окончании сессии */}
+          {sessionEnded && (
+            <div className="mt-3 bg-primary/10 border border-primary/30 rounded-xl px-3 py-2.5 flex items-center gap-2">
+              <Icon name="CheckCircle" size={15} className="text-primary flex-shrink-0" />
+              <p className="text-xs text-primary font-medium">Сессия завершена — отличная работа! Повтори завтра для накопительного эффекта.</p>
+            </div>
+          )}
+          {isPlaying && sessionDuration === null && (
+            <p className="text-xs text-muted-foreground/60 text-center">Сессия без ограничения — остановите вручную</p>
+          )}
+        </div>
 
         {/* Громкость */}
         <div className="bg-card rounded-2xl border border-border p-4">
