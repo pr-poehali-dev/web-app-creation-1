@@ -284,9 +284,13 @@ export default function BrainBooster() {
   }, []);
 
   // Протокол RI на заданной частоте:
-  // 0–90 сек  — нарастание тона 0→max
-  // 90–120 сек — затихание max→0
-  // 120 сек   — автостоп, наступает период тишины
+  // 0–30 сек   — нарастание 0→max (короткий разгон)
+  // 30–90 сек  — пик на максимуме (основное торможение нейронов)
+  // 90–180 сек — медленное угасание max→0 (90 сек даёт длинный RI-эффект)
+  // 180 сек    — автостоп, наступает период тишины
+  const RI_RISE = 30;
+  const RI_PEAK = 90;
+  const RI_FADE = 180;
   const playRI = useCallback((hz: number) => {
     stopRI();
     stopCalibTone();
@@ -297,8 +301,9 @@ export default function BrainBooster() {
     osc.type = 'sine';
     osc.frequency.value = hz;
     gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 90);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 120);
+    gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + RI_RISE);
+    gain.gain.setValueAtTime(0.22, ctx.currentTime + RI_PEAK);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + RI_FADE);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
@@ -307,7 +312,7 @@ export default function BrainBooster() {
     setRiTimer(0);
     riTimerRef.current = setInterval(() => {
       setRiTimer(t => {
-        if (t + 1 >= 121) {
+        if (t + 1 >= RI_FADE + 1) {
           setTimeout(() => stopRI(), 500);
           return t + 1;
         }
@@ -1218,9 +1223,9 @@ export default function BrainBooster() {
           {calibStep === 'result' && calibResultHz && (() => {
             // Частота RI-торможения: ~75% от частоты тиннитуса (зона подавляющего нейронного ингибирования)
             const riHz = Math.round(calibResultHz * 0.75 / 50) * 50;
-            const riPhase = riTimer < 90 ? 'rise' : riTimer < 120 ? 'fall' : 'done';
-            const riProgress = riTimer < 90 ? (riTimer / 90) * 100 : riTimer < 120 ? 100 - ((riTimer - 90) / 30) * 100 : 0;
-            const riLabel = riPhase === 'rise' ? `Нарастание · ${90 - riTimer} сек` : riPhase === 'fall' ? `Затихание · ${120 - riTimer} сек` : 'Тишина — RI-эффект активен';
+            const riPhase = riTimer < 30 ? 'rise' : riTimer < 90 ? 'peak' : riTimer < 180 ? 'fall' : 'done';
+            const riProgress = riTimer < 30 ? (riTimer / 30) * 100 : riTimer < 90 ? 100 : riTimer < 180 ? 100 - ((riTimer - 90) / 90) * 100 : 0;
+            const riLabel = riPhase === 'rise' ? `Нарастание · ${30 - riTimer} сек` : riPhase === 'peak' ? `Пик · ${90 - riTimer} сек` : riPhase === 'fall' ? `Угасание · ${180 - riTimer} сек` : 'Тишина — RI-эффект активен';
             return (
             <div className="space-y-4">
               {/* Частоты */}
@@ -1250,19 +1255,19 @@ export default function BrainBooster() {
                   </div>
                   <div>
                     <p className="text-sm font-bold">RI-сессия на вашей частоте</p>
-                    <p className="text-xs text-muted-foreground">Тон {riHz.toLocaleString()} Гц · 2 минуты</p>
+                    <p className="text-xs text-muted-foreground">Тон {riHz.toLocaleString()} Гц · 3 минуты</p>
                   </div>
                 </div>
 
                 {riPlaying && (
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                      <span className={riPhase === 'done' ? 'text-green-400 font-medium' : 'text-amber-400'}>{riLabel}</span>
-                      <span>{Math.floor(riTimer / 60)}:{(riTimer % 60).toString().padStart(2, '0')} / 2:00</span>
+                      <span className={riPhase === 'done' ? 'text-green-400 font-medium' : riPhase === 'peak' ? 'text-rose-400 font-medium' : 'text-amber-400'}>{riLabel}</span>
+                      <span>{Math.floor(riTimer / 60)}:{(riTimer % 60).toString().padStart(2, '0')} / 3:00</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-1000 ${riPhase === 'rise' ? 'bg-amber-400' : riPhase === 'fall' ? 'bg-rose-400' : 'bg-green-400'}`}
+                        className={`h-full rounded-full transition-all duration-1000 ${riPhase === 'rise' ? 'bg-amber-400' : riPhase === 'peak' ? 'bg-rose-500' : riPhase === 'fall' ? 'bg-rose-400' : 'bg-green-400'}`}
                         style={{ width: `${riPhase === 'done' ? 100 : riProgress}%` }}
                       />
                     </div>
@@ -1286,8 +1291,8 @@ export default function BrainBooster() {
                 <div className="mt-3 space-y-1">
                   {[
                     'Наденьте наушники, закройте глаза',
-                    'Тон будет нарастать 90 сек, затем плавно угаснет',
-                    'После остановки — тишина, не включайте звуки сразу',
+                    '30 сек нарастание → 60 сек пик → 90 сек плавное угасание',
+                    'После остановки — тишина не менее 3 минут, не включайте звуки',
                   ].map((t, i) => (
                     <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
                       <span className="text-amber-400 flex-shrink-0 mt-0.5">·</span>{t}
