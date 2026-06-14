@@ -308,9 +308,9 @@ export default function BrainBooster() {
 
     const t = ctx.currentTime;
     masterGain.gain.setValueAtTime(0, t);
-    masterGain.gain.linearRampToValueAtTime(0.40, t + RI_RISE);            // мягкий вход 5 сек
-    masterGain.gain.setValueAtTime(0.40, t + RI_PEAK);                     // держим пик 60 сек
-    masterGain.gain.linearRampToValueAtTime(0.08, t + RI_SLOPE);           // плавный спад 15 сек (заметно тише)
+    masterGain.gain.linearRampToValueAtTime(0.75, t + RI_RISE);            // мягкий вход 5 сек
+    masterGain.gain.setValueAtTime(0.75, t + RI_PEAK);                     // держим пик 60 сек
+    masterGain.gain.linearRampToValueAtTime(0.15, t + RI_SLOPE);           // плавный спад 15 сек (заметно тише)
     masterGain.gain.exponentialRampToValueAtTime(0.001, t + RI_END);       // финальное угасание 3 сек
 
     osc.start();
