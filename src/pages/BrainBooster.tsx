@@ -1062,50 +1062,50 @@ export default function BrainBooster() {
                     <Icon name="EarOff" size={16} className="text-rose-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-rose-400">Избавься от звона в ушах</p>
-                    <p className="text-xs text-muted-foreground">Найдём частоту вашего шума в ушах</p>
+                    <p className="text-base font-bold text-rose-400">Избавься от звона в ушах</p>
+                    <p className="text-sm text-muted-foreground">Найдём частоту вашего шума в ушах</p>
                   </div>
                 </div>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>Мы проиграем тоны разных частот. Ваша задача — найти тот, который больше всего похож на ваш шум в ушах.</p>
+                <div className="space-y-2">
+                  <p className="text-base text-muted-foreground leading-relaxed">Мы проиграем тоны разных частот. Ваша задача — найти тот, который больше всего похож на ваш шум в ушах.</p>
                 </div>
 
                 {/* Научный блок */}
                 <div className="mt-3 space-y-2">
                   <div className="bg-background/60 rounded-xl p-3 space-y-2">
-                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
                       <span className="text-rose-400">🔬</span> Почему звенит в ушах?
                     </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Тиннитус возникает когда волосковые клетки улитки повреждаются (шум, возраст, стресс) и перестают передавать сигнал на определённой частоте. Мозг, не получая сигнала, начинает <span className="text-foreground">«придумывать» его сам</span> — так появляется фантомный звон. Это нейропластичность, направленная в неправильную сторону.
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Тиннитус возникает когда волосковые клетки улитки повреждаются (шум, возраст, стресс) и перестают передавать сигнал на определённой частоте. Мозг, не получая сигнала, начинает <span className="text-foreground font-medium">«придумывать» его сам</span> — так появляется фантомный звон.
                     </p>
                   </div>
                   <div className="bg-background/60 rounded-xl p-3 space-y-2">
-                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <p className="text-sm font-bold text-foreground flex items-center gap-1.5">
                       <span className="text-rose-400">💡</span> Как можно помочь?
                     </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      <span className="text-foreground font-medium">Нотч-терапия</span> (Okamoto et al., 2010) — слушать музыку с «вырезанной» полосой на частоте шума 1–2 ч/день. За 4–12 недель нейроны вокруг этой частоты успокаиваются и шум ослабевает. <span className="text-foreground font-medium">RI-протокол</span> (Vernon, 1977) — кратковременно «перегрузить» эти нейроны точным тоном, после чего они замолкают на 30 сек – несколько минут.
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      <span className="text-foreground font-bold">Нотч-терапия</span> (Okamoto et al., 2010) — слушать музыку с «вырезанной» полосой на частоте шума 1–2 ч/день. За 4–12 недель шум ослабевает. <span className="text-foreground font-bold">RI-протокол</span> (Vernon, 1977) — точный тон «перегружает» нейроны, после чего они замолкают на несколько минут.
                     </p>
-                    <p className="text-xs text-rose-400 font-medium">Первый шаг к обоим методам — найти вашу частоту.</p>
+                    <p className="text-sm text-rose-400 font-bold">Первый шаг к обоим методам — найти вашу частоту.</p>
                   </div>
                 </div>
 
-                <div className="mt-3 space-y-1.5">
+                <div className="mt-4 space-y-2">
                   {[
                     { icon: 'Headphones', text: 'Наденьте наушники — обязательно' },
                     { icon: 'Volume2',    text: 'Установите комфортную громкость' },
                     { icon: 'Moon',       text: 'Сядьте в тишине, закройте глаза' },
                   ].map((tip, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Icon name={tip.icon} size={13} className="text-rose-400 flex-shrink-0" />
+                    <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Icon name={tip.icon} size={16} className="text-rose-400 flex-shrink-0" />
                       {tip.text}
                     </div>
                   ))}
                 </div>
                 <button
                   onClick={() => setCalibStep('coarse')}
-                  className="mt-4 w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors"
+                  className="mt-5 w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-4 text-base font-bold transition-colors"
                 >
                   Начать калибровку
                 </button>
@@ -1117,30 +1117,30 @@ export default function BrainBooster() {
           {calibStep === 'coarse' && (
             <div className="space-y-4">
               <div className="bg-card border border-border rounded-2xl p-4">
-                <p className="text-xs text-muted-foreground mb-1">Шаг 1 из 2</p>
-                <p className="text-sm font-bold mb-1">Выберите ближайший диапазон</p>
-                <p className="text-xs text-muted-foreground mb-2">Нажмите кнопку воспроизведения рядом с каждым тоном и найдите тот, что больше всего похож на ваш шум.</p>
-                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2.5 mb-4 text-xs text-rose-400 leading-relaxed">
-                  <span className="font-semibold">Важно:</span> если вы не слышите 6000–8000 Гц — это нормально. При тиннитусе граница слуха обрывается именно там, где живёт шум — мозг «заглушает» эту зону. Выбирайте самый высокий тон, который ещё слышите — это и есть ваша частота.
+                <p className="text-sm text-muted-foreground mb-1 font-medium">Шаг 1 из 2</p>
+                <p className="text-xl font-bold mb-2">Выберите ближайший диапазон</p>
+                <p className="text-sm text-muted-foreground mb-3 leading-relaxed">Нажмите кнопку воспроизведения рядом с каждым тоном и найдите тот, что больше всего похож на ваш шум.</p>
+                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3 mb-4 text-sm text-rose-400 leading-relaxed">
+                  <span className="font-bold">Важно:</span> если вы не слышите 6000–8000 Гц — это нормально. При тиннитусе граница слуха обрывается именно там, где живёт шум — мозг «заглушает» эту зону. Выбирайте самый высокий тон, который ещё слышите — это и есть ваша частота.
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {[500, 1000, 2000, 3000, 4000, 6000, 8000].map(hz => (
-                    <div key={hz} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border transition-colors ${calibCoarseHz === hz ? 'bg-rose-500/15 border-rose-500/40' : 'bg-background/50 border-border'}`}>
+                    <div key={hz} className={`flex items-center gap-3 rounded-xl px-3 py-3 border transition-colors ${calibCoarseHz === hz ? 'bg-rose-500/15 border-rose-500/40' : 'bg-background/50 border-border'}`}>
                       <button
                         onClick={() => handleCalibToneToggle(hz)}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${calibPlaying && calibHz === hz ? 'bg-rose-500 text-white' : 'bg-muted hover:bg-muted/80 text-foreground'}`}
+                        className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${calibPlaying && calibHz === hz ? 'bg-rose-500 text-white' : 'bg-muted hover:bg-muted/80 text-foreground'}`}
                       >
-                        <Icon name={calibPlaying && calibHz === hz ? 'Square' : 'Play'} size={14} />
+                        <Icon name={calibPlaying && calibHz === hz ? 'Square' : 'Play'} size={18} />
                       </button>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{hz.toLocaleString()} Гц</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-base font-bold">{hz.toLocaleString()} Гц</p>
+                        <p className="text-sm text-muted-foreground">
                           {hz <= 500 ? 'Очень низкий гул' : hz <= 1000 ? 'Низкий тон' : hz <= 2000 ? 'Средний тон' : hz <= 4000 ? 'Высокий тон' : hz <= 6000 ? 'Очень высокий' : 'Писк, свист'}
                         </p>
                       </div>
                       <button
                         onClick={() => { stopCalibTone(); setCalibCoarseHz(hz); }}
-                        className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${calibCoarseHz === hz ? 'bg-rose-500 text-white' : 'bg-muted text-muted-foreground hover:text-foreground'}`}
+                        className={`text-sm px-4 py-2 rounded-lg font-bold transition-colors ${calibCoarseHz === hz ? 'bg-rose-500 text-white' : 'bg-muted text-muted-foreground hover:text-foreground'}`}
                       >
                         {calibCoarseHz === hz ? 'Выбрано' : 'Похоже'}
                       </button>
@@ -1150,11 +1150,11 @@ export default function BrainBooster() {
                 <button
                   disabled={!calibCoarseHz}
                   onClick={() => { setCalibHz(calibCoarseHz!); setCalibStep('fine'); }}
-                  className="mt-4 w-full bg-rose-500 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors"
+                  className="mt-5 w-full bg-rose-500 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl py-4 text-base font-bold transition-colors"
                 >
                   Уточнить частоту →
                 </button>
-                <button onClick={() => { stopCalibTone(); setCalibStep('intro'); }} className="mt-2 w-full text-xs text-muted-foreground py-2 hover:text-foreground transition-colors">
+                <button onClick={() => { stopCalibTone(); setCalibStep('intro'); }} className="mt-2 w-full text-sm text-muted-foreground py-2 hover:text-foreground transition-colors">
                   ← Назад
                 </button>
               </div>
@@ -1165,25 +1165,25 @@ export default function BrainBooster() {
           {calibStep === 'fine' && calibCoarseHz && (
             <div className="space-y-4">
               <div className="bg-card border border-border rounded-2xl p-4">
-                <p className="text-xs text-muted-foreground mb-1">Шаг 2 из 2 · Тонкая настройка</p>
-                <p className="text-sm font-bold mb-1">Найдите точное совпадение</p>
-                <p className="text-xs text-muted-foreground mb-2">Диапазон вокруг {calibCoarseHz.toLocaleString()} Гц. Двигайте ползунок и прослушивайте тоны.</p>
+                <p className="text-sm text-muted-foreground mb-1 font-medium">Шаг 2 из 2 · Тонкая настройка</p>
+                <p className="text-xl font-bold mb-2">Найдите точное совпадение</p>
+                <p className="text-sm text-muted-foreground mb-3 leading-relaxed">Диапазон вокруг {calibCoarseHz.toLocaleString()} Гц. Двигайте ползунок и прослушивайте тоны.</p>
 
-                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2.5 mb-3 space-y-2">
-                  <p className="text-xs text-rose-400 leading-relaxed">
-                    <span className="font-semibold">Ищите тон, который «сливается» с вашим шумом</span> — то есть становится неотличим от звона в ушах или вы перестаёте его слышать. Это и есть ваша частота.
+                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-4 py-3 mb-4 space-y-2.5">
+                  <p className="text-sm text-rose-400 leading-relaxed">
+                    <span className="font-bold">Ищите тон, который «сливается» с вашим шумом</span> — то есть становится неотличим от звона в ушах или вы перестаёте его слышать. Это и есть ваша частота.
                   </p>
-                  <p className="text-xs text-rose-300/70 leading-relaxed">
-                    Почему так: ваш тиннитус «маскирует» близкие частоты — мозг не может различить два одинаковых звука одновременно. Этот феномен называется <span className="italic">тональная маскировка</span> и используется аудиологами для точной диагностики.
+                  <p className="text-sm text-rose-300 leading-relaxed">
+                    Почему так: ваш тиннитус «маскирует» близкие частоты — мозг не может различить два одинаковых звука одновременно. Этот феномен называется <span className="italic font-medium">тональная маскировка</span> и используется аудиологами для точной диагностики.
                   </p>
                 </div>
 
                 {/* Ползунок */}
                 <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">{Math.max(200, calibCoarseHz - 1500).toLocaleString()} Гц</span>
-                    <span className="text-lg font-bold text-rose-400">{calibHz.toLocaleString()} Гц</span>
-                    <span className="text-xs text-muted-foreground">{(calibCoarseHz + 1500).toLocaleString()} Гц</span>
+                    <span className="text-sm text-muted-foreground font-medium">{Math.max(200, calibCoarseHz - 1500).toLocaleString()} Гц</span>
+                    <span className="text-2xl font-bold text-rose-400">{calibHz.toLocaleString()} Гц</span>
+                    <span className="text-sm text-muted-foreground font-medium">{(calibCoarseHz + 1500).toLocaleString()} Гц</span>
                   </div>
                   <input
                     type="range"
@@ -1203,9 +1203,9 @@ export default function BrainBooster() {
                 {/* Кнопка прослушать */}
                 <button
                   onClick={() => calibPlaying ? stopCalibTone() : playCalibTone(calibHz)}
-                  className={`w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-colors mb-3 ${calibPlaying ? 'bg-rose-500 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}
+                  className={`w-full flex items-center justify-center gap-2 rounded-xl py-4 text-base font-bold transition-colors mb-3 ${calibPlaying ? 'bg-rose-500 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}
                 >
-                  <Icon name={calibPlaying ? 'Square' : 'Play'} size={15} />
+                  <Icon name={calibPlaying ? 'Square' : 'Play'} size={18} />
                   {calibPlaying ? 'Остановить' : 'Прослушать тон'}
                 </button>
 
@@ -1217,11 +1217,11 @@ export default function BrainBooster() {
                     localStorage.setItem('tinnitus_hz', String(calibHz));
                     setCalibStep('result');
                   }}
-                  className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors"
+                  className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-4 text-base font-bold transition-colors"
                 >
                   Это мой шум — сохранить частоту
                 </button>
-                <button onClick={() => { stopCalibTone(); setCalibStep('coarse'); }} className="mt-2 w-full text-xs text-muted-foreground py-2 hover:text-foreground transition-colors">
+                <button onClick={() => { stopCalibTone(); setCalibStep('coarse'); }} className="mt-2 w-full text-sm text-muted-foreground py-2 hover:text-foreground transition-colors">
                   ← Назад
                 </button>
               </div>
