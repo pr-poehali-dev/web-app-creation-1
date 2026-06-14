@@ -687,12 +687,6 @@ export default function BrainBooster() {
                               </p>
                             </div>
                             <div className="bg-blue-500/10 rounded-lg px-2.5 py-2">
-                              <p className="text-xs text-blue-700 font-semibold mb-1">📊 Что говорит наука</p>
-                              <p className="text-xs text-blue-700 leading-relaxed">
-                                Университет Северной Каролины (2019): участники <strong>50–75 лет</strong> после 4 недель ежедневных сессий по 20 мин улучшили удержание информации на <strong>32%</strong> по сравнению с контрольной группой.
-                              </p>
-                            </div>
-                            <div className="bg-blue-500/10 rounded-lg px-2.5 py-2">
                               <p className="text-xs text-blue-700 font-semibold mb-1">⏱ Как применять</p>
                               <p className="text-xs text-blue-700 leading-relaxed">
                                 Слушайте 20–30 минут перед важным делом — чтением, учёбой, рабочей встречей. Эффект нарастает постепенно: заметный результат — через 7–14 дней регулярной практики.
