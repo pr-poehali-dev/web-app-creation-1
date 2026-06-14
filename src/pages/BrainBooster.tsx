@@ -532,7 +532,7 @@ export default function BrainBooster() {
         <div className="flex max-w-lg mx-auto">
           {([
             { id: 'modes',    label: 'Режимы',   icon: 'Brain' },
-            { id: 'tinnitus', label: 'Избавиться от шума в ушах / Тиннитус', icon: 'EarOff' },
+            { id: 'tinnitus', label: 'Звон в ушах / Тиннитус', icon: 'EarOff' },
           ] as const).map(tab => (
             <button
               key={tab.id}
@@ -1048,7 +1048,7 @@ export default function BrainBooster() {
                     <Icon name="EarOff" size={16} className="text-rose-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-rose-400">Калибровка частоты тиннитуса</p>
+                    <p className="text-sm font-bold text-rose-400">Избавься от звона в ушах</p>
                     <p className="text-xs text-muted-foreground">Найдём частоту вашего шума в ушах</p>
                   </div>
                 </div>
