@@ -199,8 +199,12 @@ function createWhiteNoiseBuffer(ctx: AudioContext): AudioBuffer {
   return buffer;
 }
 
+// Шаги калибровки тиннитуса
+type CalibStep = 'intro' | 'coarse' | 'fine' | 'result';
+
 export default function BrainBooster() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'modes' | 'tinnitus'>('modes');
   const [activeMode, setActiveMode] = useState<BrainMode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.4);
@@ -211,6 +215,57 @@ export default function BrainBooster() {
   // Длительность сессии: null = без ограничения, число = секунды
   const [sessionDuration, setSessionDuration] = useState<number | null>(15 * 60);
   const [sessionEnded, setSessionEnded] = useState(false);
+
+  // ── Калибровщик тиннитуса ──────────────────────────────
+  const [calibStep, setCalibStep] = useState<CalibStep>('intro');
+  const [calibHz, setCalibHz] = useState(4000);          // текущий тестируемый тон
+  const [calibCoarseHz, setCalibCoarseHz] = useState<number | null>(null); // выбранный грубый диапазон
+  const [calibResultHz, setCalibResultHz] = useState<number | null>(null);  // итоговая частота
+  const [calibPlaying, setCalibPlaying] = useState(false);
+  const calibCtxRef = useRef<AudioContext | null>(null);
+  const calibOscRef = useRef<OscillatorNode | null>(null);
+
+  const stopCalibTone = useCallback(() => {
+    calibOscRef.current?.stop();
+    calibOscRef.current?.disconnect();
+    calibOscRef.current = null;
+    calibCtxRef.current?.close();
+    calibCtxRef.current = null;
+    setCalibPlaying(false);
+  }, []);
+
+  const playCalibTone = useCallback((hz: number) => {
+    stopCalibTone();
+    const ctx = new AudioContext();
+    calibCtxRef.current = ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = hz;
+    gain.gain.value = 0.18;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    calibOscRef.current = osc;
+    setCalibPlaying(true);
+  }, [stopCalibTone]);
+
+  const handleCalibToneToggle = useCallback((hz: number) => {
+    if (calibPlaying && calibHz === hz) {
+      stopCalibTone();
+      setCalibHz(hz);
+    } else {
+      setCalibHz(hz);
+      playCalibTone(hz);
+    }
+  }, [calibPlaying, calibHz, stopCalibTone, playCalibTone]);
+
+  // При смене вкладки — останавливаем все звуки
+  const handleTabChange = useCallback((tab: 'modes' | 'tinnitus') => {
+    stop();
+    stopCalibTone();
+    setActiveTab(tab);
+  }, [stopCalibTone]);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const leftOscRef = useRef<OscillatorNode | null>(null);
@@ -415,6 +470,31 @@ export default function BrainBooster() {
         </div>
       </div>
 
+      {/* ── ВКЛАДКИ ───────────────────────────────────────── */}
+      <div className="sticky top-[57px] z-10 bg-background border-b border-border px-4">
+        <div className="flex max-w-lg mx-auto">
+          {([
+            { id: 'modes',    label: 'Режимы',   icon: 'Brain' },
+            { id: 'tinnitus', label: 'Тиннитус', icon: 'EarOff' },
+          ] as const).map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Icon name={tab.icon} size={15} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── ВКЛАДКА: РЕЖИМЫ ───────────────────────────────── */}
+      {activeTab === 'modes' && (
       <div className="px-4 pt-5 space-y-5 max-w-lg mx-auto">
 
         {/* ── СОВЕТЫ ────────────────────────────────────────── */}
@@ -855,6 +935,201 @@ export default function BrainBooster() {
         </p>
 
       </div>
+      )}
+
+      {/* ── ВКЛАДКА: ТИННИТУС ─────────────────────────────── */}
+      {activeTab === 'tinnitus' && (
+        <div className="px-4 pt-5 space-y-5 max-w-lg mx-auto pb-10">
+
+          {/* Intro */}
+          {calibStep === 'intro' && (
+            <div className="space-y-4">
+              <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-rose-500/15 flex items-center justify-center flex-shrink-0">
+                    <Icon name="EarOff" size={16} className="text-rose-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-rose-400">Калибровка частоты тиннитуса</p>
+                    <p className="text-xs text-muted-foreground">Найдём частоту вашего шума в ушах</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <p>Мы проиграем тоны разных частот. Ваша задача — найти тот, который больше всего похож на ваш шум в ушах.</p>
+                  <p className="text-xs bg-background/50 rounded-xl p-3 leading-relaxed">
+                    <span className="text-foreground font-medium">Зачем это нужно:</span> зная точную частоту, можно применять нотч-терапию — научно доказанный метод снижения тиннитуса за 4–12 недель.
+                  </p>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {[
+                    { icon: 'Headphones', text: 'Наденьте наушники — обязательно' },
+                    { icon: 'Volume2',    text: 'Установите комфортную громкость' },
+                    { icon: 'Moon',       text: 'Сядьте в тишине, закройте глаза' },
+                  ].map((tip, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Icon name={tip.icon} size={13} className="text-rose-400 flex-shrink-0" />
+                      {tip.text}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setCalibStep('coarse')}
+                  className="mt-4 w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors"
+                >
+                  Начать калибровку
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Шаг 1 — грубый поиск */}
+          {calibStep === 'coarse' && (
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <p className="text-xs text-muted-foreground mb-1">Шаг 1 из 2</p>
+                <p className="text-sm font-bold mb-1">Выберите ближайший диапазон</p>
+                <p className="text-xs text-muted-foreground mb-4">Нажмите кнопку воспроизведения рядом с каждым тоном и найдите тот, что больше всего похож на ваш шум.</p>
+                <div className="space-y-2">
+                  {[500, 1000, 2000, 3000, 4000, 6000, 8000].map(hz => (
+                    <div key={hz} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border transition-colors ${calibCoarseHz === hz ? 'bg-rose-500/15 border-rose-500/40' : 'bg-background/50 border-border'}`}>
+                      <button
+                        onClick={() => handleCalibToneToggle(hz)}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${calibPlaying && calibHz === hz ? 'bg-rose-500 text-white' : 'bg-muted hover:bg-muted/80 text-foreground'}`}
+                      >
+                        <Icon name={calibPlaying && calibHz === hz ? 'Square' : 'Play'} size={14} />
+                      </button>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{hz.toLocaleString()} Гц</p>
+                        <p className="text-xs text-muted-foreground">
+                          {hz <= 500 ? 'Очень низкий гул' : hz <= 1000 ? 'Низкий тон' : hz <= 2000 ? 'Средний тон' : hz <= 4000 ? 'Высокий тон' : hz <= 6000 ? 'Очень высокий' : 'Писк, свист'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => { stopCalibTone(); setCalibCoarseHz(hz); }}
+                        className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${calibCoarseHz === hz ? 'bg-rose-500 text-white' : 'bg-muted text-muted-foreground hover:text-foreground'}`}
+                      >
+                        {calibCoarseHz === hz ? 'Выбрано' : 'Похоже'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  disabled={!calibCoarseHz}
+                  onClick={() => { setCalibHz(calibCoarseHz!); setCalibStep('fine'); }}
+                  className="mt-4 w-full bg-rose-500 hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors"
+                >
+                  Уточнить частоту →
+                </button>
+                <button onClick={() => { stopCalibTone(); setCalibStep('intro'); }} className="mt-2 w-full text-xs text-muted-foreground py-2 hover:text-foreground transition-colors">
+                  ← Назад
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Шаг 2 — тонкая настройка */}
+          {calibStep === 'fine' && calibCoarseHz && (
+            <div className="space-y-4">
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <p className="text-xs text-muted-foreground mb-1">Шаг 2 из 2 · Тонкая настройка</p>
+                <p className="text-sm font-bold mb-1">Найдите точное совпадение</p>
+                <p className="text-xs text-muted-foreground mb-2">Диапазон вокруг {calibCoarseHz.toLocaleString()} Гц. Двигайте ползунок — ищите максимальное совпадение с вашим шумом.</p>
+
+                {/* Ползунок */}
+                <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 mb-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground">{Math.max(200, calibCoarseHz - 1500).toLocaleString()} Гц</span>
+                    <span className="text-lg font-bold text-rose-400">{calibHz.toLocaleString()} Гц</span>
+                    <span className="text-xs text-muted-foreground">{(calibCoarseHz + 1500).toLocaleString()} Гц</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={Math.max(200, calibCoarseHz - 1500)}
+                    max={calibCoarseHz + 1500}
+                    step={50}
+                    value={calibHz}
+                    onChange={e => {
+                      const hz = Number(e.target.value);
+                      setCalibHz(hz);
+                      if (calibPlaying) playCalibTone(hz);
+                    }}
+                    className="w-full accent-rose-500"
+                  />
+                </div>
+
+                {/* Кнопка прослушать */}
+                <button
+                  onClick={() => calibPlaying ? stopCalibTone() : playCalibTone(calibHz)}
+                  className={`w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-colors mb-3 ${calibPlaying ? 'bg-rose-500 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}
+                >
+                  <Icon name={calibPlaying ? 'Square' : 'Play'} size={15} />
+                  {calibPlaying ? 'Остановить' : 'Прослушать тон'}
+                </button>
+
+                <button
+                  onClick={() => { stopCalibTone(); setCalibResultHz(calibHz); setCalibStep('result'); }}
+                  className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors"
+                >
+                  Это мой шум — сохранить частоту
+                </button>
+                <button onClick={() => { stopCalibTone(); setCalibStep('coarse'); }} className="mt-2 w-full text-xs text-muted-foreground py-2 hover:text-foreground transition-colors">
+                  ← Назад
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Результат */}
+          {calibStep === 'result' && calibResultHz && (
+            <div className="space-y-4">
+              <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-5 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-rose-500/15 flex items-center justify-center mx-auto mb-3">
+                  <Icon name="EarOff" size={24} className="text-rose-400" />
+                </div>
+                <p className="text-xs text-muted-foreground mb-1">Ваша частота тиннитуса</p>
+                <p className="text-4xl font-bold text-rose-400 mb-1">{calibResultHz.toLocaleString()} Гц</p>
+                <p className="text-xs text-muted-foreground">
+                  {calibResultHz <= 1000 ? 'Низкочастотный тиннитус' : calibResultHz <= 3000 ? 'Среднечастотный тиннитус' : calibResultHz <= 6000 ? 'Высокочастотный тиннитус (самый частый)' : 'Очень высокочастотный тиннитус'}
+                </p>
+              </div>
+
+              <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+                <p className="text-sm font-bold">Что делать с этой информацией</p>
+                <div className="space-y-2">
+                  {[
+                    { icon: 'Music', title: 'Нотч-терапия', desc: `Слушайте любимую музыку с вырезанной частотой ${calibResultHz.toLocaleString()} Гц — 1–2 часа в день. Через 4–12 недель шум становится тише. Это доказанный метод (Okamoto et al., 2010).` },
+                    { icon: 'EarOff', title: 'Режим «Тишина в ушах»', desc: 'Используйте режим на вкладке «Режимы» для временного облегчения между сессиями нотч-терапии.' },
+                    { icon: 'Stethoscope', title: 'Аудиолог', desc: `Запишите частоту ${calibResultHz.toLocaleString()} Гц и покажите аудиологу — это ускорит диагностику и подбор терапии.` },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 bg-background/60 rounded-xl p-3">
+                      <div className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Icon name={item.icon} size={13} className="text-rose-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">{item.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => { setCalibStep('intro'); setCalibCoarseHz(null); setCalibResultHz(null); setCalibHz(4000); }}
+                className="w-full border border-border rounded-xl py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Пройти калибровку заново
+              </button>
+
+              <p className="text-xs text-muted-foreground/50 text-center leading-relaxed pb-2">
+                Калибровка в браузере даёт приблизительный результат ±100–200 Гц. Для точной диагностики обратитесь к аудиологу.
+              </p>
+            </div>
+          )}
+
+        </div>
+      )}
+
     </div>
   );
 }
