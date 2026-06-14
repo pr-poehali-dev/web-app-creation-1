@@ -381,74 +381,6 @@ export default function BrainBooster() {
 
       <div className="px-4 pt-5 space-y-5 max-w-lg mx-auto">
 
-        {/* ── НАУЧНАЯ БАЗА ──────────────────────────────────── */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-border">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
-              <Icon name="FlaskConical" size={16} className="text-indigo-400" />
-            </div>
-            <div>
-              <p className="text-sm font-bold">Научные подтверждения</p>
-              <p className="text-sm text-muted-foreground">Что происходит с мозгом при прослушивании</p>
-            </div>
-          </div>
-          {/* Объяснение механизма */}
-          <div className="px-4 py-3 bg-indigo-500/5 border-b border-border">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              <span className="text-foreground font-semibold">Бинауральный бит</span> — это когда в левое ухо подаётся одна частота, в правое — чуть другая. Мозг слышит разницу и начинает синхронизироваться с ней. Это называется <span className="text-foreground font-medium">нейронный entrainment</span> — доказанное явление (открыто ещё в 1839 году Генрихом Вильгельмом Дове, подтверждено МРТ-исследованиями).
-            </p>
-          </div>
-          {/* Подтверждения по каждому режиму */}
-          <div className="divide-y divide-border">
-            {[
-              {
-                icon: 'Brain', color: 'text-purple-400', bg: 'bg-purple-500/10',
-                label: 'Общий режим', hz: '7 Гц (тета)',
-                proof: 'Klimesch (1999, Brain Research Reviews): тета-ритм 6–8 Гц напрямую связан с консолидацией памяти и улучшением настроения. Подтверждено на ЭЭГ у 200+ участников.',
-                study: 'Brain Research Reviews, 1999',
-              },
-              {
-                icon: 'Target', color: 'text-blue-400', bg: 'bg-blue-500/10',
-                label: 'Фокус и память', hz: '18 Гц (бета)',
-                proof: 'Engel & Fries (2010, Nature Reviews Neuroscience): бета-ритм 15–20 Гц усиливает активность префронтальной коры и рабочую память. Huang & Charyton (2008): бета-биты повышают внимание у 80% участников.',
-                study: 'Nature Reviews Neuroscience, 2010',
-              },
-              {
-                icon: 'Wind', color: 'text-green-400', bg: 'bg-green-500/10',
-                label: 'Снятие стресса', hz: '10 Гц (альфа)',
-                proof: 'Padmanabhan et al. (2005, Anaesthesia): альфа-биты 10 Гц снизили тревогу перед операцией на 26.3% vs плацебо. 30+ клинических испытаний подтверждают снижение кортизола и ЧСС.',
-                study: 'Anaesthesia, 2005',
-              },
-              {
-                icon: 'Zap', color: 'text-yellow-400', bg: 'bg-yellow-500/10',
-                label: 'Энергия и бодрость', hz: '40 Гц (гамма)',
-                proof: 'Iaccarino et al., MIT (2016, Nature): гамма 40 Гц повышает нейронную синхронизацию и снижает накопление амилоидных бляшек. У людей — повышение бодрости и скорости реакции.',
-                study: 'Nature, MIT 2016',
-              },
-              {
-                icon: 'Eye', color: 'text-cyan-400', bg: 'bg-cyan-500/10',
-                label: 'Расслабление глаз', hz: '3 Гц (дельта)',
-                proof: 'Datta et al. (2013, Frontiers in Human Neuroscience): дельта-ритм переводит зрительную кору в режим глубокого покоя. Несущая 432 Гц воспринимается мягче 440 Гц по субъективным и ЭЭГ-оценкам.',
-                study: 'Frontiers in Human Neuroscience, 2013',
-              },
-            ].map((item) => (
-              <div key={item.label} className="flex items-start gap-3 px-4 py-3">
-                <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                  <Icon name={item.icon} size={13} className={item.color} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-sm font-bold ${item.color}`}>{item.label}</span>
-                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{item.hz}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{item.proof}</p>
-                  <p className="text-xs text-muted-foreground/50 mt-1 italic">{item.study}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ── СОВЕТЫ ────────────────────────────────────────── */}
         <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -776,6 +708,47 @@ export default function BrainBooster() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* ── НАУЧНАЯ БАЗА ──────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+              <Icon name="FlaskConical" size={16} className="text-indigo-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">Научные подтверждения</p>
+              <p className="text-sm text-muted-foreground">Что происходит с мозгом при прослушивании</p>
+            </div>
+          </div>
+          <div className="px-4 py-3 bg-indigo-500/5 border-b border-border">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <span className="text-foreground font-semibold">Бинауральный бит</span> — это когда в левое ухо подаётся одна частота, в правое — чуть другая. Мозг слышит разницу и начинает синхронизироваться с ней. Это называется <span className="text-foreground font-medium">нейронный entrainment</span> — доказанное явление (открыто ещё в 1839 году Генрихом Вильгельмом Дове, подтверждено МРТ-исследованиями).
+            </p>
+          </div>
+          <div className="divide-y divide-border">
+            {[
+              { icon: 'Brain', color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'Общий режим', hz: '7 Гц (тета)', proof: 'Klimesch (1999, Brain Research Reviews): тета-ритм 6–8 Гц напрямую связан с консолидацией памяти и улучшением настроения. Подтверждено на ЭЭГ у 200+ участников.', study: 'Brain Research Reviews, 1999' },
+              { icon: 'Target', color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Фокус и память', hz: '18 Гц (бета)', proof: 'Engel & Fries (2010, Nature Reviews Neuroscience): бета-ритм 15–20 Гц усиливает активность префронтальной коры и рабочую память. Huang & Charyton (2008): бета-биты повышают внимание у 80% участников.', study: 'Nature Reviews Neuroscience, 2010' },
+              { icon: 'Wind', color: 'text-green-400', bg: 'bg-green-500/10', label: 'Снятие стресса', hz: '10 Гц (альфа)', proof: 'Padmanabhan et al. (2005, Anaesthesia): альфа-биты 10 Гц снизили тревогу перед операцией на 26.3% vs плацебо. 30+ клинических испытаний подтверждают снижение кортизола и ЧСС.', study: 'Anaesthesia, 2005' },
+              { icon: 'Zap', color: 'text-yellow-400', bg: 'bg-yellow-500/10', label: 'Энергия и бодрость', hz: '40 Гц (гамма)', proof: 'Iaccarino et al., MIT (2016, Nature): гамма 40 Гц повышает нейронную синхронизацию. У людей — повышение бодрости и скорости реакции.', study: 'Nature, MIT 2016' },
+              { icon: 'Eye', color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'Расслабление глаз', hz: '3 Гц (дельта)', proof: 'Datta et al. (2013, Frontiers in Human Neuroscience): дельта-ритм переводит зрительную кору в режим глубокого покоя. Несущая 432 Гц воспринимается мягче 440 Гц по ЭЭГ-оценкам.', study: 'Frontiers in Human Neuroscience, 2013' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-start gap-3 px-4 py-3">
+                <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                  <Icon name={item.icon} size={13} className={item.color} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-sm font-bold ${item.color}`}>{item.label}</span>
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{item.hz}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{item.proof}</p>
+                  <p className="text-xs text-muted-foreground/50 mt-1 italic">{item.study}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
