@@ -389,12 +389,12 @@ export default function BrainBooster() {
             </div>
             <div>
               <p className="text-sm font-bold">Научные подтверждения</p>
-              <p className="text-xs text-muted-foreground">Что происходит с мозгом при прослушивании</p>
+              <p className="text-sm text-muted-foreground">Что происходит с мозгом при прослушивании</p>
             </div>
           </div>
           {/* Объяснение механизма */}
           <div className="px-4 py-3 bg-indigo-500/5 border-b border-border">
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               <span className="text-foreground font-semibold">Бинауральный бит</span> — это когда в левое ухо подаётся одна частота, в правое — чуть другая. Мозг слышит разницу и начинает синхронизироваться с ней. Это называется <span className="text-foreground font-medium">нейронный entrainment</span> — доказанное явление (открыто ещё в 1839 году Генрихом Вильгельмом Дове, подтверждено МРТ-исследованиями).
             </p>
           </div>
@@ -438,11 +438,11 @@ export default function BrainBooster() {
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-xs font-bold ${item.color}`}>{item.label}</span>
-                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{item.hz}</span>
+                    <span className={`text-sm font-bold ${item.color}`}>{item.label}</span>
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{item.hz}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">{item.proof}</p>
-                  <p className="text-[10px] text-muted-foreground/50 mt-1 italic">{item.study}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{item.proof}</p>
+                  <p className="text-xs text-muted-foreground/50 mt-1 italic">{item.study}</p>
                 </div>
               </div>
             ))}
@@ -464,8 +464,8 @@ export default function BrainBooster() {
               { icon: 'CalendarDays', text: 'Эффект накапливается: заметные изменения — через 7–14 дней регулярной практики' },
               { icon: 'AlertTriangle', text: 'Не используйте за рулём и при работе с опасным оборудованием' },
             ].map((tip, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                <Icon name={tip.icon} size={13} className="text-green-400 flex-shrink-0 mt-0.5" />
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Icon name={tip.icon} size={15} className="text-green-400 flex-shrink-0 mt-0.5" />
                 {tip.text}
               </li>
             ))}
@@ -485,8 +485,8 @@ export default function BrainBooster() {
               { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
               { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
             ].map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                <Icon name={item.icon} size={13} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Icon name={item.icon} size={15} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
                 {item.text}
               </li>
             ))}
@@ -729,7 +729,7 @@ export default function BrainBooster() {
         )}
 
         {/* ── ДИСКЛЕЙМЕР (только текст, внизу) ────────────── */}
-        <p className="text-xs text-muted-foreground/50 text-center leading-relaxed pb-2">
+        <p className="text-sm text-muted-foreground/50 text-center leading-relaxed pb-2">
           Функция носит информационно-развлекательный характер, как прослушивание музыки, и не является медицинским средством диагностики или лечения.
         </p>
 
