@@ -526,7 +526,7 @@ export default function BrainBooster() {
         <div className="flex max-w-lg mx-auto">
           {([
             { id: 'modes',    label: 'Режимы',   icon: 'Brain' },
-            { id: 'tinnitus', label: 'Тиннитус', icon: 'EarOff' },
+            { id: 'tinnitus', label: 'Тиннитус / Звон в ушах', icon: 'EarOff' },
           ] as const).map(tab => (
             <button
               key={tab.id}
@@ -583,7 +583,7 @@ export default function BrainBooster() {
               { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
               { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
               { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
-              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Тишина в ушах» или «Снятие стресса»' },
+              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Снятие стресса» или вкладку «Тиннитус / Звон в ушах»' },
               { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -718,7 +718,7 @@ export default function BrainBooster() {
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Режимы</h2>
           <div className="grid grid-cols-1 gap-3">
-            {MODES.map(mode => {
+            {MODES.filter(mode => mode.id !== 'tinnitus').map(mode => {
               const isActive = activeMode === mode.id;
               const isExpanded = expandedMode === mode.id;
               return (
@@ -1039,7 +1039,10 @@ export default function BrainBooster() {
               <div className="bg-card border border-border rounded-2xl p-4">
                 <p className="text-xs text-muted-foreground mb-1">Шаг 1 из 2</p>
                 <p className="text-sm font-bold mb-1">Выберите ближайший диапазон</p>
-                <p className="text-xs text-muted-foreground mb-4">Нажмите кнопку воспроизведения рядом с каждым тоном и найдите тот, что больше всего похож на ваш шум.</p>
+                <p className="text-xs text-muted-foreground mb-2">Нажмите кнопку воспроизведения рядом с каждым тоном и найдите тот, что больше всего похож на ваш шум.</p>
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2 mb-4 text-xs text-amber-400 leading-relaxed">
+                  <span className="font-semibold">Совет:</span> если вы не слышите 6000–8000 Гц — это нормально у людей с тиннитусом. Граница слуха часто обрывается именно там, где шум. Выбирайте самый высокий тон который ещё слышите.
+                </div>
                 <div className="space-y-2">
                   {[500, 1000, 2000, 3000, 4000, 6000, 8000].map(hz => (
                     <div key={hz} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border transition-colors ${calibCoarseHz === hz ? 'bg-rose-500/15 border-rose-500/40' : 'bg-background/50 border-border'}`}>
