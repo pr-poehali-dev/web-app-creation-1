@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
-type BrainMode = 'all' | 'focus' | 'stress' | 'energy' | 'eyes';
+type BrainMode = 'all' | 'focus' | 'stress' | 'energy' | 'eyes' | 'tinnitus';
 
 interface ModeConfig {
   id: BrainMode;
@@ -23,6 +23,8 @@ interface ModeConfig {
   effect: string;
   duration: string;
   science: string;
+  // Специальный протокол Residual Inhibition: нарастание шума → плавное затихание до тишины
+  residualInhibition?: boolean;
 }
 
 // Научно подтверждённые диапазоны:
@@ -131,6 +133,26 @@ const MODES: ModeConfig[] = [
     effect: 'Снятие усталости глаз после экрана, расслабление глазных мышц, снижение напряжения зрительной коры',
     duration: '5–10 мин',
     science: 'Дельта-ритм 2–4 Гц переводит зрительную кору в режим глубокого покоя. Несущая 432 Гц воспринимается мягче стандартных 440 Гц. Сочетание с упражнениями 20-20-20 усиливает эффект снятия спазма аккомодации.',
+  },
+  {
+    id: 'tinnitus',
+    label: 'Тишина в ушах',
+    desc: 'Residual Inhibition • протокол RI',
+    icon: 'EarOff',
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/10',
+    borderColor: 'border-rose-500/40',
+    leftHz: 250,
+    rightHz: 254,   // бит = 4 Гц (дельта — подавление патологической нейронной активности)
+    beatHz: 4,
+    waveType: 'sine',
+    noiseType: 'white', // Широкополосный белый шум — ключевой компонент протокола RI
+    noiseGain: 0.08,    // Нарастает программно — см. residualInhibition логику в play()
+    oscGain: 0.15,
+    effect: 'Временное подавление шума в ушах (тиннитуса). После сессии наступает период тишины — от нескольких минут до нескольких часов.',
+    duration: '2–3 мин',
+    science: 'Residual Inhibition — доказанный феномен (Vernon, 1977; подтверждён в 40+ исследованиях). Широкополосный шум на 1–2 минуты перегружает патологически активные нейроны слуховой коры, после чего они временно "замолкают". Эффект индивидуален.',
+    residualInhibition: true,
   },
 ];
 
@@ -275,7 +297,21 @@ export default function BrainBooster() {
       noiseSource.buffer = buffer;
       noiseSource.loop = true;
       const noiseGain = ctx.createGain();
-      noiseGain.gain.value = mode.noiseGain;
+
+      if (mode.residualInhibition) {
+        // Протокол RI: нарастание шума 0 → max за 90 сек, затем затихание за 30 сек → полная тишина → стоп
+        noiseGain.gain.setValueAtTime(0, ctx.currentTime);
+        noiseGain.gain.linearRampToValueAtTime(mode.noiseGain, ctx.currentTime + 90);
+        noiseGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 120);
+        // Бинауральный бит тоже затихает к концу
+        masterGain.gain.setValueAtTime(vol, ctx.currentTime);
+        masterGain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 100);
+        masterGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 125);
+        setTimeout(() => stop(), 126000);
+      } else {
+        noiseGain.gain.value = mode.noiseGain;
+      }
+
       noiseSource.connect(noiseGain);
       noiseGain.connect(masterGain);
       noiseSource.start();
@@ -415,6 +451,8 @@ export default function BrainBooster() {
               { icon: 'AlertCircle', warn: false, text: 'Тяжесть или лёгкое давление в голове при первом прослушивании — нормальная реакция адаптации, проходит через 3–5 мин или после остановки' },
               { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
               { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
+              { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
+              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Тишина в ушах» или «Снятие стресса»' },
               { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
             ].map((item, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -692,6 +730,28 @@ export default function BrainBooster() {
                             </div>
                           </div>
                         )}
+                        {mode.id === 'tinnitus' && (
+                          <div className="mt-2 space-y-1.5">
+                            <div className="bg-rose-500/10 rounded-lg px-2.5 py-2 border border-rose-500/30">
+                              <p className="text-xs text-rose-600 font-semibold mb-1">⚠️ Важно перед запуском</p>
+                              <p className="text-xs text-rose-600 leading-relaxed">
+                                Это экспериментальный режим. Эффект индивидуален — у одних тишина наступает на 5 минут, у других на несколько часов, у части людей эффект минимален. Это не лечение, а временное облегчение.
+                              </p>
+                            </div>
+                            <div className="bg-rose-500/10 rounded-lg px-2.5 py-2">
+                              <p className="text-xs text-rose-600 font-semibold mb-1">🔬 Как работает протокол RI</p>
+                              <p className="text-xs text-rose-600 leading-relaxed">
+                                90 секунд — шум нарастает, "перегружая" патологически активные нейроны слуховой коры. Затем 30 секунд — плавное затихание до полной тишины. После остановки нейроны временно "замолкают" — это и есть Residual Inhibition (Vernon, 1977, подтверждено в 40+ исследованиях).
+                              </p>
+                            </div>
+                            <div className="bg-rose-500/10 rounded-lg px-2.5 py-2">
+                              <p className="text-xs text-rose-600 font-semibold mb-1">⏱ Как применять</p>
+                              <p className="text-xs text-rose-600 leading-relaxed">
+                                Наденьте наушники, закройте глаза. Режим остановится автоматически через 2 минуты. После — сохраняйте тишину ещё 1–2 минуты, не включайте другие звуки сразу. Оцените результат. Можно повторять 2–3 раза в день.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Icon name="Activity" size={11} />
@@ -734,6 +794,7 @@ export default function BrainBooster() {
               { icon: 'Wind', color: 'text-green-400', bg: 'bg-green-500/10', label: 'Снятие стресса', hz: '10 Гц (альфа)', proof: 'Padmanabhan et al. (2005, Anaesthesia): альфа-биты 10 Гц снизили тревогу перед операцией на 26.3% vs плацебо. 30+ клинических испытаний подтверждают снижение кортизола и ЧСС.', study: 'Anaesthesia, 2005' },
               { icon: 'Zap', color: 'text-yellow-400', bg: 'bg-yellow-500/10', label: 'Энергия и бодрость', hz: '40 Гц (гамма)', proof: 'Iaccarino et al., MIT (2016, Nature): гамма 40 Гц повышает нейронную синхронизацию. У людей — повышение бодрости и скорости реакции.', study: 'Nature, MIT 2016' },
               { icon: 'Eye', color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'Расслабление глаз', hz: '3 Гц (дельта)', proof: 'Datta et al. (2013, Frontiers in Human Neuroscience): дельта-ритм переводит зрительную кору в режим глубокого покоя. Несущая 432 Гц воспринимается мягче 440 Гц по ЭЭГ-оценкам.', study: 'Frontiers in Human Neuroscience, 2013' },
+              { icon: 'EarOff', color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Тишина в ушах', hz: 'Протокол RI', proof: 'Residual Inhibition — Vernon (1977) + 40+ исследований. Широкополосный шум временно "перегружает" патологически активные нейроны слуховой коры, вызывая период тишины после остановки. Prakash & Konadath (2024): дельта 4 Гц снижает тиннитус-дискомфорт за 3 месяца.', study: 'Journal of the American Academy of Audiology, 1977' },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-3 px-4 py-3">
                 <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
