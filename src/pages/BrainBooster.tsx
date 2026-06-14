@@ -285,11 +285,11 @@ export default function BrainBooster() {
 
   // Протокол RI (чистый тон, Vernon 1977 / Henry & Meikle 2000):
   // 0–5 сек    — мягкое нарастание
-  // 5–65 сек   — чистый тон на полной громкости (60 сек воздействия)
-  // 65–80 сек  — плавный заметный спад с пика (15 сек, громкость ощутимо падает)
+  // 5–50 сек   — чистый тон на полной громкости (45 сек воздействия)
+  // 50–80 сек  — плавный заметный спад с пика (30 сек, громкость ощутимо падает)
   // 80–83 сек  — финальное угасание до тишины (3 сек)
   const RI_RISE  = 5;
-  const RI_PEAK  = 65;
+  const RI_PEAK  = 50;
   const RI_SLOPE = 80;  // конец плавного спада
   const RI_END   = 83;  // полная тишина
   const playRI = useCallback((hz: number) => {
@@ -1231,14 +1231,14 @@ export default function BrainBooster() {
           {calibStep === 'result' && calibResultHz && (() => {
             // Частота RI-торможения: ~75% от частоты тиннитуса (зона подавляющего нейронного ингибирования)
             const riHz = Math.round(calibResultHz * 0.75 / 50) * 50;
-            const riPhase = riTimer < 5 ? 'rise' : riTimer < 65 ? 'peak' : riTimer < 80 ? 'slope' : riTimer < 83 ? 'fall' : 'done';
+            const riPhase = riTimer < 5 ? 'rise' : riTimer < 50 ? 'peak' : riTimer < 80 ? 'slope' : riTimer < 83 ? 'fall' : 'done';
             const riProgress = riTimer < 5 ? (riTimer / 5) * 100
-              : riTimer < 65 ? 100
-              : riTimer < 80 ? 100 - ((riTimer - 65) / 15) * 80
+              : riTimer < 50 ? 100
+              : riTimer < 80 ? 100 - ((riTimer - 50) / 30) * 80
               : riTimer < 83 ? 20 - ((riTimer - 80) / 3) * 20
               : 0;
             const riLabel = riPhase === 'rise'  ? `Нарастание · ${5 - riTimer} сек`
-              : riPhase === 'peak'  ? `Воздействие · ${65 - riTimer} сек`
+              : riPhase === 'peak'  ? `Воздействие · ${50 - riTimer} сек`
               : riPhase === 'slope' ? `Спад · ${80 - riTimer} сек`
               : riPhase === 'fall'  ? `Угасание · ${83 - riTimer} сек`
               : 'Тишина — RI-эффект активен';
@@ -1307,7 +1307,7 @@ export default function BrainBooster() {
                 <div className="mt-3 space-y-1">
                   {[
                     'Наденьте наушники, закройте глаза',
-                    '5 сек вход → 60 сек тон → 15 сек спад → 3 сек угасание',
+                    '5 сек вход → 45 сек тон → 30 сек спад → 3 сек угасание',
                     'После остановки — тишина не менее 3 минут, не включайте звуки',
                   ].map((t, i) => (
                     <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
