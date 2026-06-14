@@ -221,6 +221,12 @@ export default function BrainBooster() {
   const [calibHz, setCalibHz] = useState(4000);          // текущий тестируемый тон
   const [calibCoarseHz, setCalibCoarseHz] = useState<number | null>(null); // выбранный грубый диапазон
   const [calibResultHz, setCalibResultHz] = useState<number | null>(null);  // итоговая частота
+
+  // ── Сохранённая частота из localStorage ──────────────
+  const [savedHz, setSavedHz] = useState<number | null>(() => {
+    const v = localStorage.getItem('tinnitus_hz');
+    return v ? Number(v) : null;
+  });
   const [calibPlaying, setCalibPlaying] = useState(false);
   const calibCtxRef = useRef<AudioContext | null>(null);
   const calibOscRef = useRef<OscillatorNode | null>(null);
@@ -526,7 +532,7 @@ export default function BrainBooster() {
         <div className="flex max-w-lg mx-auto">
           {([
             { id: 'modes',    label: 'Режимы',   icon: 'Brain' },
-            { id: 'tinnitus', label: 'Избавиться от шума / Тиннитус', icon: 'EarOff' },
+            { id: 'tinnitus', label: 'Избавиться от шума в ушах / Тиннитус', icon: 'EarOff' },
           ] as const).map(tab => (
             <button
               key={tab.id}
@@ -995,6 +1001,47 @@ export default function BrainBooster() {
           {/* Intro */}
           {calibStep === 'intro' && (
             <div className="space-y-4">
+
+              {/* Сохранённая частота */}
+              {savedHz && (() => {
+                const riHz = Math.round(savedHz * 0.75 / 50) * 50;
+                return (
+                  <div className="bg-card border border-rose-500/40 rounded-2xl p-4">
+                    <p className="text-xs text-muted-foreground mb-2">Ваша сохранённая частота</p>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex-1 text-center bg-rose-500/10 rounded-xl p-2.5">
+                        <p className="text-xl font-bold text-rose-400">{savedHz.toLocaleString()} Гц</p>
+                        <p className="text-xs text-muted-foreground">тиннитус</p>
+                      </div>
+                      <div className="flex-1 text-center bg-amber-500/10 rounded-xl p-2.5">
+                        <p className="text-xl font-bold text-amber-400">{riHz.toLocaleString()} Гц</p>
+                        <p className="text-xs text-muted-foreground">RI-частота</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => { setCalibResultHz(savedHz); setCalibStep('result'); }}
+                      className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors mb-2"
+                    >
+                      Запустить RI-сессию
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCalibStep('coarse')}
+                        className="flex-1 border border-border rounded-xl py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Перекалибровать
+                      </button>
+                      <button
+                        onClick={() => { setSavedHz(null); localStorage.removeItem('tinnitus_hz'); }}
+                        className="flex-1 border border-border rounded-xl py-2 text-xs text-muted-foreground hover:text-rose-400 transition-colors"
+                      >
+                        Сбросить
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-rose-500/15 flex items-center justify-center flex-shrink-0">
@@ -1149,7 +1196,13 @@ export default function BrainBooster() {
                 </button>
 
                 <button
-                  onClick={() => { stopCalibTone(); setCalibResultHz(calibHz); setCalibStep('result'); }}
+                  onClick={() => {
+                    stopCalibTone();
+                    setCalibResultHz(calibHz);
+                    setSavedHz(calibHz);
+                    localStorage.setItem('tinnitus_hz', String(calibHz));
+                    setCalibStep('result');
+                  }}
                   className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors"
                 >
                   Это мой шум — сохранить частоту
