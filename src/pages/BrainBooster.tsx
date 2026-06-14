@@ -526,7 +526,7 @@ export default function BrainBooster() {
         <div className="flex max-w-lg mx-auto">
           {([
             { id: 'modes',    label: 'Режимы',   icon: 'Brain' },
-            { id: 'tinnitus', label: 'Тиннитус / Звон в ушах', icon: 'EarOff' },
+            { id: 'tinnitus', label: 'Избавиться от шума / Тиннитус', icon: 'EarOff' },
           ] as const).map(tab => (
             <button
               key={tab.id}
@@ -1007,11 +1007,30 @@ export default function BrainBooster() {
                 </div>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <p>Мы проиграем тоны разных частот. Ваша задача — найти тот, который больше всего похож на ваш шум в ушах.</p>
-                  <p className="text-xs bg-background/50 rounded-xl p-3 leading-relaxed">
-                    <span className="text-foreground font-medium">Зачем это нужно:</span> зная точную частоту, можно применять нотч-терапию — научно доказанный метод снижения тиннитуса за 4–12 недель.
-                  </p>
                 </div>
+
+                {/* Научный блок */}
                 <div className="mt-3 space-y-2">
+                  <div className="bg-background/60 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <span className="text-rose-400">🔬</span> Почему звенит в ушах?
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Тиннитус возникает когда волосковые клетки улитки повреждаются (шум, возраст, стресс) и перестают передавать сигнал на определённой частоте. Мозг, не получая сигнала, начинает <span className="text-foreground">«придумывать» его сам</span> — так появляется фантомный звон. Это нейропластичность, направленная в неправильную сторону.
+                    </p>
+                  </div>
+                  <div className="bg-background/60 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <span className="text-rose-400">💡</span> Как можно помочь?
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      <span className="text-foreground font-medium">Нотч-терапия</span> (Okamoto et al., 2010) — слушать музыку с «вырезанной» полосой на частоте шума 1–2 ч/день. За 4–12 недель нейроны вокруг этой частоты успокаиваются и шум ослабевает. <span className="text-foreground font-medium">RI-протокол</span> (Vernon, 1977) — кратковременно «перегрузить» эти нейроны точным тоном, после чего они замолкают на 30 сек – несколько минут.
+                    </p>
+                    <p className="text-xs text-rose-400 font-medium">Первый шаг к обоим методам — найти вашу частоту.</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-1.5">
                   {[
                     { icon: 'Headphones', text: 'Наденьте наушники — обязательно' },
                     { icon: 'Volume2',    text: 'Установите комфортную громкость' },
@@ -1040,8 +1059,8 @@ export default function BrainBooster() {
                 <p className="text-xs text-muted-foreground mb-1">Шаг 1 из 2</p>
                 <p className="text-sm font-bold mb-1">Выберите ближайший диапазон</p>
                 <p className="text-xs text-muted-foreground mb-2">Нажмите кнопку воспроизведения рядом с каждым тоном и найдите тот, что больше всего похож на ваш шум.</p>
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2 mb-4 text-xs text-amber-400 leading-relaxed">
-                  <span className="font-semibold">Совет:</span> если вы не слышите 6000–8000 Гц — это нормально у людей с тиннитусом. Граница слуха часто обрывается именно там, где шум. Выбирайте самый высокий тон который ещё слышите.
+                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2.5 mb-4 text-xs text-rose-400 leading-relaxed">
+                  <span className="font-semibold">Важно:</span> если вы не слышите 6000–8000 Гц — это нормально. При тиннитусе граница слуха обрывается именно там, где живёт шум — мозг «заглушает» эту зону. Выбирайте самый высокий тон, который ещё слышите — это и есть ваша частота.
                 </div>
                 <div className="space-y-2">
                   {[500, 1000, 2000, 3000, 4000, 6000, 8000].map(hz => (
@@ -1087,7 +1106,16 @@ export default function BrainBooster() {
               <div className="bg-card border border-border rounded-2xl p-4">
                 <p className="text-xs text-muted-foreground mb-1">Шаг 2 из 2 · Тонкая настройка</p>
                 <p className="text-sm font-bold mb-1">Найдите точное совпадение</p>
-                <p className="text-xs text-muted-foreground mb-2">Диапазон вокруг {calibCoarseHz.toLocaleString()} Гц. Двигайте ползунок — ищите максимальное совпадение с вашим шумом.</p>
+                <p className="text-xs text-muted-foreground mb-2">Диапазон вокруг {calibCoarseHz.toLocaleString()} Гц. Двигайте ползунок и прослушивайте тоны.</p>
+
+                <div className="bg-rose-500/10 border border-rose-500/30 rounded-xl px-3 py-2.5 mb-3 space-y-2">
+                  <p className="text-xs text-rose-400 leading-relaxed">
+                    <span className="font-semibold">Ищите тон, который «сливается» с вашим шумом</span> — то есть становится неотличим от звона в ушах или вы перестаёте его слышать. Это и есть ваша частота.
+                  </p>
+                  <p className="text-xs text-rose-300/70 leading-relaxed">
+                    Почему так: ваш тиннитус «маскирует» близкие частоты — мозг не может различить два одинаковых звука одновременно. Этот феномен называется <span className="italic">тональная маскировка</span> и используется аудиологами для точной диагностики.
+                  </p>
+                </div>
 
                 {/* Ползунок */}
                 <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 mb-3">
