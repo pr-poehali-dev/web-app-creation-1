@@ -225,6 +225,13 @@ export default function BrainBooster() {
   const calibCtxRef = useRef<AudioContext | null>(null);
   const calibOscRef = useRef<OscillatorNode | null>(null);
 
+  // ── RI-сессия на точной частоте ────────────────────────
+  const [riPlaying, setRiPlaying] = useState(false);
+  const [riTimer, setRiTimer] = useState(0);           // секунды с начала сессии
+  const riCtxRef = useRef<AudioContext | null>(null);
+  const riOscRef = useRef<OscillatorNode | null>(null);
+  const riTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const stopCalibTone = useCallback(() => {
     calibOscRef.current?.stop();
     calibOscRef.current?.disconnect();
@@ -260,12 +267,56 @@ export default function BrainBooster() {
     }
   }, [calibPlaying, calibHz, stopCalibTone, playCalibTone]);
 
+  const stopRI = useCallback(() => {
+    riOscRef.current?.stop();
+    riOscRef.current?.disconnect();
+    riOscRef.current = null;
+    riCtxRef.current?.close();
+    riCtxRef.current = null;
+    if (riTimerRef.current) { clearInterval(riTimerRef.current); riTimerRef.current = null; }
+    setRiPlaying(false);
+  }, []);
+
+  // Протокол RI на заданной частоте:
+  // 0–90 сек  — нарастание тона 0→max
+  // 90–120 сек — затихание max→0
+  // 120 сек   — автостоп, наступает период тишины
+  const playRI = useCallback((hz: number) => {
+    stopRI();
+    stopCalibTone();
+    const ctx = new AudioContext();
+    riCtxRef.current = ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = hz;
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 90);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 120);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    riOscRef.current = osc;
+    setRiPlaying(true);
+    setRiTimer(0);
+    riTimerRef.current = setInterval(() => {
+      setRiTimer(t => {
+        if (t + 1 >= 121) {
+          setTimeout(() => stopRI(), 500);
+          return t + 1;
+        }
+        return t + 1;
+      });
+    }, 1000);
+  }, [stopRI, stopCalibTone]);
+
   // При смене вкладки — останавливаем все звуки
   const handleTabChange = useCallback((tab: 'modes' | 'tinnitus') => {
     stop();
     stopCalibTone();
+    stopRI();
     setActiveTab(tab);
-  }, [stopCalibTone]);
+  }, [stopCalibTone, stopRI]);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const leftOscRef = useRef<OscillatorNode | null>(null);
@@ -1080,42 +1131,108 @@ export default function BrainBooster() {
           )}
 
           {/* Результат */}
-          {calibStep === 'result' && calibResultHz && (
+          {calibStep === 'result' && calibResultHz && (() => {
+            // Частота RI-торможения: ~75% от частоты тиннитуса (зона подавляющего нейронного ингибирования)
+            const riHz = Math.round(calibResultHz * 0.75 / 50) * 50;
+            const riPhase = riTimer < 90 ? 'rise' : riTimer < 120 ? 'fall' : 'done';
+            const riProgress = riTimer < 90 ? (riTimer / 90) * 100 : riTimer < 120 ? 100 - ((riTimer - 90) / 30) * 100 : 0;
+            const riLabel = riPhase === 'rise' ? `Нарастание · ${90 - riTimer} сек` : riPhase === 'fall' ? `Затихание · ${120 - riTimer} сек` : 'Тишина — RI-эффект активен';
+            return (
             <div className="space-y-4">
-              <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-5 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-rose-500/15 flex items-center justify-center mx-auto mb-3">
-                  <Icon name="EarOff" size={24} className="text-rose-400" />
+              {/* Частоты */}
+              <div className="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center bg-background/50 rounded-xl p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Ваш тиннитус</p>
+                    <p className="text-2xl font-bold text-rose-400">{calibResultHz.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Гц</p>
+                  </div>
+                  <div className="text-center bg-background/50 rounded-xl p-3">
+                    <p className="text-xs text-muted-foreground mb-1">Зона торможения</p>
+                    <p className="text-2xl font-bold text-amber-400">{riHz.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Гц · RI-частота</p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mb-1">Ваша частота тиннитуса</p>
-                <p className="text-4xl font-bold text-rose-400 mb-1">{calibResultHz.toLocaleString()} Гц</p>
-                <p className="text-xs text-muted-foreground">
-                  {calibResultHz <= 1000 ? 'Низкочастотный тиннитус' : calibResultHz <= 3000 ? 'Среднечастотный тиннитус' : calibResultHz <= 6000 ? 'Высокочастотный тиннитус (самый частый)' : 'Очень высокочастотный тиннитус'}
+                <p className="text-xs text-muted-foreground mt-3 text-center leading-relaxed">
+                  RI-частота = 75% от вашего тиннитуса. Именно в этой зоне нейроны слуховой коры тормозятся эффективнее всего.
                 </p>
               </div>
 
-              <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
-                <p className="text-sm font-bold">Что делать с этой информацией</p>
-                <div className="space-y-2">
-                  {[
-                    { icon: 'Music', title: 'Нотч-терапия', desc: `Слушайте любимую музыку с вырезанной частотой ${calibResultHz.toLocaleString()} Гц — 1–2 часа в день. Через 4–12 недель шум становится тише. Это доказанный метод (Okamoto et al., 2010).` },
-                    { icon: 'EarOff', title: 'Режим «Тишина в ушах»', desc: 'Используйте режим на вкладке «Режимы» для временного облегчения между сессиями нотч-терапии.' },
-                    { icon: 'Stethoscope', title: 'Аудиолог', desc: `Запишите частоту ${calibResultHz.toLocaleString()} Гц и покажите аудиологу — это ускорит диагностику и подбор терапии.` },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-start gap-3 bg-background/60 rounded-xl p-3">
-                      <div className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Icon name={item.icon} size={13} className="text-rose-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">{item.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
-                      </div>
+              {/* RI-плеер */}
+              <div className="bg-card border border-border rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                    <Icon name="Waves" size={14} className="text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">RI-сессия на вашей частоте</p>
+                    <p className="text-xs text-muted-foreground">Тон {riHz.toLocaleString()} Гц · 2 минуты</p>
+                  </div>
+                </div>
+
+                {riPlaying && (
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                      <span className={riPhase === 'done' ? 'text-green-400 font-medium' : 'text-amber-400'}>{riLabel}</span>
+                      <span>{Math.floor(riTimer / 60)}:{(riTimer % 60).toString().padStart(2, '0')} / 2:00</span>
                     </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ${riPhase === 'rise' ? 'bg-amber-400' : riPhase === 'fall' ? 'bg-rose-400' : 'bg-green-400'}`}
+                        style={{ width: `${riPhase === 'done' ? 100 : riProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => riPlaying ? stopRI() : playRI(riHz)}
+                  className={`w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-colors ${riPlaying ? 'bg-rose-500 hover:bg-rose-600 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'}`}
+                >
+                  <Icon name={riPlaying ? 'Square' : 'Play'} size={15} />
+                  {riPlaying ? 'Остановить' : 'Запустить RI-сессию'}
+                </button>
+
+                {!riPlaying && riTimer > 0 && (
+                  <p className="text-xs text-green-500 text-center mt-2 font-medium">
+                    Сессия завершена — побудьте в тишине 2–3 минуты
+                  </p>
+                )}
+
+                <div className="mt-3 space-y-1">
+                  {[
+                    'Наденьте наушники, закройте глаза',
+                    'Тон будет нарастать 90 сек, затем плавно угаснет',
+                    'После остановки — тишина, не включайте звуки сразу',
+                  ].map((t, i) => (
+                    <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                      <span className="text-amber-400 flex-shrink-0 mt-0.5">·</span>{t}
+                    </p>
                   ))}
                 </div>
               </div>
 
+              {/* Дальнейшие шаги */}
+              <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
+                <p className="text-sm font-bold mb-1">Долгосрочная терапия</p>
+                {[
+                  { icon: 'Music', title: 'Нотч-терапия', desc: `Слушайте музыку с вырезанной частотой ${calibResultHz.toLocaleString()} Гц — 1–2 часа в день. Через 4–12 недель шум становится тише. Okamoto et al., 2010.` },
+                  { icon: 'Stethoscope', title: 'Аудиолог', desc: `Покажите частоты: тиннитус ${calibResultHz.toLocaleString()} Гц, RI-зона ${riHz.toLocaleString()} Гц — это ускорит диагностику.` },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3 bg-background/60 rounded-xl p-3">
+                    <div className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Icon name={item.icon} size={13} className="text-rose-400" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <button
-                onClick={() => { setCalibStep('intro'); setCalibCoarseHz(null); setCalibResultHz(null); setCalibHz(4000); }}
+                onClick={() => { stopRI(); setCalibStep('intro'); setCalibCoarseHz(null); setCalibResultHz(null); setCalibHz(4000); setRiTimer(0); }}
                 className="w-full border border-border rounded-xl py-3 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Пройти калибровку заново
@@ -1125,7 +1242,8 @@ export default function BrainBooster() {
                 Калибровка в браузере даёт приблизительный результат ±100–200 Гц. Для точной диагностики обратитесь к аудиологу.
               </p>
             </div>
-          )}
+            );
+          })()}
 
         </div>
       )}
