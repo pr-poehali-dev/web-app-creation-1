@@ -283,37 +283,59 @@ export default function BrainBooster() {
     setRiPlaying(false);
   }, []);
 
-  // Протокол RI:
-  // 0–30 сек  — нарастание 0→max (0.40 — громче чем раньше)
-  // 30–85 сек — быстрое угасание max→почти ноль
-  // 85–90 сек — медленное затихание до полной тишины (последние 5 сек)
-  // 90 сек    — автостоп
-  const RI_RISE = 30;
-  const RI_SLOW = 85;   // начало медленного финала
-  const RI_FADE = 90;
+  // Протокол RI (научный, Henry & Meikle 2000, Neff et al. 2017):
+  // Стимул: чистый тон на RI-частоте + амплитудная модуляция 10 Гц
+  // AM 10 Гц даёт значительно более сильный RI чем чистый тон (Neff et al., 2017)
+  // 0–5 сек   — короткое нарастание (мягкий вход)
+  // 5–65 сек  — полная громкость с AM-модуляцией 10 Гц (60 сек основного воздействия)
+  // 65 сек    — РЕЗКАЯ остановка (клинический стандарт Henry & Meikle 2000)
+  const RI_RISE = 5;
+  const RI_FADE = 65;
   const playRI = useCallback((hz: number) => {
     stopRI();
     stopCalibTone();
     const ctx = new AudioContext();
     riCtxRef.current = ctx;
+
+    // Основной тон
     const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.value = hz;
+
+    // AM-модулятор 10 Гц — создаёт пульсацию тона с частотой 10 раз в секунду
+    const amOsc = ctx.createOscillator();
+    amOsc.type = 'sine';
+    amOsc.frequency.value = 10;
+    const amGain = ctx.createGain();
+    amGain.gain.value = 0.5; // глубина модуляции 50%
+    amOsc.connect(amGain);
+
+    // Несущий усилитель
+    const carrierGain = ctx.createGain();
+    carrierGain.gain.value = 0.5; // постоянная составляющая
+
+    // Итоговый gain с огибающей
+    const masterGain = ctx.createGain();
+
+    amGain.connect(masterGain.gain); // AM подмешивается к gain
+    osc.connect(carrierGain);
+    carrierGain.connect(masterGain);
+    masterGain.connect(ctx.destination);
+
     const t = ctx.currentTime;
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.40, t + RI_RISE);   // нарастание до громкого уровня
-    gain.gain.linearRampToValueAtTime(0.02, t + RI_SLOW);   // быстрое угасание почти до нуля
-    gain.gain.linearRampToValueAtTime(0, t + RI_FADE);      // медленный финал — последние 5 сек
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+    masterGain.gain.setValueAtTime(0, t);
+    masterGain.gain.linearRampToValueAtTime(0.40, t + RI_RISE); // мягкий вход 5 сек
+    masterGain.gain.setValueAtTime(0.40, t + RI_FADE - 0.05);  // держим до конца
+    masterGain.gain.linearRampToValueAtTime(0, t + RI_FADE);    // резкая остановка
+
     osc.start();
+    amOsc.start();
     riOscRef.current = osc;
     setRiPlaying(true);
     setRiTimer(0);
     riTimerRef.current = setInterval(() => {
       setRiTimer(prev => {
-        if (prev + 1 >= RI_FADE + 1) {  
+        if (prev + 1 >= RI_FADE + 1) {
           setTimeout(() => stopRI(), 500);
           return prev + 1;
         }
@@ -1224,12 +1246,12 @@ export default function BrainBooster() {
           {calibStep === 'result' && calibResultHz && (() => {
             // Частота RI-торможения: ~75% от частоты тиннитуса (зона подавляющего нейронного ингибирования)
             const riHz = Math.round(calibResultHz * 0.75 / 50) * 50;
-            const riPhase = riTimer < 30 ? 'rise' : riTimer < 90 ? 'fall' : 'done';
-            const riProgress = riTimer < 30 ? (riTimer / 30) * 100
-              : riTimer < 90 ? 100 - ((riTimer - 30) / 60) * 100
+            const riPhase = riTimer < 5 ? 'rise' : riTimer < 65 ? 'peak' : 'done';
+            const riProgress = riTimer < 5 ? (riTimer / 5) * 100
+              : riTimer < 65 ? 100
               : 0;
-            const riLabel = riPhase === 'rise' ? `Нарастание · ${30 - riTimer} сек`
-              : riPhase === 'fall' ? `Угасание · ${90 - riTimer} сек`
+            const riLabel = riPhase === 'rise' ? `Нарастание · ${5 - riTimer} сек`
+              : riPhase === 'peak' ? `Активное воздействие · ${65 - riTimer} сек`
               : 'Тишина — RI-эффект активен';
             return (
             <div className="space-y-4">
@@ -1260,19 +1282,19 @@ export default function BrainBooster() {
                   </div>
                   <div>
                     <p className="text-sm font-bold">RI-сессия на вашей частоте</p>
-                    <p className="text-xs text-muted-foreground">Тон {riHz.toLocaleString()} Гц · 1 мин 30 сек</p>
+                    <p className="text-xs text-muted-foreground">Тон {riHz.toLocaleString()} Гц · AM 10 Гц · 1 мин 5 сек</p>
                   </div>
                 </div>
 
                 {riPlaying && (
                   <div className="mb-3">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                      <span className={riPhase === 'done' ? 'text-green-400 font-medium' : riPhase === 'rise' ? 'text-amber-400' : 'text-rose-400'}>{riLabel}</span>
-                      <span>{Math.floor(riTimer / 60)}:{(riTimer % 60).toString().padStart(2, '0')} / 1:30</span>
+                      <span className={riPhase === 'done' ? 'text-green-400 font-medium' : riPhase === 'rise' ? 'text-amber-400' : 'text-rose-400 font-medium'}>{riLabel}</span>
+                      <span>{Math.floor(riTimer / 60)}:{(riTimer % 60).toString().padStart(2, '0')} / 1:05</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all duration-1000 ${riPhase === 'rise' ? 'bg-amber-400' : riPhase === 'fall' ? 'bg-rose-400' : 'bg-green-400'}`}
+                        className={`h-full rounded-full transition-all duration-1000 ${riPhase === 'rise' ? 'bg-amber-400' : riPhase === 'peak' ? 'bg-rose-500' : 'bg-green-400'}`}
                         style={{ width: `${riPhase === 'done' ? 100 : riProgress}%` }}
                       />
                     </div>
@@ -1296,7 +1318,7 @@ export default function BrainBooster() {
                 <div className="mt-3 space-y-1">
                   {[
                     'Наденьте наушники, закройте глаза',
-                    '30 сек нарастание → 60 сек плавное угасание',
+                    'Тон пульсирует 10 раз в сек — так нейроны тормозятся глубже',
                     'После остановки — тишина не менее 3 минут, не включайте звуки',
                   ].map((t, i) => (
                     <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
