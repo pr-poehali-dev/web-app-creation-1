@@ -283,11 +283,13 @@ export default function BrainBooster() {
     setRiPlaying(false);
   }, []);
 
-  // Протокол RI (простой):
-  // 0–30 сек  — нарастание 0→max
-  // 30–90 сек — плавное угасание max→0
+  // Протокол RI:
+  // 0–30 сек  — нарастание 0→max (0.40 — громче чем раньше)
+  // 30–85 сек — быстрое угасание max→почти ноль
+  // 85–90 сек — медленное затихание до полной тишины (последние 5 сек)
   // 90 сек    — автостоп
   const RI_RISE = 30;
+  const RI_SLOW = 85;   // начало медленного финала
   const RI_FADE = 90;
   const playRI = useCallback((hz: number) => {
     stopRI();
@@ -300,8 +302,9 @@ export default function BrainBooster() {
     osc.frequency.value = hz;
     const t = ctx.currentTime;
     gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.22, t + RI_RISE);  // нарастание
-    gain.gain.linearRampToValueAtTime(0, t + RI_FADE);     // угасание
+    gain.gain.linearRampToValueAtTime(0.40, t + RI_RISE);   // нарастание до громкого уровня
+    gain.gain.linearRampToValueAtTime(0.02, t + RI_SLOW);   // быстрое угасание почти до нуля
+    gain.gain.linearRampToValueAtTime(0, t + RI_FADE);      // медленный финал — последние 5 сек
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
