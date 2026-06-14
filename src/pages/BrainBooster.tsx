@@ -88,7 +88,7 @@ const MODES: ModeConfig[] = [
     beatHz: 10,
     waveType: 'sine',
     noiseType: 'brown', // Коричневый шум при снятии стресса — доказан: снижает ЧСС и тревогу сам по себе
-    noiseGain: 0.04,    // Мягкий фон — не маскирует бит, а усиливает расслабление
+    noiseGain: 0.025,   // Тихий фон — слышен, но не заглушает бинауральный бит
     oscGain: 0.24,
     effect: 'Снижение тревоги, расслабление, снятие усталости и напряжения',
     duration: '10–20 мин',
@@ -673,6 +673,11 @@ export default function BrainBooster() {
                       <div className={`rounded-xl p-3 ${mode.bgColor} border ${mode.borderColor}`}>
                         <p className="text-xs text-foreground leading-relaxed">{mode.effect}</p>
                         <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{mode.science}</p>
+                        {mode.id === 'stress' && (
+                          <p className="text-xs text-green-700 mt-2 leading-relaxed bg-green-500/10 rounded-lg px-2.5 py-2">
+                            🌊 Приглушённый гул — это коричневый шум. Он звучит как шум дождя или водопада и специально добавлен в этот режим: клинически доказано, что он сам по себе снижает тревогу и помогает расслабиться. Это норма, а не помеха.
+                          </p>
+                        )}
                         <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Icon name="Activity" size={11} />
