@@ -1,501 +1,92 @@
-import { useState, useEffect, useRef, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { removeSplash } from "./main";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import PullToRefresh from "./components/PullToRefresh";
-import ErrorBoundary from "./components/ErrorBoundary";
 import { getSession, clearSession } from "./utils/auth";
 import { clearCache } from "./services/api";
 import { SmartCache } from "./utils/smartCache";
 import { DistrictProvider } from "./contexts/DistrictContext";
 import { OffersProvider } from "./contexts/OffersContext";
 import { TimezoneProvider } from "./contexts/TimezoneContext";
-import NotificationPermissionBanner from "./components/NotificationPermissionBanner";
-import TechnicalIssuesBanner from "./components/TechnicalIssuesBanner";
-import InstallPrompt from "./components/InstallPrompt";
-import TopLoadingBar, { showLoading, hideLoading } from "./components/TopLoadingBar";
-import OnlineInviteBanner from "./components/OnlineInviteBanner";
-import BannerStrip from "./components/BannerStrip";
-import LocationToast from "./components/LocationToast";
+import { showLoading, hideLoading } from "./components/TopLoadingBar";
+import { useAppInit } from "./components/app/useAppInit";
+import AppBanners from "./components/app/AppBanners";
+import AppRoutes from "./components/app/AppRoutes";
 
-
-// Ленивая загрузка страниц
-const lazyWithRetry = (componentImport: () => Promise<unknown>) =>
-  lazy(async () => {
-    try {
-      const component = await componentImport();
-      return component as { default: React.ComponentType };
-    } catch {
-      return {
-        default: () => (
-          <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="text-center max-w-md">
-              <div className="text-5xl mb-4">📡</div>
-              <h2 className="text-xl font-bold mb-2">Ошибка загрузки</h2>
-              <p className="text-muted-foreground mb-6">Не удалось загрузить страницу. Проверьте подключение к интернету.</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 active:opacity-80"
-                >
-                  Попробовать снова
-                </button>
-                <button
-                  onClick={() => { window.location.href = '/'; }}
-                  className="px-5 py-2.5 bg-muted text-foreground rounded-lg font-medium hover:bg-muted/80 active:opacity-80"
-                >
-                  На главную
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      } as { default: React.ComponentType };
-    }
-  });
-
-// Ленивая загрузка всех страниц
-const Login = lazyWithRetry(() => import("./pages/Login"));
-const Offers = lazyWithRetry(() => import("./pages/Offers"));
-const OfferDetail = lazyWithRetry(() => import("./pages/OfferDetail"));
-
-// Ленивая загрузка остальных страниц
-const Home = lazyWithRetry(() => import("./pages/Home"));
-const Register = lazyWithRetry(() => import("./pages/Register"));
-const MyOrders = lazyWithRetry(() => import("./pages/MyOrders"));
-const Profile = lazyWithRetry(() => import("./pages/Profile"));
-const SearchResults = lazyWithRetry(() => import("./pages/SearchResults"));
-const Requests = lazyWithRetry(() => import("./pages/Requests"));
-const MyListings = lazyWithRetry(() => import("./pages/MyListings"));
-const MyOffers = lazyWithRetry(() => import("./pages/MyOffers"));
-const MyRequests = lazyWithRetry(() => import("./pages/MyRequests"));
-const CreateOffer = lazyWithRetry(() => import("./pages/CreateOffer"));
-const EditOffer = lazyWithRetry(() => import("./pages/EditOffer"));
-const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
-const NewPassword = lazyWithRetry(() => import("./pages/NewPassword"));
-const VerifyEmail = lazyWithRetry(() => import("./pages/VerifyEmail"));
-const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
-const Auctions = lazyWithRetry(() => import("./pages/Auctions"));
-const MyAuctions = lazyWithRetry(() => import("./pages/MyAuctions"));
-const ActiveOrders = lazyWithRetry(() => import("./pages/ActiveOrders"));
-const RequestDetail = lazyWithRetry(() => import("./pages/RequestDetail"));
-const EditRequest = lazyWithRetry(() => import("./pages/EditRequest"));
-const CreateRequest = lazyWithRetry(() => import("./pages/CreateRequest"));
-const CreateAuction = lazyWithRetry(() => import("./pages/CreateAuction"));
-const EditAuction = lazyWithRetry(() => import("./pages/EditAuction"));
-const AuctionDetail = lazyWithRetry(() => import("./pages/AuctionDetail"));
-const VerificationPage = lazyWithRetry(() => import("./pages/VerificationPage"));
-const VerificationResubmit = lazyWithRetry(() => import("./pages/VerificationResubmit"));
-const AdminVerifications = lazyWithRetry(() => import("./pages/AdminVerifications"));
-const AdminLogin = lazyWithRetry(() => import("./pages/AdminLogin"));
-const AdminChangePassword = lazyWithRetry(() => import("./pages/AdminChangePassword"));
-const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
-const AdminUsers = lazyWithRetry(() => import("./pages/AdminUsers"));
-const AdminDeletedUsers = lazyWithRetry(() => import("./pages/AdminDeletedUsers"));
-const AdminOffers = lazyWithRetry(() => import("./pages/AdminOffers"));
-const AdminRequests = lazyWithRetry(() => import("./pages/AdminRequests"));
-const AdminAnalytics = lazyWithRetry(() => import("./pages/AdminAnalytics"));
-const AdminSettings = lazyWithRetry(() => import("./pages/AdminSettings"));
-const AdminAuctions = lazyWithRetry(() => import("./pages/AdminAuctions"));
-const AdminContracts = lazyWithRetry(() => import("./pages/AdminContracts"));
-const AdminReviews = lazyWithRetry(() => import("./pages/AdminReviews"));
-const AdminManageAdmins = lazyWithRetry(() => import("./pages/AdminManageAdmins"));
-const AdminPanel = lazyWithRetry(() => import("./pages/AdminPanel"));
-const AdminOrders = lazyWithRetry(() => import("./pages/AdminOrders"));
-const AdminArbitrage = lazyWithRetry(() => import("./pages/AdminArbitrage"));
-const AdminSupport = lazyWithRetry(() => import("./pages/AdminSupport"));
-const SetAdminPassword = lazyWithRetry(() => import("./pages/SetAdminPassword"));
-const AdminContentManagement = lazyWithRetry(() => import("./pages/AdminContentManagement"));
-const TradingPlatform = lazyWithRetry(() => import("./pages/TradingPlatform"));
-const CreateContract = lazyWithRetry(() => import("./pages/CreateContract"));
-const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
-
-const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
-const MosquitoRepellent = lazyWithRetry(() => import("./pages/MosquitoRepellent"));
-const BrainBooster = lazyWithRetry(() => import("./pages/BrainBooster"));
-const TaxReports = lazyWithRetry(() => import("./pages/TaxReports"));
-const SellerReviews = lazyWithRetry(() => import("./pages/SellerReviews"));
-const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
-const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
-const OfferAgreement = lazyWithRetry(() => import("./pages/OfferAgreement"));
-const Support = lazyWithRetry(() => import("./pages/Support"));
-const ClearData = lazyWithRetry(() => import("./pages/ClearData"));
-const DeleteTestData = lazyWithRetry(() => import("./pages/DeleteTestData"));
-const MigrateImages = lazyWithRetry(() => import("./pages/MigrateImages"));
-const VerifyPhone = lazyWithRetry(() => import("./pages/VerifyPhone"));
-const ImageEditor = lazyWithRetry(() => import("./pages/ImageEditor"));
-const ShortUrlRedirect = lazyWithRetry(() => import("./pages/ShortUrlRedirect"));
-const MyAutoSales = lazyWithRetry(() => import("./pages/MyAutoSales"));
-const MyAutoRequests = lazyWithRetry(() => import("./pages/MyAutoRequests"));
-const MyContracts = lazyWithRetry(() => import("./pages/MyContracts"));
-const ContractDetail = lazyWithRetry(() => import("./pages/ContractDetail"));
-const EditContract = lazyWithRetry(() => import("./pages/EditContract"));
-
-// Защищённый маршрут — редирект на /login с сохранением returnUrl
-function ProtectedRoute({ isAuthenticated, children }: { isAuthenticated: boolean; children: React.ReactNode }) {
-  const location = useLocation();
-  if (!isAuthenticated) {
-    localStorage.setItem('returnUrl', location.pathname + location.search);
-    return <Navigate to="/login" state={{ returnUrl: location.pathname + location.search }} replace />;
-  }
-  return <>{children}</>;
-}
-
-// Инвалидирует кэш только при возврате на главную страницу, а не при каждом переходе
-function RouteChangeInvalidator() {
-  const location = useLocation();
-  const prevPath = useRef<string>('');
-  useEffect(() => {
-    const prev = prevPath.current;
-    prevPath.current = location.pathname;
-    // Сбрасываем кеш только когда возвращаемся на главную со страницы детали
-    if (location.pathname === '/' && prev.startsWith('/offer')) {
-      SmartCache.invalidate('offers_list');
-    }
-  }, [location.pathname]);
-  return null;
-}
-
-// Оптимизируем QueryClient для быстрой работы на медленном интернете
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // Данные считаются свежими 5 минут
-      gcTime: 1000 * 60 * 30, // Кэш хранится 30 минут
-      retry: 1, // Только 1 повтор при ошибке (не 3)
-      refetchOnWindowFocus: false, // Не перезагружать при фокусе окна
-      refetchOnReconnect: false, // Не перезагружать при переподключении
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 30,
+      retry: 1,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
     },
   },
 });
 
-const App = () => {
+function AppInner() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => !!getSession());
 
-  // Убираем сплэш сразу после монтирования App
-  useEffect(() => {
-    removeSplash();
-  }, []);
+  useEffect(() => { removeSplash(); }, []);
+  useAppInit();
 
-  useEffect(() => {
-    // Быстрая проверка сессии без лишних операций
-    const session = getSession();
-    if (session) {
-      setIsAuthenticated(true);
-      
-      // Синхронизируем профиль с сервером в фоне (откладываем чтобы не блокировать UI)
-      if (session.id) {
-        setTimeout(async () => {
-          try {
-            const response = await fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?id=${session.id}`, {
-              headers: {
-                'X-User-Id': String(session.id),
-              },
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              const updatedUser = {
-                ...session,
-                firstName: data.first_name,
-                lastName: data.last_name,
-                middleName: data.middle_name,
-                phone: data.phone,
-                companyName: data.company_name,
-                inn: data.inn,
-                ogrnip: data.ogrnip,
-                ogrn: data.ogrn,
-                notificationEmail: data.notification_email || session.notificationEmail || '',
-                userType: data.user_type || session.userType,
-              };
-              
-              // Обновляем localStorage с актуальными данными
-              localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-              window.dispatchEvent(new Event('userSessionChanged'));
-            }
-          } catch (error) {
-            // Игнорируем ошибки синхронизации
-            console.log('Background profile sync failed:', error);
-          }
-        }, 3000);
-      }
-    }
-
-    // Регистрируем Service Worker в фоне (позже чтобы не замедлять старт)
-    if ('serviceWorker' in navigator) {
-      setTimeout(() => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {
-          // Игнорируем ошибки
-        });
-      }, 4000);
-
-      // Слушаем сообщения от Service Worker
-      navigator.serviceWorker.addEventListener('message', async (event) => {
-        // Новая версия SW активирована — сбрасываем кэш и перезагружаем
-        if (event.data.type === 'SW_UPDATED') {
-          try {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-          } catch { /* ignore */ }
-          window.location.reload();
-          return;
-        }
-        if (event.data.type === 'NOTIFICATION_CLICK') {
-          const url: string = event.data.url || '/';
-          // Парсим orderId из URL вида /my-orders?orderId=123
-          const parsed = new URL(url, window.location.origin);
-          const orderId = parsed.searchParams.get('orderId');
-          const targetPath = parsed.pathname;
-
-          if (targetPath === '/my-orders' && orderId) {
-            // Уже на странице — просто открываем чат
-            if (window.location.pathname === '/my-orders') {
-              window.dispatchEvent(new CustomEvent('openOrderChatById', { detail: { orderId } }));
-            } else {
-              // Переходим на страницу и открываем чат после загрузки
-              window.location.href = `/my-orders?orderId=${orderId}`;
-            }
-          } else {
-            window.location.href = url;
-          }
-        }
-        if (event.data.type === 'PLAY_NOTIFICATION_SOUND') {
-          try {
-            const ctx = new AudioContext();
-            const now = ctx.currentTime;
-            [880, 1100].forEach((freq, i) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.connect(gain); gain.connect(ctx.destination);
-              osc.type = 'sine'; osc.frequency.value = freq;
-              gain.gain.setValueAtTime(0, now + i * 0.18);
-              gain.gain.linearRampToValueAtTime(0.25, now + i * 0.18 + 0.02);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.22);
-              osc.start(now + i * 0.18); osc.stop(now + i * 0.18 + 0.25);
-            });
-            setTimeout(() => ctx.close(), 1000);
-          } catch (_e) { /* ignore */ }
-        }
-        // Длинный звонок — приглашение в чат заказа
-        if (event.data.type === 'PLAY_INVITE_RING') {
-          try {
-            const ctx = new AudioContext();
-            if (ctx.state === 'suspended') await ctx.resume();
-            const now = ctx.currentTime;
-            const pulses = [
-              { freq: 880, time: 0 }, { freq: 1100, time: 0.15 },
-              { freq: 880, time: 0.45 }, { freq: 1100, time: 0.60 },
-              { freq: 880, time: 0.90 }, { freq: 1100, time: 1.05 },
-            ];
-            pulses.forEach(({ freq, time }) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.connect(gain); gain.connect(ctx.destination);
-              osc.type = 'sine'; osc.frequency.value = freq;
-              gain.gain.setValueAtTime(0, now + time);
-              gain.gain.linearRampToValueAtTime(0.4, now + time + 0.01);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + time + 0.18);
-              osc.start(now + time); osc.stop(now + time + 0.22);
-            });
-            setTimeout(() => ctx.close(), 2000);
-          } catch (_e) { /* ignore */ }
-        }
-      });
-    }
-
-    // Трекинг посетителей — тихо, в фоне
-    setTimeout(() => {
-      try {
-        let sid = sessionStorage.getItem('_vsid');
-        if (!sid) {
-          sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
-          sessionStorage.setItem('_vsid', sid);
-        }
-        const session = getSession() as { id?: number } | null;
-        fetch('https://functions.poehali.dev/d6fc7d3f-1215-492d-943f-d1cbf3a44bcf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(session?.id ? { 'X-User-Id': String(session.id) } : {}) },
-          body: JSON.stringify({ sessionId: sid, page: window.location.pathname, referrer: document.referrer || undefined }),
-        }).catch(() => { /* ignore */ });
-      } catch { /* ignore */ }
-    }, 2000);
-
-    return () => {};
-  }, []);
-
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
+  const handleLogin = () => setIsAuthenticated(true);
 
   const handleLogout = () => {
     clearSession();
     setIsAuthenticated(false);
-    // Отправляем событие для сброса состояния во всех компонентах
     window.dispatchEvent(new Event('userLoggedOut'));
   };
 
   const handleGlobalRefresh = async () => {
     showLoading();
     try {
-      // Инвалидируем in-memory кэш API
       clearCache();
       SmartCache.invalidateAll('orders');
       SmartCache.invalidateAll('requests');
       SmartCache.invalidateAll('offers');
       SmartCache.invalidateAll('auctions');
-      // Сигнализируем компонентам о необходимости перезагрузить данные
       window.dispatchEvent(new CustomEvent('globalRefresh'));
-      // Сбрасываем кэш Service Worker чтобы PWA получило свежий JS/HTML
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       }
       await new Promise(r => setTimeout(r, 400));
-      // Перезагружаем страницу — гарантирует актуальный код для PWA
       window.location.reload();
     } catch {
       hideLoading();
     }
   };
 
-
-
-  const isFirstVisit = !sessionStorage.getItem('app_visited');
-  if (isFirstVisit) sessionStorage.setItem('app_visited', '1');
-
-  const pageFallback = isFirstVisit
-    ? <div style={{position:'fixed',inset:0,background:'#f1f4f8',zIndex:99999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'28px'}}><div style={{width:96,height:96,borderRadius:24,overflow:'hidden',boxShadow:'0 16px 48px rgba(0,0,0,0.12)'}}><img src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" alt="ЕРТТП" style={{width:'100%',height:'100%',objectFit:'cover',display:'block'}} /></div><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'clamp(24px,7vw,42px)',fontWeight:900,color:'#1e293b',letterSpacing:'0.12em',textAlign:'center',padding:'0 24px'}}>С НАМИ УСПЕХ</span></div>
-    : <div style={{position:'fixed',inset:0,background:'rgba(241,244,248,0.85)',backdropFilter:'blur(4px)',zIndex:99999,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'16px'}}><div style={{width:40,height:40,border:'4px solid #e2e8f0',borderTopColor:'#3b82f6',borderRadius:'50%',animation:'spin 0.8s linear infinite'}} /><span style={{fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',fontSize:'16px',fontWeight:600,color:'#475569'}}>Данные загружаются</span><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>;
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <RouteChangeInvalidator />
-          <TimezoneProvider>
-            <DistrictProvider>
-              <OffersProvider>
-                <PullToRefresh onRefresh={handleGlobalRefresh}>
-                  <TopLoadingBar />
-                  <Toaster />
-                  <Sonner />
-                  <TechnicalIssuesBanner />
-                  <BannerStrip />
-                  {isAuthenticated && <NotificationPermissionBanner />}
-                  {isAuthenticated && (
-                    <OnlineInviteBanner
-                      onOpenOrderChat={(orderId) => {
-                        const dispatch = () => window.dispatchEvent(
-                          new CustomEvent('openOrderChatById', { detail: { orderId: String(orderId) } })
-                        );
-                        if (window.location.pathname === '/my-orders') {
-                          dispatch();
-                        } else {
-                          window.location.href = `/my-orders?orderId=${orderId}`;
-                        }
-                      }}
-                    />
-                  )}
-
-                  <LocationToast />
-                  <InstallPrompt />
-                  <ErrorBoundary>
-                  <Suspense fallback={pageFallback}>
-                <Routes>
-            <Route path="/" element={<Offers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/contracts" element={<Navigate to="/" replace />} />
-            <Route path="/home" element={<Home isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/predlozheniya" element={<Navigate to="/" replace />} />
-            <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
-            <Route path="/search" element={<SearchResults isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/offer/:id" element={<OfferDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/edit-offer/:id" element={<EditOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/zaprosy" element={<Requests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/request/:id" element={<RequestDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/edit-request/:id" element={<EditRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/auction" element={<Auctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/auction/:id" element={<AuctionDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/support" element={<Support isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/clear-data" element={<ClearData isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/delete-test-data" element={<DeleteTestData />} />
-            <Route path="/migrate-images" element={<MigrateImages isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/profile" element={<Profile isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/verification" element={<VerificationPage />} />
-            <Route path="/verification/resubmit" element={<VerificationResubmit isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin" element={<AdminLogin />} />
-            <Route path="/admin/panel" element={<AdminPanel isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/users" element={<AdminUsers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/deleted-users" element={<AdminDeletedUsers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/offers" element={<AdminOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/requests" element={<AdminRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/auctions" element={<AdminAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/contracts" element={<AdminContracts isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/reviews" element={<AdminReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/orders" element={<AdminOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/analytics" element={<AdminAnalytics isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/settings" element={<AdminSettings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/manage-admins" element={<AdminManageAdmins isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/verifications" element={<AdminVerifications isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/change-password" element={<AdminChangePassword />} />
-            <Route path="/admin/content" element={<AdminContentManagement />} />
-            <Route path="/admin/arbitrage" element={<AdminArbitrage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/admin/support" element={<AdminSupport isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/set-admin-password" element={<SetAdminPassword />} />
-            <Route path="/trading" element={<TradingPlatform isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/contract/:id" element={<ContractDetail isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/create-contract" element={<CreateContract isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/edit-contract/:id" element={<EditContract isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-contracts" element={<MyContracts isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/order/:offerId" element={<OrderPage isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-
-
-            <Route path="/my-listings" element={<MyListings isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-offers" element={<MyOffers isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-requests" element={<MyRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-auto-sales" element={<MyAutoSales isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-auto-requests" element={<MyAutoRequests isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/create-offer" element={<CreateOffer isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/create-request" element={<CreateRequest isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-auctions" element={<MyAuctions isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/create-auction" element={<CreateAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/edit-auction/:id" element={<EditAuction isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-
-            <Route path="/active-orders" element={<ActiveOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-orders" element={<MyOrders isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/my-reviews" element={<MyReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/mosquito-repellent" element={<ProtectedRoute isAuthenticated={isAuthenticated}><MosquitoRepellent /></ProtectedRoute>} />
-            <Route path="/brain-booster" element={<ProtectedRoute isAuthenticated={isAuthenticated}><BrainBooster /></ProtectedRoute>} />
-            <Route path="/tax-reports" element={<TaxReports />} />
-            <Route path="/seller/:userId" element={<SellerReviews isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-
-            <Route path="/register" element={<Register onRegister={handleLogin} />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/new-password" element={<NewPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/verify-phone" element={<VerifyPhone />} />
-            <Route path="/terms" element={<TermsOfService isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/privacy" element={<PrivacyPolicy isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/offer-agreement" element={<OfferAgreement isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
-            <Route path="/image-editor" element={<ImageEditor />} />
-            <Route path="/s/:code" element={<ShortUrlRedirect />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </Suspense>
-          </ErrorBoundary>
-                </PullToRefresh>
-              </OffersProvider>
-            </DistrictProvider>
-          </TimezoneProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <PullToRefresh onRefresh={handleGlobalRefresh}>
+      <AppBanners isAuthenticated={isAuthenticated} />
+      <AppRoutes
+        isAuthenticated={isAuthenticated}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+      />
+    </PullToRefresh>
   );
-};
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <BrowserRouter>
+        <TimezoneProvider>
+          <DistrictProvider>
+            <OffersProvider>
+              <AppInner />
+            </OffersProvider>
+          </DistrictProvider>
+        </TimezoneProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
