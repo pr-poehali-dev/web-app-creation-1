@@ -569,29 +569,6 @@ export default function BrainBooster() {
           </ul>
         </div>
 
-        {/* ── ПОБОЧНЫЕ ЭФФЕКТЫ ──────────────────────────────── */}
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Icon name="ShieldAlert" size={16} className="text-orange-400" />
-            <span className="text-sm font-semibold text-orange-400">Побочные эффекты и противопоказания</span>
-          </div>
-          <ul className="space-y-2">
-            {[
-              { icon: 'AlertCircle', warn: false, text: 'Тяжесть или лёгкое давление в голове при первом прослушивании — нормальная реакция адаптации, проходит через 3–5 мин или после остановки' },
-              { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
-              { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
-              { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
-              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Снятие стресса» или вкладку «Тиннитус / Звон в ушах»' },
-              { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Icon name={item.icon} size={15} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
-                {item.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-
         {/* ── АКТИВНЫЙ РЕЖИМ — большая кнопка ──────────────── */}
         {currentConfig ? (
           <div className={`rounded-2xl border-2 p-6 text-center ${currentConfig.bgColor} ${currentConfig.borderColor} transition-all`}>
@@ -898,6 +875,29 @@ export default function BrainBooster() {
               );
             })}
           </div>
+        </div>
+
+        {/* ── ПОБОЧНЫЕ ЭФФЕКТЫ ──────────────────────────────── */}
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="ShieldAlert" size={16} className="text-orange-400" />
+            <span className="text-sm font-semibold text-orange-400">Побочные эффекты и противопоказания</span>
+          </div>
+          <ul className="space-y-2">
+            {[
+              { icon: 'AlertCircle', warn: false, text: 'Тяжесть или лёгкое давление в голове при первом прослушивании — нормальная реакция адаптации, проходит через 3–5 мин или после остановки' },
+              { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
+              { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
+              { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
+              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Снятие стресса»' },
+              { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Icon name={item.icon} size={15} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
+                {item.text}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* ── НАУЧНАЯ БАЗА ──────────────────────────────────── */}
