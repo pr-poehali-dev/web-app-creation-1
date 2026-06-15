@@ -173,7 +173,6 @@ export default function AdminContentManagement() {
         });
         showSuccess('Баннер создан и опубликован');
       }
-      sessionStorage.removeItem('active_banners');
       setShowBannerForm(false);
       setEditingBanner(null);
       await loadData();
@@ -187,7 +186,6 @@ export default function AdminContentManagement() {
   const handleToggleBanner = async (banner: BannerItem) => {
     try {
       await contentAPI.updateBannerAdmin(banner.id, { is_active: !banner.is_active });
-      sessionStorage.removeItem('active_banners');
       showSuccess(banner.is_active ? 'Баннер выключен' : 'Баннер включён');
       await loadData();
     } catch (error) {
@@ -199,7 +197,6 @@ export default function AdminContentManagement() {
     if (!confirm('Удалить баннер?')) return;
     try {
       await contentAPI.deleteBannerAdmin(bannerId);
-      sessionStorage.removeItem('active_banners');
       showSuccess('Баннер удалён');
       await loadData();
     } catch (error) {

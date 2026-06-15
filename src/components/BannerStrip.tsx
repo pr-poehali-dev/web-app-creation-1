@@ -31,23 +31,17 @@ export default function BannerStrip() {
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<number | null>(null);
 
-  useEffect(() => {
-    const TTL = 60_000; // 1 минута
-    try {
-      const raw = sessionStorage.getItem('active_banners');
-      if (raw) {
-        const { ts, data } = JSON.parse(raw);
-        if (Date.now() - ts < TTL) { setBanners(data); return; }
-      }
-    } catch { /* ignore */ }
+  const loadBanners = () => {
     fetch(`${CONTENT_API}?banners=true`)
       .then(r => r.ok ? r.json() : [])
-      .then(data => {
-        const list = Array.isArray(data) ? data : [];
-        setBanners(list);
-        sessionStorage.setItem('active_banners', JSON.stringify({ ts: Date.now(), data: list }));
-      })
+      .then(data => { setBanners(Array.isArray(data) ? data : []); })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadBanners();
+    window.addEventListener('globalRefresh', loadBanners);
+    return () => window.removeEventListener('globalRefresh', loadBanners);
   }, []);
 
   const currentPage = PAGE_MAP[location.pathname] || location.pathname.replace('/', '') || 'home';
