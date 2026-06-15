@@ -32,16 +32,20 @@ export default function BannerStrip() {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   useEffect(() => {
-    const cached = sessionStorage.getItem('active_banners');
-    if (cached) {
-      try { setBanners(JSON.parse(cached)); return; } catch { /* ignore */ }
-    }
+    const TTL = 60_000; // 1 минута
+    try {
+      const raw = sessionStorage.getItem('active_banners');
+      if (raw) {
+        const { ts, data } = JSON.parse(raw);
+        if (Date.now() - ts < TTL) { setBanners(data); return; }
+      }
+    } catch { /* ignore */ }
     fetch(`${CONTENT_API}?banners=true`)
       .then(r => r.ok ? r.json() : [])
       .then(data => {
         const list = Array.isArray(data) ? data : [];
         setBanners(list);
-        sessionStorage.setItem('active_banners', JSON.stringify(list));
+        sessionStorage.setItem('active_banners', JSON.stringify({ ts: Date.now(), data: list }));
       })
       .catch(() => {});
   }, []);
