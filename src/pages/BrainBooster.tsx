@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 
-type BrainMode = 'all' | 'focus' | 'stress' | 'energy' | 'eyes' | 'tinnitus';
+type BrainMode = 'all' | 'focus' | 'stress' | 'energy' | 'eyes';
 
 interface ModeConfig {
   id: BrainMode;
@@ -133,26 +133,6 @@ const MODES: ModeConfig[] = [
     effect: 'Снятие усталости глаз после экрана, расслабление глазных мышц, снижение напряжения зрительной коры',
     duration: '5–10 мин',
     science: 'Дельта-ритм 2–4 Гц переводит зрительную кору в режим глубокого покоя. Несущая 432 Гц воспринимается мягче стандартных 440 Гц. Сочетание с упражнениями 20-20-20 усиливает эффект снятия спазма аккомодации.',
-  },
-  {
-    id: 'tinnitus',
-    label: 'Тишина в ушах',
-    desc: 'Residual Inhibition • протокол RI',
-    icon: 'EarOff',
-    color: 'text-rose-400',
-    bgColor: 'bg-rose-500/10',
-    borderColor: 'border-rose-500/40',
-    leftHz: 250,
-    rightHz: 254,   // бит = 4 Гц (дельта — подавление патологической нейронной активности)
-    beatHz: 4,
-    waveType: 'sine',
-    noiseType: 'white', // Широкополосный белый шум — ключевой компонент протокола RI
-    noiseGain: 0.08,    // Нарастает программно — см. residualInhibition логику в play()
-    oscGain: 0.15,
-    effect: 'Временное подавление шума в ушах (тиннитуса). После сессии наступает период тишины — от нескольких минут до нескольких часов.',
-    duration: '2–3 мин',
-    science: 'Residual Inhibition — доказанный феномен (Vernon, 1977; подтверждён в 40+ исследованиях). Широкополосный шум на 1–2 минуты перегружает патологически активные нейроны слуховой коры, после чего они временно "замолкают". Эффект индивидуален.',
-    residualInhibition: true,
   },
 ];
 
@@ -544,8 +524,7 @@ export default function BrainBooster() {
       <div className="sticky top-[57px] z-10 bg-background border-b border-border px-4">
         <div className="flex max-w-lg mx-auto">
           {([
-            { id: 'modes',    label: 'Режимы',   icon: 'Brain' },
-            { id: 'tinnitus', label: 'Звон в ушах / Тиннитус', icon: 'EarOff' },
+            { id: 'modes', label: 'Режимы', icon: 'Brain' },
           ] as const).map(tab => (
             <button
               key={tab.id}
@@ -1007,8 +986,8 @@ export default function BrainBooster() {
       </div>
       )}
 
-      {/* ── ВКЛАДКА: ТИННИТУС ─────────────────────────────── */}
-      {activeTab === 'tinnitus' && (
+      {/* ТИННИТУС ВРЕМЕННО СКРЫТ */}
+      {activeTab === 'tinnitus_disabled' && (
         <div className="px-4 pt-5 space-y-5 max-w-lg mx-auto pb-10">
 
           {/* Intro */}
