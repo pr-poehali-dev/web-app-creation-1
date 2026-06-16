@@ -189,31 +189,44 @@ const AMBIENT_URLS: Record<string, string> = {
   eyes:   `${CDN}/eyes.mp3`,   // Comfortable Mystery — спокойная, расслабляющая
 };
 
-// Запускает ambient MP3 через Web Audio API (loop + плавный fade-in)
-// Возвращает функцию остановки
-function startAmbientTrack(ctx: AudioContext, ambientGain: GainNode, modeId: string): (() => void) {
+// Запускает ambient MP3 через HTMLAudioElement — без CORS-ограничений.
+// Громкость нарастает плавно через audio.volume (не через Web Audio gainNode).
+function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: string): (() => void) {
   const url = AMBIENT_URLS[modeId];
   if (!url) return () => {};
 
-  let source: AudioBufferSourceNode | null = null;
-  let stopped = false;
+  const audio = new Audio(url);
+  audio.loop = true;
+  audio.volume = 0;
 
-  fetch(url)
-    .then(r => r.arrayBuffer())
-    .then(buf => ctx.decodeAudioData(buf))
-    .then(decoded => {
-      if (stopped) return;
-      source = ctx.createBufferSource();
-      source.buffer = decoded;
-      source.loop = true;
-      source.connect(ambientGain);
-      source.start();
-    })
-    .catch(() => {});
+  audio.play().catch(() => {});
+
+  // Плавное нарастание громкости за 5 секунд
+  const TARGET_VOL = 0.28;
+  const STEPS = 50;
+  const INTERVAL = 5000 / STEPS;
+  let step = 0;
+  const fadeIn = setInterval(() => {
+    step++;
+    audio.volume = Math.min(TARGET_VOL, (step / STEPS) * TARGET_VOL);
+    if (step >= STEPS) clearInterval(fadeIn);
+  }, INTERVAL);
 
   return () => {
-    stopped = true;
-    try { source?.stop(); source?.disconnect(); } catch (_e) { /* ignore */ }
+    clearInterval(fadeIn);
+    // Плавное затухание за 2 секунды
+    const startVol = audio.volume;
+    let outStep = 0;
+    const OUT_STEPS = 20;
+    const fadeOut = setInterval(() => {
+      outStep++;
+      audio.volume = Math.max(0, startVol * (1 - outStep / OUT_STEPS));
+      if (outStep >= OUT_STEPS) {
+        clearInterval(fadeOut);
+        audio.pause();
+        audio.src = '';
+      }
+    }, 100);
   };
 }
 
@@ -466,17 +479,9 @@ export default function BrainBooster() {
       noiseSourceRef.current = noiseSource;
     }
 
-    // Ambient-слой: живой MP3-трек через Web Audio API, независим от masterGain
-    const ambientGain = ctx.createGain();
-    ambientGain.gain.setValueAtTime(0, ctx.currentTime);
-    ambientGain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 5);
-    ambientGain.connect(ctx.destination);
-    const ambientStopFn = startAmbientTrack(ctx, ambientGain, mode.id);
-    stopAmbientRef.current = () => {
-      ambientGain.gain.setValueAtTime(ambientGain.gain.value, ctx.currentTime);
-      ambientGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-      setTimeout(() => { ambientStopFn(); ambientGain.disconnect(); }, 2100);
-    };
+    // Ambient-слой: живой MP3 через HTMLAudioElement, громкость управляется независимо
+    const ambientStopFn = startAmbientTrack(ctx, ctx.createGain(), mode.id);
+    stopAmbientRef.current = ambientStopFn;
 
     setIsPlaying(true);
     setPulseAnim(true);
