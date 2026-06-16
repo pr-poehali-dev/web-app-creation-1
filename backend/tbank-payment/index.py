@@ -59,7 +59,10 @@ def handler(event: dict, context) -> dict:
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
-    auth = event.get("headers", {}).get("x-authorization", "")
+    headers = event.get("headers", {})
+    print(f"Headers keys: {list(headers.keys())}")
+    auth = headers.get("x-authorization") or headers.get("authorization") or headers.get("X-Authorization") or headers.get("Authorization") or ""
+    print(f"Auth header: {auth[:30] if auth else 'EMPTY'}")
     if not auth.startswith("Bearer "):
         return {"statusCode": 401, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps({"ok": False, "error": "Необходима авторизация"})}
