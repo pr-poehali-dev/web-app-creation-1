@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "name": "Upload brain tracks to CDN",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {"uploaded": "number"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
