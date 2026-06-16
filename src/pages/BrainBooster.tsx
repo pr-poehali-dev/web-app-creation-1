@@ -179,68 +179,135 @@ function createWhiteNoiseBuffer(ctx: AudioContext): AudioBuffer {
   return buffer;
 }
 
-// ── AMBIENT MP3-ТРЕКИ (royalty-free, incompetech.com CC BY) ──────────────────
+// ── AMBIENT MP3-ПЛЕЙЛИСТЫ (royalty-free, incompetech.com CC BY Kevin MacLeod) ─
 const CDN = 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/brain-sounds';
-const AMBIENT_URLS: Record<string, string> = {
-  all:    `${CDN}/all.mp3`,    // Relaxing Piano Music — позитивный, мягкий
-  focus:  `${CDN}/focus.mp3`,  // Meditation Impromptu — медитативная скрипка/фортепиано
-  stress: `${CDN}/stress.mp3`, // Flutey Funk — флейта, лёгкая позитивная
-  energy: `${CDN}/energy.mp3`, // Intended Force — энергичная, динамичная
-  eyes:   `${CDN}/eyes.mp3`,   // Comfortable Mystery — спокойная, расслабляющая
+
+// Прямые ссылки на треки Kevin MacLeod (CC BY 4.0, incompetech.com)
+const INC = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree';
+
+const AMBIENT_PLAYLISTS: Record<string, string[]> = {
+  // Общий режим — мягкие позитивные фортепианные треки
+  all: [
+    `${CDN}/all.mp3`,
+    `${INC}/Relaxing%20Piano%20Music.mp3`,
+    `${INC}/Comfortable%20Mystery.mp3`,
+    `${INC}/Meditation%20Impromptu%2003.mp3`,
+    `${INC}/Gymnopedie%20No%203.mp3`,
+    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
+  ],
+  // Фокус — медитативные, концентрация
+  focus: [
+    `${CDN}/focus.mp3`,
+    `${INC}/Meditation%20Impromptu%2003.mp3`,
+    `${INC}/Comfortable%20Mystery.mp3`,
+    `${INC}/Gymnopedie%20No%203.mp3`,
+    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
+    `${INC}/Relaxing%20Piano%20Music.mp3`,
+  ],
+  // Стресс — лёгкие, успокаивающие
+  stress: [
+    `${CDN}/stress.mp3`,
+    `${INC}/Comfortable%20Mystery.mp3`,
+    `${INC}/Gymnopedie%20No%203.mp3`,
+    `${INC}/Relaxing%20Piano%20Music.mp3`,
+    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
+    `${INC}/Meditation%20Impromptu%2003.mp3`,
+  ],
+  // Энергия — динамичные, мотивирующие
+  energy: [
+    `${CDN}/energy.mp3`,
+    `${INC}/Intended%20Force.mp3`,
+    `${INC}/Flutey%20Funk.mp3`,
+    `${INC}/Relaxing%20Piano%20Music.mp3`,
+    `${INC}/Gymnopedie%20No%203.mp3`,
+    `${INC}/Comfortable%20Mystery.mp3`,
+  ],
+  // Глаза — расслабляющие, спокойные
+  eyes: [
+    `${CDN}/eyes.mp3`,
+    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
+    `${INC}/Gymnopedie%20No%203.mp3`,
+    `${INC}/Comfortable%20Mystery.mp3`,
+    `${INC}/Meditation%20Impromptu%2003.mp3`,
+    `${INC}/Relaxing%20Piano%20Music.mp3`,
+  ],
 };
 
-// Запускает ambient MP3 через HTMLAudioElement — без CORS-ограничений.
+// Воспроизводит плейлист последовательно с плавными переходами между треками.
+// «Общий режим» — сразу полная громкость, остальные — fade-in 3 сек.
 function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: string): (() => void) {
-  const url = AMBIENT_URLS[modeId];
-  if (!url) return () => {};
+  const playlist = AMBIENT_PLAYLISTS[modeId];
+  if (!playlist?.length) return () => {};
 
-  // «Общий режим» — громче и без задержки fade-in
   const TARGET_VOL = modeId === 'all' ? 0.42 : 0.28;
   const isImmediate = modeId === 'all';
 
-  const audio = new Audio(url);
-  audio.loop = true;
-  audio.preload = 'auto';
-  // Для «all» сразу ставим полную громкость — без нарастания
-  audio.volume = isImmediate ? TARGET_VOL : 0;
-
+  let trackIndex = 0;
+  let audio: HTMLAudioElement | null = null;
   let fadeInTimer: ReturnType<typeof setInterval> | null = null;
   let stopped = false;
 
-  const startPlay = () => {
+  const playTrack = (index: number) => {
     if (stopped) return;
-    audio.play().catch(() => {});
-    if (!isImmediate) {
-      // Для остальных режимов — плавное нарастание за 3 сек
-      const STEPS = 30;
-      let step = 0;
-      fadeInTimer = setInterval(() => {
-        step++;
-        audio.volume = Math.min(TARGET_VOL, (step / STEPS) * TARGET_VOL);
-        if (step >= STEPS && fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = null; }
-      }, 100);
-    }
+
+    const url = playlist[index % playlist.length];
+    const el = new Audio(url);
+    el.preload = 'auto';
+    el.volume = isImmediate ? TARGET_VOL : 0;
+    audio = el;
+
+    const startPlay = () => {
+      if (stopped) { el.pause(); return; }
+      el.play().catch(() => {});
+
+      if (!isImmediate) {
+        const STEPS = 30;
+        let step = 0;
+        fadeInTimer = setInterval(() => {
+          step++;
+          el.volume = Math.min(TARGET_VOL, (step / STEPS) * TARGET_VOL);
+          if (step >= STEPS && fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = null; }
+        }, 100);
+      }
+    };
+
+    if (el.readyState >= 3) { startPlay(); } 
+    else { el.addEventListener('canplay', startPlay, { once: true }); }
+
+    // По окончании трека — плавный переход к следующему
+    el.addEventListener('ended', () => {
+      if (stopped) return;
+      trackIndex++;
+      // Мягкий fade-out текущего и запуск следующего
+      let outStep = 0;
+      const fadeOut = setInterval(() => {
+        outStep++;
+        el.volume = Math.max(0, TARGET_VOL * (1 - outStep / 15));
+        if (outStep >= 15) {
+          clearInterval(fadeOut);
+          el.pause();
+          playTrack(trackIndex);
+        }
+      }, 80);
+    }, { once: true });
   };
 
-  // Для «all» — играем сразу как только браузер готов (или через 0мс если уже готов)
-  if (audio.readyState >= 3) {
-    startPlay();
-  } else {
-    audio.addEventListener('canplay', startPlay, { once: true });
-  }
+  playTrack(trackIndex);
 
   return () => {
     stopped = true;
     if (fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = null; }
+    if (!audio) return;
     const startVol = audio.volume;
+    const dying = audio;
     let outStep = 0;
     const fadeOut = setInterval(() => {
       outStep++;
-      audio.volume = Math.max(0, startVol * (1 - outStep / 20));
+      dying.volume = Math.max(0, startVol * (1 - outStep / 20));
       if (outStep >= 20) {
         clearInterval(fadeOut);
-        audio.pause();
-        audio.src = '';
+        dying.pause();
+        dying.src = '';
       }
     }, 100);
   };
