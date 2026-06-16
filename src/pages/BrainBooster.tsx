@@ -179,6 +179,197 @@ function createWhiteNoiseBuffer(ctx: AudioContext): AudioBuffer {
   return buffer;
 }
 
+// ── AMBIENT-ГЕНЕРАТОРЫ (один на режим) ──────────────────────────────────────
+// Все ambient-узлы подключаются напрямую к ctx.destination (независимо от masterGain),
+// чтобы громкость бита и ambient можно было балансировать отдельно.
+
+// «Общий режим» — позитивные мягкие пэд-аккорды (мажорная терция + квинта, медленное вибрато)
+function startAmbientAll(ctx: AudioContext, ambientGain: GainNode): (() => void) {
+  const nodes: AudioNode[] = [];
+  // Мажорные аккорды: До-Ми-Соль в нижнем регистре, медленно пульсируют
+  const chordFreqs = [130.8, 164.8, 196.0, 261.6]; // C3-E3-G3-C4
+  chordFreqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    g.gain.value = 0;
+    // Каждый голос входит с небольшой задержкой — волна нарастания
+    g.gain.setValueAtTime(0, ctx.currentTime + i * 0.8);
+    g.gain.linearRampToValueAtTime(0.06 - i * 0.01, ctx.currentTime + i * 0.8 + 4);
+    osc.connect(g);
+    g.connect(ambientGain);
+    osc.start();
+    nodes.push(osc, g);
+    // Медленное вибрато через LFO
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.frequency.value = 0.3 + i * 0.05;
+    lfoGain.gain.value = freq * 0.002;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    lfo.start();
+    nodes.push(lfo, lfoGain);
+  });
+  return () => nodes.forEach(n => { try { (n as OscillatorNode).stop?.(); n.disconnect(); } catch (_e) { /* ignore */ } });
+}
+
+// «Фокус и память» — чёткие короткие синус-пинги каждые ~4 сек, чистые и точечные
+function startAmbientFocus(ctx: AudioContext, ambientGain: GainNode): (() => void) {
+  let active = true;
+  const pingFreqs = [523.2, 659.3, 783.9]; // C5-E5-G5 — светлые, чёткие
+  let idx = 0;
+  function ping() {
+    if (!active) return;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = pingFreqs[idx % pingFreqs.length];
+    idx++;
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+    osc.connect(g);
+    g.connect(ambientGain);
+    osc.start();
+    osc.stop(ctx.currentTime + 1.3);
+    const delay = 3500 + Math.random() * 1500;
+    setTimeout(ping, delay);
+  }
+  // Первый пинг через 2 сек после старта
+  setTimeout(ping, 2000);
+  // Тихий фоновый дрон — как "воздух" вокруг пингов
+  const drone = ctx.createOscillator();
+  const droneGain = ctx.createGain();
+  drone.type = 'sine';
+  drone.frequency.value = 261.6; // C4
+  droneGain.gain.value = 0.018;
+  drone.connect(droneGain);
+  droneGain.connect(ambientGain);
+  drone.start();
+  return () => { active = false; try { drone.stop(); drone.disconnect(); droneGain.disconnect(); } catch (_e) { /* ignore */ } };
+}
+
+// «Снятие стресса» — тёплые пэды с нарастанием в конце к лёгкой мажорной ноте
+function startAmbientStress(ctx: AudioContext, ambientGain: GainNode): (() => void) {
+  const nodes: AudioNode[] = [];
+  // Мягкий фа-мажор (расслабляющий), потом через 60 сек подъём к соль (позитивный)
+  const baseFreqs = [174.6, 220.0, 261.6]; // F3-A3-C4
+  baseFreqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, ctx.currentTime + i * 1.5);
+    g.gain.linearRampToValueAtTime(0.055, ctx.currentTime + i * 1.5 + 5);
+    // Через 60 сек — лёгкий подъём частоты (эффект "воздуха и освобождения")
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + 60);
+    osc.frequency.linearRampToValueAtTime(freq * 1.125, ctx.currentTime + 75); // полтона вверх
+    osc.connect(g);
+    g.connect(ambientGain);
+    osc.start();
+    nodes.push(osc, g);
+    const lfo = ctx.createOscillator();
+    const lfoG = ctx.createGain();
+    lfo.frequency.value = 0.15 + i * 0.08;
+    lfoG.gain.value = freq * 0.003;
+    lfo.connect(lfoG);
+    lfoG.connect(osc.frequency);
+    lfo.start();
+    nodes.push(lfo, lfoG);
+  });
+  return () => nodes.forEach(n => { try { (n as OscillatorNode).stop?.(); n.disconnect(); } catch (_e) { /* ignore */ } });
+}
+
+// «Энергия и бодрость» — космические свипы, шиммер, широкий стерео-пад
+function startAmbientEnergy(ctx: AudioContext, ambientGain: GainNode): (() => void) {
+  const nodes: AudioNode[] = [];
+  // Медленные восходящие свипы — как будто взлёт
+  function sweep() {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(80, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(320, ctx.currentTime + 8);
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 1);
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 8);
+    osc.connect(g);
+    g.connect(ambientGain);
+    osc.start();
+    osc.stop(ctx.currentTime + 8.1);
+    nodes.push(osc, g);
+  }
+  sweep();
+  const sweepTimer = setInterval(sweep, 9000);
+  // Высокий шиммер — "звёзды"
+  const shimmerFreqs = [1046, 1318, 1568]; // C6-E6-G6
+  shimmerFreqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    g.gain.value = 0.012 - i * 0.003;
+    const lfo = ctx.createOscillator();
+    const lfoG = ctx.createGain();
+    lfo.frequency.value = 0.5 + i * 0.3;
+    lfoG.gain.value = g.gain.value * 0.8;
+    lfo.connect(lfoG);
+    lfoG.connect(g.gain);
+    lfo.start();
+    osc.connect(g);
+    g.connect(ambientGain);
+    osc.start();
+    nodes.push(osc, g, lfo, lfoG);
+  });
+  return () => {
+    clearInterval(sweepTimer);
+    nodes.forEach(n => { try { (n as OscillatorNode).stop?.(); n.disconnect(); } catch (_e) { /* ignore */ } });
+  };
+}
+
+// «Расслабление глаз» — тихий глубокий пэд + периодический мягкий "колокольный" тонизирующий удар
+function startAmbientEyes(ctx: AudioContext, ambientGain: GainNode): (() => void) {
+  const nodes: AudioNode[] = [];
+  let active = true;
+  // Тихий глубокий фон
+  const droneFreqs = [87.3, 130.8]; // F2-C3 — очень низко, спокойно
+  droneFreqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, ctx.currentTime + i * 2);
+    g.gain.linearRampToValueAtTime(0.045, ctx.currentTime + i * 2 + 4);
+    osc.connect(g);
+    g.connect(ambientGain);
+    osc.start();
+    nodes.push(osc, g);
+  });
+  // Периодический мягкий колокол (~каждые 18–25 сек) — тонизирует, не пугает
+  function bell() {
+    if (!active) return;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 528; // "частота трансформации" — мягко-приятная
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
+    osc.connect(g);
+    g.connect(ambientGain);
+    osc.start();
+    osc.stop(ctx.currentTime + 2.6);
+    const next = 18000 + Math.random() * 7000;
+    setTimeout(bell, next);
+  }
+  setTimeout(bell, 8000);
+  return () => {
+    active = false;
+    nodes.forEach(n => { try { (n as OscillatorNode).stop?.(); n.disconnect(); } catch (_e) { /* ignore */ } });
+  };
+}
+
 // Шаги калибровки тиннитуса
 type CalibStep = 'intro' | 'coarse' | 'fine' | 'result';
 
@@ -324,6 +515,7 @@ export default function BrainBooster() {
   const masterGainRef = useRef<GainNode | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionDurationRef = useRef<number | null>(15 * 60);
+  const stopAmbientRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     document.title = 'Нейро-звук для стимуляции мозга — ЕРТТП';
@@ -331,6 +523,8 @@ export default function BrainBooster() {
   }, []);
 
   const stop = useCallback(() => {
+    stopAmbientRef.current?.();
+    stopAmbientRef.current = null;
     leftOscRef.current?.stop();
     leftOscRef.current?.disconnect();
     leftOscRef.current = null;
@@ -424,6 +618,23 @@ export default function BrainBooster() {
       noiseSource.start();
       noiseSourceRef.current = noiseSource;
     }
+
+    // Ambient-слой: отдельный GainNode → destination, не зависит от masterGain
+    const ambientGain = ctx.createGain();
+    ambientGain.gain.setValueAtTime(0, ctx.currentTime);
+    ambientGain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + 5);
+    ambientGain.connect(ctx.destination);
+    const ambientStopFn =
+      mode.id === 'all'    ? startAmbientAll(ctx, ambientGain) :
+      mode.id === 'focus'  ? startAmbientFocus(ctx, ambientGain) :
+      mode.id === 'stress' ? startAmbientStress(ctx, ambientGain) :
+      mode.id === 'energy' ? startAmbientEnergy(ctx, ambientGain) :
+                             startAmbientEyes(ctx, ambientGain);
+    stopAmbientRef.current = () => {
+      ambientGain.gain.setValueAtTime(ambientGain.gain.value, ctx.currentTime);
+      ambientGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+      setTimeout(() => { ambientStopFn(); ambientGain.disconnect(); }, 2100);
+    };
 
     setIsPlaying(true);
     setPulseAnim(true);
