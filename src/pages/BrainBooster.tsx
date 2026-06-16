@@ -363,7 +363,7 @@ export default function BrainBooster() {
     if (!token) { navigate('/login'); return; }
     setTrialLoading(true);
     try {
-      const res = await fetch(`${TBANK_PAYMENT_URL}/trial`, {
+      const res = await fetch(`${TBANK_PAYMENT_URL}?action=trial`, {
         method: 'POST',
         headers: { 'X-Authorization': `Bearer ${token}` }
       });
@@ -378,7 +378,7 @@ export default function BrainBooster() {
     if (!token) { navigate('/login'); return; }
     setPayLoading(true);
     try {
-      const res = await fetch(`${TBANK_PAYMENT_URL}/pay`, {
+      const res = await fetch(`${TBANK_PAYMENT_URL}?action=pay`, {
         method: 'POST',
         headers: { 'X-Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan })

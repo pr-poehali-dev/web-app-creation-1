@@ -42,11 +42,15 @@ def get_user_from_jwt(token: str, cur, schema):
     try:
         payload = jwt.decode(token, os.environ["JWT_SECRET_KEY"], algorithms=["HS256"])
         user_id = payload.get("user_id")
+        print(f"JWT payload user_id: {user_id}")
         if not user_id:
             return None
         cur.execute(f"SELECT id, email, first_name FROM {schema}.users WHERE id = %s AND is_active = true LIMIT 1", (user_id,))
-        return cur.fetchone()
-    except Exception:
+        row = cur.fetchone()
+        print(f"User found: {row is not None}")
+        return row
+    except Exception as e:
+        print(f"JWT decode error: {e}")
         return None
 
 
@@ -63,7 +67,8 @@ def handler(event: dict, context) -> dict:
     token = auth.replace("Bearer ", "")
     schema = os.environ.get("DB_SCHEMA", "t_p42562714_web_app_creation_1")
     method = event.get("httpMethod")
-    path = event.get("path", "/")
+    params = event.get("queryStringParameters") or {}
+    action = params.get("action", "")
     now = datetime.now(timezone.utc)
 
     conn = get_db()
@@ -112,8 +117,8 @@ def handler(event: dict, context) -> dict:
                     "can_trial": False,
                 })}
 
-    # ── POST /trial — активировать триал ────────────────────────────────────
-    if method == "POST" and "/trial" in path:
+    # ── POST ?action=trial — активировать триал ─────────────────────────────
+    if method == "POST" and action == "trial":
         cur.execute(f"SELECT id FROM {schema}.subscriptions WHERE user_id=%s LIMIT 1", (user_id,))
         if cur.fetchone():
             cur.close(); conn.close()
@@ -130,8 +135,8 @@ def handler(event: dict, context) -> dict:
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps({"ok": True, "plan": "trial", "expires_at": trial_ends.isoformat()})}
 
-    # ── POST /pay — создать платёж ───────────────────────────────────────────
-    if method == "POST" and "/pay" in path:
+    # ── POST ?action=pay — создать платёж ───────────────────────────────────
+    if method == "POST" and action == "pay":
         body = json.loads(event.get("body") or "{}")
         plan = body.get("plan")
 
