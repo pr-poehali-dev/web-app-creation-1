@@ -1484,6 +1484,9 @@ export default function BrainBooster() {
         </div>
       )}
 
+      <p className="text-center text-xs text-muted-foreground/40 px-4 pb-6 pt-2 leading-relaxed">
+        Фоновая музыка: Kevin MacLeod (incompetech.com) — Licensed under Creative Commons Attribution 4.0
+      </p>
     </div>
   );
 }
