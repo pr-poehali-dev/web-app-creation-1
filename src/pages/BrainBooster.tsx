@@ -832,12 +832,12 @@ export default function BrainBooster() {
             <span className="text-sm font-medium">Длительность сессии</span>
           </div>
           <div className="grid grid-cols-4 gap-2 mb-3">
-            {([5, 10, 15, 20, 30, null] as (number | null)[]).map((mins) => {
-              const secs = mins !== null ? mins * 60 : null;
+            {([5, 10, 15, 20, 30] as number[]).map((mins) => {
+              const secs = mins * 60;
               const isSelected = sessionDuration === secs;
               return (
                 <button
-                  key={mins ?? 'inf'}
+                  key={mins}
                   onClick={() => handleDurationChange(secs)}
                   disabled={isPlaying}
                   className={`rounded-xl py-2 text-xs font-semibold transition-all border-2
@@ -845,7 +845,7 @@ export default function BrainBooster() {
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground hover:border-primary/40 disabled:opacity-40'}`}
                 >
-                  {mins !== null ? `${mins} мин` : '∞'}
+                  {mins} мин
                 </button>
               );
             })}
