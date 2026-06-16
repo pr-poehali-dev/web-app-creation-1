@@ -246,8 +246,8 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
     let outStep = 0;
     const fadeOut = setInterval(() => {
       outStep++;
-      el.volume = Math.max(0, TARGET_VOL * (1 - outStep / 15));
-      if (outStep >= 15) {
+      el.volume = Math.max(0, TARGET_VOL * (1 - outStep / 10));
+      if (outStep >= 10) {
         clearInterval(fadeOut);
         el.pause();
         el.src = '';
@@ -255,7 +255,7 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
         transitioning = false;
         playTrack(trackIndex);
       }
-    }, 80);
+    }, 50);
   };
 
   const playTrack = (index: number) => {
