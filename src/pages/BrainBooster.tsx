@@ -897,12 +897,12 @@ export default function BrainBooster() {
             style={{ background: `linear-gradient(to right, hsl(var(--primary)) ${(volume * 100 - 10) / 70 * 100}%, hsl(var(--muted)) ${(volume * 100 - 10) / 70 * 100}%)` }}
           />
           <div className="flex justify-between text-xs text-muted-foreground mt-1.5">
-            <span>10% (рекомендуется)</span>
+            <span>10% (тихо)</span>
             <span>80% (макс.)</span>
           </div>
           <p className="text-xs text-amber-500/80 mt-2 flex items-center gap-1">
             <Icon name="AlertTriangle" size={11} />
-            Начните с 30–40% — бинауральный эффект работает даже на тихой громкости
+            Начните с низкой громкости — бинауральный эффект одинаково работает при 10–40%
           </p>
         </div>
 
