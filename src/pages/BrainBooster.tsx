@@ -47,12 +47,12 @@ const MODES: ModeConfig[] = [
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10',
     borderColor: 'border-purple-500/40',
-    leftHz: 250,
-    rightHz: 257,   // бит = 7 Гц (граница тета/альфа)
+    leftHz: 130,
+    rightHz: 137,   // бит = 7 Гц (граница тета/альфа), несущая снижена до 130 Гц — мягче для восприятия
     beatHz: 7,
     waveType: 'sine',
-    noiseType: null,   // Научные данные 2025 (Nature): немаскированные биты дают более сильный entrainment
-    noiseGain: 0,
+    noiseType: 'pink',  // тихий розовый фон смягчает чистый тон
+    noiseGain: 0.018,
     oscGain: 0.28,
     effect: 'Общее восстановление: снимает усталость, улучшает настроение и память',
     duration: '15–20 мин',
@@ -66,12 +66,12 @@ const MODES: ModeConfig[] = [
     color: 'text-blue-400',
     bgColor: 'bg-blue-500/10',
     borderColor: 'border-blue-500/40',
-    leftHz: 250,
-    rightHz: 268,   // бит = 18 Гц (середина бета-диапазона)
+    leftHz: 120,
+    rightHz: 138,   // бит = 18 Гц (середина бета-диапазона), несущая снижена до 120 Гц
     beatHz: 18,
     waveType: 'sine',
-    noiseType: null,   // Бета-биты работают сильнее без маскировки (eNeuro 2020)
-    noiseGain: 0,
+    noiseType: 'pink',  // тихий розовый фон смягчает высокочастотный тон
+    noiseGain: 0.015,
     oscGain: 0.28,
     effect: 'Концентрация, скорость мышления, удержание информации. Особенно эффективен для людей 45+ — помогает восстановить остроту памяти.',
     duration: '20–30 мин',
@@ -85,12 +85,12 @@ const MODES: ModeConfig[] = [
     color: 'text-green-400',
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/40',
-    leftHz: 250,
-    rightHz: 260,   // бит = 10 Гц (центр альфа-диапазона)
+    leftHz: 120,
+    rightHz: 130,   // бит = 10 Гц (центр альфа-диапазона), несущая снижена до 120 Гц
     beatHz: 10,
     waveType: 'sine',
     noiseType: 'brown', // Коричневый шум при снятии стресса — доказан: снижает ЧСС и тревогу сам по себе
-    noiseGain: 0.025,   // Тихий фон — слышен, но не заглушает бинауральный бит
+    noiseGain: 0.022,   // Тихий фон — слышен, но не заглушает бинауральный бит
     oscGain: 0.24,
     effect: 'Снижение тревоги, расслабление, снятие усталости и напряжения',
     duration: '10–20 мин',
@@ -104,12 +104,12 @@ const MODES: ModeConfig[] = [
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-500/10',
     borderColor: 'border-yellow-500/40',
-    leftHz: 250,
-    rightHz: 290,   // бит = 40 Гц (классический гамма)
+    leftHz: 120,
+    rightHz: 160,   // бит = 40 Гц (классический гамма), несущая снижена до 120 Гц
     beatHz: 40,
     waveType: 'sine',
-    noiseType: 'white', // Белый шум + гамма 40 Гц: исследования MIT показали усиление когнитивного эффекта
-    noiseGain: 0.03,    // Минимальный — только усилитель, не помеха
+    noiseType: 'pink',  // розовый шум мягче белого, эффект сохраняется
+    noiseGain: 0.020,   // Минимальный — только усилитель, не помеха
     oscGain: 0.22,
     effect: 'Бодрость, подъём настроения, ясность мышления, борьба с ленью',
     duration: '10–15 мин',
@@ -123,8 +123,8 @@ const MODES: ModeConfig[] = [
     color: 'text-cyan-400',
     bgColor: 'bg-cyan-500/10',
     borderColor: 'border-cyan-500/40',
-    leftHz: 432,    // 432 Гц — более мягкая несущая, меньше давления
-    rightHz: 435,   // бит = 3 Гц (дельта — глубокое расслабление нейронов)
+    leftHz: 110,    // 110 Гц — очень мягкая несущая, минимум давления на уши
+    rightHz: 113,   // бит = 3 Гц (дельта — глубокое расслабление нейронов)
     beatHz: 3,
     waveType: 'sine',
     noiseType: 'pink',  // Розовый шум + дельта: мягкий фон помогает расслаблению зрительной коры
@@ -365,7 +365,9 @@ export default function BrainBooster() {
 
     const merger = ctx.createChannelMerger(2);
     const masterGain = ctx.createGain();
-    masterGain.gain.value = vol;
+    // Плавное нарастание за 3 секунды — убирает резкий старт
+    masterGain.gain.setValueAtTime(0, ctx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 3);
     masterGainRef.current = masterGain;
     merger.connect(masterGain);
     masterGain.connect(ctx.destination);
