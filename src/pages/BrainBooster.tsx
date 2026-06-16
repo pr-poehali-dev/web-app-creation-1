@@ -246,6 +246,25 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
   let audio: HTMLAudioElement | null = null;
   let fadeInTimer: ReturnType<typeof setInterval> | null = null;
   let stopped = false;
+  let transitioning = false;
+
+  const nextTrack = (el: HTMLAudioElement) => {
+    if (stopped || transitioning) return;
+    transitioning = true;
+    let outStep = 0;
+    const fadeOut = setInterval(() => {
+      outStep++;
+      el.volume = Math.max(0, TARGET_VOL * (1 - outStep / 15));
+      if (outStep >= 15) {
+        clearInterval(fadeOut);
+        el.pause();
+        el.src = '';
+        trackIndex++;
+        transitioning = false;
+        playTrack(trackIndex);
+      }
+    }, 80);
+  };
 
   const playTrack = (index: number) => {
     if (stopped) return;
@@ -253,12 +272,16 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
     const url = playlist[index % playlist.length];
     const el = new Audio(url);
     el.preload = 'auto';
+    el.crossOrigin = 'anonymous';
     el.volume = isImmediate ? TARGET_VOL : 0;
     audio = el;
 
     const startPlay = () => {
       if (stopped) { el.pause(); return; }
-      el.play().catch(() => {});
+      el.play().catch(() => {
+        // Трек не загрузился — переходим к следующему
+        nextTrack(el);
+      });
 
       if (!isImmediate) {
         const STEPS = 30;
@@ -271,25 +294,13 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
       }
     };
 
-    if (el.readyState >= 3) { startPlay(); } 
-    else { el.addEventListener('canplay', startPlay, { once: true }); }
+    // Ошибка загрузки — пропускаем трек
+    el.addEventListener('error', () => { if (!stopped) nextTrack(el); }, { once: true });
+    // Конец трека — плавный переход к следующему
+    el.addEventListener('ended', () => nextTrack(el), { once: true });
 
-    // По окончании трека — плавный переход к следующему
-    el.addEventListener('ended', () => {
-      if (stopped) return;
-      trackIndex++;
-      // Мягкий fade-out текущего и запуск следующего
-      let outStep = 0;
-      const fadeOut = setInterval(() => {
-        outStep++;
-        el.volume = Math.max(0, TARGET_VOL * (1 - outStep / 15));
-        if (outStep >= 15) {
-          clearInterval(fadeOut);
-          el.pause();
-          playTrack(trackIndex);
-        }
-      }, 80);
-    }, { once: true });
+    if (el.readyState >= 3) { startPlay(); }
+    else { el.addEventListener('canplay', startPlay, { once: true }); }
   };
 
   playTrack(trackIndex);
