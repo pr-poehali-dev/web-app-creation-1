@@ -264,7 +264,6 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
     const url = playlist[index % playlist.length];
     const el = new Audio(url);
     el.preload = 'auto';
-    el.crossOrigin = 'anonymous';
     el.volume = isImmediate ? TARGET_VOL : 0;
     audio = el;
 
