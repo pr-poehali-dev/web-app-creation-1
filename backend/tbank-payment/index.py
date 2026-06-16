@@ -151,6 +151,7 @@ def handler(event: dict, context) -> dict:
         plan_info = PLANS[plan]
         terminal_key = os.environ["TBANK_TERMINAL_KEY"]
         secret_key = os.environ["TBANK_SECRET_KEY"]
+        print(f"RAW terminal_key from env: '{terminal_key}' len={len(terminal_key)}")
         order_id = str(uuid.uuid4())
 
         cur.execute(f"""
