@@ -182,54 +182,46 @@ function createWhiteNoiseBuffer(ctx: AudioContext): AudioBuffer {
 // ── AMBIENT MP3-ПЛЕЙЛИСТЫ (royalty-free, incompetech.com CC BY Kevin MacLeod) ─
 const CDN = 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/brain-sounds';
 
-// Прямые ссылки на треки Kevin MacLeod (CC BY 4.0, incompetech.com)
-const INC = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree';
-
 const AMBIENT_PLAYLISTS: Record<string, string[]> = {
   // Общий режим — мягкие позитивные фортепианные треки
   all: [
     `${CDN}/all.mp3`,
-    `${INC}/Relaxing%20Piano%20Music.mp3`,
-    `${INC}/Comfortable%20Mystery.mp3`,
-    `${INC}/Meditation%20Impromptu%2003.mp3`,
-    `${INC}/Gymnopedie%20No%203.mp3`,
-    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
+    `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/extra_meditation3.mp3`,
+    `${CDN}/extra_bright.mp3`,
+    `${CDN}/eyes.mp3`,
   ],
   // Фокус — медитативные, концентрация
   focus: [
     `${CDN}/focus.mp3`,
-    `${INC}/Meditation%20Impromptu%2003.mp3`,
-    `${INC}/Comfortable%20Mystery.mp3`,
-    `${INC}/Gymnopedie%20No%203.mp3`,
-    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
-    `${INC}/Relaxing%20Piano%20Music.mp3`,
+    `${CDN}/extra_meditation3.mp3`,
+    `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/extra_bright.mp3`,
+    `${CDN}/all.mp3`,
   ],
   // Стресс — лёгкие, успокаивающие
   stress: [
     `${CDN}/stress.mp3`,
-    `${INC}/Comfortable%20Mystery.mp3`,
-    `${INC}/Gymnopedie%20No%203.mp3`,
-    `${INC}/Relaxing%20Piano%20Music.mp3`,
-    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
-    `${INC}/Meditation%20Impromptu%2003.mp3`,
+    `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/extra_bright.mp3`,
+    `${CDN}/extra_meditation3.mp3`,
+    `${CDN}/eyes.mp3`,
   ],
   // Энергия — динамичные, мотивирующие
   energy: [
     `${CDN}/energy.mp3`,
-    `${INC}/Intended%20Force.mp3`,
-    `${INC}/Flutey%20Funk.mp3`,
-    `${INC}/Relaxing%20Piano%20Music.mp3`,
-    `${INC}/Gymnopedie%20No%203.mp3`,
-    `${INC}/Comfortable%20Mystery.mp3`,
+    `${CDN}/extra_groove.mp3`,
+    `${CDN}/extra_impact.mp3`,
+    `${CDN}/stress.mp3`,
+    `${CDN}/focus.mp3`,
   ],
   // Глаза — расслабляющие, спокойные
   eyes: [
     `${CDN}/eyes.mp3`,
-    `${INC}/Open%20Those%20Bright%20Eyes.mp3`,
-    `${INC}/Gymnopedie%20No%203.mp3`,
-    `${INC}/Comfortable%20Mystery.mp3`,
-    `${INC}/Meditation%20Impromptu%2003.mp3`,
-    `${INC}/Relaxing%20Piano%20Music.mp3`,
+    `${CDN}/extra_bright.mp3`,
+    `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/extra_meditation3.mp3`,
+    `${CDN}/all.mp3`,
   ],
 };
 
