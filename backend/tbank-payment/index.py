@@ -160,14 +160,17 @@ def handler(event: dict, context) -> dict:
         payment_id = cur.fetchone()[0]
         conn.commit()
 
+        frontend = os.environ.get("FRONTEND_URL", "https://erttp.ru")
         params = {
             "TerminalKey": terminal_key,
             "Amount": plan_info["amount"],
             "OrderId": order_id,
             "Description": plan_info["label"],
-            "SuccessURL": f"{FRONTEND_URL}/brain-booster?payment=success",
-            "FailURL": f"{FRONTEND_URL}/brain-booster?payment=fail",
+            "SuccessURL": f"{frontend}/brain-booster?payment=success",
+            "FailURL": f"{frontend}/brain-booster?payment=fail",
+            "NotificationURL": "https://functions.poehali.dev/48623d77-3c76-4711-99a9-3223aae78b96",
         }
+        print(f"TBank params: TerminalKey={terminal_key[:10]}, Amount={plan_info['amount']}, OrderId={order_id}")
         params["Token"] = get_tbank_token(params, secret_key)
 
         req = urllib.request.Request(
@@ -179,12 +182,13 @@ def handler(event: dict, context) -> dict:
         with urllib.request.urlopen(req, timeout=15) as resp:
             result = json.loads(resp.read())
 
+        print(f"TBank response: Success={result.get('Success')}, Message={result.get('Message')}, Details={result.get('Details')}")
         if not result.get("Success"):
             cur.execute(f"UPDATE {schema}.payments SET status='failed' WHERE id=%s", (payment_id,))
             conn.commit()
             cur.close(); conn.close()
             return {"statusCode": 500, "headers": {**CORS, "Content-Type": "application/json"},
-                    "body": json.dumps({"ok": False, "error": result.get("Message", "Ошибка платежа")})}
+                    "body": json.dumps({"ok": False, "error": result.get("Message", "Ошибка платежа"), "details": result.get("Details", "")})}
 
         payment_url = result["PaymentURL"]
         cur.execute(f"UPDATE {schema}.payments SET tbank_payment_id=%s, payment_url=%s WHERE id=%s",
