@@ -22,7 +22,7 @@ function useSubscription() {
     if (!token) { setLoading(false); setSub(null); return; }
     try {
       const res = await fetch(TBANK_PAYMENT_URL, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'X-Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.ok) setSub(data);
@@ -352,7 +352,6 @@ export default function BrainBooster() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { sub, loading: subLoading, refresh: refreshSub } = useSubscription();
-  const [showPaywall, setShowPaywall] = useState(false);
   const [payLoading, setPayLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
   const currentUser = getSession();
@@ -366,10 +365,10 @@ export default function BrainBooster() {
     try {
       const res = await fetch(`${TBANK_PAYMENT_URL}/trial`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'X-Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.ok) { await refreshSub(); setShowPaywall(false); }
+      if (data.ok) { await refreshSub(); }
     } catch (_e) { /* ignore */ }
     setTrialLoading(false);
   };
@@ -381,7 +380,7 @@ export default function BrainBooster() {
     try {
       const res = await fetch(`${TBANK_PAYMENT_URL}/pay`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 'X-Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan })
       });
       const data = await res.json();
@@ -668,7 +667,6 @@ export default function BrainBooster() {
   const handleToggle = useCallback((modeId: BrainMode) => {
     if (!hasAccess) {
       if (!currentUser) { navigate('/login'); return; }
-      setShowPaywall(true);
       return;
     }
     const config = MODES.find(m => m.id === modeId)!;
@@ -729,14 +727,6 @@ export default function BrainBooster() {
               {sub?.plan === 'trial' ? 'Триал' : sub?.plan === 'week' ? 'Неделя' : 'Месяц'}
             </div>
           )}
-          {!hasAccess && !subLoading && (
-            <button
-              onClick={() => { if (!currentUser) navigate('/login'); else setShowPaywall(true); }}
-              className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
-            >
-              Попробовать
-            </button>
-          )}
           {isPlaying && (
             <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -780,86 +770,7 @@ export default function BrainBooster() {
         </div>
       </div>
 
-      {/* ── PAYWALL ───────────────────────────────────────── */}
-      {!subLoading && !hasAccess && (showPaywall || searchParams.get('payment') === 'fail') && (
-        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center px-6">
-          <div className="w-full max-w-sm">
-            {/* Иконка */}
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
-              <Icon name="Brain" size={32} className="text-primary" />
-            </div>
 
-            <h2 className="text-2xl font-bold text-center mb-1">Нейро-звук</h2>
-            <p className="text-muted-foreground text-center text-sm mb-6">
-              Бинауральные ритмы для фокуса, восстановления и антистресса
-            </p>
-
-            {/* Триал */}
-            {sub?.can_trial !== false && (
-              <button
-                onClick={handleStartTrial}
-                disabled={trialLoading}
-                className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-bold text-base mb-3 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
-              >
-                {trialLoading
-                  ? <Icon name="Loader2" size={18} className="animate-spin" />
-                  : <Icon name="Gift" size={18} />}
-                7 дней бесплатно
-              </button>
-            )}
-
-            {/* Тарифы */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <button
-                onClick={() => handlePay('week')}
-                disabled={payLoading}
-                className="border-2 border-border rounded-2xl p-4 text-left hover:border-primary/50 transition-colors disabled:opacity-60"
-              >
-                <p className="text-xs text-muted-foreground mb-1">Неделя</p>
-                <p className="text-xl font-bold">100 ₽</p>
-                <p className="text-xs text-muted-foreground mt-0.5">7 дней доступа</p>
-              </button>
-              <button
-                onClick={() => handlePay('month')}
-                disabled={payLoading}
-                className="border-2 border-primary rounded-2xl p-4 text-left relative overflow-hidden hover:opacity-90 transition-opacity disabled:opacity-60"
-              >
-                <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                  −25%
-                </div>
-                <p className="text-xs text-muted-foreground mb-1">Месяц</p>
-                <p className="text-xl font-bold">299 ₽</p>
-                <p className="text-xs text-muted-foreground mt-0.5 line-through">400 ₽</p>
-              </button>
-            </div>
-
-            {payLoading && (
-              <p className="text-xs text-muted-foreground text-center mb-3 flex items-center justify-center gap-1">
-                <Icon name="Loader2" size={12} className="animate-spin" />
-                Переход к оплате...
-              </p>
-            )}
-
-            {!currentUser && (
-              <p className="text-xs text-center text-muted-foreground mb-3">
-                Для оплаты нужно{' '}
-                <button onClick={() => navigate('/login')} className="text-primary underline">войти</button>
-              </p>
-            )}
-
-            <p className="text-[11px] text-muted-foreground/50 text-center leading-relaxed">
-              Оплата через Т-Банк · СБП · Любой банк РФ
-            </p>
-
-            <button
-              onClick={() => setShowPaywall(false)}
-              className="mt-4 w-full text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors py-2"
-            >
-              Закрыть
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* ── ВКЛАДКА: РЕЖИМЫ ───────────────────────────────── */}
       {activeTab === 'modes' && (
@@ -1083,9 +994,62 @@ export default function BrainBooster() {
         </div>
 
         {/* Режимы */}
-        <div>
+        <div className="relative">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Режимы</h2>
-          <div className="grid grid-cols-1 gap-3">
+
+          {/* Оверлей для незарегистрированных */}
+          {!hasAccess && !subLoading && (
+            <div className="absolute inset-0 z-10 rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 backdrop-blur-sm bg-background/60" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Icon name="Lock" size={26} className="text-primary" />
+                </div>
+                <p className="font-bold text-base mb-1">Доступ закрыт</p>
+                <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                  Попробуйте 7 дней бесплатно или выберите удобный тариф
+                </p>
+                <button
+                  onClick={handleStartTrial}
+                  disabled={trialLoading}
+                  className="w-full max-w-xs bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm mb-3 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+                >
+                  {trialLoading ? <Icon name="Loader2" size={16} className="animate-spin" /> : <Icon name="Gift" size={16} />}
+                  7 дней бесплатно
+                </button>
+                <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
+                  <button
+                    onClick={() => handlePay('week')}
+                    disabled={payLoading}
+                    className="border-2 border-border rounded-xl py-3 text-center hover:border-primary/50 transition-colors disabled:opacity-60"
+                  >
+                    <p className="text-xs text-muted-foreground">Неделя</p>
+                    <p className="font-bold text-base">100 ₽</p>
+                  </button>
+                  <button
+                    onClick={() => handlePay('month')}
+                    disabled={payLoading}
+                    className="border-2 border-primary rounded-xl py-3 text-center relative hover:opacity-90 transition-opacity disabled:opacity-60"
+                  >
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                      −25%
+                    </div>
+                    <p className="text-xs text-muted-foreground">Месяц</p>
+                    <p className="font-bold text-base">299 ₽</p>
+                    <p className="text-[10px] text-muted-foreground line-through">400 ₽</p>
+                  </button>
+                </div>
+                {payLoading && (
+                  <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                    <Icon name="Loader2" size={11} className="animate-spin" /> Переход к оплате...
+                  </p>
+                )}
+                <p className="text-[11px] text-muted-foreground/40 mt-3">Оплата через Т-Банк · СБП · Любой банк РФ</p>
+              </div>
+            </div>
+          )}
+
+          <div className={`grid grid-cols-1 gap-3 ${!hasAccess && !subLoading ? 'pointer-events-none select-none' : ''}`}>
             {MODES.filter(mode => mode.id !== 'tinnitus').map(mode => {
               const isActive = activeMode === mode.id;
               const isExpanded = expandedMode === mode.id;
@@ -1268,7 +1232,7 @@ export default function BrainBooster() {
               );
             })}
           </div>
-        </div>
+        </div>{/* конец .relative блока Режимы */}
 
         {/* Гимнастика для глаз — показывается только когда выбран режим eyes */}
         {(activeMode === 'eyes' || expandedMode === 'eyes') && (
