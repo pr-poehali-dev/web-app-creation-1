@@ -384,7 +384,16 @@ export default function BrainBooster() {
         body: JSON.stringify({ plan })
       });
       const data = await res.json();
-      if (data.ok && data.payment_url) window.location.href = data.payment_url;
+      if (data.ok && data.payment_url) {
+        const a = document.createElement('a');
+        a.href = data.payment_url;
+        a.target = '_self';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else if (!data.ok) {
+        alert(data.error || 'Ошибка создания платежа');
+      }
     } catch (_e) { /* ignore */ }
     setPayLoading(false);
   };
