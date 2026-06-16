@@ -1,6 +1,38 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import { getJwtToken, getSession } from '@/utils/auth';
+
+const TBANK_PAYMENT_URL = 'https://functions.poehali.dev/f2a339e0-68a2-42ba-b5eb-55be5d543b5e';
+
+type SubStatus = {
+  has_subscription: boolean;
+  plan: string | null;
+  expires_at: string | null;
+  can_trial: boolean;
+  status?: string;
+};
+
+function useSubscription() {
+  const [sub, setSub] = useState<SubStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    const token = getJwtToken();
+    if (!token) { setLoading(false); setSub(null); return; }
+    try {
+      const res = await fetch(TBANK_PAYMENT_URL, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.ok) setSub(data);
+    } catch (_e) { /* ignore */ }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+  return { sub, loading, refresh };
+}
 
 type BrainMode = 'all' | 'focus' | 'stress' | 'energy' | 'eyes';
 
@@ -318,6 +350,50 @@ type CalibStep = 'intro' | 'coarse' | 'fine' | 'result';
 
 export default function BrainBooster() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { sub, loading: subLoading, refresh: refreshSub } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [payLoading, setPayLoading] = useState(false);
+  const [trialLoading, setTrialLoading] = useState(false);
+  const currentUser = getSession();
+
+  const hasAccess = !!currentUser && (sub?.has_subscription === true);
+
+  const handleStartTrial = async () => {
+    const token = getJwtToken();
+    if (!token) { navigate('/login'); return; }
+    setTrialLoading(true);
+    try {
+      const res = await fetch(`${TBANK_PAYMENT_URL}/trial`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.ok) { await refreshSub(); setShowPaywall(false); }
+    } catch (_e) { /* ignore */ }
+    setTrialLoading(false);
+  };
+
+  const handlePay = async (plan: 'week' | 'month') => {
+    const token = getJwtToken();
+    if (!token) { navigate('/login'); return; }
+    setPayLoading(true);
+    try {
+      const res = await fetch(`${TBANK_PAYMENT_URL}/pay`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan })
+      });
+      const data = await res.json();
+      if (data.ok && data.payment_url) window.location.href = data.payment_url;
+    } catch (_e) { /* ignore */ }
+    setPayLoading(false);
+  };
+
+  useEffect(() => {
+    if (searchParams.get('payment') === 'success') refreshSub();
+  }, [searchParams, refreshSub]);
+
   const [activeTab, setActiveTab] = useState<'modes' | 'tinnitus'>('modes');
   const [activeMode, setActiveMode] = useState<BrainMode | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -590,6 +666,11 @@ export default function BrainBooster() {
   }, [stop]);
 
   const handleToggle = useCallback((modeId: BrainMode) => {
+    if (!hasAccess) {
+      if (!currentUser) { navigate('/login'); return; }
+      setShowPaywall(true);
+      return;
+    }
     const config = MODES.find(m => m.id === modeId)!;
     if (isPlaying && activeMode === modeId) {
       stop();
@@ -598,7 +679,7 @@ export default function BrainBooster() {
       setActiveMode(modeId);
       play(config, volume);
     }
-  }, [isPlaying, activeMode, stop, play, volume]);
+  }, [hasAccess, currentUser, isPlaying, activeMode, stop, play, volume, navigate]);
 
   useEffect(() => {
     if (masterGainRef.current) {
@@ -642,6 +723,20 @@ export default function BrainBooster() {
           <p className="text-xs text-muted-foreground">Бинауральные ритмы · Научная база</p>
         </div>
         <div className="flex items-center gap-2">
+          {hasAccess && !isPlaying && (
+            <div className="flex items-center gap-1 bg-green-500/10 text-green-600 px-2.5 py-1.5 rounded-full text-xs font-medium">
+              <Icon name="CheckCircle" size={12} />
+              {sub?.plan === 'trial' ? 'Триал' : sub?.plan === 'week' ? 'Неделя' : 'Месяц'}
+            </div>
+          )}
+          {!hasAccess && !subLoading && (
+            <button
+              onClick={() => { if (!currentUser) navigate('/login'); else setShowPaywall(true); }}
+              className="bg-primary text-primary-foreground text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+            >
+              Попробовать
+            </button>
+          )}
           {isPlaying && (
             <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -684,6 +779,87 @@ export default function BrainBooster() {
           ))}
         </div>
       </div>
+
+      {/* ── PAYWALL ───────────────────────────────────────── */}
+      {!subLoading && !hasAccess && (showPaywall || searchParams.get('payment') === 'fail') && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center px-6">
+          <div className="w-full max-w-sm">
+            {/* Иконка */}
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-5">
+              <Icon name="Brain" size={32} className="text-primary" />
+            </div>
+
+            <h2 className="text-2xl font-bold text-center mb-1">Нейро-звук</h2>
+            <p className="text-muted-foreground text-center text-sm mb-6">
+              Бинауральные ритмы для фокуса, восстановления и антистресса
+            </p>
+
+            {/* Триал */}
+            {sub?.can_trial !== false && (
+              <button
+                onClick={handleStartTrial}
+                disabled={trialLoading}
+                className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-bold text-base mb-3 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+              >
+                {trialLoading
+                  ? <Icon name="Loader2" size={18} className="animate-spin" />
+                  : <Icon name="Gift" size={18} />}
+                7 дней бесплатно
+              </button>
+            )}
+
+            {/* Тарифы */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <button
+                onClick={() => handlePay('week')}
+                disabled={payLoading}
+                className="border-2 border-border rounded-2xl p-4 text-left hover:border-primary/50 transition-colors disabled:opacity-60"
+              >
+                <p className="text-xs text-muted-foreground mb-1">Неделя</p>
+                <p className="text-xl font-bold">100 ₽</p>
+                <p className="text-xs text-muted-foreground mt-0.5">7 дней доступа</p>
+              </button>
+              <button
+                onClick={() => handlePay('month')}
+                disabled={payLoading}
+                className="border-2 border-primary rounded-2xl p-4 text-left relative overflow-hidden hover:opacity-90 transition-opacity disabled:opacity-60"
+              >
+                <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  −25%
+                </div>
+                <p className="text-xs text-muted-foreground mb-1">Месяц</p>
+                <p className="text-xl font-bold">299 ₽</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-through">400 ₽</p>
+              </button>
+            </div>
+
+            {payLoading && (
+              <p className="text-xs text-muted-foreground text-center mb-3 flex items-center justify-center gap-1">
+                <Icon name="Loader2" size={12} className="animate-spin" />
+                Переход к оплате...
+              </p>
+            )}
+
+            {!currentUser && (
+              <p className="text-xs text-center text-muted-foreground mb-3">
+                Для оплаты нужно{' '}
+                <button onClick={() => navigate('/login')} className="text-primary underline">войти</button>
+              </p>
+            )}
+
+            <p className="text-[11px] text-muted-foreground/50 text-center leading-relaxed">
+              Оплата через Т-Банк · СБП · Любой банк РФ
+            </p>
+
+            <button
+              onClick={() => setShowPaywall(false)}
+              className="mt-4 w-full text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors py-2"
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── ВКЛАДКА: РЕЖИМЫ ───────────────────────────────── */}
       {activeTab === 'modes' && (

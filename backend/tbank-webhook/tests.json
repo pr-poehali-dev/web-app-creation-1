@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Invalid token returns OK",
+      "method": "POST",
+      "path": "/",
+      "body": {"Status": "CONFIRMED", "OrderId": "test", "Token": "invalid"},
+      "expectedStatus": 200,
+      "expectedBody": "FAIL",
+      "bodyMatcher": "exact"
+    }
+  ]
+}

@@ -1,4 +1,6 @@
 {
+  "tbank-webhook": "https://functions.poehali.dev/48623d77-3c76-4711-99a9-3223aae78b96",
+  "tbank-payment": "https://functions.poehali.dev/f2a339e0-68a2-42ba-b5eb-55be5d543b5e",
   "support-chat": "https://functions.poehali.dev/290e9899-6b8d-4974-bcea-12fafbb54fe5",
   "online-invite": "https://functions.poehali.dev/a2c4ab26-756f-4a09-af41-a5589a8ff2c2",
   "call-signal": "https://functions.poehali.dev/917aa5f0-438c-4d35-b8d9-eb2ae14f54f4",
