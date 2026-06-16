@@ -197,14 +197,16 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
 
   const audio = new Audio(url);
   audio.loop = true;
-  audio.volume = 0;
 
+  // «Общий режим» — музыка стартует сразу и чуть громче (бинауральный бит не теряется — он идёт отдельным слоем)
+  const TARGET_VOL = modeId === 'all' ? 0.42 : 0.28;
+  const FADE_MS    = modeId === 'all' ? 1500  : 5000; // 1.5 сек vs 5 сек
+
+  audio.volume = 0;
   audio.play().catch(() => {});
 
-  // Плавное нарастание громкости за 5 секунд
-  const TARGET_VOL = 0.28;
   const STEPS = 50;
-  const INTERVAL = 5000 / STEPS;
+  const INTERVAL = FADE_MS / STEPS;
   let step = 0;
   const fadeIn = setInterval(() => {
     step++;
