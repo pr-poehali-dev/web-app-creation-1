@@ -8,18 +8,31 @@ import boto3
 import urllib.request
 
 TRACKS = {
-    "all":               "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Relaxing%20Piano%20Music.mp3",
-    "focus":             "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Meditation%20Impromptu%2001.mp3",
-    "stress":            "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Flutey%20Funk.mp3",
-    "energy":            "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Intended%20Force.mp3",
-    "eyes":              "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Comfortable%20Mystery.mp3",
-    "extra_gymnopedie":  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Gymnopedie%20No%203.mp3",
-    "extra_bright":      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Open%20Those%20Bright%20Eyes.mp3",
-    "extra_meditation3": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Meditation%20Impromptu%2003.mp3",
-    "extra_cipher":      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Cipher.mp3",
-    "extra_hypnotic":    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Hypnotic%20Puzzle.mp3",
-    "extra_groove":      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Groove%20Grove.mp3",
-    "extra_impact":      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Impact%20Moderato.mp3",
+    # Основные треки режимов
+    "all":    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Relaxing%20Piano%20Music.mp3",
+    "focus":  "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Meditation%20Impromptu%2001.mp3",
+    "stress": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Flutey%20Funk.mp3",
+    "energy": "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Intended%20Force.mp3",
+    "eyes":   "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Comfortable%20Mystery.mp3",
+
+    # Расслабляющие / ambient — для all, stress, eyes
+    "long_slow":       "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Slow%20Burn.mp3",
+    "long_healing":    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Healing.mp3",
+    "long_dreamy":     "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Dreamy%20Flashback.mp3",
+    "long_space":      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Space%20Fighter.mp3",
+    "long_cipher2":    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Cipher.mp3",
+    "long_whisper":    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Whisper%20of%20the%20Woods.mp3",
+
+    # Фокус / медитативные — для focus
+    "long_ambient1":   "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Ambient%20Ambulance.mp3",
+    "long_neural":     "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Neural%20Seq.mp3",
+    "long_hypno":      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Hypnotic%20Puzzle.mp3",
+
+    # Энергия / динамичные — для energy
+    "long_groove":     "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Groove%20Grove.mp3",
+    "long_impact":     "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Impact%20Moderato.mp3",
+    "long_electro":    "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Electrodoodle.mp3",
+    "long_funky":      "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Funky%20Chunk.mp3",
 }
 
 CORS = {
@@ -62,8 +75,14 @@ def handler(event: dict, context) -> dict:
     access_key = os.environ["AWS_ACCESS_KEY_ID"]
 
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=25) as resp:
-        data = resp.read()
+    with urllib.request.urlopen(req, timeout=28) as resp:
+        chunks = []
+        while True:
+            chunk = resp.read(65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        data = b"".join(chunks)
 
     s3.put_object(Bucket="files", Key=key, Body=data, ContentType="audio/mpeg")
     cdn_url = f"https://cdn.poehali.dev/projects/{access_key}/bucket/{key}"

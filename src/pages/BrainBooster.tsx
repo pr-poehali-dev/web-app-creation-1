@@ -183,43 +183,58 @@ function createWhiteNoiseBuffer(ctx: AudioContext): AudioBuffer {
 const CDN = 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/brain-sounds';
 
 const AMBIENT_PLAYLISTS: Record<string, string[]> = {
-  // Общий режим — мягкие позитивные фортепианные треки
+  // Общий режим — мягкий расслабляющий фортепиано + ambient
   all: [
     `${CDN}/all.mp3`,
+    `${CDN}/long_slow.mp3`,
     `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/long_healing.mp3`,
     `${CDN}/extra_meditation3.mp3`,
+    `${CDN}/long_dreamy.mp3`,
     `${CDN}/extra_bright.mp3`,
     `${CDN}/eyes.mp3`,
   ],
   // Фокус — медитативные, концентрация
   focus: [
     `${CDN}/focus.mp3`,
+    `${CDN}/long_slow.mp3`,
     `${CDN}/extra_meditation3.mp3`,
+    `${CDN}/long_healing.mp3`,
     `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/long_dreamy.mp3`,
     `${CDN}/extra_bright.mp3`,
     `${CDN}/all.mp3`,
   ],
   // Стресс — лёгкие, успокаивающие
   stress: [
     `${CDN}/stress.mp3`,
+    `${CDN}/long_healing.mp3`,
     `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/long_slow.mp3`,
     `${CDN}/extra_bright.mp3`,
+    `${CDN}/long_dreamy.mp3`,
     `${CDN}/extra_meditation3.mp3`,
     `${CDN}/eyes.mp3`,
   ],
   // Энергия — динамичные, мотивирующие
   energy: [
     `${CDN}/energy.mp3`,
+    `${CDN}/long_groove.mp3`,
+    `${CDN}/long_electro.mp3`,
     `${CDN}/extra_groove.mp3`,
+    `${CDN}/long_funky.mp3`,
+    `${CDN}/long_impact.mp3`,
     `${CDN}/extra_impact.mp3`,
     `${CDN}/stress.mp3`,
-    `${CDN}/focus.mp3`,
   ],
   // Глаза — расслабляющие, спокойные
   eyes: [
     `${CDN}/eyes.mp3`,
+    `${CDN}/long_dreamy.mp3`,
     `${CDN}/extra_bright.mp3`,
+    `${CDN}/long_healing.mp3`,
     `${CDN}/extra_gymnopedie.mp3`,
+    `${CDN}/long_slow.mp3`,
     `${CDN}/extra_meditation3.mp3`,
     `${CDN}/all.mp3`,
   ],
