@@ -190,40 +190,54 @@ const AMBIENT_URLS: Record<string, string> = {
 };
 
 // Запускает ambient MP3 через HTMLAudioElement — без CORS-ограничений.
-// Громкость нарастает плавно через audio.volume (не через Web Audio gainNode).
 function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: string): (() => void) {
   const url = AMBIENT_URLS[modeId];
   if (!url) return () => {};
 
+  // «Общий режим» — громче и без задержки fade-in
+  const TARGET_VOL = modeId === 'all' ? 0.42 : 0.28;
+  const isImmediate = modeId === 'all';
+
   const audio = new Audio(url);
   audio.loop = true;
+  audio.preload = 'auto';
+  // Для «all» сразу ставим полную громкость — без нарастания
+  audio.volume = isImmediate ? TARGET_VOL : 0;
 
-  // «Общий режим» — музыка стартует сразу и чуть громче (бинауральный бит не теряется — он идёт отдельным слоем)
-  const TARGET_VOL = modeId === 'all' ? 0.42 : 0.28;
-  const FADE_MS    = modeId === 'all' ? 1500  : 5000; // 1.5 сек vs 5 сек
+  let fadeInTimer: ReturnType<typeof setInterval> | null = null;
+  let stopped = false;
 
-  audio.volume = 0;
-  audio.play().catch(() => {});
+  const startPlay = () => {
+    if (stopped) return;
+    audio.play().catch(() => {});
+    if (!isImmediate) {
+      // Для остальных режимов — плавное нарастание за 3 сек
+      const STEPS = 30;
+      let step = 0;
+      fadeInTimer = setInterval(() => {
+        step++;
+        audio.volume = Math.min(TARGET_VOL, (step / STEPS) * TARGET_VOL);
+        if (step >= STEPS && fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = null; }
+      }, 100);
+    }
+  };
 
-  const STEPS = 50;
-  const INTERVAL = FADE_MS / STEPS;
-  let step = 0;
-  const fadeIn = setInterval(() => {
-    step++;
-    audio.volume = Math.min(TARGET_VOL, (step / STEPS) * TARGET_VOL);
-    if (step >= STEPS) clearInterval(fadeIn);
-  }, INTERVAL);
+  // Для «all» — играем сразу как только браузер готов (или через 0мс если уже готов)
+  if (audio.readyState >= 3) {
+    startPlay();
+  } else {
+    audio.addEventListener('canplay', startPlay, { once: true });
+  }
 
   return () => {
-    clearInterval(fadeIn);
-    // Плавное затухание за 2 секунды
+    stopped = true;
+    if (fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = null; }
     const startVol = audio.volume;
     let outStep = 0;
-    const OUT_STEPS = 20;
     const fadeOut = setInterval(() => {
       outStep++;
-      audio.volume = Math.max(0, startVol * (1 - outStep / OUT_STEPS));
-      if (outStep >= OUT_STEPS) {
+      audio.volume = Math.max(0, startVol * (1 - outStep / 20));
+      if (outStep >= 20) {
         clearInterval(fadeOut);
         audio.pause();
         audio.src = '';
