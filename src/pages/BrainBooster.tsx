@@ -225,93 +225,76 @@ const AMBIENT_PLAYLISTS: Record<string, string[]> = {
   ],
 };
 
-// Воспроизводит плейлист последовательно с плавными переходами между треками.
-// «Общий режим» — сразу полная громкость, остальные — fade-in 3 сек.
+// Воспроизводит плейлист последовательно, зацикливая на 30 минут.
 function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: string): (() => void) {
   const playlist = AMBIENT_PLAYLISTS[modeId];
   if (!playlist?.length) return () => {};
 
   const TARGET_VOL = modeId === 'all' ? 0.42 : 0.28;
-  const isImmediate = modeId === 'all';
 
   let trackIndex = 0;
-  let audio: HTMLAudioElement | null = null;
-  let fadeInTimer: ReturnType<typeof setInterval> | null = null;
+  let current: HTMLAudioElement | null = null;
   let stopped = false;
-  let transitioning = false;
 
-  const nextTrack = (el: HTMLAudioElement) => {
-    if (stopped || transitioning) return;
-    transitioning = true;
-    let outStep = 0;
-    const fadeOut = setInterval(() => {
-      outStep++;
-      el.volume = Math.max(0, TARGET_VOL * (1 - outStep / 10));
-      if (outStep >= 10) {
-        clearInterval(fadeOut);
-        el.pause();
-        el.src = '';
-        trackIndex++;
-        transitioning = false;
-        playTrack(trackIndex);
-      }
-    }, 50);
-  };
-
-  const playTrack = (index: number) => {
+  const playNext = () => {
     if (stopped) return;
 
-    const url = playlist[index % playlist.length];
+    const url = playlist[trackIndex % playlist.length];
+    trackIndex++;
+
     const el = new Audio(url);
     el.preload = 'auto';
-    el.volume = isImmediate ? TARGET_VOL : 0;
-    audio = el;
+    el.volume = 0;
+    current = el;
 
-    const startPlay = () => {
-      if (stopped) { el.pause(); return; }
-      el.play().catch(() => {
-        // Трек не загрузился — переходим к следующему
-        nextTrack(el);
-      });
+    el.addEventListener('ended', () => {
+      if (!stopped) playNext();
+    }, { once: true });
 
-      if (!isImmediate) {
-        const STEPS = 30;
+    el.addEventListener('error', () => {
+      if (!stopped) setTimeout(playNext, 500);
+    }, { once: true });
+
+    const doPlay = () => {
+      if (stopped) return;
+      el.play().then(() => {
+        // fade-in
         let step = 0;
-        fadeInTimer = setInterval(() => {
+        const fadeIn = setInterval(() => {
           step++;
-          el.volume = Math.min(TARGET_VOL, (step / STEPS) * TARGET_VOL);
-          if (step >= STEPS && fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = null; }
-        }, 100);
-      }
+          el.volume = Math.min(TARGET_VOL, (step / 20) * TARGET_VOL);
+          if (step >= 20) clearInterval(fadeIn);
+        }, 50);
+      }).catch(() => {
+        if (!stopped) setTimeout(playNext, 500);
+      });
     };
 
-    // Ошибка загрузки — пропускаем трек
-    el.addEventListener('error', () => { if (!stopped) nextTrack(el); }, { once: true });
-    // Конец трека — плавный переход к следующему
-    el.addEventListener('ended', () => nextTrack(el), { once: true });
-
-    if (el.readyState >= 3) { startPlay(); }
-    else { el.addEventListener('canplay', startPlay, { once: true }); }
+    if (el.readyState >= 2) {
+      doPlay();
+    } else {
+      el.addEventListener('canplay', doPlay, { once: true });
+      el.load();
+    }
   };
 
-  playTrack(trackIndex);
+  playNext();
 
   return () => {
     stopped = true;
-    if (fadeInTimer) { clearInterval(fadeInTimer); fadeInTimer = null; }
-    if (!audio) return;
-    const startVol = audio.volume;
-    const dying = audio;
-    let outStep = 0;
+    if (!current) return;
+    const dying = current;
+    const startVol = dying.volume;
+    let step = 0;
     const fadeOut = setInterval(() => {
-      outStep++;
-      dying.volume = Math.max(0, startVol * (1 - outStep / 20));
-      if (outStep >= 20) {
+      step++;
+      dying.volume = Math.max(0, startVol * (1 - step / 15));
+      if (step >= 15) {
         clearInterval(fadeOut);
         dying.pause();
         dying.src = '';
       }
-    }, 100);
+    }, 60);
   };
 }
 
