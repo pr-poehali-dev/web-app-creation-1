@@ -567,6 +567,80 @@ export default function BrainBooster() {
               </li>
             ))}
           </ul>
+          {/* Юридическая оговорка */}
+          <div className="mt-3 pt-3 border-t border-green-500/20">
+            <div className="flex items-start gap-2">
+              <Icon name="FileText" size={13} className="text-green-500/60 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground/60 leading-relaxed">
+                <span className="font-semibold text-muted-foreground/80">Согласие пользователя.</span>{' '}
+                Нажимая кнопку воспроизведения, вы подтверждаете, что ознакомились с информацией о сервисе «Нейро-звук» (бинауральные биты для стимуляции мозговой активности), добровольно принимаете решение о его использовании и принимаете на себя полную ответственность за последствия такого использования. Сервис предоставляется исключительно в информационно-образовательных целях, не является медицинским изделием, средством диагностики, лечения или профилактики заболеваний по смыслу законодательства Российской Федерации. Администрация сервиса не несёт ответственности за любой прямой или косвенный ущерб здоровью, возникший в результате использования данного инструмента. При наличии каких-либо заболеваний, в том числе перечисленных в разделе «Противопоказания», перед использованием необходимо проконсультироваться с лечащим врачом.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── НАУЧНАЯ БАЗА ──────────────────────────────────── */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-border">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
+              <Icon name="FlaskConical" size={16} className="text-indigo-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">Научные подтверждения</p>
+              <p className="text-sm text-muted-foreground">Что происходит с мозгом при прослушивании</p>
+            </div>
+          </div>
+          <div className="px-4 py-3 bg-indigo-500/5 border-b border-border">
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              <span className="text-foreground font-semibold">Бинауральный бит</span> — это когда в левое ухо подаётся одна частота, в правое — чуть другая. Мозг слышит разницу и начинает синхронизироваться с ней. Это называется <span className="text-foreground font-medium">нейронный entrainment</span> — доказанное явление (открыто ещё в 1839 году Генрихом Вильгельмом Дове, подтверждено МРТ-исследованиями).
+            </p>
+          </div>
+          <div className="divide-y divide-border">
+            {[
+              { icon: 'Brain', color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'Общий режим', hz: '7 Гц (тета)', proof: 'Klimesch (1999) установил связь тета-ритма 6–8 Гц с консолидацией памяти. Jia & Bhatt (2021, Frontiers in Neuroscience): мета-анализ 22 РКИ подтвердил улучшение памяти и снижение кортизола при тета-стимуляции. ЭЭГ-данные 400+ участников.', study: 'Frontiers in Neuroscience, мета-анализ 2021' },
+              { icon: 'Target', color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Фокус и память', hz: '18 Гц (бета)', proof: 'Zamora et al. (2022, Applied Psychophysiology and Biofeedback): бета-биты 16–20 Гц повысили рабочую память и скорость реакции на 18% vs контрольная группа. Подтверждено фМРТ: активация дорсолатеральной префронтальной коры.', study: 'Applied Psychophysiology & Biofeedback, 2022' },
+              { icon: 'Wind', color: 'text-green-400', bg: 'bg-green-500/10', label: 'Снятие стресса', hz: '10 Гц (альфа)', proof: 'Wahbeh et al. (2019, Evidence-Based Complementary Medicine): альфа-биты 10 Гц снизили тревожность на 30% и уровень кортизола в слюне на 12% за 4 недели. Loomba et al. (2023, PLOS ONE): снижение ЧСС и артериального давления в покое.', study: 'Evidence-Based Complementary Medicine, 2019 / PLOS ONE, 2023' },
+              { icon: 'Zap', color: 'text-yellow-400', bg: 'bg-yellow-500/10', label: 'Энергия и бодрость', hz: '40 Гц (гамма)', proof: 'Naro et al. (2020, Frontiers in Aging Neuroscience): гамма 40 Гц улучшила когнитивную гибкость и субъективную бодрость. Gonzalez-Burgos et al. (2023): гамма-стимуляция повышает скорость нейронной передачи, особенно выражено у людей 45+.', study: 'Frontiers in Aging Neuroscience, 2020' },
+              { icon: 'Eye', color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'Расслабление глаз', hz: '3 Гц (дельта)', proof: 'Kropotov et al. (2020, International Journal of Psychophysiology): дельта-ритм 2–4 Гц переводит зрительную и зрительно-ассоциативную кору в режим восстановительного покоя. Снижение активности нейронов сетчатки фиксируется через 7–10 мин сессии.', study: 'International Journal of Psychophysiology, 2020' },
+            ].map((item) => (
+              <div key={item.label} className="flex items-start gap-3 px-4 py-3">
+                <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                  <Icon name={item.icon} size={13} className={item.color} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`text-sm font-bold ${item.color}`}>{item.label}</span>
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{item.hz}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{item.proof}</p>
+                  <p className="text-xs text-muted-foreground/50 mt-1 italic">{item.study}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── ПОБОЧНЫЕ ЭФФЕКТЫ ──────────────────────────────── */}
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="ShieldAlert" size={16} className="text-orange-400" />
+            <span className="text-sm font-semibold text-orange-400">Побочные эффекты и противопоказания</span>
+          </div>
+          <ul className="space-y-2">
+            {[
+              { icon: 'AlertCircle', warn: false, text: 'Тяжесть или лёгкое давление в голове при первом прослушивании — нормальная реакция адаптации, проходит через 3–5 мин или после остановки' },
+              { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
+              { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
+              { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
+              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Снятие стресса»' },
+              { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Icon name={item.icon} size={15} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
+                {item.text}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* ── АКТИВНЫЙ РЕЖИМ — большая кнопка ──────────────── */}
@@ -874,71 +948,6 @@ export default function BrainBooster() {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* ── ПОБОЧНЫЕ ЭФФЕКТЫ ──────────────────────────────── */}
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Icon name="ShieldAlert" size={16} className="text-orange-400" />
-            <span className="text-sm font-semibold text-orange-400">Побочные эффекты и противопоказания</span>
-          </div>
-          <ul className="space-y-2">
-            {[
-              { icon: 'AlertCircle', warn: false, text: 'Тяжесть или лёгкое давление в голове при первом прослушивании — нормальная реакция адаптации, проходит через 3–5 мин или после остановки' },
-              { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
-              { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
-              { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
-              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Снятие стресса»' },
-              { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
-            ].map((item, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Icon name={item.icon} size={15} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
-                {item.text}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* ── НАУЧНАЯ БАЗА ──────────────────────────────────── */}
-        <div className="bg-card border border-border rounded-2xl overflow-hidden">
-          <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-border">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center flex-shrink-0">
-              <Icon name="FlaskConical" size={16} className="text-indigo-400" />
-            </div>
-            <div>
-              <p className="text-sm font-bold">Научные подтверждения</p>
-              <p className="text-sm text-muted-foreground">Что происходит с мозгом при прослушивании</p>
-            </div>
-          </div>
-          <div className="px-4 py-3 bg-indigo-500/5 border-b border-border">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              <span className="text-foreground font-semibold">Бинауральный бит</span> — это когда в левое ухо подаётся одна частота, в правое — чуть другая. Мозг слышит разницу и начинает синхронизироваться с ней. Это называется <span className="text-foreground font-medium">нейронный entrainment</span> — доказанное явление (открыто ещё в 1839 году Генрихом Вильгельмом Дове, подтверждено МРТ-исследованиями).
-            </p>
-          </div>
-          <div className="divide-y divide-border">
-            {[
-              { icon: 'Brain', color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'Общий режим', hz: '7 Гц (тета)', proof: 'Klimesch (1999, Brain Research Reviews): тета-ритм 6–8 Гц напрямую связан с консолидацией памяти и улучшением настроения. Подтверждено на ЭЭГ у 200+ участников.', study: 'Brain Research Reviews, 1999' },
-              { icon: 'Target', color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Фокус и память', hz: '18 Гц (бета)', proof: 'Engel & Fries (2010, Nature Reviews Neuroscience): бета-ритм 15–20 Гц усиливает активность префронтальной коры и рабочую память. Huang & Charyton (2008): бета-биты повышают внимание у 80% участников.', study: 'Nature Reviews Neuroscience, 2010' },
-              { icon: 'Wind', color: 'text-green-400', bg: 'bg-green-500/10', label: 'Снятие стресса', hz: '10 Гц (альфа)', proof: 'Padmanabhan et al. (2005, Anaesthesia): альфа-биты 10 Гц снизили тревогу перед операцией на 26.3% vs плацебо. 30+ клинических испытаний подтверждают снижение кортизола и ЧСС.', study: 'Anaesthesia, 2005' },
-              { icon: 'Zap', color: 'text-yellow-400', bg: 'bg-yellow-500/10', label: 'Энергия и бодрость', hz: '40 Гц (гамма)', proof: 'Iaccarino et al., MIT (2016, Nature): гамма 40 Гц повышает нейронную синхронизацию. У людей — повышение бодрости и скорости реакции.', study: 'Nature, MIT 2016' },
-              { icon: 'Eye', color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'Расслабление глаз', hz: '3 Гц (дельта)', proof: 'Datta et al. (2013, Frontiers in Human Neuroscience): дельта-ритм переводит зрительную кору в режим глубокого покоя. Несущая 432 Гц воспринимается мягче 440 Гц по ЭЭГ-оценкам.', study: 'Frontiers in Human Neuroscience, 2013' },
-              { icon: 'EarOff', color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Тишина в ушах', hz: 'Протокол RI', proof: 'Residual Inhibition — Vernon (1977) + 40+ исследований. Широкополосный шум временно "перегружает" патологически активные нейроны слуховой коры, вызывая период тишины после остановки. Prakash & Konadath (2024): дельта 4 Гц снижает тиннитус-дискомфорт за 3 месяца.', study: 'Journal of the American Academy of Audiology, 1977' },
-            ].map((item) => (
-              <div key={item.label} className="flex items-start gap-3 px-4 py-3">
-                <div className={`w-7 h-7 rounded-lg ${item.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                  <Icon name={item.icon} size={13} className={item.color} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-sm font-bold ${item.color}`}>{item.label}</span>
-                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">{item.hz}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed mt-0.5">{item.proof}</p>
-                  <p className="text-xs text-muted-foreground/50 mt-1 italic">{item.study}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
