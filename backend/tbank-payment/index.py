@@ -32,9 +32,11 @@ def get_db():
 
 
 def get_tbank_token(params: dict, password: str) -> str:
-    filtered = {k: v for k, v in params.items() if k not in ("Token", "DATA", "Receipt", "Items")}
+    excluded = ("Token", "DATA", "Receipt", "Items", "SuccessURL", "FailURL", "NotificationURL")
+    filtered = {k: v for k, v in params.items() if k not in excluded}
     filtered["Password"] = password
     sorted_values = "".join(str(v) for k, v in sorted(filtered.items()))
+    print(f"Token input string: {sorted_values}")
     return hashlib.sha256(sorted_values.encode()).hexdigest()
 
 
