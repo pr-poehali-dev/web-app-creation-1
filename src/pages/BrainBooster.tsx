@@ -23,7 +23,8 @@ function useSubscription() {
     if (!token) { setLoading(false); setSub(null); return; }
     try {
       const res = await fetch(TBANK_PAYMENT_URL, {
-        headers: { 'X-Authorization': `Bearer ${token}` }
+        headers: { 'X-Authorization': `Bearer ${token}` },
+        cache: 'no-store',
       });
       const data = await res.json();
       if (data.ok) setSub(data);

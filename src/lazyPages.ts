@@ -80,6 +80,7 @@ export const AdminArbitrage = lazyWithRetry(() => import("./pages/AdminArbitrage
 export const AdminSupport = lazyWithRetry(() => import("./pages/AdminSupport"));
 export const SetAdminPassword = lazyWithRetry(() => import("./pages/SetAdminPassword"));
 export const AdminContentManagement = lazyWithRetry(() => import("./pages/AdminContentManagement"));
+export const AdminSubscriptions = lazyWithRetry(() => import("./pages/AdminSubscriptions"));
 export const TradingPlatform = lazyWithRetry(() => import("./pages/TradingPlatform"));
 export const CreateContract = lazyWithRetry(() => import("./pages/CreateContract"));
 export const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));

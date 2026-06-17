@@ -116,6 +116,15 @@ export default function AdminDashboard({ isAuthenticated, onLogout }: AdminDashb
       color: 'bg-cyan-500',
       count: null,
       path: '/admin/content'
+    },
+    {
+      id: 'subscriptions',
+      title: 'Подписки Нейро-звук',
+      description: 'Управление подписками BrainBooster: выдача, отзыв, просмотр',
+      icon: 'Zap',
+      color: 'bg-violet-500',
+      count: null,
+      path: '/admin/subscriptions'
     }
   ];
 
@@ -159,7 +168,7 @@ export default function AdminDashboard({ isAuthenticated, onLogout }: AdminDashb
                   >
                     <CardHeader className="flex flex-row items-center justify-between pb-2">
                       <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${section.color}`}>
-                        <Icon name={section.icon as any} className="h-6 w-6 text-white" />
+                        <Icon name={section.icon} className="h-6 w-6 text-white" />
                       </div>
                       {section.count !== null && (
                         <Badge variant="secondary" className="text-lg font-bold">
