@@ -125,6 +125,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'normal'
     },
     {
+      id: 'subscriptions',
+      title: 'Подписки Нейро-звук',
+      description: 'Триал и платные подписки — выдача, отзыв, остаток дней',
+      icon: 'Zap',
+      color: 'bg-violet-500',
+      count: null,
+      path: '/admin/subscriptions',
+      priority: 'normal'
+    },
+    {
       id: 'deleted-users',
       title: 'История удаленных',
       description: 'Просмотр и восстановление удаленных пользователей',
@@ -324,7 +334,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         {stat.title}
                       </CardTitle>
-                      <Icon name={stat.icon as any} className={`h-4 w-4 ${stat.color}`} />
+                      <Icon name={stat.icon} className={`h-4 w-4 ${stat.color}`} />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{stat.value}</div>
@@ -382,7 +392,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
                       >
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                           <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${section.color}`}>
-                            <Icon name={section.icon as any} className="h-6 w-6 text-white" />
+                            <Icon name={section.icon} className="h-6 w-6 text-white" />
                           </div>
                           {section.count !== null && (
                             <Badge variant={section.priority === 'high' ? 'default' : 'secondary'} className="text-lg font-bold">
@@ -411,7 +421,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
                         >
                           <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${section.color}`}>
-                              <Icon name={section.icon as any} className="h-6 w-6 text-white" />
+                              <Icon name={section.icon} className="h-6 w-6 text-white" />
                             </div>
                             {section.count !== null && (
                               <Badge variant={section.priority === 'high' ? 'default' : 'secondary'} className="text-lg font-bold">
@@ -440,7 +450,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
                         >
                           <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${section.color}`}>
-                              <Icon name={section.icon as any} className="h-6 w-6 text-white" />
+                              <Icon name={section.icon} className="h-6 w-6 text-white" />
                             </div>
                             {section.count !== null && (
                               <Badge variant="secondary" className="text-lg font-bold">
