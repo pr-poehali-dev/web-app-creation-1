@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { getJwtToken, getSession } from '@/utils/auth';
+import QRCode from 'qrcode';
 
 const TBANK_PAYMENT_URL = 'https://functions.poehali.dev/f2a339e0-68a2-42ba-b5eb-55be5d543b5e';
 
@@ -348,15 +349,45 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
 // Шаги калибровки тиннитуса
 type CalibStep = 'intro' | 'coarse' | 'fine' | 'result';
 
+// Определяем мобильное устройство
+const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
 export default function BrainBooster() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { sub, loading: subLoading, refresh: refreshSub } = useSubscription();
   const [payLoading, setPayLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
+  const [paymentNotice, setPaymentNotice] = useState<'success' | 'fail' | null>(null);
+  // QR / СБП диалог
+  const [qrDialog, setQrDialog] = useState<{ qrPayload: string; paymentUrl: string; qrImg: string; sbpLink: string } | null>(null);
   const currentUser = getSession();
 
   const hasAccess = !!currentUser && (sub?.has_subscription === true);
+
+  // Обработка возврата с платёжной страницы
+  useEffect(() => {
+    const status = searchParams.get('payment');
+    if (status === 'success') {
+      setPaymentNotice('success');
+      // Поллинг подписки — вебхук может прийти с задержкой
+      let attempts = 0;
+      const poll = setInterval(async () => {
+        await refreshSub();
+        attempts++;
+        if (attempts >= 8) clearInterval(poll);
+      }, 2500);
+      // Убираем параметр из URL
+      const next = new URLSearchParams(searchParams);
+      next.delete('payment');
+      setSearchParams(next, { replace: true });
+    } else if (status === 'fail') {
+      setPaymentNotice('fail');
+      const next = new URLSearchParams(searchParams);
+      next.delete('payment');
+      setSearchParams(next, { replace: true });
+    }
+  }, []);
 
   const handleStartTrial = async () => {
     const token = getJwtToken();
@@ -385,22 +416,25 @@ export default function BrainBooster() {
       });
       const data = await res.json();
       if (data.ok && data.payment_url) {
-        const a = document.createElement('a');
-        a.href = data.payment_url;
-        a.target = '_self';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const paymentUrl = data.payment_url;
+        const qrPayload = data.qr_payload;
+
+        if (qrPayload) {
+          // Генерируем QR-картинку
+          const qrImg = await QRCode.toDataURL(qrPayload, { width: 220, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
+          // СБП deeplink для мобильного
+          const sbpLink = `bank100000000004://qr?${qrPayload}`;
+          setQrDialog({ qrPayload, paymentUrl, qrImg, sbpLink });
+        } else {
+          // Нет QR — просто редирект
+          window.location.href = paymentUrl;
+        }
       } else if (!data.ok) {
         alert(data.error || 'Ошибка создания платежа');
       }
     } catch (_e) { /* ignore */ }
     setPayLoading(false);
   };
-
-  useEffect(() => {
-    if (searchParams.get('payment') === 'success') refreshSub();
-  }, [searchParams, refreshSub]);
 
   const [activeTab, setActiveTab] = useState<'modes' | 'tinnitus'>('modes');
   const [activeMode, setActiveMode] = useState<BrainMode | null>(null);
@@ -720,6 +754,66 @@ export default function BrainBooster() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+
+      {/* ── Уведомление об оплате ─────────────────────────── */}
+      {paymentNotice && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-sm font-medium max-w-xs w-full mx-4 ${
+          paymentNotice === 'success' ? 'bg-green-500 text-white' : 'bg-destructive text-destructive-foreground'
+        }`}>
+          <Icon name={paymentNotice === 'success' ? 'CheckCircle' : 'XCircle'} size={18} />
+          <span className="flex-1">
+            {paymentNotice === 'success' ? 'Оплата прошла! Доступ активируется...' : 'Оплата не прошла. Попробуйте ещё раз.'}
+          </span>
+          <button onClick={() => setPaymentNotice(null)}><Icon name="X" size={16} /></button>
+        </div>
+      )}
+
+      {/* ── QR / СБП диалог ───────────────────────────────── */}
+      {qrDialog && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-background rounded-3xl w-full max-w-sm p-6 flex flex-col items-center gap-4">
+            <div className="flex items-center justify-between w-full">
+              <h3 className="font-bold text-base">Оплата через СБП</h3>
+              <button onClick={() => setQrDialog(null)} className="p-1.5 rounded-xl hover:bg-muted">
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+
+            {/* QR на десктопе */}
+            <div className="hidden sm:flex flex-col items-center gap-3 w-full">
+              <p className="text-sm text-muted-foreground text-center">Отсканируйте QR-код в приложении вашего банка</p>
+              <div className="p-3 bg-white rounded-2xl">
+                <img src={qrDialog.qrImg} alt="QR код оплаты" width={220} height={220} />
+              </div>
+              <p className="text-xs text-muted-foreground">Поддерживает любой банк РФ через СБП</p>
+            </div>
+
+            {/* Deeplink на мобильном */}
+            <div className="flex sm:hidden flex-col items-center gap-3 w-full">
+              <p className="text-sm text-muted-foreground text-center">Оплатите через приложение вашего банка</p>
+              <a
+                href={qrDialog.qrPayload}
+                className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm text-center flex items-center justify-center gap-2"
+              >
+                <Icon name="Smartphone" size={16} />
+                Открыть в банке (СБП)
+              </a>
+            </div>
+
+            <div className="w-full border-t border-border pt-3">
+              <p className="text-xs text-muted-foreground text-center mb-2">Или оплатите картой</p>
+              <a
+                href={qrDialog.paymentUrl}
+                className="w-full border border-border rounded-2xl py-3 font-medium text-sm text-center flex items-center justify-center gap-2 hover:bg-muted transition-colors"
+              >
+                <Icon name="CreditCard" size={15} />
+                Оплата картой
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="p-2 rounded-xl hover:bg-muted transition-colors">

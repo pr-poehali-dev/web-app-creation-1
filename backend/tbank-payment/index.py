@@ -195,13 +195,37 @@ def handler(event: dict, context) -> dict:
                     "body": json.dumps({"ok": False, "error": result.get("Message", "Ошибка платежа"), "details": result.get("Details", "")})}
 
         payment_url = result["PaymentURL"]
+        # Получаем QR-код (СБП) сразу
+        payment_id_tbank = str(result["PaymentId"])
+        qr_data = None
+        try:
+            qr_params = {
+                "TerminalKey": terminal_key,
+                "PaymentId": payment_id_tbank,
+                "DataType": "PAYLOAD",
+            }
+            qr_params["Token"] = get_tbank_token(qr_params, secret_key)
+            qr_req = urllib.request.Request(
+                "https://securepay.tinkoff.ru/v2/GetQr",
+                data=json.dumps(qr_params).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(qr_req, timeout=10) as qr_resp:
+                qr_result = json.loads(qr_resp.read())
+            print(f"GetQr response: {qr_result}")
+            if qr_result.get("Success"):
+                qr_data = qr_result.get("Data")
+        except Exception as e:
+            print(f"GetQr error (non-critical): {e}")
+
         cur.execute(f"UPDATE {schema}.payments SET tbank_payment_id=%s, payment_url=%s WHERE id=%s",
-                    (str(result["PaymentId"]), payment_url, payment_id))
+                    (payment_id_tbank, payment_url, payment_id))
         conn.commit()
         cur.close(); conn.close()
 
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
-                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id})}
+                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "qr_payload": qr_data})}
 
     cur.close(); conn.close()
     return {"statusCode": 404, "headers": {**CORS, "Content-Type": "application/json"},
