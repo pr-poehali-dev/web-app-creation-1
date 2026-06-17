@@ -425,7 +425,7 @@ export default function BrainBooster() {
       if (data.ok && data.payment_url) {
         if (data.qr_payload) {
           const qrImg = await QRCode.toDataURL(data.qr_payload, { width: 220, margin: 1 });
-          setQrDialog({ qrPayload: data.qr_payload, paymentUrl: data.payment_url, qrImg, sbpLink: `bank100000000004://qr?${data.qr_payload}` });
+          setQrDialog({ qrPayload: data.qr_payload, paymentUrl: data.payment_url, qrImg, sbpLink: `https://qr.nspk.ru/${data.qr_payload}` });
         } else {
           window.location.href = data.payment_url;
         }
@@ -443,24 +443,26 @@ export default function BrainBooster() {
   useEffect(() => {
     const status = searchParams.get('payment');
     const plan = searchParams.get('plan') || undefined;
+    if (!status) return;
+
+    // Сразу чистим все payment-параметры из URL
+    const next = new URLSearchParams(searchParams);
+    next.delete('payment');
+    next.delete('plan');
+    next.delete('modes');
+    setSearchParams(next, { replace: true });
+
     if (status === 'success') {
       setPaymentNotice({ type: 'success', plan });
       let attempts = 0;
       const poll = setInterval(async () => {
-        await refreshSub();
         attempts++;
+        await refreshSub();
         if (attempts >= 8) clearInterval(poll);
       }, 2500);
-      const next = new URLSearchParams(searchParams);
-      next.delete('payment');
-      next.delete('plan');
-      setSearchParams(next, { replace: true });
+      return () => clearInterval(poll);
     } else if (status === 'fail') {
       setPaymentNotice({ type: 'fail', plan });
-      const next = new URLSearchParams(searchParams);
-      next.delete('payment');
-      next.delete('plan');
-      setSearchParams(next, { replace: true });
     }
   }, []);
 
@@ -507,7 +509,7 @@ export default function BrainBooster() {
           // Генерируем QR-картинку
           const qrImg = await QRCode.toDataURL(qrPayload, { width: 220, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
           // СБП deeplink для мобильного
-          const sbpLink = `bank100000000004://qr?${qrPayload}`;
+          const sbpLink = `https://qr.nspk.ru/${qrPayload}`;
           setQrDialog({ qrPayload, paymentUrl, qrImg, sbpLink });
         } else {
           // Нет QR — просто редирект
@@ -873,16 +875,17 @@ export default function BrainBooster() {
               <p className="text-xs text-muted-foreground">Поддерживает любой банк РФ через СБП</p>
             </div>
 
-            {/* Deeplink на мобильном */}
+            {/* СБП deeplink на мобильном */}
             <div className="flex sm:hidden flex-col items-center gap-3 w-full">
-              <p className="text-sm text-muted-foreground text-center">Оплатите через приложение вашего банка</p>
+              <p className="text-sm text-muted-foreground text-center">Нажмите — телефон предложит выбрать банк</p>
               <a
-                href={qrDialog.qrPayload}
-                className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm text-center flex items-center justify-center gap-2"
+                href={qrDialog.sbpLink}
+                className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm text-center flex items-center justify-center gap-2 active:scale-95 transition-transform"
               >
                 <Icon name="Smartphone" size={16} />
-                Открыть в банке (СБП)
+                Оплатить через СБП
               </a>
+              <p className="text-xs text-muted-foreground/60 -mt-1 text-center">Сбер, Т-Банк, ВТБ, Альфа и любой другой банк</p>
             </div>
 
             <div className="w-full border-t border-border pt-3">
