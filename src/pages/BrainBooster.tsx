@@ -229,7 +229,7 @@ const AMBIENT_PLAYLISTS: Record<string, string[]> = {
   // Фокус — медитативные, концентрация
   focus: [
     `${CDN}/focus.mp3`,
-    `${CDN}/long_slow.mp3`,
+    `${CDN}/long_groove.mp3`,
     `${CDN}/extra_meditation3.mp3`,
     `${CDN}/long_healing.mp3`,
     `${CDN}/extra_gymnopedie.mp3`,
@@ -251,7 +251,7 @@ const AMBIENT_PLAYLISTS: Record<string, string[]> = {
   // Энергия — динамичные, мотивирующие
   energy: [
     `${CDN}/energy.mp3`,
-    `${CDN}/long_groove.mp3`,
+    `${CDN}/long_slow.mp3`,
     `${CDN}/long_electro.mp3`,
     `${CDN}/extra_groove.mp3`,
     `${CDN}/long_funky.mp3`,
