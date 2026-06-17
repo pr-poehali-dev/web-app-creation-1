@@ -104,12 +104,7 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      toast({
-        title: 'Ошибка загрузки профиля',
-        description: error instanceof Error ? error.message : 'Не удалось загрузить данные',
-        variant: 'destructive',
-      });
-      // Не делаем navigate(-1) — показываем данные из сессии если они есть
+      // Тихо показываем данные из сессии без уведомления пользователя
       const fallback = getSession();
       if (fallback) {
         setCurrentUser(fallback);
