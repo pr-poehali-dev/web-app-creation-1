@@ -326,14 +326,24 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
               <h1 className="text-3xl font-bold">Управление пользователями</h1>
               <p className="text-muted-foreground">Просмотр и управление пользователями площадки</p>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/admin/deleted-users')}
-              className="gap-2"
-            >
-              <Icon name="Archive" className="h-4 w-4" />
-              История удаленных
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/admin/subscriptions')}
+                className="gap-2 border-violet-400 text-violet-600 hover:bg-violet-50"
+              >
+                <Icon name="Zap" className="h-4 w-4" />
+                Подписки
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate('/admin/deleted-users')}
+                className="gap-2"
+              >
+                <Icon name="Archive" className="h-4 w-4" />
+                История удаленных
+              </Button>
+            </div>
           </div>
 
           <Card>
