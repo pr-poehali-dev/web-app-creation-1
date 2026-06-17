@@ -24,6 +24,16 @@ PLANS = {
     "month": {"amount": 29900, "label": "Доступ на месяц",  "days": 30},
 }
 
+# Цены за один режим
+MODE_PRICES = {
+    "week":  9900,   # 99 руб за режим/неделю
+    "month": 19900,  # 199 руб за режим/месяц
+}
+
+# Режимы которые можно купить (eyes — бесплатно в подарок)
+PAID_MODES = ["general", "focus", "stress", "energy"]
+FREE_MODES  = ["eyes"]
+
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://preview--web-app-creation-1.poehali.dev")
 
 
@@ -187,6 +197,22 @@ def handler(event: dict, context) -> dict:
             conn.commit()
             is_active = False
 
+        # Активные режимы (mode_subscriptions)
+        cur.execute(f"""
+            SELECT mode_id, plan, expires_at FROM {schema}.mode_subscriptions
+            WHERE user_id=%s AND status='active' AND expires_at > NOW()
+        """, (user_id,))
+        mode_rows = cur.fetchall()
+        active_modes = {}
+        for row in mode_rows:
+            active_modes[row[0]] = {
+                "plan": row[1],
+                "expires_at": row[2].isoformat() if row[2] else None
+            }
+        # Бесплатные режимы всегда доступны
+        for m in FREE_MODES:
+            active_modes[m] = {"plan": "free", "expires_at": None}
+
         cur.close(); conn.close()
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps({
@@ -196,6 +222,7 @@ def handler(event: dict, context) -> dict:
                     "status": status,
                     "expires_at": expires_at.isoformat() if expires_at else None,
                     "can_trial": not used_trial,
+                    "active_modes": active_modes,
                 })}
 
     # ── POST ?action=trial — активировать триал ─────────────────────────────
@@ -300,6 +327,111 @@ def handler(event: dict, context) -> dict:
         conn.commit()
         cur.close(); conn.close()
 
+        return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "qr_payload": qr_data})}
+
+    # ── POST ?action=pay-modes — оплата выбранных режимов ──────────────────
+    if method == "POST" and action == "pay-modes":
+        body = json.loads(event.get("body") or "{}")
+        modes = body.get("modes", [])   # список mode_id
+        plan = body.get("plan")         # "week" или "month"
+
+        if plan not in MODE_PRICES:
+            cur.close(); conn.close()
+            return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "Неверный тариф"})}
+
+        valid_modes = [m for m in modes if m in PAID_MODES]
+        if not valid_modes:
+            cur.close(); conn.close()
+            return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "Не выбраны режимы"})}
+
+        # Исключаем уже активные режимы
+        cur.execute(f"""
+            SELECT mode_id FROM {schema}.mode_subscriptions
+            WHERE user_id=%s AND status='active' AND expires_at > NOW()
+        """, (user_id,))
+        already = {r[0] for r in cur.fetchall()}
+        new_modes = [m for m in valid_modes if m not in already]
+        if not new_modes:
+            cur.close(); conn.close()
+            return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "Все выбранные режимы уже активны"})}
+
+        total_amount = MODE_PRICES[plan] * len(new_modes)
+        plan_days = 7 if plan == "week" else 30
+        mode_labels = {"general": "Общий", "focus": "Фокус", "stress": "Стресс", "energy": "Энергия"}
+        modes_str = ", ".join(mode_labels.get(m, m) for m in new_modes)
+        description = f"Нейро-звук: {modes_str} ({plan_days} дн.)"
+
+        terminal_key = os.environ["TBANK_TERMINAL_KEY"]
+        secret_key = os.environ["TBANK_SECRET_KEY"]
+        order_id = str(uuid.uuid4())
+        frontend = os.environ.get("FRONTEND_URL", "https://erttp.ru")
+
+        # Сохраняем pending-записи для каждого режима
+        for mode_id in new_modes:
+            cur.execute(f"""
+                INSERT INTO {schema}.mode_subscriptions
+                  (user_id, mode_id, plan, status, amount, tbank_order_id)
+                VALUES (%s, %s, %s, 'pending', %s, %s)
+            """, (user_id, mode_id, plan, MODE_PRICES[plan], order_id))
+        conn.commit()
+
+        modes_param = ",".join(new_modes)
+        params = {
+            "TerminalKey": terminal_key,
+            "Amount": total_amount,
+            "OrderId": order_id,
+            "Description": description,
+            "SuccessURL": f"{frontend}/brain-booster?payment=success&plan={plan}&modes={modes_param}",
+            "FailURL":    f"{frontend}/brain-booster?payment=fail&plan={plan}&modes={modes_param}",
+            "NotificationURL": "https://functions.poehali.dev/48623d77-3c76-4711-99a9-3223aae78b96",
+        }
+        params["Token"] = get_tbank_token(params, secret_key)
+
+        req = urllib.request.Request(
+            "https://securepay.tinkoff.ru/v2/Init",
+            data=json.dumps(params).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read())
+
+        if not result.get("Success"):
+            cur.execute(f"""
+                UPDATE {schema}.mode_subscriptions SET status='failed', updated_at=NOW()
+                WHERE tbank_order_id=%s
+            """, (order_id,))
+            conn.commit()
+            cur.close(); conn.close()
+            return {"statusCode": 500, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": result.get("Message", "Ошибка платежа")})}
+
+        payment_url = result["PaymentURL"]
+        payment_id_tbank = str(result["PaymentId"])
+
+        # Пробуем получить QR СБП
+        qr_data = None
+        try:
+            qr_params = {"TerminalKey": terminal_key, "PaymentId": payment_id_tbank, "DataType": "PAYLOAD"}
+            qr_params["Token"] = get_tbank_token(qr_params, secret_key)
+            qr_req = urllib.request.Request(
+                "https://securepay.tinkoff.ru/v2/GetQr",
+                data=json.dumps(qr_params).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(qr_req, timeout=10) as qr_resp:
+                qr_result = json.loads(qr_resp.read())
+            if qr_result.get("Success"):
+                qr_data = qr_result.get("Data")
+        except Exception as e:
+            print(f"GetQr error: {e}")
+
+        cur.close(); conn.close()
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "qr_payload": qr_data})}
 

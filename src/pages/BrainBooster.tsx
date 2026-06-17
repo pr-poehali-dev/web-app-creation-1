@@ -12,7 +12,19 @@ type SubStatus = {
   expires_at: string | null;
   can_trial: boolean;
   status?: string;
+  active_modes?: Record<string, { plan: string; expires_at: string | null }>;
 };
+
+// Маппинг id режима на id бэкенда
+const MODE_BACKEND_ID: Record<string, string> = {
+  all: 'general', focus: 'focus', stress: 'stress', energy: 'energy', eyes: 'eyes',
+};
+
+// Платные режимы (eyes — бесплатный подарок)
+const PAID_MODE_IDS = ['all', 'focus', 'stress', 'energy'];
+
+const MODE_WEEK_PRICE = 99;   // руб за режим/неделю
+const MODE_MONTH_PRICE = 199; // руб за режим/месяц
 
 function useSubscription() {
   const [sub, setSub] = useState<SubStatus | null>(null);
@@ -364,9 +376,68 @@ export default function BrainBooster() {
   const [expiredBannerClosed, setExpiredBannerClosed] = useState(false);
   // QR / СБП диалог
   const [qrDialog, setQrDialog] = useState<{ qrPayload: string; paymentUrl: string; qrImg: string; sbpLink: string } | null>(null);
+  // Экран выбора режимов для покупки
+  const [buyDialog, setBuyDialog] = useState<{ preselect?: string } | null>(null);
+  const [buySelectedModes, setBuySelectedModes] = useState<string[]>([]);
+  const [buyPlan, setBuyPlan] = useState<'week' | 'month'>('month');
+  const [buyLoading, setBuyLoading] = useState(false);
+
   const currentUser = getSession();
 
   const hasAccess = !!currentUser && (sub?.has_subscription === true);
+
+  // Проверяет есть ли доступ к конкретному режиму
+  const hasModeAccess = useCallback((modeId: string): boolean => {
+    if (!currentUser) return false;
+    // Триал или полная подписка — доступны все
+    if (hasAccess) return true;
+    // eyes — всегда бесплатно
+    if (modeId === 'eyes') return true;
+    // Проверяем mode_subscriptions
+    const backendId = MODE_BACKEND_ID[modeId] || modeId;
+    return !!(sub?.active_modes?.[backendId]);
+  }, [currentUser, hasAccess, sub]);
+
+  // Открыть экран покупки с предвыбранным режимом
+  const openBuyDialog = useCallback((preselect?: string) => {
+    const backendId = preselect ? (MODE_BACKEND_ID[preselect] || preselect) : undefined;
+    // Предвыбираем режимы которые ещё не куплены
+    const alreadyOwned = new Set(Object.keys(sub?.active_modes || {}));
+    const defaultSelected = backendId && !alreadyOwned.has(backendId) ? [backendId] : [];
+    setBuySelectedModes(defaultSelected);
+    setBuyPlan('month');
+    setBuyDialog({ preselect });
+  }, [sub]);
+
+  // Оплата выбранных режимов
+  const handlePayModes = useCallback(async () => {
+    const token = getJwtToken();
+    if (!token) { navigate('/login'); return; }
+    if (!buySelectedModes.length) return;
+    setBuyLoading(true);
+    try {
+      const res = await fetch(`${TBANK_PAYMENT_URL}?action=pay-modes`, {
+        method: 'POST',
+        headers: { 'X-Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modes: buySelectedModes, plan: buyPlan }),
+      });
+      const data = await res.json();
+      if (data.ok && data.payment_url) {
+        if (data.qr_payload) {
+          const qrImg = await QRCode.toDataURL(data.qr_payload, { width: 220, margin: 1 });
+          setQrDialog({ qrPayload: data.qr_payload, paymentUrl: data.payment_url, qrImg, sbpLink: `bank100000000004://qr?${data.qr_payload}` });
+        } else {
+          window.location.href = data.payment_url;
+        }
+        setBuyDialog(null);
+      } else {
+        alert(data.error || 'Ошибка создания платежа');
+      }
+    } catch {
+      alert('Ошибка сети');
+    }
+    setBuyLoading(false);
+  }, [buySelectedModes, buyPlan, navigate]);
 
   // Обработка возврата с платёжной страницы
   useEffect(() => {
@@ -721,8 +792,9 @@ export default function BrainBooster() {
   }, [stop]);
 
   const handleToggle = useCallback((modeId: BrainMode) => {
-    if (!hasAccess) {
-      if (!currentUser) { navigate('/login'); return; }
+    if (!currentUser) { navigate('/login'); return; }
+    if (!hasModeAccess(modeId)) {
+      openBuyDialog(modeId);
       return;
     }
     const config = MODES.find(m => m.id === modeId)!;
@@ -733,7 +805,7 @@ export default function BrainBooster() {
       setActiveMode(modeId);
       play(config, volume);
     }
-  }, [hasAccess, currentUser, isPlaying, activeMode, stop, play, volume, navigate]);
+  }, [hasModeAccess, currentUser, isPlaying, activeMode, stop, play, volume, navigate, openBuyDialog]);
 
   useEffect(() => {
     if (masterGainRef.current) {
@@ -1145,54 +1217,20 @@ export default function BrainBooster() {
           </div>
         )}
 
-        {/* Блок оплаты — показывается вместо режимов если нет доступа */}
-        {!hasAccess && !subLoading && (
-          <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center text-center">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-              <Icon name="Lock" size={26} className="text-primary" />
-            </div>
-            <p className="font-bold text-base mb-1">Доступ закрыт</p>
-            <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-              {sub?.can_trial !== false ? 'Попробуйте 7 дней бесплатно или выберите удобный тариф' : 'Выберите удобный тариф для доступа'}
-            </p>
-            {sub?.can_trial !== false && (
-              <button
-                onClick={handleStartTrial}
-                disabled={trialLoading}
-                className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-bold text-sm mb-4 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
-              >
-                {trialLoading ? <Icon name="Loader2" size={16} className="animate-spin" /> : <Icon name="Gift" size={16} />}
-                7 дней бесплатно
-              </button>
-            )}
-            <div className="grid grid-cols-2 gap-3 w-full">
-              <button
-                onClick={() => handlePay('week')}
-                disabled={payLoading}
-                className="border-2 border-border rounded-xl py-4 text-center hover:border-primary/50 transition-colors disabled:opacity-60 bg-background"
-              >
-                <p className="text-xs text-muted-foreground mb-1">Неделя</p>
-                <p className="font-bold text-lg">100 ₽</p>
-              </button>
-              <button
-                onClick={() => handlePay('month')}
-                disabled={payLoading}
-                className="border-2 border-primary rounded-xl py-4 text-center relative hover:opacity-90 transition-opacity disabled:opacity-60 bg-primary/5"
-              >
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
-                  −25%
-                </div>
-                <p className="text-xs text-muted-foreground mb-1">Месяц</p>
-                <p className="font-bold text-lg">299 ₽</p>
-                <p className="text-[10px] text-muted-foreground line-through">400 ₽</p>
-              </button>
-            </div>
-            {payLoading && (
-              <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                <Icon name="Loader2" size={11} className="animate-spin" /> Переход к оплате...
-              </p>
-            )}
-            <p className="text-[11px] text-muted-foreground/40 mt-4">Оплата через Т-Банк · СБП · Любой банк РФ</p>
+        {/* Кнопка триала — если нет никакого доступа и триал ещё не использовался */}
+        {!hasAccess && !subLoading && sub?.can_trial !== false && currentUser && (
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col items-center text-center">
+            <Icon name="Gift" size={24} className="text-primary mb-2" />
+            <p className="font-bold text-sm mb-1">7 дней бесплатно — попробуйте все режимы</p>
+            <p className="text-xs text-muted-foreground mb-3">После триала покупайте только нужные режимы</p>
+            <button
+              onClick={handleStartTrial}
+              disabled={trialLoading}
+              className="w-full bg-primary text-primary-foreground rounded-xl py-3 font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+            >
+              {trialLoading ? <Icon name="Loader2" size={16} className="animate-spin" /> : <Icon name="Gift" size={16} />}
+              Начать бесплатно
+            </button>
           </div>
         )}
 
@@ -1218,35 +1256,50 @@ export default function BrainBooster() {
           );
         })()}
 
-        {/* Режимы */}
-        <div className={!hasAccess && !subLoading ? 'hidden' : ''}>
+        {/* Режимы — всегда видны, но с кнопкой купить если нет доступа */}
+        <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Режимы</h2>
           <div className="grid grid-cols-1 gap-3">
             {MODES.filter(mode => mode.id !== 'tinnitus').map(mode => {
               const isActive = activeMode === mode.id;
               const isExpanded = expandedMode === mode.id;
+              const modeHasAccess = hasModeAccess(mode.id);
+              const isFreeMode = mode.id === 'eyes';
+              const backendId = MODE_BACKEND_ID[mode.id] || mode.id;
+              const modeExp = sub?.active_modes?.[backendId]?.expires_at;
+              const modeDaysLeft = modeExp ? Math.ceil((new Date(modeExp).getTime() - Date.now()) / 86400000) : null;
+
               return (
                 <div
                   key={mode.id}
                   className={`rounded-2xl border-2 transition-all
-                    ${isActive ? `${mode.bgColor} ${mode.borderColor}` : 'bg-card border-border'}`}
+                    ${isActive ? `${mode.bgColor} ${mode.borderColor}` : 'bg-card border-border'}
+                    ${!modeHasAccess ? 'opacity-90' : ''}`}
                 >
                   <div className="flex items-center gap-3 p-4">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${mode.bgColor}`}>
                       <Icon name={mode.icon} size={22} className={mode.color} />
                     </div>
 
-                    {/* Текстовая зона — нажатие раскрывает описание */}
+                    {/* Текстовая зона */}
                     <button
                       className="flex-1 min-w-0 text-left"
                       onClick={() => setExpandedMode(isExpanded ? null : mode.id)}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-sm">{mode.label}</p>
+                        {isFreeMode && (
+                          <span className="text-[10px] font-bold text-cyan-600 bg-cyan-100 px-1.5 py-0.5 rounded-full">Подарок</span>
+                        )}
                         {isActive && isPlaying && (
                           <span className="flex items-center gap-1 text-xs text-primary font-medium">
                             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                             Играет
+                          </span>
+                        )}
+                        {modeHasAccess && !hasAccess && modeDaysLeft !== null && (
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${modeDaysLeft <= 3 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                            {modeDaysLeft}д
                           </span>
                         )}
                       </div>
@@ -1256,20 +1309,33 @@ export default function BrainBooster() {
                       )}
                     </button>
 
-                    {/* Кнопка Play/Stop — отдельная зона */}
-                    <button
-                      onClick={() => handleToggle(mode.id)}
-                      className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90
-                        ${isActive && isPlaying
-                          ? 'bg-red-500 text-white shadow-md'
-                          : `${mode.bgColor} border-2 ${mode.borderColor}`}`}
-                    >
-                      <Icon
-                        name={isActive && isPlaying ? 'Square' : 'Play'}
-                        size={16}
-                        className={isActive && isPlaying ? 'text-white' : mode.color}
-                      />
-                    </button>
+                    {/* Кнопка Play или Оплатить */}
+                    {modeHasAccess ? (
+                      <button
+                        onClick={() => handleToggle(mode.id)}
+                        className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90
+                          ${isActive && isPlaying
+                            ? 'bg-red-500 text-white shadow-md'
+                            : `${mode.bgColor} border-2 ${mode.borderColor}`}`}
+                      >
+                        <Icon
+                          name={isActive && isPlaying ? 'Square' : 'Play'}
+                          size={16}
+                          className={isActive && isPlaying ? 'text-white' : mode.color}
+                        />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (!currentUser) { navigate('/login'); return; }
+                          openBuyDialog(mode.id);
+                        }}
+                        className="flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-2.5 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold leading-tight hover:opacity-90 active:scale-95 transition-all min-w-[52px]"
+                      >
+                        <Icon name="ShoppingCart" size={12} className="mb-0.5" />
+                        <span>от {MODE_WEEK_PRICE}₽</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Раскрытый текст */}
@@ -1799,6 +1865,137 @@ export default function BrainBooster() {
       <p className="text-center text-xs text-muted-foreground/40 px-4 pb-6 pt-2 leading-relaxed">
         Фоновая музыка: Kevin MacLeod (incompetech.com) — Licensed under Creative Commons Attribution 4.0
       </p>
+
+      {/* ── Диалог выбора и покупки режимов ─────────────── */}
+      {buyDialog && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-background rounded-3xl w-full max-w-sm flex flex-col gap-0 overflow-hidden shadow-2xl">
+
+            {/* Шапка */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-border">
+              <div>
+                <h3 className="font-bold text-base">Выберите режимы</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Можно купить несколько сразу</p>
+              </div>
+              <button onClick={() => setBuyDialog(null)} className="p-1.5 rounded-xl hover:bg-muted">
+                <Icon name="X" size={18} />
+              </button>
+            </div>
+
+            {/* Список режимов */}
+            <div className="px-4 py-3 space-y-2">
+              {MODES.filter(m => PAID_MODE_IDS.includes(m.id)).map(mode => {
+                const backendId = MODE_BACKEND_ID[mode.id] || mode.id;
+                const alreadyOwned = !!(sub?.active_modes?.[backendId]) || hasAccess;
+                const isSelected = buySelectedModes.includes(backendId);
+                return (
+                  <button
+                    key={mode.id}
+                    disabled={alreadyOwned}
+                    onClick={() => {
+                      if (alreadyOwned) return;
+                      setBuySelectedModes(prev =>
+                        prev.includes(backendId)
+                          ? prev.filter(x => x !== backendId)
+                          : [...prev, backendId]
+                      );
+                    }}
+                    className={`w-full flex items-center gap-3 p-3 rounded-2xl border-2 transition-all text-left ${
+                      alreadyOwned
+                        ? 'border-green-400/50 bg-green-50 opacity-70 cursor-default'
+                        : isSelected
+                        ? `${mode.borderColor} ${mode.bgColor}`
+                        : 'border-border bg-card hover:border-primary/40'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${mode.bgColor}`}>
+                      <Icon name={mode.icon} size={18} className={mode.color} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold">{mode.label}</p>
+                      <p className="text-xs text-muted-foreground truncate">{mode.desc}</p>
+                    </div>
+                    {alreadyOwned ? (
+                      <Icon name="CheckCircle" size={18} className="text-green-500 shrink-0" />
+                    ) : (
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                        isSelected ? 'bg-primary border-primary' : 'border-border'
+                      }`}>
+                        {isSelected && <Icon name="Check" size={11} className="text-primary-foreground" />}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+
+              {/* Расслабление глаз — подарок */}
+              <div className="flex items-center gap-3 p-3 rounded-2xl border-2 border-cyan-400/50 bg-cyan-50">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-cyan-500/10">
+                  <Icon name="Eye" size={18} className="text-cyan-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">Расслабление глаз</p>
+                    <span className="text-[10px] font-bold text-cyan-600 bg-cyan-100 px-1.5 py-0.5 rounded-full">Подарок</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Идёт бесплатно к любому режиму</p>
+                </div>
+                <Icon name="Gift" size={18} className="text-cyan-500 shrink-0" />
+              </div>
+            </div>
+
+            {/* Тариф */}
+            <div className="px-4 pb-3">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setBuyPlan('week')}
+                  className={`rounded-xl py-3 text-center border-2 transition-all ${buyPlan === 'week' ? 'border-primary bg-primary/5' : 'border-border'}`}
+                >
+                  <p className="text-xs text-muted-foreground">Неделя</p>
+                  <p className="font-bold">{MODE_WEEK_PRICE} ₽/реж.</p>
+                </button>
+                <button
+                  onClick={() => setBuyPlan('month')}
+                  className={`rounded-xl py-3 text-center border-2 transition-all relative ${buyPlan === 'month' ? 'border-primary bg-primary/5' : 'border-border'}`}
+                >
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">Выгоднее</div>
+                  <p className="text-xs text-muted-foreground">Месяц</p>
+                  <p className="font-bold">{MODE_MONTH_PRICE} ₽/реж.</p>
+                </button>
+              </div>
+            </div>
+
+            {/* Итог и кнопка */}
+            <div className="px-4 pb-5">
+              {buySelectedModes.length > 0 ? (
+                <div className="mb-3 flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {buySelectedModes.length} {buySelectedModes.length === 1 ? 'режим' : buySelectedModes.length < 5 ? 'режима' : 'режимов'}
+                    {' × '}{buyPlan === 'week' ? MODE_WEEK_PRICE : MODE_MONTH_PRICE} ₽
+                  </span>
+                  <span className="font-bold text-lg">
+                    {buySelectedModes.length * (buyPlan === 'week' ? MODE_WEEK_PRICE : MODE_MONTH_PRICE)} ₽
+                  </span>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center mb-3">Выберите хотя бы один режим</p>
+              )}
+              <button
+                onClick={handlePayModes}
+                disabled={!buySelectedModes.length || buyLoading}
+                className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {buyLoading
+                  ? <><Icon name="Loader2" size={16} className="animate-spin" /> Переход к оплате...</>
+                  : <><Icon name="CreditCard" size={16} /> Оплатить {buySelectedModes.length > 0 ? `${buySelectedModes.length * (buyPlan === 'week' ? MODE_WEEK_PRICE : MODE_MONTH_PRICE)} ₽` : ''}</>
+                }
+              </button>
+              <p className="text-[11px] text-muted-foreground/50 text-center mt-2">Оплата через Т-Банк · СБП · Любой банк РФ</p>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

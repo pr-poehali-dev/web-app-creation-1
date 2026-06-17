@@ -15,6 +15,7 @@ CORS = {
 }
 
 PLAN_DAYS = {"week": 7, "month": 30}
+MODE_PLAN_DAYS = {"week": 7, "month": 30}
 
 
 def verify_token(params: dict, password: str) -> bool:
@@ -77,7 +78,26 @@ def handler(event: dict, context) -> dict:
     print(f"[WEBHOOK] Payment found: {payment}")
 
     if not payment:
-        print(f"[WEBHOOK] Payment not found for order_id={order_id}")
+        # Проверяем mode_subscriptions
+        cur.execute(f"""
+            SELECT user_id, plan FROM {schema}.mode_subscriptions
+            WHERE tbank_order_id=%s AND status='pending' LIMIT 1
+        """, (order_id,))
+        mode_row = cur.fetchone()
+        if mode_row:
+            mode_user_id, mode_plan = mode_row
+            days = MODE_PLAN_DAYS.get(mode_plan, 7)
+            now = datetime.now(timezone.utc)
+            expires_at = now + timedelta(days=days)
+            cur.execute(f"""
+                UPDATE {schema}.mode_subscriptions
+                SET status='active', paid_at=NOW(), expires_at=%s, updated_at=NOW()
+                WHERE tbank_order_id=%s AND status='pending'
+            """, (expires_at, order_id))
+            conn.commit()
+            print(f"[WEBHOOK] Mode subscriptions activated for user_id={mode_user_id}, order={order_id}")
+        else:
+            print(f"[WEBHOOK] Nothing found for order_id={order_id}")
         cur.close(); conn.close()
         return {"statusCode": 200, "headers": CORS, "body": "OK"}
 
