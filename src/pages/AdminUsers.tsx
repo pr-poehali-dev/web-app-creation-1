@@ -49,108 +49,7 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
   const [callText, setCallText] = useState('Вам поступил новый заказ на вашем сайте.');
   const [isCalling, setIsCalling] = useState(false);
 
-  // Управление подпиской BrainBooster
-  const [showSubDialog, setShowSubDialog] = useState(false);
-  const [subUser, setSubUser] = useState<User | null>(null);
-  const [subPlan, setSubPlan] = useState<string>('month');
-  const [subLoading, setSubLoading] = useState(false);
-  const [subMap, setSubMap] = useState<Record<string, { active: boolean; plan: string | null; expires_at: string | null }>>({});
 
-  const ADMIN_KEY = localStorage.getItem('adminKey') || '';
-  const SUB_URL = 'https://functions.poehali.dev/f2a339e0-68a2-42ba-b5eb-55be5d543b5e';
-
-  const fetchSubscriptions = async (key: string) => {
-    try {
-      const res = await fetch(`${SUB_URL}?action=admin-list`, { headers: { 'X-Admin-Key': key } });
-      const data = await res.json();
-      if (data.ok && data.subscriptions) {
-        const map: Record<string, { active: boolean; plan: string | null; expires_at: string | null }> = {};
-        for (const s of data.subscriptions) {
-          map[String(s.user_id)] = { active: s.is_active, plan: s.plan, expires_at: s.expires_at };
-        }
-        setSubMap(map);
-      }
-    } catch { /* тихо */ }
-  };
-
-  const handleGrantSub = (user: User) => {
-    setSubUser(user);
-    setSubPlan('month');
-    setShowSubDialog(true);
-  };
-
-  const getAdminKey = () => localStorage.getItem('adminKey') || '';
-
-  const doGrantSub = async (key: string, userId: string, plan: string, userName: string) => {
-    const res = await fetch(`${SUB_URL}?action=admin-grant`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
-      body: JSON.stringify({ user_id: userId, plan }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      const planLabel = plan === 'week' ? 'Неделя' : plan === 'month' ? 'Месяц' : 'Год';
-      toast.success(`Подписка (${planLabel}) выдана: ${userName}`);
-      setShowSubDialog(false);
-      fetchSubscriptions(localStorage.getItem('adminKey') || key);
-      return true;
-    }
-    if (res.status === 403) return false;
-    toast.error(data.error || 'Ошибка выдачи подписки');
-    return true;
-  };
-
-  const confirmGrantSub = async () => {
-    if (!subUser) return;
-    setSubLoading(true);
-    try {
-      const key = getAdminKey();
-      const ok = await doGrantSub(key, subUser.id, subPlan, subUser.name || subUser.email);
-      if (!ok) {
-        const entered = prompt('Введите ключ администратора (ADMIN_CLEANUP_KEY):');
-        if (entered) {
-          localStorage.setItem('adminKey', entered);
-          await doGrantSub(entered, subUser.id, subPlan, subUser.name || subUser.email);
-        }
-      }
-    } catch {
-      toast.error('Ошибка сети');
-    }
-    setSubLoading(false);
-  };
-
-  const doRevokeSub = async (key: string, userId: string, userName: string) => {
-    const res = await fetch(`${SUB_URL}?action=admin-revoke`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
-      body: JSON.stringify({ user_id: userId }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      toast.success(`Подписка отозвана: ${userName}`);
-      fetchSubscriptions(localStorage.getItem('adminKey') || key);
-      return true;
-    }
-    if (res.status === 403) return false;
-    toast.error(data.error || 'Ошибка');
-    return true;
-  };
-
-  const handleRevokeSub = async (user: User) => {
-    try {
-      const key = getAdminKey();
-      const ok = await doRevokeSub(key, user.id, user.name || user.email);
-      if (!ok) {
-        const entered = prompt('Введите ключ администратора (ADMIN_CLEANUP_KEY):');
-        if (entered) {
-          localStorage.setItem('adminKey', entered);
-          await doRevokeSub(entered, user.id, user.name || user.email);
-        }
-      }
-    } catch {
-      toast.error('Ошибка сети');
-    }
-  };
 
   useEffect(() => {
     fetchUsers();
@@ -176,10 +75,7 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
       if (filterStatus !== 'all') params.append('status', filterStatus);
       if (filterType !== 'all') params.append('type', filterType);
 
-      const [response] = await Promise.all([
-        fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?${params}`),
-        fetchSubscriptions(localStorage.getItem('adminKey') || ''),
-      ]);
+      const response = await fetch(`https://functions.poehali.dev/f20975b5-cf6f-4ee6-9127-53f3d552589f?${params}`);
       const data = await response.json();
       
       if (data.users) {
@@ -393,9 +289,6 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
                 onUnblock={handleUnblockUser}
                 onDelete={handleDelete}
                 onCall={handleCall}
-                onGrantSub={handleGrantSub}
-                onRevokeSub={handleRevokeSub}
-                subMap={subMap}
               />
             </CardContent>
           </Card>
@@ -445,41 +338,6 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
             <Button onClick={handleMakeCall} disabled={isCalling} className="gap-2">
               <Icon name="Phone" className="h-4 w-4" />
               {isCalling ? 'Звоним...' : 'Позвонить'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Диалог выдачи подписки BrainBooster */}
-      <Dialog open={showSubDialog} onOpenChange={setShowSubDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Выдать подписку BrainBooster</DialogTitle>
-            <DialogDescription>
-              Пользователь: <strong>{subUser?.name || subUser?.email}</strong>
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <label className="text-sm font-medium">Тариф</label>
-            <Select value={subPlan} onValueChange={setSubPlan}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="week">Неделя (7 дней)</SelectItem>
-                <SelectItem value="month">Месяц (30 дней)</SelectItem>
-                <SelectItem value="year">Год (365 дней)</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Если у пользователя уже есть активная подписка — она будет продлена.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSubDialog(false)}>Отмена</Button>
-            <Button onClick={confirmGrantSub} disabled={subLoading} className="gap-2">
-              <Icon name="Zap" className="h-4 w-4" />
-              {subLoading ? 'Выдаём...' : 'Выдать подписку'}
             </Button>
           </DialogFooter>
         </DialogContent>

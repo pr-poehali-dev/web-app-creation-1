@@ -34,12 +34,6 @@ export interface User {
   rating?: number;
 }
 
-interface SubInfo {
-  active: boolean;
-  plan: string | null;
-  expires_at: string | null;
-}
-
 interface UsersTableProps {
   users: User[];
   isLoading: boolean;
@@ -48,9 +42,6 @@ interface UsersTableProps {
   onUnblock: (user: User) => void;
   onDelete: (user: User) => void;
   onCall?: (user: User) => void;
-  onGrantSub?: (user: User) => void;
-  onRevokeSub?: (user: User) => void;
-  subMap?: Record<string, SubInfo>;
 }
 
 const getStatusBadge = (status: string) => {
@@ -87,9 +78,6 @@ export default function UsersTable({
   onUnblock,
   onDelete,
   onCall,
-  onGrantSub,
-  onRevokeSub,
-  subMap = {},
 }: UsersTableProps) {
   return (
     <div className="rounded-md border">
@@ -118,30 +106,9 @@ export default function UsersTable({
                 Пользователи не найдены
               </TableCell>
             </TableRow>
-          ) : users.map((user) => {
-            const sub = subMap[String(user.id)];
-            const subActive = sub?.active === true;
-            const subExists = sub !== undefined;
-            const planLabel = sub?.plan === 'trial' ? 'Триал' : sub?.plan === 'week' ? 'Неделя' : sub?.plan === 'month' ? 'Месяц' : sub?.plan === 'year' ? 'Год' : null;
-            return (
+          ) : users.map((user) => (
             <TableRow key={user.id}>
-              <TableCell className="font-medium">
-                <div className="flex flex-col gap-1">
-                  <span>{user.name}</span>
-                  {subActive && planLabel && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-purple-600 bg-purple-100 rounded-full px-1.5 py-0.5 w-fit">
-                      <Icon name="Zap" size={9} />
-                      {planLabel}
-                    </span>
-                  )}
-                  {!subActive && subExists && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-500 bg-red-50 rounded-full px-1.5 py-0.5 w-fit">
-                      <Icon name="ZapOff" size={9} />
-                      Истекла
-                    </span>
-                  )}
-                </div>
-              </TableCell>
+              <TableCell className="font-medium">{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>{getTypeName(user.type)}</TableCell>
               <TableCell>{getStatusBadge(user.status)}</TableCell>
@@ -198,32 +165,6 @@ export default function UsersTable({
                       <Icon name="Phone" className="h-4 w-4" />
                     </Button>
                   )}
-                  {onGrantSub && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onGrantSub(user)}
-                      title={subActive ? `Подписка активна: ${planLabel}` : 'Выдать подписку BrainBooster'}
-                      className={subActive
-                        ? 'border-[3px] border-purple-500 text-purple-600 bg-purple-50 hover:bg-purple-100'
-                        : 'border-purple-300 text-purple-400 hover:bg-purple-50'}
-                    >
-                      <Icon name="Zap" className="h-4 w-4" />
-                    </Button>
-                  )}
-                  {onRevokeSub && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onRevokeSub(user)}
-                      title={subActive ? 'Отозвать подписку' : subExists ? 'Подписка неактивна / истекла' : 'Подписки нет'}
-                      className={subActive
-                        ? 'border-orange-400 text-orange-600 hover:bg-orange-50'
-                        : 'border-[3px] border-red-500 text-red-500 bg-red-50 hover:bg-red-100'}
-                    >
-                      <Icon name="ZapOff" className="h-4 w-4" />
-                    </Button>
-                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -236,8 +177,7 @@ export default function UsersTable({
                 </div>
               </TableCell>
             </TableRow>
-            );
-          })}
+          ))}
         </TableBody>
       </Table>
     </div>
