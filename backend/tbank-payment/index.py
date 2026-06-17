@@ -32,7 +32,7 @@ def get_db():
 
 
 def get_tbank_token(params: dict, password: str) -> str:
-    excluded = ("Token", "DATA", "Receipt", "Items", "SuccessURL", "FailURL", "NotificationURL")
+    excluded = ("Token", "DATA", "Receipt", "Items")
     filtered = {k: v for k, v in params.items() if k not in excluded}
     filtered["Password"] = password
     sorted_values = "".join(str(v) for k, v in sorted(filtered.items()))
