@@ -860,43 +860,53 @@ export default function BrainBooster() {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-background rounded-3xl w-full max-w-sm p-6 flex flex-col items-center gap-4">
             <div className="flex items-center justify-between w-full">
-              <h3 className="font-bold text-base">Оплата через СБП</h3>
+              <div>
+                <h3 className="font-bold text-base">Оплата через СБП</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Любой банк РФ</p>
+              </div>
               <button onClick={() => setQrDialog(null)} className="p-1.5 rounded-xl hover:bg-muted">
                 <Icon name="X" size={18} />
               </button>
             </div>
 
-            {/* Кнопка СБП — на мобильном главная, на десктопе скрыта */}
-            <div className="flex sm:hidden flex-col items-center gap-2 w-full">
+            {/* QR-код — главный способ на всех устройствах */}
+            <div className="flex flex-col items-center gap-2 w-full">
+              <p className="text-sm text-muted-foreground text-center">
+                Откройте приложение банка → раздел СБП или «Оплатить по QR» → отсканируйте
+              </p>
+              <div className="p-3 bg-white rounded-2xl shadow-sm">
+                <img src={qrDialog.qrImg} alt="QR код СБП" width={220} height={220} />
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+                <Icon name="CheckCircle" size={12} className="text-green-500" />
+                Сбер · Т-Банк · ВТБ · Альфа · Озон · любой банк
+              </div>
+            </div>
+
+            {/* Кнопка «Открыть банк» — только на мобильном как удобный ярлык */}
+            <div className="flex sm:hidden flex-col items-center gap-1.5 w-full">
+              <div className="flex items-center gap-2 w-full">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-xs text-muted-foreground">или</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
               <button
                 onClick={() => { window.location.href = qrDialog.sbpLink; }}
-                className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-bold text-sm text-center flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                className="w-full border-2 border-primary/40 text-primary rounded-2xl py-3 font-semibold text-sm text-center flex items-center justify-center gap-2 active:scale-95 transition-transform hover:bg-primary/5"
               >
-                <Icon name="Smartphone" size={18} />
-                Выбрать банк и оплатить
+                <Icon name="Smartphone" size={16} />
+                Открыть приложение банка
               </button>
-              <p className="text-xs text-muted-foreground/70 text-center">Сбер · Т-Банк · ВТБ · Альфа · любой банк РФ</p>
             </div>
 
-            {/* QR — на мобильном как запасной вариант, на десктопе основной */}
-            <div className="flex flex-col items-center gap-2 w-full">
-              <p className="text-xs text-muted-foreground sm:text-sm text-center">
-                <span className="sm:hidden">Или отсканируйте QR камерой</span>
-                <span className="hidden sm:inline">Отсканируйте QR-код в приложении вашего банка</span>
-              </p>
-              <div className="p-3 bg-white rounded-2xl">
-                <img src={qrDialog.qrImg} alt="QR код оплаты" width={200} height={200} />
-              </div>
-              <p className="text-xs text-muted-foreground/60">Любой банк РФ · СБП</p>
-            </div>
-
+            {/* Оплата картой */}
             <div className="w-full border-t border-border pt-3">
               <button
                 onClick={() => { window.location.href = qrDialog.paymentUrl; }}
-                className="w-full border border-border rounded-2xl py-3 font-medium text-sm text-center flex items-center justify-center gap-2 hover:bg-muted transition-colors"
+                className="w-full border border-border rounded-2xl py-3 text-muted-foreground text-sm text-center flex items-center justify-center gap-2 hover:bg-muted hover:text-foreground transition-colors"
               >
                 <Icon name="CreditCard" size={15} />
-                Оплата картой
+                Оплатить картой
               </button>
             </div>
           </div>
