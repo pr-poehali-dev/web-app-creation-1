@@ -16,7 +16,7 @@ from datetime import datetime, timezone, timedelta
 CORS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, X-Authorization, X-Admin-Key",
 }
 
 PLANS = {
@@ -167,6 +167,10 @@ def handler(event: dict, context) -> dict:
         """, (user_id,))
         sub = cur.fetchone()
 
+        # Проверяем использовал ли триал отдельно
+        cur.execute(f"SELECT id FROM {schema}.subscriptions WHERE user_id=%s AND plan='trial' LIMIT 1", (user_id,))
+        used_trial = cur.fetchone() is not None
+
         if not sub:
             cur.close(); conn.close()
             return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
@@ -191,12 +195,12 @@ def handler(event: dict, context) -> dict:
                     "plan": plan if is_active else None,
                     "status": status,
                     "expires_at": expires_at.isoformat() if expires_at else None,
-                    "can_trial": False,
+                    "can_trial": not used_trial,
                 })}
 
     # ── POST ?action=trial — активировать триал ─────────────────────────────
     if method == "POST" and action == "trial":
-        cur.execute(f"SELECT id FROM {schema}.subscriptions WHERE user_id=%s LIMIT 1", (user_id,))
+        cur.execute(f"SELECT id FROM {schema}.subscriptions WHERE user_id=%s AND plan='trial' LIMIT 1", (user_id,))
         if cur.fetchone():
             cur.close(); conn.close()
             return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},

@@ -359,6 +359,7 @@ export default function BrainBooster() {
   const [payLoading, setPayLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState<{ type: 'success' | 'fail'; plan?: string } | null>(null);
+  const paymentNoticeRef = useRef<HTMLDivElement | null>(null);
   // QR / СБП диалог
   const [qrDialog, setQrDialog] = useState<{ qrPayload: string; paymentUrl: string; qrImg: string; sbpLink: string } | null>(null);
   const currentUser = getSession();
@@ -389,6 +390,15 @@ export default function BrainBooster() {
       setSearchParams(next, { replace: true });
     }
   }, []);
+
+  // Скролл к уведомлению об оплате
+  useEffect(() => {
+    if (paymentNotice && paymentNoticeRef.current) {
+      setTimeout(() => {
+        paymentNoticeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [paymentNotice]);
 
   const handleStartTrial = async () => {
     const token = getJwtToken();
@@ -756,28 +766,7 @@ export default function BrainBooster() {
   return (
     <div className="min-h-screen bg-background pb-24">
 
-      {/* ── Уведомление об оплате ─────────────────────────── */}
-      {paymentNotice && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-sm font-medium max-w-sm w-[calc(100%-2rem)] ${
-          paymentNotice.type === 'success' ? 'bg-green-500 text-white' : 'bg-destructive text-destructive-foreground'
-        }`}>
-          <Icon name={paymentNotice.type === 'success' ? 'CheckCircle' : 'XCircle'} size={18} className="shrink-0" />
-          <span className="flex-1">
-            {paymentNotice.type === 'success'
-              ? paymentNotice.plan === 'week'
-                ? 'Недельная подписка оформлена! Доступ открыт на 7 дней.'
-                : paymentNotice.plan === 'month'
-                ? 'Месячная подписка оформлена! Доступ открыт на 30 дней.'
-                : 'Оплата прошла! Доступ активируется...'
-              : paymentNotice.plan === 'week'
-                ? 'Оплата недельного доступа не прошла. Попробуйте ещё раз.'
-                : paymentNotice.plan === 'month'
-                ? 'Оплата месячного доступа не прошла. Попробуйте ещё раз.'
-                : 'Оплата не прошла. Попробуйте ещё раз.'}
-          </span>
-          <button onClick={() => setPaymentNotice(null)}><Icon name="X" size={16} /></button>
-        </div>
-      )}
+      {/* Уведомление об оплате — рендерится inline над режимами через paymentNotice */}
 
       {/* ── Баннер об истечении подписки ──────────────────── */}
       {!subLoading && !hasAccess && sub?.status === 'expired' && (
@@ -834,12 +823,18 @@ export default function BrainBooster() {
       )}
 
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="p-2 rounded-xl hover:bg-muted transition-colors">
-          <Icon name="ArrowLeft" size={20} />
-        </button>
-        <div className="flex-1">
-          <h1 className="font-bold text-base">Нейро-звук для стимуляции мозга</h1>
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
+          <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="p-2 rounded-xl hover:bg-muted transition-colors" title="Назад">
+            <Icon name="ArrowLeft" size={20} />
+          </button>
+          <button onClick={() => navigate('/')} className="flex items-center gap-1 px-2 py-1.5 rounded-xl hover:bg-muted transition-colors text-xs font-medium text-muted-foreground" title="На главную">
+            <Icon name="Home" size={15} />
+            <span className="hidden sm:inline">На главную</span>
+          </button>
+        </div>
+        <div className="flex-1 text-center">
+          <h1 className="font-bold text-base leading-tight">Нейро-звук для стимуляции мозга</h1>
           <p className="text-xs text-muted-foreground">Бинауральные ритмы · Научная база</p>
         </div>
         <div className="flex items-center gap-2">
@@ -1115,6 +1110,29 @@ export default function BrainBooster() {
           </p>
         </div>
 
+        {/* ── Уведомление об оплате над режимами ─────────────── */}
+        {paymentNotice && (
+          <div ref={paymentNoticeRef} className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium ${
+            paymentNotice.type === 'success' ? 'bg-green-500 text-white' : 'bg-destructive text-destructive-foreground'
+          }`}>
+            <Icon name={paymentNotice.type === 'success' ? 'CheckCircle' : 'XCircle'} size={18} className="shrink-0" />
+            <span className="flex-1">
+              {paymentNotice.type === 'success'
+                ? paymentNotice.plan === 'week'
+                  ? 'Недельная подписка оформлена! Доступ открыт на 7 дней.'
+                  : paymentNotice.plan === 'month'
+                  ? 'Месячная подписка оформлена! Доступ открыт на 30 дней.'
+                  : 'Оплата прошла! Доступ активируется...'
+                : paymentNotice.plan === 'week'
+                  ? 'Оплата недельного доступа не прошла. Попробуйте ещё раз.'
+                  : paymentNotice.plan === 'month'
+                  ? 'Оплата месячного доступа не прошла. Попробуйте ещё раз.'
+                  : 'Оплата не прошла. Попробуйте ещё раз.'}
+            </span>
+            <button onClick={() => setPaymentNotice(null)}><Icon name="X" size={16} /></button>
+          </div>
+        )}
+
         {/* Режимы */}
         <div className="relative">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Режимы</h2>
@@ -1129,16 +1147,18 @@ export default function BrainBooster() {
                 </div>
                 <p className="font-bold text-base mb-1">Доступ закрыт</p>
                 <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                  Попробуйте 7 дней бесплатно или выберите удобный тариф
+                  {sub?.can_trial !== false ? 'Попробуйте 7 дней бесплатно или выберите удобный тариф' : 'Выберите удобный тариф для доступа'}
                 </p>
-                <button
-                  onClick={handleStartTrial}
-                  disabled={trialLoading}
-                  className="w-full max-w-xs bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm mb-3 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
-                >
-                  {trialLoading ? <Icon name="Loader2" size={16} className="animate-spin" /> : <Icon name="Gift" size={16} />}
-                  7 дней бесплатно
-                </button>
+                {sub?.can_trial !== false && (
+                  <button
+                    onClick={handleStartTrial}
+                    disabled={trialLoading}
+                    className="w-full max-w-xs bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm mb-3 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+                  >
+                    {trialLoading ? <Icon name="Loader2" size={16} className="animate-spin" /> : <Icon name="Gift" size={16} />}
+                    7 дней бесплатно
+                  </button>
+                )}
                 <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
                   <button
                     onClick={() => handlePay('week')}
