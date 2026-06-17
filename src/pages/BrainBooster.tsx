@@ -361,6 +361,7 @@ export default function BrainBooster() {
   const [trialLoading, setTrialLoading] = useState(false);
   const [paymentNotice, setPaymentNotice] = useState<{ type: 'success' | 'fail'; plan?: string } | null>(null);
   const paymentNoticeRef = useRef<HTMLDivElement | null>(null);
+  const [expiredBannerClosed, setExpiredBannerClosed] = useState(false);
   // QR / СБП диалог
   const [qrDialog, setQrDialog] = useState<{ qrPayload: string; paymentUrl: string; qrImg: string; sbpLink: string } | null>(null);
   const currentUser = getSession();
@@ -770,10 +771,13 @@ export default function BrainBooster() {
       {/* Уведомление об оплате — рендерится inline над режимами через paymentNotice */}
 
       {/* ── Баннер об истечении подписки ──────────────────── */}
-      {!subLoading && !hasAccess && sub?.status === 'expired' && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-sm font-medium max-w-sm w-[calc(100%-2rem)] bg-amber-500 text-white">
+      {!subLoading && !hasAccess && sub?.status === 'expired' && !expiredBannerClosed && (
+        <div className="mx-4 mt-3 flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium bg-amber-500 text-white">
           <Icon name="Clock" size={18} className="shrink-0" />
           <span className="flex-1">Подписка истекла. Продлите доступ, чтобы продолжить.</span>
+          <button onClick={() => setExpiredBannerClosed(true)} className="p-1 rounded-lg hover:bg-amber-600 transition-colors shrink-0">
+            <Icon name="X" size={16} />
+          </button>
         </div>
       )}
 
@@ -839,12 +843,19 @@ export default function BrainBooster() {
           <p className="text-xs text-muted-foreground">Бинауральные ритмы · Научная база</p>
         </div>
         <div className="flex items-center gap-2">
-          {hasAccess && !isPlaying && (
-            <div className="flex items-center gap-1 bg-green-500/10 text-green-600 px-2.5 py-1.5 rounded-full text-xs font-medium">
-              <Icon name="CheckCircle" size={12} />
-              {sub?.plan === 'trial' ? 'Триал' : sub?.plan === 'week' ? 'Неделя' : 'Месяц'}
-            </div>
-          )}
+          {hasAccess && !isPlaying && sub?.expires_at && (() => {
+            const days = Math.ceil((new Date(sub.expires_at).getTime() - Date.now()) / 86400000);
+            const isTrial = sub.plan === 'trial';
+            const isUrgent = days <= 3;
+            return (
+              <div className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium ${
+                isUrgent ? 'bg-red-500/10 text-red-600' : isTrial ? 'bg-blue-500/10 text-blue-600' : 'bg-green-500/10 text-green-600'
+              }`}>
+                <Icon name={isUrgent ? 'AlertCircle' : 'Clock'} size={12} />
+                {days <= 0 ? 'Истекает' : `${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'}`}
+              </div>
+            );
+          })()}
           {isPlaying && (
             <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
@@ -1184,6 +1195,28 @@ export default function BrainBooster() {
             <p className="text-[11px] text-muted-foreground/40 mt-4">Оплата через Т-Банк · СБП · Любой банк РФ</p>
           </div>
         )}
+
+        {/* Остаток дней подписки */}
+        {hasAccess && sub?.expires_at && (() => {
+          const days = Math.ceil((new Date(sub.expires_at).getTime() - Date.now()) / 86400000);
+          const isTrial = sub.plan === 'trial';
+          const isUrgent = days <= 3;
+          return (
+            <div className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm ${
+              isUrgent ? 'bg-red-500/10 border border-red-500/20' : isTrial ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-green-500/10 border border-green-500/20'
+            }`}>
+              <div className="flex items-center gap-2">
+                <Icon name={isUrgent ? 'AlertCircle' : isTrial ? 'Gift' : 'CheckCircle'} size={16} className={isUrgent ? 'text-red-500' : isTrial ? 'text-blue-500' : 'text-green-500'} />
+                <span className="font-medium">
+                  {isTrial ? 'Бесплатный период' : 'Подписка активна'}
+                </span>
+              </div>
+              <span className={`font-bold text-sm ${isUrgent ? 'text-red-600' : isTrial ? 'text-blue-600' : 'text-green-600'}`}>
+                {days <= 0 ? 'Истекает сегодня' : `ещё ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'}`}
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Режимы */}
         <div className={!hasAccess && !subLoading ? 'hidden' : ''}>
