@@ -22,7 +22,11 @@ def verify_token(params: dict, password: str) -> bool:
     excluded = ("Token", "DATA", "Receipt", "Items", "Pan", "ExpDate", "CardId")
     filtered = {k: v for k, v in params.items() if k not in excluded}
     filtered["Password"] = password
-    sorted_values = "".join(str(v) for k, v in sorted(filtered.items()))
+    def to_str(v):
+        if isinstance(v, bool):
+            return str(v).lower()
+        return str(v)
+    sorted_values = "".join(to_str(v) for k, v in sorted(filtered.items()))
     print(f"[WEBHOOK] Token verify string: {sorted_values[:120]}")
     expected = hashlib.sha256(sorted_values.encode()).hexdigest()
     print(f"[WEBHOOK] Expected token: {expected}, Received: {received_token}")
