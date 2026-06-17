@@ -19,7 +19,8 @@ PLAN_DAYS = {"week": 7, "month": 30}
 
 def verify_token(params: dict, password: str) -> bool:
     received_token = params.get("Token", "")
-    filtered = {k: v for k, v in params.items() if k not in ("Token", "DATA", "Receipt", "Items")}
+    excluded = ("Token", "DATA", "Receipt", "Items", "Pan", "ExpDate", "CardId")
+    filtered = {k: v for k, v in params.items() if k not in excluded}
     filtered["Password"] = password
     sorted_values = "".join(str(v) for k, v in sorted(filtered.items()))
     print(f"[WEBHOOK] Token verify string: {sorted_values[:120]}")
