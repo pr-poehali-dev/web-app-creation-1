@@ -375,7 +375,7 @@ export default function BrainBooster() {
   const paymentNoticeRef = useRef<HTMLDivElement | null>(null);
   const [expiredBannerClosed, setExpiredBannerClosed] = useState(false);
   // QR / СБП диалог
-  const [qrDialog, setQrDialog] = useState<{ paymentUrl: string; qrImg: string } | null>(null);
+  const [qrDialog, setQrDialog] = useState<{ paymentUrl: string; qrImg: string; sbpPayload: string | null }| null>(null);
   // Экран выбора режимов для покупки
   const [buyDialog, setBuyDialog] = useState<{ preselect?: string } | null>(null);
   const [buySelectedModes, setBuySelectedModes] = useState<string[]>([]);
@@ -425,7 +425,7 @@ export default function BrainBooster() {
       if (data.ok && data.payment_url) {
         if (data.qr_payload) {
           const qrImg = await QRCode.toDataURL(data.qr_payload, { width: 220, margin: 1 });
-          setQrDialog({ paymentUrl: data.payment_url, qrImg });
+          setQrDialog({ paymentUrl: data.payment_url, qrImg, sbpPayload: data.sbp_payload || null });
         } else {
           window.location.href = data.payment_url;
         }
@@ -508,7 +508,7 @@ export default function BrainBooster() {
         if (qrPayload) {
           // Генерируем QR-картинку
           const qrImg = await QRCode.toDataURL(qrPayload, { width: 220, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
-          setQrDialog({ paymentUrl, qrImg });
+          setQrDialog({ paymentUrl, qrImg, sbpPayload: data.sbp_payload || null });
         } else {
           // Нет QR — просто редирект
           window.location.href = paymentUrl;
@@ -879,23 +879,45 @@ export default function BrainBooster() {
               </ol>
             </div>
 
-            {/* На мобильном — кнопка открыть страницу напрямую */}
-            <div className="flex sm:hidden flex-col items-center gap-1.5 w-full">
+            {/* Мобильный: кнопка выбора банка (СБП) или страница оплаты */}
+            <div className="flex sm:hidden flex-col items-center gap-2 w-full">
               <div className="flex items-center gap-2 w-full">
                 <div className="flex-1 h-px bg-border" />
-                <span className="text-xs text-muted-foreground">или перейти на страницу оплаты</span>
+                <span className="text-xs text-muted-foreground">или</span>
                 <div className="flex-1 h-px bg-border" />
               </div>
-              <button
-                onClick={() => { window.location.href = qrDialog.paymentUrl; }}
-                className="w-full border-2 border-primary/30 text-primary rounded-2xl py-3 font-semibold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform hover:bg-primary/5"
-              >
-                <Icon name="Smartphone" size={16} />
-                Открыть страницу оплаты
-              </button>
+              {qrDialog.sbpPayload ? (
+                <>
+                  <button
+                    onClick={() => { window.location.href = qrDialog.sbpPayload!; }}
+                    className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                  >
+                    <Icon name="Landmark" size={16} />
+                    Выбрать банк и оплатить по СБП
+                  </button>
+                  <p className="text-xs text-muted-foreground/60 text-center -mt-1">
+                    Откроется список банков → выберите свой → приложение откроется автоматически
+                  </p>
+                  <button
+                    onClick={() => { window.location.href = qrDialog.paymentUrl; }}
+                    className="w-full border border-border rounded-2xl py-2.5 text-muted-foreground text-sm flex items-center justify-center gap-2 hover:bg-muted transition-colors"
+                  >
+                    <Icon name="CreditCard" size={14} />
+                    Оплатить картой
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => { window.location.href = qrDialog.paymentUrl; }}
+                  className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                >
+                  <Icon name="CreditCard" size={16} />
+                  Перейти к оплате
+                </button>
+              )}
             </div>
 
-            {/* На десктопе — кнопка "перейти по ссылке" */}
+            {/* Десктоп — ссылка на страницу оплаты */}
             <div className="hidden sm:flex w-full">
               <button
                 onClick={() => { window.open(qrDialog.paymentUrl, '_blank'); }}

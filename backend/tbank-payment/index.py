@@ -303,12 +303,38 @@ def handler(event: dict, context) -> dict:
         cur.execute(f"UPDATE {schema}.payments SET tbank_payment_id=%s, payment_url=%s WHERE id=%s",
                     (payment_id_tbank, payment_url, payment_id))
         conn.commit()
-        cur.close(); conn.close()
 
-        # qr_payload = payment_url: фронт генерирует QR из него,
-        # при сканировании открывается страница Т-Банка с СБП/картой
+        # Пробуем получить СБП QR payload (ссылка вида https://qr.nspk.ru/...)
+        sbp_payload = None
+        try:
+            qr_params = {
+                "TerminalKey": terminal_key,
+                "PaymentId": payment_id_tbank,
+                "DataType": "PAYLOAD",
+            }
+            qr_params["Token"] = get_tbank_token(qr_params, secret_key)
+            qr_req = urllib.request.Request(
+                "https://securepay.tinkoff.ru/v2/GetQr",
+                data=json.dumps(qr_params).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(qr_req, timeout=10) as qr_resp:
+                qr_result = json.loads(qr_resp.read())
+            print(f"GetQr full response: {qr_result}")
+            if qr_result.get("Success"):
+                sbp_payload = qr_result.get("Data")
+                print(f"GetQr SUCCESS, sbp_payload={sbp_payload}")
+            else:
+                print(f"GetQr FAILED: ErrorCode={qr_result.get('ErrorCode')}, Message={qr_result.get('Message')}, Details={qr_result.get('Details')}")
+        except Exception as e:
+            print(f"GetQr exception: {e}")
+
+        cur.close(); conn.close()
+        # sbp_payload — ссылка https://qr.nspk.ru/... для выбора банка
+        # Если недоступно — фронт использует payment_url как fallback
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
-                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "qr_payload": payment_url})}
+                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "qr_payload": payment_url, "sbp_payload": sbp_payload})}
 
     # ── POST ?action=pay-modes — оплата выбранных режимов ──────────────────
     if method == "POST" and action == "pay-modes":
@@ -393,9 +419,27 @@ def handler(event: dict, context) -> dict:
         payment_url = result["PaymentURL"]
         payment_id_tbank = str(result["PaymentId"])
 
+        sbp_payload = None
+        try:
+            qr_params = {"TerminalKey": terminal_key, "PaymentId": payment_id_tbank, "DataType": "PAYLOAD"}
+            qr_params["Token"] = get_tbank_token(qr_params, secret_key)
+            qr_req = urllib.request.Request(
+                "https://securepay.tinkoff.ru/v2/GetQr",
+                data=json.dumps(qr_params).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(qr_req, timeout=10) as qr_resp:
+                qr_result = json.loads(qr_resp.read())
+            print(f"GetQr (modes) full response: {qr_result}")
+            if qr_result.get("Success"):
+                sbp_payload = qr_result.get("Data")
+        except Exception as e:
+            print(f"GetQr (modes) exception: {e}")
+
         cur.close(); conn.close()
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
-                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "qr_payload": payment_url})}
+                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "qr_payload": payment_url, "sbp_payload": sbp_payload})}
 
     cur.close(); conn.close()
     return {"statusCode": 404, "headers": {**CORS, "Content-Type": "application/json"},
