@@ -66,25 +66,36 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
 
   const getAdminKey = () => localStorage.getItem('adminKey') || '';
 
+  const doGrantSub = async (key: string, userId: string, plan: string, userName: string) => {
+    const res = await fetch(`${SUB_URL}?action=admin-grant`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
+      body: JSON.stringify({ user_id: userId, plan }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const planLabel = plan === 'week' ? 'Неделя' : plan === 'month' ? 'Месяц' : 'Год';
+      toast.success(`Подписка (${planLabel}) выдана: ${userName}`);
+      setShowSubDialog(false);
+      return true;
+    }
+    if (res.status === 403) return false;
+    toast.error(data.error || 'Ошибка выдачи подписки');
+    return true;
+  };
+
   const confirmGrantSub = async () => {
     if (!subUser) return;
     setSubLoading(true);
     try {
-      const res = await fetch(`${SUB_URL}?action=admin-grant`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
-        body: JSON.stringify({ user_id: subUser.id, plan: subPlan }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        const planLabel = subPlan === 'week' ? 'Неделя' : subPlan === 'month' ? 'Месяц' : 'Год';
-        toast.success(`Подписка (${planLabel}) выдана: ${subUser.name || subUser.email}`);
-        setShowSubDialog(false);
-      } else if (res.status === 403) {
-        const key = prompt('Введите ключ администратора:');
-        if (key) { localStorage.setItem('adminKey', key); toast.info('Ключ сохранён, попробуйте снова'); }
-      } else {
-        toast.error(data.error || 'Ошибка выдачи подписки');
+      const key = getAdminKey();
+      const ok = await doGrantSub(key, subUser.id, subPlan, subUser.name || subUser.email);
+      if (!ok) {
+        const entered = prompt('Введите ключ администратора (ADMIN_CLEANUP_KEY):');
+        if (entered) {
+          localStorage.setItem('adminKey', entered);
+          await doGrantSub(entered, subUser.id, subPlan, subUser.name || subUser.email);
+        }
       }
     } catch {
       toast.error('Ошибка сети');
@@ -92,21 +103,29 @@ export default function AdminUsers({ isAuthenticated, onLogout }: AdminUsersProp
     setSubLoading(false);
   };
 
+  const doRevokeSub = async (key: string, userId: string, userName: string) => {
+    const res = await fetch(`${SUB_URL}?action=admin-revoke`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': key },
+      body: JSON.stringify({ user_id: userId }),
+    });
+    const data = await res.json();
+    if (data.ok) { toast.success(`Подписка отозвана: ${userName}`); return true; }
+    if (res.status === 403) return false;
+    toast.error(data.error || 'Ошибка');
+    return true;
+  };
+
   const handleRevokeSub = async (user: User) => {
     try {
-      const res = await fetch(`${SUB_URL}?action=admin-revoke`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Key': getAdminKey() },
-        body: JSON.stringify({ user_id: user.id }),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        toast.success(`Подписка отозвана: ${user.name || user.email}`);
-      } else if (res.status === 403) {
-        const key = prompt('Введите ключ администратора:');
-        if (key) { localStorage.setItem('adminKey', key); toast.info('Ключ сохранён, попробуйте снова'); }
-      } else {
-        toast.error(data.error || 'Ошибка');
+      const key = getAdminKey();
+      const ok = await doRevokeSub(key, user.id, user.name || user.email);
+      if (!ok) {
+        const entered = prompt('Введите ключ администратора (ADMIN_CLEANUP_KEY):');
+        if (entered) {
+          localStorage.setItem('adminKey', entered);
+          await doRevokeSub(entered, user.id, user.name || user.email);
+        }
       }
     } catch {
       toast.error('Ошибка сети');
