@@ -866,37 +866,38 @@ export default function BrainBooster() {
               </button>
             </div>
 
-            {/* QR на десктопе */}
-            <div className="hidden sm:flex flex-col items-center gap-3 w-full">
-              <p className="text-sm text-muted-foreground text-center">Отсканируйте QR-код в приложении вашего банка</p>
-              <div className="p-3 bg-white rounded-2xl">
-                <img src={qrDialog.qrImg} alt="QR код оплаты" width={220} height={220} />
-              </div>
-              <p className="text-xs text-muted-foreground">Поддерживает любой банк РФ через СБП</p>
+            {/* Кнопка СБП — на мобильном главная, на десктопе скрыта */}
+            <div className="flex sm:hidden flex-col items-center gap-2 w-full">
+              <button
+                onClick={() => { window.location.href = qrDialog.sbpLink; }}
+                className="w-full bg-primary text-primary-foreground rounded-2xl py-4 font-bold text-sm text-center flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              >
+                <Icon name="Smartphone" size={18} />
+                Выбрать банк и оплатить
+              </button>
+              <p className="text-xs text-muted-foreground/70 text-center">Сбер · Т-Банк · ВТБ · Альфа · любой банк РФ</p>
             </div>
 
-            {/* СБП deeplink на мобильном */}
-            <div className="flex sm:hidden flex-col items-center gap-3 w-full">
-              <p className="text-sm text-muted-foreground text-center">Нажмите — телефон предложит выбрать банк</p>
-              <a
-                href={qrDialog.sbpLink}
-                className="w-full bg-primary text-primary-foreground rounded-2xl py-3.5 font-bold text-sm text-center flex items-center justify-center gap-2 active:scale-95 transition-transform"
-              >
-                <Icon name="Smartphone" size={16} />
-                Оплатить через СБП
-              </a>
-              <p className="text-xs text-muted-foreground/60 -mt-1 text-center">Сбер, Т-Банк, ВТБ, Альфа и любой другой банк</p>
+            {/* QR — на мобильном как запасной вариант, на десктопе основной */}
+            <div className="flex flex-col items-center gap-2 w-full">
+              <p className="text-xs text-muted-foreground sm:text-sm text-center">
+                <span className="sm:hidden">Или отсканируйте QR камерой</span>
+                <span className="hidden sm:inline">Отсканируйте QR-код в приложении вашего банка</span>
+              </p>
+              <div className="p-3 bg-white rounded-2xl">
+                <img src={qrDialog.qrImg} alt="QR код оплаты" width={200} height={200} />
+              </div>
+              <p className="text-xs text-muted-foreground/60">Любой банк РФ · СБП</p>
             </div>
 
             <div className="w-full border-t border-border pt-3">
-              <p className="text-xs text-muted-foreground text-center mb-2">Или оплатите картой</p>
-              <a
-                href={qrDialog.paymentUrl}
+              <button
+                onClick={() => { window.location.href = qrDialog.paymentUrl; }}
                 className="w-full border border-border rounded-2xl py-3 font-medium text-sm text-center flex items-center justify-center gap-2 hover:bg-muted transition-colors"
               >
                 <Icon name="CreditCard" size={15} />
                 Оплата картой
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -980,39 +981,6 @@ export default function BrainBooster() {
       {activeTab === 'modes' && (
       <div className="px-4 pt-5 space-y-5 max-w-lg mx-auto">
 
-        {/* ── СОВЕТЫ ────────────────────────────────────────── */}
-        <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Icon name="Lightbulb" size={16} className="text-green-400" />
-            <span className="text-sm font-semibold text-green-400">Как слушать правильно</span>
-          </div>
-          <ul className="space-y-2">
-            {[
-              { icon: 'Headphones', text: 'Обязательно стерео-наушники — без них бинауральный эффект физически невозможен (звук идёт раздельно в каждое ухо)' },
-              { icon: 'Volume2',    text: 'Начинайте с 30–40% громкости — мозг воспринимает бинауральный бит даже на тихом уровне, громче ≠ эффективнее' },
-              { icon: 'Moon',       text: 'Закройте глаза, сядьте или лягте удобно — минимизируйте внешние раздражители' },
-              { icon: 'Clock',      text: 'Первая сессия — 5–10 минут. Рабочий режим — 15–30 минут. Больше — не нужно' },
-              { icon: 'CalendarDays', text: 'Эффект накапливается: заметные изменения — через 7–14 дней регулярной практики' },
-              { icon: 'AlertTriangle', text: 'Не используйте за рулём и при работе с опасным оборудованием' },
-            ].map((tip, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Icon name={tip.icon} size={15} className="text-green-400 flex-shrink-0 mt-0.5" />
-                {tip.text}
-              </li>
-            ))}
-          </ul>
-          {/* Юридическая оговорка */}
-          <div className="mt-3 pt-3 border-t border-green-500/20">
-            <div className="flex items-start gap-2">
-              <Icon name="FileText" size={15} className="text-green-500/70 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                <span className="font-semibold text-foreground">Согласие пользователя.</span>{' '}
-                Нажимая кнопку воспроизведения, вы подтверждаете, что ознакомились с информацией о сервисе «Нейро-звук» (бинауральные биты для стимуляции мозговой активности), добровольно принимаете решение о его использовании и принимаете на себя полную ответственность за последствия такого использования. Сервис предоставляется исключительно в информационно-образовательных целях, не является медицинским изделием, средством диагностики, лечения или профилактики заболеваний по смыслу законодательства Российской Федерации. Администрация сервиса не несёт ответственности за любой прямой или косвенный ущерб здоровью, возникший в результате использования данного инструмента. При наличии каких-либо заболеваний, в том числе перечисленных в разделе «Противопоказания», перед использованием необходимо проконсультироваться с лечащим врачом.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* ── НАУЧНАЯ БАЗА ──────────────────────────────────── */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-border">
@@ -1054,27 +1022,37 @@ export default function BrainBooster() {
           </div>
         </div>
 
-        {/* ── ПОБОЧНЫЕ ЭФФЕКТЫ ──────────────────────────────── */}
-        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
+        {/* ── СОВЕТЫ ────────────────────────────────────────── */}
+        <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Icon name="ShieldAlert" size={16} className="text-orange-400" />
-            <span className="text-sm font-semibold text-orange-400">Побочные эффекты и противопоказания</span>
+            <Icon name="Lightbulb" size={16} className="text-green-400" />
+            <span className="text-sm font-semibold text-green-400">Как слушать правильно</span>
           </div>
           <ul className="space-y-2">
             {[
-              { icon: 'AlertCircle', warn: false, text: 'Тяжесть или лёгкое давление в голове при первом прослушивании — нормальная реакция адаптации, проходит через 3–5 мин или после остановки' },
-              { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
-              { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
-              { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
-              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Снятие стресса»' },
-              { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
-            ].map((item, i) => (
+              { icon: 'Headphones', text: 'Обязательно стерео-наушники — без них бинауральный эффект физически невозможен (звук идёт раздельно в каждое ухо)' },
+              { icon: 'Volume2',    text: 'Начинайте с 30–40% громкости — мозг воспринимает бинауральный бит даже на тихом уровне, громче ≠ эффективнее' },
+              { icon: 'Moon',       text: 'Закройте глаза, сядьте или лягте удобно — минимизируйте внешние раздражители' },
+              { icon: 'Clock',      text: 'Первая сессия — 5–10 минут. Рабочий режим — 15–30 минут. Больше — не нужно' },
+              { icon: 'CalendarDays', text: 'Эффект накапливается: заметные изменения — через 7–14 дней регулярной практики' },
+              { icon: 'AlertTriangle', text: 'Не используйте за рулём и при работе с опасным оборудованием' },
+            ].map((tip, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Icon name={item.icon} size={15} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
-                {item.text}
+                <Icon name={tip.icon} size={15} className="text-green-400 flex-shrink-0 mt-0.5" />
+                {tip.text}
               </li>
             ))}
           </ul>
+          {/* Юридическая оговорка */}
+          <div className="mt-3 pt-3 border-t border-green-500/20">
+            <div className="flex items-start gap-2">
+              <Icon name="FileText" size={15} className="text-green-500/70 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <span className="font-semibold text-foreground">Согласие пользователя.</span>{' '}
+                Нажимая кнопку воспроизведения, вы подтверждаете, что ознакомились с информацией о сервисе «Нейро-звук» (бинауральные биты для стимуляции мозговой активности), добровольно принимаете решение о его использовании и принимаете на себя полную ответственность за последствия такого использования. Сервис предоставляется исключительно в информационно-образовательных целях, не является медицинским изделием, средством диагностики, лечения или профилактики заболеваний по смыслу законодательства Российской Федерации. Администрация сервиса не несёт ответственности за любой прямой или косвенный ущерб здоровью, возникший в результате использования данного инструмента. При наличии каких-либо заболеваний, в том числе перечисленных в разделе «Противопоказания», перед использованием необходимо проконсультироваться с лечащим врачом.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* ── АКТИВНЫЙ РЕЖИМ — большая кнопка ──────────────── */}
@@ -1474,6 +1452,29 @@ export default function BrainBooster() {
             })}
           </div>
         </div>{/* конец блока Режимы */}
+
+        {/* ── ПОБОЧНЫЕ ЭФФЕКТЫ ──────────────────────────────── */}
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Icon name="ShieldAlert" size={16} className="text-orange-400" />
+            <span className="text-sm font-semibold text-orange-400">Побочные эффекты и противопоказания</span>
+          </div>
+          <ul className="space-y-2">
+            {[
+              { icon: 'AlertCircle', warn: false, text: 'Тяжесть или лёгкое давление в голове при первом прослушивании — нормальная реакция адаптации, проходит через 3–5 мин или после остановки' },
+              { icon: 'AlertCircle', warn: false, text: 'Лёгкое головокружение при громкости выше 60% или сессии дольше 30 мин — снизьте громкость и сделайте перерыв' },
+              { icon: 'AlertCircle', warn: false, text: 'Бета-режим «Фокус» у чувствительных людей может временно усилить тревожность — начните с «Общего режима»' },
+              { icon: 'AlertCircle', warn: false, text: 'Внутричерепное давление (ВЧД) — режимы расслабления могут снижать тонус сосудов, режим «Энергия» — повышать нейронную активность. При ВЧД — только после консультации с неврологом' },
+              { icon: 'AlertCircle', warn: false, text: 'Шум в ушах (тиннитус) — высокие частоты (Фокус 18 Гц, Энергия 40 Гц) могут временно усилить шум. При тиннитусе используйте только режим «Снятие стресса»' },
+              { icon: 'XCircle',     warn: true,  text: 'Противопоказано: эпилепсия, беременность, дети до 18 лет, острые психозы, кардиостимулятор' },
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Icon name={item.icon} size={15} className={`${item.warn ? 'text-red-400' : 'text-orange-400'} flex-shrink-0 mt-0.5`} />
+                {item.text}
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* Гимнастика для глаз — показывается только когда выбран режим eyes */}
         {(activeMode === 'eyes' || expandedMode === 'eyes') && (
