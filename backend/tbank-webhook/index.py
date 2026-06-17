@@ -45,6 +45,7 @@ def handler(event: dict, context) -> dict:
     secret_key = os.environ["TBANK_SECRET_KEY"]
     schema = os.environ.get("DB_SCHEMA", "t_p42562714_web_app_creation_1")
 
+    print(f"[WEBHOOK] Secret key first5={secret_key[:5]}, last3={secret_key[-3:]}, len={len(secret_key)}")
     token_ok = verify_token(body, secret_key)
     print(f"[WEBHOOK] Token valid: {token_ok}")
 
