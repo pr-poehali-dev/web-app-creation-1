@@ -22,7 +22,9 @@ def verify_token(params: dict, password: str) -> bool:
     filtered = {k: v for k, v in params.items() if k not in ("Token", "DATA", "Receipt", "Items")}
     filtered["Password"] = password
     sorted_values = "".join(str(v) for k, v in sorted(filtered.items()))
+    print(f"[WEBHOOK] Token verify string: {sorted_values[:120]}")
     expected = hashlib.sha256(sorted_values.encode()).hexdigest()
+    print(f"[WEBHOOK] Expected token: {expected}, Received: {received_token}")
     return received_token == expected
 
 
@@ -35,18 +37,27 @@ def handler(event: dict, context) -> dict:
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
-    body = json.loads(event.get("body") or "{}")
+    raw_body = event.get("body") or "{}"
+    print(f"[WEBHOOK] Raw body: {raw_body[:500]}")
+
+    body = json.loads(raw_body)
     secret_key = os.environ["TBANK_SECRET_KEY"]
     schema = os.environ.get("DB_SCHEMA", "t_p42562714_web_app_creation_1")
 
-    if not verify_token(body, secret_key):
+    token_ok = verify_token(body, secret_key)
+    print(f"[WEBHOOK] Token valid: {token_ok}")
+
+    if not token_ok:
+        print("[WEBHOOK] Token mismatch — returning FAIL")
         return {"statusCode": 200, "headers": CORS, "body": "FAIL"}
 
     status = body.get("Status")
     order_id = body.get("OrderId")
     tbank_payment_id = str(body.get("PaymentId", ""))
+    print(f"[WEBHOOK] Status={status}, OrderId={order_id}, PaymentId={tbank_payment_id}")
 
     if status != "CONFIRMED" or not order_id:
+        print(f"[WEBHOOK] Skipping non-CONFIRMED status: {status}")
         return {"statusCode": 200, "headers": CORS, "body": "OK"}
 
     conn = get_db()
@@ -57,8 +68,15 @@ def handler(event: dict, context) -> dict:
         WHERE tbank_order_id = %s LIMIT 1
     """, (order_id,))
     payment = cur.fetchone()
+    print(f"[WEBHOOK] Payment found: {payment}")
 
-    if not payment or payment[2] == "paid":
+    if not payment:
+        print(f"[WEBHOOK] Payment not found for order_id={order_id}")
+        cur.close(); conn.close()
+        return {"statusCode": 200, "headers": CORS, "body": "OK"}
+
+    if payment[3] == "paid":
+        print(f"[WEBHOOK] Payment already paid, skipping")
         cur.close(); conn.close()
         return {"statusCode": 200, "headers": CORS, "body": "OK"}
 
@@ -81,19 +99,21 @@ def handler(event: dict, context) -> dict:
     existing = cur.fetchone()
 
     if existing:
-        new_expires = max(existing[1], now) + timedelta(days=days)
+        new_expires = max(existing[1].replace(tzinfo=timezone.utc) if existing[1].tzinfo is None else existing[1], now) + timedelta(days=days)
         cur.execute(f"""
             UPDATE {schema}.subscriptions
             SET plan=%s, expires_at=%s, paid_at=NOW(), updated_at=NOW()
             WHERE id=%s
         """, (plan, new_expires, existing[0]))
         sub_id = existing[0]
+        print(f"[WEBHOOK] Updated existing subscription id={sub_id}, new_expires={new_expires}")
     else:
         cur.execute(f"""
             INSERT INTO {schema}.subscriptions (user_id, plan, status, paid_at, expires_at)
             VALUES (%s, %s, 'active', NOW(), %s) RETURNING id
         """, (user_id, plan, expires_at))
         sub_id = cur.fetchone()[0]
+        print(f"[WEBHOOK] Created new subscription id={sub_id}, expires={expires_at}")
 
     cur.execute(f"""
         UPDATE {schema}.payments SET subscription_id=%s WHERE id=%s
@@ -103,4 +123,5 @@ def handler(event: dict, context) -> dict:
     cur.close()
     conn.close()
 
+    print(f"[WEBHOOK] Done — subscription activated for user_id={user_id}")
     return {"statusCode": 200, "headers": CORS, "body": "OK"}
