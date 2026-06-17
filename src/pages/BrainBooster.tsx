@@ -358,7 +358,7 @@ export default function BrainBooster() {
   const { sub, loading: subLoading, refresh: refreshSub } = useSubscription();
   const [payLoading, setPayLoading] = useState(false);
   const [trialLoading, setTrialLoading] = useState(false);
-  const [paymentNotice, setPaymentNotice] = useState<'success' | 'fail' | null>(null);
+  const [paymentNotice, setPaymentNotice] = useState<{ type: 'success' | 'fail'; plan?: string } | null>(null);
   // QR / СБП диалог
   const [qrDialog, setQrDialog] = useState<{ qrPayload: string; paymentUrl: string; qrImg: string; sbpLink: string } | null>(null);
   const currentUser = getSession();
@@ -368,23 +368,24 @@ export default function BrainBooster() {
   // Обработка возврата с платёжной страницы
   useEffect(() => {
     const status = searchParams.get('payment');
+    const plan = searchParams.get('plan') || undefined;
     if (status === 'success') {
-      setPaymentNotice('success');
-      // Поллинг подписки — вебхук может прийти с задержкой
+      setPaymentNotice({ type: 'success', plan });
       let attempts = 0;
       const poll = setInterval(async () => {
         await refreshSub();
         attempts++;
         if (attempts >= 8) clearInterval(poll);
       }, 2500);
-      // Убираем параметр из URL
       const next = new URLSearchParams(searchParams);
       next.delete('payment');
+      next.delete('plan');
       setSearchParams(next, { replace: true });
     } else if (status === 'fail') {
-      setPaymentNotice('fail');
+      setPaymentNotice({ type: 'fail', plan });
       const next = new URLSearchParams(searchParams);
       next.delete('payment');
+      next.delete('plan');
       setSearchParams(next, { replace: true });
     }
   }, []);
@@ -757,14 +758,32 @@ export default function BrainBooster() {
 
       {/* ── Уведомление об оплате ─────────────────────────── */}
       {paymentNotice && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-sm font-medium max-w-xs w-full mx-4 ${
-          paymentNotice === 'success' ? 'bg-green-500 text-white' : 'bg-destructive text-destructive-foreground'
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-sm font-medium max-w-sm w-[calc(100%-2rem)] ${
+          paymentNotice.type === 'success' ? 'bg-green-500 text-white' : 'bg-destructive text-destructive-foreground'
         }`}>
-          <Icon name={paymentNotice === 'success' ? 'CheckCircle' : 'XCircle'} size={18} />
+          <Icon name={paymentNotice.type === 'success' ? 'CheckCircle' : 'XCircle'} size={18} className="shrink-0" />
           <span className="flex-1">
-            {paymentNotice === 'success' ? 'Оплата прошла! Доступ активируется...' : 'Оплата не прошла. Попробуйте ещё раз.'}
+            {paymentNotice.type === 'success'
+              ? paymentNotice.plan === 'week'
+                ? 'Недельная подписка оформлена! Доступ открыт на 7 дней.'
+                : paymentNotice.plan === 'month'
+                ? 'Месячная подписка оформлена! Доступ открыт на 30 дней.'
+                : 'Оплата прошла! Доступ активируется...'
+              : paymentNotice.plan === 'week'
+                ? 'Оплата недельного доступа не прошла. Попробуйте ещё раз.'
+                : paymentNotice.plan === 'month'
+                ? 'Оплата месячного доступа не прошла. Попробуйте ещё раз.'
+                : 'Оплата не прошла. Попробуйте ещё раз.'}
           </span>
           <button onClick={() => setPaymentNotice(null)}><Icon name="X" size={16} /></button>
+        </div>
+      )}
+
+      {/* ── Баннер об истечении подписки ──────────────────── */}
+      {!subLoading && !hasAccess && sub?.status === 'expired' && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg text-sm font-medium max-w-sm w-[calc(100%-2rem)] bg-amber-500 text-white">
+          <Icon name="Clock" size={18} className="shrink-0" />
+          <span className="flex-1">Подписка истекла. Продлите доступ, чтобы продолжить.</span>
         </div>
       )}
 

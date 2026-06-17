@@ -42,6 +42,8 @@ interface UsersTableProps {
   onUnblock: (user: User) => void;
   onDelete: (user: User) => void;
   onCall?: (user: User) => void;
+  onGrantSub?: (user: User) => void;
+  onRevokeSub?: (user: User) => void;
 }
 
 const getStatusBadge = (status: string) => {
@@ -78,6 +80,8 @@ export default function UsersTable({
   onUnblock,
   onDelete,
   onCall,
+  onGrantSub,
+  onRevokeSub,
 }: UsersTableProps) {
   return (
     <div className="rounded-md border">
@@ -163,6 +167,28 @@ export default function UsersTable({
                       className="border-blue-400 text-blue-600 hover:bg-blue-50"
                     >
                       <Icon name="Phone" className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onGrantSub && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onGrantSub(user)}
+                      title="Выдать подписку BrainBooster"
+                      className="border-purple-400 text-purple-600 hover:bg-purple-50"
+                    >
+                      <Icon name="Zap" className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {onRevokeSub && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onRevokeSub(user)}
+                      title="Отозвать подписку BrainBooster"
+                      className="border-orange-400 text-orange-600 hover:bg-orange-50"
+                    >
+                      <Icon name="ZapOff" className="h-4 w-4" />
                     </Button>
                   )}
                   <Button

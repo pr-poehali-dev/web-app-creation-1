@@ -57,24 +57,96 @@ def get_user_from_jwt(token: str, cur, schema):
 
 
 def handler(event: dict, context) -> dict:
-    """Управление подпиской: статус, триал, оплата через Т-Банк."""
+    """Управление подпиской: статус, триал, оплата через Т-Банк. Админ: ?action=admin-grant/admin-revoke."""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
     headers = event.get("headers", {})
-    print(f"Headers keys: {list(headers.keys())}")
-    auth = headers.get("x-authorization") or headers.get("authorization") or headers.get("X-Authorization") or headers.get("Authorization") or ""
-    print(f"Auth header: {auth[:30] if auth else 'EMPTY'}")
-    if not auth.startswith("Bearer "):
-        return {"statusCode": 401, "headers": {**CORS, "Content-Type": "application/json"},
-                "body": json.dumps({"ok": False, "error": "Необходима авторизация"})}
-
-    token = auth.replace("Bearer ", "")
     schema = os.environ.get("DB_SCHEMA", "t_p42562714_web_app_creation_1")
     method = event.get("httpMethod")
     params = event.get("queryStringParameters") or {}
     action = params.get("action", "")
     now = datetime.now(timezone.utc)
+
+    # ── Админские действия — без JWT, по X-Admin-Key ────────────────────────
+    if action in ("admin-grant", "admin-revoke", "admin-list"):
+        admin_key = headers.get("x-admin-key") or headers.get("X-Admin-Key") or ""
+        if admin_key != os.environ.get("ADMIN_CLEANUP_KEY", ""):
+            return {"statusCode": 403, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "Доступ запрещён"})}
+
+        conn = get_db()
+        cur = conn.cursor()
+
+        if action == "admin-list":
+            cur.execute(f"""
+                SELECT s.user_id, s.plan, s.status, s.expires_at,
+                       u.email, u.first_name, u.last_name
+                FROM {schema}.subscriptions s
+                JOIN {schema}.users u ON u.id = s.user_id
+                ORDER BY s.updated_at DESC NULLS LAST LIMIT 200
+            """)
+            rows = cur.fetchall()
+            subs = []
+            for r in rows:
+                exp = r[3]
+                if exp and exp.tzinfo is None:
+                    exp = exp.replace(tzinfo=timezone.utc)
+                subs.append({
+                    "user_id": r[0], "plan": r[1], "status": r[2],
+                    "expires_at": exp.isoformat() if exp else None,
+                    "is_active": r[2] == "active" and exp and exp > now,
+                    "email": r[4],
+                    "name": f"{r[6] or ''} {r[5] or ''}".strip()
+                })
+            cur.close(); conn.close()
+            return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": True, "subscriptions": subs})}
+
+        body = json.loads(event.get("body") or "{}")
+        user_id = body.get("user_id")
+        plan = body.get("plan", "month")
+        days = int(body.get("days", {"week": 7, "month": 30, "year": 365}.get(plan, 30)))
+
+        if not user_id:
+            cur.close(); conn.close()
+            return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "user_id обязателен"})}
+
+        if action == "admin-grant":
+            cur.execute(f"SELECT id, expires_at FROM {schema}.subscriptions WHERE user_id=%s ORDER BY created_at DESC LIMIT 1", (user_id,))
+            existing = cur.fetchone()
+            if existing:
+                exp = existing[1]
+                if exp and exp.tzinfo is None:
+                    exp = exp.replace(tzinfo=timezone.utc)
+                base = max(exp, now) if exp else now
+                new_exp = base + timedelta(days=days)
+                cur.execute(f"UPDATE {schema}.subscriptions SET plan=%s, status='active', expires_at=%s, updated_at=NOW() WHERE id=%s",
+                            (plan, new_exp, existing[0]))
+                msg = "Подписка продлена"
+            else:
+                new_exp = now + timedelta(days=days)
+                cur.execute(f"INSERT INTO {schema}.subscriptions (user_id, plan, status, paid_at, expires_at) VALUES (%s,%s,'active',NOW(),%s)",
+                            (user_id, plan, new_exp))
+                msg = "Подписка выдана"
+            conn.commit(); cur.close(); conn.close()
+            return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": True, "message": msg, "expires_at": new_exp.isoformat()})}
+
+        if action == "admin-revoke":
+            cur.execute(f"UPDATE {schema}.subscriptions SET status='expired', expires_at=NOW(), updated_at=NOW() WHERE user_id=%s AND status='active'", (user_id,))
+            conn.commit(); cur.close(); conn.close()
+            return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": True, "message": "Подписка отозвана"})}
+
+    # ── Обычные пользовательские запросы — требуют JWT ───────────────────────
+    auth = headers.get("x-authorization") or headers.get("authorization") or headers.get("X-Authorization") or headers.get("Authorization") or ""
+    if not auth.startswith("Bearer "):
+        return {"statusCode": 401, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps({"ok": False, "error": "Необходима авторизация"})}
+
+    token = auth.replace("Bearer ", "")
 
     conn = get_db()
     cur = conn.cursor()
@@ -170,8 +242,8 @@ def handler(event: dict, context) -> dict:
             "Amount": plan_info["amount"],
             "OrderId": order_id,
             "Description": plan_info["label"],
-            "SuccessURL": f"{frontend}/brain-booster?payment=success",
-            "FailURL": f"{frontend}/brain-booster?payment=fail",
+            "SuccessURL": f"{frontend}/brain-booster?payment=success&plan={plan}",
+            "FailURL": f"{frontend}/brain-booster?payment=fail&plan={plan}",
             "NotificationURL": "https://functions.poehali.dev/48623d77-3c76-4711-99a9-3223aae78b96",
         }
         print(f"TBank params: TerminalKey={terminal_key[:10]}, Amount={plan_info['amount']}, OrderId={order_id}")
