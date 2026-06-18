@@ -423,13 +423,16 @@ export default function BrainBooster() {
       });
       const data = await res.json();
       if (data.ok && data.payment_url) {
-        if (data.qr_payload) {
+        const sbpUrl = data.sbp_payload || null;
+        setBuyDialog(null);
+        if (isMobile() && sbpUrl) {
+          window.location.href = sbpUrl;
+        } else if (data.qr_payload) {
           const qrImg = await QRCode.toDataURL(data.qr_payload, { width: 220, margin: 1 });
-          setQrDialog({ paymentUrl: data.payment_url, qrImg, sbpPayload: data.sbp_payload || null });
+          setQrDialog({ paymentUrl: data.payment_url, qrImg, sbpPayload: sbpUrl });
         } else {
           window.location.href = data.payment_url;
         }
-        setBuyDialog(null);
       } else {
         alert(data.error || 'Ошибка создания платежа');
       }
@@ -503,14 +506,14 @@ export default function BrainBooster() {
       const data = await res.json();
       if (data.ok && data.payment_url) {
         const paymentUrl = data.payment_url;
-        const qrPayload = data.qr_payload;
+        const sbpUrl = data.sbp_payload || null;
 
-        if (qrPayload) {
-          // Генерируем QR-картинку
-          const qrImg = await QRCode.toDataURL(qrPayload, { width: 220, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
-          setQrDialog({ paymentUrl, qrImg, sbpPayload: data.sbp_payload || null });
+        if (isMobile() && sbpUrl) {
+          window.location.href = sbpUrl;
+        } else if (data.qr_payload) {
+          const qrImg = await QRCode.toDataURL(data.qr_payload, { width: 220, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
+          setQrDialog({ paymentUrl, qrImg, sbpPayload: sbpUrl });
         } else {
-          // Нет QR — просто редирект
           window.location.href = paymentUrl;
         }
       } else if (!data.ok) {

@@ -20,7 +20,7 @@ MODE_PLAN_DAYS = {"week": 7, "month": 30}
 
 def verify_token(params: dict, password: str) -> bool:
     received_token = params.get("Token", "")
-    excluded = ("Token", "DATA", "Receipt", "Items", "Pan", "ExpDate", "CardId")
+    excluded = ("Token", "DATA", "Receipt", "Items", "Pan", "ExpDate", "CardId", "ErrorCode")
     filtered = {k: v for k, v in params.items() if k not in excluded}
     filtered["Password"] = password
     def to_str(v):
@@ -28,7 +28,7 @@ def verify_token(params: dict, password: str) -> bool:
             return str(v).lower()
         return str(v)
     sorted_values = "".join(to_str(v) for k, v in sorted(filtered.items()))
-    print(f"[WEBHOOK] Token verify string: {sorted_values[:120]}")
+    print(f"[WEBHOOK] Token verify string: {sorted_values[:200]}")
     expected = hashlib.sha256(sorted_values.encode()).hexdigest()
     print(f"[WEBHOOK] Expected token: {expected}, Received: {received_token}")
     return received_token == expected
