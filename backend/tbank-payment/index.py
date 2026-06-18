@@ -37,6 +37,14 @@ FREE_MODES  = ["eyes"]
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://preview--web-app-creation-1.poehali.dev")
 
 
+def get_secret_key() -> str:
+    key = os.environ.get("TBANK_SECRET_KEY", "")
+    alt = os.environ.get("TBANK_SECRET_KE", "")
+    chosen = key if key else alt
+    print(f"[PAY] secret_key: len={len(chosen)}, first5={chosen[:5]!r}, last3={chosen[-3:]!r}, source={'TBANK_SECRET_KEY' if chosen == key else 'TBANK_SECRET_KE'}")
+    return chosen
+
+
 def get_db():
     return psycopg2.connect(os.environ["DATABASE_URL"])
 
@@ -255,9 +263,7 @@ def handler(event: dict, context) -> dict:
 
         plan_info = PLANS[plan]
         terminal_key = os.environ["TBANK_TERMINAL_KEY"]
-        secret_key = os.environ["TBANK_SECRET_KEY"]
-        print(f"RAW terminal_key from env: '{terminal_key}' len={len(terminal_key)}")
-        print(f"RAW secret_key from env: len={len(secret_key)}, first3={secret_key[:3]}, last3={secret_key[-3:]}")
+        secret_key = get_secret_key()
         order_id = str(uuid.uuid4())
 
         cur.execute(f"""
@@ -372,7 +378,7 @@ def handler(event: dict, context) -> dict:
         description = f"Нейро-звук: {modes_str} ({plan_days} дн.)"
 
         terminal_key = os.environ["TBANK_TERMINAL_KEY"]
-        secret_key = os.environ["TBANK_SECRET_KEY"]
+        secret_key = get_secret_key()
         order_id = str(uuid.uuid4())
         frontend = os.environ.get("FRONTEND_URL", "https://erttp.ru")
 

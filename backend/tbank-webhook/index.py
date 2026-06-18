@@ -47,12 +47,23 @@ def handler(event: dict, context) -> dict:
     print(f"[WEBHOOK] Raw body: {raw_body[:500]}")
 
     body = json.loads(raw_body)
-    secret_key = os.environ["TBANK_SECRET_KEY"]
     schema = os.environ.get("DB_SCHEMA", "t_p42562714_web_app_creation_1")
 
-    print(f"[WEBHOOK] Secret key first5={secret_key[:5]}, last3={secret_key[-3:]}, len={len(secret_key)}")
+    # Пробуем оба секрета — TBANK_SECRET_KEY и TBANK_SECRET_KE (на случай опечатки в названии)
+    secret_key = os.environ.get("TBANK_SECRET_KEY", "")
+    secret_key_alt = os.environ.get("TBANK_SECRET_KE", "")
+
+    print(f"[WEBHOOK] KEY  first5={secret_key[:5]!r}, last3={secret_key[-3:]!r}, len={len(secret_key)}")
+    print(f"[WEBHOOK] KE   first5={secret_key_alt[:5]!r}, last3={secret_key_alt[-3:]!r}, len={len(secret_key_alt)}")
+
     token_ok = verify_token(body, secret_key)
-    print(f"[WEBHOOK] Token valid: {token_ok}")
+    used_key = "TBANK_SECRET_KEY"
+    if not token_ok and secret_key_alt and secret_key_alt != secret_key:
+        token_ok = verify_token(body, secret_key_alt)
+        if token_ok:
+            used_key = "TBANK_SECRET_KE"
+
+    print(f"[WEBHOOK] Token valid: {token_ok}, used_key={used_key}")
 
     if not token_ok:
         print("[WEBHOOK] Token mismatch — returning FAIL")
