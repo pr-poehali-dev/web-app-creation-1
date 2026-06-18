@@ -438,28 +438,66 @@ export default function BrainBooster() {
   useEffect(() => {
     const status = searchParams.get('payment');
     const plan = searchParams.get('plan') || undefined;
-    if (!status) return;
 
-    // Сразу чистим все payment-параметры из URL
-    const next = new URLSearchParams(searchParams);
-    next.delete('payment');
-    next.delete('plan');
-    next.delete('modes');
-    setSearchParams(next, { replace: true });
+    // Если эта вкладка открылась как возвратная — сигналим исходной и закрываемся
+    if (status) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('payment');
+      next.delete('plan');
+      next.delete('modes');
+      setSearchParams(next, { replace: true });
+
+      try {
+        const bc = new BroadcastChannel('payment_result');
+        bc.postMessage({ status, plan });
+        bc.close();
+      } catch (_) { /* BroadcastChannel не поддерживается */ }
+
+      // Если вкладка была открыта Т-Банком (opener существует) — закрываем её
+      if (window.opener) {
+        window.close();
+        return;
+      }
+    }
 
     if (status === 'success') {
       setPaymentNotice({ type: 'success', plan });
-      let attempts = 0;
-      const poll = setInterval(async () => {
-        attempts++;
-        await refreshSub();
-        if (attempts >= 8) clearInterval(poll);
-      }, 2500);
-      return () => clearInterval(poll);
+      // Сразу обновляем, потом повторяем пока не появятся active_modes
+      const pollUntilActive = async () => {
+        for (let i = 0; i < 12; i++) {
+          await refreshSub();
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      };
+      pollUntilActive();
     } else if (status === 'fail') {
       setPaymentNotice({ type: 'fail', plan });
     }
   }, []);
+
+  // Слушаем BroadcastChannel — исходная вкладка получает сигнал от возвратной
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    try {
+      bc = new BroadcastChannel('payment_result');
+      bc.onmessage = (e) => {
+        const { status, plan } = e.data || {};
+        if (status === 'success') {
+          setPaymentNotice({ type: 'success', plan });
+          const pollUntilActive = async () => {
+            for (let i = 0; i < 12; i++) {
+              await refreshSub();
+              await new Promise(r => setTimeout(r, 2000));
+            }
+          };
+          pollUntilActive();
+        } else if (status === 'fail') {
+          setPaymentNotice({ type: 'fail', plan });
+        }
+      };
+    } catch (_) { /* не поддерживается */ }
+    return () => { bc?.close(); };
+  }, [refreshSub]);
 
   // Скролл к уведомлению об оплате
   useEffect(() => {
