@@ -64,12 +64,12 @@
     <!-- Clear old caches on deploy -->
     <script>
         (function() {
-            var APP_VERSION = '1.2.1';
+            var APP_VERSION = '1.2.2';
             var VERSION_KEY = 'app_version';
             var currentVersion = localStorage.getItem(VERSION_KEY);
             if (currentVersion !== APP_VERSION) {
                 localStorage.setItem(VERSION_KEY, APP_VERSION);
-                // Тихо очищаем кэши в фоне — без перезагрузки
+                var doReload = !!currentVersion;
                 if ('serviceWorker' in navigator) {
                     navigator.serviceWorker.getRegistrations().then(function(regs) {
                         regs.forEach(function(r) { r.unregister(); });
@@ -78,7 +78,10 @@
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
                         names.forEach(function(n) { caches.delete(n); });
-                    }).catch(function(){});
+                        if (doReload) { window.location.reload(); }
+                    }).catch(function(){ if (doReload) { window.location.reload(); } });
+                } else if (doReload) {
+                    window.location.reload();
                 }
             }
         })();
