@@ -192,9 +192,20 @@ def handler(event: dict, context) -> dict:
         used_trial = cur.fetchone() is not None
 
         if not sub:
+            # Всё равно проверяем mode_subscriptions и бесплатные режимы
+            cur.execute(f"""
+                SELECT mode_id, plan, expires_at FROM {schema}.mode_subscriptions
+                WHERE user_id=%s AND status='active' AND expires_at > NOW()
+            """, (user_id,))
+            mode_rows = cur.fetchall()
+            active_modes = {}
+            for row in mode_rows:
+                active_modes[row[0]] = {"plan": row[1], "expires_at": row[2].isoformat() if row[2] else None}
+            for m in FREE_MODES:
+                active_modes[m] = {"plan": "free", "expires_at": None}
             cur.close(); conn.close()
             return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
-                    "body": json.dumps({"ok": True, "has_subscription": False, "can_trial": True})}
+                    "body": json.dumps({"ok": True, "has_subscription": False, "can_trial": True, "active_modes": active_modes})}
 
         plan, status, expires_at = sub
         if expires_at and expires_at.tzinfo is None:
