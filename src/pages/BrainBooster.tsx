@@ -289,6 +289,7 @@ const AMBIENT_PLAYLISTS: Record<string, string[]> = {
 // Воспроизводит плейлист последовательно, зацикливая на 30 минут.
 function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: string): (() => void) {
   const playlist = AMBIENT_PLAYLISTS[modeId];
+  console.log('[Ambient] start modeId=', modeId, 'playlist=', playlist?.length ?? 'NOT FOUND');
   if (!playlist?.length) return () => {};
 
   const TARGET_VOL = modeId === 'all' ? 0.42 : 0.28;
@@ -302,6 +303,7 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
 
     const url = playlist[trackIndex % playlist.length];
     trackIndex++;
+    console.log('[Ambient] playNext url=', url);
 
     const el = new Audio(url);
     el.preload = 'auto';
@@ -312,21 +314,23 @@ function startAmbientTrack(_ctx: AudioContext, _ambientGain: GainNode, modeId: s
       if (!stopped) playNext();
     }, { once: true });
 
-    el.addEventListener('error', () => {
+    el.addEventListener('error', (e) => {
+      console.error('[Ambient] audio error', url, e);
       if (!stopped) setTimeout(playNext, 500);
     }, { once: true });
 
     const doPlay = () => {
       if (stopped) return;
       el.play().then(() => {
-        // fade-in
+        console.log('[Ambient] playing OK', url);
         let step = 0;
         const fadeIn = setInterval(() => {
           step++;
           el.volume = Math.min(TARGET_VOL, (step / 20) * TARGET_VOL);
           if (step >= 20) clearInterval(fadeIn);
         }, 50);
-      }).catch(() => {
+      }).catch((err) => {
+        console.error('[Ambient] play() rejected', url, err);
         if (!stopped) setTimeout(playNext, 500);
       });
     };
