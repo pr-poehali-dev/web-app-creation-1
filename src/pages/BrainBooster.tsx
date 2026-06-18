@@ -423,16 +423,8 @@ export default function BrainBooster() {
       });
       const data = await res.json();
       if (data.ok && data.payment_url) {
-        const sbpUrl = data.sbp_payload || null;
         setBuyDialog(null);
-        if (isMobile() && sbpUrl) {
-          window.location.href = sbpUrl;
-        } else if (data.qr_payload) {
-          const qrImg = await QRCode.toDataURL(data.qr_payload, { width: 220, margin: 1 });
-          setQrDialog({ paymentUrl: data.payment_url, qrImg, sbpPayload: sbpUrl });
-        } else {
-          window.location.href = data.payment_url;
-        }
+        window.location.href = data.payment_url;
       } else {
         alert(data.error || 'Ошибка создания платежа');
       }
@@ -505,17 +497,7 @@ export default function BrainBooster() {
       });
       const data = await res.json();
       if (data.ok && data.payment_url) {
-        const paymentUrl = data.payment_url;
-        const sbpUrl = data.sbp_payload || null;
-
-        if (isMobile() && sbpUrl) {
-          window.location.href = sbpUrl;
-        } else if (data.qr_payload) {
-          const qrImg = await QRCode.toDataURL(data.qr_payload, { width: 220, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
-          setQrDialog({ paymentUrl, qrImg, sbpPayload: sbpUrl });
-        } else {
-          window.location.href = paymentUrl;
-        }
+        window.location.href = data.payment_url;
       } else if (!data.ok) {
         alert(data.error || 'Ошибка создания платежа');
       }

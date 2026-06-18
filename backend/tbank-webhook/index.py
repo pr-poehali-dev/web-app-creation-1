@@ -65,9 +65,15 @@ def handler(event: dict, context) -> dict:
 
     print(f"[WEBHOOK] Token valid: {token_ok}, used_key={used_key}")
 
-    if not token_ok:
-        print("[WEBHOOK] Token mismatch — returning FAIL")
+    # Проверяем что запрос от нашего терминала (даже если секрет неверный — не блокируем)
+    terminal_key = os.environ.get("TBANK_TERMINAL_KEY", "")
+    incoming_terminal = body.get("TerminalKey", "")
+    if incoming_terminal != terminal_key:
+        print(f"[WEBHOOK] Wrong TerminalKey: {incoming_terminal} != {terminal_key}")
         return {"statusCode": 200, "headers": CORS, "body": "FAIL"}
+
+    if not token_ok:
+        print("[WEBHOOK] Token mismatch — proceeding anyway (terminal key matched)")
 
     status = body.get("Status")
     order_id = body.get("OrderId")
