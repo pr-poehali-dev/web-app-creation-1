@@ -127,8 +127,8 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
           return;
         }
       }
-      // Fallback: без файла — вставляем ссылку прямо в текст (WhatsApp надёжнее так)
-      await navigator.share({ title, text: `${text}\n${shareUrl}` });
+      // Fallback: без файла — передаём и url и text (WhatsApp требует url для диалога)
+      await navigator.share({ title, text, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
