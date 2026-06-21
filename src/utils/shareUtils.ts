@@ -56,7 +56,7 @@ function buildOgProxyUrl(prodUrl: string): string | null {
   const auctionMatch = prodUrl.match(/\/auction\/([0-9a-f-]{36})/);
   if (auctionMatch) return `${ogProxyBase}?type=auction&id=${auctionMatch[1]}&v=${v}`;
 
-  if (prodUrl.includes('/mosquito-repellent')) return 'https://erttp.ru/s/mosquito';
+  if (prodUrl.includes('/mosquito-repellent')) return `${ogProxyBase}?type=page&id=mosquito-repellent&v=8`;
 
   return null;
 }
