@@ -133,6 +133,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
               return true;
             };
 
+            if (ipLocation.timezone) {
+              localStorage.setItem('userTimezone', ipLocation.timezone);
+              window.dispatchEvent(new CustomEvent('timezoneDetected', { detail: { timezone: ipLocation.timezone } }));
+            }
+
             const ipOk = ipLocation.source !== 'default'
               && ipLocation.district
               && ipLocation.district !== 'Все районы'

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { detectLocationByIP, detectLocationByBrowser, getLocationFromStorage } from '@/utils/geolocation';
+import { getLocationFromStorage } from '@/utils/geolocation';
 
 interface TimezoneContextType {
   timezone: string;
@@ -69,88 +69,31 @@ function getTimezoneByDistrict(districtId: string): string {
 }
 
 export function TimezoneProvider({ children }: { children: ReactNode }) {
-  const [timezone, setTimezone] = useState<string>('Asia/Yakutsk'); // По умолчанию Якутск
-  const [isDetecting, setIsDetecting] = useState(false);
+  const [timezone, setTimezone] = useState<string>(() => {
+    // Сначала пробуем сохранённый timezone
+    const saved = localStorage.getItem('userTimezone');
+    if (saved) return saved;
+    // Затем из сохранённой локации
+    const loc = getLocationFromStorage();
+    if (loc?.timezone) return loc.timezone;
+    if (loc?.district) return getTimezoneByDistrict(loc.district);
+    // Иначе — браузерный timezone (мгновенно, без запросов)
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      return 'Asia/Yakutsk';
+    }
+  });
+  const [isDetecting] = useState(false);
 
   useEffect(() => {
-    const detectTimezone = async () => {
-      setIsDetecting(true);
-      
-      try {
-        // Сначала проверяем сохраненную локацию
-        const storedLocation = getLocationFromStorage();
-        
-        if (storedLocation?.district) {
-          const tz = getTimezoneByDistrict(storedLocation.district);
-          setTimezone(tz);
-          localStorage.setItem('userTimezone', tz);
-          setIsDetecting(false);
-          return;
-        }
-
-        // Пробуем определить через браузер
-        try {
-          const browserLocation = await detectLocationByBrowser();
-          if (browserLocation.district && browserLocation.district !== 'Все районы') {
-            const tz = getTimezoneByDistrict(browserLocation.district);
-            setTimezone(tz);
-            localStorage.setItem('userTimezone', tz);
-            setIsDetecting(false);
-            return;
-          }
-        } catch {
-          // geolocation not available
-        }
-
-        // Определяем через IP
-        const ipLocation = await detectLocationByIP();
-        if (ipLocation.district && ipLocation.district !== 'Все районы') {
-          const tz = getTimezoneByDistrict(ipLocation.district);
-          setTimezone(tz);
-          localStorage.setItem('userTimezone', tz);
-          setIsDetecting(false);
-          return;
-        }
-
-        // Если не удалось определить район, используем часовой пояс браузера
-        // Это сработает для пользователей из других регионов (Владивосток, Чита и т.д.)
-        const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        setTimezone(browserTimezone);
-        localStorage.setItem('userTimezone', browserTimezone);
-      } catch (error) {
-        console.error('Timezone detection failed:', error);
-        // В случае ошибки используем часовой пояс браузера
-        try {
-          const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-          setTimezone(browserTimezone);
-          localStorage.setItem('userTimezone', browserTimezone);
-        } catch {
-          // Последний fallback - Якутск
-          setTimezone('Asia/Yakutsk');
-        }
-      } finally {
-        setIsDetecting(false);
-      }
+    // Слушаем событие от DistrictContext когда он определит локацию по IP
+    const handler = (e: Event) => {
+      const tz = (e as CustomEvent<{ timezone: string }>).detail?.timezone;
+      if (tz) setTimezone(tz);
     };
-
-    // Проверяем сохраненный часовой пояс
-    const savedTimezone = localStorage.getItem('userTimezone');
-    if (savedTimezone) {
-      setTimezone(savedTimezone);
-      // Не делаем detectTimezone() если уже есть сохраненный
-    } else {
-      // Сначала используем часовой пояс браузера мгновенно
-      try {
-        const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        setTimezone(browserTimezone);
-        localStorage.setItem('userTimezone', browserTimezone);
-      } catch {
-        setTimezone('Asia/Yakutsk');
-      }
-      
-      // Потом в фоне пробуем определить более точно
-      detectTimezone();
-    }
+    window.addEventListener('timezoneDetected', handler);
+    return () => window.removeEventListener('timezoneDetected', handler);
   }, []);
 
   return (
