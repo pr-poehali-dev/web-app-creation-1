@@ -152,6 +152,20 @@ def build_og_html(og: dict, redirect_url: str) -> str:
 </body>
 </html>"""
 
+STATIC_OG = {
+    f'{SITE_URL}/mosquito-repellent': {
+        'title': 'Отпугиватель комаров — ЕРТТП',
+        'description': 'Бесплатный ультразвуковой отпугиватель комаров и собак прямо в телефоне. Выбери регион: Якутия, Урал, Дальний Восток — и включи защиту.',
+        'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/fecdcb8f-d804-4115-af1d-6de23bcc0d8a.jpg',
+        'url': f'{SITE_URL}/mosquito-repellent',
+    },
+}
+
+def get_static_og(url: str) -> dict:
+    """OG-данные для статичных страниц без БД."""
+    clean = url.split('?')[0].rstrip('/')
+    return STATIC_OG.get(clean, {})
+
 def is_bot(event: dict) -> bool:
     ua = (event.get('headers') or {}).get('User-Agent', '')
     bots = ['TelegramBot', 'WhatsApp', 'facebookexternalhit', 'Twitterbot',
@@ -187,10 +201,14 @@ def handler(event: dict, context) -> dict:
 
         # Боты мессенджеров — отдаём HTML с OG-тегами
         if is_bot(event):
-            og = {}
-            offer_id = extract_offer_id(original_url)
-            if offer_id:
-                og = get_offer_og(offer_id, conn)
+            og = get_static_og(original_url)
+            if not og:
+                offer_id = extract_offer_id(original_url)
+                request_id = extract_request_id(original_url)
+                if offer_id:
+                    og = get_offer_og(offer_id, conn)
+                elif request_id:
+                    og = {}  # можно расширить при необходимости
             cur.close()
             conn.close()
             if not og:

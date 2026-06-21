@@ -56,9 +56,25 @@ function buildOgProxyUrl(prodUrl: string): string | null {
   const auctionMatch = prodUrl.match(/\/auction\/([0-9a-f-]{36})/);
   if (auctionMatch) return `${ogProxyBase}?type=auction&id=${auctionMatch[1]}&v=${v}`;
 
-  if (prodUrl.includes('/mosquito-repellent')) return `${ogProxyBase}?type=page&id=mosquito-repellent&v=${v}`;
-
   return null;
+}
+
+/** Создаёт короткую ссылку через short-url бэкенд. Возвращает erttp.ru/s/XXXXX */
+async function createShortUrl(prodUrl: string): Promise<string | null> {
+  try {
+    const shortUrlBase = (func2url as Record<string, string>)['short-url'];
+    if (!shortUrlBase) return null;
+    const resp = await fetch(shortUrlBase, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: prodUrl }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    return data.short_url ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -91,7 +107,14 @@ async function fetchImageAsFile(imageUrl: string, title: string): Promise<File |
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
   const prodUrl = toProdUrl(url);
   const ogUrl = buildOgProxyUrl(prodUrl);
-  const shareUrl = ogUrl ?? prodUrl;
+
+  // Для статичных страниц (нет UUID → нет og-proxy) создаём короткую ссылку
+  // Короткая ссылка: erttp.ru/s/XXXXX — short-url бэкенд сам отдаёт OG-превью ботам
+  let shareUrl = ogUrl ?? prodUrl;
+  if (!ogUrl) {
+    const short = await createShortUrl(prodUrl);
+    if (short) shareUrl = short;
+  }
 
   if (navigator.share) {
     try {
