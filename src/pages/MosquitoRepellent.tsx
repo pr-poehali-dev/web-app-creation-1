@@ -273,8 +273,8 @@ export default function MosquitoRepellent() {
           <button
             onClick={() => shareContent({
               title: 'Отпугиватель комаров — ЕРТТП',
-              text: '🦟 Бесплатный отпугиватель комаров прямо в телефоне — выбери свой регион и включи защиту!',
-              url: window.location.href,
+              text: '',
+              url: 'https://erttp.ru/s/mosquito',
             })}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             title="Поделиться ссылкой"
