@@ -14,6 +14,31 @@ from datetime import datetime, date
 from decimal import Decimal
 import psycopg2
 from psycopg2.extras import RealDictCursor
+import urllib.request
+
+PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+
+
+def send_banner_push(title: str, message: str):
+    """Отправляет пуш всем подписчикам при создании/обновлении баннера"""
+    try:
+        payload = json.dumps({
+            'district': 'all',
+            'type': 'banner_update',
+            'title': title,
+            'message': message,
+            'url': '/',
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            PUSH_SEND_URL,
+            data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST',
+        )
+        urllib.request.urlopen(req, timeout=10)
+        print(f'[PUSH] Banner push sent: {title}')
+    except Exception as e:
+        print(f'[PUSH] Failed to send banner push: {e}')
 
 
 def decimal_to_float(obj):
@@ -282,7 +307,10 @@ def create_or_update_content(event: Dict[str, Any], headers: Dict[str, str]) -> 
         
         result = cur.fetchone()
         conn.commit()
-        
+
+        if is_active:
+            send_banner_push(title, message)
+
         message_text = 'Banner created successfully'
         result_id = result['id']
     else:
@@ -387,7 +415,14 @@ def update_banner(banner_id: str, event: Dict[str, Any], headers: Dict[str, str]
             'body': json.dumps({'error': 'Banner not found'}),
             'isBase64Encoded': False
         }
-    
+
+    # Отправляем пуш если баннер активен после обновления
+    new_active = body.get('isActive', body.get('is_active'))
+    if new_active is True:
+        push_title = body.get('title', 'Новое объявление')
+        push_message = body.get('message', 'Обновление на сайте ЕРТТП')
+        send_banner_push(push_title, push_message)
+
     return {
         'statusCode': 200,
         'headers': headers,
