@@ -35,6 +35,7 @@ export interface BannerFormState {
   showOnPages: string[];
   showRegions: string[];
   showDistricts: string[];
+  sendPush: boolean;
 }
 
 export const CONTENT_LABELS: Record<string, { label: string; hint: string }> = {
@@ -69,6 +70,7 @@ export const EMPTY_BANNER: BannerFormState = {
   showOnPages: ['home'],
   showRegions: [],
   showDistricts: [],
+  sendPush: true,
 };
 
 export const PAGE_OPTIONS = [

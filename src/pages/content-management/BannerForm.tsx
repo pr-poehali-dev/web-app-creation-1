@@ -255,6 +255,24 @@ export default function BannerForm({
           </Label>
         </div>
 
+        <div className="flex items-start gap-3 rounded-lg border border-dashed p-3 bg-muted/30">
+          <button type="button"
+            onClick={() => onChange({ ...bannerForm, sendPush: !bannerForm.sendPush })}
+            className={`relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+              bannerForm.sendPush ? 'bg-primary' : 'bg-muted-foreground/30'
+            }`}>
+            <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform shadow ${
+              bannerForm.sendPush ? 'translate-x-6' : 'translate-x-1'
+            }`} />
+          </button>
+          <div className="cursor-pointer" onClick={() => onChange({ ...bannerForm, sendPush: !bannerForm.sendPush })}>
+            <Label className="cursor-pointer font-medium">Отправить пуш-уведомление</Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Все подписанные пользователи получат уведомление с заголовком и текстом баннера
+            </p>
+          </div>
+        </div>
+
         <div className="flex gap-2 pt-2">
           <Button onClick={onSave} disabled={saving}>
             {saving ? 'Сохранение...' : editingBanner ? 'Сохранить изменения' : 'Создать баннер'}

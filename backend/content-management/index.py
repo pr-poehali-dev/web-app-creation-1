@@ -308,7 +308,8 @@ def create_or_update_content(event: Dict[str, Any], headers: Dict[str, str]) -> 
         result = cur.fetchone()
         conn.commit()
 
-        if is_active:
+        send_push = body.get('sendPush', False)
+        if send_push and is_active:
             send_banner_push(title, message)
 
         message_text = 'Banner created successfully'
@@ -416,9 +417,8 @@ def update_banner(banner_id: str, event: Dict[str, Any], headers: Dict[str, str]
             'isBase64Encoded': False
         }
 
-    # Отправляем пуш если баннер активен после обновления
-    new_active = body.get('isActive', body.get('is_active'))
-    if new_active is True:
+    # Отправляем пуш только если явно запрошено
+    if body.get('send_push'):
         push_title = body.get('title', 'Новое объявление')
         push_message = body.get('message', 'Обновление на сайте ЕРТТП')
         send_banner_push(push_title, push_message)

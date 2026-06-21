@@ -130,6 +130,7 @@ export default function AdminContentManagement() {
       showOnPages: banner.show_on_pages || ['home'],
       showRegions: banner.show_regions || [],
       showDistricts: banner.show_districts || [],
+      sendPush: false,
     });
     setShowBannerForm(true);
   };
@@ -154,8 +155,9 @@ export default function AdminContentManagement() {
           show_on_pages: bannerForm.showOnPages,
           show_regions: bannerForm.showRegions.length > 0 ? bannerForm.showRegions : null,
           show_districts: bannerForm.showDistricts.length > 0 ? bannerForm.showDistricts : null,
+          send_push: bannerForm.sendPush,
         });
-        showSuccess('Баннер обновлён');
+        showSuccess(bannerForm.sendPush ? 'Баннер обновлён и пуш отправлен' : 'Баннер обновлён');
       } else {
         await contentAPI.createBannerAdmin({
           title: bannerForm.title,
@@ -170,8 +172,9 @@ export default function AdminContentManagement() {
           showOnPages: bannerForm.showOnPages,
           showRegions: bannerForm.showRegions.length > 0 ? bannerForm.showRegions : null,
           showDistricts: bannerForm.showDistricts.length > 0 ? bannerForm.showDistricts : null,
+          sendPush: bannerForm.sendPush,
         });
-        showSuccess('Баннер создан и опубликован');
+        showSuccess(bannerForm.sendPush ? 'Баннер создан и пуш отправлен' : 'Баннер создан');
       }
       setShowBannerForm(false);
       setEditingBanner(null);
