@@ -591,14 +591,6 @@ export default function MosquitoRepellent() {
           <p>Высокие частоты могут быть слышны детям и домашним животным.</p>
         </div>
 
-        <button
-          onClick={() => navigate('/')}
-          className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        >
-          <Icon name="House" size={16} />
-          На главную
-        </button>
-
       </div>
     </div>
   );
