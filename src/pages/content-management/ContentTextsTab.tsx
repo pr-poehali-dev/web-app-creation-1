@@ -1,7 +1,9 @@
+import { lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
-import RichTextEditor from '@/components/ui/RichTextEditor';
+
+const RichTextEditor = lazy(() => import('@/components/ui/RichTextEditor'));
 import { type ContentItem, getContentLabel } from './types';
 
 const BOOLEAN_KEYS = new Set(['footer.notice.visible']);
@@ -82,10 +84,12 @@ export default function ContentTextsTab({
 
           {isEditing ? (
             <div className="space-y-3">
-              <RichTextEditor
-                value={editValue}
-                onChange={onChangeValue}
-              />
+              <Suspense fallback={<div className="h-40 bg-muted rounded-lg animate-pulse" />}>
+                <RichTextEditor
+                  value={editValue}
+                  onChange={onChangeValue}
+                />
+              </Suspense>
               <div className="flex gap-2">
                 <Button size="sm" onClick={() => onSave(item.key)} disabled={saving}>
                   {saving ? 'Сохранение...' : 'Сохранить'}
