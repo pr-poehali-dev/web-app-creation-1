@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
+import { shareContent } from '@/utils/shareUtils';
 
 type Mode = 'mosquito' | 'dog';
 type SignalMode = 'pulse' | 'siberia' | 'ural' | 'yakut' | 'fareast' | 'south';
@@ -269,16 +270,11 @@ export default function MosquitoRepellent() {
             <p className="text-xs text-muted-foreground">Выбери режим защиты</p>
           </div>
           <button
-            onClick={() => {
-              const shareUrl = window.location.origin + '/mosquito-repellent';
-              const shareText = 'Бесплатный отпугиватель комаров прямо в телефоне — выбери свой регион и включи защиту!';
-              if (navigator.share) {
-                navigator.share({ title: 'Отпугиватель комаров — ЕРТТП', text: shareText, url: shareUrl });
-              } else {
-                navigator.clipboard.writeText(shareUrl);
-                alert('Ссылка скопирована!');
-              }
-            }}
+            onClick={() => shareContent({
+              title: 'Отпугиватель комаров — ЕРТТП',
+              text: '🦟 Бесплатный отпугиватель комаров прямо в телефоне — выбери свой регион и включи защиту!',
+              url: window.location.origin + '/mosquito-repellent',
+            })}
             className="p-2 hover:bg-muted rounded-lg transition-colors"
             title="Поделиться ссылкой"
           >
