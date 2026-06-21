@@ -56,7 +56,7 @@ function buildOgProxyUrl(prodUrl: string): string | null {
   const auctionMatch = prodUrl.match(/\/auction\/([0-9a-f-]{36})/);
   if (auctionMatch) return `${ogProxyBase}?type=auction&id=${auctionMatch[1]}&v=${v}`;
 
-  if (prodUrl.includes('/mosquito-repellent')) return `${ogProxyBase}?type=page&id=mosquito-repellent&v=8`;
+  if (prodUrl.includes('/mosquito-repellent')) return 'https://erttp.ru/s/mosquito';
 
   return null;
 }
@@ -122,8 +122,8 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
           return;
         }
       }
-      // Fallback: без файла — передаём og-proxy URL (бот мессенджера загрузит og:image)
-      await navigator.share({ title, text, url: shareUrl });
+      // Fallback: без файла — только url (text убран чтобы не дублировать описание из og:description)
+      await navigator.share({ title, url: shareUrl });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
