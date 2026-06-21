@@ -262,8 +262,9 @@ export default function MosquitoRepellent() {
 
         {/* Шапка */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => navigate('/')} className="p-2 hover:bg-muted rounded-lg transition-colors">
-            <Icon name="ArrowLeft" size={22} />
+          <button onClick={() => navigate('/')} className="flex items-center gap-1.5 px-3 py-2 hover:bg-muted rounded-lg transition-colors text-sm font-medium text-muted-foreground hover:text-foreground">
+            <Icon name="ArrowLeft" size={16} />
+            На главную
           </button>
           <div className="flex-1">
             <h1 className="text-xl font-bold">Отпугиватель комаров</h1>
@@ -590,14 +591,6 @@ export default function MosquitoRepellent() {
           <p>Эффективность ультразвука научно не доказана на 100%. Не полагайся на эту функцию как на единственное средство защиты.</p>
           <p>Высокие частоты могут быть слышны детям и домашним животным.</p>
         </div>
-
-        <button
-          onClick={() => navigate('/')}
-          className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        >
-          <Icon name="House" size={16} />
-          На главную
-        </button>
 
       </div>
     </div>

@@ -107,14 +107,7 @@ async function fetchImageAsFile(imageUrl: string, title: string): Promise<File |
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
   const prodUrl = toProdUrl(url);
   const ogUrl = buildOgProxyUrl(prodUrl);
-
-  // Для статичных страниц (нет UUID → нет og-proxy) создаём короткую ссылку
-  // Короткая ссылка: erttp.ru/s/XXXXX — short-url бэкенд сам отдаёт OG-превью ботам
-  let shareUrl = ogUrl ?? prodUrl;
-  if (!ogUrl) {
-    const short = await createShortUrl(prodUrl);
-    if (short) shareUrl = short;
-  }
+  const shareUrl = ogUrl ?? prodUrl;
 
   if (navigator.share) {
     try {
