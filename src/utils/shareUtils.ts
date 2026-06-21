@@ -127,8 +127,8 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
           return;
         }
       }
-      // Fallback: без файла — передаём og-proxy URL (бот мессенджера загрузит og:image)
-      await navigator.share({ title, text, url: shareUrl });
+      // Fallback: без файла — вставляем ссылку прямо в текст (WhatsApp надёжнее так)
+      await navigator.share({ title, text: `${text}\n${shareUrl}` });
       toast.success('Ссылка отправлена!');
       return;
     } catch (e) {
