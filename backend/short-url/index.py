@@ -152,19 +152,28 @@ def build_og_html(og: dict, redirect_url: str) -> str:
 </body>
 </html>"""
 
+_MOSQUITO_OG = {
+    'title': 'Отпугиватель комаров — ЕРТТП',
+    'description': 'Бесплатный ультразвуковой отпугиватель комаров и собак прямо в телефоне. Выбери регион: Якутия, Урал, Дальний Восток — и включи защиту.',
+    'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/fecdcb8f-d804-4115-af1d-6de23bcc0d8a.jpg',
+    'url': f'{SITE_URL}/mosquito-repellent',
+}
+
 STATIC_OG = {
-    f'{SITE_URL}/mosquito-repellent': {
-        'title': 'Отпугиватель комаров — ЕРТТП',
-        'description': 'Бесплатный ультразвуковой отпугиватель комаров и собак прямо в телефоне. Выбери регион: Якутия, Урал, Дальний Восток — и включи защиту.',
-        'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/fecdcb8f-d804-4115-af1d-6de23bcc0d8a.jpg',
-        'url': f'{SITE_URL}/mosquito-repellent',
-    },
+    f'{SITE_URL}/mosquito-repellent': _MOSQUITO_OG,
+    'https://functions.poehali.dev/2a7d2949-7159-4c2e-aeda-5cd18c67e0e7': _MOSQUITO_OG,
 }
 
 def get_static_og(url: str) -> dict:
     """OG-данные для статичных страниц без БД."""
     clean = url.split('?')[0].rstrip('/')
-    return STATIC_OG.get(clean, {})
+    if clean in STATIC_OG:
+        return STATIC_OG[clean]
+    # Проверяем по началу URL (для og-proxy с параметрами)
+    for key, val in STATIC_OG.items():
+        if clean.startswith(key):
+            return val
+    return {}
 
 def is_bot(event: dict) -> bool:
     ua = (event.get('headers') or {}).get('User-Agent', '')
