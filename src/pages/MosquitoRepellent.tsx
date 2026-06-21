@@ -270,11 +270,12 @@ export default function MosquitoRepellent() {
           </div>
           <button
             onClick={() => {
-              const url = window.location.origin + '/mosquito-repellent';
+              const shareUrl = window.location.origin + '/mosquito-repellent';
+              const shareText = 'Бесплатный отпугиватель комаров прямо в телефоне — выбери свой регион и включи защиту!';
               if (navigator.share) {
-                navigator.share({ title: 'Отпугиватель комаров', url });
+                navigator.share({ title: 'Отпугиватель комаров — ЕРТТП', text: shareText, url: shareUrl });
               } else {
-                navigator.clipboard.writeText(url);
+                navigator.clipboard.writeText(shareUrl);
                 alert('Ссылка скопирована!');
               }
             }}

@@ -67,6 +67,21 @@ def handler(event: dict, context) -> dict:
     item_type = params.get('type', '')
     item_id = params.get('id', '').replace("'", "")
 
+    # Статичные страницы сайта
+    STATIC_PAGES = {
+        'mosquito-repellent': {
+            'title': 'Отпугиватель комаров — ЕРТТП',
+            'desc': 'Бесплатный ультразвуковой отпугиватель комаров и собак прямо в телефоне. Выбери регион Якутия, Урал, Дальний Восток и включи защиту.',
+            'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/fecdcb8f-d804-4115-af1d-6de23bcc0d8a.jpg',
+            'path': '/mosquito-repellent',
+        },
+    }
+
+    if item_type == 'page' and item_id in STATIC_PAGES:
+        p = STATIC_PAGES[item_id]
+        page_url = f"{frontend_url}{p['path']}"
+        return html_response(p['title'], p['desc'], p['image'], page_url, page_url)
+
     if not item_id or item_type not in ('offer', 'request', 'auction'):
         return {
             'statusCode': 302,
