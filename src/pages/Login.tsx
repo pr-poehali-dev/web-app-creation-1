@@ -381,12 +381,12 @@ export default function Login({ onLogin }: LoginProps) {
               )}
             </Button>
 
-            <div className="text-center text-base">
-              <span className="text-muted-foreground">Нет аккаунта? </span>
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <span className="text-sm text-muted-foreground">Нет аккаунта?</span>
               <Button
                 type="button"
-                variant="link"
-                className="px-1 text-base"
+                variant="outline"
+                className="w-full border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-white transition-colors"
                 onClick={() => navigate('/register')}
               >
                 Зарегистрироваться

@@ -31,6 +31,8 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [supportUnread, setSupportUnread] = useState<number | null>(null);
+
   const [stats, setStats] = useState<StatsData>({
     totalUsers: 0,
     verifiedUsers: 0,
@@ -58,7 +60,23 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
     }
 
     loadStats();
+    loadSupportUnread();
   }, [navigate, toast]);
+
+  const loadSupportUnread = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      const res = await fetch('https://functions.poehali.dev/290e9899-6b8d-4974-bcea-12fafbb54fe5?action=admin_tickets', {
+        headers: { 'X-Admin-Id': userId || '' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const tickets = data.tickets || [];
+        const total = tickets.reduce((sum: number, t: { unread_user?: number }) => sum + Number(t.unread_user || 0), 0);
+        setSupportUnread(total > 0 ? total : null);
+      }
+    } catch (e) { /* ignore */ }
+  };
 
   const loadStats = async () => {
     try {
@@ -210,7 +228,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       description: 'Чат с пользователями — вопросы и обращения',
       icon: 'MessageSquare',
       color: 'bg-sky-500',
-      count: null,
+      count: supportUnread,
       path: '/admin/support',
       priority: 'high'
     },
