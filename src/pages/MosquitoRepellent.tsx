@@ -204,7 +204,16 @@ export default function MosquitoRepellent() {
     gainRef.current.gain.setTargetAtTime(activeVolume, t, 0.05);
   }, [activeVolume, isActive]);
 
-  const toggle = () => { if (isActive) stop(); else start(); };
+  const toggle = () => {
+    if (isActive) { stop(); return; }
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      localStorage.setItem('returnUrl', '/mosquito-repellent');
+      navigate('/register');
+      return;
+    }
+    start();
+  };
 
   const switchMode = (m: Mode) => { if (isActive) stop(); setMode(m); };
   const switchSignal = (s: SignalMode) => { if (isActive) stop(); setSignalMode(s); };
