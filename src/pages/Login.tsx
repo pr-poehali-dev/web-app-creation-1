@@ -78,7 +78,7 @@ export default function Login({ onLogin }: LoginProps) {
     });
 
     try {
-      const result = await authenticateUser(login, password);
+      const result = await authenticateUser(login, password, rememberMe);
       
       if (result.success && result.user) {
         if (rememberMe) {

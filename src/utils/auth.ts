@@ -63,7 +63,7 @@ const SESSION_STORAGE_KEY = 'currentUser';
 const JWT_TOKEN_KEY = 'jwt_token';
 const AUTH_API = func2url.auth;
 
-const convertUserFromBackend = (backendUser: any): User => {
+const convertUserFromBackend = (backendUser: Record<string, unknown>): User => {
   const user = {
     id: backendUser.id,
     email: backendUser.email,
@@ -166,7 +166,8 @@ export const registerUser = async (userData: {
 
 export const authenticateUser = async (
   login: string,
-  password: string
+  password: string,
+  rememberMe = false
 ): Promise<AuthResponse> => {
   try {
     const response = await fetchWithRetry(AUTH_API, {
@@ -193,7 +194,7 @@ export const authenticateUser = async (
 
     const user = convertUserFromBackend(data.user);
     const token = data.token;
-    saveSession(user, token);
+    saveSession(user, token, rememberMe);
 
     return {
       success: true,
@@ -209,15 +210,27 @@ export const authenticateUser = async (
   }
 };
 
-export const saveSession = (user: User, token?: string): void => {
+export const saveSession = (user: User, token?: string, persistent = true): void => {
   try {
-    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
+    const storage = persistent ? localStorage : sessionStorage;
+    // При временной сессии — очищаем старые данные из localStorage
+    if (!persistent) {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      localStorage.removeItem(JWT_TOKEN_KEY);
+      // userId пишем в оба хранилища — чтобы не ломать прямые обращения к localStorage.getItem('userId')
+      if (user.id) {
+        localStorage.setItem('userId', user.id.toString());
+      }
+    }
+    storage.setItem(SESSION_STORAGE_KEY, JSON.stringify(user));
     if (user.id) {
-      localStorage.setItem('userId', user.id.toString());
+      storage.setItem('userId', user.id.toString());
     }
     if (token) {
-      localStorage.setItem(JWT_TOKEN_KEY, token);
+      storage.setItem(JWT_TOKEN_KEY, token);
     }
+    // Флаг для определения где лежит сессия
+    localStorage.setItem('sessionPersistent', persistent ? '1' : '0');
     window.dispatchEvent(new Event('userSessionChanged'));
   } catch (error) {
     console.error('Error saving session:', error);
@@ -226,7 +239,7 @@ export const saveSession = (user: User, token?: string): void => {
 
 export const getJwtToken = (): string | null => {
   try {
-    return localStorage.getItem(JWT_TOKEN_KEY);
+    return localStorage.getItem(JWT_TOKEN_KEY) || sessionStorage.getItem(JWT_TOKEN_KEY);
   } catch (error) {
     console.error('Error getting JWT token:', error);
     return null;
@@ -235,7 +248,7 @@ export const getJwtToken = (): string | null => {
 
 export const getSession = (): User | null => {
   try {
-    const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+    const stored = localStorage.getItem(SESSION_STORAGE_KEY) || sessionStorage.getItem(SESSION_STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
   } catch (error) {
     console.error('Error reading session:', error);
@@ -250,6 +263,10 @@ export const clearSession = (): void => {
     localStorage.removeItem('userId');
     localStorage.removeItem('isRootAdmin');
     localStorage.removeItem(JWT_TOKEN_KEY);
+    localStorage.removeItem('sessionPersistent');
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    sessionStorage.removeItem('userId');
+    sessionStorage.removeItem(JWT_TOKEN_KEY);
   } catch (error) {
     console.error('Error clearing session:', error);
   }
