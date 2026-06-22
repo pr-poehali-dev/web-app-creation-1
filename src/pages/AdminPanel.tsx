@@ -72,7 +72,10 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       if (res.ok) {
         const data = await res.json();
         const tickets = data.tickets || [];
-        const total = tickets.reduce((sum: number, t: { unread_user?: number }) => sum + Number(t.unread_user || 0), 0);
+        const total = tickets.reduce((sum: number, t: { unread_user?: number; status?: string }) => {
+          if (t.status === 'closed') return sum;
+          return sum + Number(t.unread_user || 0);
+        }, 0);
         setSupportUnread(total > 0 ? total : null);
       }
     } catch (e) { /* ignore */ }

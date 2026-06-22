@@ -130,11 +130,13 @@ def handler(event: dict, context) -> dict:
                     (SELECT COUNT(*) FROM {SCHEMA}.support_messages m WHERE m.ticket_id = t.id) AS msg_count,
                     (SELECT m.message FROM {SCHEMA}.support_messages m
                      WHERE m.ticket_id = t.id ORDER BY m.created_at DESC LIMIT 1) AS last_message,
-                    (SELECT COUNT(*) FROM {SCHEMA}.support_messages m
-                     WHERE m.ticket_id = t.id AND m.is_admin = FALSE
-                       AND m.created_at > COALESCE(
-                           (SELECT MAX(m2.created_at) FROM {SCHEMA}.support_messages m2
-                            WHERE m2.ticket_id = t.id AND m2.is_admin = TRUE), t.created_at)) AS unread_user
+                    (CASE WHEN t.status = 'closed' THEN 0
+                     ELSE (SELECT COUNT(*) FROM {SCHEMA}.support_messages m
+                           WHERE m.ticket_id = t.id AND m.is_admin = FALSE
+                             AND m.created_at > COALESCE(
+                                 (SELECT MAX(m2.created_at) FROM {SCHEMA}.support_messages m2
+                                  WHERE m2.ticket_id = t.id AND m2.is_admin = TRUE), t.created_at))
+                     END) AS unread_user
                 FROM {SCHEMA}.support_tickets t
                 LEFT JOIN {SCHEMA}.users u ON u.id = t.user_id
                 {where}
