@@ -75,6 +75,12 @@ def handler(event: dict, context) -> dict:
             'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/fecdcb8f-d804-4115-af1d-6de23bcc0d8a.jpg',
             'path': '/mosquito-repellent',
         },
+        'brain-booster': {
+            'title': 'Нейро-звук для стимуляции мозга — ЕРТТП',
+            'desc': 'Бинауральные ритмы для фокуса, снятия стресса и бодрости. Выбери режим — Фокус, Энергия, Расслабление — и включи нейростимуляцию прямо в браузере.',
+            'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/og-image-1771653741881.png',
+            'path': '/brain-booster',
+        },
     }
 
     if item_type == 'page' and item_id in STATIC_PAGES:
