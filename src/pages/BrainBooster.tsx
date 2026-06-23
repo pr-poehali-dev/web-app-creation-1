@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { getJwtToken, getSession } from '@/utils/auth';
-import { shareContent } from '@/utils/shareUtils';
 
 const TBANK_PAYMENT_URL = 'https://functions.poehali.dev/f2a339e0-68a2-42ba-b5eb-55be5d543b5e';
 
@@ -843,11 +842,15 @@ export default function BrainBooster() {
   useEffect(() => () => stop(), [stop]);
 
   const handleShare = useCallback(async () => {
-    await shareContent({
-      title: 'Нейро-звук для стимуляции мозга — ЕРТТП',
-      text: 'Нейро-звук для мозга — бинауральные ритмы для фокуса, снятия стресса и бодрости. Попробуй бесплатно!',
-      url: window.location.href,
-    });
+    const url = 'https://erttp.ru/brain-booster';
+    const text = 'Нейро-звук для мозга — бинауральные ритмы для фокуса, снятия стресса и бодрости';
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Нейро-звук для стимуляции мозга — ЕРТТП', text, url });
+      } catch { /* пользователь отменил */ }
+    } else {
+      await navigator.clipboard.writeText(url);
+    }
     setShareSuccess(true);
     setTimeout(() => setShareSuccess(false), 2500);
   }, []);
