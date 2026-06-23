@@ -842,14 +842,14 @@ export default function BrainBooster() {
   useEffect(() => () => stop(), [stop]);
 
   const handleShare = useCallback(async () => {
-    const url = 'https://erttp.ru/brain-booster';
+    const shortUrl = 'https://erttp.ru/s/56tDiZb';
     const text = 'Нейро-звук для мозга — бинауральные ритмы для фокуса, снятия стресса и бодрости';
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Нейро-звук для стимуляции мозга — ЕРТТП', text, url });
+        await navigator.share({ title: 'Нейро-звук для стимуляции мозга — ЕРТТП', text, url: shortUrl });
       } catch { /* пользователь отменил */ }
     } else {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shortUrl);
     }
     setShareSuccess(true);
     setTimeout(() => setShareSuccess(false), 2500);
