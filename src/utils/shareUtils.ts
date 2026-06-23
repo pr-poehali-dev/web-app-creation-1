@@ -110,7 +110,9 @@ async function fetchImageAsFile(imageUrl: string, title: string): Promise<File |
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
   const prodUrl = toProdUrl(url);
   const ogUrl = buildOgProxyUrl(prodUrl);
-  const shareUrl = ogUrl ?? prodUrl;
+  // Сокращаем og-proxy URL (длинный) → erttp.ru/s/XXXXX, либо оставляем prodUrl
+  const shortUrl = ogUrl ? await createShortUrl(ogUrl) : null;
+  const shareUrl = shortUrl ?? ogUrl ?? prodUrl;
 
   if (navigator.share) {
     try {
