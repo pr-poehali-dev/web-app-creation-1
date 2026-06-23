@@ -159,9 +159,17 @@ _MOSQUITO_OG = {
     'url': f'{SITE_URL}/mosquito-repellent',
 }
 
+_BRAIN_BOOSTER_OG = {
+    'title': 'Нейро-звук для стимуляции мозга — ЕРТТП',
+    'description': 'Бинауральные ритмы для фокуса, снятия стресса и бодрости. Выбери режим — Фокус, Энергия, Расслабление — и включи нейростимуляцию прямо в браузере.',
+    'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/og-image-1771653741881.png',
+    'url': f'{SITE_URL}/brain-booster',
+}
+
 STATIC_OG = {
     f'{SITE_URL}/mosquito-repellent': _MOSQUITO_OG,
     'https://functions.poehali.dev/2a7d2949-7159-4c2e-aeda-5cd18c67e0e7': _MOSQUITO_OG,
+    f'{SITE_URL}/brain-booster': _BRAIN_BOOSTER_OG,
 }
 
 def get_static_og(url: str) -> dict:
