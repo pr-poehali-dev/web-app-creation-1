@@ -110,8 +110,12 @@ async function fetchImageAsFile(imageUrl: string, title: string): Promise<File |
 export async function shareContent({ title, text, url, imageUrl }: ShareOptions): Promise<void> {
   const prodUrl = toProdUrl(url);
   const ogUrl = buildOgProxyUrl(prodUrl);
-  // Сокращаем prodUrl → erttp.ru/s/XXXXX (short-url сам строит OG-превью из prodUrl)
-  const shortUrl = await createShortUrl(prodUrl);
+  // Для динамических страниц (offer/request/auction) сокращаем ogUrl — short-url умеет их читать из БД
+  // Для статических страниц (brain-booster, mosquito) — prodUrl, short-url знает их из STATIC_OG
+  const urlToShorten = ogUrl && (prodUrl.includes('/offer/') || prodUrl.includes('/request/') || prodUrl.includes('/auction/'))
+    ? ogUrl
+    : prodUrl;
+  const shortUrl = await createShortUrl(urlToShorten);
   const shareUrl = shortUrl ?? ogUrl ?? prodUrl;
 
   if (navigator.share) {
