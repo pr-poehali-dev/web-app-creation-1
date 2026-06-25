@@ -96,7 +96,7 @@ export default function RegisterContactFields({
             name="confirm-password"
             type={showConfirmPassword ? 'text' : 'password'}
             value={formData.confirmPassword}
-            autoComplete="new-password"
+            autoComplete="off"
             onChange={(e) => onInputChange('confirmPassword', e.target.value)}
             className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
             disabled={isSubmitting}
@@ -111,6 +111,12 @@ export default function RegisterContactFields({
           </button>
         </div>
         {errors.confirmPassword && <p className="text-sm text-destructive">{errors.confirmPassword}</p>}
+        {!errors.confirmPassword && formData.confirmPassword && formData.password === formData.confirmPassword && (
+          <p className="text-xs text-green-600">Пароли совпадают</p>
+        )}
+        {!errors.confirmPassword && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+          <p className="text-xs text-destructive">Пароли не совпадают</p>
+        )}
       </div>
     </>
   );
