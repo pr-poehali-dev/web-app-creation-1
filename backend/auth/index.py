@@ -304,6 +304,50 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                                 'isBase64Encoded': False
                             }
                     
+                    # Проверка ИНН↔ФИО через DaData для самозанятых и ИП
+                    if user_type in ('self-employed', 'entrepreneur') and inn:
+                        import requests as http_requests
+                        dadata_key = os.environ.get('DADATA_API_KEY')
+                        if dadata_key:
+                            try:
+                                dadata_resp = http_requests.post(
+                                    'https://suggestions.dadata.ru/suggestions/api/4_1/rs/findById/party',
+                                    headers={'Authorization': f'Token {dadata_key}', 'Content-Type': 'application/json'},
+                                    json={'query': inn},
+                                    timeout=10
+                                )
+                                if dadata_resp.status_code == 200:
+                                    suggestions = dadata_resp.json().get('suggestions', [])
+                                    if not suggestions:
+                                        return {
+                                            'statusCode': 400,
+                                            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                            'body': json.dumps({'error': 'ИНН не найден в базе ФНС. Проверьте правильность ввода.'}),
+                                            'isBase64Encoded': False
+                                        }
+                                    fio_data = suggestions[0].get('data', {}).get('fio', {})
+                                    if isinstance(fio_data, dict) and fio_data:
+                                        fns_surname = fio_data.get('surname', '').strip().lower()
+                                        fns_name = fio_data.get('name', '').strip().lower()
+                                        fns_patronymic = fio_data.get('patronymic', '').strip().lower()
+                                        user_surname = last_name.strip().lower()
+                                        user_name = first_name.strip().lower()
+                                        user_patronymic = middle_name.strip().lower() if middle_name else ''
+                                        name_match = (
+                                            fns_surname == user_surname and
+                                            fns_name == user_name and
+                                            (not fns_patronymic or not user_patronymic or fns_patronymic == user_patronymic)
+                                        )
+                                        if not name_match:
+                                            return {
+                                                'statusCode': 400,
+                                                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                                                'body': json.dumps({'error': 'ИНН не соответствует указанному ФИО. Регистрация по чужому ИНН запрещена.'}),
+                                                'isBase64Encoded': False
+                                            }
+                            except Exception as e:
+                                print(f"DaData INN check error during registration: {e}")
+                    
                     password_hash = hash_password(password)
                     role = body_data.get('role', 'user')
                     
