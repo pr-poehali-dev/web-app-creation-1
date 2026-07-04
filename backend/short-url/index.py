@@ -152,13 +152,6 @@ def build_og_html(og: dict, redirect_url: str) -> str:
 </body>
 </html>"""
 
-_MOSQUITO_OG = {
-    'title': 'Отпугиватель комаров — ЕРТТП',
-    'description': 'Бесплатный ультразвуковой отпугиватель комаров и собак прямо в телефоне. Выбери регион: Якутия, Урал, Дальний Восток — и включи защиту.',
-    'image': 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/fecdcb8f-d804-4115-af1d-6de23bcc0d8a.jpg',
-    'url': f'{SITE_URL}/mosquito-repellent',
-}
-
 _BRAIN_BOOSTER_OG = {
     'title': 'Нейро-звук для стимуляции мозга — ЕРТТП',
     'description': 'Бинауральные ритмы для фокуса, снятия стресса и бодрости. Выбери режим — Фокус, Энергия, Расслабление — и включи нейростимуляцию прямо в браузере.',
@@ -167,8 +160,6 @@ _BRAIN_BOOSTER_OG = {
 }
 
 STATIC_OG = {
-    f'{SITE_URL}/mosquito-repellent': _MOSQUITO_OG,
-    'https://functions.poehali.dev/2a7d2949-7159-4c2e-aeda-5cd18c67e0e7': _MOSQUITO_OG,
     f'{SITE_URL}/brain-booster': _BRAIN_BOOSTER_OG,
 }
 

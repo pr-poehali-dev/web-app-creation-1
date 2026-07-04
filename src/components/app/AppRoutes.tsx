@@ -108,7 +108,6 @@ export default function AppRoutes({ isAuthenticated, onLogin, onLogout }: RouteP
             <Route path="/active-orders" element={<P.ActiveOrders {...auth} />} />
             <Route path="/my-orders" element={<P.MyOrders {...auth} />} />
             <Route path="/my-reviews" element={<P.MyReviews {...auth} />} />
-            <Route path="/mosquito-repellent" element={<P.MosquitoRepellent />} />
             <Route path="/brain-booster" element={<ProtectedRoute isAuthenticated={isAuthenticated}><P.BrainBooster /></ProtectedRoute>} />
             <Route path="/tax-reports" element={<P.TaxReports />} />
             <Route path="/seller/:userId" element={<P.SellerReviews {...auth} />} />

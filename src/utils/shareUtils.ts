@@ -56,7 +56,6 @@ function buildOgProxyUrl(prodUrl: string): string | null {
   const auctionMatch = prodUrl.match(/\/auction\/([0-9a-f-]{36})/);
   if (auctionMatch) return `${ogProxyBase}?type=auction&id=${auctionMatch[1]}&v=${v}`;
 
-  if (prodUrl.includes('/mosquito-repellent')) return `${ogProxyBase}?type=page&id=mosquito-repellent&v=8`;
   if (prodUrl.includes('/brain-booster')) return `${ogProxyBase}?type=page&id=brain-booster&v=1`;
 
   return null;
@@ -111,7 +110,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
   const prodUrl = toProdUrl(url);
   const ogUrl = buildOgProxyUrl(prodUrl);
   // Для динамических страниц (offer/request/auction) сокращаем ogUrl — short-url умеет их читать из БД
-  // Для статических страниц (brain-booster, mosquito) — prodUrl, short-url знает их из STATIC_OG
+  // Для статических страниц (brain-booster) — prodUrl, short-url знает их из STATIC_OG
   const urlToShorten = ogUrl && (prodUrl.includes('/offer/') || prodUrl.includes('/request/') || prodUrl.includes('/auction/'))
     ? ogUrl
     : prodUrl;

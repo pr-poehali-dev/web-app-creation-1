@@ -85,7 +85,6 @@ export const TradingPlatform = lazyWithRetry(() => import("./pages/TradingPlatfo
 export const CreateContract = lazyWithRetry(() => import("./pages/CreateContract"));
 export const OrderPage = lazyWithRetry(() => import("./pages/OrderPage"));
 export const MyReviews = lazyWithRetry(() => import("./pages/MyReviews"));
-export const MosquitoRepellent = lazyWithRetry(() => import("./pages/MosquitoRepellent"));
 export const BrainBooster = lazyWithRetry(() => import("./pages/BrainBooster"));
 export const TaxReports = lazyWithRetry(() => import("./pages/TaxReports"));
 export const SellerReviews = lazyWithRetry(() => import("./pages/SellerReviews"));

@@ -115,10 +115,6 @@ export default function HeaderUserMenu({
           <Icon name="Star" className="mr-2 h-4 w-4" />
           Мои отзывы
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/mosquito-repellent')} className="border-2 border-border rounded-md mb-1">
-          <Icon name="Zap" className="mr-2 h-4 w-4 text-green-500" />
-          Отпугиватель комаров
-        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate('/brain-booster')} className="border-2 border-border rounded-md mb-1">
           <Icon name="Brain" className="mr-2 h-4 w-4 text-purple-500" />
           Нейро-звук для мозга
