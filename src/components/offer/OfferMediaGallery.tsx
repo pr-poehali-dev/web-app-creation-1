@@ -174,7 +174,6 @@ export default function OfferMediaGallery({
                 src={video.thumbnail || '/placeholder-video.jpg'}
                 alt="Video thumbnail"
                 className="w-full h-full object-cover"
-                loading="lazy"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <Icon name="Play" className="h-6 w-6 text-white" />
@@ -195,7 +194,6 @@ export default function OfferMediaGallery({
                 src={image.url}
                 alt={image.alt}
                 className="w-full h-full object-cover"
-                loading="lazy"
               />
             </button>
           ))}
