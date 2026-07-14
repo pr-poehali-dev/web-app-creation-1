@@ -36,10 +36,13 @@ def get_messages_by_offer(offer_id: str, headers: Dict[str, str]) -> Dict[str, A
     order_ids = [f"'{str(o['id'])}'" for o in orders_data]
     order_map = {str(o['id']): {'order_number': o['order_number'], 'buyer_name': o.get('buyer_name', 'Пользователь')} for o in orders_data}
     
-    # Получаем сообщения по этим заказам
+    # Получаем сообщения по этим заказам — только входящие от покупателя
+    # (страница используется владельцем предложения, поэтому свои же
+    # отправленные сообщения продавца в список и счётчики не попадают)
     sql_messages = f"""
         SELECT * FROM {schema}.order_messages 
         WHERE order_id IN ({','.join(order_ids)})
+        AND sender_type = 'buyer'
         ORDER BY created_at DESC
     """
     
