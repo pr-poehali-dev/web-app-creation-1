@@ -34,6 +34,9 @@ MODE_PRICES = {
 PAID_MODES = ["general", "focus", "stress", "energy"]
 FREE_MODES  = ["eyes"]
 
+# Цена одного платного ИИ-обзора актива в разделе "Рынок" (в копейках) — дефолт, реальная берётся из site_settings
+MARKET_REVIEW_PRICE = 1500  # 15 руб
+
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://preview--web-app-creation-1.poehali.dev")
 
 
@@ -47,6 +50,18 @@ def get_secret_key() -> str:
 
 def get_db():
     return psycopg2.connect(os.environ["DATABASE_URL"])
+
+
+def get_market_review_price(cur, schema: str) -> int:
+    """Цена ИИ-обзора рынка в копейках — настраивается в админке через site_settings."""
+    try:
+        cur.execute(f"SELECT setting_value FROM {schema}.site_settings WHERE setting_key='market_review_price_kopeks'")
+        row = cur.fetchone()
+        if row and row[0]:
+            return int(row[0])
+    except Exception as e:
+        print(f"[PAY] failed to read market_review_price_kopeks: {e}")
+    return MARKET_REVIEW_PRICE
 
 
 def get_tbank_token(params: dict, password: str) -> str:
@@ -89,7 +104,7 @@ def handler(event: dict, context) -> dict:
     now = datetime.now(timezone.utc)
 
     # ── Админские действия — без JWT, по X-Admin-Key ────────────────────────
-    if action in ("admin-grant", "admin-revoke", "admin-list"):
+    if action in ("admin-grant", "admin-revoke", "admin-list", "admin-market-reviews"):
         admin_key = headers.get("x-admin-key") or headers.get("X-Admin-Key") or ""
         if admin_key != os.environ.get("ADMIN_CLEANUP_KEY", ""):
             return {"statusCode": 403, "headers": {**CORS, "Content-Type": "application/json"},
@@ -97,6 +112,56 @@ def handler(event: dict, context) -> dict:
 
         conn = get_db()
         cur = conn.cursor()
+
+        if action == "admin-market-reviews":
+            if method == "GET":
+                cur.execute(f"""
+                    SELECT r.id, r.user_id, r.ticker, r.amount, r.status,
+                           r.tbank_order_id, r.review_text IS NOT NULL AS has_review,
+                           r.created_at, r.updated_at, u.email, u.first_name, u.last_name
+                    FROM {schema}.market_review_purchases r
+                    LEFT JOIN {schema}.users u ON u.id = r.user_id
+                    ORDER BY r.created_at DESC LIMIT 200
+                """)
+                rows = cur.fetchall()
+                items = []
+                for r in rows:
+                    items.append({
+                        "id": r[0], "user_id": r[1], "ticker": r[2], "amount": r[3], "status": r[4],
+                        "order_id": r[5], "has_review": r[6],
+                        "created_at": r[7].isoformat() if r[7] else None,
+                        "updated_at": r[8].isoformat() if r[8] else None,
+                        "email": r[9], "name": f"{r[11] or ''} {r[10] or ''}".strip(),
+                    })
+                price = get_market_review_price(cur, schema)
+                cur.close(); conn.close()
+                return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                        "body": json.dumps({"ok": True, "purchases": items, "priceKopeks": price})}
+
+            if method == "POST":
+                body = json.loads(event.get("body") or "{}")
+                new_price = body.get("priceKopeks")
+                try:
+                    new_price = int(new_price)
+                except (TypeError, ValueError):
+                    new_price = None
+                if not new_price or new_price < 1:
+                    cur.close(); conn.close()
+                    return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
+                            "body": json.dumps({"ok": False, "error": "priceKopeks должен быть положительным числом"})}
+                cur.execute(f"""
+                    INSERT INTO {schema}.site_settings (setting_key, setting_value)
+                    VALUES ('market_review_price_kopeks', %s)
+                    ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP
+                """, (str(new_price),))
+                conn.commit()
+                cur.close(); conn.close()
+                return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                        "body": json.dumps({"ok": True, "priceKopeks": new_price})}
+
+            cur.close(); conn.close()
+            return {"statusCode": 405, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "Method not allowed"})}
 
         if action == "admin-list":
             cur.execute(f"""
@@ -412,6 +477,85 @@ def handler(event: dict, context) -> dict:
         cur.close(); conn.close()
         return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
                 "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id})}
+
+    # ── POST ?action=pay-market-review — оплата ИИ-обзора актива (раздел "Рынок") ──
+    if method == "POST" and action == "pay-market-review":
+        body = json.loads(event.get("body") or "{}")
+        ticker = (body.get("ticker") or "").strip().upper()
+        name = (body.get("name") or ticker).strip()
+
+        if not ticker:
+            cur.close(); conn.close()
+            return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "ticker обязателен"})}
+
+        amount = get_market_review_price(cur, schema)
+        terminal_key = os.environ["TBANK_TERMINAL_KEY"]
+        secret_key = get_secret_key()
+        order_id = str(uuid.uuid4())
+
+        cur.execute(f"""
+            INSERT INTO {schema}.market_review_purchases (user_id, ticker, amount, status, tbank_order_id)
+            VALUES (%s, %s, %s, 'pending', %s) RETURNING id
+        """, (user_id, ticker, amount, order_id))
+        purchase_id = cur.fetchone()[0]
+        conn.commit()
+
+        frontend = os.environ.get("FRONTEND_URL", "https://erttp.ru")
+        params = {
+            "TerminalKey": terminal_key,
+            "Amount": amount,
+            "OrderId": order_id,
+            "Description": f"ИИ-обзор актива {name}",
+            "SuccessURL": f"{frontend}/market?payment=success&purchaseId={purchase_id}",
+            "FailURL": f"{frontend}/market?payment=fail&purchaseId={purchase_id}",
+            "NotificationURL": "https://functions.poehali.dev/48623d77-3c76-4711-99a9-3223aae78b96",
+        }
+        params["Token"] = get_tbank_token(params, secret_key)
+
+        req = urllib.request.Request(
+            "https://securepay.tinkoff.ru/v2/Init",
+            data=json.dumps(params).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read())
+
+        if not result.get("Success"):
+            cur.execute(f"UPDATE {schema}.market_review_purchases SET status='failed', updated_at=NOW() WHERE id=%s", (purchase_id,))
+            conn.commit()
+            cur.close(); conn.close()
+            return {"statusCode": 500, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": result.get("Message", "Ошибка платежа")})}
+
+        payment_url = result["PaymentURL"]
+        payment_id_tbank = str(result["PaymentId"])
+        cur.execute(f"UPDATE {schema}.market_review_purchases SET tbank_payment_id=%s WHERE id=%s",
+                    (payment_id_tbank, purchase_id))
+        conn.commit()
+        cur.close(); conn.close()
+        return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps({"ok": True, "payment_url": payment_url, "order_id": order_id, "purchaseId": purchase_id})}
+
+    # ── GET ?action=market-review-status&purchaseId=N — статус оплаты обзора ──
+    if method == "GET" and action == "market-review-status":
+        purchase_id = params.get("purchaseId")
+        if not purchase_id:
+            cur.close(); conn.close()
+            return {"statusCode": 400, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "purchaseId обязателен"})}
+        cur.execute(f"""
+            SELECT id, status, review_text FROM {schema}.market_review_purchases
+            WHERE id=%s AND user_id=%s
+        """, (purchase_id, user_id))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        if not row:
+            return {"statusCode": 404, "headers": {**CORS, "Content-Type": "application/json"},
+                    "body": json.dumps({"ok": False, "error": "Покупка не найдена"})}
+        return {"statusCode": 200, "headers": {**CORS, "Content-Type": "application/json"},
+                "body": json.dumps({"ok": True, "status": row[1], "hasReview": bool(row[2])})}
 
     cur.close(); conn.close()
     return {"statusCode": 404, "headers": {**CORS, "Content-Type": "application/json"},

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMarketSearch, useMarketAsset, useMarketReview, SearchResult } from './useMarketData';
+import { useMarketSearch, useMarketAsset, useMarketReview, useMarketReviewPrice, SearchResult } from './useMarketData';
 import MarketSearchBox from './MarketSearchBox';
 import MarketQuoteCard from './MarketQuoteCard';
 import MarketNewsList from './MarketNewsList';
@@ -23,6 +23,7 @@ export default function MarketAssetPanel({ marketHint, placeholder, emptyHint }:
   );
 
   const review = useMarketReview();
+  const priceKopeks = useMarketReviewPrice();
 
   const handleSelect = (r: SearchResult) => {
     setSelected(r);
@@ -56,6 +57,7 @@ export default function MarketAssetPanel({ marketHint, placeholder, emptyHint }:
               status={review.status}
               reviewText={review.reviewText}
               error={review.error}
+              priceKopeks={priceKopeks}
               onBuy={() => review.buy(selected.ticker, selected.name)}
               onCheckPending={() => review.checkPending(selected.ticker, selected.name)}
             />

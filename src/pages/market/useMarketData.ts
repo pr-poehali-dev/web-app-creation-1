@@ -4,6 +4,7 @@ import { getSession, getJwtToken } from '@/utils/auth';
 
 const AI_ASSIST_API = func2url['ai-assist'];
 const TBANK_PAYMENT_API = func2url['tbank-payment'];
+const SITE_SETTINGS_API = func2url['site-settings'];
 
 export interface SearchResult {
   ticker: string;
@@ -117,6 +118,29 @@ export function useMarketAsset(ticker: string | null, name: string, marketHint: 
   }, [ticker, loadQuote, loadNews]);
 
   return { quote, news, isLoadingQuote, isLoadingNews, reload: () => { loadQuote(); loadNews(); } };
+}
+
+export function useMarketReviewPrice() {
+  const [priceKopeks, setPriceKopeks] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${SITE_SETTINGS_API}?key=market_review_price_kopeks`);
+        if (res.ok) {
+          const data = await res.json();
+          const value = parseInt(data?.setting_value, 10);
+          if (!cancelled && !isNaN(value)) setPriceKopeks(value);
+        }
+      } catch {
+        // тихо игнорируем — компонент покажет цену по умолчанию
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  return priceKopeks;
 }
 
 export type ReviewStatus = 'idle' | 'creating' | 'pending' | 'paid' | 'error';

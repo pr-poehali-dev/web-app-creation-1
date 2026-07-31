@@ -6,6 +6,7 @@ import os
 import json
 import hashlib
 import psycopg2
+import urllib.request
 from datetime import datetime, timezone, timedelta
 
 CORS = {
@@ -16,6 +17,38 @@ CORS = {
 
 PLAN_DAYS = {"week": 7, "month": 30}
 MODE_PLAN_DAYS = {"week": 7, "month": 30}
+
+EMAIL_NOTIFY_URL = "https://functions.poehali.dev/dd3295a9-ffa3-4842-8c95-de00a018ecf0"
+
+
+def notify_admin_market_review(cur, schema: str, ticker: str, amount_kopeks: int, buyer_user_id: int):
+    """Отправляет email первому суперадмину о новой оплаченной покупке ИИ-обзора рынка."""
+    try:
+        cur.execute(f"""
+            SELECT id FROM {schema}.users
+            WHERE role = 'superadmin' OR is_root_admin = true
+            ORDER BY is_root_admin DESC, id ASC LIMIT 1
+        """)
+        row = cur.fetchone()
+        if not row:
+            print("[WEBHOOK] No admin found to notify about market review purchase")
+            return
+        admin_user_id = row[0]
+        amount_rub = amount_kopeks / 100
+        payload = json.dumps({
+            "userId": admin_user_id,
+            "title": "Новая оплата ИИ-обзора рынка",
+            "message": f"Пользователь ID {buyer_user_id} купил ИИ-обзор актива «{ticker}» на сумму {amount_rub:.2f} ₽.",
+            "url": "/admin/market-reviews",
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            EMAIL_NOTIFY_URL, data=payload,
+            headers={"Content-Type": "application/json"}, method="POST",
+        )
+        urllib.request.urlopen(req, timeout=8)
+        print(f"[WEBHOOK] Admin notified (user_id={admin_user_id}) about market review purchase, ticker={ticker}")
+    except Exception as e:
+        print(f"[WEBHOOK] Failed to notify admin about market review purchase: {e}")
 
 
 def verify_token(params: dict, password: str) -> bool:
@@ -113,6 +146,25 @@ def handler(event: dict, context) -> dict:
             """, (expires_at, order_id))
             conn.commit()
             print(f"[WEBHOOK] Mode subscriptions activated for user_id={mode_user_id}, order={order_id}")
+            cur.close(); conn.close()
+            return {"statusCode": 200, "headers": CORS, "body": "OK"}
+
+        # Проверяем market_review_purchases (раздел "Рынок" — платный ИИ-обзор)
+        cur.execute(f"""
+            SELECT id, user_id, ticker, amount FROM {schema}.market_review_purchases
+            WHERE tbank_order_id=%s AND status='pending' LIMIT 1
+        """, (order_id,))
+        review_row = cur.fetchone()
+        if review_row:
+            review_id, review_user_id, review_ticker, review_amount = review_row
+            cur.execute(f"""
+                UPDATE {schema}.market_review_purchases
+                SET status='paid', tbank_payment_id=%s, updated_at=NOW()
+                WHERE id=%s
+            """, (tbank_payment_id, review_id))
+            conn.commit()
+            print(f"[WEBHOOK] Market review purchase paid id={review_id}, user_id={review_user_id}")
+            notify_admin_market_review(cur, schema, review_ticker, review_amount, review_user_id)
         else:
             print(f"[WEBHOOK] Nothing found for order_id={order_id}")
         cur.close(); conn.close()

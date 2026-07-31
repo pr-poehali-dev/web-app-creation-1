@@ -156,6 +156,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'normal'
     },
     {
+      id: 'market-reviews',
+      title: 'ИИ-обзоры рынка',
+      description: 'Покупки платного обзора в разделе «Рынок», настройка цены',
+      icon: 'LineChart',
+      color: 'bg-emerald-500',
+      count: null,
+      path: '/admin/market-reviews',
+      priority: 'normal'
+    },
+    {
       id: 'deleted-users',
       title: 'История удаленных',
       description: 'Просмотр и восстановление удаленных пользователей',

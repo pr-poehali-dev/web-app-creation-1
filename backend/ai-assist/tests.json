@@ -12,6 +12,31 @@
       "path": "/",
       "body": {},
       "expectedStatus": 400
+    },
+    {
+      "name": "Market search by query",
+      "method": "GET",
+      "path": "/?action=market_search&q=SBER",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Market quote by ticker",
+      "method": "GET",
+      "path": "/?action=market_quote&ticker=SBER",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Market news by ticker",
+      "method": "GET",
+      "path": "/?action=market_news&ticker=SBER&name=Сбербанк",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Market review without auth",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "market_review", "ticker": "SBER"},
+      "expectedStatus": 400
     }
   ]
 }

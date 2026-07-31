@@ -10,11 +10,13 @@ interface MarketReviewBlockProps {
   status: ReviewStatus;
   reviewText: string | null;
   error: string | null;
+  priceKopeks: number | null;
   onBuy: () => void;
   onCheckPending: () => void;
 }
 
-export default function MarketReviewBlock({ ticker, name, status, reviewText, error, onBuy, onCheckPending }: MarketReviewBlockProps) {
+export default function MarketReviewBlock({ ticker, name, status, reviewText, error, priceKopeks, onBuy, onCheckPending }: MarketReviewBlockProps) {
+  const priceLabel = priceKopeks ? (priceKopeks / 100).toLocaleString('ru-RU', { minimumFractionDigits: priceKopeks % 100 === 0 ? 0 : 2 }) : null;
   useEffect(() => {
     if (status === 'pending') onCheckPending();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,7 +68,7 @@ export default function MarketReviewBlock({ ticker, name, status, reviewText, er
             ) : (
               <Icon name="CreditCard" size={16} />
             )}
-            Получить обзор за 15 ₽
+            Получить обзор{priceLabel ? ` за ${priceLabel} ₽` : ''}
           </Button>
         )}
 
