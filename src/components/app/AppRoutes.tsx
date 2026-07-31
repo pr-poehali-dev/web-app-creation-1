@@ -94,6 +94,7 @@ export default function AppRoutes({ isAuthenticated, onLogin, onLogout }: RouteP
             <Route path="/create-contract" element={<P.CreateContract {...auth} />} />
             <Route path="/edit-contract/:id" element={<P.EditContract {...auth} />} />
             <Route path="/my-contracts" element={<P.MyContracts {...auth} />} />
+            <Route path="/market" element={<P.Market {...auth} />} />
             <Route path="/order/:offerId" element={<P.OrderPage {...auth} />} />
             <Route path="/my-listings" element={<P.MyListings {...auth} />} />
             <Route path="/my-offers" element={<P.MyOffers {...auth} />} />

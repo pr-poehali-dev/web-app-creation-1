@@ -103,3 +103,4 @@ export const MyAutoRequests = lazyWithRetry(() => import("./pages/MyAutoRequests
 export const MyContracts = lazyWithRetry(() => import("./pages/MyContracts"));
 export const ContractDetail = lazyWithRetry(() => import("./pages/ContractDetail"));
 export const EditContract = lazyWithRetry(() => import("./pages/EditContract"));
+export const Market = lazyWithRetry(() => import("./pages/Market"));
