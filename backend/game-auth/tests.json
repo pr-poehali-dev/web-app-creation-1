@@ -1,0 +1,55 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Register with invalid nickname",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "register", "nickname": "a", "pin": "1234"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Register with invalid pin",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "register", "nickname": "testplayer1", "pin": "12"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Login with wrong credentials",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "login", "nickname": "nonexistent_user_xyz", "pin": "1234"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Verify with invalid token",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "verify", "token": "invalid.token.here"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Unknown action",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "unknown_action"},
+      "expectedStatus": 400,
+      "expectedBody": {"error": "string"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}
