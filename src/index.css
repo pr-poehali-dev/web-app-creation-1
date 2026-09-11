@@ -1,5 +1,4 @@
-/* Шрифт Roboto подключается через <link> в index.html — грузится параллельно с сайтом,
-   а не после этого CSS-файла (см. комментарий в index.html) */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap");
 
 @tailwind base;
 @tailwind components;

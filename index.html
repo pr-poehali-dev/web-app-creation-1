@@ -23,19 +23,12 @@
     <!-- Preconnect для ускорения загрузки -->
     <link rel="preconnect" href="https://cdn.poehali.dev">
     <link rel="preconnect" href="https://functions.poehali.dev">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://ipapi.co">
     <link rel="dns-prefetch" href="https://cdn.poehali.dev">
     <link rel="dns-prefetch" href="https://functions.poehali.dev">
-    <link rel="dns-prefetch" href="https://ipapi.co">
-
-    <!-- Шрифт подключаем напрямую тегом link — грузится параллельно с остальным сайтом,
-         а не последовательно после JS и CSS бандла (как было бы через @import в CSS) -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
-
+    
     <!-- Предзагрузка критичных ресурсов -->
     <link rel="modulepreload" href="/src/main.tsx">
+    <link rel="preload" as="image" href="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/004988d2-a5b0-4467-9c9b-906f9d2d477d.jpg">
     
     <meta name="robots" content="index, follow" />
     <meta property="og:type" content="website">
@@ -95,17 +88,13 @@
     <script async src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS COMMENT! -->
-    <script defer src="https://cdn.poehali.dev/intertnal/js/pp-min-2.js"></script>
-    <script defer src="https://cdn.poehali.dev/intertnal/js/route-min.js"></script>
-    <script defer src="https://cdn.poehali.dev/intertnal/js/telemetry-min.js"></script>
+    <script src="https://cdn.poehali.dev/intertnal/js/pp-min-2.js"></script>
+    <script src="https://cdn.poehali.dev/intertnal/js/route-min.js"></script>
+    <script src="https://cdn.poehali.dev/intertnal/js/telemetry-min.js"></script>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS COMMENT! -->
 
     <meta name="pp-name" value="web-app-creation-1">
-      <script defer src="https://cdn.poehali.dev/intertnal/js/inspector-min.js"></script>
-      <script src="https://cdn.poehali.dev/intertnal/js/pp-min-2.js"></script>
-      <script src="https://cdn.poehali.dev/intertnal/js/route-min.js"></script>
       <script src="https://cdn.poehali.dev/intertnal/js/inspector-min.js"></script>
-      <script src="https://cdn.poehali.dev/intertnal/js/telemetry-min.js"></script>
   </head>
 
 <body>
@@ -113,7 +102,7 @@
   <!-- Splash до загрузки React — убирается автоматически когда React монтируется -->
   <div id="html-splash" style="position:fixed;inset:0;background:#f1f4f8;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;">
     <div style="width:96px;height:96px;border-radius:24px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.12);">
-      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAIAAAC2BqGFAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAAGYktHRAD/AP8A/6C9p5MAAAAHdElNRQfqCQMMCRs2E9QaAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI2LTA5LTAzVDEyOjA5OjEwKzAwOjAwRApqNAAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNi0wOS0wM1QxMjowOToxMCswMDowMDVX0ogAAAAodEVYdGRhdGU6dGltZXN0YW1wADIwMjYtMDktMDNUMTI6MDk6MjcrMDA6MDApaso6AAAPpElEQVR42u3ceZRU1Z0H8Lu8/dXeVVTTICAQMIFW44IREZmgDKgJGYJLVEAF7BbcEnFggslRjwsSXI+OTsyYuMaMyTGCOOOCEJDFBkREhW56Yeluupbu2l/VW+6988drG4I4ozMnVTXj/f7ZrwqKT9+6797f/T3g1OnrAM/fPogTcGgOzcOhOTSH5uHQHJqHQ3NoDs3DoTk0D4fm0Byah0NzaB4OzaE5NA+H5tA8HJpDc2geDs2heTg0h+bQPByaQ/NwaA7NoXk4NIfm+b8PDWG53/iNg3alLItB+PXU3NdbFqtO7uqCRgjYNmMMDB0iFovMthlCACEAIaAUUAoQOvpK9ycQAvc1ts2KRTqkTqQMuG+sqgjV81EwBsUi83rR4oaw348PH7Zf/rdUIukAACQR6joCAKTSRNcQACCXp8EABgAUCtSyGQAgEhauujw4dKiYyZKn/iWZzVFVhYRUzTe1Sh5RxhgaBg0E8PJ/jG7cnF+zNnvlZYH68WosbhMCPDoSBChLsLXdfP6lFEJgzlXBkSfLpkkJAfkCxRhEB4l7Pim+8mr60ot9kyfp96+Mp9NE0xAhjEMfVS4USCQi/PyO6H+8nVv9Zibgw7kCjUaEkSdLGMO+FOlLOY7D5l4dQggYBlNk+MLvUxiBUEgIBjChrKPDiiUcr47SWXLpDN+Mab4Vq+LxhK3ruBqsKw+NMcznyZA6cent0ddWp996NxcKCoQwd9o1LQYYwBgKIgSMGQZrXFgzaaI+v/EwIUxVkWkyQhiEQJKgKEJKAcYwlXIunOqdNdO/8uF4V5ft8VTeGo8cPa+yyrkcOXmEtPT26Cuvptatz7vKAADGAMZQlqAkQUGAEAKMoSzD97cWNA1fMTuwrclwHKaqSBShJEGEIGPAfaOm4c8+K+Vy9MaF4b3NpVjMURTE2DcVGmOYzZJTxso/u2XQcy/2bdpSCH6uPBBXx12uMQYgBKqCtu8o1kbFKy4Lbv3AKJaoJEBKwXHv0jTcst9MJp3FDeG2drOr21bVSlpXDBpjmMmQU+uVmxdFfv2vvU07i8GA8MUvOELAcVihwDAGggAZA4wBVYUfbDcCATznqmBTk5EvMFk+HpExoGmorcPq6rYXN4QPdVqHDlXSujLQGMN0mpx9ltawoOaJp5K795QC/hNMo+5SJBwWb2oMt3dYvb3EnQEYA7qGdnxYVGR03byanbuMTIae2FpFBw9ZHQesxQ3hWNxpb7c0rTLWFYDGGKbSzqSJnuvmhB5+PLGv2fR/iXK+QOpqxZ/eHOntdS660NfSasYTzjHWeNfuImDghuvDuz8u9vadYCJmDKgq6uq2m1vMRTeE0xnSsr+kabj81uWGRgjkcnTqFO+VlwdXPhzvOGD5fCdWzuXJsKHSsiXRNW9mfv1sLyWgYUG4ucU8ErPVY6z3fFIsltiNC8Of7i3F419iraCeuL3n01LjghrTZM0tpqLAMluXFRohYBTZhDO1WTP9v3ok3tlle70nVs7myOhR8h0/HfTSK6n1G/J1g8V9zWYi4SxqDLd3WJ1d/bOte9Pbu6+UztBFN4RbWs3uHluV4RetFQUle53du0tzrwllMuTgYVuSym... [truncated]
+      <img src="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/4bbf8889-8425-4a91-bebb-1e4aaa060042.png" alt="ЕРТТП" style="width:100%;height:100%;object-fit:cover;display:block;" />
     </div>
     <span style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:clamp(24px,7vw,42px);font-weight:900;color:#1e293b;letter-spacing:0.12em;text-align:center;padding:0 24px;">С НАМИ УСПЕХ</span>
     <div style="width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
