@@ -123,6 +123,9 @@ export default function AppRoutes({ isAuthenticated, onLogin, onLogout }: RouteP
             <Route path="/offer-agreement" element={<P.OfferAgreement {...auth} />} />
             <Route path="/image-editor" element={<P.ImageEditor />} />
             <Route path="/s/:code" element={<P.ShortUrlRedirect />} />
+            <Route path="/games/auth" element={<P.GameAuth />} />
+            <Route path="/games" element={<P.GameLobby />} />
+            <Route path="/games/room/:roomId" element={<P.ChessGame />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<P.NotFound />} />
           </Routes>
