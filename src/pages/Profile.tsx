@@ -224,6 +224,30 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
           )}
 
           {isViewingOwnProfile && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Icon name="Spade" className="h-5 w-5" />
+                  Игровой клуб
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 h-auto py-3 w-full sm:w-auto border-amber-500/40 hover:bg-amber-500/10"
+                  onClick={() => navigate('/games')}
+                >
+                  <Icon name="Crown" className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                  <div className="text-left">
+                    <div className="font-medium">Шахматы, шашки и покер</div>
+                    <div className="text-xs text-muted-foreground">Играйте онлайн с другими игроками</div>
+                  </div>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {isViewingOwnProfile && (
             <>
               <NotificationSettings userId={String(currentUser?.id ?? '')} />
               <EmailNotificationSettings userId={String(currentUser?.id ?? '')} userEmail={currentUser?.email ?? ''} />
