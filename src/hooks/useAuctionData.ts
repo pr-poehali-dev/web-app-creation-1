@@ -24,7 +24,6 @@ export function useAuctionData(id: string | undefined) {
       setIsLoading(true);
       try {
         const userId = localStorage.getItem('userId');
-        console.log('Loading auction:', id, 'userId:', userId);
 
         const response = await fetch(`https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?id=${id}`, {
           headers: userId ? {
@@ -32,11 +31,8 @@ export function useAuctionData(id: string | undefined) {
           } : {},
         });
 
-        console.log('Response status:', response.status);
-
         if (response.ok) {
           const data = await response.json();
-          console.log('Auction data:', data);
           if (data) {
             setAuction({
               ...data,
@@ -85,7 +81,6 @@ export function useAuctionData(id: string | undefined) {
     loadAuction();
     
     const unsubscribe = dataSync.subscribe('auction_updated', () => {
-      console.log('Auction updated, reloading auction detail...');
       loadAuction();
     });
     
@@ -169,13 +164,9 @@ export function useAuctionData(id: string | undefined) {
                 
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
-                  playPromise.catch(err => {
-                    console.log('Audio play prevented:', err);
-                  });
+                  playPromise.catch(() => { /* автовоспроизведение заблокировано браузером */ });
                 }
-              } catch (error) {
-                console.log('Audio error:', error);
-              }
+              } catch { /* игнорируем ошибки воспроизведения звука */ }
               
               toast({
                 title: 'Новая ставка!',
