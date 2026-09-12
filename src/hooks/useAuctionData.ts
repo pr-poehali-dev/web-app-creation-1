@@ -4,6 +4,9 @@ import { useToast } from '@/hooks/use-toast';
 import type { Auction, AuctionBid } from '@/types/auction';
 import { notifyAuctionWinner, notifyAuctionSeller } from '@/utils/notifications';
 import { dataSync } from '@/utils/dataSync';
+import func2url from '../../backend/func2url.json';
+
+const AUCTIONS_API = func2url.auctions;
 
 export function useAuctionData(id: string | undefined) {
   const navigate = useNavigate();
@@ -25,7 +28,7 @@ export function useAuctionData(id: string | undefined) {
       try {
         const userId = localStorage.getItem('userId');
 
-        const response = await fetch(`https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?id=${id}`, {
+        const response = await fetch(`${AUCTIONS_API}?id=${id}`, {
           headers: userId ? {
             'X-User-Id': userId,
           } : {},
@@ -109,7 +112,7 @@ export function useAuctionData(id: string | undefined) {
         const userId = localStorage.getItem('userId');
         if (!userId) return;
 
-        const response = await fetch(`https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?id=${id}`, {
+        const response = await fetch(`${AUCTIONS_API}?id=${id}`, {
           headers: {
             'X-User-Id': userId,
           },

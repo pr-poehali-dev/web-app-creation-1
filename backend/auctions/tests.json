@@ -1,0 +1,41 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET list without auth (public)",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "GET my auctions without auth",
+      "method": "GET",
+      "path": "/?scope=my",
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Unauthorized"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "POST create without auth",
+      "method": "POST",
+      "path": "/",
+      "body": {"action": "create"},
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Unauthorized"},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "DELETE without auth",
+      "method": "DELETE",
+      "path": "/",
+      "expectedStatus": 401,
+      "expectedBody": {"error": "Unauthorized"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

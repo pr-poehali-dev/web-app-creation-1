@@ -13,17 +13,14 @@ from psycopg2.extras import RealDictCursor
 import jwt
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
-DB_SCHEMA = os.environ.get('DB_SCHEMA', 'public')
+DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
 GAME_JWT_ISSUER = 'games-section'
 
 
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    with conn.cursor() as cur:
-        cur.execute(f"SET search_path TO {DB_SCHEMA}")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 
 def get_user_from_token(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -79,9 +76,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT c.id, c.user_id, c.message, c.created_at, u.nickname, u.avatar_emoji
-                       FROM game_chat_messages c
-                       JOIN game_users u ON u.id = c.user_id
+                    f"""SELECT c.id, c.user_id, c.message, c.created_at, u.nickname, u.avatar_emoji
+                       FROM {DB_SCHEMA}.game_chat_messages c
+                       JOIN {DB_SCHEMA}.game_users u ON u.id = c.user_id
                        WHERE c.room_id = %s
                        ORDER BY c.created_at ASC LIMIT 200""",
                     (room_id,)
@@ -112,14 +109,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id FROM game_room_players WHERE room_id = %s AND user_id = %s",
+                    f"SELECT id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
                     (room_id, user['id'])
                 )
                 if not cur.fetchone():
                     return error_response(403, 'Вы не участник этой комнаты')
 
                 cur.execute(
-                    """INSERT INTO game_chat_messages (room_id, user_id, message)
+                    f"""INSERT INTO {DB_SCHEMA}.game_chat_messages (room_id, user_id, message)
                        VALUES (%s, %s, %s) RETURNING id, created_at""",
                     (room_id, user['id'], message)
                 )

@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Auction, AuctionBid } from '@/types/auction';
+import func2url from '../../backend/func2url.json';
+
+const AUCTIONS_API = func2url.auctions;
 
 interface UseRealtimeAuctionOptions {
   auctionId: string | undefined;
@@ -23,7 +26,7 @@ export function useRealtimeAuction({ auctionId, enabled, interval = 5000 }: UseR
 
       const userId = localStorage.getItem('userId');
       const response = await fetch(
-        `https://functions.poehali.dev/9fd62fb3-48c7-4d72-8bf2-05f33093f80f?id=${auctionId}`,
+        `${AUCTIONS_API}?id=${auctionId}`,
         {
           headers: userId ? { 'X-User-Id': userId } : {},
         }

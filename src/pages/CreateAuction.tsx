@@ -17,6 +17,9 @@ import AuctionPricingSection from '@/components/auction/AuctionPricingSection';
 import AuctionScheduleSection from '@/components/auction/AuctionScheduleSection';
 import AuctionLocationSection from '@/components/auction/AuctionLocationSection';
 import AuctionMediaSection from '@/components/auction/AuctionMediaSection';
+import func2url from '../../backend/func2url.json';
+
+const AUCTIONS_API = func2url.auctions;
 
 interface CreateAuctionProps {
   isAuthenticated: boolean;
@@ -295,10 +298,11 @@ export default function CreateAuction({ isAuthenticated, onLogout }: CreateAucti
       const userLocation = localStorage.getItem('userLocation');
       const timezoneOffset = userLocation ? JSON.parse(userLocation).timezoneOffset || 9 : 9;
 
-      const response = await fetch('https://functions.poehali.dev/54ee04cf-3428-411f-8f87-bc1f19a53f27', {
+      const response = await fetch(AUCTIONS_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-User-Id': userId },
         body: JSON.stringify({
+          action: 'create',
           ...formData,
           imageUrls,
           videoUrl,

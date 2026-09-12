@@ -15,7 +15,7 @@ from psycopg2.extras import RealDictCursor
 import jwt
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
-DB_SCHEMA = os.environ.get('DB_SCHEMA', 'public')
+DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
 GAME_JWT_ISSUER = 'games-section'
@@ -29,10 +29,7 @@ CHECKERS_INITIAL_STATE = {
 
 
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    with conn.cursor() as cur:
-        cur.execute(f"SET search_path TO {DB_SCHEMA}")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 
 def get_user_from_token(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -97,9 +94,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             with conn.cursor() as cur:
                 if params.get('room_id'):
                     cur.execute(
-                        """SELECT r.*, u.nickname as created_by_nickname
-                           FROM game_rooms r
-                           JOIN game_users u ON u.id = r.created_by
+                        f"""SELECT r.*, u.nickname as created_by_nickname
+                           FROM {DB_SCHEMA}.game_rooms r
+                           JOIN {DB_SCHEMA}.game_users u ON u.id = r.created_by
                            WHERE r.id = %s""",
                         (params['room_id'],)
                     )
@@ -108,9 +105,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return error_response(404, 'Комната не найдена')
 
                     cur.execute(
-                        """SELECT p.*, u.nickname, u.avatar_emoji
-                           FROM game_room_players p
-                           JOIN game_users u ON u.id = p.user_id
+                        f"""SELECT p.*, u.nickname, u.avatar_emoji
+                           FROM {DB_SCHEMA}.game_room_players p
+                           JOIN {DB_SCHEMA}.game_users u ON u.id = p.user_id
                            WHERE p.room_id = %s ORDER BY p.seat_index""",
                         (params['room_id'],)
                     )
@@ -125,11 +122,11 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
 
-                query = """SELECT r.id, r.game_type, r.room_name, r.status, r.max_players,
+                query = f"""SELECT r.id, r.game_type, r.room_name, r.status, r.max_players,
                                   r.is_private, r.created_at, u.nickname as created_by_nickname,
-                                  (SELECT COUNT(*) FROM game_room_players WHERE room_id = r.id) as players_count
-                           FROM game_rooms r
-                           JOIN game_users u ON u.id = r.created_by
+                                  (SELECT COUNT(*) FROM {DB_SCHEMA}.game_room_players WHERE room_id = r.id) as players_count
+                           FROM {DB_SCHEMA}.game_rooms r
+                           JOIN {DB_SCHEMA}.game_users u ON u.id = r.created_by
                            WHERE r.status = 'waiting' AND r.is_private = FALSE"""
                 query_params = []
                 if game_type:
@@ -170,7 +167,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             try:
                 with conn.cursor() as cur:
                     cur.execute(
-                        """INSERT INTO game_rooms (game_type, room_name, max_players, created_by, state, is_private, invite_code)
+                        f"""INSERT INTO {DB_SCHEMA}.game_rooms (game_type, room_name, max_players, created_by, state, is_private, invite_code)
                            VALUES (%s, %s, %s, %s, %s, %s, %s)
                            RETURNING id""",
                         (game_type, room_name, max_players, user['id'],
@@ -181,7 +178,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     side = 'white' if game_type in ('chess', 'checkers') else 'seat0'
                     chips = 1000 if game_type == 'poker' else None
                     cur.execute(
-                        """INSERT INTO game_room_players (room_id, user_id, seat_index, side, chips)
+                        f"""INSERT INTO {DB_SCHEMA}.game_room_players (room_id, user_id, seat_index, side, chips)
                            VALUES (%s, %s, 0, %s, %s)""",
                         (room_id, user['id'], side, chips)
                     )
@@ -204,9 +201,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             try:
                 with conn.cursor() as cur:
                     if invite_code:
-                        cur.execute("SELECT * FROM game_rooms WHERE invite_code = %s", (invite_code,))
+                        cur.execute(f"SELECT * FROM {DB_SCHEMA}.game_rooms WHERE invite_code = %s", (invite_code,))
                     else:
-                        cur.execute("SELECT * FROM game_rooms WHERE id = %s", (room_id,))
+                        cur.execute(f"SELECT * FROM {DB_SCHEMA}.game_rooms WHERE id = %s", (room_id,))
                     room = cur.fetchone()
 
                     if not room:
@@ -215,7 +212,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return error_response(400, 'Игра уже началась или завершена')
 
                     cur.execute(
-                        "SELECT COUNT(*) as cnt FROM game_room_players WHERE room_id = %s",
+                        f"SELECT COUNT(*) as cnt FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s",
                         (room['id'],)
                     )
                     count = cur.fetchone()['cnt']
@@ -223,7 +220,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return error_response(400, 'Комната заполнена')
 
                     cur.execute(
-                        "SELECT id FROM game_room_players WHERE room_id = %s AND user_id = %s",
+                        f"SELECT id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
                         (room['id'], user['id'])
                     )
                     if cur.fetchone():
@@ -242,7 +239,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     chips = 1000 if room['game_type'] == 'poker' else None
 
                     cur.execute(
-                        """INSERT INTO game_room_players (room_id, user_id, seat_index, side, chips)
+                        f"""INSERT INTO {DB_SCHEMA}.game_room_players (room_id, user_id, seat_index, side, chips)
                            VALUES (%s, %s, %s, %s, %s)""",
                         (room['id'], user['id'], count, side, chips)
                     )
@@ -250,7 +247,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     new_count = count + 1
                     if new_count >= 2:
                         cur.execute(
-                            "UPDATE game_rooms SET status = 'playing', current_turn_user_id = created_by, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                            f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'playing', current_turn_user_id = created_by, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
                             (room['id'],)
                         )
                     conn.commit()

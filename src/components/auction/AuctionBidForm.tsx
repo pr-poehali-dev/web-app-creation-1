@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import type { Auction, AuctionBid } from '@/types/auction';
+import func2url from '../../../backend/func2url.json';
+
+const AUCTIONS_API = func2url.auctions;
 
 interface AuctionBidFormProps {
   auction: Auction;
@@ -52,13 +55,14 @@ export default function AuctionBidForm({ auction, currentUser, bids, onBidPlaced
     setIsPlacingBid(true);
     try {
       const userId = localStorage.getItem('userId');
-      const response = await fetch('https://functions.poehali.dev/4f5819a8-90ce-4cf8-8bee-cbb08e81da8b', {
+      const response = await fetch(AUCTIONS_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-User-Id': userId || '',
         },
         body: JSON.stringify({
+          action: 'place_bid',
           auctionId: auction.id,
           amount: amount,
         }),

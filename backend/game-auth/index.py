@@ -17,7 +17,7 @@ import bcrypt
 import jwt
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
-DB_SCHEMA = os.environ.get('DB_SCHEMA', 'public')
+DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
 JWT_EXPIRATION_HOURS = 24 * 30
@@ -25,10 +25,7 @@ GAME_JWT_ISSUER = 'games-section'
 
 
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    with conn.cursor() as cur:
-        cur.execute(f"SET search_path TO {DB_SCHEMA}")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 
 def hash_pin(pin: str) -> str:
@@ -117,7 +114,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
-                cur.execute("SELECT id FROM game_users WHERE nickname = %s", (nickname,))
+                cur.execute(f"SELECT id FROM {DB_SCHEMA}.game_users WHERE nickname = %s", (nickname,))
                 if cur.fetchone():
                     return {
                         'statusCode': 409,
@@ -128,7 +125,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                 pin_hash = hash_pin(pin)
                 cur.execute(
-                    """INSERT INTO game_users (nickname, pin_hash, last_login_at)
+                    f"""INSERT INTO {DB_SCHEMA}.game_users (nickname, pin_hash, last_login_at)
                        VALUES (%s, %s, CURRENT_TIMESTAMP)
                        RETURNING id, nickname, avatar_emoji, chips_balance, games_played, games_won""",
                     (nickname, pin_hash)
@@ -154,8 +151,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    """SELECT id, nickname, pin_hash, avatar_emoji, chips_balance, games_played, games_won
-                       FROM game_users WHERE nickname = %s""",
+                    f"""SELECT id, nickname, pin_hash, avatar_emoji, chips_balance, games_played, games_won
+                       FROM {DB_SCHEMA}.game_users WHERE nickname = %s""",
                     (nickname,)
                 )
                 user = cur.fetchone()
@@ -169,7 +166,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
 
                 cur.execute(
-                    "UPDATE game_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = %s",
+                    f"UPDATE {DB_SCHEMA}.game_users SET last_login_at = CURRENT_TIMESTAMP WHERE id = %s",
                     (user['id'],)
                 )
                 conn.commit()
@@ -196,8 +193,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             try:
                 with conn.cursor() as cur:
                     cur.execute(
-                        """SELECT id, nickname, avatar_emoji, chips_balance, games_played, games_won
-                           FROM game_users WHERE id = %s""",
+                        f"""SELECT id, nickname, avatar_emoji, chips_balance, games_played, games_won
+                           FROM {DB_SCHEMA}.game_users WHERE id = %s""",
                         (payload['game_user_id'],)
                     )
                     user = cur.fetchone()

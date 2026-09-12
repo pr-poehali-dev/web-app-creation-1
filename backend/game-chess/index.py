@@ -15,17 +15,14 @@ import jwt
 import chess
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
-DB_SCHEMA = os.environ.get('DB_SCHEMA', 'public')
+DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
 GAME_JWT_ISSUER = 'games-section'
 
 
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
-    with conn.cursor() as cur:
-        cur.execute(f"SET search_path TO {DB_SCHEMA}")
-    return conn
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 
 def get_user_from_token(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
@@ -88,7 +85,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM game_rooms WHERE id = %s", (room_id,))
+            cur.execute(f"SELECT * FROM {DB_SCHEMA}.game_rooms WHERE id = %s", (room_id,))
             room = cur.fetchone()
 
             if not room:
@@ -101,7 +98,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 return error_response(400, 'Сейчас не ваш ход')
 
             cur.execute(
-                "SELECT side FROM game_room_players WHERE room_id = %s AND user_id = %s",
+                f"SELECT side FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
                 (room_id, user['id'])
             )
             player = cur.fetchone()
@@ -133,13 +130,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             is_check = board.is_check()
 
             cur.execute(
-                "SELECT COALESCE(MAX(move_number), 0) + 1 as next_num FROM game_moves WHERE room_id = %s",
+                f"SELECT COALESCE(MAX(move_number), 0) + 1 as next_num FROM {DB_SCHEMA}.game_moves WHERE room_id = %s",
                 (room_id,)
             )
             move_number = cur.fetchone()['next_num']
 
             cur.execute(
-                """INSERT INTO game_moves (room_id, user_id, move_number, move_data)
+                f"""INSERT INTO {DB_SCHEMA}.game_moves (room_id, user_id, move_number, move_data)
                    VALUES (%s, %s, %s, %s)""",
                 (room_id, user['id'], move_number, json.dumps({'uci': move_uci, 'fen_after': new_fen}))
             )
@@ -158,14 +155,14 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             next_turn_user_id = None
             if not game_over:
                 cur.execute(
-                    "SELECT user_id FROM game_room_players WHERE room_id = %s AND user_id != %s",
+                    f"SELECT user_id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id != %s",
                     (room_id, user['id'])
                 )
                 opponent = cur.fetchone()
                 next_turn_user_id = opponent['user_id'] if opponent else None
 
             cur.execute(
-                """UPDATE game_rooms
+                f"""UPDATE {DB_SCHEMA}.game_rooms
                    SET state = %s, status = %s, winner_id = %s,
                        current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP
                    WHERE id = %s""",
@@ -174,12 +171,12 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
             if winner_id:
                 cur.execute(
-                    "UPDATE game_users SET games_played = games_played + 1, games_won = games_won + 1 WHERE id = %s",
+                    f"UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1, games_won = games_won + 1 WHERE id = %s",
                     (winner_id,)
                 )
                 cur.execute(
-                    """UPDATE game_users SET games_played = games_played + 1
-                       WHERE id IN (SELECT user_id FROM game_room_players WHERE room_id = %s AND user_id != %s)""",
+                    f"""UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1
+                       WHERE id IN (SELECT user_id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id != %s)""",
                     (room_id, winner_id)
                 )
 

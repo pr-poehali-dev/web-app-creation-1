@@ -38,7 +38,7 @@ import type { Auction } from '@/types/auction';
 import { dataSync } from '@/utils/dataSync';
 import func2url from '../../backend/func2url.json';
 
-const API_URL = func2url['auctions-list'];
+const API_URL = func2url.auctions;
 
 interface AdminAuctionsProps {
   isAuthenticated: boolean;

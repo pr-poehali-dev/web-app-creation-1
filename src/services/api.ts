@@ -8,9 +8,8 @@ const ADMIN_OFFERS_API = func2url['admin-offers'];
 const REQUESTS_API = func2url.requests;
 const ADMIN_REQUESTS_API = func2url['admin-requests'];
 const ORDERS_API = func2url.orders;
-const AUCTIONS_LIST_API = func2url['auctions-list'];
-const AUCTIONS_MY_API = func2url['auctions-my'];
-const AUCTIONS_UPDATE_API = func2url['auctions-update'];
+// Единая функция аукционов (объединяет бывшие auctions-list/my/create/place-bid/update)
+const AUCTIONS_API = func2url.auctions;
 const UPLOAD_VIDEO_API = func2url['upload-video'];
 const GET_UPLOAD_URL_API = func2url['get-upload-url'];
 const CONTENT_MANAGEMENT_API = func2url['content-management'];
@@ -1141,7 +1140,7 @@ export const auctionsAPI = {
     if (status) params.append('status', status);
     params.append('timezoneOffset', timezoneOffset.toString());
     
-    const response = await fetchWithRetry(`${AUCTIONS_LIST_API}?${params.toString()}`);
+    const response = await fetchWithRetry(`${AUCTIONS_API}?${params.toString()}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch auctions');
@@ -1166,7 +1165,7 @@ export const auctionsAPI = {
 
     const timezoneOffset = getAuctionsTimezoneOffset();
 
-    const response = await fetchWithRetry(`${AUCTIONS_MY_API}?timezoneOffset=${timezoneOffset}`, {
+    const response = await fetchWithRetry(`${AUCTIONS_API}?scope=my&timezoneOffset=${timezoneOffset}`, {
       headers: {
         'X-User-Id': userId,
       },
@@ -1188,7 +1187,7 @@ export const auctionsAPI = {
   async getAuctionById(id: string): Promise<Auction> {
     const timezoneOffset = getAuctionsTimezoneOffset();
     
-    const response = await fetchWithRetry(`${AUCTIONS_LIST_API}?id=${id}&timezoneOffset=${timezoneOffset}`);
+    const response = await fetchWithRetry(`${AUCTIONS_API}?id=${id}&timezoneOffset=${timezoneOffset}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch auction');
@@ -1213,7 +1212,7 @@ export const auctionsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetchWithRetry(AUCTIONS_MY_API, {
+    const response = await fetchWithRetry(AUCTIONS_API, {
       method: 'DELETE',
       headers: {
         'X-User-Id': userId,
@@ -1243,7 +1242,7 @@ export const auctionsAPI = {
       throw new Error('User not authenticated');
     }
 
-    const response = await fetchWithRetry(AUCTIONS_UPDATE_API, {
+    const response = await fetchWithRetry(AUCTIONS_API, {
       method: 'POST',
       headers: {
         'X-User-Id': userId,
