@@ -17,8 +17,18 @@ export default function GameAuth() {
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const redirectAfterAuth = () => {
+    const pendingInvite = localStorage.getItem('pending_game_invite');
+    if (pendingInvite) {
+      localStorage.removeItem('pending_game_invite');
+      navigate(`/games/invite/${pendingInvite}`);
+    } else {
+      navigate('/games');
+    }
+  };
+
   if (getGameSession()) {
-    navigate('/games');
+    redirectAfterAuth();
     return null;
   }
 
@@ -51,7 +61,7 @@ export default function GameAuth() {
 
     if (result.success) {
       toast({ title: 'Добро пожаловать!', description: `Привет, ${result.user?.nickname}!` });
-      navigate('/games');
+      redirectAfterAuth();
     } else {
       toast({ variant: 'destructive', title: 'Ошибка', description: result.error });
     }

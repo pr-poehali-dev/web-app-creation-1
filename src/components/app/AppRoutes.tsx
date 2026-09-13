@@ -125,7 +125,8 @@ export default function AppRoutes({ isAuthenticated, onLogin, onLogout }: RouteP
             <Route path="/s/:code" element={<P.ShortUrlRedirect />} />
             <Route path="/games/auth" element={<P.GameAuth />} />
             <Route path="/games" element={<P.GameLobby />} />
-            <Route path="/games/room/:roomId" element={<P.ChessGame />} />
+            <Route path="/games/room/:roomId" element={<P.GameRoomRouter />} />
+            <Route path="/games/invite/:code" element={<P.GameInviteJoin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<P.NotFound />} />
           </Routes>

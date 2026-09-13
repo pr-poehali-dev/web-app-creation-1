@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Chess, Square } from 'chess.js';
 import Icon from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,22 +8,27 @@ import GameLayout from '../components/GameLayout';
 import InviteShareBox from '../components/InviteShareBox';
 import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail } from '../utils/gameRooms';
-import { sendChessMove } from '../utils/gameChess';
+import { sendCheckersMove } from '../utils/gameCheckers';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../utils/gameChat';
+import {
+  CBoard,
+  Side,
+  initialCheckersBoard,
+  getAllLegalMoves,
+  isWhitePiece,
+  isBlackPiece,
+  isKingPiece,
+} from '../utils/checkersEngine';
 
-const PIECE_SYMBOLS: Record<string, string> = {
-  p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚',
-  P: '♙', N: '♘', B: '♗', R: '♖', Q: '♕', K: '♔',
-};
-
-export default function ChessGame() {
+export default function CheckersGame() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user] = useState<GameUser | null>(getGameSession());
   const [room, setRoom] = useState<GameRoomDetail | null>(null);
-  const [chess, setChess] = useState<Chess>(new Chess());
-  const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
+  const [board, setBoard] = useState<CBoard>(initialCheckersBoard());
+  const [selected, setSelected] = useState<[number, number] | null>(null);
+  const [forcedPiece, setForcedPiece] = useState<[number, number] | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -35,12 +39,10 @@ export default function ChessGame() {
     try {
       const data = await getGameRoom(numericRoomId);
       setRoom(data);
-      const fen = (data.state?.fen as string) || undefined;
-      if (fen) {
-        const newChess = new Chess();
-        newChess.load(fen);
-        setChess(newChess);
-      }
+      const stateBoard = data.state?.board as CBoard | undefined;
+      setBoard(stateBoard || initialCheckersBoard());
+      const mustContinue = (data.state?.must_continue as [number, number] | null | undefined) ?? null;
+      setForcedPiece(mustContinue);
     } catch {
       // комната может быть временно недоступна при развороте бэкенда
     }
@@ -73,40 +75,55 @@ export default function ChessGame() {
   useEffect(() => {
     const container = chatContainerRef.current;
     if (!container) return;
-    // Скроллим только сам блок чата, не затрагивая страницу — иначе автопрокрутка
-    // страницы уносила доску за пределы экрана при каждом новом сообщении.
     container.scrollTop = container.scrollHeight;
   }, [chatMessages]);
 
   if (!user) return null;
 
-  const mySide = room?.players.find((p) => p.user_id === user.id)?.side;
+  const mySide = room?.players.find((p) => p.user_id === user.id)?.side as Side | undefined;
   const isMyTurn = room?.current_turn_user_id === user.id;
   const opponent = room?.players.find((p) => p.user_id !== user.id);
 
-  const handleSquareClick = async (square: Square) => {
-    if (!room || room.status !== 'playing' || !isMyTurn) return;
+  const legalMoves = mySide && room?.status === 'playing' && isMyTurn
+    ? getAllLegalMoves(board, mySide, forcedPiece)
+    : [];
 
-    if (!selectedSquare) {
-      const piece = chess.get(square);
-      if (piece && piece.color === (mySide === 'white' ? 'w' : 'b')) {
-        setSelectedSquare(square);
+  const selectedMoves = selected
+    ? legalMoves.filter((m) => m.from[0] === selected[0] && m.from[1] === selected[1])
+    : [];
+
+  const selectablePieces = new Set(legalMoves.map((m) => `${m.from[0]}-${m.from[1]}`));
+
+  const handleSquareClick = async (row: number, col: number) => {
+    if (!room || room.status !== 'playing' || !isMyTurn || !mySide) return;
+
+    const piece = board[row][col];
+    const key = `${row}-${col}`;
+
+    if (!selected) {
+      if (piece && selectablePieces.has(key)) {
+        setSelected([row, col]);
       }
       return;
     }
 
-    if (selectedSquare === square) {
-      setSelectedSquare(null);
+    if (selected[0] === row && selected[1] === col) {
+      setSelected(null);
       return;
     }
 
-    const moveUci = `${selectedSquare}${square}`;
-    const legalMoves = chess.moves({ square: selectedSquare, verbose: true });
-    const needsPromotion = legalMoves.some((m) => m.to === square && m.promotion);
-    const finalUci = needsPromotion ? `${moveUci}q` : moveUci;
+    const move = selectedMoves.find((m) => m.to[0] === row && m.to[1] === col);
+    if (!move) {
+      if (piece && selectablePieces.has(key)) {
+        setSelected([row, col]);
+      } else {
+        setSelected(null);
+      }
+      return;
+    }
 
-    setSelectedSquare(null);
-    const result = await sendChessMove(numericRoomId, finalUci);
+    setSelected(null);
+    const result = await sendCheckersMove(numericRoomId, move.from, move.to);
 
     if (!result.success) {
       toast({ variant: 'destructive', title: 'Недопустимый ход', description: result.error });
@@ -115,12 +132,10 @@ export default function ChessGame() {
 
     await loadRoom();
 
-    if (result.is_checkmate) {
-      toast({ title: 'Шах и мат!', description: result.winner_id === user.id ? 'Вы победили! 🎉' : 'Соперник победил' });
-    } else if (result.is_check) {
-      toast({ title: 'Шах!' });
-    } else if (result.is_stalemate || result.is_draw) {
-      toast({ title: 'Ничья' });
+    if (result.status === 'finished') {
+      toast({ title: 'Игра окончена', description: result.winner_id === user.id ? 'Вы победили! 🎉' : 'Соперник победил' });
+    } else if (result.must_continue) {
+      toast({ title: 'Продолжайте взятие!' });
     }
   };
 
@@ -135,8 +150,7 @@ export default function ChessGame() {
     }
   };
 
-  const board = chess.board();
-  const displayBoard = mySide === 'black' ? [...board].reverse().map((row) => [...row].reverse()) : board;
+  const displayRows = mySide === 'black' ? [...board].reverse().map((row) => [...row].reverse()) : board;
 
   return (
     <GameLayout user={user}>
@@ -168,7 +182,7 @@ export default function ChessGame() {
               </div>
               {room.status === 'playing' && (
                 <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
-                  {isMyTurn ? 'Ваш ход' : 'Ход соперника'}
+                  {isMyTurn ? (forcedPiece ? 'Продолжайте взятие' : 'Ваш ход') : 'Ход соперника'}
                 </div>
               )}
               {room.status === 'waiting' && (
@@ -185,34 +199,48 @@ export default function ChessGame() {
 
             <div className="aspect-square w-full max-w-[560px] mx-auto rounded-xl overflow-hidden border-4 border-amber-500/30 shadow-2xl shadow-amber-500/10">
               <div className="grid grid-cols-8 grid-rows-8 h-full w-full">
-                {displayBoard.map((row, rowIdx) =>
+                {displayRows.map((row, rowIdx) =>
                   row.map((piece, colIdx) => {
                     const actualRow = mySide === 'black' ? 7 - rowIdx : rowIdx;
                     const actualCol = mySide === 'black' ? 7 - colIdx : colIdx;
-                    const file = String.fromCharCode(97 + actualCol);
-                    const rank = 8 - actualRow;
-                    const square = `${file}${rank}` as Square;
                     const isDark = (rowIdx + colIdx) % 2 === 1;
-                    const isSelected = selectedSquare === square;
+                    const isSelected = selected?.[0] === actualRow && selected?.[1] === actualCol;
+                    const isSelectable = !selected && piece && selectablePieces.has(`${actualRow}-${actualCol}`);
+                    const targetMove = selectedMoves.find((m) => m.to[0] === actualRow && m.to[1] === actualCol);
 
                     return (
                       <button
-                        key={square}
-                        onClick={() => handleSquareClick(square)}
-                        className={`flex items-center justify-center text-3xl sm:text-4xl transition-colors ${
-                          isDark ? 'bg-slate-700' : 'bg-slate-200'
-                        } ${isSelected ? 'ring-4 ring-inset ring-amber-400' : ''} hover:opacity-80`}
+                        key={`${actualRow}-${actualCol}`}
+                        onClick={() => handleSquareClick(actualRow, actualCol)}
+                        className={`relative flex items-center justify-center text-3xl sm:text-4xl transition-colors ${
+                          isDark ? 'bg-emerald-900' : 'bg-emerald-50'
+                        } ${isSelected ? 'ring-4 ring-inset ring-amber-400' : ''} ${
+                          isSelectable ? 'ring-2 ring-inset ring-amber-300/60' : ''
+                        } hover:opacity-80`}
                       >
                         {piece && (
                           <span
-                            className={piece.color === 'w' ? 'text-white' : 'text-slate-950'}
-                            style={piece.color === 'w' ? {
-                              WebkitTextStroke: '1.5px #1e293b',
-                              paintOrder: 'stroke fill',
-                            } : undefined}
+                            className={`h-[72%] w-[72%] rounded-full flex items-center justify-center shadow-md ${
+                              isWhitePiece(piece)
+                                ? 'bg-gradient-to-br from-slate-100 to-slate-300 border-2 border-slate-400'
+                                : 'bg-gradient-to-br from-slate-800 to-slate-950 border-2 border-slate-950'
+                            }`}
                           >
-                            {PIECE_SYMBOLS[piece.color === 'w' ? piece.type.toUpperCase() : piece.type]}
+                            {isKingPiece(piece) && (
+                              <Icon
+                                name="Crown"
+                                size={20}
+                                className={isBlackPiece(piece) ? 'text-amber-400' : 'text-amber-600'}
+                              />
+                            )}
                           </span>
+                        )}
+                        {targetMove && (
+                          <span
+                            className={`absolute rounded-full ${
+                              targetMove.captured ? 'h-[40%] w-[40%] border-4 border-red-500/70' : 'h-[28%] w-[28%] bg-amber-400/80'
+                            }`}
+                          />
                         )}
                       </button>
                     );

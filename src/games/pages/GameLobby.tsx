@@ -10,7 +10,7 @@ import { listGameRooms, createGameRoom, joinGameRoom, GameRoomListItem, GameType
 
 const GAME_INFO: Record<GameType, { title: string; icon: string; description: string; color: string; available: boolean }> = {
   chess: { title: 'Шахматы', icon: 'Crown', description: 'Классическая игра для двоих', color: 'from-blue-500 to-indigo-600', available: true },
-  checkers: { title: 'Шашки', icon: 'Circle', description: 'Скоро будет доступно', color: 'from-emerald-500 to-teal-600', available: false },
+  checkers: { title: 'Шашки', icon: 'Circle', description: 'Классическая игра для двоих', color: 'from-emerald-500 to-teal-600', available: true },
   poker: { title: 'Покер', icon: 'Spade', description: 'Скоро будет доступно', color: 'from-red-500 to-rose-600', available: false },
 };
 

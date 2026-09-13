@@ -108,4 +108,5 @@ export const AdminMarketReviews = lazyWithRetry(() => import("./pages/AdminMarke
 
 export const GameAuth = lazyWithRetry(() => import("./games/pages/GameAuth"));
 export const GameLobby = lazyWithRetry(() => import("./games/pages/GameLobby"));
-export const ChessGame = lazyWithRetry(() => import("./games/pages/ChessGame"));
+export const GameRoomRouter = lazyWithRetry(() => import("./games/pages/GameRoomRouter"));
+export const GameInviteJoin = lazyWithRetry(() => import("./games/pages/GameInviteJoin"));

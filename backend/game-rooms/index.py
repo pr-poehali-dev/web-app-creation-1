@@ -23,8 +23,24 @@ GAME_JWT_ISSUER = 'games-section'
 CHESS_INITIAL_STATE = {
     'fen': 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 }
+
+
+def _initial_checkers_board():
+    board = [[None] * 8 for _ in range(8)]
+    for row in range(3):
+        for col in range(8):
+            if (row + col) % 2 == 1:
+                board[row][col] = 'b'
+    for row in range(5, 8):
+        for col in range(8):
+            if (row + col) % 2 == 1:
+                board[row][col] = 'w'
+    return board
+
+
 CHECKERS_INITIAL_STATE = {
-    'board': None
+    'board': _initial_checkers_board(),
+    'must_continue': None
 }
 
 
@@ -161,7 +177,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             room_name = (body.get('room_name') or f'Комната {user["nickname"]}')[:64]
             is_private = bool(body.get('is_private'))
             max_players = 8 if game_type == 'poker' else 2
-            invite_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)) if is_private else None
+            # Каждая комната получает код приглашения независимо от приватности —
+            # им можно поделиться, а публичность влияет лишь на видимость в общем списке.
+            invite_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
             conn = get_db_connection()
             try:
