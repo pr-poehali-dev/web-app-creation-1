@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
+import Icon from '@/components/ui/icon';
 
 interface HeaderMobileMenuProps {
   isOpen: boolean;
@@ -65,6 +66,16 @@ export default function HeaderMobileMenu({
         onClick={onClose}
       >
         Поддержка
+      </Link>
+      <Link
+        to="/games"
+        className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
+        onClick={onClose}
+      >
+        <span className="flex items-center gap-2">
+          <Icon name="Spade" className="h-4 w-4" />
+          Игровой клуб
+        </span>
       </Link>
     </div>
   );
