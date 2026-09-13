@@ -26,7 +26,7 @@ export default function ChessGame() {
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const numericRoomId = Number(roomId);
 
@@ -70,7 +70,11 @@ export default function ChessGame() {
   }, [user, loadRoom, loadChat, navigate]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = chatContainerRef.current;
+    if (!container) return;
+    // Скроллим только сам блок чата, не затрагивая страницу — иначе автопрокрутка
+    // страницы уносила доску за пределы экрана при каждом новом сообщении.
+    container.scrollTop = container.scrollHeight;
   }, [chatMessages]);
 
   if (!user) return null;
@@ -197,7 +201,13 @@ export default function ChessGame() {
                         } ${isSelected ? 'ring-4 ring-inset ring-amber-400' : ''} hover:opacity-80`}
                       >
                         {piece && (
-                          <span className={piece.color === 'w' ? 'text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]' : 'text-slate-950'}>
+                          <span
+                            className={piece.color === 'w' ? 'text-white' : 'text-slate-950'}
+                            style={piece.color === 'w' ? {
+                              WebkitTextStroke: '1.5px #1e293b',
+                              paintOrder: 'stroke fill',
+                            } : undefined}
+                          >
                             {PIECE_SYMBOLS[piece.color === 'w' ? piece.type.toUpperCase() : piece.type]}
                           </span>
                         )}
@@ -222,7 +232,7 @@ export default function ChessGame() {
               <Icon name="MessageCircle" size={18} />
               Чат комнаты
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 space-y-2">
               {chatMessages.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center mt-4">Пока нет сообщений</p>
               ) : (
@@ -239,7 +249,6 @@ export default function ChessGame() {
                   </div>
                 ))
               )}
-              <div ref={chatEndRef} />
             </div>
             <div className="p-3 border-t border-slate-800 flex gap-2">
               <Input
