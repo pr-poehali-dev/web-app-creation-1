@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import { getGameSession, GameUser } from '../utils/gameAuth';
-import { listGameRooms, createGameRoom, joinGameRoom, GameRoomListItem, GameType } from '../utils/gameRooms';
+import { listGameRooms, createGameRoom, joinGameRoom, deleteGameRoom, GameRoomListItem, GameType } from '../utils/gameRooms';
 
 const GAME_INFO: Record<GameType, { title: string; icon: string; description: string; color: string; available: boolean }> = {
   chess: { title: 'Шахматы', icon: 'Crown', description: 'Классическая игра для двоих', color: 'from-blue-500 to-indigo-600', available: true },
@@ -22,6 +23,9 @@ export default function GameLobby() {
   const [rooms, setRooms] = useState<GameRoomListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [inviteCode, setInviteCode] = useState('');
+  const [copiedRoomId, setCopiedRoomId] = useState<number | null>(null);
+  const [roomToDelete, setRoomToDelete] = useState<GameRoomListItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadRooms = useCallback(async () => {
     try {
@@ -69,6 +73,43 @@ export default function GameLobby() {
       navigate(`/games/room/${room_id}`);
     } catch (e) {
       toast({ variant: 'destructive', title: 'Ошибка', description: e instanceof Error ? e.message : 'Комната не найдена' });
+    }
+  };
+
+  const handleShareRoom = async (room: GameRoomListItem) => {
+    if (!room.invite_code) return;
+    const inviteUrl = `${window.location.origin}/games/invite/${room.invite_code}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Присоединяйся к игре', text: 'Приглашаю тебя в партию!', url: inviteUrl });
+        return;
+      } catch {
+        return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopiedRoomId(room.id);
+      toast({ title: 'Ссылка скопирована' });
+      setTimeout(() => setCopiedRoomId(null), 2000);
+    } catch {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось скопировать ссылку' });
+    }
+  };
+
+  const handleDeleteRoom = async () => {
+    if (!roomToDelete) return;
+    setIsDeleting(true);
+    try {
+      await deleteGameRoom(roomToDelete.id);
+      toast({ title: 'Комната удалена' });
+      setRoomToDelete(null);
+      loadRooms();
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: e instanceof Error ? e.message : 'Не удалось удалить комнату' });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -145,26 +186,63 @@ export default function GameLobby() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {rooms.map((room) => (
-                <div
-                  key={room.id}
-                  className="flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-xl p-4 hover:border-amber-500/30 transition-colors"
-                >
-                  <div>
-                    <p className="font-semibold text-slate-100">{room.room_name}</p>
-                    <p className="text-xs text-slate-500">
-                      Создал {room.created_by_nickname} · {room.players_count}/{room.max_players} игроков
-                    </p>
+              {rooms.map((room) => {
+                const isOwner = room.created_by === user.id;
+                return (
+                  <div
+                    key={room.id}
+                    className="flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-xl p-4 hover:border-amber-500/30 transition-colors gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-100 truncate">{room.room_name}</p>
+                      <p className="text-xs text-slate-500">
+                        Создал {room.created_by_nickname} · {room.players_count}/{room.max_players} игроков
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isOwner && room.invite_code && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => handleShareRoom(room)}
+                          className="border-slate-700 text-slate-300 hover:bg-slate-800 h-9 w-9"
+                          title="Поделиться приглашением"
+                        >
+                          <Icon name={copiedRoomId === room.id ? 'Check' : 'Share2'} size={16} />
+                        </Button>
+                      )}
+                      {isOwner && (
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          onClick={() => setRoomToDelete(room)}
+                          className="border-slate-700 text-red-400 hover:bg-red-500/10 hover:text-red-400 h-9 w-9"
+                          title="Удалить комнату"
+                        >
+                          <Icon name="Trash2" size={16} />
+                        </Button>
+                      )}
+                      <Button size="sm" onClick={() => handleJoinRoom(room.id)} className="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200">
+                        Войти
+                      </Button>
+                    </div>
                   </div>
-                  <Button size="sm" onClick={() => handleJoinRoom(room.id)} className="bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200">
-                    Войти
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={!!roomToDelete}
+        title="Удалить комнату?"
+        description={roomToDelete ? `Комната «${roomToDelete.room_name}» будет удалена без возможности восстановления.` : undefined}
+        confirmLabel={isDeleting ? 'Удаление...' : 'Удалить'}
+        cancelLabel="Отмена"
+        onConfirm={handleDeleteRoom}
+        onCancel={() => setRoomToDelete(null)}
+      />
     </GameLayout>
   );
 }

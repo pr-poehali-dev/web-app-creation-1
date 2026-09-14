@@ -139,7 +139,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
 
                 query = f"""SELECT r.id, r.game_type, r.room_name, r.status, r.max_players,
-                                  r.is_private, r.created_at, u.nickname as created_by_nickname,
+                                  r.is_private, r.created_at, r.created_by, r.invite_code,
+                                  u.nickname as created_by_nickname,
                                   (SELECT COUNT(*) FROM {DB_SCHEMA}.game_room_players WHERE room_id = r.id) as players_count
                            FROM {DB_SCHEMA}.game_rooms r
                            JOIN {DB_SCHEMA}.game_users u ON u.id = r.created_by
@@ -274,6 +275,39 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'statusCode': 200,
                         'headers': cors_headers(),
                         'body': json.dumps({'success': True, 'room_id': room['id']}),
+                        'isBase64Encoded': False
+                    }
+            finally:
+                conn.close()
+
+        elif action == 'delete':
+            room_id = body.get('room_id')
+            if not room_id:
+                return error_response(400, 'room_id обязателен')
+
+            conn = get_db_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(f"SELECT * FROM {DB_SCHEMA}.game_rooms WHERE id = %s", (room_id,))
+                    room = cur.fetchone()
+
+                    if not room:
+                        return error_response(404, 'Комната не найдена')
+                    if room['created_by'] != user['id']:
+                        return error_response(403, 'Удалить комнату может только её создатель')
+                    if room['status'] != 'waiting':
+                        return error_response(400, 'Нельзя удалить комнату с начатой игрой')
+
+                    cur.execute(f"DELETE FROM {DB_SCHEMA}.game_chat_messages WHERE room_id = %s", (room_id,))
+                    cur.execute(f"DELETE FROM {DB_SCHEMA}.game_moves WHERE room_id = %s", (room_id,))
+                    cur.execute(f"DELETE FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s", (room_id,))
+                    cur.execute(f"DELETE FROM {DB_SCHEMA}.game_rooms WHERE id = %s", (room_id,))
+                    conn.commit()
+
+                    return {
+                        'statusCode': 200,
+                        'headers': cors_headers(),
+                        'body': json.dumps({'success': True}),
                         'isBase64Encoded': False
                     }
             finally:

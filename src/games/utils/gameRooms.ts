@@ -14,7 +14,9 @@ export interface GameRoomListItem {
   max_players: number;
   is_private: boolean;
   created_at: string;
+  created_by: number;
   created_by_nickname: string;
+  invite_code: string | null;
   players_count: number;
 }
 
@@ -90,4 +92,14 @@ export const joinGameRoom = async (roomId?: number, inviteCode?: string): Promis
   const data = await response.json();
   if (!response.ok || !data.success) throw new Error(data.error || 'Не удалось присоединиться к комнате');
   return data;
+};
+
+export const deleteGameRoom = async (roomId: number): Promise<void> => {
+  const response = await fetch(GAME_ROOMS_API, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ action: 'delete', room_id: roomId }),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) throw new Error(data.error || 'Не удалось удалить комнату');
 };
