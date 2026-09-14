@@ -81,6 +81,23 @@ def error_response(status: int, message: str) -> Dict[str, Any]:
     }
 
 
+def _sanitize_poker_state(state: Dict[str, Any], viewer_user_id: int) -> Dict[str, Any]:
+    """Скрывает карманные карты чужих игроков от текущего зрителя.
+    Свои карты видны всегда; чужие — только на шоудауне (last_result уже содержит открытые карты)."""
+    sanitized = dict(state)
+    players = sanitized.get('players')
+    if isinstance(players, dict):
+        new_players = {}
+        for uid_str, pdata in players.items():
+            pdata = dict(pdata)
+            if uid_str != str(viewer_user_id):
+                pdata.pop('hole_cards', None)
+            new_players[uid_str] = pdata
+        sanitized['players'] = new_players
+    sanitized.pop('deck', None)
+    return sanitized
+
+
 def initial_state_for(game_type: str) -> Dict[str, Any]:
     if game_type == 'chess':
         return CHESS_INITIAL_STATE
@@ -131,6 +148,10 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                     room_data = dict(room)
                     room_data['players'] = [dict(p) for p in players]
+
+                    if room_data['game_type'] == 'poker' and room_data.get('state'):
+                        room_data['state'] = _sanitize_poker_state(room_data['state'], user['id'])
+
                     return {
                         'statusCode': 200,
                         'headers': cors_headers(),
@@ -264,7 +285,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     )
 
                     new_count = count + 1
-                    if new_count >= 2:
+                    # Покер собирает до 8 игроков — не запускаем автоматически при 2,
+                    # ждём явного старта стола создателем (action 'start_table').
+                    if new_count >= 2 and room['game_type'] != 'poker':
                         cur.execute(
                             f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'playing', current_turn_user_id = created_by, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
                             (room['id'],)
@@ -275,6 +298,49 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'statusCode': 200,
                         'headers': cors_headers(),
                         'body': json.dumps({'success': True, 'room_id': room['id']}),
+                        'isBase64Encoded': False
+                    }
+            finally:
+                conn.close()
+
+        elif action == 'start_table':
+            room_id = body.get('room_id')
+            if not room_id:
+                return error_response(400, 'room_id обязателен')
+
+            conn = get_db_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(f"SELECT * FROM {DB_SCHEMA}.game_rooms WHERE id = %s", (room_id,))
+                    room = cur.fetchone()
+
+                    if not room:
+                        return error_response(404, 'Комната не найдена')
+                    if room['game_type'] != 'poker':
+                        return error_response(400, 'Эта команда только для покера')
+                    if room['created_by'] != user['id']:
+                        return error_response(403, 'Начать стол может только создатель комнаты')
+                    if room['status'] != 'waiting':
+                        return error_response(400, 'Стол уже запущен')
+
+                    cur.execute(
+                        f"SELECT COUNT(*) as cnt FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s",
+                        (room_id,)
+                    )
+                    count = cur.fetchone()['cnt']
+                    if count < 2:
+                        return error_response(400, 'Нужно минимум 2 игрока для начала')
+
+                    cur.execute(
+                        f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'playing', updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                        (room_id,)
+                    )
+                    conn.commit()
+
+                    return {
+                        'statusCode': 200,
+                        'headers': cors_headers(),
+                        'body': json.dumps({'success': True}),
                         'isBase64Encoded': False
                     }
             finally:
@@ -295,8 +361,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         return error_response(404, 'Комната не найдена')
                     if room['created_by'] != user['id']:
                         return error_response(403, 'Удалить комнату может только её создатель')
-                    if room['status'] != 'waiting':
-                        return error_response(400, 'Нельзя удалить комнату с начатой игрой')
+                    if room['status'] == 'playing':
+                        return error_response(400, 'Нельзя удалить комнату во время игры')
 
                     cur.execute(f"DELETE FROM {DB_SCHEMA}.game_chat_messages WHERE room_id = %s", (room_id,))
                     cur.execute(f"DELETE FROM {DB_SCHEMA}.game_moves WHERE room_id = %s", (room_id,))
@@ -308,6 +374,56 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'statusCode': 200,
                         'headers': cors_headers(),
                         'body': json.dumps({'success': True}),
+                        'isBase64Encoded': False
+                    }
+            finally:
+                conn.close()
+
+        elif action == 'leave':
+            room_id = body.get('room_id')
+            if not room_id:
+                return error_response(400, 'room_id обязателен')
+
+            conn = get_db_connection()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(f"SELECT * FROM {DB_SCHEMA}.game_rooms WHERE id = %s", (room_id,))
+                    room = cur.fetchone()
+
+                    if not room:
+                        return error_response(404, 'Комната не найдена')
+                    if room['status'] == 'playing':
+                        return error_response(400, 'Нельзя покинуть комнату во время игры')
+
+                    cur.execute(
+                        f"SELECT id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
+                        (room_id, user['id'])
+                    )
+                    if not cur.fetchone():
+                        return error_response(403, 'Вы не участник этой комнаты')
+
+                    cur.execute(
+                        f"DELETE FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
+                        (room_id, user['id'])
+                    )
+
+                    cur.execute(
+                        f"SELECT COUNT(*) as cnt FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s",
+                        (room_id,)
+                    )
+                    remaining = cur.fetchone()['cnt']
+
+                    if remaining == 0:
+                        cur.execute(f"DELETE FROM {DB_SCHEMA}.game_chat_messages WHERE room_id = %s", (room_id,))
+                        cur.execute(f"DELETE FROM {DB_SCHEMA}.game_moves WHERE room_id = %s", (room_id,))
+                        cur.execute(f"DELETE FROM {DB_SCHEMA}.game_rooms WHERE id = %s", (room_id,))
+
+                    conn.commit()
+
+                    return {
+                        'statusCode': 200,
+                        'headers': cors_headers(),
+                        'body': json.dumps({'success': True, 'room_deleted': remaining == 0}),
                         'isBase64Encoded': False
                     }
             finally:

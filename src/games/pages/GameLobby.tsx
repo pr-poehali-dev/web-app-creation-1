@@ -12,7 +12,7 @@ import { listGameRooms, createGameRoom, joinGameRoom, deleteGameRoom, GameRoomLi
 const GAME_INFO: Record<GameType, { title: string; icon: string; description: string; color: string; available: boolean }> = {
   chess: { title: 'Шахматы', icon: 'Crown', description: 'Классическая игра для двоих', color: 'from-blue-500 to-indigo-600', available: true },
   checkers: { title: 'Шашки', icon: 'Circle', description: 'Классическая игра для двоих', color: 'from-emerald-500 to-teal-600', available: true },
-  poker: { title: 'Покер', icon: 'Spade', description: 'Скоро будет доступно', color: 'from-red-500 to-rose-600', available: false },
+  poker: { title: 'Покер', icon: 'Spade', description: 'Техасский холдем до 8 игроков', color: 'from-red-500 to-rose-600', available: true },
 };
 
 export default function GameLobby() {
@@ -194,6 +194,10 @@ export default function GameLobby() {
                     className="flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-xl p-4 hover:border-amber-500/30 transition-colors gap-3"
                   >
                     <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <Icon name={GAME_INFO[room.game_type].icon} size={14} className="text-amber-400 shrink-0" />
+                        <span className="text-xs font-medium text-amber-400">{GAME_INFO[room.game_type].title}</span>
+                      </div>
                       <p className="font-semibold text-slate-100 truncate">{room.room_name}</p>
                       <p className="text-xs text-slate-500">
                         Создал {room.created_by_nickname} · {room.players_count}/{room.max_players} игроков

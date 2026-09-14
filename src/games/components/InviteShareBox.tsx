@@ -10,12 +10,14 @@ interface InviteShareBoxProps {
   user: GameUser;
 }
 
-// Ссылка-приглашение видна только создателю комнаты, пока идёт ожидание соперника.
+// Ссылка-приглашение видна ВСЕМ игрокам комнаты (не только создателю), пока комната
+// ждёт остальных участников — это удобно и для дуэльных игр, и для покера на 8 мест.
 export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  if (room.created_by !== user.id || room.status !== 'waiting' || !room.invite_code) return null;
+  const isMember = room.players.some((p) => p.user_id === user.id);
+  if (!isMember || room.status !== 'waiting' || !room.invite_code) return null;
 
   const inviteUrl = `${window.location.origin}/games/invite/${room.invite_code}`;
 

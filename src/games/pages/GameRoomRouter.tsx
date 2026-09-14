@@ -6,8 +6,9 @@ import { getGameSession } from '../utils/gameAuth';
 import { getGameRoom, GameType } from '../utils/gameRooms';
 import ChessGame from './ChessGame';
 import CheckersGame from './CheckersGame';
+import PokerGame from './PokerGame';
 
-// Комната может быть шахматной или шашечной — сначала узнаём тип игры,
+// Комната может быть шахматной, шашечной или покерной — сначала узнаём тип игры,
 // затем рендерим нужную доску. Дочерние компоненты сами читают :roomId через useParams.
 export default function GameRoomRouter() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -59,5 +60,6 @@ export default function GameRoomRouter() {
   }
 
   if (gameType === 'checkers') return <CheckersGame />;
+  if (gameType === 'poker') return <PokerGame />;
   return <ChessGame />;
 }

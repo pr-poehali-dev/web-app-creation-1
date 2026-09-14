@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import InviteShareBox from '../components/InviteShareBox';
+import LeaveRoomButton from '../components/LeaveRoomButton';
 import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail } from '../utils/gameRooms';
 import { sendChessMove } from '../utils/gameChess';
@@ -177,8 +178,11 @@ export default function ChessGame() {
                 </div>
               )}
               {room.status === 'finished' && (
-                <div className="px-3 py-1.5 rounded-full text-sm font-semibold bg-emerald-600 text-white">
-                  {room.winner_id === user.id ? 'Вы победили!' : room.winner_id ? 'Вы проиграли' : 'Ничья'}
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-1.5 rounded-full text-sm font-semibold bg-emerald-600 text-white">
+                    {room.winner_id === user.id ? 'Вы победили!' : room.winner_id ? 'Вы проиграли' : 'Ничья'}
+                  </div>
+                  <LeaveRoomButton roomId={numericRoomId} />
                 </div>
               )}
             </div>

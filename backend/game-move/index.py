@@ -462,6 +462,433 @@ def handle_chess_move(cur, conn, room, user, body):
 
 
 # ──────────────────────────────────────────────────────────────────────────
+# Покер: Техасский Холдем на несколько игроков (до 8), с раздачей карт,
+# кругами торгов (fold/check/call/raise), side-пoтами и определением победителя
+# по комбинации из 7 карт (2 карманные + 5 общих).
+# ──────────────────────────────────────────────────────────────────────────
+
+import random as _random
+from itertools import combinations as _combinations
+from collections import Counter as _Counter
+
+POKER_RANKS = '23456789TJQKA'
+POKER_SUITS = 'SHDC'
+SMALL_BLIND = 10
+BIG_BLIND = 20
+
+
+def poker_new_deck() -> List[str]:
+    deck = [r + s for r in POKER_RANKS for s in POKER_SUITS]
+    _random.shuffle(deck)
+    return deck
+
+
+def poker_card_rank(card: str) -> int:
+    return POKER_RANKS.index(card[0]) + 2
+
+
+def poker_evaluate_5(cards: List[str]):
+    ranks = sorted([poker_card_rank(c) for c in cards], reverse=True)
+    suits = [c[1] for c in cards]
+    is_flush = len(set(suits)) == 1
+    unique_ranks = sorted(set(ranks), reverse=True)
+    is_straight = False
+    straight_high = None
+    if len(unique_ranks) == 5:
+        if unique_ranks[0] - unique_ranks[4] == 4:
+            is_straight = True
+            straight_high = unique_ranks[0]
+        elif unique_ranks == [14, 5, 4, 3, 2]:
+            is_straight = True
+            straight_high = 5
+    counts = _Counter(ranks)
+    groups = sorted(counts.items(), key=lambda x: (-x[1], -x[0]))
+    count_pattern = [g[1] for g in groups]
+    group_ranks = [g[0] for g in groups]
+    if is_straight and is_flush:
+        return (8, straight_high)
+    if count_pattern[0] == 4:
+        return (7, group_ranks[0], group_ranks[1])
+    if count_pattern[0] == 3 and count_pattern[1] == 2:
+        return (6, group_ranks[0], group_ranks[1])
+    if is_flush:
+        return (5,) + tuple(ranks)
+    if is_straight:
+        return (4, straight_high)
+    if count_pattern[0] == 3:
+        return (3, group_ranks[0]) + tuple(group_ranks[1:])
+    if count_pattern[0] == 2 and count_pattern[1] == 2:
+        return (2, group_ranks[0], group_ranks[1], group_ranks[2])
+    if count_pattern[0] == 2:
+        return (1, group_ranks[0]) + tuple(group_ranks[1:])
+    return (0,) + tuple(ranks)
+
+
+def poker_evaluate_7(cards7: List[str]):
+    best = None
+    for combo in _combinations(cards7, 5):
+        score = poker_evaluate_5(list(combo))
+        if best is None or score > best:
+            best = score
+    return best
+
+
+POKER_HAND_NAMES = {
+    8: 'Стрит-флеш', 7: 'Каре', 6: 'Фулл-хаус', 5: 'Флеш',
+    4: 'Стрит', 3: 'Сет', 2: 'Две пары', 1: 'Пара', 0: 'Старшая карта'
+}
+
+
+def poker_hand_name(score) -> str:
+    return POKER_HAND_NAMES[score[0]]
+
+
+def poker_compute_pots(contributions: Dict[str, int], folded_set) -> List[Tuple[int, List[str]]]:
+    levels = sorted(set(v for v in contributions.values() if v > 0))
+    pots = []
+    prev = 0
+    for level in levels:
+        amount = 0
+        eligible = []
+        for uid, contrib in contributions.items():
+            if contrib > prev:
+                amount += min(contrib, level) - prev
+            if contrib >= level and uid not in folded_set:
+                eligible.append(uid)
+        if amount > 0:
+            pots.append((amount, eligible))
+        prev = level
+    return pots
+
+
+def poker_settle_pots(pots, hole_cards, community_cards, seat_order) -> Tuple[Dict[str, int], Dict[str, Any]]:
+    winnings: Dict[str, int] = {}
+    hand_info: Dict[str, Any] = {}
+    for amount, eligible in pots:
+        if len(eligible) == 1:
+            winnings[eligible[0]] = winnings.get(eligible[0], 0) + amount
+            continue
+        scores = {}
+        for uid in eligible:
+            score = poker_evaluate_7(hole_cards[uid] + community_cards)
+            scores[uid] = score
+            hand_info[uid] = poker_hand_name(score)
+        best_score = max(scores.values())
+        winners = [uid for uid, s in scores.items() if s == best_score]
+        share = amount // len(winners)
+        remainder = amount - share * len(winners)
+        winners_sorted = sorted(winners, key=lambda u: seat_order.index(u))
+        for i, uid in enumerate(winners_sorted):
+            winnings[uid] = winnings.get(uid, 0) + share + (1 if i < remainder else 0)
+    return winnings, hand_info
+
+
+def poker_next_active_seat(seat_order: List[str], current: str, players: Dict[str, Any]) -> Optional[str]:
+    n = len(seat_order)
+    idx = seat_order.index(current)
+    for i in range(1, n + 1):
+        cand = seat_order[(idx + i) % n]
+        p = players[cand]
+        if not p['folded'] and not p['all_in']:
+            return cand
+    return None
+
+
+def poker_round_complete(seat_order: List[str], players: Dict[str, Any], current_bet: int) -> bool:
+    active = [u for u in seat_order if not players[u]['folded'] and not players[u]['all_in']]
+    if len(active) <= 1:
+        return True
+    return all(players[u]['has_acted'] and players[u]['bet_this_round'] == current_bet for u in active)
+
+
+def poker_get_seat_order(cur, room_id) -> List[str]:
+    cur.execute(
+        "SELECT user_id FROM " + DB_SCHEMA + ".game_room_players WHERE room_id = %s ORDER BY seat_index",
+        (room_id,)
+    )
+    return [str(r['user_id']) for r in cur.fetchall()]
+
+
+def poker_start_hand(cur, room_id: int, seat_order: List[str], chips: Dict[str, int], dealer_seat_index: int) -> Dict[str, Any]:
+    deck = poker_new_deck()
+    players: Dict[str, Any] = {}
+    for uid in seat_order:
+        players[uid] = {
+            'hole_cards': [deck.pop(), deck.pop()],
+            'bet_this_round': 0,
+            'total_bet_this_hand': 0,
+            'folded': False,
+            'all_in': chips[uid] <= 0,
+            'has_acted': False,
+        }
+
+    n = len(seat_order)
+    sb_seat = (dealer_seat_index + 1) % n if n > 2 else dealer_seat_index
+    bb_seat = (dealer_seat_index + 2) % n if n > 2 else (dealer_seat_index + 1) % n
+    sb_uid = seat_order[sb_seat]
+    bb_uid = seat_order[bb_seat]
+
+    def post_blind(uid: str, amount: int):
+        pay = min(amount, chips[uid])
+        chips[uid] -= pay
+        players[uid]['bet_this_round'] += pay
+        players[uid]['total_bet_this_hand'] += pay
+        if chips[uid] == 0:
+            players[uid]['all_in'] = True
+
+    post_blind(sb_uid, SMALL_BLIND)
+    post_blind(bb_uid, BIG_BLIND)
+
+    current_bet = BIG_BLIND
+    first_to_act = seat_order[(bb_seat + 1) % n]
+    # Если после блайндов первый по очереди уже all-in/сфолдил (у 2 игроков), находим следующего
+    if players[first_to_act]['all_in'] or players[first_to_act]['folded']:
+        nxt = poker_next_active_seat(seat_order, first_to_act, players)
+        if nxt:
+            first_to_act = nxt
+
+    return {
+        'hand_number': 1,
+        'deck': deck,
+        'community_cards': [],
+        'stage': 'preflop',
+        'pot': sum(p['total_bet_this_hand'] for p in players.values()),
+        'dealer_seat_index': dealer_seat_index,
+        'current_bet': current_bet,
+        'players': players,
+        'last_result': None,
+    }, first_to_act
+
+
+def poker_advance_stage(state: Dict[str, Any]) -> None:
+    active_count = sum(1 for p in state['players'].values() if not p['folded'])
+    if active_count <= 1:
+        state['stage'] = 'showdown'
+        return
+    if state['stage'] == 'preflop':
+        state['deck'].pop()  # burn card
+        state['community_cards'] = [state['deck'].pop() for _ in range(3)]
+        state['stage'] = 'flop'
+    elif state['stage'] == 'flop':
+        state['deck'].pop()
+        state['community_cards'].append(state['deck'].pop())
+        state['stage'] = 'turn'
+    elif state['stage'] == 'turn':
+        state['deck'].pop()
+        state['community_cards'].append(state['deck'].pop())
+        state['stage'] = 'river'
+    elif state['stage'] == 'river':
+        state['stage'] = 'showdown'
+        return
+    state['current_bet'] = 0
+    for p in state['players'].values():
+        p['bet_this_round'] = 0
+        if not p['folded'] and not p['all_in']:
+            p['has_acted'] = False
+
+
+def poker_finish_hand(cur, room, state: Dict[str, Any], seat_order: List[str], chips: Dict[str, int]):
+    contributions = {uid: state['players'][uid]['total_bet_this_hand'] for uid in seat_order}
+    folded = {uid for uid in seat_order if state['players'][uid]['folded']}
+    pots = poker_compute_pots(contributions, folded)
+    hole_cards = {uid: state['players'][uid]['hole_cards'] for uid in seat_order}
+
+    # Если карты ещё не полностью открыты (все, кроме одного, сфолдили до ривера) —
+    # достаём общие карты для отображения, но эвалюатор в этом случае не нужен для одного eligible.
+    community = state['community_cards']
+
+    winnings, hand_info = poker_settle_pots(pots, hole_cards, community, seat_order)
+    for uid, amount in winnings.items():
+        chips[uid] += amount
+
+    for uid in seat_order:
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_room_players SET chips = %s WHERE room_id = %s AND user_id = %s",
+            (chips[uid], room['id'], uid)
+        )
+
+    state['last_result'] = {
+        'winnings': winnings,
+        'hands': hand_info,
+        'community_cards': community,
+        'hole_cards': hole_cards,
+    }
+    state['stage'] = 'showdown'
+
+    remaining_players = [uid for uid in seat_order if chips[uid] > 0]
+    game_over = len(remaining_players) <= 1
+    winner_id = int(remaining_players[0]) if game_over and remaining_players else None
+    return game_over, winner_id
+
+
+def handle_poker_action(cur, conn, room, user, body):
+    room_id = room['id']
+    action = body.get('action')
+    if action not in ('start_hand', 'fold', 'check', 'call', 'raise'):
+        return error_response(400, 'Неизвестное покерное действие')
+
+    cur.execute(
+        "SELECT user_id, chips, seat_index FROM " + DB_SCHEMA + ".game_room_players WHERE room_id = %s ORDER BY seat_index",
+        (room_id,)
+    )
+    player_rows = cur.fetchall()
+    seat_order = [str(r['user_id']) for r in player_rows]
+    chips = {str(r['user_id']): (r['chips'] or 0) for r in player_rows}
+    my_uid = str(user['id'])
+
+    if my_uid not in seat_order:
+        return error_response(403, 'Вы не участник этой партии')
+
+    state = room['state'] or {}
+
+    if action == 'start_hand':
+        if room['status'] != 'playing':
+            return error_response(400, 'Игра ещё не началась')
+        if state.get('stage') not in (None, 'showdown', 'waiting'):
+            return error_response(400, 'Раздача уже идёт')
+        if len([uid for uid in seat_order if chips[uid] > 0]) < 2:
+            return error_response(400, 'Недостаточно игроков с фишками для новой раздачи')
+
+        prev_dealer = state.get('dealer_seat_index', -1)
+        dealer_seat_index = (prev_dealer + 1) % len(seat_order)
+        # пропускаем игроков без фишек при назначении дилера
+        attempts = 0
+        while chips[seat_order[dealer_seat_index]] <= 0 and attempts < len(seat_order):
+            dealer_seat_index = (dealer_seat_index + 1) % len(seat_order)
+            attempts += 1
+
+        new_state, first_to_act = poker_start_hand(cur, room_id, seat_order, chips, dealer_seat_index)
+        new_state['hand_number'] = state.get('hand_number', 0) + 1
+
+        for uid in seat_order:
+            cur.execute(
+                "UPDATE " + DB_SCHEMA + ".game_room_players SET chips = %s WHERE room_id = %s AND user_id = %s",
+                (chips[uid], room_id, uid)
+            )
+
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, current_turn_user_id = %s, "
+            "updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+            (json.dumps(new_state), int(first_to_act), room_id)
+        )
+        conn.commit()
+        return {
+            'statusCode': 200,
+            'headers': cors_headers(),
+            'body': json.dumps({'success': True, 'stage': new_state['stage']}),
+            'isBase64Encoded': False
+        }
+
+    # Ходовые действия (fold/check/call/raise) — требуют активной раздачи и своей очереди
+    if state.get('stage') not in ('preflop', 'flop', 'turn', 'river'):
+        return error_response(400, 'Сейчас нет активного круга торгов')
+    if room['current_turn_user_id'] != user['id']:
+        return error_response(400, 'Сейчас не ваш ход')
+
+    players_state = state['players']
+    p = players_state.get(my_uid)
+    if not p or p['folded'] or p['all_in']:
+        return error_response(400, 'Вы не можете сейчас действовать')
+
+    if action == 'fold':
+        p['folded'] = True
+        p['has_acted'] = True
+    elif action == 'check':
+        if p['bet_this_round'] != state['current_bet']:
+            return error_response(400, 'Нельзя чекать — есть неуравненная ставка')
+        p['has_acted'] = True
+    elif action == 'call':
+        to_call = state['current_bet'] - p['bet_this_round']
+        if to_call <= 0:
+            return error_response(400, 'Нечего коллировать, используйте чек')
+        pay = min(to_call, chips[my_uid])
+        chips[my_uid] -= pay
+        p['bet_this_round'] += pay
+        p['total_bet_this_hand'] += pay
+        if chips[my_uid] == 0:
+            p['all_in'] = True
+        p['has_acted'] = True
+    elif action == 'raise':
+        amount = body.get('amount')
+        if not isinstance(amount, (int, float)) or amount <= state['current_bet']:
+            return error_response(400, 'Сумма рейза должна быть больше текущей ставки')
+        amount = int(amount)
+        pay = amount - p['bet_this_round']
+        if pay > chips[my_uid]:
+            return error_response(400, 'Недостаточно фишек для такого рейза')
+        chips[my_uid] -= pay
+        p['bet_this_round'] += pay
+        p['total_bet_this_hand'] += pay
+        state['current_bet'] = max(state['current_bet'], p['bet_this_round'])
+        if chips[my_uid] == 0:
+            p['all_in'] = True
+        p['has_acted'] = True
+        for other_uid in seat_order:
+            if other_uid != my_uid and not players_state[other_uid]['folded'] and not players_state[other_uid]['all_in']:
+                players_state[other_uid]['has_acted'] = False
+
+    cur.execute(
+        "UPDATE " + DB_SCHEMA + ".game_room_players SET chips = %s WHERE room_id = %s AND user_id = %s",
+        (chips[my_uid], room_id, my_uid)
+    )
+
+    state['pot'] = sum(pl['total_bet_this_hand'] for pl in players_state.values())
+
+    game_over = False
+    winner_id = None
+    next_turn_user_id = None
+
+    if poker_round_complete(seat_order, players_state, state['current_bet']):
+        active_count = sum(1 for pl in players_state.values() if not pl['folded'])
+        if active_count <= 1 or state['stage'] == 'river':
+            game_over_hand, showdown_winner = poker_finish_hand(cur, room, state, seat_order, chips)
+            game_over = game_over_hand
+            winner_id = showdown_winner
+            next_turn_user_id = None
+        else:
+            poker_advance_stage(state)
+            first_uid = poker_next_active_seat(seat_order, seat_order[state['dealer_seat_index']], players_state)
+            next_turn_user_id = int(first_uid) if first_uid else None
+    else:
+        nxt = poker_next_active_seat(seat_order, my_uid, players_state)
+        next_turn_user_id = int(nxt) if nxt else None
+
+    new_status = 'finished' if game_over else 'playing'
+
+    cur.execute(
+        "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = %s, winner_id = %s, "
+        "current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+        (json.dumps(state), new_status, winner_id, next_turn_user_id, room_id)
+    )
+
+    if winner_id:
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_users SET games_played = games_played + 1, "
+            "games_won = games_won + 1 WHERE id = %s",
+            (winner_id,)
+        )
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_users SET games_played = games_played + 1 "
+            "WHERE id IN (SELECT user_id FROM " + DB_SCHEMA + ".game_room_players WHERE room_id = %s AND user_id != %s)",
+            (room_id, winner_id)
+        )
+
+    conn.commit()
+
+    return {
+        'statusCode': 200,
+        'headers': cors_headers(),
+        'body': json.dumps({
+            'success': True,
+            'stage': state['stage'],
+            'status': new_status,
+            'winner_id': winner_id
+        }),
+        'isBase64Encoded': False
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────────
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method = event.get('httpMethod', 'GET')
@@ -498,6 +925,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result = handle_chess_move(cur, conn, room, user, body)
         elif room['game_type'] == 'checkers':
             result = handle_checkers_move(cur, conn, room, user, body)
+        elif room['game_type'] == 'poker':
+            result = handle_poker_action(cur, conn, room, user, body)
         else:
             result = error_response(400, 'Неизвестный тип игры для этой комнаты')
 

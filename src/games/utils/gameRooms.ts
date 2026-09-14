@@ -103,3 +103,25 @@ export const deleteGameRoom = async (roomId: number): Promise<void> => {
   const data = await response.json();
   if (!response.ok || !data.success) throw new Error(data.error || 'Не удалось удалить комнату');
 };
+
+export const leaveGameRoom = async (roomId: number): Promise<void> => {
+  const response = await fetch(GAME_ROOMS_API, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ action: 'leave', room_id: roomId }),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) throw new Error(data.error || 'Не удалось покинуть комнату');
+};
+
+// Покерный стол собирает игроков (до 8) в статусе 'waiting' — создатель явно
+// запускает игру, когда набралось достаточно участников.
+export const startPokerTable = async (roomId: number): Promise<void> => {
+  const response = await fetch(GAME_ROOMS_API, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ action: 'start_table', room_id: roomId }),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) throw new Error(data.error || 'Не удалось начать игру');
+};
