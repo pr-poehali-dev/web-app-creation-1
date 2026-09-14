@@ -1,8 +1,10 @@
 // Отправка хода в шахматную партию на сервер для проверки и сохранения.
+// Использует общую для всех настольных игр функцию game-move (объединена с шашками,
+// чтобы уложиться в лимит backend-функций) — тип игры сервер определяет по комнате.
 import func2url from '../../../backend/func2url.json';
 import { getGameToken } from './gameAuth';
 
-const GAME_CHESS_API = (func2url as Record<string, string>)['game-chess'] || '';
+const GAME_MOVE_API = (func2url as Record<string, string>)['game-move'] || '';
 
 export interface MoveResult {
   success: boolean;
@@ -18,7 +20,7 @@ export interface MoveResult {
 
 export const sendChessMove = async (roomId: number, moveUci: string): Promise<MoveResult> => {
   const token = getGameToken();
-  const response = await fetch(GAME_CHESS_API, {
+  const response = await fetch(GAME_MOVE_API, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

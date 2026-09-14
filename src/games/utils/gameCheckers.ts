@@ -1,9 +1,11 @@
 // Отправка хода в шашечную партию на сервер для проверки и сохранения.
+// Использует общую для всех настольных игр функцию game-move (объединена с шахматами,
+// чтобы уложиться в лимит backend-функций) — тип игры сервер определяет по комнате.
 import func2url from '../../../backend/func2url.json';
 import { getGameToken } from './gameAuth';
 import { CBoard } from './checkersEngine';
 
-const GAME_CHECKERS_API = (func2url as Record<string, string>)['game-checkers'] || '';
+const GAME_MOVE_API = (func2url as Record<string, string>)['game-move'] || '';
 
 export interface CheckersMoveResult {
   success: boolean;
@@ -21,7 +23,7 @@ export const sendCheckersMove = async (
   to: [number, number]
 ): Promise<CheckersMoveResult> => {
   const token = getGameToken();
-  const response = await fetch(GAME_CHECKERS_API, {
+  const response = await fetch(GAME_MOVE_API, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

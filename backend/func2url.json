@@ -1,7 +1,7 @@
 {
+  "game-move": "https://functions.poehali.dev/051d59b4-31bf-4b21-8b85-e88ff84e1c92",
   "game-chat": "https://functions.poehali.dev/79ebb51f-b9b9-4e0c-b572-5468c20bc9f4",
   "auctions": "https://functions.poehali.dev/c17b9e82-b55f-47f3-a4ca-f79b7bef466f",
-  "game-chess": "https://functions.poehali.dev/541788e3-7191-4e41-b9d3-26f3cea2df8b",
   "game-auth": "https://functions.poehali.dev/d0957ecb-5af9-4a55-b842-c3d7c654d558",
   "game-rooms": "https://functions.poehali.dev/f196fe97-2e3c-480e-85e8-9cec5ee9d095",
   "tbank-webhook": "https://functions.poehali.dev/48623d77-3c76-4711-99a9-3223aae78b96",
