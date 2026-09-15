@@ -76,7 +76,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"""SELECT c.id, c.user_id, c.message, c.created_at, u.nickname, u.avatar_emoji
+                    f"""SELECT c.id, c.user_id, c.message, c.created_at, c.is_system, u.nickname, u.avatar_emoji
                        FROM {DB_SCHEMA}.game_chat_messages c
                        JOIN {DB_SCHEMA}.game_users u ON u.id = c.user_id
                        WHERE c.room_id = %s

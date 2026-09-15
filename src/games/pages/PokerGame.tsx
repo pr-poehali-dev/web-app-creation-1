@@ -330,18 +330,27 @@ export default function PokerGame() {
               {chatMessages.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center mt-4">Пока нет сообщений</p>
               ) : (
-                chatMessages.map((msg) => (
-                  <div key={msg.id} className={`flex flex-col ${msg.user_id === user.id ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] text-slate-500">{msg.nickname}</span>
-                    <div
-                      className={`max-w-[85%] rounded-lg px-3 py-1.5 text-sm ${
-                        msg.user_id === user.id ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-200'
-                      }`}
-                    >
-                      {msg.message}
+                chatMessages.map((msg) =>
+                  msg.is_system ? (
+                    <div key={msg.id} className="flex justify-center">
+                      <div className="max-w-[95%] rounded-lg px-3 py-1.5 text-xs text-center bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1.5">
+                        <Icon name="Sparkles" size={12} className="shrink-0" />
+                        {msg.message}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ) : (
+                    <div key={msg.id} className={`flex flex-col ${msg.user_id === user.id ? 'items-end' : 'items-start'}`}>
+                      <span className="text-[10px] text-slate-500">{msg.nickname}</span>
+                      <div
+                        className={`max-w-[85%] rounded-lg px-3 py-1.5 text-sm ${
+                          msg.user_id === user.id ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-200'
+                        }`}
+                      >
+                        {msg.message}
+                      </div>
+                    </div>
+                  )
+                )
               )}
             </div>
             <div className="p-3 border-t border-slate-800 flex gap-2">

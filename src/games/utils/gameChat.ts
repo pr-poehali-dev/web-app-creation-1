@@ -11,6 +11,7 @@ export interface ChatMessage {
   created_at: string;
   nickname: string;
   avatar_emoji: string;
+  is_system?: boolean;
 }
 
 function authHeaders(): HeadersInit {

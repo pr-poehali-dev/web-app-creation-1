@@ -26,6 +26,7 @@ export default function GameLobby() {
   const [copiedRoomId, setCopiedRoomId] = useState<number | null>(null);
   const [roomToDelete, setRoomToDelete] = useState<GameRoomListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [clubLinkCopied, setClubLinkCopied] = useState(false);
 
   const loadRooms = useCallback(async () => {
     try {
@@ -98,6 +99,28 @@ export default function GameLobby() {
     }
   };
 
+  const handleShareClub = async () => {
+    const clubUrl = `${window.location.origin}/games`;
+    const prettyText = `игровой-клуб.рф — заходи, там шахматы, шашки и покер онлайн!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Игровой клуб', text: prettyText, url: clubUrl });
+        return;
+      } catch {
+        return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(clubUrl);
+      setClubLinkCopied(true);
+      toast({ title: 'Ссылка на клуб скопирована' });
+      setTimeout(() => setClubLinkCopied(false), 2000);
+    } catch {
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось скопировать ссылку' });
+    }
+  };
+
   const handleDeleteRoom = async () => {
     if (!roomToDelete) return;
     setIsDeleting(true);
@@ -117,9 +140,31 @@ export default function GameLobby() {
 
   return (
     <GameLayout user={user}>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-100 mb-1">Выберите игру</h1>
-        <p className="text-slate-400">Играйте онлайн с другими игроками в реальном времени</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-100 mb-1">Выберите игру</h1>
+          <p className="text-slate-400">Играйте онлайн с другими игроками в реальном времени</p>
+        </div>
+      </div>
+
+      <div className="mb-8 bg-gradient-to-r from-amber-500/10 to-purple-500/10 border border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shrink-0">
+            <Icon name="Spade" size={20} className="text-slate-950" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-slate-100">Позови друзей в игровой клуб</p>
+            <p className="text-xs text-slate-400 truncate">игровой-клуб.рф — общая ссылка на выбор игры и все комнаты</p>
+          </div>
+        </div>
+        <Button
+          onClick={handleShareClub}
+          size="sm"
+          className="bg-gradient-to-r from-amber-400 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-bold shrink-0"
+        >
+          <Icon name={clubLinkCopied ? 'Check' : 'Share2'} size={16} className="mr-1.5" />
+          Поделиться клубом
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

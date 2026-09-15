@@ -715,10 +715,43 @@ def poker_finish_hand(cur, room, state: Dict[str, Any], seat_order: List[str], c
     }
     state['stage'] = 'showdown'
 
+    poker_post_hand_summary(cur, room, seat_order, winnings, hand_info, folded)
+
     remaining_players = [uid for uid in seat_order if chips[uid] > 0]
     game_over = len(remaining_players) <= 1
     winner_id = int(remaining_players[0]) if game_over and remaining_players else None
     return game_over, winner_id
+
+
+def poker_post_hand_summary(cur, room, seat_order: List[str], winnings: Dict[str, int], hand_info: Dict[str, Any], folded) -> None:
+    '''Пишет в чат комнаты системное сообщение с итогом раздачи (кто и сколько выиграл),
+    чтобы игроки видели историю партий, не открывая логи вручную.'''
+    winners = {uid: amount for uid, amount in winnings.items() if amount > 0}
+    if not winners:
+        return
+
+    cur.execute(
+        "SELECT id, nickname FROM " + DB_SCHEMA + ".game_users WHERE id = ANY(%s)",
+        ([int(uid) for uid in seat_order],)
+    )
+    nicknames = {str(r['id']): r['nickname'] for r in cur.fetchall()}
+
+    parts = []
+    for uid, amount in sorted(winners.items(), key=lambda kv: -kv[1]):
+        name = nicknames.get(uid, '?')
+        hand_name = hand_info.get(uid)
+        if hand_name:
+            parts.append(f"{name} выиграл(а) {amount} фишек ({hand_name})")
+        else:
+            parts.append(f"{name} забрал(а) банк {amount} фишек (соперники сбросили карты)")
+
+    message = 'Итог раздачи: ' + '; '.join(parts)
+    system_author_id = int(seat_order[0])
+
+    cur.execute(
+        "INSERT INTO " + DB_SCHEMA + ".game_chat_messages (room_id, user_id, message, is_system) VALUES (%s, %s, %s, TRUE)",
+        (room['id'], system_author_id, message[:500])
+    )
 
 
 def handle_poker_action(cur, conn, room, user, body):

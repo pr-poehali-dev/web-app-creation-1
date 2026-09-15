@@ -1,0 +1,1 @@
+ALTER TABLE game_chat_messages ADD COLUMN is_system BOOLEAN NOT NULL DEFAULT FALSE;
