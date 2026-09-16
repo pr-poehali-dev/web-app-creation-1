@@ -125,6 +125,29 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
+                if params.get('my_active'):
+                    # Комнаты, где пользователь участвует и партия ещё не завершена —
+                    # чтобы лобби могло предложить "вернуться в игру" после случайного выхода.
+                    cur.execute(
+                        f"""SELECT r.id, r.game_type, r.room_name, r.status, r.max_players,
+                               r.created_at, r.updated_at, r.created_by,
+                               u.nickname as created_by_nickname,
+                               (SELECT COUNT(*) FROM {DB_SCHEMA}.game_room_players WHERE room_id = r.id) as players_count
+                           FROM {DB_SCHEMA}.game_rooms r
+                           JOIN {DB_SCHEMA}.game_room_players p ON p.room_id = r.id
+                           JOIN {DB_SCHEMA}.game_users u ON u.id = r.created_by
+                           WHERE p.user_id = %s AND r.status IN ('waiting', 'playing')
+                           ORDER BY r.updated_at DESC""",
+                        (user['id'],)
+                    )
+                    active_rooms = cur.fetchall()
+                    return {
+                        'statusCode': 200,
+                        'headers': cors_headers(),
+                        'body': json.dumps([dict(r) for r in active_rooms], default=str),
+                        'isBase64Encoded': False
+                    }
+
                 if params.get('room_id'):
                     cur.execute(
                         f"""SELECT r.*, u.nickname as created_by_nickname
@@ -392,8 +415,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                     if not room:
                         return error_response(404, 'Комната не найдена')
-                    if room['status'] == 'playing':
-                        return error_response(400, 'Нельзя покинуть комнату во время игры')
 
                     cur.execute(
                         f"SELECT id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
@@ -401,6 +422,105 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     )
                     if not cur.fetchone():
                         return error_response(403, 'Вы не участник этой комнаты')
+
+                    # Партия уже идёт — выход засчитывается как поражение (форфейт),
+                    # чтобы оставшиеся игроки не зависли в ожидании вышедшего.
+                    if room['status'] == 'playing':
+                        if room['game_type'] in ('chess', 'checkers'):
+                            cur.execute(
+                                f"SELECT user_id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id != %s",
+                                (room_id, user['id'])
+                            )
+                            opponent_row = cur.fetchone()
+                            winner_id = opponent_row['user_id'] if opponent_row else None
+
+                            cur.execute(
+                                f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'finished', winner_id = %s, "
+                                f"updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                                (winner_id, room_id)
+                            )
+                            if winner_id:
+                                cur.execute(
+                                    f"UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1, "
+                                    f"games_won = games_won + 1 WHERE id = %s",
+                                    (winner_id,)
+                                )
+                            cur.execute(
+                                f"UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1 WHERE id = %s",
+                                (user['id'],)
+                            )
+                            cur.execute(
+                                f"DELETE FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
+                                (room_id, user['id'])
+                            )
+                            conn.commit()
+                            return {
+                                'statusCode': 200,
+                                'headers': cors_headers(),
+                                'body': json.dumps({'success': True, 'forfeited': True}),
+                                'isBase64Encoded': False
+                            }
+
+                        # poker: игрок встаёт из-за стола — сбрасывает текущую раздачу (если участвует)
+                        # и передаёт ход дальше, если ходить должен был именно он
+                        cur.execute(
+                            f"SELECT user_id, chips, seat_index FROM {DB_SCHEMA}.game_room_players "
+                            f"WHERE room_id = %s ORDER BY seat_index",
+                            (room_id,)
+                        )
+                        seats = cur.fetchall()
+                        state = room['state'] or {}
+                        players_state = state.get('players') if isinstance(state.get('players'), dict) else None
+                        my_uid = str(user['id'])
+
+                        if players_state and my_uid in players_state:
+                            players_state[my_uid]['folded'] = True
+                            players_state[my_uid]['has_acted'] = True
+
+                        was_my_turn = room['current_turn_user_id'] == user['id']
+
+                        cur.execute(
+                            f"DELETE FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
+                            (room_id, user['id'])
+                        )
+
+                        remaining_seats = [s for s in seats if s['user_id'] != user['id']]
+
+                        if len(remaining_seats) <= 1:
+                            winner_id = remaining_seats[0]['user_id'] if remaining_seats else None
+                            cur.execute(
+                                f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'finished', winner_id = %s, "
+                                f"state = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                                (winner_id, json.dumps(state), room_id)
+                            )
+                            if winner_id:
+                                cur.execute(
+                                    f"UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1, "
+                                    f"games_won = games_won + 1 WHERE id = %s",
+                                    (winner_id,)
+                                )
+                            cur.execute(
+                                f"UPDATE {DB_SCHEMA}.game_users SET games_played = games_played + 1 WHERE id = %s",
+                                (user['id'],)
+                            )
+                        else:
+                            next_turn_user_id = room['current_turn_user_id']
+                            if was_my_turn:
+                                order = [s['user_id'] for s in remaining_seats]
+                                next_turn_user_id = order[0] if order else None
+                            cur.execute(
+                                f"UPDATE {DB_SCHEMA}.game_rooms SET state = %s, current_turn_user_id = %s, "
+                                f"updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                                (json.dumps(state), next_turn_user_id, room_id)
+                            )
+
+                        conn.commit()
+                        return {
+                            'statusCode': 200,
+                            'headers': cors_headers(),
+                            'body': json.dumps({'success': True, 'forfeited': True}),
+                            'isBase64Encoded': False
+                        }
 
                     cur.execute(
                         f"DELETE FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",

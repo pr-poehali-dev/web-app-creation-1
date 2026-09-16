@@ -20,6 +20,19 @@ export interface GameRoomListItem {
   players_count: number;
 }
 
+export interface MyActiveRoom {
+  id: number;
+  game_type: GameType;
+  room_name: string;
+  status: 'waiting' | 'playing';
+  max_players: number;
+  created_at: string;
+  updated_at: string;
+  created_by: number;
+  created_by_nickname: string;
+  players_count: number;
+}
+
 export interface GameRoomPlayer {
   id: number;
   room_id: number;
@@ -59,6 +72,14 @@ export const listGameRooms = async (gameType?: GameType): Promise<GameRoomListIt
   const url = gameType ? `${GAME_ROOMS_API}?game_type=${gameType}` : GAME_ROOMS_API;
   const response = await fetch(url, { headers: authHeaders() });
   if (!response.ok) throw new Error('Не удалось загрузить список комнат');
+  return response.json();
+};
+
+// Комнаты, где пользователь уже участвует и партия ещё не завершена — используется
+// лобби, чтобы предложить вернуться в незаконченную игру после случайного выхода.
+export const getMyActiveRooms = async (): Promise<MyActiveRoom[]> => {
+  const response = await fetch(`${GAME_ROOMS_API}?my_active=1`, { headers: authHeaders() });
+  if (!response.ok) throw new Error('Не удалось загрузить активные игры');
   return response.json();
 };
 

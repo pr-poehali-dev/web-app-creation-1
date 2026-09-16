@@ -2,12 +2,21 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import ConfirmDialog from '@/components/ui/confirm-dialog';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import { getGameSession, GameUser } from '../utils/gameAuth';
-import { listGameRooms, createGameRoom, joinGameRoom, deleteGameRoom, GameRoomListItem, GameType } from '../utils/gameRooms';
+import {
+  listGameRooms,
+  createGameRoom,
+  joinGameRoom,
+  deleteGameRoom,
+  leaveGameRoom,
+  getMyActiveRooms,
+  GameRoomListItem,
+  GameType,
+  MyActiveRoom,
+} from '../utils/gameRooms';
 
 const GAME_INFO: Record<GameType, { title: string; icon: string; description: string; color: string; available: boolean }> = {
   chess: { title: 'Шахматы', icon: 'Crown', description: 'Классическая игра для двоих', color: 'from-blue-500 to-indigo-600', available: true },
@@ -22,11 +31,13 @@ export default function GameLobby() {
   const [selectedGame, setSelectedGame] = useState<GameType>('chess');
   const [rooms, setRooms] = useState<GameRoomListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [inviteCode, setInviteCode] = useState('');
   const [copiedRoomId, setCopiedRoomId] = useState<number | null>(null);
   const [roomToDelete, setRoomToDelete] = useState<GameRoomListItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [clubLinkCopied, setClubLinkCopied] = useState(false);
+  const [activeRooms, setActiveRooms] = useState<MyActiveRoom[]>([]);
+  const [roomToForfeit, setRoomToForfeit] = useState<MyActiveRoom | null>(null);
+  const [isForfeiting, setIsForfeiting] = useState(false);
 
   const loadRooms = useCallback(async () => {
     try {
@@ -39,15 +50,29 @@ export default function GameLobby() {
     }
   }, [selectedGame]);
 
+  const loadActiveRooms = useCallback(async () => {
+    try {
+      const data = await getMyActiveRooms();
+      setActiveRooms(data);
+    } catch {
+      // тихо игнорируем — сервис ещё может разворачиваться
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) {
       navigate('/games/auth');
       return;
     }
     loadRooms();
+    loadActiveRooms();
     const interval = setInterval(loadRooms, 4000);
-    return () => clearInterval(interval);
-  }, [user, loadRooms, navigate]);
+    const activeInterval = setInterval(loadActiveRooms, 5000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(activeInterval);
+    };
+  }, [user, loadRooms, loadActiveRooms, navigate]);
 
   const handleCreateRoom = async () => {
     try {
@@ -64,16 +89,6 @@ export default function GameLobby() {
       navigate(`/games/room/${roomId}`);
     } catch (e) {
       toast({ variant: 'destructive', title: 'Ошибка', description: e instanceof Error ? e.message : 'Не удалось присоединиться' });
-    }
-  };
-
-  const handleJoinByCode = async () => {
-    if (!inviteCode.trim()) return;
-    try {
-      const { room_id } = await joinGameRoom(undefined, inviteCode.trim().toUpperCase());
-      navigate(`/games/room/${room_id}`);
-    } catch (e) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: e instanceof Error ? e.message : 'Комната не найдена' });
     }
   };
 
@@ -136,6 +151,26 @@ export default function GameLobby() {
     }
   };
 
+  const handleResumeRoom = (roomId: number) => {
+    navigate(`/games/room/${roomId}`);
+  };
+
+  const handleForfeitRoom = async () => {
+    if (!roomToForfeit) return;
+    setIsForfeiting(true);
+    try {
+      await leaveGameRoom(roomToForfeit.id);
+      toast({ title: 'Вы вышли из игры' });
+      setRoomToForfeit(null);
+      loadActiveRooms();
+      loadRooms();
+    } catch (e) {
+      toast({ variant: 'destructive', title: 'Ошибка', description: e instanceof Error ? e.message : 'Не удалось выйти из игры' });
+    } finally {
+      setIsForfeiting(false);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -146,6 +181,50 @@ export default function GameLobby() {
           <p className="text-slate-400">Играйте онлайн с другими игроками в реальном времени</p>
         </div>
       </div>
+
+      {activeRooms.length > 0 && (
+        <div className="mb-6 space-y-3">
+          {activeRooms.map((room) => (
+            <div
+              key={room.id}
+              className="bg-gradient-to-r from-emerald-500/10 to-amber-500/10 border border-emerald-500/30 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shrink-0 animate-pulse">
+                  <Icon name={GAME_INFO[room.game_type].icon} size={20} className="text-slate-950" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-100">
+                    У вас есть незавершённая игра: {GAME_INFO[room.game_type].title}
+                  </p>
+                  <p className="text-xs text-slate-400 truncate">
+                    «{room.room_name}» · {room.players_count}/{room.max_players} игроков ·{' '}
+                    {room.status === 'playing' ? 'партия идёт' : 'ожидание соперника'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  onClick={() => handleResumeRoom(room.id)}
+                  className="bg-gradient-to-r from-emerald-400 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700 text-slate-950 font-bold"
+                >
+                  <Icon name="Play" size={16} className="mr-1.5" />
+                  Продолжить
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setRoomToForfeit(room)}
+                  className="border-slate-700 text-slate-300 hover:bg-red-500/10 hover:text-red-400"
+                >
+                  Выйти из игры
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="mb-8 bg-gradient-to-r from-amber-500/10 to-purple-500/10 border border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="flex items-center gap-3 min-w-0">
@@ -203,18 +282,6 @@ export default function GameLobby() {
               <Icon name="Plus" size={18} className="mr-1.5" />
               Создать комнату
             </Button>
-            <div className="flex gap-2 flex-1">
-              <Input
-                value={inviteCode}
-                onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="Код приглашения"
-                className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500 uppercase"
-                maxLength={6}
-              />
-              <Button variant="outline" onClick={handleJoinByCode} className="border-slate-700 text-slate-200 hover:bg-slate-800">
-                Войти
-              </Button>
-            </div>
           </div>
 
           <h2 className="text-lg font-semibold text-slate-200 mb-3">Доступные комнаты</h2>
@@ -291,6 +358,20 @@ export default function GameLobby() {
         cancelLabel="Отмена"
         onConfirm={handleDeleteRoom}
         onCancel={() => setRoomToDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={!!roomToForfeit}
+        title="Выйти из игры?"
+        description={
+          roomToForfeit?.status === 'playing'
+            ? 'Партия уже идёт — выход будет засчитан как поражение, а победа присуждена сопернику.'
+            : 'Вы покинете комнату до начала партии.'
+        }
+        confirmLabel={isForfeiting ? 'Выход...' : 'Выйти'}
+        cancelLabel="Остаться"
+        onConfirm={handleForfeitRoom}
+        onCancel={() => setRoomToForfeit(null)}
       />
     </GameLayout>
   );
