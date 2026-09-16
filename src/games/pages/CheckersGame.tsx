@@ -217,7 +217,7 @@ export default function CheckersGame() {
                         key={`${actualRow}-${actualCol}`}
                         onClick={() => handleSquareClick(actualRow, actualCol)}
                         className={`relative flex items-center justify-center text-3xl sm:text-4xl transition-colors ${
-                          isDark ? 'bg-emerald-900' : 'bg-emerald-50'
+                          isDark ? 'bg-slate-400' : 'bg-emerald-50'
                         } ${isSelected ? 'ring-4 ring-inset ring-amber-400' : ''} ${
                           isSelectable ? 'ring-2 ring-inset ring-amber-300/60' : ''
                         } hover:opacity-80`}
