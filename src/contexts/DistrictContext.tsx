@@ -101,6 +101,12 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // В игровом клубе регион не используется — не запускаем геолокацию,
+      // чтобы не тормозить загрузку страницы (IP + возможный GPS-запрос до 10 сек)
+      if (window.location.pathname.startsWith('/games')) {
+        return;
+      }
+
       // При первом открытии — геолокацию запускаем ПОСЛЕ рендера страницы
       const isFirstVisit = !localStorage.getItem('locationDetected');
       if (isFirstVisit) {
