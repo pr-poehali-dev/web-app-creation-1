@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { registerGameUser, loginGameUser, getGameSession } from '../utils/gameAuth';
+import GamesPWAMeta from '../components/GamesPWAMeta';
 
 export default function GameAuth() {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ export default function GameAuth() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950 flex items-center justify-center p-4">
+      <GamesPWAMeta />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 -left-20 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl" />

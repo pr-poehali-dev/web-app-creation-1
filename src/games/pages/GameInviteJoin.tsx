@@ -4,6 +4,7 @@ import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
 import { getGameSession } from '../utils/gameAuth';
 import { joinGameRoom } from '../utils/gameRooms';
+import GamesPWAMeta from '../components/GamesPWAMeta';
 
 // Страница-обработчик ссылки-приглашения /games/invite/:code.
 // Если пользователь не вошёл в игровой раздел — сначала отправляем на авторизацию,
@@ -35,6 +36,7 @@ export default function GameInviteJoin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950 flex items-center justify-center">
+      <GamesPWAMeta />
       <div className="text-center text-slate-400">
         <Icon name="Loader2" size={32} className="mx-auto mb-3 animate-spin" />
         Подключаемся к комнате...

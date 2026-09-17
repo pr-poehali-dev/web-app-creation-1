@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { GameUser, clearGameSession } from '../utils/gameAuth';
+import GamesPWAMeta from './GamesPWAMeta';
 
 interface GameLayoutProps {
   user: GameUser | null;
@@ -17,6 +18,7 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950 text-slate-100">
+      <GamesPWAMeta />
       <header className="border-b border-amber-500/20 bg-slate-950/60 backdrop-blur-md sticky top-0 z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/games" className="flex items-center gap-2 group">
