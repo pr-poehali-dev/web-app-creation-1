@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { detectLocationByBrowser, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
+import { detectLocationByBrowser, detectLocationByIP, getLocationFromStorage, saveLocationToStorage } from '@/utils/geolocation';
 import { REGIONS, findRegionByLocation, type Region } from '@/data/regions';
 import { DISTRICTS, getDistrictsByRegion, findDistrictByName, type District as DistrictType } from '@/data/districts';
 
@@ -101,65 +101,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // В игровом клубе регион не используется — не запускаем геолокацию,
-      // чтобы не тормозить загрузку страницы (IP + возможный GPS-запрос до 10 сек)
-      if (window.location.pathname.startsWith('/games')) {
-        return;
-      }
-
-      // При первом открытии — геолокацию запускаем ПОСЛЕ рендера страницы
-      const isFirstVisit = !localStorage.getItem('locationDetected');
-      if (isFirstVisit) {
-        localStorage.setItem('locationDetected', 'true');
-        // Откладываем на 2 сек — страница успевает отрисоваться и стать интерактивной
-        setTimeout(async () => {
-          setIsDetecting(true);
-          try {
-            const { detectLocationByIP } = await import('@/utils/geolocation');
-            const ipLocation = await detectLocationByIP();
-
-            const applyLocation = (loc: typeof ipLocation) => {
-              const districtData = DISTRICTS.find(d => d.id === loc.district);
-              if (!districtData) return false;
-              const regionData = REGIONS.find(r => r.id === districtData.regionId);
-              setSelectedRegionState(districtData.regionId);
-              setDetectedCity(loc.city);
-              saveLocationToStorage(loc);
-              setAvailableDistricts(getDistrictsByRegion(districtData.regionId));
-              setDetectedDistrictId(districtData.id);
-              localStorage.setItem('detectedDistrictId', districtData.id);
-              localStorage.setItem('detectedCity', loc.city);
-              setSelectedDistrictsState([districtData.id]);
-              localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
-              setTimeout(() => emitLocationEvent('detected', {
-                city: loc.city,
-                district: districtData.name,
-                region: regionData?.name || '',
-              }), 800);
-              return true;
-            };
-
-            if (ipLocation.timezone) {
-              localStorage.setItem('userTimezone', ipLocation.timezone);
-              window.dispatchEvent(new CustomEvent('timezoneDetected', { detail: { timezone: ipLocation.timezone } }));
-            }
-
-            const ipOk = ipLocation.source !== 'default'
-              && ipLocation.district
-              && ipLocation.district !== 'Все районы'
-              && applyLocation(ipLocation);
-
-            // Если IP не дал результата — пробуем GPS
-            if (!ipOk && navigator.geolocation) {
-              const gpsLocation = await detectLocationByBrowser();
-              if (gpsLocation.source !== 'default' && gpsLocation.district && gpsLocation.district !== 'Все районы') {
-                applyLocation(gpsLocation);
-              }
-            }
-          } catch (_e) { /* не удалось определить — оставляем "Все районы" */ }
-          setIsDetecting(false);
-        }, 2000);
-      }
+      // Автоматическое определение региона при первом входе ОТКЛЮЧЕНО —
+      // чтобы сайт открывался сразу, без задержек и без скрытых сетевых запросов/диалогов.
+      // Регион определяется только по явному нажатию пользователем кнопки
+      // «Определить мой регион» (см. requestGeolocation ниже).
+      localStorage.setItem('locationDetected', 'true');
     };
 
     initLocation();
@@ -237,6 +183,7 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
             if (location.source !== 'default' && location.district && location.district !== 'Все районы') {
               const districtData = DISTRICTS.find(d => d.id === location.district);
               if (districtData) {
+                const regionData = REGIONS.find(r => r.id === districtData.regionId);
                 setSelectedRegionState(districtData.regionId);
                 setDetectedCity(location.city);
                 saveLocationToStorage(location);
@@ -246,6 +193,11 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem('detectedCity', location.city);
                 setSelectedDistrictsState([districtData.id]);
                 localStorage.setItem('selectedDistricts', JSON.stringify([districtData.id]));
+                emitLocationEvent('detected', {
+                  city: location.city,
+                  district: districtData.name,
+                  region: regionData?.name || '',
+                });
               }
             }
             setIsDetecting(false);
@@ -309,6 +261,13 @@ export function DistrictProvider({ children }: { children: ReactNode }) {
           const districtIds = [districtToSelect.id];
           setSelectedDistrictsState(districtIds);
           localStorage.setItem('selectedDistricts', JSON.stringify(districtIds));
+
+          const regionData = REGIONS.find(r => r.id === regionId);
+          emitLocationEvent('detected', {
+            city: location.city,
+            district: districtToSelect.name,
+            region: regionData?.name || '',
+          });
         }
       }
     } catch (error) {

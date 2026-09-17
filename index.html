@@ -19,7 +19,27 @@
     <link rel="icon" type="image/png" href="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/ac1dbacf-5483-41dc-8ccd-fcd52e894f1b.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/bucket/ac1dbacf-5483-41dc-8ccd-fcd52e894f1b.png">
     <link rel="manifest" href="/manifest.json">
-    
+
+    <!-- Мгновенная подмена PWA-тегов для /games — ДО загрузки React, чтобы "Добавить на экран"
+         сразу же ставило значок и название Игрового клуба, а не ЕРТТП -->
+    <script>
+        (function() {
+            if (location.pathname.indexOf('/games') === 0) {
+                var manifestTag = document.querySelector('link[rel="manifest"]');
+                var appleIconTag = document.querySelector('link[rel="apple-touch-icon"]');
+                var faviconTag = document.querySelector('link[rel="icon"]');
+                var appleTitleTag = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+                var themeColorTag = document.querySelector('meta[name="theme-color"]');
+                if (manifestTag) manifestTag.setAttribute('href', '/manifest-games.json');
+                if (appleIconTag) appleIconTag.setAttribute('href', '/icons/games-icon-180.png');
+                if (faviconTag) faviconTag.setAttribute('href', '/icons/games-icon-192.png');
+                if (appleTitleTag) appleTitleTag.setAttribute('content', 'Игры');
+                if (themeColorTag) themeColorTag.setAttribute('content', '#1a0a2e');
+                document.title = 'Игровой клуб — Шахматы, Шашки, Покер | ЕРТТП';
+            }
+        })();
+    </script>
+
     <!-- Preconnect для ускорения загрузки -->
     <link rel="preconnect" href="https://cdn.poehali.dev">
     <link rel="preconnect" href="https://functions.poehali.dev">
