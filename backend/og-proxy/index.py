@@ -62,6 +62,7 @@ def handler(event: dict, context) -> dict:
     schema = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
     frontend_url = os.environ.get('FRONTEND_URL', 'https://erttp.ru').rstrip('/')
     default_image = 'https://cdn.poehali.dev/projects/1a60f89a-b726-4c33-8dad-d42db554ed3e/files/og-image-1771653741881.png'
+    games_image = f'{frontend_url}/images/games-og-image.png'
 
     params = event.get('queryStringParameters') or {}
     item_type = params.get('type', '')
@@ -81,6 +82,36 @@ def handler(event: dict, context) -> dict:
         p = STATIC_PAGES[item_id]
         page_url = f"{frontend_url}{p['path']}"
         return html_response(p['title'], p['desc'], p['image'], page_url, page_url)
+
+    # Приглашение в игровую комнату (шахматы/шашки/покер) — используем игровой лого (конь),
+    # а не общий лого ЕРТТП (рукопожатие), чтобы превью в мессенджере соответствовало разделу.
+    if item_type == 'game-invite':
+        code = params.get('code', '').replace("'", "").upper()
+        redirect = f'{frontend_url}/games/invite/{code}'
+        page_url = redirect
+        if not code:
+            return {'statusCode': 302, 'headers': {'Location': redirect, 'Access-Control-Allow-Origin': '*'}, 'body': ''}
+
+        game_names = {'chess': 'шахматы', 'checkers': 'шашки', 'poker': 'покер'}
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        try:
+            cur.execute(f"""
+                SELECT game_type, room_name FROM {schema}.game_rooms
+                WHERE invite_code = '{code}' AND status = 'waiting' LIMIT 1
+            """)
+            row = cur.fetchone()
+        finally:
+            cur.close()
+            conn.close()
+
+        if not row:
+            return {'statusCode': 302, 'headers': {'Location': redirect, 'Access-Control-Allow-Origin': '*'}, 'body': ''}
+
+        game_label = game_names.get(row.get('game_type'), 'игру')
+        title = f"Приглашение в {game_label} — Игровой клуб ЕРТТП"
+        desc = f"{row.get('room_name') or 'Партия'} ждёт соперника. Присоединяйся!"
+        return html_response(title, desc, games_image, page_url, redirect)
 
     if not item_id or item_type not in ('offer', 'request', 'auction'):
         return {

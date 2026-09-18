@@ -58,6 +58,10 @@ function buildOgProxyUrl(prodUrl: string): string | null {
 
   if (prodUrl.includes('/brain-booster')) return `${ogProxyBase}?type=page&id=brain-booster&v=1`;
 
+  // Приглашение в игровую комнату — используем игровой лого (конь), а не общий лого ЕРТТП
+  const gameInviteMatch = prodUrl.match(/\/games\/invite\/([A-Za-z0-9]{4,8})/);
+  if (gameInviteMatch) return `${ogProxyBase}?type=game-invite&code=${gameInviteMatch[1]}&v=${v}`;
+
   return null;
 }
 
@@ -111,7 +115,7 @@ export async function shareContent({ title, text, url, imageUrl }: ShareOptions)
   const ogUrl = buildOgProxyUrl(prodUrl);
   // Для динамических страниц (offer/request/auction) сокращаем ogUrl — short-url умеет их читать из БД
   // Для статических страниц (brain-booster) — prodUrl, short-url знает их из STATIC_OG
-  const urlToShorten = ogUrl && (prodUrl.includes('/offer/') || prodUrl.includes('/request/') || prodUrl.includes('/auction/'))
+  const urlToShorten = ogUrl && (prodUrl.includes('/offer/') || prodUrl.includes('/request/') || prodUrl.includes('/auction/') || prodUrl.includes('/games/invite/'))
     ? ogUrl
     : prodUrl;
   const shortUrl = await createShortUrl(urlToShorten);
