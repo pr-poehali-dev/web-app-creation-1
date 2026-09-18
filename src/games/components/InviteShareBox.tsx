@@ -2,7 +2,6 @@ import { useState } from 'react';
 import Icon from '@/components/ui/icon';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { shareContent } from '@/utils/shareUtils';
 import { GameRoomDetail } from '../utils/gameRooms';
 import { GameUser } from '../utils/gameAuth';
 
@@ -10,12 +9,6 @@ interface InviteShareBoxProps {
   room: GameRoomDetail;
   user: GameUser;
 }
-
-const GAME_LABELS: Record<string, string> = {
-  chess: 'шахматы',
-  checkers: 'шашки',
-  poker: 'покер',
-};
 
 // Ссылка-приглашение видна ВСЕМ игрокам комнаты (не только создателю), пока комната
 // ждёт остальных участников — это удобно и для дуэльных игр, и для покера на 8 мест.
@@ -27,21 +20,24 @@ export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
   if (!isMember || room.status !== 'waiting' || !room.invite_code) return null;
 
   const inviteUrl = `${window.location.origin}/games/invite/${room.invite_code}`;
-  const gameLabel = GAME_LABELS[room.game_type] || 'игру';
 
   const handleShare = async () => {
-    // Идём через shareContent — она подменяет ссылку на og-proxy URL, чтобы боты мессенджеров
-    // (Telegram, WhatsApp) показывали превью с игровым лого (конь), а не общим лого ЕРТТП.
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Присоединяйся к игре', text: 'Приглашаю тебя в партию!', url: inviteUrl });
+        return;
+      } catch {
+        // пользователь закрыл диалог — просто fallback на копирование ниже не нужен
+        return;
+      }
+    }
     try {
-      await shareContent({
-        title: 'Присоединяйся к игре',
-        text: `Приглашаю тебя в ${gameLabel}!`,
-        url: inviteUrl,
-      });
+      await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
+      toast({ title: 'Ссылка скопирована' });
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось поделиться ссылкой' });
+      toast({ variant: 'destructive', title: 'Ошибка', description: 'Не удалось скопировать ссылку' });
     }
   };
 
