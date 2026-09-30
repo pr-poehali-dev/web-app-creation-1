@@ -116,11 +116,13 @@ export default function GameLobby() {
 
   const handleShareClub = async () => {
     const clubUrl = `${window.location.origin}/games`;
-    const prettyText = `игровой-клуб.рф — заходи, там шахматы, шашки и покер онлайн!`;
 
+    // Передаём только url (без text) — иначе мессенджеры (Telegram и т.д.) показывают
+    // ДВЕ ссылки: саму url и вложенный в text домен-подобный текст, распознанный как ссылка,
+    // но нерабочий (т.к. это не настоящий домен).
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Игровой клуб', text: prettyText, url: clubUrl });
+        await navigator.share({ title: 'Игровой клуб — заходи, там шахматы, шашки и покер онлайн!', url: clubUrl });
         return;
       } catch {
         return;
@@ -233,7 +235,7 @@ export default function GameLobby() {
           </div>
           <div className="min-w-0">
             <p className="font-semibold text-slate-100">Позови друзей в игровой клуб</p>
-            <p className="text-xs text-slate-400 truncate">игровой-клуб.рф — общая ссылка на выбор игры и все комнаты</p>
+            <p className="text-xs text-slate-400 truncate">Общая ссылка на выбор игры и все комнаты</p>
           </div>
         </div>
         <Button

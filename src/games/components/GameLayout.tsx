@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Icon from '@/components/ui/icon';
 import { GameUser, clearGameSession } from '../utils/gameAuth';
 import GamesPWAMeta from './GamesPWAMeta';
+import GameNotificationBanner from './GameNotificationBanner';
 
 interface GameLayoutProps {
   user: GameUser | null;
@@ -53,6 +54,7 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
         </div>
       </header>
       <main className="container mx-auto px-4 py-8">{children}</main>
+      {user && <GameNotificationBanner />}
     </div>
   );
 }

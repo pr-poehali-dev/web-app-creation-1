@@ -16,12 +16,41 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import jwt
 import chess
+import requests
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 JWT_ALGORITHM = 'HS256'
 GAME_JWT_ISSUER = 'games-section'
+
+PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+
+GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер'}
+
+
+def notify_next_turn(room_id: int, next_turn_user_id: Optional[int], game_type: str) -> None:
+    '''Шлёт push-уведомление сопернику «Ваш ход!» после того как текущий игрок сходил.
+    Префикс game_ отделяет игровых пользователей (game_users.id) от обычных
+    пользователей сайта (users.id) — они делят одну таблицу push_subscriptions.
+    Ошибки отправки (нет подписки, сеть недоступна) не должны ломать сохранение хода,
+    поэтому любые исключения тут проглатываются.'''
+    if not next_turn_user_id:
+        return
+    try:
+        requests.post(
+            PUSH_SEND_URL,
+            json={
+                'userId': f'game_{next_turn_user_id}',
+                'title': '🎮 Ваш ход!',
+                'message': f'{GAME_TITLES.get(game_type, "Игра")}: соперник сделал ход, ваша очередь',
+                'url': f'/games/room/{room_id}',
+                'type': 'game_turn',
+            },
+            timeout=4,
+        )
+    except Exception:
+        pass
 
 
 def get_db_connection():
@@ -331,6 +360,9 @@ def handle_checkers_move(cur, conn, room, user, body):
 
     conn.commit()
 
+    if not game_over and not must_continue:
+        notify_next_turn(room_id, next_turn_user_id, 'checkers')
+
     return {
         'statusCode': 200,
         'headers': cors_headers(),
@@ -443,6 +475,9 @@ def handle_chess_move(cur, conn, room, user, body):
         )
 
     conn.commit()
+
+    if not game_over:
+        notify_next_turn(room_id, next_turn_user_id, 'chess')
 
     return {
         'statusCode': 200,
@@ -805,6 +840,10 @@ def handle_poker_action(cur, conn, room, user, body):
             (json.dumps(new_state), int(first_to_act), room_id)
         )
         conn.commit()
+
+        if int(first_to_act) != user['id']:
+            notify_next_turn(room_id, int(first_to_act), 'poker')
+
         return {
             'statusCode': 200,
             'headers': cors_headers(),
@@ -907,6 +946,9 @@ def handle_poker_action(cur, conn, room, user, body):
         )
 
     conn.commit()
+
+    if not game_over and next_turn_user_id and next_turn_user_id != user['id']:
+        notify_next_turn(room_id, next_turn_user_id, 'poker')
 
     return {
         'statusCode': 200,
