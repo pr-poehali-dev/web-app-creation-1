@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileInfoCard from '@/components/profile/ProfileInfoCard';
 import ProfileSecurityCard from '@/components/profile/ProfileSecurityCard';
+import ProfilePinCard from '@/components/profile/ProfilePinCard';
 import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
 import ProfileVerificationCard from '@/components/profile/ProfileVerificationCard';
 import NotificationSettings from '@/components/profile/NotificationSettings';
@@ -17,6 +18,7 @@ import ProfileEditForm from '@/components/profile/ProfileEditForm';
 import ProfilePasswordForm from '@/components/profile/ProfilePasswordForm';
 import { useProfileData } from '@/hooks/useProfileData';
 import { useProfileForm } from '@/hooks/useProfileForm';
+import { saveSession } from '@/utils/auth';
 
 interface ProfileProps {
   isAuthenticated: boolean;
@@ -180,6 +182,17 @@ export default function Profile({ isAuthenticated, onLogout }: ProfileProps) {
               onPasswordSave={handleSavePassword}
               onCancelPassword={handleCancelChangePassword}
               onPasswordChange={handlePasswordChange}
+            />
+          )}
+
+          {isViewingOwnProfile && (
+            <ProfilePinCard
+              hasPin={!!currentUser.hasPin}
+              onPinChange={(hasPin) => {
+                const updated = { ...currentUser, hasPin };
+                setCurrentUser(updated);
+                saveSession(updated);
+              }}
             />
           )}
 

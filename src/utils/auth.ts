@@ -49,6 +49,7 @@ interface User {
   }>;
   averageRating?: number;
   reviewsCount?: number;
+  hasPin?: boolean;
 }
 
 interface AuthResponse {
@@ -85,6 +86,7 @@ const convertUserFromBackend = (backendUser: Record<string, unknown>): User => {
     averageRating: backendUser.average_rating || backendUser.averageRating,
     reviewsCount: backendUser.reviews_count || backendUser.reviewsCount,
     notificationEmail: backendUser.notification_email || backendUser.notificationEmail || '',
+    hasPin: Boolean(backendUser.has_pin),
   };
   
   if (backendUser.role) {

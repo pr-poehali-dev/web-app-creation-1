@@ -113,7 +113,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         u.ogrn,
                         u.created_at,
                         u.notification_email,
-                        u.email_notifications
+                        u.email_notifications,
+                        u.pin_hash
                     FROM t_p42562714_web_app_creation_1.users u
                     WHERE u.id = %s AND u.removed_at IS NULL
                 """, (user_id_param,))
@@ -131,6 +132,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 user_dict = dict(user_data)
                 if user_dict.get('created_at'):
                     user_dict['created_at'] = user_dict['created_at'].isoformat()
+                user_dict['has_pin'] = bool(user_dict.pop('pin_hash'))
                 
                 return {
                     'statusCode': 200,

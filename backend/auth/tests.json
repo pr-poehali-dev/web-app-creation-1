@@ -41,6 +41,34 @@
         "error": "string"
       },
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test set_pin without token",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "set_pin",
+        "pin": "1234"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test verify_pin without token",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "verify_pin",
+        "pin": "1234"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
     }
   ]
 }

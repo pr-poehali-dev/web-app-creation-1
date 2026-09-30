@@ -134,6 +134,32 @@ def reset_failed_attempts(conn, email: str):
         )
         conn.commit()
 
+def increment_pin_failed_attempts(conn, user_id: int) -> int:
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET pin_failed_attempts = COALESCE(pin_failed_attempts, 0) + 1 WHERE id = %s",
+            (user_id,)
+        )
+        cur.execute("SELECT pin_failed_attempts FROM users WHERE id = %s", (user_id,))
+        result = cur.fetchone()
+        attempts = result['pin_failed_attempts'] if result else 0
+        if attempts >= 5:
+            locked_until = datetime.now() + timedelta(minutes=5)
+            cur.execute(
+                "UPDATE users SET pin_locked_until = %s WHERE id = %s",
+                (locked_until, user_id)
+            )
+        conn.commit()
+        return attempts
+
+def reset_pin_failed_attempts(conn, user_id: int):
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE users SET pin_failed_attempts = 0, pin_locked_until = NULL WHERE id = %s",
+            (user_id,)
+        )
+        conn.commit()
+
 def send_verification_email(email: str, verification_link: str):
     smtp_user = os.environ.get('MAIL_USER')
     smtp_pass = os.environ.get('MAIL_PASSWORD')
@@ -242,7 +268,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             body_data = json.loads(event.get('body', '{}'))
             action = body_data.get('action')
             
-            if action in ['login', 'register', 'forgot_password']:
+            if action in ['login', 'register', 'forgot_password', 'verify_pin']:
                 if not check_rate_limit(conn, source_ip, f'auth_{action}', max_requests=5, window_minutes=1):
                     return {
                         'statusCode': 429,
@@ -386,6 +412,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 user_data = dict(user)
                 if user_data['email'] and user_data['email'].endswith('@noemail.erttp.local'):
                     user_data['email'] = ''
+                user_data['has_pin'] = False
                 
                 token = generate_jwt_token(user['id'], user['email'], user['phone'])
                 
@@ -521,7 +548,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         """SELECT id, email, phone, password_hash, first_name, last_name, middle_name, 
                            user_type, is_active, company_name, inn, ogrnip, ogrn, 
                            position, director_name, legal_address, created_at, role, is_root_admin, locked_until,
-                           verification_status
+                           verification_status, pin_hash
                            FROM users 
                            WHERE email = %s 
                               OR REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = %s 
@@ -578,6 +605,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 
                 user_data = dict(user)
                 user_data.pop('password_hash')
+                user_data['has_pin'] = bool(user_data.pop('pin_hash'))
                 # Скрываем технический email для физических лиц
                 if user_data.get('email') and user_data['email'].endswith('@noemail.erttp.local'):
                     user_data['email'] = ''
@@ -715,7 +743,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     cur.execute(
                         """SELECT id, email, phone, first_name, last_name, middle_name,
                            user_type, company_name, inn, ogrnip, ogrn, position, director_name,
-                           legal_address, created_at, role, is_root_admin, verification_status
+                           legal_address, created_at, role, is_root_admin, verification_status, pin_hash
                            FROM users WHERE id = %s AND removed_at IS NULL""",
                         (auth_user['user_id'],)
                     )
@@ -730,6 +758,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     }
                 
                 user_data = dict(user)
+                user_data['has_pin'] = bool(user_data.pop('pin_hash'))
                 if user_data.get('email') and user_data['email'].endswith('@noemail.erttp.local'):
                     user_data['email'] = ''
                 
@@ -837,6 +866,122 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'statusCode': 200,
                     'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
                     'body': json.dumps({'success': True, 'message': 'Пароль успешно изменен'}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'set_pin':
+                auth_user = get_user_from_request(event)
+                if not auth_user:
+                    return {
+                        'statusCode': 401,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Требуется авторизация'}),
+                        'isBase64Encoded': False
+                    }
+                
+                pin = body_data.get('pin', '')
+                if not pin or len(pin) != 4 or not pin.isdigit():
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'PIN-код должен состоять из 4 цифр'}),
+                        'isBase64Encoded': False
+                    }
+                
+                pin_hash = hash_password(pin)
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """UPDATE users 
+                           SET pin_hash = %s, pin_failed_attempts = 0, pin_locked_until = NULL 
+                           WHERE id = %s""",
+                        (pin_hash, auth_user['user_id'])
+                    )
+                    conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'PIN-код установлен'}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'verify_pin':
+                auth_user = get_user_from_request(event)
+                if not auth_user:
+                    return {
+                        'statusCode': 401,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Требуется авторизация'}),
+                        'isBase64Encoded': False
+                    }
+                
+                pin = body_data.get('pin', '')
+                
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT pin_hash, pin_locked_until FROM users WHERE id = %s AND removed_at IS NULL",
+                        (auth_user['user_id'],)
+                    )
+                    user = cur.fetchone()
+                
+                if not user or not user['pin_hash']:
+                    return {
+                        'statusCode': 400,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'PIN-код не установлен'}),
+                        'isBase64Encoded': False
+                    }
+                
+                if user['pin_locked_until'] and datetime.now() < user['pin_locked_until']:
+                    return {
+                        'statusCode': 423,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({
+                            'error': 'Слишком много неверных попыток. Попробуйте позже',
+                            'locked_until': user['pin_locked_until'].isoformat()
+                        }),
+                        'isBase64Encoded': False
+                    }
+                
+                if not pin or not verify_password(pin, user['pin_hash']):
+                    attempts = increment_pin_failed_attempts(conn, auth_user['user_id'])
+                    return {
+                        'statusCode': 401,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Неверный PIN-код', 'attempts_left': max(0, 5 - attempts)}),
+                        'isBase64Encoded': False
+                    }
+                
+                reset_pin_failed_attempts(conn, auth_user['user_id'])
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True}),
+                    'isBase64Encoded': False
+                }
+            
+            elif action == 'clear_pin':
+                auth_user = get_user_from_request(event)
+                if not auth_user:
+                    return {
+                        'statusCode': 401,
+                        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                        'body': json.dumps({'error': 'Требуется авторизация'}),
+                        'isBase64Encoded': False
+                    }
+                
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE users SET pin_hash = NULL, pin_failed_attempts = 0, pin_locked_until = NULL WHERE id = %s",
+                        (auth_user['user_id'],)
+                    )
+                    conn.commit()
+                
+                return {
+                    'statusCode': 200,
+                    'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                    'body': json.dumps({'success': True, 'message': 'PIN-код удалён'}),
                     'isBase64Encoded': False
                 }
         

@@ -20,6 +20,7 @@ export interface User {
   password?: string;
   role?: string;
   notificationEmail?: string;
+  hasPin?: boolean;
 }
 
 const profileCache = new Map<string, { data: User; timestamp: number }>();
@@ -93,6 +94,7 @@ export const useProfileData = (isAuthenticated: boolean, viewingUserId: string |
         createdAt: data.created_at,
         isVerified: false,
         notificationEmail: data.notification_email || '',
+        hasPin: Boolean(data.has_pin),
       };
       
       profileCache.set(userId, { data: userData, timestamp: Date.now() });
