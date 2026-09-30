@@ -11,6 +11,7 @@ import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail } from '../utils/gameRooms';
 import { sendCheckersMove } from '../utils/gameCheckers';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../utils/gameChat';
+import { notifyOpponent } from '../utils/gameNotify';
 import {
   CBoard,
   Side,
@@ -32,6 +33,7 @@ export default function CheckersGame() {
   const [forcedPiece, setForcedPiece] = useState<[number, number] | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [isNotifying, setIsNotifying] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const numericRoomId = Number(roomId);
@@ -151,6 +153,26 @@ export default function CheckersGame() {
     }
   };
 
+  const handleNotifyOpponent = async () => {
+    if (!opponent) return;
+    setIsNotifying(true);
+    try {
+      const result = await notifyOpponent({
+        opponentUserId: opponent.user_id,
+        roomId: numericRoomId,
+        senderNickname: user.nickname,
+        gameTitle: 'Шашки',
+      });
+      if (result.success) {
+        toast({ title: 'Уведомление отправлено', description: `${opponent.nickname} получит push-уведомление` });
+      } else {
+        toast({ variant: 'destructive', title: 'Не удалось отправить', description: result.error });
+      }
+    } finally {
+      setIsNotifying(false);
+    }
+  };
+
   const displayRows = mySide === 'black' ? [...board].reverse().map((row) => [...row].reverse()) : board;
 
   return (
@@ -182,8 +204,23 @@ export default function CheckersGame() {
                 </div>
               </div>
               {room.status === 'playing' && (
-                <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
-                  {isMyTurn ? (forcedPiece ? 'Продолжайте взятие' : 'Ваш ход') : 'Ход соперника'}
+                <div className="flex items-center gap-2">
+                  <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+                    {isMyTurn ? (forcedPiece ? 'Продолжайте взятие' : 'Ваш ход') : 'Ход соперника'}
+                  </div>
+                  {!isMyTurn && opponent && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleNotifyOpponent}
+                      disabled={isNotifying}
+                      className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                      title="Напомнить сопернику о ходе push-уведомлением"
+                    >
+                      <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />
+                      Напомнить
+                    </Button>
+                  )}
                 </div>
               )}
               {room.status === 'waiting' && (

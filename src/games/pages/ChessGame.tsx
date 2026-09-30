@@ -12,6 +12,7 @@ import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail } from '../utils/gameRooms';
 import { sendChessMove } from '../utils/gameChess';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../utils/gameChat';
+import { notifyOpponent } from '../utils/gameNotify';
 
 const PIECE_SYMBOLS: Record<string, string> = {
   p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚',
@@ -28,6 +29,7 @@ export default function ChessGame() {
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
+  const [isNotifying, setIsNotifying] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const numericRoomId = Number(roomId);
@@ -136,6 +138,26 @@ export default function ChessGame() {
     }
   };
 
+  const handleNotifyOpponent = async () => {
+    if (!opponent) return;
+    setIsNotifying(true);
+    try {
+      const result = await notifyOpponent({
+        opponentUserId: opponent.user_id,
+        roomId: numericRoomId,
+        senderNickname: user.nickname,
+        gameTitle: 'Шахматы',
+      });
+      if (result.success) {
+        toast({ title: 'Уведомление отправлено', description: `${opponent.nickname} получит push-уведомление` });
+      } else {
+        toast({ variant: 'destructive', title: 'Не удалось отправить', description: result.error });
+      }
+    } finally {
+      setIsNotifying(false);
+    }
+  };
+
   const board = chess.board();
   const displayBoard = mySide === 'black' ? [...board].reverse().map((row) => [...row].reverse()) : board;
 
@@ -168,8 +190,23 @@ export default function ChessGame() {
                 </div>
               </div>
               {room.status === 'playing' && (
-                <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
-                  {isMyTurn ? 'Ваш ход' : 'Ход соперника'}
+                <div className="flex items-center gap-2">
+                  <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
+                    {isMyTurn ? 'Ваш ход' : 'Ход соперника'}
+                  </div>
+                  {!isMyTurn && opponent && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleNotifyOpponent}
+                      disabled={isNotifying}
+                      className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                      title="Напомнить сопернику о ходе push-уведомлением"
+                    >
+                      <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />
+                      Напомнить
+                    </Button>
+                  )}
                 </div>
               )}
               {room.status === 'waiting' && (
@@ -209,7 +246,9 @@ export default function ChessGame() {
                       >
                         {piece && (
                           <span
-                            className={piece.color === 'w' ? 'text-white' : 'text-slate-950'}
+                            className={`${piece.color === 'w' ? 'text-white' : 'text-slate-950'} ${
+                              piece.type === 'p' ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl'
+                            }`}
                             style={piece.color === 'w' ? {
                               WebkitTextStroke: '1.5px #1e293b',
                               paintOrder: 'stroke fill',

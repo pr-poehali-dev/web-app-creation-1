@@ -11,6 +11,7 @@ import { getGameSession, GameUser } from '../utils/gameAuth';
 import { getGameRoom, GameRoomDetail, startPokerTable } from '../utils/gameRooms';
 import { sendPokerAction, PokerState } from '../utils/gamePoker';
 import { getChatMessages, sendChatMessage, ChatMessage } from '../utils/gameChat';
+import { notifyOpponent } from '../utils/gameNotify';
 
 const SUIT_SYMBOLS: Record<string, string> = { S: '♠', H: '♥', D: '♦', C: '♣' };
 const RANK_LABELS: Record<string, string> = { T: '10' };
@@ -58,6 +59,7 @@ export default function PokerGame() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [isActing, setIsActing] = useState(false);
+  const [isNotifying, setIsNotifying] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const numericRoomId = Number(roomId);
@@ -161,6 +163,27 @@ export default function PokerGame() {
 
   const seats = room?.players || [];
   const isOwner = room?.created_by === user.id;
+  const turnPlayer = room?.players.find((p) => p.user_id === room.current_turn_user_id);
+
+  const handleNotifyOpponent = async () => {
+    if (!turnPlayer) return;
+    setIsNotifying(true);
+    try {
+      const result = await notifyOpponent({
+        opponentUserId: turnPlayer.user_id,
+        roomId: numericRoomId,
+        senderNickname: user.nickname,
+        gameTitle: 'Покер',
+      });
+      if (result.success) {
+        toast({ title: 'Уведомление отправлено', description: `${turnPlayer.nickname} получит push-уведомление` });
+      } else {
+        toast({ variant: 'destructive', title: 'Не удалось отправить', description: result.error });
+      }
+    } finally {
+      setIsNotifying(false);
+    }
+  };
 
   return (
     <GameLayout user={user}>
@@ -280,10 +303,25 @@ export default function PokerGame() {
                 </Button>
               ) : room.status === 'playing' && stage !== 'waiting' ? (
                 <div>
-                  <p className="text-sm text-slate-400 mb-3">
-                    {isMyTurn ? 'Ваш ход' : 'Ход соперника'} · Ваши фишки: <span className="text-amber-400 font-semibold">{myChips}</span>
-                    {toCall > 0 && <> · Чтобы уравнять: <span className="text-amber-400 font-semibold">{toCall}</span></>}
-                  </p>
+                  <div className="text-sm text-slate-400 mb-3 flex flex-wrap items-center gap-2">
+                    <span>
+                      {isMyTurn ? 'Ваш ход' : 'Ход соперника'} · Ваши фишки: <span className="text-amber-400 font-semibold">{myChips}</span>
+                      {toCall > 0 && <> · Чтобы уравнять: <span className="text-amber-400 font-semibold">{toCall}</span></>}
+                    </span>
+                    {!isMyTurn && turnPlayer && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleNotifyOpponent}
+                        disabled={isNotifying}
+                        className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                        title="Напомнить сопернику о ходе push-уведомлением"
+                      >
+                        <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />
+                        Напомнить
+                      </Button>
+                    )}
+                  </div>
                   {isMyTurn && !myPokerState?.folded && !myPokerState?.all_in && (
                     <div className="flex flex-wrap gap-2">
                       <Button variant="outline" onClick={() => handleAction('fold')} disabled={isActing} className="border-red-800 text-red-400 hover:bg-red-500/10">
