@@ -190,7 +190,7 @@ export default function ChessGame() {
                 </div>
               </div>
               {room.status === 'playing' && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   <div className={`px-3 py-1.5 rounded-full text-sm font-semibold ${isMyTurn ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-400'}`}>
                     {isMyTurn ? 'Ваш ход' : 'Ход соперника'}
                   </div>
@@ -200,7 +200,7 @@ export default function ChessGame() {
                       variant="outline"
                       onClick={handleNotifyOpponent}
                       disabled={isNotifying}
-                      className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                      className="border-amber-500/50 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300"
                       title="Напомнить сопернику о ходе push-уведомлением"
                     >
                       <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />
@@ -241,13 +241,15 @@ export default function ChessGame() {
                         key={square}
                         onClick={() => handleSquareClick(square)}
                         className={`flex items-center justify-center text-3xl sm:text-4xl transition-colors ${
-                          isDark ? 'bg-slate-700' : 'bg-slate-200'
+                          isDark ? 'bg-slate-400' : 'bg-slate-200'
                         } ${isSelected ? 'ring-4 ring-inset ring-amber-400' : ''} hover:opacity-80`}
                       >
                         {piece && (
                           <span
                             className={`${piece.color === 'w' ? 'text-white' : 'text-slate-950'} ${
-                              piece.type === 'p' ? 'text-2xl sm:text-3xl' : 'text-4xl sm:text-5xl'
+                              piece.type === 'p'
+                                ? piece.color === 'w' ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
+                                : 'text-4xl sm:text-5xl'
                             }`}
                             style={piece.color === 'w' ? {
                               WebkitTextStroke: '1.5px #1e293b',
