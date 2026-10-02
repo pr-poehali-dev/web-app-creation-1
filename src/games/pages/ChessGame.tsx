@@ -15,7 +15,7 @@ import { getChatMessages, sendChatMessage, ChatMessage } from '../utils/gameChat
 import { notifyOpponent } from '../utils/gameNotify';
 
 const PIECE_SYMBOLS: Record<string, string> = {
-  p: '♟', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚',
+  p: '♟\uFE0E', n: '♞', b: '♝', r: '♜', q: '♛', k: '♚',
   P: '♙', N: '♘', B: '♗', R: '♖', Q: '♕', K: '♔',
 };
 
@@ -248,7 +248,7 @@ export default function ChessGame() {
                           <span
                             className={`${piece.color === 'w' ? 'text-white' : 'text-slate-950'} ${
                               piece.type === 'p'
-                                ? piece.color === 'w' ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl'
+                                ? 'text-xl sm:text-2xl'
                                 : 'text-4xl sm:text-5xl'
                             }`}
                             style={piece.color === 'w' ? {

@@ -32,11 +32,10 @@ export default function GameNotificationBanner() {
       registerServiceWorker().then(async (reg) => {
         if (!reg) return;
         await navigator.serviceWorker.ready;
-        const existing = await checkPushSubscription();
-        if (!existing) {
-          const newSub = await subscribeToPushNotifications(reg);
-          if (newSub) await sendSubscriptionToServer(newSub, gamePushId(user.id));
-        }
+        // Всегда синхронизируем подписку с сервером: браузер мог быть подписан ранее
+        // (например, на основном сайте), а запись для game_<id> на сервере отсутствует.
+        const existing = (await checkPushSubscription()) || (await subscribeToPushNotifications(reg));
+        if (existing) await sendSubscriptionToServer(existing, gamePushId(user.id));
       }).catch(() => {});
     }
   }, []);

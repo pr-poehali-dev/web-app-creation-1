@@ -56,7 +56,7 @@ export const notifyOpponent = async ({
     if (!response.ok || data.success === false) {
       return { success: false, error: data.error || 'Не удалось отправить уведомление' };
     }
-    if (data.sent === 0 && data.total === 0) {
+    if (!data.sent) {
       return { success: false, error: 'У соперника не включены уведомления' };
     }
 
