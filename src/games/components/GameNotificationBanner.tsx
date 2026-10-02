@@ -4,36 +4,40 @@ import Icon from '@/components/ui/icon';
 import { setupPushNotifications, checkPushSubscription, subscribeToPushNotifications, sendSubscriptionToServer, registerServiceWorker } from '@/services/pushNotifications';
 import { getGameSession } from '../utils/gameAuth';
 
-// Префикс отделяет игровых пользователей (game_users.id) от обычных пользователей
-// сайта (users.id) в общей таблице push_subscriptions — это две разные системы аккаунтов.
 const gamePushId = (gameUserId: number) => `game_${gameUserId}`;
+const DISMISSED_KEY = 'game_push_prompt_dismissed';
 
-// Баннер «Включить уведомления о ходах» — отдельно от push основного сайта,
-// т.к. игровой раздел использует независимую систему аутентификации (game_token/game_user).
+const isIos = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isStandalone = () =>
+  window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
 export default function GameNotificationBanner() {
   const [show, setShow] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>('default');
+  const [needsInstall, setNeedsInstall] = useState(false);
+  const [denied, setDenied] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!('Notification' in window)) return;
-    setPermission(Notification.permission);
-
-    const dismissed = localStorage.getItem('game_notification_banner_dismissed');
     const user = getGameSession();
     if (!user) return;
 
-    if (Notification.permission === 'default' && !dismissed) {
-      setTimeout(() => setShow(true), 2000);
+    if (!('Notification' in window)) {
+      if (isIos() && !isStandalone() && !sessionStorage.getItem(DISMISSED_KEY)) {
+        setNeedsInstall(true);
+        setShow(true);
+      }
+      return;
     }
 
-    // Если разрешение уже выдано — переподписываемся на случай смены VAPID ключа
+    if (Notification.permission === 'default' && !sessionStorage.getItem(DISMISSED_KEY)) {
+      setShow(true);
+      return;
+    }
+
     if (Notification.permission === 'granted') {
       registerServiceWorker().then(async (reg) => {
         if (!reg) return;
         await navigator.serviceWorker.ready;
-        // Всегда синхронизируем подписку с сервером: браузер мог быть подписан ранее
-        // (например, на основном сайте), а запись для game_<id> на сервере отсутствует.
         const existing = (await checkPushSubscription()) || (await subscribeToPushNotifications(reg));
         if (existing) await sendSubscriptionToServer(existing, gamePushId(user.id));
       }).catch(() => {});
@@ -41,20 +45,18 @@ export default function GameNotificationBanner() {
   }, []);
 
   const handleEnable = async () => {
+    const user = getGameSession();
+    if (!user) {
+      setShow(false);
+      return;
+    }
     setLoading(true);
     try {
-      const user = getGameSession();
-      if (!user) {
-        setShow(false);
-        return;
-      }
       const success = await setupPushNotifications(gamePushId(user.id));
       if (success) {
-        setPermission('granted');
         setShow(false);
       } else if (Notification.permission === 'denied') {
-        setPermission('denied');
-        setShow(false);
+        setDenied(true);
       }
     } finally {
       setLoading(false);
@@ -63,37 +65,52 @@ export default function GameNotificationBanner() {
 
   const handleDismiss = () => {
     setShow(false);
-    localStorage.setItem('game_notification_banner_dismissed', 'true');
+    sessionStorage.setItem(DISMISSED_KEY, '1');
   };
 
-  if (!show || permission !== 'default') return null;
+  if (!show) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-96 max-w-[calc(100vw-2rem)] shadow-2xl rounded-xl border border-amber-500/20 bg-slate-900">
-      <div className="p-4">
-        <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 flex-shrink-0">
-            <Icon name="Bell" className="h-6 w-6 text-amber-400" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-semibold mb-1 text-slate-100">Уведомлять о ходах?</h3>
-            <p className="text-sm text-slate-400 mb-4">
-              Получайте уведомление, когда наступает ваш ход в шахматах, шашках или покере
-            </p>
-            <div className="flex gap-2">
-              <Button onClick={handleEnable} size="sm" className="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold" disabled={loading}>
-                {loading ? (
-                  <Icon name="Loader2" className="mr-1.5 h-4 w-4 animate-spin" />
-                ) : (
-                  <Icon name="Check" className="mr-1.5 h-4 w-4" />
-                )}
-                {loading ? 'Подключение...' : 'Включить'}
-              </Button>
-              <Button onClick={handleDismiss} variant="outline" size="sm" disabled={loading} className="border-slate-700 text-slate-300 hover:bg-slate-800">
-                Позже
-              </Button>
-            </div>
-          </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-sm rounded-2xl border border-amber-500/30 bg-slate-900 p-6 text-center shadow-2xl">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15">
+          <Icon name="BellRing" className="h-7 w-7 text-amber-400" />
+        </div>
+        <h3 className="mb-2 text-lg font-bold text-slate-100">Включите уведомления</h3>
+
+        {needsInstall ? (
+          <p className="mb-5 text-sm text-slate-400">
+            На iPhone нажмите «Поделиться» и выберите «На экран Домой», затем откройте игры с иконки и включите уведомления.
+          </p>
+        ) : denied ? (
+          <p className="mb-5 text-sm text-slate-400">
+            Уведомления заблокированы. Разрешите их в настройках браузера для этого сайта.
+          </p>
+        ) : (
+          <p className="mb-5 text-sm text-slate-400">
+            Так вы узнаете, что соперник сделал ход, и получите напоминание о своём ходе.
+          </p>
+        )}
+
+        <div className="flex flex-col gap-2">
+          {!needsInstall && !denied && (
+            <Button
+              onClick={handleEnable}
+              disabled={loading}
+              className="w-full bg-amber-500 font-semibold text-slate-950 hover:bg-amber-600"
+            >
+              {loading ? <Icon name="Loader2" className="mr-1.5 h-4 w-4 animate-spin" /> : <Icon name="Bell" className="mr-1.5 h-4 w-4" />}
+              {loading ? 'Подключение...' : 'Разрешить уведомления'}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            onClick={handleDismiss}
+            disabled={loading}
+            className="w-full text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+          >
+            {needsInstall || denied ? 'Понятно' : 'Не сейчас'}
+          </Button>
         </div>
       </div>
     </div>
