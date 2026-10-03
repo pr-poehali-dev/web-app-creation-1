@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { GameRoomDetail } from '../utils/gameRooms';
 import { GameUser } from '../utils/gameAuth';
+import { buildInviteUrl } from '../utils/gameLinks';
 
 interface InviteShareBoxProps {
   room: GameRoomDetail;
@@ -19,7 +20,7 @@ export default function InviteShareBox({ room, user }: InviteShareBoxProps) {
   const isMember = room.players.some((p) => p.user_id === user.id);
   if (!isMember || room.status !== 'waiting' || !room.invite_code) return null;
 
-  const inviteUrl = `${window.location.origin}/games/invite/${room.invite_code}`;
+  const inviteUrl = buildInviteUrl(room.invite_code);
 
   const handleShare = async () => {
     if (navigator.share) {
