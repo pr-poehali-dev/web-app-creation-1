@@ -271,17 +271,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                     if not room:
                         return error_response(404, 'Комната не найдена')
-                    if room['status'] != 'waiting':
-                        return error_response(400, 'Игра уже началась или завершена')
-
-                    cur.execute(
-                        f"SELECT COUNT(*) as cnt FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s",
-                        (room['id'],)
-                    )
-                    count = cur.fetchone()['cnt']
-                    if count >= room['max_players']:
-                        return error_response(400, 'Комната заполнена')
-
                     cur.execute(
                         f"SELECT id FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s AND user_id = %s",
                         (room['id'], user['id'])
@@ -293,6 +282,17 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                             'body': json.dumps({'success': True, 'room_id': room['id']}),
                             'isBase64Encoded': False
                         }
+
+                    if room['status'] != 'waiting':
+                        return error_response(400, 'Игра уже началась или завершена')
+
+                    cur.execute(
+                        f"SELECT COUNT(*) as cnt FROM {DB_SCHEMA}.game_room_players WHERE room_id = %s",
+                        (room['id'],)
+                    )
+                    count = cur.fetchone()['cnt']
+                    if count >= room['max_players']:
+                        return error_response(400, 'Комната заполнена')
 
                     side = None
                     if room['game_type'] in ('chess', 'checkers'):
