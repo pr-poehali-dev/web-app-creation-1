@@ -34,6 +34,7 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
 
           {user && (
             <div className="flex items-center gap-3">
+              <GameNotificationBanner />
               <div className="hidden sm:flex items-center gap-2 bg-slate-800/60 border border-amber-500/20 rounded-full px-3 py-1.5">
                 <Icon name="Coins" size={16} className="text-amber-400" />
                 <span className="text-sm font-semibold text-amber-300">{user.chips_balance}</span>
@@ -54,7 +55,6 @@ export default function GameLayout({ user, onLogout, children }: GameLayoutProps
         </div>
       </header>
       <main className="container mx-auto px-4 py-8">{children}</main>
-      {user && <GameNotificationBanner />}
     </div>
   );
 }
