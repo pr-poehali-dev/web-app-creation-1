@@ -128,6 +128,8 @@ export default function AppRoutes({ isAuthenticated, onLogin, onRegister, onLogo
             <Route path="/games" element={<P.GameLobby />} />
             <Route path="/games/room/:roomId" element={<P.GameRoomRouter />} />
             <Route path="/games/invite/:code" element={<P.GameInviteJoin />} />
+            <Route path="/assistant" element={<P.AssistantHome />} />
+            <Route path="/assistant/auth" element={<P.AssistantAuth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<P.NotFound />} />
           </Routes>

@@ -27,7 +27,7 @@ from psycopg2.extras import RealDictCursor
 CORS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-User-Id",
+    "Access-Control-Allow-Headers": "Content-Type, X-User-Id, X-Assistant-Token",
 }
 
 MOEX_BASE = "https://iss.moex.com/iss"
@@ -313,6 +313,10 @@ def handler(event: dict, context) -> dict:
 
     body = json.loads(event.get("body") or "{}")
     action = body.get("action", "")
+
+    from assistant_app import ASSISTANT_ACTIONS, handle_assistant
+    if action in ASSISTANT_ACTIONS:
+        return handle_assistant(event, body)
 
     # ── POST: платный ИИ-обзор рынка (только после подтверждённой оплаты) ──
     if action == "market_review":

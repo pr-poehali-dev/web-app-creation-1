@@ -110,3 +110,6 @@ export const GameAuth = lazyWithRetry(() => import("./games/pages/GameAuth"));
 export const GameLobby = lazyWithRetry(() => import("./games/pages/GameLobby"));
 export const GameRoomRouter = lazyWithRetry(() => import("./games/pages/GameRoomRouter"));
 export const GameInviteJoin = lazyWithRetry(() => import("./games/pages/GameInviteJoin"));
+
+export const AssistantAuth = lazyWithRetry(() => import("./assistant/pages/AssistantAuth"));
+export const AssistantHome = lazyWithRetry(() => import("./assistant/pages/AssistantHome"));
