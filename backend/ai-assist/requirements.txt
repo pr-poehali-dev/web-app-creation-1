@@ -2,3 +2,7 @@ requests
 psycopg2-binary
 bcrypt==4.1.2
 PyJWT==2.8.0
+cryptography>=41.0.0
+py-vapid>=1.9.0
+http-ece>=1.2.0
+pywebpush>=2.0.0

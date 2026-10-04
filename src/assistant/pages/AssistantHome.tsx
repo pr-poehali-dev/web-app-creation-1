@@ -48,7 +48,7 @@ export default function AssistantHome() {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = 'Помощник на каждый день';
+    document.title = 'Ассистент на каждый день';
     return () => {
       document.title = prev;
     };
@@ -80,7 +80,7 @@ export default function AssistantHome() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500">
               <Icon name="HeartHandshake" size={20} className="text-white" />
             </div>
-            <span className="text-lg font-bold text-slate-800">Помощник</span>
+            <span className="text-lg font-bold text-slate-800">Ассистент</span>
           </div>
           <div className="flex items-center gap-1">
             <button

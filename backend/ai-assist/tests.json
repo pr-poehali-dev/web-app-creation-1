@@ -84,6 +84,16 @@
         "error": "string"
       },
       "bodyMatcher": "partial"
+    },
+    {
+      "name": "Assistant reminders run",
+      "method": "GET",
+      "path": "/?action=assistant_reminders",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
     }
   ]
 }

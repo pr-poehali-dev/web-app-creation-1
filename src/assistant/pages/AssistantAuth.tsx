@@ -57,8 +57,8 @@ export default function AssistantAuth() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/30">
             <Icon name="HeartHandshake" size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-800">Помощник</h1>
-          <p className="mt-2 text-slate-600">Спокойный помощник на каждый день: подскажет, напомнит и поможет с текстами</p>
+          <h1 className="text-3xl font-bold text-slate-800">Ассистент</h1>
+          <p className="mt-2 text-slate-600">Спокойный ассистент на каждый день: подскажет, напомнит и поможет с текстами</p>
         </div>
 
         <div className="rounded-2xl bg-white p-6 shadow-lg border border-slate-100">
@@ -124,7 +124,7 @@ export default function AssistantAuth() {
             </li>
             <li className="flex items-start gap-2">
               <Icon name="Check" size={16} className="mt-0.5 shrink-0 text-emerald-600" />
-              Помощник помнит только то, что вы сами ему рассказали
+              Ассистент помнит только то, что вы сами ему рассказали
             </li>
             <li className="flex items-start gap-2">
               <Icon name="Check" size={16} className="mt-0.5 shrink-0 text-emerald-600" />

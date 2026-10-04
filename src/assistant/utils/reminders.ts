@@ -37,12 +37,12 @@ const showReminder = async (title: string): Promise<void> => {
     if ('serviceWorker' in navigator) {
       const reg = await navigator.serviceWorker.getRegistration();
       if (reg && Notification.permission === 'granted') {
-        await reg.showNotification(`Помощник: ${title}`, { body, icon: '/favicon.png', tag: `task-${title}` });
+        await reg.showNotification(`Ассистент: ${title}`, { body, icon: '/favicon.png', tag: `task-${title}` });
         return;
       }
     }
     if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(`Помощник: ${title}`, { body, icon: '/favicon.png' });
+      new Notification(`Ассистент: ${title}`, { body, icon: '/favicon.png' });
     }
   } catch {
     // уведомление не показалось — ничего страшного, дело остаётся в списке

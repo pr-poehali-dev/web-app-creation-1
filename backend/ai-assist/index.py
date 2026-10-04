@@ -291,6 +291,10 @@ def handler(event: dict, context) -> dict:
     params = event.get("queryStringParameters") or {}
     query_action = params.get("action", "")
 
+    if query_action == "assistant_reminders":
+        from assistant_reminders import run_reminders
+        return run_reminders()
+
     # ── GET: рыночные данные (бесплатно, без GPT) ──────────────────────────
     if method == "GET" and query_action == "market_search":
         result = market_search(params.get("q", ""))

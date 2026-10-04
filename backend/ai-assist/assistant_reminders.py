@@ -22,12 +22,8 @@ def load_vapid_key() -> str:
     return raw
 
 
-def handler(event: dict, context) -> dict:
-    '''Рассылает push-напоминания о делах помощника, срок которых наступил. Вызывать по расписанию раз в минуту.'''
-    if event.get('httpMethod') == 'OPTIONS':
-        return {'statusCode': 200, 'headers': {**HEADERS, 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'}, 'body': ''}
-
+def run_reminders() -> dict:
+    '''Рассылает push-напоминания о делах ассистента, срок которых наступил. Вызывать по расписанию раз в минуту.'''
     vapid_key = load_vapid_key()
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     cur = conn.cursor()
@@ -59,7 +55,7 @@ def handler(event: dict, context) -> dict:
         conn.commit()
         cur.execute(f'SELECT endpoint, subscription_data FROM {DB_SCHEMA}.assistant_push_subscriptions WHERE user_id = %s', (user_id,))
         payload = json.dumps({
-            'title': 'Помощник: напоминание',
+            'title': 'Ассистент: напоминание',
             'body': title,
             'icon': '/favicon.png',
             'badge': '/favicon.png',

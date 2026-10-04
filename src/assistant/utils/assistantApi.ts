@@ -63,7 +63,7 @@ export class AssistantApiError extends Error {
 }
 
 const call = async <T,>(action: string, payload: Record<string, unknown> = {}): Promise<T> => {
-  if (!API) throw new AssistantApiError('Помощник временно недоступен', 0);
+  if (!API) throw new AssistantApiError('Ассистент временно недоступен', 0);
   const token = getAssistantToken();
   let response: Response;
   try {
