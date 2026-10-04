@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import { CATEGORIES } from '@/data/categories';
@@ -167,7 +168,19 @@ export default function RequestBasicInfoSection({
 
         {!isTransport && (
           <div>
-            <Label htmlFor="title">Название запроса *</Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="title">Название запроса *</Label>
+              {formData.title.length >= 3 && (
+                <AIAssistButton
+                  action="improve_title"
+                  entity="request"
+                  title={formData.title}
+                  category={formData.category}
+                  onResult={(text) => onInputChange('title', text.slice(0, 100))}
+                  label="Улучшить"
+                />
+              )}
+            </div>
             <Input
               id="title"
               value={formData.title}
@@ -184,9 +197,34 @@ export default function RequestBasicInfoSection({
 
         {!isTransport && (
           <div>
-            <Label htmlFor="description">
-              Описание запроса {isDescriptionRequired ? '*' : '(необязательно)'}
-            </Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label htmlFor="description">
+                Описание запроса {isDescriptionRequired ? '*' : '(необязательно)'}
+              </Label>
+              <div className="flex gap-1.5">
+                {formData.title.length >= 3 && formData.description.length === 0 && (
+                  <AIAssistButton
+                    action="suggest_description"
+                    entity="request"
+                    title={formData.title}
+                    category={formData.category}
+                    onResult={(text) => onInputChange('description', text.slice(0, 1000))}
+                    label="Сгенерировать"
+                  />
+                )}
+                {formData.description.length >= 10 && (
+                  <AIAssistButton
+                    action="improve_description"
+                    entity="request"
+                    title={formData.title}
+                    description={formData.description}
+                    category={formData.category}
+                    onResult={(text) => onInputChange('description', text.slice(0, 1000))}
+                    label="Улучшить"
+                  />
+                )}
+              </div>
+            </div>
             <Textarea
               id="description"
               value={formData.description}

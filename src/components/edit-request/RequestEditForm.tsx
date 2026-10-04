@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import ProductMediaUpload from '@/components/ProductMediaUpload';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 
 type PricingType = 'fixed' | 'negotiable' | 'not_set';
 
@@ -86,7 +87,18 @@ export default function RequestEditForm({
     <div className="space-y-5">
       {!isTransport && (
         <div className="space-y-2">
-          <Label>Название</Label>
+          <div className="flex items-center justify-between">
+            <Label>Название</Label>
+            {title.length >= 3 && (
+              <AIAssistButton
+                action="improve_title"
+                entity="request"
+                title={title}
+                onResult={(text) => onTitleChange(text.slice(0, 100))}
+                label="Улучшить"
+              />
+            )}
+          </div>
           <Input
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
@@ -96,7 +108,19 @@ export default function RequestEditForm({
       )}
 
       <div className="space-y-2">
-        <Label>Описание</Label>
+        <div className="flex items-center justify-between">
+          <Label>Описание</Label>
+          {description.length >= 10 && (
+            <AIAssistButton
+              action="improve_description"
+              entity="request"
+              title={title}
+              description={description}
+              onResult={(text) => onDescriptionChange(text.slice(0, 1000))}
+              label="Улучшить"
+            />
+          )}
+        </div>
         <Textarea
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}

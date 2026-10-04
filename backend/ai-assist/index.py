@@ -369,6 +369,13 @@ def handler(event: dict, context) -> dict:
     product_name = body.get("productName", "").strip()
     terms = body.get("termsConditions", "").strip()
     contract_type = body.get("contractType", "")
+    entity = body.get("entity", "offer")
+    entity_names = {
+        "offer": ("торгового предложения", "предложения"),
+        "request": ("запроса на покупку товара или услуги", "запроса"),
+        "auction": ("аукционного лота", "лота"),
+    }
+    entity_gen, entity_short = entity_names.get(entity, entity_names["offer"])
 
     if not action:
         return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "action is required"})}
@@ -378,7 +385,7 @@ def handler(event: dict, context) -> dict:
         if not title:
             return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "title is required"})}
         prompt = (
-            f"Улучши название торгового предложения для платформы ЕРТТП.\n"
+            f"Улучши название {entity_gen} для платформы ЕРТТП.\n"
             f"Категория: {category or 'не указана'}.\n"
             f"Текущее название: «{title}».\n"
             f"Сделай название чётким, конкретным и привлекательным.\n"
@@ -390,7 +397,7 @@ def handler(event: dict, context) -> dict:
         if not description:
             return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "description is required"})}
         prompt = (
-            f"Улучши описание торгового предложения для платформы ЕРТТП.\n"
+            f"Улучши описание {entity_gen} для платформы ЕРТТП.\n"
             f"Категория: {category or 'не указана'}.\n"
             f"{'Название: «' + title + '». ' if title else ''}"
             f"Текущее описание: «{description}».\n"
@@ -403,10 +410,10 @@ def handler(event: dict, context) -> dict:
         if not title:
             return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "title is required"})}
         prompt = (
-            f"Напиши описание торгового предложения для платформы ЕРТТП.\n"
+            f"Напиши описание {entity_gen} для платформы ЕРТТП.\n"
             f"Категория: {category or 'не указана'}.\n"
             f"Название: «{title}».\n"
-            f"Напиши профессиональное, конкретное описание: характеристики, условия, преимущества.\n"
+            f"Напиши профессиональное, конкретное описание {entity_short}: характеристики, условия, требования.\n"
             f"Верни ТОЛЬКО описание, без пояснений, 150-400 символов."
         )
         max_tokens = 300

@@ -10,6 +10,7 @@ interface AIAssistButtonProps {
   title?: string;
   description?: string;
   category?: string;
+  entity?: 'offer' | 'request' | 'auction';
   onResult: (text: string) => void;
   label?: string;
 }
@@ -19,6 +20,7 @@ export default function AIAssistButton({
   title,
   description,
   category,
+  entity = 'offer',
   onResult,
   label,
 }: AIAssistButtonProps) {
@@ -31,7 +33,7 @@ export default function AIAssistButton({
       const res = await fetch(AI_ASSIST_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, title, description, category }),
+        body: JSON.stringify({ action, title, description, category, entity }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка');

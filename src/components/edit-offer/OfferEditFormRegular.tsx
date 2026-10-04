@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { Offer } from '@/types/offer';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 
 interface EditData {
   pricePerUnit: string;
@@ -44,7 +45,19 @@ export default function OfferEditFormRegular({ offer, editData, isSaving, isWork
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="description">Описание</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="description">Описание</Label>
+          {editData.description.length >= 10 && (
+            <AIAssistButton
+              action="improve_description"
+              title={offer.title}
+              description={editData.description}
+              category={offer.category}
+              onResult={(text) => onEditDataChange({ ...editData, description: text.slice(0, 1000) })}
+              label="Улучшить"
+            />
+          )}
+        </div>
         <Textarea
           id="description"
           value={editData.description}
