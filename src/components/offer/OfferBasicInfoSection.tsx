@@ -180,6 +180,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
                 {formData.title.length >= 3 && (
                   <AIAssistButton
                     action="improve_title"
+                    entity={isUtilities ? 'service' : 'offer'}
                     title={formData.title}
                     category={formData.category}
                     onResult={(text) => onInputChange('title', text.slice(0, 100))}
@@ -207,6 +208,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
                   {formData.title.length >= 3 && formData.description.length === 0 && (
                     <AIAssistButton
                       action="suggest_description"
+                      entity={isUtilities ? 'service' : 'offer'}
                       title={formData.title}
                       category={formData.category}
                       onResult={(text) => onInputChange('description', text.slice(0, 1000))}
@@ -216,6 +218,7 @@ export default function OfferBasicInfoSection({ formData, onInputChange }: Offer
                   {formData.description.length >= 10 && (
                     <AIAssistButton
                       action="improve_description"
+                      entity={isUtilities ? 'service' : 'offer'}
                       title={formData.title}
                       description={formData.description}
                       category={formData.category}

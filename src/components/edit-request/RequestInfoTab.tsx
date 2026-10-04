@@ -50,6 +50,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
   const [transportRoute, setTransportRoute] = useState(request.transportRoute || '');
   const [transportType, setTransportType] = useState(request.transportType || '');
   const [transportServiceType, setTransportServiceType] = useState(request.transportServiceType || '');
+  const [transportComment, setTransportComment] = useState(request.transportComment || '');
   const [transportPrice, setTransportPrice] = useState(request.transportPrice ? String(request.transportPrice) : '');
   const [transportNegotiable, setTransportNegotiable] = useState(request.transportNegotiable || false);
   const [transportDepartureDateTime, setTransportDepartureDateTime] = useState(
@@ -82,6 +83,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
     setTransportRoute(request.transportRoute || '');
     setTransportType(request.transportType || '');
     setTransportServiceType(request.transportServiceType || '');
+    setTransportComment(request.transportComment || '');
     setTransportPrice(request.transportPrice ? String(request.transportPrice) : '');
     setTransportNegotiable(request.transportNegotiable || false);
     setTransportDepartureDateTime(formatDateTimeLocal(request.transportDepartureDateTime || request.transportDateTime));
@@ -107,6 +109,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
         updateData.transportRoute = transportRoute;
         updateData.transportType = transportType;
         updateData.transportServiceType = transportServiceType;
+        updateData.transportComment = transportComment;
         updateData.transportPrice = transportPrice ? parseFloat(transportPrice) : null;
         updateData.transportNegotiable = transportNegotiable;
         updateData.transportDepartureDateTime = transportDepartureDateTime || null;
@@ -136,6 +139,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
           transportRoute,
           transportType,
           transportServiceType,
+          transportComment,
           transportPrice: transportPrice ? parseFloat(transportPrice) : undefined,
           transportNegotiable,
           transportDepartureDateTime: transportDepartureDateTime || undefined,
@@ -208,6 +212,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
             transportRoute={transportRoute}
             transportType={transportType}
             transportServiceType={transportServiceType}
+            transportComment={transportComment}
             transportPrice={transportPrice}
             transportNegotiable={transportNegotiable}
             transportDepartureDateTime={transportDepartureDateTime}
@@ -223,6 +228,7 @@ export default function RequestInfoTab({ request, onDelete, onUpdate }: RequestI
             onTransportRouteChange={setTransportRoute}
             onTransportTypeChange={setTransportType}
             onTransportServiceTypeChange={setTransportServiceType}
+            onTransportCommentChange={setTransportComment}
             onTransportPriceChange={setTransportPrice}
             onTransportNegotiableChange={setTransportNegotiable}
             onTransportDepartureDateTimeChange={setTransportDepartureDateTime}

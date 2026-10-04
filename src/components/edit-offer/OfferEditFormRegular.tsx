@@ -6,6 +6,11 @@ import type { Offer } from '@/types/offer';
 import AIAssistButton from '@/components/offer/AIAssistButton';
 
 interface EditData {
+  title: string;
+  unit: string;
+  transportServiceType: string;
+  transportRoute: string;
+  transportType: string;
   pricePerUnit: string;
   quantity: string;
   minOrderQuantity: string;
@@ -42,15 +47,40 @@ interface OfferEditFormRegularProps {
 }
 
 export default function OfferEditFormRegular({ offer, editData, isSaving, isWorks = false, onEditDataChange }: OfferEditFormRegularProps) {
+  const entity = isWorks ? 'service' : 'offer';
   return (
     <>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="title">Название</Label>
+          {editData.title.length >= 3 && (
+            <AIAssistButton
+              action="improve_title"
+              entity={entity}
+              title={editData.title}
+              category={offer.category}
+              onResult={(text) => onEditDataChange({ ...editData, title: text.slice(0, 100) })}
+              label="Улучшить"
+            />
+          )}
+        </div>
+        <Input
+          id="title"
+          value={editData.title}
+          onChange={(e) => onEditDataChange({ ...editData, title: e.target.value })}
+          disabled={isSaving}
+          maxLength={100}
+          placeholder="Название"
+        />
+      </div>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="description">Описание</Label>
           {editData.description.length >= 10 && (
             <AIAssistButton
               action="improve_description"
-              title={offer.title}
+              entity={entity}
+              title={editData.title}
               description={editData.description}
               category={offer.category}
               onResult={(text) => onEditDataChange({ ...editData, description: text.slice(0, 1000) })}
@@ -82,7 +112,18 @@ export default function OfferEditFormRegular({ offer, editData, isSaving, isWork
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="quantity">Доступное количество ({offer.unit})</Label>
+            <Label htmlFor="unit">Единица измерения</Label>
+            <Input
+              id="unit"
+              value={editData.unit}
+              onChange={(e) => onEditDataChange({ ...editData, unit: e.target.value })}
+              disabled={isSaving}
+              maxLength={20}
+              placeholder="шт, кг, т, м²"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Доступное количество ({editData.unit || offer.unit})</Label>
             <Input
               id="quantity"
               type="number"
@@ -93,7 +134,7 @@ export default function OfferEditFormRegular({ offer, editData, isSaving, isWork
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="minOrderQuantity">Минимальное количество для заказа ({offer.unit})</Label>
+            <Label htmlFor="minOrderQuantity">Минимальное количество для заказа ({editData.unit || offer.unit})</Label>
             <Input
               id="minOrderQuantity"
               type="number"

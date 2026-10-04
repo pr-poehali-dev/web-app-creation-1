@@ -5,8 +5,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import type { Offer, TransportWaypoint } from '@/types/offer';
+import AIAssistButton from '@/components/offer/AIAssistButton';
+import { SERVICE_TYPES, TRANSPORT_TYPES, CARGO_TRANSPORT_TYPES, formatRoute } from '@/components/offer/transportConstants';
 
 interface EditData {
+  title: string;
+  unit: string;
+  transportServiceType: string;
+  transportRoute: string;
+  transportType: string;
   pricePerUnit: string;
   quantity: string;
   minOrderQuantity: string;
@@ -83,8 +90,57 @@ export default function OfferEditFormTransport({ offer, editData, isSaving, onEd
     });
   };
 
+  const vehicleOptions = editData.transportServiceType === 'Грузоперевозки' ? CARGO_TRANSPORT_TYPES : TRANSPORT_TYPES;
+  const selectClass = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer';
+  const aiExtra = {
+    serviceType: editData.transportServiceType,
+    route: editData.transportRoute,
+    vehicleType: editData.transportType,
+    capacity: editData.transportCapacity,
+  };
+
   return (
     <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="transportServiceType">Тип услуги</Label>
+        <select
+          id="transportServiceType"
+          value={editData.transportServiceType}
+          onChange={(e) => onEditDataChange({ ...editData, transportServiceType: e.target.value })}
+          disabled={isSaving}
+          className={selectClass}
+        >
+          <option value="">Выберите тип услуги</option>
+          {SERVICE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="transportRoute">Маршрут</Label>
+        <Input
+          id="transportRoute"
+          value={editData.transportRoute}
+          onChange={(e) => onEditDataChange({ ...editData, transportRoute: e.target.value })}
+          onBlur={(e) => onEditDataChange({ ...editData, transportRoute: formatRoute(e.target.value) })}
+          disabled={isSaving}
+          placeholder="Например: Якутск - Мирный"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="transportType">Тип транспорта</Label>
+        <select
+          id="transportType"
+          value={editData.transportType}
+          onChange={(e) => onEditDataChange({ ...editData, transportType: e.target.value })}
+          disabled={isSaving}
+          className={selectClass}
+        >
+          <option value="">Выберите транспорт</option>
+          {editData.transportType && !vehicleOptions.includes(editData.transportType) && (
+            <option value={editData.transportType}>{editData.transportType}</option>
+          )}
+          {vehicleOptions.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
       <div className="space-y-2">
         <Label htmlFor="transportCapacity">Вместимость / Грузоподъёмность</Label>
         <Input
@@ -123,6 +179,7 @@ export default function OfferEditFormTransport({ offer, editData, isSaving, onEd
             <option value="За место">За место</option>
             <option value="За час">За час</option>
             <option value="За км">За км</option>
+            {editData.transportServiceType !== 'Пассажирские перевозки' && <option value="За тонну">За тонну</option>}
             <option value="Договорная">Договорная</option>
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
@@ -162,7 +219,7 @@ export default function OfferEditFormTransport({ offer, editData, isSaving, onEd
         <Label>Остановки по пути</Label>
         <div className="bg-muted/40 rounded-md p-3 space-y-2">
           <div className="text-xs text-muted-foreground border border-dashed border-muted-foreground/30 rounded px-2 py-1.5">
-            Основной маршрут: <span className="font-medium text-foreground">{offer.transportRoute || 'Не указан'}</span>
+            Основной маршрут: <span className="font-medium text-foreground">{editData.transportRoute || 'Не указан'}</span>
           </div>
           {editData.transportWaypoints.map((wp) => (
             <div key={wp.id} className={`flex items-center gap-2 rounded-md p-2 border ${wp.isActive ? 'bg-background border-border' : 'bg-muted border-muted opacity-60'}`}>
@@ -233,7 +290,30 @@ export default function OfferEditFormTransport({ offer, editData, isSaving, onEd
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="transportComment">Комментарий</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="transportComment">Комментарий</Label>
+          <div className="flex gap-1.5">
+            {!editData.transportComment.trim() && (editData.transportRoute || editData.transportServiceType) && (
+              <AIAssistButton
+                action="suggest_transport_comment"
+                entity="transport"
+                extra={aiExtra}
+                onResult={(text) => onEditDataChange({ ...editData, transportComment: text.slice(0, 500) })}
+                label="Сгенерировать"
+              />
+            )}
+            {editData.transportComment.trim().length >= 10 && (
+              <AIAssistButton
+                action="improve_transport_comment"
+                entity="transport"
+                description={editData.transportComment}
+                extra={aiExtra}
+                onResult={(text) => onEditDataChange({ ...editData, transportComment: text.slice(0, 500) })}
+                label="Улучшить"
+              />
+            )}
+          </div>
+        </div>
         <Textarea
           id="transportComment"
           value={editData.transportComment}

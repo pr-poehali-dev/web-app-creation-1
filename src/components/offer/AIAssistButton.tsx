@@ -6,11 +6,12 @@ import { useToast } from '@/hooks/use-toast';
 const AI_ASSIST_URL = 'https://functions.poehali.dev/3c3c03a1-545b-4d8f-916e-cfc3b8a7719a';
 
 interface AIAssistButtonProps {
-  action: 'improve_title' | 'improve_description' | 'suggest_description';
+  action: 'improve_title' | 'improve_description' | 'suggest_description' | 'improve_transport_comment' | 'suggest_transport_comment';
   title?: string;
   description?: string;
   category?: string;
-  entity?: 'offer' | 'request' | 'auction';
+  entity?: 'offer' | 'request' | 'auction' | 'service' | 'transport';
+  extra?: Record<string, string | undefined>;
   onResult: (text: string) => void;
   label?: string;
 }
@@ -21,6 +22,7 @@ export default function AIAssistButton({
   description,
   category,
   entity = 'offer',
+  extra,
   onResult,
   label,
 }: AIAssistButtonProps) {
@@ -33,7 +35,7 @@ export default function AIAssistButton({
       const res = await fetch(AI_ASSIST_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, title, description, category, entity }),
+        body: JSON.stringify({ action, title, description, category, entity, ...extra }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка');

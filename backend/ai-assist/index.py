@@ -67,7 +67,10 @@ def call_yandex_gpt(prompt: str, max_tokens: int = 400) -> str:
         timeout=25,
     )
     response.raise_for_status()
-    return response.json()["result"]["alternatives"][0]["message"]["text"].strip()
+    text = response.json()["result"]["alternatives"][0]["message"]["text"].strip()
+    if len(text) > 2 and text[0] in "«\"" and text[-1] in "»\"":
+        text = text[1:-1].strip()
+    return text
 
 
 def get_db():
@@ -374,7 +377,10 @@ def handler(event: dict, context) -> dict:
         "offer": ("торгового предложения", "предложения"),
         "request": ("запроса на покупку товара или услуги", "запроса"),
         "auction": ("аукционного лота", "лота"),
+        "service": ("предложения услуг (работы, ремонт, сервис)", "услуги"),
+        "transport": ("транспортной услуги (пассажирские перевозки, грузоперевозки, аренда транспорта, доставка)", "услуги перевозки"),
     }
+    no_invent = "Не выдумывай цены, телефоны, адреса и факты, которых нет в исходных данных.\n"
     entity_gen, entity_short = entity_names.get(entity, entity_names["offer"])
 
     if not action:
@@ -402,6 +408,7 @@ def handler(event: dict, context) -> dict:
             f"{'Название: «' + title + '». ' if title else ''}"
             f"Текущее описание: «{description}».\n"
             f"Исправь орфографию, улучши стиль, сделай текст профессиональным и понятным.\n"
+            f"{no_invent}"
             f"Верни ТОЛЬКО улучшенное описание, без пояснений, не более 900 символов."
         )
         max_tokens = 500
@@ -414,9 +421,46 @@ def handler(event: dict, context) -> dict:
             f"Категория: {category or 'не указана'}.\n"
             f"Название: «{title}».\n"
             f"Напиши профессиональное, конкретное описание {entity_short}: характеристики, условия, требования.\n"
+            f"{no_invent}"
             f"Верни ТОЛЬКО описание, без пояснений, 150-400 символов."
         )
         max_tokens = 300
+
+    # --- Комментарий / описание перевозки ---
+    elif action in ("improve_transport_comment", "suggest_transport_comment"):
+        service_type = body.get("serviceType", "").strip()
+        route = body.get("route", "").strip()
+        vehicle = body.get("vehicleType", "").strip()
+        capacity = body.get("capacity", "").strip()
+        facts = (
+            f"{'Вид услуги: ' + service_type + '. ' if service_type else ''}"
+            f"{'Маршрут: ' + route + '. ' if route else ''}"
+            f"{'Транспорт: ' + vehicle + '. ' if vehicle else ''}"
+            f"{'Вместимость/грузоподъёмность: ' + capacity + '. ' if capacity else ''}"
+        )
+        if action == "improve_transport_comment":
+            if not description:
+                return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "description is required"})}
+            prompt = (
+                f"Улучши комментарий к транспортной услуге на платформе ЕРТТП.\n"
+                f"{facts}\n"
+                f"Текущий текст: «{description}».\n"
+                f"Исправь орфографию, сделай текст понятным и вежливым.\n"
+                f"{no_invent}"
+                f"Верни ТОЛЬКО улучшенный текст, без пояснений, не более 500 символов."
+            )
+            max_tokens = 300
+        else:
+            if not facts:
+                return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "route or serviceType is required"})}
+            prompt = (
+                f"Напиши короткий комментарий к транспортной услуге на платформе ЕРТТП.\n"
+                f"{facts}\n"
+                f"Опиши условия поездки или перевозки: комфорт, аккуратность, пунктуальность, "
+                f"что можно уточнить у водителя. {no_invent}"
+                f"Верни ТОЛЬКО текст, без пояснений, 150-350 символов."
+            )
+            max_tokens = 250
 
     # --- Действия для контрактов ---
     elif action == "improve_contract_title":

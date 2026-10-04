@@ -50,6 +50,11 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     pricePerUnit: offer.pricePerUnit.toString(),
     quantity: offer.quantity.toString(),
     minOrderQuantity: offer.minOrderQuantity?.toString() || '',
+    title: offer.title || '',
+    unit: offer.unit || '',
+    transportServiceType: offer.transportServiceType || '',
+    transportRoute: offer.transportRoute || '',
+    transportType: offer.transportType || '',
     description: offer.description || '',
     deliveryPeriodStart: toDateInputValue(offer.deliveryPeriodStart),
     deliveryPeriodEnd: toDateInputValue(offer.deliveryPeriodEnd),
@@ -89,6 +94,14 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
     const quantity = isTransport ? parseInt(editData.transportCapacity) || 0 : isWorks ? 0 : parseInt(editData.quantity);
     const minOrderQuantity = editData.minOrderQuantity ? parseInt(editData.minOrderQuantity) : undefined;
 
+    if (!isTransport && !editData.title.trim()) {
+      toast({ title: 'Ошибка', description: 'Укажите название', variant: 'destructive' });
+      return;
+    }
+    if (isTransport && !editData.transportRoute.trim()) {
+      toast({ title: 'Ошибка', description: 'Укажите маршрут', variant: 'destructive' });
+      return;
+    }
     if (!isTransport && !isWorks && (isNaN(pricePerUnit) || pricePerUnit <= 0)) {
       toast({ title: 'Ошибка', description: 'Укажите корректную цену', variant: 'destructive' });
       return;
@@ -135,14 +148,16 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
         pricePerUnit,
         quantity,
         minOrderQuantity,
+        ...(isTransport ? {} : { title: editData.title.trim() }),
+        ...(!isTransport && !isWorks && editData.unit ? { unit: editData.unit.trim() } : {}),
         description: editData.description,
         images: images,
         video: video || null,
         deliveryPeriodStart: editData.deliveryPeriodStart || null,
         deliveryPeriodEnd: editData.deliveryPeriodEnd || null,
-        transportServiceType: offer.transportServiceType,
-        transportRoute: offer.transportRoute,
-        transportType: offer.transportType,
+        transportServiceType: editData.transportServiceType || offer.transportServiceType,
+        transportRoute: editData.transportRoute || offer.transportRoute,
+        transportType: editData.transportType || offer.transportType,
         transportCapacity: editData.transportCapacity || offer.transportCapacity,
         transportPrice: editData.transportNegotiable ? undefined : (parseFloat(editData.transportPrice) || undefined),
         transportPriceType: editData.transportPriceType || offer.transportPriceType,
@@ -188,7 +203,12 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       pricePerUnit: offer.pricePerUnit.toString(),
       quantity: offer.quantity.toString(),
       minOrderQuantity: offer.minOrderQuantity?.toString() || '',
-      description: offer.description || '',
+      title: offer.title || '',
+    unit: offer.unit || '',
+    transportServiceType: offer.transportServiceType || '',
+    transportRoute: offer.transportRoute || '',
+    transportType: offer.transportType || '',
+    description: offer.description || '',
       deliveryPeriodStart: toDateInputValue(offer.deliveryPeriodStart),
       deliveryPeriodEnd: toDateInputValue(offer.deliveryPeriodEnd),
       transportPrice: offer.transportPrice?.toString() || '',
@@ -210,6 +230,7 @@ export default function OfferInfoTab({ offer, districtName: propDistrictName, on
       autoMileage: offer.autoMileage?.toString() || '',
       autoPtsRecords: offer.autoPtsRecords || '',
       autoDescription: offer.autoDescription || '',
+      district: offer.district || '',
     });
     setImages(offer.images || []);
     setCurrentImageIndex(0);

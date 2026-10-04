@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import Icon from '@/components/ui/icon';
 import ProductMediaUpload from '@/components/ProductMediaUpload';
 import AIAssistButton from '@/components/offer/AIAssistButton';
+import { SERVICE_TYPES, TRANSPORT_TYPES, CARGO_TRANSPORT_TYPES, formatRoute } from '@/components/offer/transportConstants';
 
 type PricingType = 'fixed' | 'negotiable' | 'not_set';
 
@@ -25,6 +26,7 @@ interface RequestEditFormProps {
   transportRoute: string;
   transportType: string;
   transportServiceType: string;
+  transportComment: string;
   transportPrice: string;
   transportNegotiable: boolean;
   transportDepartureDateTime: string;
@@ -40,6 +42,7 @@ interface RequestEditFormProps {
   onTransportRouteChange: (v: string) => void;
   onTransportTypeChange: (v: string) => void;
   onTransportServiceTypeChange: (v: string) => void;
+  onTransportCommentChange: (v: string) => void;
   onTransportPriceChange: (v: string) => void;
   onTransportNegotiableChange: (v: boolean) => void;
   onTransportDepartureDateTimeChange: (v: string) => void;
@@ -62,6 +65,7 @@ export default function RequestEditForm({
   transportRoute,
   transportType,
   transportServiceType,
+  transportComment,
   transportPrice,
   transportNegotiable,
   transportDepartureDateTime,
@@ -77,6 +81,7 @@ export default function RequestEditForm({
   onTransportRouteChange,
   onTransportTypeChange,
   onTransportServiceTypeChange,
+  onTransportCommentChange,
   onTransportPriceChange,
   onTransportNegotiableChange,
   onTransportDepartureDateTimeChange,
@@ -207,25 +212,40 @@ export default function RequestEditForm({
             <Input
               value={transportRoute}
               onChange={(e) => onTransportRouteChange(e.target.value)}
+              onBlur={(e) => onTransportRouteChange(formatRoute(e.target.value))}
               placeholder="Город отправления — Город назначения"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Тип услуги</Label>
-              <Input
+              <select
                 value={transportServiceType}
                 onChange={(e) => onTransportServiceTypeChange(e.target.value)}
-                placeholder="Тип услуги"
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Выберите тип услуги</option>
+                {transportServiceType && !SERVICE_TYPES.includes(transportServiceType) && (
+                  <option value={transportServiceType}>{transportServiceType}</option>
+                )}
+                {SERVICE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Тип транспорта</Label>
-              <Input
+              <select
                 value={transportType}
                 onChange={(e) => onTransportTypeChange(e.target.value)}
-                placeholder="Тип транспорта"
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Выберите транспорт</option>
+                {transportType && ![...TRANSPORT_TYPES, ...CARGO_TRANSPORT_TYPES].includes(transportType) && (
+                  <option value={transportType}>{transportType}</option>
+                )}
+                {(transportServiceType === 'Грузоперевозки' ? CARGO_TRANSPORT_TYPES : TRANSPORT_TYPES).map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="space-y-2">
@@ -256,6 +276,39 @@ export default function RequestEditForm({
             <Label htmlFor="transport-negotiable" className="cursor-pointer text-sm">
               По договоренности
             </Label>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Комментарий</Label>
+              <div className="flex gap-1.5">
+                {!transportComment.trim() && (transportRoute || transportServiceType) && (
+                  <AIAssistButton
+                    action="suggest_transport_comment"
+                    entity="transport"
+                    extra={{ serviceType: transportServiceType, route: transportRoute, vehicleType: transportType }}
+                    onResult={(text) => onTransportCommentChange(text.slice(0, 500))}
+                    label="Сгенерировать"
+                  />
+                )}
+                {transportComment.trim().length >= 10 && (
+                  <AIAssistButton
+                    action="improve_transport_comment"
+                    entity="transport"
+                    description={transportComment}
+                    extra={{ serviceType: transportServiceType, route: transportRoute, vehicleType: transportType }}
+                    onResult={(text) => onTransportCommentChange(text.slice(0, 500))}
+                    label="Улучшить"
+                  />
+                )}
+              </div>
+            </div>
+            <Textarea
+              value={transportComment}
+              onChange={(e) => onTransportCommentChange(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Дополнительная информация об услуге, условиях, особенностях..."
+            />
           </div>
         </div>
       )}

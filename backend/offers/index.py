@@ -909,6 +909,10 @@ def update_offer(offer_id: str, event: Dict[str, Any], headers: Dict[str, str]) 
         if 'description' in body:
             desc_esc = body['description'].replace("'", "''")
             updates.append(f"description = '{desc_esc}'")
+
+        if 'unit' in body and body['unit']:
+            unit_upd_esc = str(body['unit']).replace("'", "''")
+            updates.append(f"unit = '{unit_upd_esc}'")
         
         if 'quantity' in body:
             updates.append(f"quantity = {body['quantity']}")

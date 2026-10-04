@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 import SearchableSelect from '@/components/ui/SearchableSelect';
 import {
   AUTO_MAKES,
@@ -17,6 +18,11 @@ import { DISTRICTS } from '@/data/districts';
 import type { Offer } from '@/types/offer';
 
 interface EditData {
+  title: string;
+  unit: string;
+  transportServiceType: string;
+  transportRoute: string;
+  transportType: string;
   pricePerUnit: string;
   quantity: string;
   minOrderQuantity: string;
@@ -276,7 +282,20 @@ export default function OfferEditFormAutoSale({ offer, editData, isSaving, onEdi
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="autoDescription">Описание автомобиля</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="autoDescription">Описание автомобиля</Label>
+          {editData.autoDescription.length >= 10 && (
+            <AIAssistButton
+              action="improve_description"
+              entity="offer"
+              title={[editData.autoMake, editData.autoModel, editData.autoYear].filter(Boolean).join(' ')}
+              description={editData.autoDescription}
+              category="auto-sale"
+              onResult={(text) => onEditDataChange({ ...editData, autoDescription: text.slice(0, 1000) })}
+              label="Улучшить"
+            />
+          )}
+        </div>
         <Textarea
           id="autoDescription"
           value={editData.autoDescription}

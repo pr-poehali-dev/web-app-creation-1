@@ -9,6 +9,11 @@ import OfferEditFormAutoSale from './OfferEditFormAutoSale';
 import OfferViewInfo from './OfferViewInfo';
 
 interface EditData {
+  title: string;
+  unit: string;
+  transportServiceType: string;
+  transportRoute: string;
+  transportType: string;
   pricePerUnit: string;
   quantity: string;
   minOrderQuantity: string;

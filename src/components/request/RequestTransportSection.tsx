@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import AIAssistButton from '@/components/offer/AIAssistButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import Icon from '@/components/ui/icon';
 import { useDistrict } from '@/contexts/DistrictContext';
@@ -376,7 +377,40 @@ export default function RequestTransportSection({ formData, onInputChange, onDis
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="transportComment">Комментарий</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="transportComment">Комментарий</Label>
+            <div className="flex gap-1.5">
+              {!(formData.transportComment || '').trim() && (formData.transportRoute || formData.transportServiceType) && (
+                <AIAssistButton
+                  action="suggest_transport_comment"
+                  entity="transport"
+                  extra={{
+                    serviceType: formData.transportServiceType,
+                    route: formData.transportRoute,
+                    vehicleType: formData.transportType,
+                    capacity: formData.transportCapacity,
+                  }}
+                  onResult={(text) => onInputChange('transportComment', text.slice(0, 500))}
+                  label="Сгенерировать"
+                />
+              )}
+              {(formData.transportComment || '').trim().length >= 10 && (
+                <AIAssistButton
+                  action="improve_transport_comment"
+                  entity="transport"
+                  description={formData.transportComment}
+                  extra={{
+                    serviceType: formData.transportServiceType,
+                    route: formData.transportRoute,
+                    vehicleType: formData.transportType,
+                    capacity: formData.transportCapacity,
+                  }}
+                  onResult={(text) => onInputChange('transportComment', text.slice(0, 500))}
+                  label="Улучшить"
+                />
+              )}
+            </div>
+          </div>
           <Textarea
             id="transportComment"
             value={formData.transportComment || ''}
