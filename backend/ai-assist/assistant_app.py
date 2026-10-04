@@ -1,5 +1,5 @@
 '''
-Личный помощник «Рядом»: вход по имени и PIN-коду, чат с ИИ, память о пользователе, дела.
+Личный помощник «Помощник»: вход по имени и PIN-коду, чат с ИИ, память о пользователе, дела.
 Независим от основной системы пользователей сайта: свои таблицы assistant_*, свой JWT.
 Хранит только то, что человек сам написал; всё можно посмотреть и удалить.
 Args: event - dict with httpMethod, body (action), headers (X-Assistant-Token)
@@ -39,7 +39,7 @@ MODES = {
 }
 
 SYSTEM_PROMPT = (
-    'Ты добрый и спокойный личный помощник «Рядом». Говори по-русски, просто и тепло, без сложных слов. '
+    'Ты добрый и спокойный личный помощник «Помощник». Говори по-русски, просто и тепло, без сложных слов. '
     'Отвечай по делу, короткими абзацами, шаги нумеруй. Если не хватает данных, задай один уточняющий вопрос. '
     'Не выдумывай факты, цены, телефоны и адреса. В вопросах здоровья, права и денег напомни, что это совет, '
     'а не замена специалисту. Если пользователь просит запомнить что-то о себе, согласись и скажи, что запомнил.'
@@ -170,12 +170,12 @@ def extract_fact(message: str) -> Optional[str]:
 ASSISTANT_ACTIONS = {
     'register', 'login', 'me', 'save_profile', 'chat', 'history', 'clear_history',
     'memory_list', 'memory_add', 'memory_delete', 'tasks_list', 'task_add', 'task_toggle',
-    'task_delete', 'delete_account',
+    'task_delete', 'delete_account', 'push_subscribe', 'push_unsubscribe',
 }
 
 
 def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, Any]:
-    '''Обработка действий помощника «Рядом» (вызывается из ai-assist по action).'''
+    '''Обработка действий помощника «Помощник» (вызывается из ai-assist по action).'''
     action = body.get('action')
 
     if action == 'register':
@@ -397,10 +397,16 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                         due_at = datetime.fromisoformat(str(due_raw).replace('Z', ''))
                     except ValueError:
                         return err(400, 'Не удалось понять дату')
+                try:
+                    tz_offset = int(body.get('tz_offset', -180))
+                except (TypeError, ValueError):
+                    tz_offset = -180
+                if tz_offset < -840 or tz_offset > 840:
+                    tz_offset = -180
                 cur.execute(
-                    f'''INSERT INTO {DB_SCHEMA}.assistant_tasks (user_id, title, due_at)
-                        VALUES (%s, %s, %s) RETURNING id, title, due_at, done''',
-                    (user_id, title, due_at)
+                    f'''INSERT INTO {DB_SCHEMA}.assistant_tasks (user_id, title, due_at, tz_offset)
+                        VALUES (%s, %s, %s, %s) RETURNING id, title, due_at, done''',
+                    (user_id, title, due_at, tz_offset)
                 )
                 row = cur.fetchone()
                 conn.commit()
@@ -426,8 +432,31 @@ def handle_assistant(event: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, A
                 conn.commit()
                 return reply(200, {'success': True})
 
+            if action == 'push_subscribe':
+                sub = body.get('subscription') or {}
+                endpoint = sub.get('endpoint') if isinstance(sub, dict) else None
+                if not endpoint or not isinstance(sub.get('keys'), dict):
+                    return err(400, 'Не удалось включить уведомления')
+                cur.execute(
+                    f'''INSERT INTO {DB_SCHEMA}.assistant_push_subscriptions (user_id, endpoint, subscription_data)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (endpoint) DO UPDATE SET user_id = EXCLUDED.user_id,
+                        subscription_data = EXCLUDED.subscription_data''',
+                    (user_id, endpoint, json.dumps(sub))
+                )
+                conn.commit()
+                return reply(200, {'success': True})
+
+            if action == 'push_unsubscribe':
+                cur.execute(
+                    f'DELETE FROM {DB_SCHEMA}.assistant_push_subscriptions WHERE user_id = %s',
+                    (user_id,)
+                )
+                conn.commit()
+                return reply(200, {'success': True})
+
             if action == 'delete_account':
-                for table in ('assistant_messages', 'assistant_memory', 'assistant_tasks'):
+                for table in ('assistant_messages', 'assistant_memory', 'assistant_tasks', 'assistant_push_subscriptions'):
                     cur.execute(f'DELETE FROM {DB_SCHEMA}.{table} WHERE user_id = %s', (user_id,))
                 cur.execute(f'DELETE FROM {DB_SCHEMA}.assistant_users WHERE id = %s', (user_id,))
                 conn.commit()

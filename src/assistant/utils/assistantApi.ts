@@ -113,7 +113,13 @@ export const deleteMemory = (id: number) => call('memory_delete', { id });
 
 export const loadTasks = async () => (await call<{ tasks: AssistantTask[] }>('tasks_list')).tasks;
 export const addTask = async (title: string, dueAt?: string) =>
-  (await call<{ task: AssistantTask }>('task_add', { title, due_at: dueAt || null })).task;
+  (await call<{ task: AssistantTask }>('task_add', {
+    title,
+    due_at: dueAt || null,
+    tz_offset: new Date().getTimezoneOffset(),
+  })).task;
+export const subscribePush = (subscription: unknown) => call('push_subscribe', { subscription });
+export const unsubscribePush = () => call('push_unsubscribe');
 export const toggleTask = async (id: number) => (await call<{ task: AssistantTask }>('task_toggle', { id })).task;
 export const deleteTask = (id: number) => call('task_delete', { id });
 

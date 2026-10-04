@@ -57,7 +57,7 @@ export default function AssistantAuth() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500 shadow-lg shadow-emerald-500/30">
             <Icon name="HeartHandshake" size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-800">Рядом</h1>
+          <h1 className="text-3xl font-bold text-slate-800">Помощник</h1>
           <p className="mt-2 text-slate-600">Спокойный помощник на каждый день: подскажет, напомнит и поможет с текстами</p>
         </div>
 

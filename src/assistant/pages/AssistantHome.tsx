@@ -17,7 +17,7 @@ import {
 type Tab = 'chat' | 'tasks' | 'memory';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'chat', label: 'Помощник', icon: 'MessageCircle' },
+  { id: 'chat', label: 'Чат', icon: 'MessageCircle' },
   { id: 'tasks', label: 'Мои дела', icon: 'ListChecks' },
   { id: 'memory', label: 'Что я помню', icon: 'Bookmark' },
 ];
@@ -48,7 +48,7 @@ export default function AssistantHome() {
 
   useEffect(() => {
     const prev = document.title;
-    document.title = 'Рядом — помощник на каждый день';
+    document.title = 'Помощник на каждый день';
     return () => {
       document.title = prev;
     };
@@ -80,7 +80,7 @@ export default function AssistantHome() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500">
               <Icon name="HeartHandshake" size={20} className="text-white" />
             </div>
-            <span className="text-lg font-bold text-slate-800">Рядом</span>
+            <span className="text-lg font-bold text-slate-800">Помощник</span>
           </div>
           <div className="flex items-center gap-1">
             <button
