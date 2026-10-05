@@ -5,6 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 import { useToast } from '@/hooks/use-toast';
+import { useInstallApp } from '@/hooks/useInstallApp';
 import { showBrowserNotification } from '@/utils/browserNotifications';
 
 interface NotificationSettingsProps {
@@ -19,6 +20,22 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
     return localStorage.getItem('soundNotificationsEnabled') !== 'false';
   });
   const { toast } = useToast();
+  const { install, isIOS, isInstalled } = useInstallApp();
+  const [showIosHint, setShowIosHint] = useState(false);
+
+  const handleInstall = async () => {
+    const result = await install();
+    if (result === 'installed') {
+      toast({ title: 'Приложение установлено', description: 'Значок появился на главном экране' });
+    } else if (result === 'ios-manual') {
+      setShowIosHint(true);
+    } else if (result === 'manual') {
+      toast({
+        title: 'Установка из меню браузера',
+        description: 'Откройте меню браузера (⋮) и выберите «Установить приложение» или «Добавить на главный экран»',
+      });
+    }
+  };
 
   useEffect(() => {
     checkNotificationSupport();
@@ -109,6 +126,32 @@ export default function NotificationSettings({ userId }: NotificationSettingsPro
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!isInstalled && (
+          <div className="p-4 bg-primary/5 rounded-lg space-y-3">
+            <div className="flex items-start gap-3">
+              <Icon name="Smartphone" className="h-5 w-5 flex-shrink-0 mt-0.5 text-primary" />
+              <div className="text-sm">
+                <p className="font-semibold">Установите приложение на телефон</p>
+                <p className="text-muted-foreground">
+                  Значок на главном экране для быстрого входа
+                  {isIOS ? '. На iPhone push-уведомления работают только из установленного приложения.' : ' и стабильных уведомлений.'}
+                </p>
+              </div>
+            </div>
+            <Button className="w-full" onClick={handleInstall}>
+              <Icon name="Download" className="mr-2 h-4 w-4" />
+              Установить на телефон
+            </Button>
+            {showIosHint && (
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal ml-5">
+                <li>В открывшемся меню нажмите «На экран Домой» (если меню не открылось — кнопка «Поделиться» внизу Safari)</li>
+                <li>Нажмите «Добавить»</li>
+                <li>Откройте приложение с главного экрана и включите уведомления</li>
+              </ol>
+            )}
+          </div>
+        )}
+
         {!isSupported ? (
           <div className="p-4 bg-destructive/10 text-destructive rounded-lg flex items-start gap-3">
             <Icon name="AlertCircle" className="h-5 w-5 flex-shrink-0 mt-0.5" />
