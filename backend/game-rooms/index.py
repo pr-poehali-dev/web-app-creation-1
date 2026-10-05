@@ -238,7 +238,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     )
                     room_id = cur.fetchone()['id']
 
-                    side = 'white' if game_type in ('chess', 'checkers') else 'seat0'
+                    # Создатель играет чёрными, вошедший вторым — белыми и ходит первым
+                    side = 'black' if game_type in ('chess', 'checkers') else 'seat0'
                     chips = 1000 if game_type == 'poker' else None
                     cur.execute(
                         f"""INSERT INTO {DB_SCHEMA}.game_room_players (room_id, user_id, seat_index, side, chips)
@@ -296,7 +297,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
                     side = None
                     if room['game_type'] in ('chess', 'checkers'):
-                        side = 'black'
+                        side = 'white'
                     else:
                         side = f'seat{count}'
                     chips = 1000 if room['game_type'] == 'poker' else None
@@ -312,8 +313,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     # ждём явного старта стола создателем (action 'start_table').
                     if new_count >= 2 and room['game_type'] != 'poker':
                         cur.execute(
-                            f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'playing', current_turn_user_id = created_by, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
-                            (room['id'],)
+                            f"UPDATE {DB_SCHEMA}.game_rooms SET status = 'playing', current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+                            (user['id'] if room['game_type'] in ('chess', 'checkers') else room['created_by'], room['id'])
                         )
                     conn.commit()
 
