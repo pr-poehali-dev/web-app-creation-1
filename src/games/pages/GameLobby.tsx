@@ -183,6 +183,9 @@ export default function GameLobby() {
           <h1 className="text-3xl font-bold text-slate-100 mb-1">Выберите игру</h1>
           <p className="text-slate-400">Играйте онлайн с другими игроками в реальном времени</p>
         </div>
+        <Button onClick={() => navigate('/games/tournaments')} className="bg-gradient-to-r from-amber-400 to-amber-600 text-slate-950 hover:opacity-90">
+          <Icon name="Trophy" size={16} className="mr-1" />Турниры
+        </Button>
       </div>
 
       {activeRooms.length > 0 && (

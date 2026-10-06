@@ -236,6 +236,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'high'
     },
     {
+      id: 'games',
+      title: 'Игры: мониторинг и турниры',
+      description: 'Все игровые комнаты игроков в реальном времени и проведение турниров',
+      icon: 'Gamepad2',
+      color: 'bg-indigo-600',
+      count: null,
+      path: '/admin/games',
+      priority: 'high'
+    },
+    {
       id: 'support',
       title: 'Обращения в поддержку',
       description: 'Чат с пользователями — вопросы и обращения',
@@ -472,7 +482,7 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
                 <TabsContent value="management" className="space-y-6">
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {adminSections
-                      .filter(s => ['users', 'analytics', 'settings', 'manage-admins'].includes(s.id))
+                      .filter(s => ['users', 'analytics', 'settings', 'manage-admins', 'games'].includes(s.id))
                       .map((section) => (
                         <Card 
                           key={section.id}

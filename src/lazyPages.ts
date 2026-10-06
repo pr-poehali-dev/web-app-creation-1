@@ -77,6 +77,7 @@ export const AdminManageAdmins = lazyWithRetry(() => import("./pages/AdminManage
 export const AdminPanel = lazyWithRetry(() => import("./pages/AdminPanel"));
 export const AdminOrders = lazyWithRetry(() => import("./pages/AdminOrders"));
 export const AdminArbitrage = lazyWithRetry(() => import("./pages/AdminArbitrage"));
+export const AdminGames = lazyWithRetry(() => import("./pages/AdminGames"));
 export const AdminSupport = lazyWithRetry(() => import("./pages/AdminSupport"));
 export const SetAdminPassword = lazyWithRetry(() => import("./pages/SetAdminPassword"));
 export const AdminContentManagement = lazyWithRetry(() => import("./pages/AdminContentManagement"));
@@ -109,6 +110,7 @@ export const AdminMarketReviews = lazyWithRetry(() => import("./pages/AdminMarke
 export const GameAuth = lazyWithRetry(() => import("./games/pages/GameAuth"));
 export const GameLobby = lazyWithRetry(() => import("./games/pages/GameLobby"));
 export const GameRoomRouter = lazyWithRetry(() => import("./games/pages/GameRoomRouter"));
+export const GameTournaments = lazyWithRetry(() => import("./games/pages/GameTournaments"));
 export const GameInviteJoin = lazyWithRetry(() => import("./games/pages/GameInviteJoin"));
 
 export const AssistantAuth = lazyWithRetry(() => import("./assistant/pages/AssistantAuth"));

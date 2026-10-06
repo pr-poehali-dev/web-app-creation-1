@@ -88,6 +88,7 @@ export default function AppRoutes({ isAuthenticated, onLogin, onRegister, onLogo
             <Route path="/admin/change-password" element={<P.AdminChangePassword />} />
             <Route path="/admin/content" element={<P.AdminContentManagement />} />
             <Route path="/admin/arbitrage" element={<P.AdminArbitrage {...auth} />} />
+            <Route path="/admin/games" element={<P.AdminGames {...auth} />} />
             <Route path="/admin/support" element={<P.AdminSupport {...auth} />} />
             <Route path="/admin/subscriptions" element={<P.AdminSubscriptions {...auth} />} />
             <Route path="/admin/market-reviews" element={<P.AdminMarketReviews {...auth} />} />
@@ -126,6 +127,7 @@ export default function AppRoutes({ isAuthenticated, onLogin, onRegister, onLogo
             <Route path="/s/:code" element={<P.ShortUrlRedirect />} />
             <Route path="/games/auth" element={<P.GameAuth />} />
             <Route path="/games" element={<P.GameLobby />} />
+            <Route path="/games/tournaments" element={<P.GameTournaments />} />
             <Route path="/games/room/:roomId" element={<P.GameRoomRouter />} />
             <Route path="/games/invite/:code" element={<P.GameInviteJoin />} />
             <Route path="/assistant" element={<P.AssistantHome />} />
