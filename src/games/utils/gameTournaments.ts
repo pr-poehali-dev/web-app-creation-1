@@ -1,8 +1,8 @@
-// API турниров и мониторинга игровых комнат (backend: game-admin).
+// API турниров и мониторинга игровых комнат (backend: game-rooms).
 import func2url from '../../../backend/func2url.json';
 import { getGameToken } from './gameAuth';
 
-export const GAME_ADMIN_API = (func2url as Record<string, string>)['game-admin'] || '';
+export const GAME_ADMIN_API = (func2url as Record<string, string>)['game-rooms'] || '';
 
 export interface Tournament {
   id: number;

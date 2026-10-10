@@ -13,6 +13,7 @@ from typing import Dict, Any, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import jwt
+import tournaments
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
@@ -67,7 +68,7 @@ def cors_headers() -> Dict[str, str]:
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, X-Game-Token',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Game-Token, X-Admin-Id',
         'Access-Control-Max-Age': '86400'
     }
 
@@ -113,6 +114,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': cors_headers(), 'body': '', 'isBase64Encoded': False}
+
+    if (event.get('queryStringParameters') or {}).get('action') in tournaments.ACTIONS:
+        return tournaments.handle(event, context)
 
     user = get_user_from_token(event)
     if not user:

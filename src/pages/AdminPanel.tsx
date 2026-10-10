@@ -246,6 +246,16 @@ export default function AdminPanel({ isAuthenticated, onLogout }: AdminPanelProp
       priority: 'high'
     },
     {
+      id: 'games',
+      title: 'Игры: мониторинг и турниры',
+      description: 'Все игровые комнаты игроков в реальном времени и проведение турниров',
+      icon: 'Gamepad2',
+      color: 'bg-indigo-600',
+      count: null,
+      path: '/admin/games',
+      priority: 'high'
+    },
+    {
       id: 'support',
       title: 'Обращения в поддержку',
       description: 'Чат с пользователями — вопросы и обращения',

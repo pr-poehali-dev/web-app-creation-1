@@ -7,6 +7,7 @@ Returns: HTTP response dict
 import json
 import os
 import random
+import urllib.request
 from typing import Dict, Any, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -16,6 +17,8 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 S = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 GAME_JWT_ISSUER = 'games-section'
+PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
+PENDING_PUSH = []
 TOURNEY_GAMES = ('chess', 'checkers')
 ACTIONS = ('monitor', 'room_detail', 'close_room', 'sync', 'admin_tournaments', 'admin_tournament',
            'create_tournament', 'start_tournament', 'cancel_tournament',
@@ -102,7 +105,31 @@ def create_match_room(cur, t, rnd, p1, p2):
     rid = cur.fetchone()['id']
     cur.execute(f"INSERT INTO {S}.game_room_players (room_id,user_id,seat_index,side) VALUES (%s,%s,0,'white'),(%s,%s,1,'black')",
                 (rid, p1, rid, p2))
+    PENDING_PUSH.append((t['name'], rnd, rid, p1, p2))
     return rid
+
+
+def flush_push():
+    '''Отправляет push обоим игрокам о начале турнирной партии. Ошибки отправки игнорируются.'''
+    items = list(PENDING_PUSH)
+    PENDING_PUSH.clear()
+    for name, rnd, rid, p1, p2 in items:
+        for uid, opp in ((p1, p2), (p2, p1)):
+            try:
+                req = urllib.request.Request(
+                    PUSH_SEND_URL,
+                    data=json.dumps({
+                        'userId': f'game_{uid}',
+                        'title': '🏆 Ваша турнирная партия',
+                        'message': f'«{name}», раунд {rnd}: соперник найден, заходите играть',
+                        'url': f'/games/room/{rid}',
+                        'type': 'game_turn',
+                    }).encode(),
+                    headers={'Content-Type': 'application/json'},
+                )
+                urllib.request.urlopen(req, timeout=3)
+            except Exception:
+                pass
 
 
 def make_round(cur, t, rnd, player_ids):
@@ -210,6 +237,7 @@ def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return err(400, 'Некорректный JSON')
     action = params.get('action') or body.get('action') or ''
 
+    PENDING_PUSH.clear()
     conn = conn_()
     try:
         with conn.cursor() as cur:
@@ -423,6 +451,8 @@ def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return err(400, 'Неизвестное действие')
     except Exception as e:
         conn.rollback()
+        PENDING_PUSH.clear()
         return err(500, f'Ошибка сервера: {e}')
     finally:
         conn.close()
+        flush_push()
