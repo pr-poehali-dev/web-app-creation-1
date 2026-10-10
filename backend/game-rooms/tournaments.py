@@ -17,6 +17,9 @@ S = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
 JWT_SECRET = os.environ.get('JWT_SECRET_KEY', '')
 GAME_JWT_ISSUER = 'games-section'
 TOURNEY_GAMES = ('chess', 'checkers')
+ACTIONS = ('monitor', 'room_detail', 'close_room', 'sync', 'admin_tournaments', 'admin_tournament',
+           'create_tournament', 'start_tournament', 'cancel_tournament',
+           'tournaments', 'tournament', 'join_tournament', 'leave_tournament')
 
 
 def conn_():
@@ -194,7 +197,7 @@ def sync_all_active(cur):
 
 # ---------- Handler ----------
 
-def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method = event.get('httpMethod', 'GET')
     if method == 'OPTIONS':
         return {'statusCode': 200, 'headers': hdrs(), 'body': '', 'isBase64Encoded': False}
