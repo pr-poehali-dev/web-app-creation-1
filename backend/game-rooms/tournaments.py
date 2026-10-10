@@ -156,6 +156,13 @@ def sync_tournament(cur, tid):
     t = cur.fetchone()
     if not t or t['status'] != 'active':
         return
+    cur.execute(f"""UPDATE {S}.game_rooms r SET status='finished', updated_at=CURRENT_TIMESTAMP,
+                      winner_id=(SELECT p.user_id FROM {S}.game_room_players p WHERE p.room_id=r.id AND p.user_id != r.current_turn_user_id LIMIT 1)
+                    WHERE r.status='playing' AND r.current_turn_user_id IS NOT NULL
+                      AND r.updated_at < CURRENT_TIMESTAMP - (%s * INTERVAL '1 minute')
+                      AND r.id IN (SELECT room_id FROM {S}.game_tournament_matches
+                                   WHERE tournament_id=%s AND status='playing' AND room_id IS NOT NULL)""",
+                (t['move_timeout_minutes'], tid))
     for _ in range(10):
         cur.execute(f"""SELECT m.*, r.status AS room_status, r.winner_id AS room_winner FROM {S}.game_tournament_matches m
                         LEFT JOIN {S}.game_rooms r ON r.id = m.room_id
@@ -343,13 +350,14 @@ def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         mn = max(2, int(body.get('min_players', 4)))
                         mx = min(64, int(body.get('max_players', 16)))
                         fee = max(0, int(body.get('entry_fee', 0)))
+                        timeout_min = min(10080, max(5, int(body.get('move_timeout_minutes', 1440))))
                     except Exception:
                         return err(400, 'Некорректные числа')
                     if mx < mn:
                         return err(400, 'Максимум игроков меньше минимума')
-                    cur.execute(f"""INSERT INTO {S}.game_tournaments (name, description, game_type, min_players, max_players, entry_fee, starts_at, created_by)
-                                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-                                (name, (body.get('description') or '')[:1000], gt, mn, mx, fee, body.get('starts_at') or None, admin_id))
+                    cur.execute(f"""INSERT INTO {S}.game_tournaments (name, description, game_type, min_players, max_players, entry_fee, starts_at, created_by, move_timeout_minutes)
+                                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                                (name, (body.get('description') or '')[:1000], gt, mn, mx, fee, body.get('starts_at') or None, admin_id, timeout_min))
                     tid = cur.fetchone()['id']
                     conn.commit()
                     return ok({'success': True, 'id': tid})
@@ -394,7 +402,7 @@ def handle(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 if action == 'tournaments':
                     sync_all_active(cur)
                     conn.commit()
-                    cur.execute(f"""SELECT t.id, t.name, t.description, t.game_type, t.status, t.min_players, t.max_players, t.entry_fee,
+                    cur.execute(f"""SELECT t.id, t.name, t.description, t.game_type, t.status, t.min_players, t.max_players, t.entry_fee, t.move_timeout_minutes,
                                       t.prize_pool, t.starts_at, t.current_round, w.nickname AS winner_nickname,
                                       (SELECT COUNT(*) FROM {S}.game_tournament_players WHERE tournament_id=t.id) AS players_count,
                                       EXISTS(SELECT 1 FROM {S}.game_tournament_players WHERE tournament_id=t.id AND user_id=%s) AS joined

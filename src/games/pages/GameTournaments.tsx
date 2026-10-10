@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import GameLayout from '../components/GameLayout';
 import { getGameSession } from '../utils/gameAuth';
-import { playerCall, Tournament, STATUS_LABEL, GAME_LABEL } from '../utils/gameTournaments';
+import { playerCall, Tournament, STATUS_LABEL, GAME_LABEL, formatTimeout } from '../utils/gameTournaments';
 
 export default function GameTournaments() {
   const navigate = useNavigate();
@@ -83,6 +83,7 @@ export default function GameTournaments() {
               <span>{GAME_LABEL[open.game_type]}</span>
               <span>игроков {open.players_count}/{open.max_players} (старт от {open.min_players})</span>
               <span>взнос {open.entry_fee}</span><span>фонд {open.prize_pool}</span>
+              <span>на ход: {formatTimeout(open.move_timeout_minutes)} (не сходил — поражение)</span>
               {open.winner_nickname && <span className="text-amber-300">🏆 {open.winner_nickname}</span>}
             </div>
             {open.status === 'registration' && (open.joined

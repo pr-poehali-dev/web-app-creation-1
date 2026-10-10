@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { adminCall, Tournament, STATUS_LABEL, GAME_LABEL } from '@/games/utils/gameTournaments';
+import { adminCall, Tournament, STATUS_LABEL, GAME_LABEL, formatTimeout } from '@/games/utils/gameTournaments';
 
 interface Props {
   isAuthenticated: boolean;
@@ -81,7 +81,7 @@ export default function AdminGames({ isAuthenticated, onLogout }: Props) {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [tDetail, setTDetail] = useState<Tournament | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', game_type: 'chess', min_players: 4, max_players: 16, entry_fee: 0, starts_at: '' });
+  const [form, setForm] = useState({ name: '', description: '', game_type: 'chess', min_players: 4, max_players: 16, entry_fee: 0, move_timeout_minutes: 1440, starts_at: '' });
 
   const loadTournaments = useCallback(async () => {
     try { setTournaments((await adminCall('admin_tournaments')).tournaments); }
@@ -113,7 +113,7 @@ export default function AdminGames({ isAuthenticated, onLogout }: Props) {
       await adminCall('create_tournament', { body: { ...form, starts_at: form.starts_at || null } });
       toast({ title: 'Турнир создан' });
       setShowForm(false);
-      setForm({ name: '', description: '', game_type: 'chess', min_players: 4, max_players: 16, entry_fee: 0, starts_at: '' });
+      setForm({ name: '', description: '', game_type: 'chess', min_players: 4, max_players: 16, entry_fee: 0, move_timeout_minutes: 1440, starts_at: '' });
       loadTournaments();
     } catch (e) { toast({ title: 'Ошибка', description: (e as Error).message, variant: 'destructive' }); }
   };
@@ -231,6 +231,7 @@ export default function AdminGames({ isAuthenticated, onLogout }: Props) {
                           <span>{GAME_LABEL[t.game_type]}</span>
                           <span>игроков: {t.players_count}/{t.max_players} (мин. {t.min_players})</span>
                           <span>взнос: {t.entry_fee}</span>
+                          <span>на ход: {formatTimeout(t.move_timeout_minutes)}</span>
                           <span>фонд: {t.prize_pool}</span>
                           {t.starts_at && <span>старт: {fmt(t.starts_at)}</span>}
                         </div>
@@ -316,6 +317,8 @@ export default function AdminGames({ isAuthenticated, onLogout }: Props) {
               <label className="text-xs">Макс. игроков<Input type="number" max={64} value={form.max_players} onChange={e => setForm({ ...form, max_players: +e.target.value })} /></label>
               <label className="text-xs">Взнос (фишки)<Input type="number" min={0} value={form.entry_fee} onChange={e => setForm({ ...form, entry_fee: +e.target.value })} /></label>
             </div>
+            <label className="text-xs block">Время на ход (минут; 1440 = сутки). Не сходил вовремя — поражение
+              <Input type="number" min={5} max={10080} value={form.move_timeout_minutes} onChange={e => setForm({ ...form, move_timeout_minutes: +e.target.value })} /></label>
             <label className="text-xs block">Дата начала (информационно)<Input type="datetime-local" value={form.starts_at} onChange={e => setForm({ ...form, starts_at: e.target.value })} /></label>
             <Button className="w-full" onClick={createTournament}>Создать</Button>
           </div>

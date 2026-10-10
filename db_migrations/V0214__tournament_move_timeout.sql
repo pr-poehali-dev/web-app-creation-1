@@ -1,0 +1,1 @@
+ALTER TABLE game_tournaments ADD COLUMN IF NOT EXISTS move_timeout_minutes INTEGER NOT NULL DEFAULT 1440;

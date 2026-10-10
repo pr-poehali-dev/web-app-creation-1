@@ -13,6 +13,7 @@ export interface Tournament {
   min_players: number;
   max_players: number;
   entry_fee: number;
+  move_timeout_minutes: number;
   prize_pool: number;
   starts_at: string | null;
   current_round: number;
@@ -70,3 +71,6 @@ export const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Отменён',
 };
 export const GAME_LABEL: Record<string, string> = { chess: 'Шахматы', checkers: 'Шашки', poker: 'Покер' };
+
+export const formatTimeout = (min: number) =>
+  min >= 1440 && min % 1440 === 0 ? `${min / 1440} сут.` : min >= 60 && min % 60 === 0 ? `${min / 60} ч` : `${min} мин`;
