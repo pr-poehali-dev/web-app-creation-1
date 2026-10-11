@@ -172,6 +172,35 @@ STATIC_OG = {
     f'{SITE_URL}/games': _GAMES_OG,
 }
 
+_INVITE_TEXT = {
+    'chess': ('Шахматы', 'Тебя приглашают на партию в шахматы. Нажми, чтобы присоединиться!'),
+    'checkers': ('Шашки', 'Тебя приглашают на партию в шашки. Нажми, чтобы присоединиться!'),
+    'poker': ('Покер', 'Тебя приглашают за стол в покер. Нажми, чтобы присоединиться!'),
+}
+
+def extract_game_invite(url: str) -> str | None:
+    import re
+    m = re.search(r'/games/invite/([A-Za-z0-9]+)', url)
+    return m.group(1) if m else None
+
+def get_game_invite_og(code: str, url: str, conn) -> dict:
+    cur = conn.cursor()
+    safe = code.replace("'", "''")
+    cur.execute(f"SELECT game_type FROM {SCHEMA}.game_rooms WHERE invite_code = '{safe}' LIMIT 1")
+    row = cur.fetchone()
+    cur.close()
+    game_type = row[0] if row else None
+    if game_type not in _INVITE_TEXT:
+        return {**_GAMES_OG, 'url': url}
+    name, desc = _INVITE_TEXT[game_type]
+    return {
+        'title': f'Приглашение в игру: {name}',
+        'description': desc,
+        'image': f'{SITE_URL}/games-og-{game_type}.jpg',
+        'url': url,
+        'site_name': 'Игровой клуб ЕРТТП',
+    }
+
 def get_static_og(url: str) -> dict:
     """OG-данные для статичных страниц без БД."""
     clean = url.split('?')[0].rstrip('/')
@@ -220,7 +249,8 @@ def handler(event: dict, context) -> dict:
 
         # Боты мессенджеров — отдаём HTML с OG-тегами
         if is_bot(event):
-            og = get_static_og(original_url)
+            invite_code = extract_game_invite(original_url)
+            og = get_game_invite_og(invite_code, original_url, conn) if invite_code else get_static_og(original_url)
             if not og:
                 offer_id = extract_offer_id(original_url)
                 request_id = extract_request_id(original_url)
