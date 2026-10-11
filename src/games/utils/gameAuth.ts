@@ -28,7 +28,7 @@ const GAME_AUTH_API = (func2url as Record<string, string>)['game-auth'] || '';
 
 export const getGameAuthApiUrl = () => GAME_AUTH_API;
 
-export const registerGameUser = async (nickname: string, pin: string): Promise<GameAuthResponse> => {
+export const registerGameUser = async (nickname: string): Promise<GameAuthResponse> => {
   if (!GAME_AUTH_API) {
     return { success: false, error: 'Игровой раздел ещё разворачивается, попробуйте через пару минут' };
   }
@@ -36,7 +36,7 @@ export const registerGameUser = async (nickname: string, pin: string): Promise<G
     const response = await fetch(GAME_AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'register', nickname, pin }),
+      body: JSON.stringify({ action: 'register', nickname }),
     });
     const data = await response.json();
     if (!response.ok || !data.success) {
@@ -49,7 +49,7 @@ export const registerGameUser = async (nickname: string, pin: string): Promise<G
   }
 };
 
-export const loginGameUser = async (nickname: string, pin: string): Promise<GameAuthResponse> => {
+export const loginGameUser = async (nickname: string): Promise<GameAuthResponse> => {
   if (!GAME_AUTH_API) {
     return { success: false, error: 'Игровой раздел ещё разворачивается, попробуйте через пару минут' };
   }
@@ -57,11 +57,11 @@ export const loginGameUser = async (nickname: string, pin: string): Promise<Game
     const response = await fetch(GAME_AUTH_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', nickname, pin }),
+      body: JSON.stringify({ action: 'login', nickname }),
     });
     const data = await response.json();
     if (!response.ok || !data.success) {
-      return { success: false, error: data.error || 'Неверный никнейм или PIN-код' };
+      return { success: false, error: data.error || 'Игрок с таким никнеймом не найден' };
     }
     saveGameSession(data.user, data.token);
     return { success: true, user: data.user, token: data.token };

@@ -13,9 +13,6 @@ export default function GameAuth() {
   const { toast } = useToast();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [nickname, setNickname] = useState('');
-  const [pin, setPin] = useState('');
-  const [pinConfirm, setPinConfirm] = useState('');
-  const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const redirectAfterAuth = () => {
@@ -33,11 +30,6 @@ export default function GameAuth() {
     return null;
   }
 
-  const handlePinChange = (value: string, setter: (v: string) => void) => {
-    const digitsOnly = value.replace(/\D/g, '').slice(0, 6);
-    setter(digitsOnly);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -45,19 +37,11 @@ export default function GameAuth() {
       toast({ variant: 'destructive', title: 'Ошибка', description: 'Никнейм должен быть от 3 символов' });
       return;
     }
-    if (pin.length < 4) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'PIN-код должен содержать 4-6 цифр' });
-      return;
-    }
-    if (mode === 'register' && pin !== pinConfirm) {
-      toast({ variant: 'destructive', title: 'Ошибка', description: 'PIN-коды не совпадают' });
-      return;
-    }
 
     setIsLoading(true);
     const result = mode === 'register'
-      ? await registerGameUser(nickname.trim(), pin)
-      : await loginGameUser(nickname.trim(), pin);
+      ? await registerGameUser(nickname.trim())
+      : await loginGameUser(nickname.trim());
     setIsLoading(false);
 
     if (result.success) {
@@ -125,44 +109,6 @@ export default function GameAuth() {
                 maxLength={20}
               />
             </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="pin" className="text-slate-300">PIN-код</Label>
-              <div className="relative">
-                <Input
-                  id="pin"
-                  type={showPin ? 'text' : 'password'}
-                  inputMode="numeric"
-                  value={pin}
-                  onChange={(e) => handlePinChange(e.target.value, setPin)}
-                  placeholder="4-6 цифр"
-                  className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500 focus-visible:ring-amber-500 pr-10 tracking-[0.3em]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPin(!showPin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-                  tabIndex={-1}
-                >
-                  <Icon name={showPin ? 'EyeOff' : 'Eye'} size={16} />
-                </button>
-              </div>
-            </div>
-
-            {mode === 'register' && (
-              <div className="space-y-1.5">
-                <Label htmlFor="pinConfirm" className="text-slate-300">Повторите PIN-код</Label>
-                <Input
-                  id="pinConfirm"
-                  type={showPin ? 'text' : 'password'}
-                  inputMode="numeric"
-                  value={pinConfirm}
-                  onChange={(e) => handlePinChange(e.target.value, setPinConfirm)}
-                  placeholder="4-6 цифр"
-                  className="bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-500 focus-visible:ring-amber-500 tracking-[0.3em]"
-                />
-              </div>
-            )}
 
             <Button
               type="submit"

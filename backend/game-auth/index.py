@@ -9,6 +9,7 @@ Returns: HTTP response dict with statusCode, headers, body
 import json
 import os
 import re
+import secrets
 from typing import Dict, Any
 from datetime import datetime, timedelta
 import psycopg2
@@ -94,7 +95,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     if action == 'register':
         nickname = (body.get('nickname') or '').strip()
-        pin = body.get('pin') or ''
 
         if not validate_nickname(nickname):
             return {
@@ -103,14 +103,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Никнейм: 3-20 символов, буквы/цифры/подчёркивание'}),
                 'isBase64Encoded': False
             }
-        if not validate_pin(pin):
-            return {
-                'statusCode': 400,
-                'headers': cors_headers(),
-                'body': json.dumps({'error': 'PIN-код должен содержать 4-6 цифр'}),
-                'isBase64Encoded': False
-            }
-
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
@@ -123,7 +115,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'isBase64Encoded': False
                     }
 
-                pin_hash = hash_pin(pin)
+                pin_hash = hash_pin(secrets.token_hex(16))
                 cur.execute(
                     f"""INSERT INTO {DB_SCHEMA}.game_users (nickname, pin_hash, last_login_at)
                        VALUES (%s, %s, CURRENT_TIMESTAMP)
@@ -145,23 +137,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 
     elif action == 'login':
         nickname = (body.get('nickname') or '').strip()
-        pin = body.get('pin') or ''
 
         conn = get_db_connection()
         try:
             with conn.cursor() as cur:
                 cur.execute(
-                    f"""SELECT id, nickname, pin_hash, avatar_emoji, chips_balance, games_played, games_won
+                    f"""SELECT id, nickname, avatar_emoji, chips_balance, games_played, games_won
                        FROM {DB_SCHEMA}.game_users WHERE nickname = %s""",
                     (nickname,)
                 )
                 user = cur.fetchone()
 
-                if not user or not verify_pin(pin, user['pin_hash']):
+                if not user:
                     return {
                         'statusCode': 401,
                         'headers': cors_headers(),
-                        'body': json.dumps({'error': 'Неверный никнейм или PIN-код'}),
+                        'body': json.dumps({'error': 'Игрок с таким никнеймом не найден'}),
                         'isBase64Encoded': False
                     }
 
@@ -171,7 +162,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 )
                 conn.commit()
 
-                user_data = {k: v for k, v in dict(user).items() if k != 'pin_hash'}
+                user_data = dict(user)
                 token = generate_game_token(user['id'], user['nickname'])
                 return {
                     'statusCode': 200,
