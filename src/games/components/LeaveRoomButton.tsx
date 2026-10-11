@@ -40,7 +40,7 @@ export default function LeaveRoomButton({ roomId, requireConfirm = true }: Leave
         variant="outline"
         size="sm"
         onClick={() => (requireConfirm ? setConfirmOpen(true) : doLeave())}
-        className="border-slate-700 text-slate-300 hover:bg-slate-800"
+        className="bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950"
       >
         <Icon name="LogOut" size={16} className="mr-1.5" />
         Выйти из комнаты

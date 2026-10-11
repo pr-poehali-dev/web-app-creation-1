@@ -324,7 +324,7 @@ export default function DurakGame() {
                   variant="outline"
                   onClick={toggleSound}
                   aria-label={soundOn ? 'Выключить звук' : 'Включить звук'}
-                  className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                  className="bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950 disabled:opacity-70"
                 >
                   <Icon name={soundOn ? 'Volume2' : 'VolumeX'} size={14} />
                 </Button>
@@ -343,7 +343,7 @@ export default function DurakGame() {
                   variant="outline"
                   onClick={handleNotify}
                   disabled={isNotifying}
-                  className="border-slate-700 text-slate-300 hover:bg-slate-800"
+                  className="bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950 disabled:opacity-70"
                 >
                   <Icon name={isNotifying ? 'Loader2' : 'BellRing'} size={14} className={isNotifying ? 'mr-1.5 animate-spin' : 'mr-1.5'} />
                   Напомнить: {turnPlayer.nickname}

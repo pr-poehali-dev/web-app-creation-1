@@ -59,7 +59,7 @@ export default function DurakRulesDialog() {
         size="sm"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="border-slate-700 text-slate-300 hover:bg-slate-800"
+        className="bg-amber-400 hover:bg-amber-500 border-amber-500 text-slate-950 font-semibold hover:text-slate-950 disabled:opacity-70"
       >
         <Icon name="BookOpen" size={14} className="mr-1.5" />
         Порядок игры
