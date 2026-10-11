@@ -24,7 +24,7 @@ export const makeShareUrl = async (rawUrl: string, senderNickname?: string): Pro
     });
     if (!response.ok) return url;
     const data = await response.json();
-    return data.code ? `${base}?code=${data.code}&go=1` : url;
+    return data.code ? `${base}?code=${data.code}` : url;
   } catch {
     return url;
   }

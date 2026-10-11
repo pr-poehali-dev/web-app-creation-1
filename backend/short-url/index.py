@@ -274,7 +274,8 @@ def handler(event: dict, context) -> dict:
 
         cur.close()
         conn.close()
-        if params.get('go'):
+        accept = next((v for k, v in (event.get('headers') or {}).items() if k.lower() == 'accept'), '')
+        if 'text/html' in accept:
             return {'statusCode': 302, 'headers': {**CORS_HEADERS, 'Location': original_url}, 'body': ''}
         # Обычный пользователь (фронтенд) — JSON как раньше
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'url': original_url})}
