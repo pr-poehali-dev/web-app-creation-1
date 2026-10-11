@@ -77,6 +77,16 @@ export default function HeaderMobileMenu({
           Игровой клуб
         </span>
       </Link>
+      <Link
+        to="/assistant"
+        className="block mx-4 px-3 py-2 text-sm font-medium text-foreground hover:bg-primary/5 hover:text-primary rounded-md border-2 border-primary/20 hover:border-primary/40 transition-colors"
+        onClick={onClose}
+      >
+        <span className="flex items-center gap-2">
+          <Icon name="Sparkles" className="h-4 w-4" />
+          Мой помощник
+        </span>
+      </Link>
     </div>
   );
 }

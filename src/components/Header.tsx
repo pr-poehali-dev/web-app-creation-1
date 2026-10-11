@@ -354,6 +354,15 @@ export default function Header({ isAuthenticated, onLogout }: HeaderProps) {
                 Игровой клуб
               </span>
             </Link>
+            <Link
+              to="/assistant"
+              className={`text-[11px] lg:text-sm font-medium transition-colors px-1.5 lg:px-2 py-1.5 rounded-md border-2 whitespace-nowrap ${location.pathname.startsWith('/assistant') ? 'bg-primary/10 text-primary border-primary/40' : 'text-foreground hover:text-primary hover:bg-primary/5 border-primary/20 hover:border-primary/40'}`}
+            >
+              <span className="flex items-center gap-1">
+                <Icon name="Sparkles" className="h-3.5 w-3.5" />
+                Мой помощник
+              </span>
+            </Link>
           </nav>
 
           <div className="flex items-center space-x-1 md:space-x-1.5">
