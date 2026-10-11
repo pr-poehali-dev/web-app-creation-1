@@ -160,8 +160,8 @@ _BRAIN_BOOSTER_OG = {
 }
 
 _GAMES_OG = {
-    'title': 'Игровой клуб — шахматы, шашки и покер онлайн',
-    'description': 'Играй с друзьями онлайн: шахматы, шашки, покер на виртуальные фишки. Заходи и присоединяйся!',
+    'title': 'Игровой клуб — шахматы, шашки, карты и покер онлайн',
+    'description': 'Играй с друзьями онлайн: шахматы, шашки, дурак, Баарыс и покер. Заходи и присоединяйся!',
     'image': f'{SITE_URL}/games-og.jpg',
     'url': f'{SITE_URL}/games',
     'site_name': 'Игровой клуб ЕРТТП',
@@ -177,6 +177,7 @@ _INVITE_TEXT = {
     'checkers': ('Шашки', 'в шашки', 'на партию в шашки'),
     'poker': ('Покер', 'в покер', 'за стол в покер'),
     'durak': ('Дурак', 'на игру в дурака', 'сыграть в переводного дурака'),
+    'baarys': ('Баарыс', 'в Баарыс', 'на партию в Баарыс'),
 }
 
 def extract_game_invite(url: str) -> str | None:
@@ -273,6 +274,8 @@ def handler(event: dict, context) -> dict:
 
         cur.close()
         conn.close()
+        if params.get('go'):
+            return {'statusCode': 302, 'headers': {**CORS_HEADERS, 'Location': original_url}, 'body': ''}
         # Обычный пользователь (фронтенд) — JSON как раньше
         return {'statusCode': 200, 'headers': CORS_HEADERS, 'body': json.dumps({'url': original_url})}
 
