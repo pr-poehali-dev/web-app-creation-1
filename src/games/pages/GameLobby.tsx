@@ -23,6 +23,7 @@ import {
 const GAME_INFO: Record<GameType, { title: string; icon: string; description: string; color: string; available: boolean }> = {
   chess: { title: 'Шахматы', icon: 'Crown', description: 'Классическая игра для двоих', color: 'from-blue-500 to-indigo-600', available: true },
   checkers: { title: 'Шашки', icon: 'Circle', description: 'Классическая игра для двоих', color: 'from-emerald-500 to-teal-600', available: true },
+  durak: { title: 'Дурак', icon: 'Layers', description: 'Переводной, от 2 до 6 игроков', color: 'from-amber-500 to-orange-600', available: true },
   poker: { title: 'Покер', icon: 'Spade', description: 'Техасский холдем до 8 игроков', color: 'from-red-500 to-rose-600', available: true },
 };
 
@@ -260,7 +261,7 @@ export default function GameLobby() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {(Object.keys(GAME_INFO) as GameType[]).map((type) => {
           const info = GAME_INFO[type];
           const isSelected = selectedGame === type;

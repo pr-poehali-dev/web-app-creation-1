@@ -17,6 +17,7 @@ from psycopg2.extras import RealDictCursor
 import jwt
 import chess
 import requests
+import durak
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 't_p42562714_web_app_creation_1')
@@ -26,7 +27,7 @@ GAME_JWT_ISSUER = 'games-section'
 
 PUSH_SEND_URL = 'https://functions.poehali.dev/a1c8fafd-b64f-45e5-b9b9-0a050cca4f7a'
 
-GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер'}
+GAME_TITLES = {'chess': 'Шахматы', 'checkers': 'Шашки', 'poker': 'Покер', 'durak': 'Дурак'}
 
 
 def notify_next_turn(room_id: int, next_turn_user_id: Optional[int], game_type: str) -> None:
@@ -974,6 +975,91 @@ def handle_poker_action(cur, conn, room, user, body):
 
 # ──────────────────────────────────────────────────────────────────────────
 
+def handle_durak_action(cur, conn, room, user, body):
+    action = body.get('action')
+    if action not in ('start', 'attack', 'defend', 'transfer', 'take', 'pass'):
+        return error_response(400, 'Неизвестное действие')
+
+    room_id = room['id']
+    cur.execute("SELECT * FROM " + DB_SCHEMA + ".game_rooms WHERE id = %s FOR UPDATE", (room_id,))
+    room = cur.fetchone()
+    cur.execute(
+        "SELECT user_id FROM " + DB_SCHEMA + ".game_room_players WHERE room_id = %s ORDER BY seat_index",
+        (room_id,)
+    )
+    order = [str(r['user_id']) for r in cur.fetchall()]
+    my_uid = str(user['id'])
+    if my_uid not in order:
+        return error_response(403, 'Вы не участник этой партии')
+
+    prev_turn = room['current_turn_user_id']
+
+    if action == 'start':
+        if room['created_by'] != user['id']:
+            return error_response(403, 'Начать игру может только создатель комнаты')
+        if room['status'] not in ('waiting', 'finished'):
+            return error_response(400, 'Игра уже идёт')
+        if not 2 <= len(order) <= 6:
+            return error_response(400, 'Для игры нужно от 2 до 6 игроков')
+        state = durak.new_game(order)
+        turn = durak.current_turn(state)
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = 'playing', winner_id = NULL, "
+            "current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+            (json.dumps(state), int(turn), room_id)
+        )
+        conn.commit()
+        if int(turn) != user['id']:
+            notify_next_turn(room_id, int(turn), 'durak')
+        return {'statusCode': 200, 'headers': cors_headers(), 'body': json.dumps({'success': True, 'status': 'playing'}), 'isBase64Encoded': False}
+
+    if room['status'] != 'playing':
+        return error_response(400, 'Игра не идёт')
+    state = room['state'] or {}
+    if not state.get('hands'):
+        return error_response(400, 'Игра ещё не началась')
+
+    err = durak.apply_action(state, my_uid, action, body)
+    if err:
+        return error_response(400, err)
+
+    finished = state['phase'] == 'finished'
+    turn = durak.current_turn(state)
+    turn_id = int(turn) if turn else None
+    winner_id = int(state['out'][0]) if finished and state['out'] else None
+
+    cur.execute(
+        "UPDATE " + DB_SCHEMA + ".game_rooms SET state = %s, status = %s, winner_id = %s, "
+        "current_turn_user_id = %s, updated_at = CURRENT_TIMESTAMP WHERE id = %s",
+        (json.dumps(state), 'finished' if finished else 'playing', winner_id, turn_id, room_id)
+    )
+
+    if finished:
+        ids = [int(u) for u in order]
+        cur.execute(
+            "UPDATE " + DB_SCHEMA + ".game_users SET games_played = games_played + 1 WHERE id = ANY(%s)",
+            (ids,)
+        )
+        winners = [int(u) for u in order if u != state.get('loser')]
+        if winners:
+            cur.execute(
+                "UPDATE " + DB_SCHEMA + ".game_users SET games_won = games_won + 1 WHERE id = ANY(%s)",
+                (winners,)
+            )
+
+    conn.commit()
+
+    if not finished and turn_id and turn_id != prev_turn and turn_id != user['id']:
+        notify_next_turn(room_id, turn_id, 'durak')
+
+    return {
+        'statusCode': 200,
+        'headers': cors_headers(),
+        'body': json.dumps({'success': True, 'phase': state['phase'], 'loser': state.get('loser')}),
+        'isBase64Encoded': False
+    }
+
+
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method = event.get('httpMethod', 'GET')
 
@@ -1011,6 +1097,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             result = handle_checkers_move(cur, conn, room, user, body)
         elif room['game_type'] == 'poker':
             result = handle_poker_action(cur, conn, room, user, body)
+        elif room['game_type'] == 'durak':
+            result = handle_durak_action(cur, conn, room, user, body)
         else:
             result = error_response(400, 'Неизвестный тип игры для этой комнаты')
 

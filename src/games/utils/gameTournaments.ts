@@ -70,7 +70,7 @@ export const STATUS_LABEL: Record<string, string> = {
   finished: 'Завершён',
   cancelled: 'Отменён',
 };
-export const GAME_LABEL: Record<string, string> = { chess: 'Шахматы', checkers: 'Шашки', poker: 'Покер' };
+export const GAME_LABEL: Record<string, string> = { chess: 'Шахматы', checkers: 'Шашки', poker: 'Покер', durak: 'Дурак' };
 
 export const formatTimeout = (min: number) =>
   min >= 1440 && min % 1440 === 0 ? `${min / 1440} сут.` : min >= 60 && min % 60 === 0 ? `${min / 60} ч` : `${min} мин`;

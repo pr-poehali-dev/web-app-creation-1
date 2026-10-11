@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 const GAMES_MANIFEST = '/manifest-games.json';
 const GAMES_APPLE_ICON = '/icons/games-icon-180.png';
 const GAMES_FAVICON = '/icons/games-icon-192.png';
-const GAMES_TITLE = 'Игровой клуб — Шахматы, Шашки, Покер | ЕРТТП';
+const GAMES_TITLE = 'Игровой клуб — Шахматы, Шашки, Покер, Дурак | ЕРТТП';
 const GAMES_APPLE_TITLE = 'Игры';
 const GAMES_THEME_COLOR = '#1a0a2e';
 
